@@ -1,0 +1,24 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_size = 4
+indent_style = space
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{kt,kts}]
+ktlint_code_style = ktlint_official
+max_line_length = 120
+# Compose 컴포저블/프리뷰는 PascalCase 이므로 function-naming 예외 처리
+ktlint_function_naming_ignore_when_annotated_with = Composable, Preview
+ij_kotlin_allow_trailing_comma = true
+ij_kotlin_allow_trailing_comma_on_call_site = true
+
+# 테스트 함수명은 addition_isCorrect 같은 snake_case 관례를 허용
+[**/src/{test,androidTest}/**/*.kt]
+ktlint_standard_function-naming = disabled
+
+[*.{yml,yaml,toml}]
+indent_size = 2
