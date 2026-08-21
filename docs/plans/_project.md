@@ -23,7 +23,7 @@
 | 인증·세션 | 미정 — 서버 토큰·세션 계약 확정 전에는 클라이언트 값을 추측하지 않습니다. | 구현 근거 없음 |
 | 의존성 주입 | Hilt를 사용하며 애노테이션 처리는 KSP로 돌립니다. 모듈 경계별 컴포넌트 배치는 멀티 모듈 구조 계획에서 정합니다. | `app/build.gradle.kts` |
 | 화면 이동 | Navigation Compose를 사용합니다. 라우트 정의 방식과 모듈 간 노출 범위는 구조 계획에서 정합니다. | `app/build.gradle.kts` |
-| 배포 | PR CI 외 환경 분리·서명·단계적 배포 정책은 미정입니다. 서버 base URL은 dev `https://dev-api.manyak.app`, 운영 `https://api.manyak.app`이며 빌드 타입 주입 방식은 미정입니다. | 운영 구성 근거 없음 |
+| 배포 | 서버 base URL은 빌드 타입별 `BuildConfig.BASE_URL`로 주입합니다. debug는 dev 서버 `https://dev-api.manyak.app/api/v1/`가 기본이고 `local.properties`의 `BASE_URL`로 덮어씁니다. release는 `https://api.manyak.app/api/v1/`입니다. 평문 통신은 debug 소스 세트의 network security config에서 로컬 호스트에만 허용합니다. 서명·단계적 배포 정책은 미정입니다. | `app/build.gradle.kts`, `app/src/debug/res/xml/network_security_config.xml` |
 
 ## 갱신 규칙
 

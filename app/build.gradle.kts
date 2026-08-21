@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -36,6 +38,14 @@ tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
     }
 }
 
+val localProperties =
+    Properties().apply {
+        val file = rootProject.file("local.properties")
+        if (file.exists()) {
+            file.inputStream().use { load(it) }
+        }
+    }
+
 android {
     namespace = "app.manyak"
     compileSdk {
@@ -53,7 +63,13 @@ android {
     }
 
     buildTypes {
+        debug {
+            // 로컬 서버에 붙일 때는 local.properties 에 BASE_URL 을 넣어 덮어쓴다.
+            val debugBaseUrl = localProperties.getProperty("BASE_URL") ?: "https://dev-api.manyak.app/api/v1/"
+            buildConfigField("String", "BASE_URL", "\"$debugBaseUrl\"")
+        }
         release {
+            buildConfigField("String", "BASE_URL", "\"https://api.manyak.app/api/v1/\"")
             optimization {
                 enable = false
             }
@@ -65,6 +81,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
