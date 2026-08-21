@@ -53,9 +53,9 @@ jobs:
         with:
           name: reports
           path: |
-            app/build/reports/ktlint/
-            app/build/reports/detekt/
-            app/build/reports/lint-results-*.html
-            app/build/reports/tests/
+            **/build/reports/ktlint/
+            **/build/reports/detekt/
+            **/build/reports/lint-results-*.html
+            **/build/reports/tests/
           retention-days: 7
           if-no-files-found: ignore
