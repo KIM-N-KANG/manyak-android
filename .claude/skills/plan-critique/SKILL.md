@@ -31,7 +31,7 @@ description: 기능 개발 계획을 적대적으로 검토해 구현 전에 깨
 
 ### 1. 선별 공격 — 검토하지 않은 고려 사항 중 해당하는 것이 있는가
 
-계획에 적힌 "검토한 고려 사항" 목록과 기능 내용을 대조합니다. 여덟 항목 중 이 기능의 코드에 나타날 텐데 검토되지 않은 것을 찾습니다: 모듈 구조(`module-architecture`), 상태·생명주기(`state-lifecycle`), 데이터·네트워크·동기화(`data-layer`), 인증·보안·개인정보(`auth-session`), 알림·외부 진입(`push-deeplink`), 디바이스·다국어·접근성(`adaptive-ui`), 안정성·품질·성능(`reliability`), 빌드·배포·운영(`release-ops`).
+계획에 적힌 "검토한 고려 사항" 목록과 기능 내용을 대조합니다. 여덟 항목 중 이 기능의 코드에 나타날 텐데 검토되지 않은 것을 찾습니다: 모듈 구조(`module-architecture`), 상태·생명주기(`state-lifecycle`), 데이터·네트워크·동기화(`data-layer`), 인증·보안·개인정보(`auth-session`), 알림·외부 진입(`notification-entry`), 디바이스·다국어·접근성(`adaptive-ui`), 안정성·품질·성능(`reliability`), 빌드·배포·운영(`release-ops`).
 
 작업 스킬도 함께 대조합니다. 여덟 항목과 달리 이쪽은 결정이 아니라 탐색이 산출물이므로, 해당하는데 돌지 않았으면 계획에 빈 곳이 남습니다: 사용자 귀속 데이터 정리(`session-data-cleanup`).
 
