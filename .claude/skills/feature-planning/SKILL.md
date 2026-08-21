@@ -1,6 +1,6 @@
 ---
 name: feature-planning
-description: 안드로이드 앱에 새 기능을 만들기 전에 고려 사항 스킬을 골라 검토하고 개발 계획을 세울 때 사용합니다. 기능이 닿는 코드를 한 번 읽고, 8개 고려 사항 스킬(module-architecture, state-lifecycle, data-layer, auth-session, push-deeplink, adaptive-ui, reliability, release-ops) 중 해당하는 것만 Skill 도구로 호출해 결정을 받아온 뒤, 중복 결정을 합치고 미결정을 드러내고 의존 순서에 맞춘 구현 순서를 만들어 계획 문서로 남긴 뒤, plan-critique 스킬로 그 계획을 한 번 공격해 깨질 지점을 찾습니다. "기능 만들자", "화면 추가", "기능 개발 계획", "어떻게 만들지 정하자", "설계부터 하자", "무엇부터 해야 할지", "작업 순서", "이 기능 계획 세워줘"처럼 요청할 때 적용합니다. 사용자가 새 기능이나 새 화면을 만들자고 하면 코드를 바로 쓰기 전에 먼저 이 스킬을 확인합니다. 계획이라는 단어를 쓰지 않아도 마찬가지입니다.
+description: 안드로이드 앱에 새 기능을 만들기 전에 고려 사항 스킬을 골라 검토하고 개발 계획을 세울 때 사용합니다. 기능이 닿는 코드를 한 번 읽고, 8개 고려 사항 스킬(module-architecture, state-lifecycle, data-layer, auth-session, push-deeplink, adaptive-ui, reliability, release-ops) 중 해당하는 것만 Skill 도구로 호출하고, 필요하면 작업 스킬(session-data-cleanup)도 함께 불러 결정을 받아온 뒤, 중복 결정을 합치고 미결정을 드러내고 의존 순서에 맞춘 구현 순서를 만들어 계획 문서로 남긴 뒤, plan-critique 스킬로 그 계획을 한 번 공격해 깨질 지점을 찾습니다. "기능 만들자", "화면 추가", "기능 개발 계획", "어떻게 만들지 정하자", "설계부터 하자", "무엇부터 해야 할지", "작업 순서", "이 기능 계획 세워줘"처럼 요청할 때 적용합니다. 사용자가 새 기능이나 새 화면을 만들자고 하면 코드를 바로 쓰기 전에 먼저 이 스킬을 확인합니다. 계획이라는 단어를 쓰지 않아도 마찬가지입니다.
 ---
 
 # 기능 개발 계획
@@ -39,7 +39,10 @@ description: 안드로이드 앱에 새 기능을 만들기 전에 고려 사항
 | 서버에 만들거나 고치거나 지움 | `data-layer`, `reliability` |
 | 사용자 입력을 받는 폼 | `state-lifecycle`, `reliability`, `adaptive-ui` |
 | 목록, 페이지네이션, 검색·필터 | `data-layer`, `state-lifecycle`, `reliability` |
-| 로그인이 필요하거나 사용자 정보를 다룸 | `auth-session` |
+| 인증 인프라가 아직 없는데 로그인이나 토큰이 필요함 | `auth-session` |
+| 인증 방식 변경, 로그인 제공자 추가 | `auth-session` |
+| 로그아웃·탈퇴·계정 전환 | `auth-session`, `session-data-cleanup` |
+| 사용자 데이터를 저장하는 저장소나 SDK를 새로 도입함 | `session-data-cleanup` |
 | 새 권한을 요청하거나 개인정보를 저장함 | `auth-session` |
 | 알림, 딥링크, 외부에서 앱을 여는 경로 | `push-deeplink`, `module-architecture` |
 | 앱을 닫아도 끝나야 하는 작업(업로드·전송·동기화) | `state-lifecycle`, `data-layer` |
@@ -49,6 +52,8 @@ description: 안드로이드 앱에 새 기능을 만들기 전에 고려 사항
 | 단계적으로 열거나 급할 때 꺼야 함 | `release-ops` |
 
 **선별 판단 기준**: 그 스킬의 결정이 이 기능의 코드나 설정에 실제로 나타나는가. 나타나지 않으면 뺍니다. 애매하다는 이유로 넣지 않습니다.
+
+**이미 있는 것을 그대로 쓰는 것은 신호가 아닙니다.** 공통 인증 클라이언트가 이미 있는데 인증이 필요한 API를 하나 더 붙이거나, 저장소 역할이 이미 정해졌는데 테이블을 하나 더 만드는 것은 결정할 것이 없습니다. `_project.md`의 결정을 따르면 됩니다. 스킬은 그 결정이 아직 없거나, 이 기능 때문에 바뀌어야 할 때 부릅니다.
 
 **고른 스킬이 6개를 넘으면 기능이 너무 큽니다.** 이건 계획을 크게 세우라는 뜻이 아니라 기능을 쪼개라는 신호입니다. 사용자에게 나눌 단위를 제안하고, 첫 단위부터 계획합니다.
 
@@ -82,6 +87,7 @@ Skill 도구로 고른 스킬을 순서대로 호출합니다. **`module-archite
 | 오류 분류 | `data-layer`가 기술 분류를 정하고 `reliability`가 화면 표현을 정함 |
 | 중복 실행 | 요청 계층은 `data-layer`, 취소 범위는 `state-lifecycle`, 화면 상태 어긋남은 `reliability` |
 | 권한 요청 | 일반 원칙은 `auth-session`, 알림 권한은 `push-deeplink` |
+| 세션 종료 | 정책은 `auth-session`, 지울 대상 탐색은 `session-data-cleanup` |
 | 백그라운드 작업 | `state-lifecycle`이 정하고 `data-layer`·`push-deeplink`가 참조 |
 
 **충돌하면 드러냅니다.** 두 검토가 같은 것을 다르게 정했다면 둘 중 하나를 조용히 고르지 말고, 무엇이 갈렸는지 적고 하나로 합칩니다.
