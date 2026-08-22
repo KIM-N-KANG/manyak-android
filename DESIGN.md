@@ -121,6 +121,10 @@ rounded:
   overlay: 20dp
   pill: CircleShape
 
+sizes:
+  control: 48dp
+  icon: 20dp
+
 spacing:
   hairline: 2dp
   inline: 4dp
@@ -142,6 +146,7 @@ components:
     textColor: "{colors.text-inverse}"
     typography: "{typography.label-large}"
     rounded: "{rounded.control}"
+    height: "{sizes.control}"
     padding: "{spacing.compact} {spacing.component}"
   button-primary-pressed:
     backgroundColor: "{colors.background-brand-bold-pressed}"
@@ -231,6 +236,10 @@ components:
     textColor: "{colors.text}"
     typography: "{typography.body-reading}"
     padding: "{spacing.gutter}"
+  logo-manyak:
+    asset: "res/drawable/ic_logo_manyak.xml"
+    color: "{colors.brand}"
+    height: 32dp
   logo-google:
     asset: "res/drawable/ic_logo_google.xml"
     size: 24dp
@@ -390,6 +399,17 @@ components:
 
 **그림자를 쓰지 않습니다.** 깊이는 (a) 표면 색 차이와 (b) 경계선으로만 만듭니다. M3의 tonal elevation도 끕니다 — `surfaceTint`를 투명으로 파생시켜 표면이 고도에 따라 브랜드 색으로 물드는 것을 막습니다.
 
+## 크기
+
+| 토큰 | 값 | 용도 |
+| --- | --- | --- |
+| `{sizes.control}` | 48dp | 버튼·입력창·탭처럼 탭 가능한 컨트롤의 높이 |
+| `{sizes.icon}` | 20dp | 라벨 옆 아이콘·제공자 로고 |
+
+`{sizes.control}`은 안드로이드 최소 터치 타깃과 같은 값이다. Material3 기본 버튼은 시각 높이 40dp 에
+터치 영역만 48dp 로 넓히므로 **보이는 크기와 눌리는 크기가 어긋난다** — 그 차이를 없애려고 둘을 맞췄다.
+토큰 정본에는 높이가 없어 이 값은 이 레포가 소유한다.
+
 ## 모양
 
 | 토큰 | 값 | 용도 |
@@ -487,6 +507,7 @@ components:
 - **제목 굵기가 웹과 한 단계 다릅니다.** 토큰은 SemiBold(600)지만 앱은 Medium(500)입니다. 가변 폰트를 쓰는 웹은 600 그대로입니다.
 - **M3 확장 슬롯**(`*Fixed` 색, `*Emphasized` 타이포 등)은 파생 대상이 아닙니다. 해당 슬롯을 읽는 컴포넌트를 쓰게 되면 파생을 넓힙니다.
 - **폰트가 APK에서 약 5.3MB**를 차지합니다(원본 14MB, 압축 후). 줄여야 하면 Pretendard 공식 subset 빌드로 교체합니다.
-- **태블릿·폴더블·가로 모드 정책이 없습니다.** 터치 타깃 최소 크기도 아직 토큰으로 정하지 않았습니다.
+- **태블릿·폴더블·가로 모드 정책이 없습니다.**
+- **컨트롤 높이(`sizes.*`)는 토큰 정본이 아니라 이 레포가 정한 값입니다.** 웹과 맞추려면 토큰 생성기 쪽에 크기 층을 추가해야 합니다.
 - **모션·전환 토큰이 없습니다.** 눌림 상태는 색 변화로만 정의되어 있습니다.
 - **디자인 시스템의 최종 위치는 `:core:ui`입니다**(하네스 §3-3-2). 아직 그 모듈이 없어 `:app`에 두었고, 만들 때 `ui/theme/`·`res/font/`·로고 drawable을 통째로 옮깁니다.

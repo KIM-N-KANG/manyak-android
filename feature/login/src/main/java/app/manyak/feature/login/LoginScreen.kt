@@ -1,12 +1,13 @@
 package app.manyak.feature.login
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
@@ -21,10 +22,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.manyak.core.domain.auth.AuthProvider
@@ -37,7 +42,7 @@ import app.manyak.core.ui.theme.ManyakTheme
  * 앱은 로그인 필수라 이 화면이 첫 실행 경험이다(하네스 §3-3-1).
  *
  * 문구 정본은 웹(FE-SCREEN-008)이며 앱이 새로 쓰지 않는다. 게스트 데이터가 없으므로 웹의 이관 1회
- * 안내만 뺀다.
+ * 안내는 넣지 않는다.
  */
 @Composable
 fun LoginScreen(
@@ -72,68 +77,70 @@ private fun LoginContent(
                     .padding(innerPadding)
                     .fillMaxSize()
                     .padding(horizontal = ManyakTheme.spacing.gutter),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
+            horizontalAlignment = Alignment.Start,
         ) {
-            CenteredMessage(
-                textRes = R.string.login_headline,
-                style = ManyakTheme.typography.titleLarge,
+            Spacer(modifier = Modifier.height(ManyakTheme.spacing.block))
+            Image(
+                painter = painterResource(R.drawable.ic_logo_manyak),
+                contentDescription = stringResource(R.string.app_logo_description),
+            )
+            Text(
+                modifier = Modifier.padding(top = ManyakTheme.spacing.component),
+                text = stringResource(R.string.login_headline),
+                style = ManyakTheme.typography.headlineSmall,
                 color = ManyakTheme.colors.text,
             )
+
+            // 버튼과 안내는 화면 아래에 모은다.
+            Spacer(modifier = Modifier.weight(1f))
+
             state.notice?.messageResOrNull()?.let { noticeRes ->
                 CenteredMessage(
-                    modifier = Modifier.padding(top = ManyakTheme.spacing.section),
-                    textRes = noticeRes,
+                    modifier = Modifier.padding(bottom = ManyakTheme.spacing.component),
+                    text = stringResource(noticeRes),
                     style = ManyakTheme.typography.bodyMedium,
                     color = ManyakTheme.colors.textDanger,
                 )
             }
 
-            ProviderButtons(
-                modifier = Modifier.padding(top = ManyakTheme.spacing.block),
-                state = state,
-                onSignIn = onSignIn,
-            )
+            ProviderButtons(state = state, onSignIn = onSignIn)
 
             CenteredMessage(
-                modifier = Modifier.padding(top = ManyakTheme.spacing.section),
-                textRes = R.string.login_existing_account,
+                modifier = Modifier.padding(top = ManyakTheme.spacing.component),
+                text = stringResource(R.string.login_provider_conflict),
                 style = ManyakTheme.typography.bodySmall,
                 color = ManyakTheme.colors.textSubtle,
             )
-            CenteredMessage(
-                modifier = Modifier.padding(top = ManyakTheme.spacing.inline),
-                textRes = R.string.login_provider_conflict,
-                style = ManyakTheme.typography.bodySmall,
-                color = ManyakTheme.colors.textSubtle,
-            )
+
             state.error?.messageResOrNull()?.let { errorRes ->
                 CenteredMessage(
-                    modifier = Modifier.padding(top = ManyakTheme.spacing.component),
-                    textRes = errorRes,
+                    modifier = Modifier.padding(top = ManyakTheme.spacing.compact),
+                    text = stringResource(errorRes),
                     style = ManyakTheme.typography.bodySmall,
                     color = ManyakTheme.colors.textDanger,
                 )
             }
 
             LegalConsent(
-                modifier = Modifier.padding(top = ManyakTheme.spacing.section),
+                modifier = Modifier.padding(top = ManyakTheme.spacing.component),
                 onOpenLegalDocument = onOpenLegalDocument,
             )
+
+            Spacer(modifier = Modifier.height(ManyakTheme.spacing.block))
         }
     }
 }
 
 @Composable
 private fun CenteredMessage(
-    textRes: Int,
+    text: String,
     style: TextStyle,
     color: Color,
     modifier: Modifier = Modifier,
 ) {
     Text(
-        modifier = modifier,
-        text = stringResource(textRes),
+        modifier = modifier.fillMaxWidth(),
+        text = text,
         style = style,
         color = color,
         textAlign = TextAlign.Center,
@@ -185,7 +192,7 @@ private fun ProviderButton(
     // 진행 중에는 탭한 버튼을 스피너로 바꾸고 두 버튼을 모두 비활성화한다(공통 계약).
     val isBusy = state.inProgress != null
     Button(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().height(ManyakTheme.sizes.control),
         onClick = { onClick(provider) },
         enabled = !isBusy,
         shape = ManyakTheme.shapes.control,
@@ -198,56 +205,70 @@ private fun ProviderButton(
             ),
     ) {
         if (state.inProgress == provider) {
-            CircularProgressIndicator(modifier = Modifier.size(LogoSize), color = contentColor)
+            CircularProgressIndicator(modifier = Modifier.size(ManyakTheme.sizes.icon), color = contentColor)
         } else {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
             ) {
-                Image(painter = painterResource(logoRes), contentDescription = null, modifier = Modifier.size(LogoSize))
+                Image(
+                    painter = painterResource(logoRes),
+                    contentDescription = null,
+                    modifier = Modifier.size(ManyakTheme.sizes.icon),
+                )
                 Text(text = stringResource(labelRes), style = ManyakTheme.typography.labelLarge)
             }
         }
     }
 }
 
+/**
+ * 로그인 버튼 클릭을 묵시적 동의로 간주하는 고지.
+ *
+ * 두 문서 이름에만 밑줄과 링크를 붙인다 — 문장을 쪼개 별도 링크를 두면 번역·개정 때 문장이 어긋난다.
+ */
 @Composable
 private fun LegalConsent(
     onOpenLegalDocument: (LegalDocument) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
-    ) {
-        Text(
-            text = stringResource(R.string.login_consent),
-            style = ManyakTheme.typography.labelSmall,
-            color = ManyakTheme.colors.textSubtle,
-            textAlign = TextAlign.Center,
-        )
-        Row(horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.component)) {
-            LegalLink(R.string.login_consent_terms) { onOpenLegalDocument(LegalDocument.TERMS) }
-            LegalLink(R.string.login_consent_privacy) { onOpenLegalDocument(LegalDocument.PRIVACY) }
-        }
-    }
-}
+    val termsLabel = stringResource(R.string.login_consent_terms)
+    val privacyLabel = stringResource(R.string.login_consent_privacy)
+    val sentence = stringResource(R.string.login_consent, termsLabel, privacyLabel)
+    val linkStyles = TextLinkStyles(style = SpanStyle(textDecoration = TextDecoration.Underline))
 
-@Composable
-private fun LegalLink(
-    labelRes: Int,
-    onClick: () -> Unit,
-) {
+    val annotated =
+        buildAnnotatedString {
+            append(sentence)
+            val links =
+                listOf(
+                    termsLabel to LegalDocument.TERMS,
+                    privacyLabel to LegalDocument.PRIVACY,
+                )
+            links.forEach { (label, document) ->
+                val start = sentence.indexOf(label)
+                if (start < 0) return@forEach
+                addLink(
+                    LinkAnnotation.Clickable(
+                        tag = document.name,
+                        styles = linkStyles,
+                        linkInteractionListener = { onOpenLegalDocument(document) },
+                    ),
+                    start = start,
+                    end = start + label.length,
+                )
+            }
+        }
+
     Text(
-        modifier = Modifier.clickable(onClick = onClick).padding(ManyakTheme.spacing.hairline),
-        text = stringResource(labelRes),
+        modifier = modifier.fillMaxWidth(),
+        text = annotated,
         style = ManyakTheme.typography.labelSmall,
-        color = ManyakTheme.colors.textBrand,
+        color = ManyakTheme.colors.textSubtle,
+        textAlign = TextAlign.Center,
     )
 }
 
-private val LogoSize = 20.dp
 private val KakaoContainerColor = Color(0xFFFEE500)
 private val KakaoContentColor = Color(0xE6000000)
 
