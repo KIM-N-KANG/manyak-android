@@ -1,0 +1,1796 @@
+{
+  "$description": "마냑 디자인 토큰. build-tokens.mjs가 생성한다. 직접 수정하지 않는다.",
+  "color": {
+    "gray": {
+      "0": {
+        "$type": "color",
+        "$value": "#FFFFFF"
+      },
+      "50": {
+        "$type": "color",
+        "$value": "#FCFCFC"
+      },
+      "100": {
+        "$type": "color",
+        "$value": "#F5F5F5"
+      },
+      "150": {
+        "$type": "color",
+        "$value": "#EEEEEE"
+      },
+      "300": {
+        "$type": "color",
+        "$value": "#9F9F9F"
+      },
+      "350": {
+        "$type": "color",
+        "$value": "#969696"
+      },
+      "400": {
+        "$type": "color",
+        "$value": "#8D8D8D"
+      },
+      "500": {
+        "$type": "color",
+        "$value": "#7E7E7E"
+      },
+      "550": {
+        "$type": "color",
+        "$value": "#747474"
+      },
+      "650": {
+        "$type": "color",
+        "$value": "#666666"
+      },
+      "700": {
+        "$type": "color",
+        "$value": "#5E5E5E"
+      },
+      "750": {
+        "$type": "color",
+        "$value": "#575757"
+      },
+      "900": {
+        "$type": "color",
+        "$value": "#1F1F1F"
+      },
+      "925": {
+        "$type": "color",
+        "$value": "#191919"
+      },
+      "950": {
+        "$type": "color",
+        "$value": "#131313"
+      }
+    },
+    "green": {
+      "50": {
+        "$type": "color",
+        "$value": "#E8F8EE",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.965 0.0219 159.17)"
+        }
+      },
+      "100": {
+        "$type": "color",
+        "$value": "#D0F1DE",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.93 0.0437 159.17)"
+        }
+      },
+      "200": {
+        "$type": "color",
+        "$value": "#AFE7C6",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.88 0.0729 159.17)"
+        }
+      },
+      "300": {
+        "$type": "color",
+        "$value": "#88D9AC",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.82 0.1021 159.17)"
+        }
+      },
+      "400": {
+        "$type": "color",
+        "$value": "#58C58F",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.745 0.1283 159.17)"
+        }
+      },
+      "500": {
+        "$type": "color",
+        "$value": "#33B57B",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.69 0.1414 159.17)"
+        }
+      },
+      "600": {
+        "$type": "color",
+        "$value": "#05A66B",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.6398 0.1458 159.17)"
+        }
+      },
+      "700": {
+        "$type": "color",
+        "$value": "#00995F",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.5998 0.1458 159.17)"
+        }
+      },
+      "800": {
+        "$type": "color",
+        "$value": "#00804B",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.52 0.1385 159.17)"
+        }
+      },
+      "900": {
+        "$type": "color",
+        "$value": "#006034",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.42 0.1196 159.17)"
+        }
+      },
+      "950": {
+        "$type": "color",
+        "$value": "#00411F",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.32 0.0991 159.17)"
+        }
+      }
+    },
+    "red": {
+      "50": {
+        "$type": "color",
+        "$value": "#FFECE8",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.965 0.0315 27.33)"
+        }
+      },
+      "100": {
+        "$type": "color",
+        "$value": "#FFD9D1",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.93 0.063 27.33)"
+        }
+      },
+      "200": {
+        "$type": "color",
+        "$value": "#FFBDB2",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.88 0.105 27.33)"
+        }
+      },
+      "300": {
+        "$type": "color",
+        "$value": "#FF9C8F",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.82 0.147 27.33)"
+        }
+      },
+      "400": {
+        "$type": "color",
+        "$value": "#FF7669",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.745 0.1848 27.33)"
+        }
+      },
+      "500": {
+        "$type": "color",
+        "$value": "#FF5A50",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.69 0.2037 27.33)"
+        }
+      },
+      "600": {
+        "$type": "color",
+        "$value": "#F1453D",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.6398 0.21 27.33)"
+        }
+      },
+      "700": {
+        "$type": "color",
+        "$value": "#E23531",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.5998 0.21 27.33)"
+        }
+      },
+      "800": {
+        "$type": "color",
+        "$value": "#C1191C",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.52 0.1995 27.33)"
+        }
+      },
+      "900": {
+        "$type": "color",
+        "$value": "#95000A",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.42 0.1722 27.33)"
+        }
+      },
+      "950": {
+        "$type": "color",
+        "$value": "#6A0000",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.32 0.1428 27.33)"
+        }
+      }
+    },
+    "amber": {
+      "50": {
+        "$type": "color",
+        "$value": "#FDF2E2",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.965 0.024 75)"
+        }
+      },
+      "100": {
+        "$type": "color",
+        "$value": "#FBE4C5",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.93 0.048 75)"
+        }
+      },
+      "200": {
+        "$type": "color",
+        "$value": "#F7D19C",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.88 0.08 75)"
+        }
+      },
+      "300": {
+        "$type": "color",
+        "$value": "#EFBA6E",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.82 0.112 75)"
+        }
+      },
+      "400": {
+        "$type": "color",
+        "$value": "#E09E32",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.745 0.1408 75)"
+        }
+      },
+      "500": {
+        "$type": "color",
+        "$value": "#D28A00",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.69 0.1552 75)"
+        }
+      },
+      "600": {
+        "$type": "color",
+        "$value": "#C37A00",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.6398 0.16 75)"
+        }
+      },
+      "700": {
+        "$type": "color",
+        "$value": "#B66E00",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.5998 0.16 75)"
+        }
+      },
+      "800": {
+        "$type": "color",
+        "$value": "#9A5700",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.52 0.152 75)"
+        }
+      },
+      "900": {
+        "$type": "color",
+        "$value": "#753E00",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.42 0.1312 75)"
+        }
+      },
+      "950": {
+        "$type": "color",
+        "$value": "#512600",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.32 0.1088 75)"
+        }
+      }
+    },
+    "blue": {
+      "50": {
+        "$type": "color",
+        "$value": "#E9F5FF",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.965 0.0225 252)"
+        }
+      },
+      "100": {
+        "$type": "color",
+        "$value": "#D3EBFF",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.93 0.045 252)"
+        }
+      },
+      "200": {
+        "$type": "color",
+        "$value": "#B4DBFF",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.88 0.075 252)"
+        }
+      },
+      "300": {
+        "$type": "color",
+        "$value": "#92C9FF",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.82 0.105 252)"
+        }
+      },
+      "400": {
+        "$type": "color",
+        "$value": "#6BB1FD",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.745 0.132 252)"
+        }
+      },
+      "500": {
+        "$type": "color",
+        "$value": "#519FF2",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.69 0.1455 252)"
+        }
+      },
+      "600": {
+        "$type": "color",
+        "$value": "#3D8FE4",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.6398 0.15 252)"
+        }
+      },
+      "700": {
+        "$type": "color",
+        "$value": "#2F82D6",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.5998 0.15 252)"
+        }
+      },
+      "800": {
+        "$type": "color",
+        "$value": "#186AB7",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.52 0.1425 252)"
+        }
+      },
+      "900": {
+        "$type": "color",
+        "$value": "#044E8D",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.42 0.123 252)"
+        }
+      },
+      "950": {
+        "$type": "color",
+        "$value": "#003364",
+        "$extensions": {
+          "app.manyak.oklch": "oklch(0.32 0.102 252)"
+        }
+      }
+    },
+    "$extensions": {
+      "app.manyak.layer": "primitive"
+    }
+  },
+  "space": {
+    "100": {
+      "$type": "dimension",
+      "$value": "8px"
+    },
+    "150": {
+      "$type": "dimension",
+      "$value": "12px"
+    },
+    "200": {
+      "$type": "dimension",
+      "$value": "16px"
+    },
+    "300": {
+      "$type": "dimension",
+      "$value": "24px"
+    },
+    "400": {
+      "$type": "dimension",
+      "$value": "32px"
+    },
+    "500": {
+      "$type": "dimension",
+      "$value": "40px"
+    },
+    "025": {
+      "$type": "dimension",
+      "$value": "2px"
+    },
+    "050": {
+      "$type": "dimension",
+      "$value": "4px"
+    }
+  },
+  "font": {
+    "size": {
+      "xs": {
+        "$type": "dimension",
+        "$value": "11px"
+      },
+      "sm": {
+        "$type": "dimension",
+        "$value": "12px"
+      },
+      "base": {
+        "$type": "dimension",
+        "$value": "14px"
+      },
+      "lg": {
+        "$type": "dimension",
+        "$value": "16px"
+      },
+      "xl": {
+        "$type": "dimension",
+        "$value": "18px"
+      },
+      "2xl": {
+        "$type": "dimension",
+        "$value": "20px"
+      },
+      "3xl": {
+        "$type": "dimension",
+        "$value": "24px"
+      }
+    },
+    "lineHeight": {
+      "xs": {
+        "$type": "dimension",
+        "$value": "15px"
+      },
+      "sm": {
+        "$type": "dimension",
+        "$value": "16px"
+      },
+      "base": {
+        "$type": "dimension",
+        "$value": "20px"
+      },
+      "lg": {
+        "$type": "dimension",
+        "$value": "24px"
+      },
+      "xl": {
+        "$type": "dimension",
+        "$value": "26px"
+      },
+      "2xl": {
+        "$type": "dimension",
+        "$value": "27px"
+      },
+      "3xl": {
+        "$type": "dimension",
+        "$value": "30px"
+      }
+    },
+    "weight": {
+      "regular": {
+        "$type": "fontWeight",
+        "$value": 400
+      },
+      "medium": {
+        "$type": "fontWeight",
+        "$value": 500
+      },
+      "semibold": {
+        "$type": "fontWeight",
+        "$value": 600
+      },
+      "bold": {
+        "$type": "fontWeight",
+        "$value": 700
+      }
+    }
+  },
+  "radius": {
+    "sm": {
+      "$type": "dimension",
+      "$value": "12px"
+    },
+    "md": {
+      "$type": "dimension",
+      "$value": "14px"
+    },
+    "lg": {
+      "$type": "dimension",
+      "$value": "16px"
+    },
+    "xl": {
+      "$type": "dimension",
+      "$value": "20px"
+    },
+    "full": {
+      "$type": "dimension",
+      "$value": "9999px"
+    }
+  },
+  "semantic": {
+    "light": {
+      "color": {
+        "brand": {
+          "$type": "color",
+          "$value": "{color.green.600}",
+          "$description": "로고·일러스트 등 큰 그래픽 전용"
+        },
+        "text": {
+          "@": {
+            "$type": "color",
+            "$value": "{color.gray.950}",
+            "$description": "본문·제목 기본 (폰트색)"
+          },
+          "subtle": {
+            "$type": "color",
+            "$value": "{color.gray.750}",
+            "$description": "보조 설명·메타 정보 (보조 폰트색)"
+          },
+          "subtlest": {
+            "$type": "color",
+            "$value": "{color.gray.550}",
+            "$description": "약한 보조 폰트색. elevation.surface 위에서만 본문 크기로 쓴다"
+          },
+          "disabled": {
+            "$type": "color",
+            "$value": "{color.gray.350}",
+            "$description": "가장 약한 보조 폰트색. 비활성·장식 전용"
+          },
+          "inverse": {
+            "$type": "color",
+            "$value": "{color.gray.0}",
+            "$description": "bold 배경 위 텍스트"
+          },
+          "brand": {
+            "$type": "color",
+            "$value": "{color.green.800}",
+            "$description": "브랜드 강조 텍스트·링크"
+          },
+          "danger": {
+            "$type": "color",
+            "$value": "{color.red.800}",
+            "$description": "오류 메시지"
+          },
+          "warning": {
+            "$type": "color",
+            "$value": "{color.amber.800}",
+            "$description": "경고 메시지"
+          },
+          "information": {
+            "$type": "color",
+            "$value": "{color.blue.800}",
+            "$description": "안내 메시지"
+          }
+        },
+        "background": {
+          "neutral": {
+            "@": {
+              "$type": "color",
+              "$value": "{color.gray.100}",
+              "$description": "입력창·비강조 채움 (보조 배경색)"
+            },
+            "pressed": {
+              "$type": "color",
+              "$value": "{color.gray.150}",
+              "$description": "위의 눌림 상태 (강한 보조 배경색)"
+            }
+          },
+          "brand": {
+            "bold": {
+              "@": {
+                "$type": "color",
+                "$value": "{color.green.800}",
+                "$description": "주 버튼"
+              },
+              "pressed": {
+                "$type": "color",
+                "$value": "{color.green.900}",
+                "$description": "주 버튼 눌림"
+              }
+            },
+            "subtle": {
+              "$type": "color",
+              "$value": "{color.green.50}",
+              "$description": "브랜드 배지·선택 표시"
+            }
+          },
+          "danger": {
+            "bold": {
+              "@": {
+                "$type": "color",
+                "$value": "{color.red.800}",
+                "$description": "파괴적 동작 버튼"
+              },
+              "pressed": {
+                "$type": "color",
+                "$value": "{color.red.900}",
+                "$description": "위의 눌림 상태"
+              }
+            },
+            "subtle": {
+              "$type": "color",
+              "$value": "{color.red.50}",
+              "$description": "오류 배너"
+            }
+          },
+          "warning": {
+            "subtle": {
+              "$type": "color",
+              "$value": "{color.amber.50}",
+              "$description": "경고 배너"
+            }
+          },
+          "information": {
+            "subtle": {
+              "$type": "color",
+              "$value": "{color.blue.50}",
+              "$description": "안내 배너"
+            }
+          },
+          "disabled": {
+            "$type": "color",
+            "$value": "{color.gray.150}",
+            "$description": "비활성 채움"
+          }
+        },
+        "border": {
+          "@": {
+            "$type": "color",
+            "$value": "{color.gray.150}",
+            "$description": "구분선·카드 테두리(장식)"
+          },
+          "input": {
+            "$type": "color",
+            "$value": "{color.gray.400}",
+            "$description": "폼 컨트롤 경계. 경계가 유일한 식별 수단일 때"
+          },
+          "brand": {
+            "$type": "color",
+            "$value": "{color.green.700}",
+            "$description": "선택된 테두리"
+          },
+          "danger": {
+            "$type": "color",
+            "$value": "{color.red.700}",
+            "$description": "오류 입력창"
+          },
+          "warning": {
+            "$type": "color",
+            "$value": "{color.amber.700}",
+            "$description": "경고 배너 경계"
+          },
+          "information": {
+            "$type": "color",
+            "$value": "{color.blue.700}",
+            "$description": "안내 배너 경계"
+          },
+          "focused": {
+            "$type": "color",
+            "$value": "{color.green.700}",
+            "$description": "포커스 링"
+          }
+        }
+      },
+      "elevation": {
+        "surface": {
+          "@": {
+            "$type": "color",
+            "$value": "{color.gray.50}",
+            "$description": "앱 바탕·카드·시트 (배경색)"
+          },
+          "raised": {
+            "$type": "color",
+            "$value": "{color.gray.0}",
+            "$description": "팝오버·플로팅. 지정 외 값(순백)을 쓰는 유일한 자리"
+          }
+        }
+      }
+    },
+    "dark": {
+      "color": {
+        "brand": {
+          "$type": "color",
+          "$value": "{color.green.600}",
+          "$description": "로고·일러스트 등 큰 그래픽 전용"
+        },
+        "text": {
+          "@": {
+            "$type": "color",
+            "$value": "{color.gray.50}",
+            "$description": "본문·제목 기본 (폰트색)"
+          },
+          "subtle": {
+            "$type": "color",
+            "$value": "{color.gray.300}",
+            "$description": "보조 설명·메타 정보 (보조 폰트색)"
+          },
+          "subtlest": {
+            "$type": "color",
+            "$value": "{color.gray.500}",
+            "$description": "약한 보조 폰트색. elevation.surface 위에서만 본문 크기로 쓴다"
+          },
+          "disabled": {
+            "$type": "color",
+            "$value": "{color.gray.700}",
+            "$description": "가장 약한 보조 폰트색. 비활성·장식 전용"
+          },
+          "inverse": {
+            "$type": "color",
+            "$value": "{color.gray.0}",
+            "$description": "bold 배경 위 텍스트"
+          },
+          "brand": {
+            "$type": "color",
+            "$value": "{color.green.400}",
+            "$description": "브랜드 강조 텍스트·링크"
+          },
+          "danger": {
+            "$type": "color",
+            "$value": "{color.red.400}",
+            "$description": "오류 메시지"
+          },
+          "warning": {
+            "$type": "color",
+            "$value": "{color.amber.400}",
+            "$description": "경고 메시지"
+          },
+          "information": {
+            "$type": "color",
+            "$value": "{color.blue.400}",
+            "$description": "안내 메시지"
+          }
+        },
+        "background": {
+          "neutral": {
+            "@": {
+              "$type": "color",
+              "$value": "{color.gray.925}",
+              "$description": "입력창·비강조 채움 (보조 배경색)"
+            },
+            "pressed": {
+              "$type": "color",
+              "$value": "{color.gray.900}",
+              "$description": "위의 눌림 상태 (강한 보조 배경색)"
+            }
+          },
+          "brand": {
+            "bold": {
+              "@": {
+                "$type": "color",
+                "$value": "{color.green.800}",
+                "$description": "주 버튼"
+              },
+              "pressed": {
+                "$type": "color",
+                "$value": "{color.green.900}",
+                "$description": "주 버튼 눌림"
+              }
+            },
+            "subtle": {
+              "$type": "color",
+              "$value": "{color.green.950}",
+              "$description": "브랜드 배지·선택 표시"
+            }
+          },
+          "danger": {
+            "bold": {
+              "@": {
+                "$type": "color",
+                "$value": "{color.red.800}",
+                "$description": "파괴적 동작 버튼"
+              },
+              "pressed": {
+                "$type": "color",
+                "$value": "{color.red.900}",
+                "$description": "위의 눌림 상태"
+              }
+            },
+            "subtle": {
+              "$type": "color",
+              "$value": "{color.red.950}",
+              "$description": "오류 배너"
+            }
+          },
+          "warning": {
+            "subtle": {
+              "$type": "color",
+              "$value": "{color.amber.950}",
+              "$description": "경고 배너"
+            }
+          },
+          "information": {
+            "subtle": {
+              "$type": "color",
+              "$value": "{color.blue.950}",
+              "$description": "안내 배너"
+            }
+          },
+          "disabled": {
+            "$type": "color",
+            "$value": "{color.gray.900}",
+            "$description": "비활성 채움"
+          }
+        },
+        "border": {
+          "@": {
+            "$type": "color",
+            "$value": "{color.gray.900}",
+            "$description": "구분선·카드 테두리(장식)"
+          },
+          "input": {
+            "$type": "color",
+            "$value": "{color.gray.650}",
+            "$description": "폼 컨트롤 경계. 경계가 유일한 식별 수단일 때"
+          },
+          "brand": {
+            "$type": "color",
+            "$value": "{color.green.400}",
+            "$description": "선택된 테두리"
+          },
+          "danger": {
+            "$type": "color",
+            "$value": "{color.red.400}",
+            "$description": "오류 입력창"
+          },
+          "warning": {
+            "$type": "color",
+            "$value": "{color.amber.400}",
+            "$description": "경고 배너 경계"
+          },
+          "information": {
+            "$type": "color",
+            "$value": "{color.blue.400}",
+            "$description": "안내 배너 경계"
+          },
+          "focused": {
+            "$type": "color",
+            "$value": "{color.green.400}",
+            "$description": "포커스 링"
+          }
+        }
+      },
+      "elevation": {
+        "surface": {
+          "@": {
+            "$type": "color",
+            "$value": "{color.gray.950}",
+            "$description": "앱 바탕·카드·시트 (배경색)"
+          },
+          "raised": {
+            "$type": "color",
+            "$value": "{color.gray.900}",
+            "$description": "팝오버·플로팅. 지정 외 값(순백)을 쓰는 유일한 자리"
+          }
+        }
+      }
+    },
+    "space": {
+      "hairline": {
+        "$type": "dimension",
+        "$value": "{space.025}",
+        "$description": "아이콘과 라벨 사이"
+      },
+      "inline": {
+        "$type": "dimension",
+        "$value": "{space.050}",
+        "$description": "인접한 인라인 요소"
+      },
+      "compact": {
+        "$type": "dimension",
+        "$value": "{space.100}",
+        "$description": "리스트 항목 간격·버튼 내부 세로"
+      },
+      "component": {
+        "$type": "dimension",
+        "$value": "{space.150}",
+        "$description": "컴포넌트 내부 기본"
+      },
+      "gutter": {
+        "$type": "dimension",
+        "$value": "{space.200}",
+        "$description": "화면 좌우 여백"
+      },
+      "section": {
+        "$type": "dimension",
+        "$value": "{space.300}",
+        "$description": "섹션 사이"
+      },
+      "block": {
+        "$type": "dimension",
+        "$value": "{space.400}",
+        "$description": "큰 구획 사이"
+      },
+      "screen-bottom": {
+        "$type": "dimension",
+        "$value": "{space.500}",
+        "$description": "스크롤 영역 하단 여유"
+      }
+    },
+    "radius": {
+      "thumbnail": {
+        "$type": "dimension",
+        "$value": "{radius.sm}",
+        "$description": "썸네일·작은 아이콘 컨테이너"
+      },
+      "control": {
+        "$type": "dimension",
+        "$value": "{radius.md}",
+        "$description": "버튼·입력창·탭"
+      },
+      "card": {
+        "$type": "dimension",
+        "$value": "{radius.lg}",
+        "$description": "카드·리스트 항목"
+      },
+      "overlay": {
+        "$type": "dimension",
+        "$value": "{radius.xl}",
+        "$description": "바텀시트·다이얼로그"
+      },
+      "pill": {
+        "$type": "dimension",
+        "$value": "{radius.full}",
+        "$description": "배지·칩·아바타"
+      }
+    },
+    "typography": {
+      "label": {
+        "small": {
+          "$type": "typography",
+          "$value": {
+            "fontSize": "{font.size.xs}",
+            "fontWeight": "{font.weight.regular}",
+            "lineHeight": "{font.lineHeight.xs}"
+          },
+          "$description": "타임스탬프·최소 보조 문구",
+          "$extensions": {
+            "app.manyak.ratio": 1.364
+          }
+        },
+        "large": {
+          "$type": "typography",
+          "$value": {
+            "fontSize": "{font.size.base}",
+            "fontWeight": "{font.weight.medium}",
+            "lineHeight": "{font.lineHeight.base}"
+          },
+          "$description": "버튼·탭 라벨",
+          "$extensions": {
+            "app.manyak.ratio": 1.429
+          }
+        }
+      },
+      "body": {
+        "small": {
+          "$type": "typography",
+          "$value": {
+            "fontSize": "{font.size.sm}",
+            "fontWeight": "{font.weight.regular}",
+            "lineHeight": "{font.lineHeight.sm}"
+          },
+          "$description": "메타 정보·보조 설명",
+          "$extensions": {
+            "app.manyak.ratio": 1.333
+          }
+        },
+        "medium": {
+          "$type": "typography",
+          "$value": {
+            "fontSize": "{font.size.base}",
+            "fontWeight": "{font.weight.regular}",
+            "lineHeight": "{font.lineHeight.base}"
+          },
+          "$description": "본문 기본",
+          "$extensions": {
+            "app.manyak.ratio": 1.429
+          }
+        },
+        "large": {
+          "$type": "typography",
+          "$value": {
+            "fontSize": "{font.size.lg}",
+            "fontWeight": "{font.weight.regular}",
+            "lineHeight": "{font.lineHeight.lg}"
+          },
+          "$description": "강조 본문·입력 필드",
+          "$extensions": {
+            "app.manyak.ratio": 1.5
+          }
+        },
+        "reading": {
+          "$type": "typography",
+          "$value": {
+            "fontSize": "{font.size.lg}",
+            "fontWeight": "{font.weight.regular}",
+            "lineHeight": "28px"
+          },
+          "$description": "스토리 본문(MaruBuri). 장문 전용 롤",
+          "$extensions": {
+            "app.manyak.ratio": 1.75,
+            "app.manyak.family": "serif"
+          }
+        }
+      },
+      "title": {
+        "medium": {
+          "$type": "typography",
+          "$value": {
+            "fontSize": "{font.size.xl}",
+            "fontWeight": "{font.weight.semibold}",
+            "lineHeight": "{font.lineHeight.xl}"
+          },
+          "$description": "섹션·카드 제목",
+          "$extensions": {
+            "app.manyak.ratio": 1.444
+          }
+        },
+        "large": {
+          "$type": "typography",
+          "$value": {
+            "fontSize": "{font.size.2xl}",
+            "fontWeight": "{font.weight.semibold}",
+            "lineHeight": "{font.lineHeight.2xl}"
+          },
+          "$description": "화면 제목",
+          "$extensions": {
+            "app.manyak.ratio": 1.35
+          }
+        }
+      },
+      "headline": {
+        "small": {
+          "$type": "typography",
+          "$value": {
+            "fontSize": "{font.size.3xl}",
+            "fontWeight": "{font.weight.bold}",
+            "lineHeight": "{font.lineHeight.3xl}"
+          },
+          "$description": "온보딩·랜딩 헤드라인",
+          "$extensions": {
+            "app.manyak.ratio": 1.25
+          }
+        }
+      }
+    }
+  },
+  "$extensions": {
+    "app.manyak.report": {
+      "contrast": [
+        {
+          "fg": "color.text",
+          "bg": "elevation.surface",
+          "min": 4.5,
+          "light": 18.11,
+          "dark": 18.11
+        },
+        {
+          "fg": "color.text",
+          "bg": "elevation.surface.raised",
+          "min": 4.5,
+          "light": 18.58,
+          "dark": 16.07
+        },
+        {
+          "fg": "color.text.subtle",
+          "bg": "elevation.surface",
+          "min": 4.5,
+          "light": 7.04,
+          "dark": 7.02
+        },
+        {
+          "fg": "color.text.subtle",
+          "bg": "elevation.surface.raised",
+          "min": 4.5,
+          "light": 7.23,
+          "dark": 6.23
+        },
+        {
+          "fg": "color.text.brand",
+          "bg": "elevation.surface",
+          "min": 4.5,
+          "light": 4.89,
+          "dark": 8.67
+        },
+        {
+          "fg": "color.text.brand",
+          "bg": "elevation.surface.raised",
+          "min": 4.5,
+          "light": 5.01,
+          "dark": 7.69
+        },
+        {
+          "fg": "color.text.danger",
+          "bg": "elevation.surface",
+          "min": 4.5,
+          "light": 5.98,
+          "dark": 7.12
+        },
+        {
+          "fg": "color.text.danger",
+          "bg": "elevation.surface.raised",
+          "min": 4.5,
+          "light": 6.13,
+          "dark": 6.32
+        },
+        {
+          "fg": "color.text.warning",
+          "bg": "elevation.surface",
+          "min": 4.5,
+          "light": 5.48,
+          "dark": 8.06
+        },
+        {
+          "fg": "color.text.warning",
+          "bg": "elevation.surface.raised",
+          "min": 4.5,
+          "light": 5.62,
+          "dark": 7.15
+        },
+        {
+          "fg": "color.text.information",
+          "bg": "elevation.surface",
+          "min": 4.5,
+          "light": 5.41,
+          "dark": 8.26
+        },
+        {
+          "fg": "color.text.information",
+          "bg": "elevation.surface.raised",
+          "min": 4.5,
+          "light": 5.55,
+          "dark": 7.33
+        },
+        {
+          "fg": "color.text.subtlest",
+          "bg": "elevation.surface",
+          "min": 4.5,
+          "light": 4.56,
+          "dark": 4.58
+        },
+        {
+          "fg": "color.text.inverse",
+          "bg": "color.background.brand.bold",
+          "min": 4.5,
+          "light": 5.01,
+          "dark": 5.01
+        },
+        {
+          "fg": "color.text.inverse",
+          "bg": "color.background.brand.bold.pressed",
+          "min": 4.5,
+          "light": 7.71,
+          "dark": 7.71
+        },
+        {
+          "fg": "color.text.inverse",
+          "bg": "color.background.danger.bold",
+          "min": 4.5,
+          "light": 6.13,
+          "dark": 6.13
+        },
+        {
+          "fg": "color.text.inverse",
+          "bg": "color.background.danger.bold.pressed",
+          "min": 4.5,
+          "light": 9.2,
+          "dark": 9.2
+        },
+        {
+          "fg": "color.text",
+          "bg": "color.background.neutral",
+          "min": 4.5,
+          "light": 17.04,
+          "dark": 17.14
+        },
+        {
+          "fg": "color.text.subtle",
+          "bg": "color.background.neutral",
+          "min": 4.5,
+          "light": 6.63,
+          "dark": 6.64
+        },
+        {
+          "fg": "color.text.danger",
+          "bg": "color.background.danger.subtle",
+          "min": 4.5,
+          "light": 5.38,
+          "dark": 4.99
+        },
+        {
+          "fg": "color.text.brand",
+          "bg": "color.background.brand.subtle",
+          "min": 4.5,
+          "light": 4.56,
+          "dark": 5.52
+        },
+        {
+          "fg": "color.text.warning",
+          "bg": "color.background.warning.subtle",
+          "min": 4.5,
+          "light": 5.08,
+          "dark": 5.6
+        },
+        {
+          "fg": "color.text.information",
+          "bg": "color.background.information.subtle",
+          "min": 4.5,
+          "light": 5.01,
+          "dark": 5.63
+        },
+        {
+          "fg": "color.border.input",
+          "bg": "elevation.surface",
+          "min": 3,
+          "light": 3.24,
+          "dark": 3.24
+        },
+        {
+          "fg": "color.border.input",
+          "bg": "color.background.neutral",
+          "min": 3,
+          "light": 3.04,
+          "dark": 3.06
+        },
+        {
+          "fg": "color.border.focused",
+          "bg": "elevation.surface",
+          "min": 3,
+          "light": 3.58,
+          "dark": 8.67
+        },
+        {
+          "fg": "color.border.brand",
+          "bg": "elevation.surface",
+          "min": 3,
+          "light": 3.58,
+          "dark": 8.67
+        },
+        {
+          "fg": "color.border.danger",
+          "bg": "elevation.surface",
+          "min": 3,
+          "light": 4.28,
+          "dark": 7.12
+        },
+        {
+          "fg": "color.border.warning",
+          "bg": "elevation.surface",
+          "min": 3,
+          "light": 3.92,
+          "dark": 8.06
+        },
+        {
+          "fg": "color.border.information",
+          "bg": "elevation.surface",
+          "min": 3,
+          "light": 3.87,
+          "dark": 8.26
+        }
+      ],
+      "forbidden": [
+        {
+          "fg": "color.text.subtlest",
+          "bg": "color.background.neutral",
+          "reason": "보조 배경색 위에서 4.5에 못 미친다. 입력창·채움 위에서는 color.text.subtle을 쓴다",
+          "light": 4.29,
+          "dark": 4.33
+        },
+        {
+          "fg": "color.text.subtlest",
+          "bg": "color.background.neutral.pressed",
+          "reason": "위와 같다. 강한 보조 배경색 위에서는 더 낮아진다",
+          "light": 4.03,
+          "dark": 4.06
+        },
+        {
+          "fg": "color.text.disabled",
+          "bg": "elevation.surface",
+          "reason": "배경색 위에서도 3에 못 미친다. 읽어야 하는 텍스트에 쓰지 않는다",
+          "light": 2.88,
+          "dark": 2.87
+        }
+      ],
+      "grayRamp": {
+        "0": {
+          "hex": "#FFFFFF",
+          "source": "anchor"
+        },
+        "50": {
+          "hex": "#FCFCFC",
+          "source": "anchor"
+        },
+        "100": {
+          "hex": "#F5F5F5",
+          "source": "anchor"
+        },
+        "150": {
+          "hex": "#EEEEEE",
+          "source": "anchor"
+        },
+        "300": {
+          "hex": "#9F9F9F",
+          "source": "derived",
+          "note": "다크 color.text.subtle (라이트 7.04 재현)",
+          "target": 7.04,
+          "got": 7.02
+        },
+        "350": {
+          "hex": "#969696",
+          "source": "anchor"
+        },
+        "400": {
+          "hex": "#8D8D8D",
+          "source": "derived",
+          "note": "라이트 color.border.input (채움색 위 3:1 확보)",
+          "target": 3.25,
+          "got": 3.24
+        },
+        "500": {
+          "hex": "#7E7E7E",
+          "source": "derived",
+          "note": "다크 color.text.subtlest (라이트 4.56 재현)",
+          "target": 4.56,
+          "got": 4.58
+        },
+        "550": {
+          "hex": "#747474",
+          "source": "anchor"
+        },
+        "650": {
+          "hex": "#666666",
+          "source": "derived",
+          "note": "다크 color.border.input (채움색 위 3:1 확보)",
+          "target": 3.25,
+          "got": 3.24
+        },
+        "700": {
+          "hex": "#5E5E5E",
+          "source": "derived",
+          "note": "다크 color.text.disabled (라이트 2.88 재현)",
+          "target": 2.88,
+          "got": 2.87
+        },
+        "750": {
+          "hex": "#575757",
+          "source": "anchor"
+        },
+        "900": {
+          "hex": "#1F1F1F",
+          "source": "derived",
+          "note": "다크 강한 보조 배경색",
+          "target": 1.13,
+          "got": 1.13
+        },
+        "925": {
+          "hex": "#191919",
+          "source": "derived",
+          "note": "다크 보조 배경색",
+          "target": 1.06,
+          "got": 1.06
+        },
+        "950": {
+          "hex": "#131313",
+          "source": "anchor"
+        }
+      }
+    },
+    "app.manyak.resolved": {
+      "color.brand": {
+        "light": "green.600",
+        "dark": "green.600",
+        "lightHex": "#05A66B",
+        "darkHex": "#05A66B",
+        "use": "로고·일러스트 등 큰 그래픽 전용"
+      },
+      "color.text": {
+        "light": "gray.950",
+        "dark": "gray.50",
+        "lightHex": "#131313",
+        "darkHex": "#FCFCFC",
+        "use": "본문·제목 기본 (폰트색)"
+      },
+      "color.text.subtle": {
+        "light": "gray.750",
+        "dark": "gray.300",
+        "lightHex": "#575757",
+        "darkHex": "#9F9F9F",
+        "use": "보조 설명·메타 정보 (보조 폰트색)"
+      },
+      "color.text.subtlest": {
+        "light": "gray.550",
+        "dark": "gray.500",
+        "lightHex": "#747474",
+        "darkHex": "#7E7E7E",
+        "use": "약한 보조 폰트색. elevation.surface 위에서만 본문 크기로 쓴다"
+      },
+      "color.text.disabled": {
+        "light": "gray.350",
+        "dark": "gray.700",
+        "lightHex": "#969696",
+        "darkHex": "#5E5E5E",
+        "use": "가장 약한 보조 폰트색. 비활성·장식 전용"
+      },
+      "color.text.inverse": {
+        "light": "gray.0",
+        "dark": "gray.0",
+        "lightHex": "#FFFFFF",
+        "darkHex": "#FFFFFF",
+        "use": "bold 배경 위 텍스트"
+      },
+      "color.text.brand": {
+        "light": "green.800",
+        "dark": "green.400",
+        "lightHex": "#00804B",
+        "darkHex": "#58C58F",
+        "use": "브랜드 강조 텍스트·링크"
+      },
+      "color.text.danger": {
+        "light": "red.800",
+        "dark": "red.400",
+        "lightHex": "#C1191C",
+        "darkHex": "#FF7669",
+        "use": "오류 메시지"
+      },
+      "color.text.warning": {
+        "light": "amber.800",
+        "dark": "amber.400",
+        "lightHex": "#9A5700",
+        "darkHex": "#E09E32",
+        "use": "경고 메시지"
+      },
+      "color.text.information": {
+        "light": "blue.800",
+        "dark": "blue.400",
+        "lightHex": "#186AB7",
+        "darkHex": "#6BB1FD",
+        "use": "안내 메시지"
+      },
+      "elevation.surface": {
+        "light": "gray.50",
+        "dark": "gray.950",
+        "lightHex": "#FCFCFC",
+        "darkHex": "#131313",
+        "use": "앱 바탕·카드·시트 (배경색)"
+      },
+      "elevation.surface.raised": {
+        "light": "gray.0",
+        "dark": "gray.900",
+        "lightHex": "#FFFFFF",
+        "darkHex": "#1F1F1F",
+        "use": "팝오버·플로팅. 지정 외 값(순백)을 쓰는 유일한 자리"
+      },
+      "color.background.neutral": {
+        "light": "gray.100",
+        "dark": "gray.925",
+        "lightHex": "#F5F5F5",
+        "darkHex": "#191919",
+        "use": "입력창·비강조 채움 (보조 배경색)"
+      },
+      "color.background.neutral.pressed": {
+        "light": "gray.150",
+        "dark": "gray.900",
+        "lightHex": "#EEEEEE",
+        "darkHex": "#1F1F1F",
+        "use": "위의 눌림 상태 (강한 보조 배경색)"
+      },
+      "color.background.brand.bold": {
+        "light": "green.800",
+        "dark": "green.800",
+        "lightHex": "#00804B",
+        "darkHex": "#00804B",
+        "use": "주 버튼"
+      },
+      "color.background.brand.bold.pressed": {
+        "light": "green.900",
+        "dark": "green.900",
+        "lightHex": "#006034",
+        "darkHex": "#006034",
+        "use": "주 버튼 눌림"
+      },
+      "color.background.brand.subtle": {
+        "light": "green.50",
+        "dark": "green.950",
+        "lightHex": "#E8F8EE",
+        "darkHex": "#00411F",
+        "use": "브랜드 배지·선택 표시"
+      },
+      "color.background.danger.bold": {
+        "light": "red.800",
+        "dark": "red.800",
+        "lightHex": "#C1191C",
+        "darkHex": "#C1191C",
+        "use": "파괴적 동작 버튼"
+      },
+      "color.background.danger.bold.pressed": {
+        "light": "red.900",
+        "dark": "red.900",
+        "lightHex": "#95000A",
+        "darkHex": "#95000A",
+        "use": "위의 눌림 상태"
+      },
+      "color.background.danger.subtle": {
+        "light": "red.50",
+        "dark": "red.950",
+        "lightHex": "#FFECE8",
+        "darkHex": "#6A0000",
+        "use": "오류 배너"
+      },
+      "color.background.warning.subtle": {
+        "light": "amber.50",
+        "dark": "amber.950",
+        "lightHex": "#FDF2E2",
+        "darkHex": "#512600",
+        "use": "경고 배너"
+      },
+      "color.background.information.subtle": {
+        "light": "blue.50",
+        "dark": "blue.950",
+        "lightHex": "#E9F5FF",
+        "darkHex": "#003364",
+        "use": "안내 배너"
+      },
+      "color.background.disabled": {
+        "light": "gray.150",
+        "dark": "gray.900",
+        "lightHex": "#EEEEEE",
+        "darkHex": "#1F1F1F",
+        "use": "비활성 채움"
+      },
+      "color.border": {
+        "light": "gray.150",
+        "dark": "gray.900",
+        "lightHex": "#EEEEEE",
+        "darkHex": "#1F1F1F",
+        "use": "구분선·카드 테두리(장식)"
+      },
+      "color.border.input": {
+        "light": "gray.400",
+        "dark": "gray.650",
+        "lightHex": "#8D8D8D",
+        "darkHex": "#666666",
+        "use": "폼 컨트롤 경계. 경계가 유일한 식별 수단일 때"
+      },
+      "color.border.brand": {
+        "light": "green.700",
+        "dark": "green.400",
+        "lightHex": "#00995F",
+        "darkHex": "#58C58F",
+        "use": "선택된 테두리"
+      },
+      "color.border.danger": {
+        "light": "red.700",
+        "dark": "red.400",
+        "lightHex": "#E23531",
+        "darkHex": "#FF7669",
+        "use": "오류 입력창"
+      },
+      "color.border.warning": {
+        "light": "amber.700",
+        "dark": "amber.400",
+        "lightHex": "#B66E00",
+        "darkHex": "#E09E32",
+        "use": "경고 배너 경계"
+      },
+      "color.border.information": {
+        "light": "blue.700",
+        "dark": "blue.400",
+        "lightHex": "#2F82D6",
+        "darkHex": "#6BB1FD",
+        "use": "안내 배너 경계"
+      },
+      "color.border.focused": {
+        "light": "green.700",
+        "dark": "green.400",
+        "lightHex": "#00995F",
+        "darkHex": "#58C58F",
+        "use": "포커스 링"
+      }
+    },
+    "app.manyak.spacing": {
+      "space.hairline": {
+        "ref": "025",
+        "use": "아이콘과 라벨 사이",
+        "px": 2
+      },
+      "space.inline": {
+        "ref": "050",
+        "use": "인접한 인라인 요소",
+        "px": 4
+      },
+      "space.compact": {
+        "ref": "100",
+        "use": "리스트 항목 간격·버튼 내부 세로",
+        "px": 8
+      },
+      "space.component": {
+        "ref": "150",
+        "use": "컴포넌트 내부 기본",
+        "px": 12
+      },
+      "space.gutter": {
+        "ref": "200",
+        "use": "화면 좌우 여백",
+        "px": 16
+      },
+      "space.section": {
+        "ref": "300",
+        "use": "섹션 사이",
+        "px": 24
+      },
+      "space.block": {
+        "ref": "400",
+        "use": "큰 구획 사이",
+        "px": 32
+      },
+      "space.screen-bottom": {
+        "ref": "500",
+        "use": "스크롤 영역 하단 여유",
+        "px": 40
+      }
+    },
+    "app.manyak.typography": {
+      "typography.label.small": {
+        "size": "xs",
+        "weight": "regular",
+        "use": "타임스탬프·최소 보조 문구",
+        "px": 11,
+        "lineHeight": 15,
+        "weightValue": 400,
+        "ratio": 1.364
+      },
+      "typography.body.small": {
+        "size": "sm",
+        "weight": "regular",
+        "use": "메타 정보·보조 설명",
+        "px": 12,
+        "lineHeight": 16,
+        "weightValue": 400,
+        "ratio": 1.333
+      },
+      "typography.body.medium": {
+        "size": "base",
+        "weight": "regular",
+        "use": "본문 기본",
+        "px": 14,
+        "lineHeight": 20,
+        "weightValue": 400,
+        "ratio": 1.429
+      },
+      "typography.body.large": {
+        "size": "lg",
+        "weight": "regular",
+        "use": "강조 본문·입력 필드",
+        "px": 16,
+        "lineHeight": 24,
+        "weightValue": 400,
+        "ratio": 1.5
+      },
+      "typography.label.large": {
+        "size": "base",
+        "weight": "medium",
+        "use": "버튼·탭 라벨",
+        "px": 14,
+        "lineHeight": 20,
+        "weightValue": 500,
+        "ratio": 1.429
+      },
+      "typography.title.medium": {
+        "size": "xl",
+        "weight": "semibold",
+        "use": "섹션·카드 제목",
+        "px": 18,
+        "lineHeight": 26,
+        "weightValue": 600,
+        "ratio": 1.444
+      },
+      "typography.title.large": {
+        "size": "2xl",
+        "weight": "semibold",
+        "use": "화면 제목",
+        "px": 20,
+        "lineHeight": 27,
+        "weightValue": 600,
+        "ratio": 1.35
+      },
+      "typography.headline.small": {
+        "size": "3xl",
+        "weight": "bold",
+        "use": "온보딩·랜딩 헤드라인",
+        "px": 24,
+        "lineHeight": 30,
+        "weightValue": 700,
+        "ratio": 1.25
+      },
+      "typography.body.reading": {
+        "size": "lg",
+        "weight": "regular",
+        "lineHeight": 28,
+        "family": "serif",
+        "use": "스토리 본문(MaruBuri). 장문 전용 롤",
+        "px": 16,
+        "weightValue": 400,
+        "ratio": 1.75
+      }
+    },
+    "app.manyak.radius": {
+      "sm": 12,
+      "md": 14,
+      "lg": 16,
+      "xl": 20,
+      "full": 9999
+    },
+    "app.manyak.radiusSemantic": {
+      "radius.thumbnail": {
+        "ref": "sm",
+        "use": "썸네일·작은 아이콘 컨테이너",
+        "px": 12
+      },
+      "radius.control": {
+        "ref": "md",
+        "use": "버튼·입력창·탭",
+        "px": 14
+      },
+      "radius.card": {
+        "ref": "lg",
+        "use": "카드·리스트 항목",
+        "px": 16
+      },
+      "radius.overlay": {
+        "ref": "xl",
+        "use": "바텀시트·다이얼로그",
+        "px": 20
+      },
+      "radius.pill": {
+        "ref": "full",
+        "use": "배지·칩·아바타",
+        "px": 9999
+      }
+    },
+    "app.manyak.space": [
+      [
+        "025",
+        2
+      ],
+      [
+        "050",
+        4
+      ],
+      [
+        "100",
+        8
+      ],
+      [
+        "150",
+        12
+      ],
+      [
+        "200",
+        16
+      ],
+      [
+        "300",
+        24
+      ],
+      [
+        "400",
+        32
+      ],
+      [
+        "500",
+        40
+      ]
+    ]
+  }
+}
