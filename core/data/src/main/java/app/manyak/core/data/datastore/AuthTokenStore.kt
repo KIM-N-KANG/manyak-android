@@ -9,6 +9,7 @@ import app.manyak.core.data.crypto.KeystoreCipher
 import app.manyak.core.data.di.AuthTokenDataStore
 import app.manyak.core.data.di.IoDispatcher
 import app.manyak.core.data.session.TokenAnchors
+import app.manyak.core.data.session.TokenStorage
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -39,14 +40,14 @@ class AuthTokenStore
         @param:AuthTokenDataStore private val dataStore: DataStore<Preferences>,
         private val cipher: KeystoreCipher,
         @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher,
-    ) {
+    ) : TokenStorage {
         /**
          * 복호화·역직렬화에 실패하면 null 을 돌려주고 저장소를 비운다.
          *
          * 기기 이전·백업 복원·키 무효화로 복호화가 실패할 수 있고, 그때 무한 시작 실패 대신
          * 로컬 세션을 폐기하고 다시 로그인시키는 것이 계약이다(하네스 §3-3-4).
          */
-        suspend fun read(): StoredSession? =
+        override suspend fun read(): StoredSession? =
             withContext(ioDispatcher) {
                 val encoded = dataStore.data.first()[SESSION_KEY] ?: return@withContext null
                 val decoded =
@@ -62,7 +63,7 @@ class AuthTokenStore
             }
 
         /** 원자적으로 한 번에 쓴다. 암호화나 쓰기가 실패하면 false 이며, 호출부는 세션을 종료해야 한다. */
-        suspend fun write(session: StoredSession): Boolean =
+        override suspend fun write(session: StoredSession): Boolean =
             withContext(ioDispatcher) {
                 val payload = StoredSessionPayload.from(session)
                 val plain = json.encodeToString(payload).encodeToByteArray()
@@ -75,7 +76,7 @@ class AuthTokenStore
             }
 
         /** 토큰과 모든 만료 판정 앵커를 지운다. 여러 번 실행해도 안전하다. */
-        suspend fun clear() {
+        override suspend fun clear() {
             withContext(ioDispatcher) {
                 runCatching { dataStore.edit { it.remove(SESSION_KEY) } }
                 cipher.destroyKey()
