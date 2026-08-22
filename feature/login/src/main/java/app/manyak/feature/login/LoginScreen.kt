@@ -73,14 +73,17 @@ private fun LoginContent(
                     .padding(horizontal = ManyakTheme.spacing.gutter),
             horizontalAlignment = Alignment.Start,
         ) {
-            Spacer(modifier = Modifier.height(ManyakTheme.spacing.block))
             Image(
-                modifier = Modifier.height(ManyakTheme.sizes.logo).aspectRatio(LOGO_ASPECT_RATIO),
+                modifier =
+                    Modifier
+                        .padding(top = ManyakTheme.spacing.screenTop)
+                        .height(ManyakTheme.sizes.logo)
+                        .aspectRatio(LOGO_ASPECT_RATIO),
                 painter = painterResource(R.drawable.ic_logo_manyak),
                 contentDescription = stringResource(R.string.app_logo_description),
             )
             Text(
-                modifier = Modifier.padding(top = ManyakTheme.spacing.component),
+                modifier = Modifier.padding(top = ManyakTheme.spacing.section),
                 text = stringResource(R.string.login_headline),
                 style = ManyakTheme.typography.titleLarge,
                 color = ManyakTheme.colors.text,

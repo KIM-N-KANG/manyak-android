@@ -8,7 +8,7 @@
 
     <!-- 로그인 -->
     <string name="login_title">로그인</string>
-    <string name="login_headline">나만의 스토리를 만들고\n채팅으로 이어나가는 AI 스토리챗 서비스</string>
+    <string name="login_headline">키워드 몇 개로\n나만의 세계를 만들어 보세요</string>
     <string name="login_kakao">카카오로 시작하기</string>
     <string name="login_google">Google로 시작하기</string>
     <string name="login_provider_conflict">소셜 계정 하나로 먼저 로그인한 뒤 다른 계정을 연동하면,\n어느 계정으로 로그인해도 똑같이 이용할 수 있어요</string>

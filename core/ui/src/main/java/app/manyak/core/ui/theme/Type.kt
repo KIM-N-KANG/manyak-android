@@ -106,7 +106,7 @@ internal val ManyakDefaultTypography =
         titleLarge =
             TextStyle(
                 fontFamily = Pretendard,
-                fontWeight = FontWeight.Medium,
+                fontWeight = FontWeight.Bold,
                 fontSize = 20.sp,
                 lineHeight = 27.sp,
             ),

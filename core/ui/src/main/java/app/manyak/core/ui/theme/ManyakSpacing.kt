@@ -24,6 +24,8 @@ data class ManyakSpacing(
     val section: Dp,
     /** 큰 구획 사이 */
     val block: Dp,
+    /** 화면 상단 첫 요소 위 여유 */
+    val screenTop: Dp,
     /** 스크롤 영역 하단 여유 */
     val screenBottom: Dp,
 )
@@ -37,5 +39,6 @@ internal val ManyakDefaultSpacing =
         gutter = 16.dp,
         section = 24.dp,
         block = 32.dp,
+        screenTop = 64.dp,
         screenBottom = 40.dp,
     )
