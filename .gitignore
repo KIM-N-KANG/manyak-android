@@ -13,6 +13,8 @@
 /.idea/misc.xml
 .DS_Store
 /build
+# 모듈 build 디렉터리. app/.gitignore 처럼 모듈마다 두지 않고 한 줄로 덮는다.
+build/
 /captures
 .externalNativeBuild
 .cxx
