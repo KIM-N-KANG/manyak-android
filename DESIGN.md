@@ -124,6 +124,7 @@ rounded:
 sizes:
   control: 48dp
   icon: 20dp
+  logo: 24dp
 
 spacing:
   hairline: 2dp
@@ -239,7 +240,7 @@ components:
   logo-manyak:
     asset: "res/drawable/ic_logo_manyak.xml"
     color: "{colors.brand}"
-    height: 32dp
+    height: "{sizes.logo}"
   logo-google:
     asset: "res/drawable/ic_logo_google.xml"
     size: 24dp
@@ -405,6 +406,7 @@ components:
 | --- | --- | --- |
 | `{sizes.control}` | 48dp | 버튼·입력창·탭처럼 탭 가능한 컨트롤의 높이 |
 | `{sizes.icon}` | 20dp | 라벨 옆 아이콘·제공자 로고 |
+| `{sizes.logo}` | 24dp | 마냑 로고 락업의 높이. 폭은 원본 비율(89:32)로 따라간다 |
 
 `{sizes.control}`은 안드로이드 최소 터치 타깃과 같은 값이다. Material3 기본 버튼은 시각 높이 40dp 에
 터치 영역만 48dp 로 넓히므로 **보이는 크기와 눌리는 크기가 어긋난다** — 그 차이를 없애려고 둘을 맞췄다.

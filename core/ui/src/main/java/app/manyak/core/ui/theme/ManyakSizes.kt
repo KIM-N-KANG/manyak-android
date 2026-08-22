@@ -17,10 +17,13 @@ data class ManyakSizes(
     val control: Dp,
     /** 라벨 옆에 붙는 아이콘·제공자 로고 */
     val icon: Dp,
+    /** 마냑 로고 락업의 높이. 폭은 원본 비율(89:32)로 따라간다 */
+    val logo: Dp,
 )
 
 internal val ManyakDefaultSizes =
     ManyakSizes(
         control = 48.dp,
         icon = 20.dp,
+        logo = 24.dp,
     )

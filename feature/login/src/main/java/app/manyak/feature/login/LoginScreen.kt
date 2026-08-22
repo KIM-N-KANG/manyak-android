@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -81,13 +82,14 @@ private fun LoginContent(
         ) {
             Spacer(modifier = Modifier.height(ManyakTheme.spacing.block))
             Image(
+                modifier = Modifier.height(ManyakTheme.sizes.logo).aspectRatio(LOGO_ASPECT_RATIO),
                 painter = painterResource(R.drawable.ic_logo_manyak),
                 contentDescription = stringResource(R.string.app_logo_description),
             )
             Text(
                 modifier = Modifier.padding(top = ManyakTheme.spacing.component),
                 text = stringResource(R.string.login_headline),
-                style = ManyakTheme.typography.headlineSmall,
+                style = ManyakTheme.typography.titleLarge,
                 color = ManyakTheme.colors.text,
             )
 
@@ -103,14 +105,14 @@ private fun LoginContent(
                 )
             }
 
-            ProviderButtons(state = state, onSignIn = onSignIn)
-
             CenteredMessage(
-                modifier = Modifier.padding(top = ManyakTheme.spacing.component),
+                modifier = Modifier.padding(bottom = ManyakTheme.spacing.component),
                 text = stringResource(R.string.login_provider_conflict),
                 style = ManyakTheme.typography.bodySmall,
                 color = ManyakTheme.colors.textSubtle,
             )
+
+            ProviderButtons(state = state, onSignIn = onSignIn)
 
             state.error?.messageResOrNull()?.let { errorRes ->
                 CenteredMessage(
@@ -171,7 +173,7 @@ private fun ProviderButtons(
             provider = AuthProvider.GOOGLE,
             labelRes = R.string.login_google,
             logoRes = R.drawable.ic_logo_google,
-            containerColor = ManyakTheme.colors.surfaceRaised,
+            containerColor = ManyakTheme.colors.backgroundNeutral,
             contentColor = ManyakTheme.colors.text,
             state = state,
             onClick = onSignIn,
@@ -268,6 +270,9 @@ private fun LegalConsent(
         textAlign = TextAlign.Center,
     )
 }
+
+/** 로고 원본(89×32)의 가로세로 비율. */
+private const val LOGO_ASPECT_RATIO = 89f / 32f
 
 private val KakaoContainerColor = Color(0xFFFEE500)
 private val KakaoContentColor = Color(0xE6000000)
