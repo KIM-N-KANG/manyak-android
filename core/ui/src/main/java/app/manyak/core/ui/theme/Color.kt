@@ -1,4 +1,4 @@
-package app.manyak.ui.theme
+package app.manyak.core.ui.theme
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color

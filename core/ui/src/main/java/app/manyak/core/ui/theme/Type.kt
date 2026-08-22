@@ -1,4 +1,4 @@
-package app.manyak.ui.theme
+package app.manyak.core.ui.theme
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.text.TextStyle
@@ -6,7 +6,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import app.manyak.R
+import app.manyak.core.ui.R
 
 /** 기본 서체. UI 전반에 쓴다. */
 val Pretendard =

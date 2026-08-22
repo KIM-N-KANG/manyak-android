@@ -4,11 +4,6 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- 카카오톡 앱 간 로그인 가능 여부를 조회하려면 패키지 가시성이 필요하다(Android 11+). -->
-    <queries>
-        <package android:name="com.kakao.talk" />
-    </queries>
-
     <application
         android:name=".ManyakApplication"
         android:allowBackup="false"
@@ -33,12 +28,18 @@
         </activity>
 
         <!--
-            카카오계정 웹 로그인의 리다이렉트 수신부. 스킴은 네이티브 앱 키에서 파생되므로
-            빌드 타입별 placeholder 로 주입한다(app/build.gradle.kts).
+            카카오계정 웹 로그인의 리다이렉트 수신부. 액티비티 자체는 카카오 SDK 매니페스트가 선언하고,
+            여기서는 네이티브 앱 키에서 파생된 스킴의 intent-filter 만 얹는다. 실제 키를 아는 것이
+            :app 뿐이라 이 선언도 여기 둔다 — 라이브러리 매니페스트의 placeholder 는 앱 병합 전에
+            그 모듈의 값으로 치환되어 실제 키가 들어가지 않는다.
+
+            MissingClass 억제 — 클래스는 :core:data 의 전이 의존인 카카오 SDK 에 있어 실행 시점에는
+            APK 에 포함되지만, SDK 가 :app 의 컴파일 경로에는 없어 lint 가 확인하지 못한다.
         -->
         <activity
             android:name="com.kakao.sdk.auth.AuthCodeHandlerActivity"
-            android:exported="true">
+            android:exported="true"
+            tools:ignore="MissingClass">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 

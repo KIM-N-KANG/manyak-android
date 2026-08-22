@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    카카오 SDK 가 요구하는 항목 중 **빌드 타입별 값이 필요 없는 것**만 이 모듈이 선언한다.
+    리다이렉트 스킴은 네이티브 앱 키에서 파생되는데, 라이브러리 매니페스트의 placeholder 는
+    앱 병합 전에 이 모듈의 값으로 치환되어 실제 키가 들어가지 않는다. 그래서 :app 이 선언한다.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 카카오톡 앱 간 로그인 가능 여부를 조회하려면 패키지 가시성이 필요하다(Android 11+). -->
+    <queries>
+        <package android:name="com.kakao.talk" />
+    </queries>
+
+</manifest>
