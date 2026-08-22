@@ -24,3 +24,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "manyak-android"
 include(":app")
+
+// 순수 Kotlin. 도메인 모델·Repository 계약·오류 타입을 소유한다.
+include(":core:domain")
