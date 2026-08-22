@@ -127,6 +127,10 @@ dependencies {
     implementation(projects.core.domain)
     implementation(projects.core.data)
     implementation(projects.core.ui)
+    implementation(projects.core.navigation)
+    implementation(projects.feature.login)
+    implementation(projects.feature.legal)
+    implementation(projects.feature.my)
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)

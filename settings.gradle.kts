@@ -39,3 +39,11 @@ include(":core:data")
 
 // 디자인 시스템 · 공용 컴포저블 · MviViewModel · 문자열 리소스 전량.
 include(":core:ui")
+
+// 타입 안전 라우트의 단일 등록처. feature 끼리 직접 참조하지 않고 여기를 거친다.
+include(":core:navigation")
+
+// 도메인 단위 화면 모듈. 화면은 하위 패키지로 둔다.
+include(":feature:login")
+include(":feature:legal")
+include(":feature:my")
