@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.manyak.core.navigation.LegalDocument
@@ -35,6 +36,7 @@ import app.manyak.core.ui.theme.ManyakTheme
  */
 @Composable
 fun LegalDocumentScreen(
+    onLeaveDocument: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: LegalViewModel = hiltViewModel(),
 ) {
@@ -48,6 +50,8 @@ fun LegalDocumentScreen(
             LegalWebView(
                 url = state.url,
                 allowedHost = state.allowedHost,
+                documentPath = state.documentPath,
+                onLeaveDocument = onLeaveDocument,
                 reloadToken = state.reloadToken,
                 onPageStarted = { },
                 onPageFinished = { viewModel.onIntent(LegalIntent.PageFinished) },
@@ -93,6 +97,8 @@ private fun LegalLoadFailure(
 private fun LegalWebView(
     url: String,
     allowedHost: String?,
+    documentPath: String?,
+    onLeaveDocument: () -> Unit,
     reloadToken: Int,
     onPageStarted: () -> Unit,
     onPageFinished: () -> Unit,
@@ -138,6 +144,23 @@ private fun LegalWebView(
                             view: WebView?,
                             request: WebResourceRequest?,
                         ): Boolean = request?.url?.host != allowedHost
+
+                        /**
+                         * 웹 페이지 자체의 헤더 뒤로가기는 SPA 라우팅이라 페이지 로드가 일어나지 않는다.
+                         * 그래서 [shouldOverrideUrlLoading] 으로는 막을 수 없고, 이 콜백으로 이탈을 감지해
+                         * 화면을 닫는다 — 법적 문서에서 다른 제품 화면이 열리면 안 된다(하네스 §3-3-3).
+                         */
+                        override fun doUpdateVisitedHistory(
+                            view: WebView?,
+                            url: String?,
+                            isReload: Boolean,
+                        ) {
+                            if (isReload || url == null) return
+                            val visited = url.toUri()
+                            if (visited.host != allowedHost || visited.path != documentPath) {
+                                onLeaveDocument()
+                            }
+                        }
                     }
             }
         },

@@ -55,7 +55,7 @@ private fun AuthNavHost() {
         composable<LoginRoute> {
             LoginScreen(onOpenLegalDocument = { document -> navController.openLegalDocument(document) })
         }
-        legalDestination()
+        legalDestination(onLeaveDocument = { navController.popBackStack() })
     }
 }
 
@@ -65,7 +65,7 @@ private fun MainNavHost() {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = MyRoute) {
         composable<MyRoute> { MyScreen() }
-        legalDestination()
+        legalDestination(onLeaveDocument = { navController.popBackStack() })
     }
 }
 
@@ -73,8 +73,8 @@ private fun MainNavHost() {
  * 공용 법적 문서. 제품 그래프 밖의 목적지로 양쪽 그래프에 등록해, 뒤로가기가 진입한 화면으로 돌아간다.
  * 여기서 임의의 메인 목적지로 이동하는 경로는 두지 않는다.
  */
-private fun androidx.navigation.NavGraphBuilder.legalDestination() {
-    composable<LegalRoute> { LegalDocumentScreen() }
+private fun androidx.navigation.NavGraphBuilder.legalDestination(onLeaveDocument: () -> Unit) {
+    composable<LegalRoute> { LegalDocumentScreen(onLeaveDocument = onLeaveDocument) }
 }
 
 private fun NavHostController.openLegalDocument(document: LegalDocument) {
