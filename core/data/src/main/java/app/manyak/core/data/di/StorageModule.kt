@@ -44,6 +44,14 @@ object StorageModule {
 
     @Provides
     @Singleton
+    @ProfileDataStore
+    fun provideProfileDataStore(
+        @ApplicationContext context: Context,
+    ): DataStore<Preferences> =
+        PreferenceDataStoreFactory.create { context.preferencesDataStoreFile(PROFILE_STORE_NAME) }
+
+    @Provides
+    @Singleton
     @IoDispatcher
     fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
 
@@ -59,6 +67,7 @@ object StorageModule {
 
     private const val AUTH_TOKEN_STORE_NAME = "auth_tokens"
     private const val DEVICE_STORE_NAME = "device"
+    private const val PROFILE_STORE_NAME = "profile"
 }
 
 @Module
