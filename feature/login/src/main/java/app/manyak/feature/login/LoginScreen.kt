@@ -30,7 +30,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -40,12 +39,6 @@ import app.manyak.core.ui.R
 import app.manyak.core.ui.error.messageResOrNull
 import app.manyak.core.ui.theme.ManyakTheme
 
-/**
- * 앱은 로그인 필수라 이 화면이 첫 실행 경험이다.
- *
- * 문구 정본은 웹이며 앱이 새로 쓰지 않는다. 게스트 데이터가 없으므로 웹의 이관 1회
- * 안내는 넣지 않는다.
- */
 @Composable
 fun LoginScreen(
     onOpenLegalDocument: (LegalDocument) -> Unit,
@@ -94,7 +87,6 @@ private fun LoginContent(
                 color = ManyakTheme.colors.text,
             )
 
-            // 버튼과 안내는 화면 아래에 모은다.
             Spacer(modifier = Modifier.weight(1f))
 
             state.notice?.messageResOrNull()?.let { noticeRes ->
@@ -106,8 +98,6 @@ private fun LoginContent(
                 )
             }
 
-            // 평소에는 계정 분리 안내를 두고, 실패했을 때 그 자리를 오류 문구가 대신한다.
-            // 사용자가 스스로 취소한 경우에는 보여 줄 문구가 없으므로 안내가 그대로 남는다.
             val errorRes = state.error?.messageResOrNull()
             CenteredMessage(
                 modifier = Modifier.padding(bottom = ManyakTheme.spacing.component),
@@ -200,11 +190,9 @@ private fun ProviderButton(
             ),
     ) {
         if (state.inProgress == provider) {
-            // 라벨과 같은 색이면 스피너가 글자보다 무겁게 보인다. 같은 색을 옅게 써서 톤을 맞춘다.
             CircularProgressIndicator(
                 modifier = Modifier.size(ManyakTheme.sizes.icon),
-                color = contentColor.copy(alpha = PROGRESS_ALPHA),
-                strokeWidth = ProgressStrokeWidth,
+                color = ManyakTheme.colors.progressIndicator,
             )
         } else {
             Row(
@@ -222,11 +210,6 @@ private fun ProviderButton(
     }
 }
 
-/**
- * 로그인 버튼 클릭을 묵시적 동의로 간주하는 고지.
- *
- * 두 문서 이름에만 밑줄과 링크를 붙인다 — 문장을 쪼개 별도 링크를 두면 번역·개정 때 문장이 어긋난다.
- */
 @Composable
 private fun LegalConsent(
     onOpenLegalDocument: (LegalDocument) -> Unit,
@@ -269,7 +252,6 @@ private fun LegalConsent(
     )
 }
 
-private const val PROGRESS_ALPHA = 0.55f
 private val ProgressStrokeWidth = 2.dp
 
 /** 로고 원본(89×32)의 가로세로 비율. */
@@ -277,19 +259,3 @@ private const val LOGO_ASPECT_RATIO = 89f / 32f
 
 private val KakaoContainerColor = Color(0xFFFEE500)
 private val KakaoContentColor = Color(0xE6000000)
-
-@Preview(showBackground = true, name = "로그인 · 라이트")
-@Composable
-private fun LoginScreenPreview() {
-    ManyakTheme(darkTheme = false) {
-        LoginContent(state = LoginUiState(), onSignIn = {}, onOpenLegalDocument = {})
-    }
-}
-
-@Preview(showBackground = true, backgroundColor = 0xFF131313, name = "로그인 · 다크")
-@Composable
-private fun LoginScreenDarkPreview() {
-    ManyakTheme(darkTheme = true) {
-        LoginContent(state = LoginUiState(inProgress = AuthProvider.KAKAO), onSignIn = {}, onOpenLegalDocument = {})
-    }
-}
