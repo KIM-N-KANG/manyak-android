@@ -2,6 +2,7 @@ package app.manyak.core.data.provider
 
 import android.content.Context
 import androidx.credentials.ClearCredentialStateRequest
+import androidx.credentials.Credential
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
@@ -73,15 +74,11 @@ class GoogleIdTokenProvider
                 ProviderCleanupResult.RETRY_REQUIRED
             }
 
-        private fun extractIdToken(credential: androidx.credentials.Credential): DomainResult<String> {
-            val isGoogleIdToken =
-                credential is CustomCredential &&
-                    credential.type in GOOGLE_ID_TOKEN_TYPES
-            if (!isGoogleIdToken) {
+        private fun extractIdToken(credential: Credential): DomainResult<String> {
+            if (credential !is CustomCredential || credential.type !in GOOGLE_ID_TOKEN_TYPES) {
                 return DomainResult.Failure(DomainError.ProviderFailed(provider, "unexpected-credential"))
             }
-            val idToken = GoogleIdTokenCredential.createFrom((credential as CustomCredential).data).idToken
-            return DomainResult.Success(idToken)
+            return DomainResult.Success(GoogleIdTokenCredential.createFrom(credential.data).idToken)
         }
 
         private companion object {

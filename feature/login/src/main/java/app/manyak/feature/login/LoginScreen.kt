@@ -30,7 +30,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.manyak.core.domain.auth.AuthProvider
@@ -251,8 +250,6 @@ private fun LegalConsent(
         textAlign = TextAlign.Center,
     )
 }
-
-private val ProgressStrokeWidth = 2.dp
 
 /** 로고 원본(89×32)의 가로세로 비율. */
 private const val LOGO_ASPECT_RATIO = 89f / 32f
