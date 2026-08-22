@@ -15,8 +15,8 @@
     <string name="login_provider_conflict">카카오와 Google로 각각 로그인하면 나중에 연동할 수 없어요</string>
     <!-- %1$s·%2$s 는 아래 두 문서 이름이며, 화면에서 밑줄과 링크가 붙는다. -->
     <string name="login_consent">로그인 시 %1$s 및 %2$s에\n동의하는 것으로 간주해요</string>
-    <string name="login_consent_terms">서비스이용약관</string>
-    <string name="login_consent_privacy">개인정보처리방침</string>
+    <string name="login_consent_terms">서비스 이용 약관</string>
+    <string name="login_consent_privacy">개인정보 처리방침</string>
     <string name="login_in_progress">로그인하는 중</string>
 
     <!-- 법적 문서 -->
