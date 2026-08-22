@@ -105,23 +105,17 @@ private fun LoginContent(
                 )
             }
 
+            // 평소에는 계정 분리 안내를 두고, 실패했을 때 그 자리를 오류 문구가 대신한다.
+            // 사용자가 스스로 취소한 경우에는 보여 줄 문구가 없으므로 안내가 그대로 남는다.
+            val errorRes = state.error?.messageResOrNull()
             CenteredMessage(
                 modifier = Modifier.padding(bottom = ManyakTheme.spacing.component),
-                text = stringResource(R.string.login_provider_conflict),
+                text = stringResource(errorRes ?: R.string.login_provider_conflict),
                 style = ManyakTheme.typography.bodySmall,
-                color = ManyakTheme.colors.textSubtle,
+                color = if (errorRes == null) ManyakTheme.colors.textSubtle else ManyakTheme.colors.textDanger,
             )
 
             ProviderButtons(state = state, onSignIn = onSignIn)
-
-            state.error?.messageResOrNull()?.let { errorRes ->
-                CenteredMessage(
-                    modifier = Modifier.padding(top = ManyakTheme.spacing.compact),
-                    text = stringResource(errorRes),
-                    style = ManyakTheme.typography.bodySmall,
-                    color = ManyakTheme.colors.textDanger,
-                )
-            }
 
             LegalConsent(
                 modifier = Modifier.padding(top = ManyakTheme.spacing.component),
