@@ -46,6 +46,17 @@ val localProperties =
         }
     }
 
+// 제공자 키는 local.properties(추적 제외)에서 빌드 타입별로 읽는다. 값이 앱에 실려 나가긴 하지만
+// 개발·운영 키가 섞이면 발급한 ID 토큰이 상대 환경 허용 목록에서 거부되므로 주입 지점을 하나로 둔다.
+// 값이 없으면 빈 문자열이 들어가고, 로그인 시작 단계가 빈 키를 명시적 실패로 처리한다.
+fun authProperty(
+    name: String,
+    buildType: String,
+): String {
+    val key = "${name}_${buildType.uppercase()}"
+    return localProperties.getProperty(key) ?: System.getenv(key) ?: ""
+}
+
 android {
     namespace = "app.manyak"
     compileSdk {
@@ -60,6 +71,11 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // 약관·개인정보처리방침은 웹 페이지를 그대로 연다(docs/plans/login.md 결정 1).
+        // 본문 정본이 웹 하나뿐이라 환경과 무관하게 운영 웹을 가리킨다.
+        val webBaseUrl = localProperties.getProperty("WEB_BASE_URL") ?: "https://manyak.app"
+        buildConfigField("String", "WEB_BASE_URL", "\"$webBaseUrl\"")
     }
 
     buildTypes {
@@ -67,9 +83,31 @@ android {
             // 로컬 서버에 붙일 때는 local.properties 에 BASE_URL 을 넣어 덮어쓴다.
             val debugBaseUrl = localProperties.getProperty("BASE_URL") ?: "https://dev-api.manyak.app/api/v1/"
             buildConfigField("String", "BASE_URL", "\"$debugBaseUrl\"")
+            buildConfigField(
+                "String",
+                "GOOGLE_SERVER_CLIENT_ID",
+                "\"${authProperty("GOOGLE_SERVER_CLIENT_ID", "debug")}\"",
+            )
+            buildConfigField(
+                "String",
+                "KAKAO_NATIVE_APP_KEY",
+                "\"${authProperty("KAKAO_NATIVE_APP_KEY", "debug")}\"",
+            )
+            manifestPlaceholders["kakaoNativeAppKey"] = authProperty("KAKAO_NATIVE_APP_KEY", "debug")
         }
         release {
             buildConfigField("String", "BASE_URL", "\"https://api.manyak.app/api/v1/\"")
+            buildConfigField(
+                "String",
+                "GOOGLE_SERVER_CLIENT_ID",
+                "\"${authProperty("GOOGLE_SERVER_CLIENT_ID", "release")}\"",
+            )
+            buildConfigField(
+                "String",
+                "KAKAO_NATIVE_APP_KEY",
+                "\"${authProperty("KAKAO_NATIVE_APP_KEY", "release")}\"",
+            )
+            manifestPlaceholders["kakaoNativeAppKey"] = authProperty("KAKAO_NATIVE_APP_KEY", "release")
             optimization {
                 enable = false
             }
