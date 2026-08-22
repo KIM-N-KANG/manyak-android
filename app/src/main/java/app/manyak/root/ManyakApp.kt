@@ -1,9 +1,12 @@
 package app.manyak.root
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -37,10 +40,23 @@ fun ManyakApp(
 
     Surface(modifier = modifier.fillMaxSize(), color = ManyakTheme.colors.surface) {
         when (sessionState) {
-            SessionState.Undetermined -> Unit
+            SessionState.Undetermined -> SessionProgress()
             is SessionState.SignedOut -> AuthNavHost()
             SessionState.Member -> MainNavHost()
         }
+    }
+}
+
+/**
+ * 상태가 미확정인 동안 보여 주는 표시.
+ *
+ * 앱 시작 직후에는 짧게 스쳐 가고, 로그아웃 중에는 정리가 끝날 때까지 유지된다. 종료 정리는 서버 호출과
+ * 저장소 삭제를 포함해 눈에 띄는 시간이 걸리므로, 빈 화면 대신 진행 중임을 알린다.
+ */
+@Composable
+private fun SessionProgress() {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        CircularProgressIndicator(color = ManyakTheme.colors.textBrand)
     }
 }
 
