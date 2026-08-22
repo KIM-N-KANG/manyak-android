@@ -31,6 +31,7 @@
 | 영역 | 결정 | 근거 |
 | --- | --- | --- |
 | 빌드 버전 | JDK, SDK, 플러그인 버전은 실제 Gradle·CI 파일을 정본으로 사용합니다. 문서에 사본을 두지 않습니다. | `gradle/libs.versions.toml`, `gradle/gradle-daemon-jvm.properties` |
+| 디자인 토큰·테마 | 색·타이포·여백·모서리는 디자인 토큰에서 파생합니다. 사용 규칙과 갱신 절차는 `DESIGN.md`에 있습니다. | `DESIGN.md`, `design/design-tokens.json` |
 | 서버 base URL 주입 | 빌드 타입별 `BuildConfig.BASE_URL`로 주입합니다. debug는 dev 서버 `https://dev-api.manyak.app/api/v1/`가 기본이고 `local.properties`의 `BASE_URL`로 덮어씁니다. release는 `https://api.manyak.app/api/v1/`입니다. | `app/build.gradle.kts` |
 | 평문 통신 | debug 소스 세트의 network security config에서 로컬 호스트에만 허용합니다. release 매니페스트에는 포함되지 않습니다. | `app/src/debug/res/xml/network_security_config.xml` |
 | 모듈 품질 게이트 | 새 모듈은 역할에 필요한 정적 검사·lint·테스트가 루트 CI 게이트에 연결되고, 리포트를 모듈 경로와 무관하게 수집할 수 있어야 합니다. | `.github/workflows/android-ci.yml` |

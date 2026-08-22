@@ -1,0 +1,492 @@
+---
+version: alpha
+name: manyak-android-design
+description: 초록 하나로 모든 상호작용을 말하는 무채색 인터페이스. 표면은 거의 흰색(#FCFCFC)과 거의 검정(#131313) 두 축뿐이고, 그림자 없이 표면 색 차이로만 층을 나눈다. UI는 Pretendard가, 스토리 본문은 MaruBuri가 맡아 "읽는 화면"과 "조작하는 화면"이 서체로 갈린다. 모든 색 조합은 토큰 빌드가 명도 대비를 재서 통과시킨 것만 남았다.
+
+colors:
+  brand: "#05A66B"
+  text: "#131313"
+  text-subtle: "#575757"
+  text-subtlest: "#747474"
+  text-disabled: "#969696"
+  text-inverse: "#FFFFFF"
+  text-brand: "#00804B"
+  text-danger: "#C1191C"
+  text-warning: "#9A5700"
+  text-information: "#186AB7"
+  surface: "#FCFCFC"
+  surface-raised: "#FFFFFF"
+  background-neutral: "#F5F5F5"
+  background-neutral-pressed: "#EEEEEE"
+  background-brand-bold: "#00804B"
+  background-brand-bold-pressed: "#006034"
+  background-brand-subtle: "#E8F8EE"
+  background-danger-bold: "#C1191C"
+  background-danger-bold-pressed: "#95000A"
+  background-danger-subtle: "#FFECE8"
+  background-warning-subtle: "#FDF2E2"
+  background-information-subtle: "#E9F5FF"
+  background-disabled: "#EEEEEE"
+  border: "#EEEEEE"
+  border-input: "#8D8D8D"
+  border-brand: "#00995F"
+  border-danger: "#E23531"
+  border-warning: "#B66E00"
+  border-information: "#2F82D6"
+  border-focused: "#00995F"
+
+colors-dark:
+  brand: "#05A66B"
+  text: "#FCFCFC"
+  text-subtle: "#9F9F9F"
+  text-subtlest: "#7E7E7E"
+  text-disabled: "#5E5E5E"
+  text-inverse: "#FFFFFF"
+  text-brand: "#58C58F"
+  text-danger: "#FF7669"
+  text-warning: "#E09E32"
+  text-information: "#6BB1FD"
+  surface: "#131313"
+  surface-raised: "#1F1F1F"
+  background-neutral: "#191919"
+  background-neutral-pressed: "#1F1F1F"
+  background-brand-bold: "#00804B"
+  background-brand-bold-pressed: "#006034"
+  background-brand-subtle: "#00411F"
+  background-danger-bold: "#C1191C"
+  background-danger-bold-pressed: "#95000A"
+  background-danger-subtle: "#6A0000"
+  background-warning-subtle: "#512600"
+  background-information-subtle: "#003364"
+  background-disabled: "#1F1F1F"
+  border: "#1F1F1F"
+  border-input: "#666666"
+  border-brand: "#58C58F"
+  border-danger: "#FF7669"
+  border-warning: "#E09E32"
+  border-information: "#6BB1FD"
+  border-focused: "#58C58F"
+
+typography:
+  headline-small:
+    fontFamily: "Pretendard"
+    fontSize: 24sp
+    fontWeight: 700
+    lineHeight: 30sp
+  title-large:
+    fontFamily: "Pretendard"
+    fontSize: 20sp
+    fontWeight: 500
+    lineHeight: 27sp
+  title-medium:
+    fontFamily: "Pretendard"
+    fontSize: 18sp
+    fontWeight: 500
+    lineHeight: 26sp
+  body-large:
+    fontFamily: "Pretendard"
+    fontSize: 16sp
+    fontWeight: 400
+    lineHeight: 24sp
+  body-reading:
+    fontFamily: "MaruBuri"
+    fontSize: 16sp
+    fontWeight: 400
+    lineHeight: 28sp
+  body-medium:
+    fontFamily: "Pretendard"
+    fontSize: 14sp
+    fontWeight: 400
+    lineHeight: 20sp
+  label-large:
+    fontFamily: "Pretendard"
+    fontSize: 14sp
+    fontWeight: 500
+    lineHeight: 20sp
+  body-small:
+    fontFamily: "Pretendard"
+    fontSize: 12sp
+    fontWeight: 400
+    lineHeight: 16sp
+  label-small:
+    fontFamily: "Pretendard"
+    fontSize: 11sp
+    fontWeight: 400
+    lineHeight: 15sp
+
+rounded:
+  thumbnail: 12dp
+  control: 14dp
+  card: 16dp
+  overlay: 20dp
+  pill: CircleShape
+
+spacing:
+  hairline: 2dp
+  inline: 4dp
+  compact: 8dp
+  component: 12dp
+  gutter: 16dp
+  section: 24dp
+  block: 32dp
+  screen-bottom: 40dp
+
+components:
+  screen:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.text}"
+    typography: "{typography.body-medium}"
+    padding: "{spacing.gutter}"
+  button-primary:
+    backgroundColor: "{colors.background-brand-bold}"
+    textColor: "{colors.text-inverse}"
+    typography: "{typography.label-large}"
+    rounded: "{rounded.control}"
+    padding: "{spacing.compact} {spacing.component}"
+  button-primary-pressed:
+    backgroundColor: "{colors.background-brand-bold-pressed}"
+    textColor: "{colors.text-inverse}"
+    rounded: "{rounded.control}"
+  button-danger:
+    backgroundColor: "{colors.background-danger-bold}"
+    textColor: "{colors.text-inverse}"
+    typography: "{typography.label-large}"
+    rounded: "{rounded.control}"
+    padding: "{spacing.compact} {spacing.component}"
+  button-danger-pressed:
+    backgroundColor: "{colors.background-danger-bold-pressed}"
+    textColor: "{colors.text-inverse}"
+    rounded: "{rounded.control}"
+  button-neutral:
+    backgroundColor: "{colors.background-neutral}"
+    textColor: "{colors.text}"
+    typography: "{typography.label-large}"
+    rounded: "{rounded.control}"
+    padding: "{spacing.compact} {spacing.component}"
+  button-neutral-pressed:
+    backgroundColor: "{colors.background-neutral-pressed}"
+    textColor: "{colors.text}"
+    rounded: "{rounded.control}"
+  button-disabled:
+    backgroundColor: "{colors.background-disabled}"
+    textColor: "{colors.text-disabled}"
+    typography: "{typography.label-large}"
+    rounded: "{rounded.control}"
+  text-field:
+    backgroundColor: "{colors.background-neutral}"
+    textColor: "{colors.text}"
+    typography: "{typography.body-large}"
+    borderColor: "{colors.border-input}"
+    rounded: "{rounded.control}"
+    padding: "{spacing.component}"
+  text-field-focused:
+    backgroundColor: "{colors.background-neutral}"
+    borderColor: "{colors.border-focused}"
+    rounded: "{rounded.control}"
+  text-field-error:
+    backgroundColor: "{colors.background-neutral}"
+    borderColor: "{colors.border-danger}"
+    rounded: "{rounded.control}"
+  card:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.text}"
+    typography: "{typography.title-medium}"
+    borderColor: "{colors.border}"
+    rounded: "{rounded.card}"
+    padding: "{spacing.component}"
+  overlay:
+    backgroundColor: "{colors.surface-raised}"
+    textColor: "{colors.text}"
+    rounded: "{rounded.overlay}"
+    padding: "{spacing.gutter}"
+  badge:
+    backgroundColor: "{colors.background-brand-subtle}"
+    textColor: "{colors.text-brand}"
+    typography: "{typography.body-small}"
+    rounded: "{rounded.pill}"
+    padding: "{spacing.hairline} {spacing.compact}"
+  banner-danger:
+    backgroundColor: "{colors.background-danger-subtle}"
+    textColor: "{colors.text-danger}"
+    typography: "{typography.body-small}"
+    borderColor: "{colors.border-danger}"
+    rounded: "{rounded.control}"
+    padding: "{spacing.component}"
+  banner-warning:
+    backgroundColor: "{colors.background-warning-subtle}"
+    textColor: "{colors.text-warning}"
+    typography: "{typography.body-small}"
+    borderColor: "{colors.border-warning}"
+    rounded: "{rounded.control}"
+    padding: "{spacing.component}"
+  banner-information:
+    backgroundColor: "{colors.background-information-subtle}"
+    textColor: "{colors.text-information}"
+    typography: "{typography.body-small}"
+    borderColor: "{colors.border-information}"
+    rounded: "{rounded.control}"
+    padding: "{spacing.component}"
+  story-body:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.text}"
+    typography: "{typography.body-reading}"
+    padding: "{spacing.gutter}"
+  logo-google:
+    asset: "res/drawable/ic_logo_google.xml"
+    size: 24dp
+  logo-kakao:
+    asset: "res/drawable/ic_logo_kakao.xml"
+    backgroundColor: "#FEE500"
+    size: 24dp
+---
+
+## 개요
+
+마냑 앱의 시각 언어는 **초록 하나와 무채색 두 축**으로 이뤄집니다. 표면은 거의 흰색 `{colors.surface}`(#FCFCFC)와 거의 검정(다크 #131313) 둘뿐이고, 그 위에서 색이 있는 것은 브랜드 초록과 상태 색(오류·경고·안내) 넷뿐입니다. 브랜드 초록 `{colors.brand}`(#05A66B)는 로고 그린과 **정확히 같은 값**이며, 팔레트 사다리 전체가 이 값에 맞춰 세워졌습니다.
+
+색·크기·여백·모서리는 전부 **디자인 토큰**에서 나옵니다. 화면 코드는 토큰 이름만 쓰고 값을 직접 적지 않습니다. 토큰은 Primitive(팔레트) → Semantic(의도) 두 층이며, 화면이 만질 수 있는 것은 Semantic뿐입니다 — 팔레트는 Kotlin에서 `private`이라 참조 자체가 불가능합니다.
+
+서체가 두 벌인 것이 이 시스템의 성격을 가장 잘 드러냅니다. 조작하는 화면은 Pretendard가, 읽는 화면(스토리 본문)은 MaruBuri가 맡습니다. 같은 16sp라도 `{typography.body-large}`는 행간 24sp로 촘촘하고 `{typography.body-reading}`은 28sp로 벌어져 있습니다 — UI는 스캔하는 것이고 스토리는 읽는 것이기 때문입니다.
+
+**핵심 특징**
+
+- 상호작용은 전부 브랜드 초록 하나. 두 번째 강조색은 없습니다.
+- 그림자를 쓰지 않습니다. 층은 `{colors.surface}` ↔ `{colors.surface-raised}` 표면 색 차이로만 나눕니다.
+- 성공 상태에 별도 초록을 두지 않고 브랜드 초록을 재사용합니다. 브랜드 자체가 초록이라 둘을 나누면 구분되지 않습니다.
+- 라이트·다크가 같은 이름으로 대응합니다. 화면 코드에는 분기가 없습니다.
+- 굵기는 Regular(400)·Medium(500)·Bold(700) 셋뿐입니다.
+- 모든 텍스트·경계 조합은 토큰 빌드의 명도 대비 검증(30건)을 통과한 것만 남았습니다.
+- 기기 배경화면에서 색을 가져오는 dynamic color를 쓰지 않습니다.
+
+## 코드 대응
+
+`app/src/main/java/app/manyak/ui/theme/`
+
+| 파일 | 내용 |
+| --- | --- |
+| `Color.kt` | 팔레트(private)와 시맨틱 색 30종, 라이트·다크 인스턴스 |
+| `Type.kt` | `Pretendard`·`MaruBuri` FontFamily와 타이포 롤 9종 |
+| `ManyakSpacing.kt` | 여백 8단계 |
+| `ManyakShapes.kt` | 모서리 5종 |
+| `Theme.kt` | `ManyakTheme` 컴포저블·접근자, M3 슬롯 파생 |
+
+이름은 세 표기가 1:1로 대응합니다 — 이 문서 `{colors.text-subtle}` ↔ Kotlin `ManyakTheme.colors.textSubtle` ↔ 토큰 JSON `color.text.subtle`.
+
+화면 코드에서 토큰을 읽는 통로는 `ManyakTheme.colors` · `typography` · `spacing` · `shapes` 넷뿐입니다.
+
+## 색
+
+> **정본:** `design/design-tokens.json`(생성물의 사본). 값을 바꾸려면 `~/Desktop/2026-08-06-manyak-design-tokens/build-tokens.mjs`에서 고쳐 다시 생성하고, JSON을 복사한 뒤 `Color.kt`를 함께 갱신합니다. 이 레포에서 값만 고치면 웹과 갈라집니다.
+
+### 브랜드
+
+- **브랜드 초록** (`{colors.brand}` — #05A66B): 로고·일러스트 등 **큰 그래픽 전용**입니다. 이 색 위에 흰 텍스트를 얹으면 대비가 3.15로 AA에 못 미치므로 버튼 배경으로 쓰지 않습니다.
+- **주 버튼 배경** (`{colors.background-brand-bold}` — #00804B): 한 단계 어두운 초록. 흰 텍스트와 5.01을 확보합니다. 라이트·다크가 같은 값입니다.
+- **브랜드 텍스트** (`{colors.text-brand}`): 링크·강조 텍스트. 라이트 #00804B, 다크 #58C58F — 다크에서 어두운 초록은 읽히지 않기 때문입니다.
+
+### 표면
+
+- **표면** (`{colors.surface}` — 라이트 #FCFCFC / 다크 #131313): 앱 바탕·카드·시트. 화면의 기본 바닥입니다.
+- **떠 있는 표면** (`{colors.surface-raised}` — 라이트 #FFFFFF / 다크 #1F1F1F): 팝오버·플로팅. **순백을 쓰는 유일한 자리**입니다.
+- **보조 배경** (`{colors.background-neutral}` — 라이트 #F5F5F5 / 다크 #191919): 입력창·비강조 채움. 눌림은 `{colors.background-neutral-pressed}`.
+- **비활성 채움** (`{colors.background-disabled}`): 비활성 컨트롤의 바닥.
+
+### 텍스트
+
+| 토큰 | 라이트 | 다크 | 용도 |
+| --- | --- | --- | --- |
+| `{colors.text}` | #131313 | #FCFCFC | 본문·제목 기본 |
+| `{colors.text-subtle}` | #575757 | #9F9F9F | 보조 설명·메타 정보 |
+| `{colors.text-subtlest}` | #747474 | #7E7E7E | 약한 보조. `{colors.surface}` 위에서만 본문 크기로 |
+| `{colors.text-disabled}` | #969696 | #5E5E5E | 비활성·장식 전용. 읽어야 하는 텍스트에 쓰지 않음 |
+| `{colors.text-inverse}` | #FFFFFF | #FFFFFF | bold 배경 위 텍스트 |
+| `{colors.text-danger}` | #C1191C | #FF7669 | 오류 메시지 |
+| `{colors.text-warning}` | #9A5700 | #E09E32 | 경고 메시지 |
+| `{colors.text-information}` | #186AB7 | #6BB1FD | 안내 메시지 |
+
+### 경계
+
+- **장식 경계** (`{colors.border}`): 구분선·카드 테두리. 대비 요구 대상이 아닙니다.
+- **입력 경계** (`{colors.border-input}` — 라이트 #8D8D8D / 다크 #666666): 경계가 유일한 식별 수단일 때. **표면이 아니라 자기 채움색 기준으로** 역산한 값입니다 — 표면 기준으로 잡았더니 `{colors.background-neutral}` 위에서 2.85로 미달했기 때문입니다.
+- **포커스 링** (`{colors.border-focused}`): 선택된 테두리 `{colors.border-brand}`와 같은 값입니다.
+- 상태 경계 `{colors.border-danger}` · `{colors.border-warning}` · `{colors.border-information}`는 각 배너·입력창에 씁니다.
+
+### 쓰면 안 되는 조합
+
+지정된 색 자체의 한계라 값을 바꾸지 않는 한 해소되지 않습니다.
+
+| 조합 | 대비 | 대신 |
+| --- | --- | --- |
+| `{colors.text-subtlest}` + `{colors.background-neutral}`(및 pressed) | 4.03–4.33 | `{colors.text-subtle}` |
+| `{colors.text-disabled}` + 읽어야 하는 텍스트 | 2.87–2.88 | `{colors.text-subtle}` |
+
+### 그라디언트
+
+**없습니다.** 장식용 그라디언트를 토큰으로 두지 않습니다. 깊이는 표면 색 차이로만 만듭니다.
+
+## 타이포그래피
+
+### 서체
+
+- **Pretendard** — UI 전반. Regular·Medium·Bold 세 웨이트를 정적 TTF로 번들합니다(`res/font/pretendard_*.ttf`).
+- **MaruBuri** — 스토리 본문 전용. Regular·Bold를 번들합니다(`res/font/maruburi_*.ttf`).
+- 둘 다 SIL OFL 1.1이며 원문은 `assets/licenses/`에 있습니다.
+
+### 위계
+
+| 토큰 | 크기 | 굵기 | 행간 | 용도 |
+| --- | --- | --- | --- | --- |
+| `{typography.headline-small}` | 24sp | 700 | 30sp | 온보딩·랜딩 헤드라인 |
+| `{typography.title-large}` | 20sp | 500 | 27sp | 화면 제목 |
+| `{typography.title-medium}` | 18sp | 500 | 26sp | 섹션·카드 제목 |
+| `{typography.body-large}` | 16sp | 400 | 24sp | 강조 본문·입력 필드 |
+| `{typography.body-reading}` | 16sp | 400 | 28sp | 스토리 본문 (MaruBuri) |
+| `{typography.body-medium}` | 14sp | 400 | 20sp | 본문 기본 |
+| `{typography.label-large}` | 14sp | 500 | 20sp | 버튼·탭 라벨 |
+| `{typography.body-small}` | 12sp | 400 | 16sp | 메타 정보·보조 설명 |
+| `{typography.label-small}` | 11sp | 400 | 15sp | 타임스탬프·최소 보조 문구 |
+
+### 원칙
+
+- **행간은 배수가 아니라 sp 절대값입니다.** Compose `TextStyle`이 절대값만 받으므로, 배수로 두면 플랫폼마다 반올림이 갈립니다.
+- **UI 롤의 행간은 1.25~1.5입니다.** `{typography.body-reading}`만 1.75로 벌립니다 — 스토리 본문은 한 화면을 채우는 장문이라 UI 기준 그대로는 답답합니다.
+- **MaruBuri는 `{typography.body-reading}` 전용입니다.** 버튼·라벨·제목에 쓰지 않습니다.
+- **굵기 사다리는 400 / 500 / 700입니다.** 토큰의 제목 롤은 SemiBold(600)지만 앱은 Medium(500)으로 내립니다 — 번들에 없는 굵기를 요구하면 Bold로 대체 렌더되어 의도보다 두꺼워지기 때문입니다.
+- 화면 기본 텍스트 스타일은 `{typography.body-medium}`이고 기본 색은 `{colors.text}`입니다. `ManyakTheme`이 `LocalTextStyle`·`LocalContentColor`로 내립니다.
+
+## 레이아웃
+
+### 여백
+
+이름은 크기가 아니라 **상황**으로 붙입니다. `space.200`은 값이 바뀌면 의미를 잃지만 `{spacing.gutter}`는 그대로 유효하기 때문입니다.
+
+| 토큰 | 값 | 용도 |
+| --- | --- | --- |
+| `{spacing.hairline}` | 2dp | 아이콘과 라벨 사이 |
+| `{spacing.inline}` | 4dp | 인접한 인라인 요소 |
+| `{spacing.compact}` | 8dp | 리스트 항목 간격·버튼 내부 세로 |
+| `{spacing.component}` | 12dp | 컴포넌트 내부 기본 |
+| `{spacing.gutter}` | 16dp | 화면 좌우 여백 |
+| `{spacing.section}` | 24dp | 섹션 사이 |
+| `{spacing.block}` | 32dp | 큰 구획 사이 |
+| `{spacing.screen-bottom}` | 40dp | 스크롤 영역 하단 여유 |
+
+2dp 격자이며, **시맨틱 이름이 붙은 단계만 둡니다.** 안 쓰는 중간 단계가 있으면 언젠가 이름 없이 쓰이고, 그러면 시맨틱 층이 무의미해집니다.
+
+### 화면 구성
+
+- 화면 좌우는 `{spacing.gutter}`, 스크롤 영역 하단은 `{spacing.screen-bottom}`.
+- 섹션 사이는 `{spacing.section}`, 성격이 다른 큰 구획 사이는 `{spacing.block}`.
+- 시스템 인셋은 `enableEdgeToEdge()`와 `Scaffold`의 `innerPadding`으로 처리하고, 화면 여백은 그 안쪽에 얹습니다.
+
+## 표면과 깊이
+
+| 층 | 처리 | 용도 |
+| --- | --- | --- |
+| 바닥 | `{colors.surface}` | 앱 바탕·카드·시트 |
+| 떠 있음 | `{colors.surface-raised}` | 팝오버·바텀시트·다이얼로그 |
+| 채움 | `{colors.background-neutral}` | 입력창·비강조 채움 |
+| 경계 | `{colors.border}` 1dp | 구분선·카드 테두리 |
+
+**그림자를 쓰지 않습니다.** 깊이는 (a) 표면 색 차이와 (b) 경계선으로만 만듭니다. M3의 tonal elevation도 끕니다 — `surfaceTint`를 투명으로 파생시켜 표면이 고도에 따라 브랜드 색으로 물드는 것을 막습니다.
+
+## 모양
+
+| 토큰 | 값 | 용도 |
+| --- | --- | --- |
+| `{rounded.thumbnail}` | 12dp | 썸네일·작은 아이콘 컨테이너 |
+| `{rounded.control}` | 14dp | 버튼·입력창·탭 |
+| `{rounded.card}` | 16dp | 카드·리스트 항목 |
+| `{rounded.overlay}` | 20dp | 바텀시트·다이얼로그 |
+| `{rounded.pill}` | `CircleShape` | 배지·칩·아바타 |
+
+`{rounded.pill}`은 **큰 dp가 아니라 `CircleShape`입니다.** 값으로 두면 큰 요소에서 모서리가 잘못 그려집니다. 그래서 `ManyakShapes`는 dp가 아니라 `Shape`를 내립니다.
+
+## 컴포넌트
+
+> 아래 명세는 **토큰의 용도 정의에서 파생한 조합**입니다. 아직 공용 컴포저블로 구현된 것은 없습니다(로고 두 개만 자산으로 존재). 화면을 만들 때 이 조합을 따르고, 두 번째 사용처가 생기면 공용 컴포넌트로 올립니다.
+
+### 버튼
+
+**`button-primary`** — 주 동작. 배경 `{colors.background-brand-bold}`, 텍스트 `{colors.text-inverse}`, `{typography.label-large}`, 모서리 `{rounded.control}`, 내부 여백 세로 `{spacing.compact}` · 가로 `{spacing.component}`. 눌림은 `{component.button-primary-pressed}`로 배경만 한 단계 어둡게 바꿉니다.
+
+**`button-danger`** — 파괴적 동작(탈퇴·삭제). 같은 형태에 배경만 `{colors.background-danger-bold}`. 눌림은 `{component.button-danger-pressed}`.
+
+**`button-neutral`** — 보조 동작. 배경 `{colors.background-neutral}`, 텍스트 `{colors.text}`. 눌림은 `{component.button-neutral-pressed}`.
+
+**`button-disabled`** — 배경 `{colors.background-disabled}`, 텍스트 `{colors.text-disabled}`. 비활성은 색만으로 전달하지 않고 상태 안내를 함께 둡니다.
+
+### 입력
+
+**`text-field`** — 배경 `{colors.background-neutral}`, 경계 `{colors.border-input}` 1dp, 텍스트 `{typography.body-large}`, 모서리 `{rounded.control}`, 내부 여백 `{spacing.component}`. 경계색이 채움색 기준으로 3:1을 넘기므로 경계만으로도 식별됩니다.
+
+**`text-field-focused`** — 경계를 `{colors.border-focused}`로 바꿉니다.
+
+**`text-field-error`** — 경계를 `{colors.border-danger}`로 바꾸고, 오류 문구를 `{colors.text-danger}` + `{typography.body-small}`로 아래에 둡니다. 색만으로 오류를 알리지 않습니다.
+
+### 컨테이너
+
+**`card`** — 배경 `{colors.surface}`, 경계 `{colors.border}` 1dp, 모서리 `{rounded.card}`, 내부 여백 `{spacing.component}`. 제목 `{typography.title-medium}`, 본문 `{typography.body-medium}`, 메타 `{typography.body-small}` + `{colors.text-subtle}`.
+
+**`overlay`** — 바텀시트·다이얼로그. 배경 `{colors.surface-raised}`, 모서리 `{rounded.overlay}`, 내부 여백 `{spacing.gutter}`.
+
+**`badge`** — 배경 `{colors.background-brand-subtle}`, 텍스트 `{colors.text-brand}` + `{typography.body-small}`, 모서리 `{rounded.pill}`, 여백 세로 `{spacing.hairline}` · 가로 `{spacing.compact}`.
+
+**`banner-danger` / `banner-warning` / `banner-information`** — 배경은 각 `subtle`, 텍스트는 같은 계열의 텍스트 색, 모서리 `{rounded.control}`, 내부 여백 `{spacing.component}`. 배너 자체가 상태를 말하므로 아이콘 없이도 성립하지만, 색만으로 구분되지 않도록 문구를 명시합니다.
+
+### 스토리
+
+**`story-body`** — 배경 `{colors.surface}`, 텍스트 `{colors.text}` + `{typography.body-reading}`, 좌우 여백 `{spacing.gutter}`. 이 시스템에서 MaruBuri가 나타나는 유일한 자리입니다.
+
+### 로고
+
+**`logo-google`** — `res/drawable/ic_logo_google.xml`. 공식 4색 G를 그대로 씁니다. **tint·변형·재색칠 금지.**
+
+**`logo-kakao`** — `res/drawable/ic_logo_kakao.xml`. 카카오 말풍선 심벌은 노란 컨테이너 `#FEE500` 위에만 올립니다. 이 노랑은 카카오가 정한 값이라 토큰 팔레트에 넣지 않았습니다.
+
+## 해야 할 것 / 하지 말아야 할 것
+
+### 해야 할 것
+
+- 색·크기·여백·모서리는 `ManyakTheme`의 접근자로만 읽습니다.
+- 주 동작은 `{colors.background-brand-bold}`, 파괴적 동작은 `{colors.background-danger-bold}`로 구분합니다.
+- 보조 설명은 `{colors.text-subtle}`, 강한 대비가 필요 없는 장식만 `{colors.text-disabled}`에 둡니다.
+- 배지·칩·아바타는 `{rounded.pill}`(=`CircleShape`)로 그립니다.
+- 스토리 본문에는 `{typography.body-reading}`을 씁니다.
+- 상태는 색과 문구를 함께 씁니다.
+
+### 하지 말아야 할 것
+
+- `MaterialTheme.colorScheme`·`MaterialTheme.typography`를 직접 참조하지 않습니다. `ManyakTheme`이 두 값을 토큰에서 파생해 채우지만 이는 M3 기본값(보라색·Roboto)이 새는 것을 막는 **안전망**일 뿐 정본이 아닙니다.
+- dynamic color를 켜지 않습니다. 브랜드 색이 기기 배경화면에 덮입니다.
+- `{colors.brand}`를 버튼·텍스트 배경으로 쓰지 않습니다. 큰 그래픽 전용입니다.
+- 그림자로 층을 만들지 않습니다. 표면 색을 바꿉니다.
+- `{rounded.pill}`을 큰 dp 값으로 대체하지 않습니다.
+- 팔레트 값(`#05A66B` 등)을 화면 코드에 직접 적지 않습니다.
+- SemiBold(600)를 요구하지 않습니다. 사다리는 400 / 500 / 700입니다.
+- 성공 상태에 새 초록을 만들지 않습니다.
+
+## 화면 대응
+
+- **큰 글자**: 모든 텍스트 크기·행간이 sp라 시스템 글자 크기 설정을 따릅니다. 고정 dp 높이 컨테이너에 텍스트를 가두지 않습니다.
+- **라이트·다크**: `ManyakTheme(darkTheme = isSystemInDarkTheme())`로 결정합니다. Compose 첫 프레임 전 창 배경은 `values`/`values-night`의 `@color/surface`가 담당해 다크에서 흰 화면이 번쩍이지 않습니다.
+- **창 크기·인셋**: `enableEdgeToEdge()`와 `Scaffold` 인셋까지만 정해져 있습니다. 태블릿·폴더블 대응 정책은 아직 없습니다(아래 알려진 공백).
+
+## 갱신 지침
+
+1. 값을 바꿀 때는 토큰 생성기 → `design/design-tokens.json` → Kotlin 순서로 옮깁니다. 반대 방향으로 고치지 않습니다.
+2. Kotlin 파일은 사람이 옮겨 적습니다. Style Dictionary 같은 생성기는 두지 않습니다 — 토큰 변경 빈도가 낮은데 안드로이드 빌드에 Node 의존을 얹는 비용이 더 큽니다.
+3. 새 컴포넌트는 `components:`에 항목을 추가하고 값은 반드시 `{token.ref}`로 적습니다. 헥사·dp를 직접 쓰지 않습니다.
+4. 상태 변형(`-pressed`, `-focused`, `-error`)은 별도 항목으로 둡니다. hover는 문서화하지 않습니다.
+5. 토큰에 없는 값이 필요하면 화면에서 임시로 만들지 말고 토큰 생성기에 단계를 추가합니다.
+6. 두 번째 사용처가 생기기 전에는 공용 컴포넌트로 올리지 않습니다.
+
+## 알려진 공백
+
+- **공용 컴포넌트가 없습니다.** `components:`는 토큰 용도에서 파생한 명세이고, 실제 컴포저블은 화면 작업과 함께 만듭니다.
+- **제목 굵기가 웹과 한 단계 다릅니다.** 토큰은 SemiBold(600)지만 앱은 Medium(500)입니다. 가변 폰트를 쓰는 웹은 600 그대로입니다.
+- **M3 확장 슬롯**(`*Fixed` 색, `*Emphasized` 타이포 등)은 파생 대상이 아닙니다. 해당 슬롯을 읽는 컴포넌트를 쓰게 되면 파생을 넓힙니다.
+- **폰트가 APK에서 약 5.3MB**를 차지합니다(원본 14MB, 압축 후). 줄여야 하면 Pretendard 공식 subset 빌드로 교체합니다.
+- **태블릿·폴더블·가로 모드 정책이 없습니다.** 터치 타깃 최소 크기도 아직 토큰으로 정하지 않았습니다.
+- **모션·전환 토큰이 없습니다.** 눌림 상태는 색 변화로만 정의되어 있습니다.
+- **디자인 시스템의 최종 위치는 `:core:ui`입니다**(하네스 §3-3-2). 아직 그 모듈이 없어 `:app`에 두었고, 만들 때 `ui/theme/`·`res/font/`·로고 drawable을 통째로 옮깁니다.
