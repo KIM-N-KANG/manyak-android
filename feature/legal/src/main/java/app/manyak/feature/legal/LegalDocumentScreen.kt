@@ -102,6 +102,12 @@ private fun LegalWebView(
         modifier = Modifier.fillMaxSize(),
         factory = { context ->
             WebView(context).apply {
+                // Compose 안에서 초기 측정이 0 이면 뷰포트 단위(svh·vh)가 0 으로 굳는다.
+                layoutParams =
+                    android.view.ViewGroup.LayoutParams(
+                        android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                        android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                    )
                 settings.javaScriptEnabled = true
                 settings.domStorageEnabled = true
                 settings.useWideViewPort = true
