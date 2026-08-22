@@ -56,7 +56,8 @@ fun ManyakApp(
 @Composable
 private fun SessionProgress() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        CircularProgressIndicator(color = ManyakTheme.colors.textBrand)
+        // 텍스트 색(textBrand)은 이 크기에서 지나치게 무겁다. 로고와 같은 브랜드 원색을 쓴다.
+        CircularProgressIndicator(color = ManyakTheme.colors.brand)
     }
 }
 

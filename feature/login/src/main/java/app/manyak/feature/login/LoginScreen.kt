@@ -31,6 +31,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.manyak.core.domain.auth.AuthProvider
@@ -201,7 +202,12 @@ private fun ProviderButton(
             ),
     ) {
         if (state.inProgress == provider) {
-            CircularProgressIndicator(modifier = Modifier.size(ManyakTheme.sizes.icon), color = contentColor)
+            // 라벨과 같은 색이면 스피너가 글자보다 무겁게 보인다. 같은 색을 옅게 써서 톤을 맞춘다.
+            CircularProgressIndicator(
+                modifier = Modifier.size(ManyakTheme.sizes.icon),
+                color = contentColor.copy(alpha = PROGRESS_ALPHA),
+                strokeWidth = ProgressStrokeWidth,
+            )
         } else {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -264,6 +270,9 @@ private fun LegalConsent(
         textAlign = TextAlign.Center,
     )
 }
+
+private const val PROGRESS_ALPHA = 0.55f
+private val ProgressStrokeWidth = 2.dp
 
 /** 로고 원본(89×32)의 가로세로 비율. */
 private const val LOGO_ASPECT_RATIO = 89f / 32f
