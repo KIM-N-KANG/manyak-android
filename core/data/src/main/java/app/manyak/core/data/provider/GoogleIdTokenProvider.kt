@@ -21,7 +21,7 @@ import javax.inject.Singleton
 /**
  * Credential Manager + Sign in with Google.
  *
- * 구 Google Sign-In SDK 는 지원이 중단되어 쓰지 않는다(하네스 §3-3-4). 요청에 싣는 것은
+ * 구 Google Sign-In SDK 는 지원이 중단되어 쓰지 않는다. 요청에 싣는 것은
  * **서버(웹) 클라이언트 ID** 이며 이 값이 ID 토큰의 `aud` 가 된다 — Android 클라이언트 ID 는 `azp` 로
  * 따로 실려 서버가 검사한다.
  *

@@ -41,9 +41,9 @@ import app.manyak.core.ui.error.messageResOrNull
 import app.manyak.core.ui.theme.ManyakTheme
 
 /**
- * 앱은 로그인 필수라 이 화면이 첫 실행 경험이다(하네스 §3-3-1).
+ * 앱은 로그인 필수라 이 화면이 첫 실행 경험이다.
  *
- * 문구 정본은 웹(FE-SCREEN-008)이며 앱이 새로 쓰지 않는다. 게스트 데이터가 없으므로 웹의 이관 1회
+ * 문구 정본은 웹이며 앱이 새로 쓰지 않는다. 게스트 데이터가 없으므로 웹의 이관 1회
  * 안내는 넣지 않는다.
  */
 @Composable
@@ -144,7 +144,6 @@ private fun CenteredMessage(
     )
 }
 
-/** 카카오가 위, Google 이 아래다(공통 계약 FE-SCREEN-008). */
 @Composable
 private fun ProviderButtons(
     state: LoginUiState,
@@ -186,7 +185,6 @@ private fun ProviderButton(
     state: LoginUiState,
     onClick: (AuthProvider) -> Unit,
 ) {
-    // 진행 중에는 탭한 버튼을 스피너로 바꾸고 두 버튼을 모두 비활성화한다(공통 계약).
     val isBusy = state.inProgress != null
     Button(
         modifier = Modifier.fillMaxWidth().height(ManyakTheme.sizes.control),

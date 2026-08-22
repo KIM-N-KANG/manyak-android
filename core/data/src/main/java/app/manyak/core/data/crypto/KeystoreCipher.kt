@@ -16,7 +16,7 @@ import javax.inject.Singleton
  * Android Keystore 키로 바이트열을 AES/GCM 암복호화한다.
  *
  * 키는 **사용자 인증을 요구하지 않는다** — 앱 시작 시 사용자 상호작용 없이 세션을 복원해야 하기
- * 때문이다. 하드웨어 보호(StrongBox)는 가능하면 쓰되 없는 기기에서 로그인을 막지 않는다(하네스 §3-3-4).
+ * 때문이다. 하드웨어 보호(StrongBox)는 가능하면 쓰되 없는 기기에서 로그인을 막지 않는다.
  */
 @Singleton
 class KeystoreCipher

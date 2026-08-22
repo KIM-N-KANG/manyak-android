@@ -19,7 +19,7 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * Definition of Done 의 `MviViewModel` 계약 테스트(하네스 §3-3-7).
+ * `MviViewModel` 의 큐 계약 테스트.
  *
  * 이 베이스 클래스를 둔 이유가 화면별 편차를 막는 것이므로, 큐 계약이 깨지면 여기서 드러나야 한다.
  */

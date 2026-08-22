@@ -29,7 +29,7 @@ import app.manyak.feature.my.MyScreen
  * 미로그인 상태에서 **메인 목적지가 백스택에 존재할 수 없게** 만들어 가드 누락이 사고가 되지 않게 한다.
  *
  * 상태가 미확정인 동안에는 어느 그래프도 그리지 않는다. 로그인 화면이 잠깐 스쳤다가 메인으로 바뀌는
- * 깜빡임을 막기 위해서다(하네스 §3-3-3).
+ * 깜빡임을 막기 위해서다.
  */
 @Composable
 fun ManyakApp(
@@ -56,8 +56,7 @@ fun ManyakApp(
 @Composable
 private fun SessionProgress() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        // 텍스트 색(textBrand)은 이 크기에서 지나치게 무겁다. 로고와 같은 브랜드 원색을 쓴다.
-        CircularProgressIndicator(color = ManyakTheme.colors.brand)
+        CircularProgressIndicator(color = ManyakTheme.colors.progressIndicator)
     }
 }
 

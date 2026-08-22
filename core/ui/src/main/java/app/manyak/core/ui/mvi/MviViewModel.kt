@@ -15,15 +15,15 @@ import kotlinx.coroutines.launch
  * 모든 화면 ViewModel 의 베이스.
  *
  * 흐름은 `onIntent` → (필요하면 부수효과) → [dispatchEvent] → [reduce] → 새 상태다.
- * [reduce] 는 **순수 함수**이며 그 안에서 부수효과를 수행하지 않는다(하네스 §3-3-2 UI 상태 모델).
+ * [reduce] 는 **순수 함수**이며 그 안에서 부수효과를 수행하지 않는다.
  *
  * 큐 계약이 이 클래스에 모여 있는 이유는 화면마다 다시 작성하면 편차가 생기기 때문이다.
  * - Intent·ReducerEvent·UiEffect 는 각각 용량 [CHANNEL_CAPACITY] 의 채널로 받고 overflow 는 `SUSPEND` 다.
- *   `DROP_OLDEST`·`trySend` 실패 무시는 쓰지 않는다 — 사용자의 입력이나 상태 전이를 조용히 버리게 된다.
+ *  `DROP_OLDEST`·`trySend` 실패 무시는 쓰지 않는다 — 사용자의 입력이나 상태 전이를 조용히 버리게 된다.
  * - 각 채널의 소비 코루틴은 **하나**다. 그래서 동시에 완료된 부수효과가 만든 이벤트도 큐에 들어온
- *   순서대로 하나씩 reduce 된다.
+ *  순서대로 하나씩 reduce 된다.
  * - `UiEffect` 는 replay 하지 않는다. 화면 호스트 하나만 소비하며, 이미 소비한 효과는 재수집에 다시
- *   나오지 않는다.
+ *  나오지 않는다.
  *
  * @param I 사용자·시스템 입력
  * @param S 화면이 그리는 불변 스냅숏

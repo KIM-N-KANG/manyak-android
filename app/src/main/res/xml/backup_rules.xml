@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    API 30 이하의 자동 백업 규칙. allowBackup="false" 로 백업 자체를 끄지만, 하네스 §3-3-4 의
-    이중 방어 계약에 따라 토큰·세션 저장 파일을 규칙에서도 명시적으로 제외한다.
+    API 30 이하의 자동 백업 규칙. allowBackup="false" 로 백업 자체를 끄지만,
+    토큰·세션 저장 파일은 규칙에서도 한 번 더 제외한다.
 -->
 <full-backup-content>
     <exclude

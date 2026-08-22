@@ -4,7 +4,7 @@ import app.manyak.core.domain.error.DomainResult
 import kotlinx.coroutines.flow.StateFlow
 
 /**
- * 프로필 보관소. 화면마다 `/auth/me` 를 부르지 않는다(하네스 §3-3-4).
+ * 프로필 보관소. 화면마다 `/auth/me` 를 부르지 않는다.
  *
  * 마지막 성공 응답을 로컬에 보관해 조회 실패·오프라인에서 표시한다. 이 캐시는 사용자 귀속
  * 데이터이므로 세션 종료 정리 대상이다.

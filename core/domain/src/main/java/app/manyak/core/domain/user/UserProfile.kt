@@ -2,7 +2,7 @@ package app.manyak.core.domain.user
 
 import app.manyak.core.domain.auth.AuthProvider
 
-/** `GET /auth/me` 가 권위 있는 출처다. 화면은 이 모델 하나만 관찰한다(하네스 §3-3-4). */
+/** `GET /auth/me` 가 권위 있는 출처다. 화면은 이 모델 하나만 관찰한다. */
 data class UserProfile(
     /** 사용자 공개 ID. 분석·크래시 리포트의 사용자 식별자로도 쓴다. */
     val id: String,

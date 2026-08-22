@@ -31,7 +31,7 @@ annotation class AuthProviderKey(
  *
  * **사용자 귀속 저장소는 [UserScopedStore] 집합에 반드시 들어가야 한다** — 세션 종료 흐름이 이 집합을
  * 통째로 지우므로, 새 저장소를 만들고 여기에 넣지 않으면 정리 대상에서 빠진다. 바인딩이 한 파일에
- * 모여 있어 그 누락이 리뷰 diff 에 드러난다(하네스 §3-3-2·§3-3-4).
+ * 모여 있어 그 누락이 리뷰 diff 에 드러난다.
  */
 @Module
 @InstallIn(SingletonComponent::class)

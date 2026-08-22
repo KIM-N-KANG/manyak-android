@@ -11,7 +11,7 @@ import retrofit2.http.Path
 
 /**
  * 인증 경로. **access 토큰을 붙이지 않는 클라이언트**로 호출한다 — 재발급 요청이 다시 재발급 경로를
- * 타면 무한 재귀가 되기 때문이다(하네스 §3-3-4 재귀 금지).
+ * 타면 무한 재귀가 되기 때문이다.
  */
 interface AuthApi {
     @POST("auth/login/{provider}")

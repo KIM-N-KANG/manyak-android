@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    화면 문구는 전량 이 모듈에 모은다(하네스 §3-3-2). 순수 Kotlin 모듈은 리소스에 접근할 수 없으므로
+    화면 문구는 전량 이 모듈에 모은다. 순수 Kotlin 모듈은 리소스에 접근할 수 없으므로
     이 배치가 곧 "Repository 구현은 UI 문구를 알지 않는다"를 컴파일러가 강제하는 장치가 된다.
-    로그인 화면 문구의 정본은 웹(FE-SCREEN-008)이며 앱이 새로 쓰지 않는다.
 -->
 <resources>
     <string name="app_logo_description">마냑</string>

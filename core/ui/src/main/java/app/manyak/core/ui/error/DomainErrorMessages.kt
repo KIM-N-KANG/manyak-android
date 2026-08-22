@@ -6,7 +6,7 @@ import app.manyak.core.domain.session.SessionEndNotice
 import app.manyak.core.ui.R
 
 /**
- * 오류 타입을 문자열 리소스로 바꾸는 지점. 이 변환은 `:core:ui` 만 한다(하네스 §3-3-2).
+ * 오류 타입을 문자열 리소스로 바꾸는 지점. 이 변환은 `:core:ui` 만 한다.
  *
  * [DomainError.ProviderCancelled] 는 문구가 없다 — 사용자가 스스로 닫은 것이라 실패 안내를 띄우면
  * 오히려 방해가 된다. 호출부가 null 을 받으면 아무것도 보여 주지 않는다.

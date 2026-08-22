@@ -4,7 +4,7 @@ import app.manyak.core.domain.auth.AuthProvider
 
 /**
  * 계층을 지나는 오류의 타입. 문구를 모른다 — 사용자에게 보일 문자열로 바꾸는 것은 `:core:ui`의 몫이고,
- * 무엇을 보여 줄지 결정하는 것은 화면의 ViewModel 이다(하네스 §3-3-2).
+ * 무엇을 보여 줄지 결정하는 것은 화면의 ViewModel 이다.
  */
 sealed interface DomainError {
     /** 연결 실패·타임아웃. 세션을 끝내지 않는다. */
@@ -23,7 +23,7 @@ sealed interface DomainError {
     /** 인증이 거절됐다(401). 세션 종료 경로로 이어진다. */
     data object Unauthorized : DomainError
 
-    /** 정지된 계정이다. 일반 로그아웃과 구분되는 안내를 보여야 한다(하네스 §3-3-4). */
+    /** 정지된 계정이다. 일반 로그아웃과 구분되는 안내를 보여야 한다. */
     data object AccountSuspended : DomainError
 
     /** 사용자가 제공자 화면을 스스로 닫았다. 실패 안내를 띄우지 않고 폴백도 하지 않는다. */

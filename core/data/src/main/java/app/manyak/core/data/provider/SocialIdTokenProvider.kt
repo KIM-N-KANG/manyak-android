@@ -5,7 +5,7 @@ import app.manyak.core.domain.auth.AuthProvider
 import app.manyak.core.domain.error.DomainResult
 
 /**
- * 제공자 SDK 인증만 담당한다. **서버 로그인은 호출하지 않는다**(하네스 §3-3-4).
+ * 제공자 SDK 인증만 담당한다. **서버 로그인은 호출하지 않는다**.
  *
  * 두 단계를 한 함수에 묶으면 계정 연동이 로그인 경로를 타고 세션이 연동 대상 계정으로 교체되는 사고가
  * 구조적으로 열린다. 연동은 이 어댑터의 [requestIdToken] 만 재사용하고 서버 호출은 따로 한다.

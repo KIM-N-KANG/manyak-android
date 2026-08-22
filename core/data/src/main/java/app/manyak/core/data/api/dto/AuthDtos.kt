@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * 와이어 DTO 는 이 모듈 밖으로 나가지 않는다(하네스 §3-3-2). 도메인 모델로 바꾸는 것도 여기서 한다.
+ * 와이어 DTO 는 이 모듈 밖으로 나가지 않는다. 도메인 모델로 바꾸는 것도 여기서 한다.
  */
 @Serializable
 data class SocialLoginRequestDto(

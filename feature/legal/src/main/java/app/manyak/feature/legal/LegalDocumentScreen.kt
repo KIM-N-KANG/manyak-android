@@ -32,7 +32,6 @@ import app.manyak.core.ui.theme.ManyakTheme
  * 약관·개인정보처리방침을 웹 페이지 그대로 보여 준다.
  *
  * 같은 호스트 밖으로는 이동하지 않는다 — 법적 문서 화면에서 임의의 목적지로 새는 경로를 만들지 않는다
- * (하네스 §3-3-3).
  */
 @Composable
 fun LegalDocumentScreen(
@@ -148,7 +147,7 @@ private fun LegalWebView(
                         /**
                          * 웹 페이지 자체의 헤더 뒤로가기는 SPA 라우팅이라 페이지 로드가 일어나지 않는다.
                          * 그래서 [shouldOverrideUrlLoading] 으로는 막을 수 없고, 이 콜백으로 이탈을 감지해
-                         * 화면을 닫는다 — 법적 문서에서 다른 제품 화면이 열리면 안 된다(하네스 §3-3-3).
+                         * 화면을 닫는다 — 법적 문서에서 다른 제품 화면이 열리면 안 된다.
                          */
                         override fun doUpdateVisitedHistory(
                             view: WebView?,

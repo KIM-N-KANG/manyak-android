@@ -4,7 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * 검수 항목 #5(하네스 §3-3-7) — 재부팅·벽시계 조작·`BOOT_COUNT` 읽기 실패 조합에서
+ * 재부팅·벽시계 조작·`BOOT_COUNT` 읽기 실패 조합에서
  * 만료 토큰을 유효로 판정하지 않는지, 그러면서도 재발급 무한 루프에 빠지지 않는지 확인한다.
  */
 class TokenFreshnessEvaluatorTest {

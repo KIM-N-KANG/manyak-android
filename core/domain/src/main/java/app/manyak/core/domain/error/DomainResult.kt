@@ -2,7 +2,7 @@ package app.manyak.core.domain.error
 
 /**
  * 상위 계층은 예외가 아니라 이 타입으로 결과를 받는다. 예외를 오류 타입으로 바꾸는 지점은
- * `:core:data` 한 곳이다(하네스 §3-3-2).
+ * `:core:data` 한 곳이다.
  */
 sealed interface DomainResult<out T> {
     data class Success<out T>(

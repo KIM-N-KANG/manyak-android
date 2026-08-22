@@ -8,7 +8,7 @@ import retrofit2.Response
 import java.io.IOException
 
 /**
- * 예외를 오류 타입으로 바꾸는 **유일한 지점**이다(하네스 §3-3-2). 상위 계층은 예외가 아니라
+ * 예외를 오류 타입으로 바꾸는 **유일한 지점**이다. 상위 계층은 예외가 아니라
  * [DomainResult] 를 받는다.
  *
  * 취소(`CancellationException`)는 여기서 잡지 않는다 — 화면 이탈로 취소된 작업이 실패로 둔갑하면 안 된다.
