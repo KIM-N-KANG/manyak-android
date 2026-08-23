@@ -130,6 +130,8 @@ dependencies {
     implementation(projects.core.navigation)
     implementation(projects.feature.login)
     implementation(projects.feature.legal)
+    implementation(projects.feature.home)
+    implementation(projects.feature.chat)
     implementation(projects.feature.my)
 
     implementation(platform(libs.androidx.compose.bom))

@@ -18,6 +18,21 @@ data object LoginRoute
 @Serializable
 data object MainGraphRoute
 
+/**
+ * 하단 탭 셋을 두르는 셸. 메인 그래프에서는 이 목적지 하나로 보이고, 탭 목적지들은 셸 안쪽에만 있다.
+ *
+ * 셸을 두르지 않는 화면(스토리 상세·제작 퍼널·채팅 화면 등)은 이 목적지의 형제로 등록해,
+ * 헤더와 하단 탭이 두르는 범위를 목적지 구조가 그대로 드러내게 한다.
+ */
+@Serializable
+data object MainTabsRoute
+
+@Serializable
+data object HomeRoute
+
+@Serializable
+data object ChatListRoute
+
 @Serializable
 data object MyRoute
 

@@ -29,7 +29,7 @@ import app.manyak.core.domain.session.SessionState
 import app.manyak.core.navigation.LegalDocument
 import app.manyak.core.navigation.LegalRoute
 import app.manyak.core.navigation.LoginRoute
-import app.manyak.core.navigation.MyRoute
+import app.manyak.core.navigation.MainTabsRoute
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ManyakProgressIndicator
 import app.manyak.core.ui.component.rememberDelayedProgressVisibility
@@ -37,7 +37,6 @@ import app.manyak.core.ui.error.messageResOrNull
 import app.manyak.core.ui.theme.ManyakTheme
 import app.manyak.feature.legal.LegalDocumentScreen
 import app.manyak.feature.login.LoginScreen
-import app.manyak.feature.my.MyScreen
 
 /**
  * 세션 상태가 어느 그래프를 띄울지 결정한다. 그래프 안에서 가드로 막지 않는다 —
@@ -143,12 +142,14 @@ private fun AuthNavHost() {
     }
 }
 
-/** 메인 그래프. 지금은 마이 화면만 있고 홈·채팅 탭은 이후 범위다. */
+/**
+ * 메인 그래프. 하단 탭 셋은 셸 목적지 안쪽에 있고, 셸을 두르지 않는 화면은 그 형제로 등록한다.
+ */
 @Composable
 private fun MainNavHost() {
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = MyRoute) {
-        composable<MyRoute> { MyScreen() }
+    NavHost(navController = navController, startDestination = MainTabsRoute) {
+        composable<MainTabsRoute> { MainTabsScreen() }
         legalDestination(onLeaveDocument = { navController.popBackStack() })
     }
 }
