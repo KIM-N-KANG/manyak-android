@@ -36,9 +36,13 @@ import app.manyak.core.ui.theme.ManyakTheme
  */
 @Composable
 fun LegalDocumentScreen(
+    document: LegalDocument,
     onLeaveDocument: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: LegalViewModel = hiltViewModel(),
+    viewModel: LegalViewModel =
+        hiltViewModel<LegalViewModel, LegalViewModel.Factory>(
+            creationCallback = { factory -> factory.create(document) },
+        ),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val showLoadingIndicator = rememberDelayedProgressVisibility(inProgress = state.isLoading)

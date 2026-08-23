@@ -1,13 +1,12 @@
 package app.manyak.feature.legal
 
 import android.net.Uri
-import androidx.lifecycle.SavedStateHandle
-import androidx.navigation.toRoute
 import app.manyak.core.navigation.LegalDocument
-import app.manyak.core.navigation.LegalRoute
 import app.manyak.core.ui.mvi.MviViewModel
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 
 sealed interface LegalIntent {
     data object PageFinished : LegalIntent
@@ -38,16 +37,18 @@ sealed interface LegalEvent {
     data object Reloading : LegalEvent
 }
 
-@HiltViewModel
+/**
+ * 어느 문서를 여는지는 라우트가 정한다. 백스택의 키가 곧 그 값이므로 목적지에서 받아 넘긴다.
+ */
+@HiltViewModel(assistedFactory = LegalViewModel.Factory::class)
 class LegalViewModel
-    @Inject
+    @AssistedInject
     constructor(
-        savedStateHandle: SavedStateHandle,
+        @Assisted document: LegalDocument,
         urlProvider: LegalUrlProvider,
     ) : MviViewModel<LegalIntent, LegalUiState, LegalEvent, Nothing>(
             initialState =
-                savedStateHandle.toRoute<LegalRoute>().document.let { document ->
-                    val url = urlProvider.urlFor(document)
+                urlProvider.urlFor(document).let { url ->
                     val parsed = Uri.parse(url)
                     LegalUiState(
                         document = document,
@@ -57,6 +58,11 @@ class LegalViewModel
                     )
                 },
         ) {
+        @AssistedFactory
+        interface Factory {
+            fun create(document: LegalDocument): LegalViewModel
+        }
+
         override suspend fun handleIntent(intent: LegalIntent) {
             when (intent) {
                 LegalIntent.PageFinished -> dispatchEvent(LegalEvent.Loaded)

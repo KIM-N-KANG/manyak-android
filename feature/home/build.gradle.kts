@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.kotlin.serialization)
 
     alias(libs.plugins.ktlint)
     alias(libs.plugins.detekt)
@@ -28,7 +27,7 @@ tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
 }
 
 android {
-    namespace = "app.manyak.core.navigation"
+    namespace = "app.manyak.feature.home"
     compileSdk {
         version = release(37)
     }
@@ -48,6 +47,7 @@ android {
 }
 
 dependencies {
-    api(libs.androidx.navigation3.runtime)
-    api(libs.kotlinx.serialization.json)
+    implementation(projects.core.ui)
+
+    debugImplementation(libs.androidx.compose.ui.tooling)
 }

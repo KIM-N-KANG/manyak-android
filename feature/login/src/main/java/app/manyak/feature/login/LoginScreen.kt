@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -50,6 +49,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.manyak.core.domain.auth.AuthProvider
 import app.manyak.core.navigation.LegalDocument
 import app.manyak.core.ui.R
+import app.manyak.core.ui.component.ManyakLogo
 import app.manyak.core.ui.component.ManyakProgressIndicator
 import app.manyak.core.ui.error.messageResOrNull
 import app.manyak.core.ui.theme.ManyakTheme
@@ -158,15 +158,7 @@ private fun LoginContent(
 @Composable
 private fun LoginHeadline(modifier: Modifier = Modifier) {
     Column(modifier = modifier) {
-        Image(
-            modifier =
-                Modifier
-                    .padding(top = ManyakTheme.spacing.screenTop)
-                    .height(ManyakTheme.sizes.logo)
-                    .aspectRatio(LOGO_ASPECT_RATIO),
-            painter = painterResource(R.drawable.ic_logo_manyak),
-            contentDescription = stringResource(R.string.app_logo_description),
-        )
+        ManyakLogo(modifier = Modifier.padding(top = ManyakTheme.spacing.screenTop))
         Text(
             modifier = Modifier.padding(top = ManyakTheme.spacing.component),
             text = stringResource(R.string.login_headline),
@@ -346,9 +338,6 @@ private fun LegalConsent(
 
 @Composable
 private fun headlineShadow(): Shadow = Shadow(color = ManyakTheme.colors.surface, blurRadius = HEADLINE_SHADOW_BLUR)
-
-/** 로고 원본(89×32)의 가로세로 비율. */
-private const val LOGO_ASPECT_RATIO = 89f / 32f
 
 private val ProviderButtonBorderWidth = 1.dp
 private const val HEADLINE_SHADOW_BLUR = 12f

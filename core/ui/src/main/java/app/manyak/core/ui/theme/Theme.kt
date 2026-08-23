@@ -24,6 +24,8 @@ private val LocalManyakShapes =
     staticCompositionLocalOf<ManyakShapes> { error("ManyakTheme 밖에서는 모서리 토큰을 쓸 수 없습니다.") }
 private val LocalManyakSizes =
     staticCompositionLocalOf<ManyakSizes> { error("ManyakTheme 밖에서는 크기 토큰을 쓸 수 없습니다.") }
+private val LocalManyakMotion =
+    staticCompositionLocalOf<ManyakMotion> { error("ManyakTheme 밖에서는 모션 토큰을 쓸 수 없습니다.") }
 
 /**
  * 앱 전역 테마. 디자인 토큰을 [CompositionLocal][staticCompositionLocalOf]로 내린다.
@@ -45,6 +47,7 @@ fun ManyakTheme(
         LocalManyakSpacing provides ManyakDefaultSpacing,
         LocalManyakShapes provides ManyakDefaultShapes,
         LocalManyakSizes provides ManyakDefaultSizes,
+        LocalManyakMotion provides ManyakDefaultMotion,
     ) {
         MaterialTheme(
             colorScheme = colors.toMaterialColorScheme(),
@@ -81,6 +84,10 @@ object ManyakTheme {
     val sizes: ManyakSizes
         @Composable @ReadOnlyComposable
         get() = LocalManyakSizes.current
+
+    val motion: ManyakMotion
+        @Composable @ReadOnlyComposable
+        get() = LocalManyakMotion.current
 }
 
 // 아래 세 변환은 M3 슬롯을 토큰에서 파생시키는 안전망이다. 라이트·다크 구분은 토큰이 이미 하므로

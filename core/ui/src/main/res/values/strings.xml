@@ -23,8 +23,12 @@
     <string name="legal_privacy_title">개인정보 처리방침</string>
     <string name="legal_load_failed">문서를 불러오지 못했어요. 네트워크 상태를 확인해주세요</string>
 
+    <!-- 메인 탭. 헤더의 섹션 이름과 하단 탭의 라벨에 함께 쓴다. -->
+    <string name="main_tab_home">홈</string>
+    <string name="main_tab_chat">채팅</string>
+    <string name="main_tab_my">마이</string>
+
     <!-- 마이 -->
-    <string name="my_title">마이</string>
     <string name="my_logout">로그아웃</string>
     <string name="my_logout_in_progress">로그아웃하는 중</string>
 

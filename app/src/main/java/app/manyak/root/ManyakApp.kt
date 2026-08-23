@@ -21,15 +21,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation3.runtime.EntryProviderScope
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.ui.NavDisplay
 import app.manyak.core.domain.session.SessionState
-import app.manyak.core.navigation.LegalDocument
 import app.manyak.core.navigation.LegalRoute
 import app.manyak.core.navigation.LoginRoute
-import app.manyak.core.navigation.MyRoute
+import app.manyak.core.navigation.MainTabsRoute
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ManyakProgressIndicator
 import app.manyak.core.ui.component.rememberDelayedProgressVisibility
@@ -37,7 +37,6 @@ import app.manyak.core.ui.error.messageResOrNull
 import app.manyak.core.ui.theme.ManyakTheme
 import app.manyak.feature.legal.LegalDocumentScreen
 import app.manyak.feature.login.LoginScreen
-import app.manyak.feature.my.MyScreen
 
 /**
  * 세션 상태가 어느 그래프를 띄울지 결정한다. 그래프 안에서 가드로 막지 않는다 —
@@ -57,8 +56,8 @@ fun ManyakApp(
     Surface(modifier = modifier.fillMaxSize(), color = ManyakTheme.colors.surface) {
         when (val state = sessionState) {
             SessionState.Undetermined -> if (showSessionProgress) SessionProgress()
-            is SessionState.SignedOut -> AuthNavHost()
-            SessionState.Member -> MainNavHost()
+            is SessionState.SignedOut -> AuthNavDisplay()
+            SessionState.Member -> MainNavDisplay()
             // 이전 사용자의 데이터가 남아 있다. 정리가 끝날 때까지 어느 그래프도 열지 않는다.
             is SessionState.CleanupFailed -> CleanupFailed(state, onRetry = viewModel::onRetryCleanup)
         }
@@ -129,38 +128,55 @@ private fun SessionProgress() {
 }
 
 /**
- * 인증 그래프. 로그인 성공 시 세션 상태가 바뀌며 이 그래프가 통째로 사라지므로,
+ * 인증 백스택. 로그인 성공 시 세션 상태가 바뀌며 이 백스택이 통째로 사라지므로,
  * 메인에서 뒤로가기로 로그인 화면에 돌아갈 수 없다.
  */
 @Composable
-private fun AuthNavHost() {
-    val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = LoginRoute) {
-        composable<LoginRoute> {
-            LoginScreen(onOpenLegalDocument = { document -> navController.openLegalDocument(document) })
-        }
-        legalDestination(onLeaveDocument = { navController.popBackStack() })
-    }
-}
-
-/** 메인 그래프. 지금은 마이 화면만 있고 홈·채팅 탭은 이후 범위다. */
-@Composable
-private fun MainNavHost() {
-    val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = MyRoute) {
-        composable<MyRoute> { MyScreen() }
-        legalDestination(onLeaveDocument = { navController.popBackStack() })
-    }
+private fun AuthNavDisplay() {
+    val backStack = rememberNavBackStack(LoginRoute)
+    val screenTransition = rememberScreenTransition()
+    NavDisplay(
+        backStack = backStack,
+        entryDecorators = rememberManyakEntryDecorators(),
+        transitionSpec = screenTransition,
+        popTransitionSpec = screenTransition,
+        entryProvider =
+            entryProvider<NavKey> {
+                entry<LoginRoute> {
+                    LoginScreen(onOpenLegalDocument = { document -> backStack.add(LegalRoute(document)) })
+                }
+                legalEntry(onLeaveDocument = { backStack.removeLastOrNull() })
+            },
+    )
 }
 
 /**
- * 공용 법적 문서. 제품 그래프 밖의 목적지로 양쪽 그래프에 등록해, 뒤로가기가 진입한 화면으로 돌아간다.
- * 여기서 임의의 메인 목적지로 이동하는 경로는 두지 않는다.
+ * 메인 백스택. 하단 탭 셋은 셸이 소유한 탭별 백스택 안에 있고, 셸을 두르지 않는 화면은
+ * 셸 키 위에 쌓여 헤더도 하단 탭도 없이 전체 화면으로 그려진다.
  */
-private fun androidx.navigation.NavGraphBuilder.legalDestination(onLeaveDocument: () -> Unit) {
-    composable<LegalRoute> { LegalDocumentScreen(onLeaveDocument = onLeaveDocument) }
+@Composable
+private fun MainNavDisplay() {
+    val backStack = rememberNavBackStack(MainTabsRoute)
+    val screenTransition = rememberScreenTransition()
+    NavDisplay(
+        backStack = backStack,
+        entryDecorators = rememberManyakEntryDecorators(),
+        transitionSpec = screenTransition,
+        popTransitionSpec = screenTransition,
+        entryProvider =
+            entryProvider<NavKey> {
+                entry<MainTabsRoute> { MainTabsScreen() }
+                legalEntry(onLeaveDocument = { backStack.removeLastOrNull() })
+            },
+    )
 }
 
-private fun NavHostController.openLegalDocument(document: LegalDocument) {
-    navigate(LegalRoute(document))
+/**
+ * 공용 법적 문서. 제품 백스택 양쪽에 등록해 뒤로가기가 진입한 화면으로 돌아간다.
+ * 여기서 임의의 메인 목적지로 이동하는 경로는 두지 않는다.
+ */
+private fun EntryProviderScope<NavKey>.legalEntry(onLeaveDocument: () -> Unit) {
+    entry<LegalRoute> { route ->
+        LegalDocumentScreen(document = route.document, onLeaveDocument = onLeaveDocument)
+    }
 }

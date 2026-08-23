@@ -130,6 +130,8 @@ dependencies {
     implementation(projects.core.navigation)
     implementation(projects.feature.login)
     implementation(projects.feature.legal)
+    implementation(projects.feature.home)
+    implementation(projects.feature.chat)
     implementation(projects.feature.my)
 
     implementation(platform(libs.androidx.compose.bom))
@@ -142,7 +144,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
-    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.navigation3.ui)
+    implementation(libs.androidx.lifecycle.viewmodel.navigation3)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

@@ -124,6 +124,7 @@ rounded:
 sizes:
   control: 48dp
   icon: 20dp
+  tab-icon: 24dp
   logo: 24dp
 
 spacing:
@@ -237,6 +238,27 @@ components:
     textColor: "{colors.text}"
     typography: "{typography.body-reading}"
     padding: "{spacing.gutter}"
+  section-header:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.text}"
+    typography: "{typography.title-medium}"
+    minHeight: 64dp
+    padding: "{spacing.gutter}"
+  tab-bar:
+    backgroundColor: "{colors.surface}"
+    borderTopColor: "{colors.border}"
+    borderTopWidth: 1dp
+    minHeight: 80dp
+  tab-bar-item-selected:
+    iconColor: "{colors.text}"
+    iconSize: "{sizes.tab-icon}"
+    textColor: "{colors.text}"
+    typography: "{typography.label-small}"
+  tab-bar-item-unselected:
+    iconColor: "{colors.text-subtle}"
+    iconSize: "{sizes.tab-icon}"
+    textColor: "{colors.text-subtle}"
+    typography: "{typography.label-small}"
   logo-manyak:
     asset: "res/drawable/ic_logo_manyak.xml"
     color: "{colors.brand}"
@@ -270,7 +292,7 @@ components:
 
 ## 코드 대응
 
-`app/src/main/java/app/manyak/ui/theme/`
+`core/ui/src/main/java/app/manyak/core/ui/theme/`
 
 | 파일 | 내용 |
 | --- | --- |
@@ -278,7 +300,18 @@ components:
 | `Type.kt` | `Pretendard`·`MaruBuri` FontFamily와 타이포 롤 9종 |
 | `ManyakSpacing.kt` | 여백 8단계 |
 | `ManyakShapes.kt` | 모서리 5종 |
+| `ManyakSizes.kt` | 크기 4종 |
+| `ManyakMotion.kt` | 전환 시간 1종 |
 | `Theme.kt` | `ManyakTheme` 컴포저블·접근자, M3 슬롯 파생 |
+
+`core/ui/src/main/java/app/manyak/core/ui/component/`
+
+| 파일 | 내용 |
+| --- | --- |
+| `ManyakLogo.kt` | 로고 락업. 높이는 토큰, 폭은 원본 비율 |
+| `ManyakSectionHeader.kt` | 메인 탭 상단 헤더 |
+| `ManyakNavigationBar.kt` · `ManyakNavigationItem.kt` | 하단 탭 바와 그 항목 |
+| `ProgressIndicator.kt` | 로딩 스피너와 지연 표시 헬퍼 |
 
 이름은 세 표기가 1:1로 대응합니다 — 이 문서 `{colors.text-subtle}` ↔ Kotlin `ManyakTheme.colors.textSubtle` ↔ 토큰 JSON `color.text.subtle`.
 
@@ -406,11 +439,32 @@ components:
 | --- | --- | --- |
 | `{sizes.control}` | 48dp | 버튼·입력창·탭처럼 탭 가능한 컨트롤의 높이 |
 | `{sizes.icon}` | 20dp | 라벨 옆 아이콘·제공자 로고 |
+| `{sizes.tab-icon}` | 24dp | 하단 탭 아이콘 |
 | `{sizes.logo}` | 24dp | 마냑 로고 락업의 높이. 폭은 원본 비율(89:32)로 따라간다 |
+
+`{sizes.tab-icon}`이 `{sizes.icon}`보다 큰 이유는 놓이는 자리가 다르기 때문이다. `{sizes.icon}`은 같은 줄의
+라벨 옆에 붙어 글자 크기에 맞추지만, 탭 아이콘은 라벨 위에 놓인 탭의 주된 시각 요소다. 웹 하단
+네비게이션도 같은 24px이다.
 
 `{sizes.control}`은 안드로이드 최소 터치 타깃과 같은 값이다. Material3 기본 버튼은 시각 높이 40dp 에
 터치 영역만 48dp 로 넓히므로 **보이는 크기와 눌리는 크기가 어긋난다** — 그 차이를 없애려고 둘을 맞췄다.
 토큰 정본에는 높이가 없어 이 값은 이 레포가 소유한다.
+
+## 모션
+
+| 토큰 | 값 | 쓰임 |
+| --- | --- | --- |
+| `{motion.screen-transition}` | 150ms | 화면·탭이 바뀔 때의 교차 페이드 |
+
+토큰 정본에 모션이 없어 이 값도 이 레포가 소유한다. 시간만 정하고 무엇을 움직일지는 쓰는 쪽이 정한다.
+
+**전환은 짧다.** 내비게이션 라이브러리 기본값은 700ms 인데, 하단 탭처럼 자주 오가는 전환에서는
+눌렀는데 뒤늦게 따라오는 느낌을 준다. 150ms 는 전환이 있었다는 것만 알리고 비켜선다.
+
+**예측형 뒤로가기(predictive back)는 예외로 두고 라이브러리 기본값을 쓴다.** 이쪽 애니메이션은 장식이
+아니라 손가락을 따라오는 제스처 피드백 그 자체라, 짧게 만들면 제스처가 반응하지 않는 것처럼 보인다.
+
+**눌림 상태에는 애니메이션을 쓰지 않는다.** 색 변화로만 말한다.
 
 ## 모양
 
@@ -460,6 +514,20 @@ components:
 
 **`story-body`** — 배경 `{colors.surface}`, 텍스트 `{colors.text}` + `{typography.body-reading}`, 좌우 여백 `{spacing.gutter}`. 이 시스템에서 MaruBuri가 나타나는 유일한 자리입니다.
 
+### 셸
+
+> 셸의 두 컴포넌트는 **M3 컴포넌트 위에 색만 얹어** 만든다. 인셋·높이·최소 터치 타깃·시맨틱을 직접 계산하지 않기 위해서다. 이 시스템에 없는 요소만 골라 지운다.
+
+**`section-header`** — 메인 탭의 상단 헤더. `TopAppBar` 위에 배경 `{colors.surface}`와 제목 색 `{colors.text}`를 얹는다. 좌우 여백은 앱 바 기본값이 16dp 라 `{spacing.gutter}`와 같고, 로고와 섹션 이름(`{typography.title-medium}`) 사이도 `{spacing.gutter}`다. 높이는 최소 64dp 이고 제목이 커지면 함께 늘어난다. 구분선과 그림자를 두지 않는다. `TopAppBar`가 아직 실험 API 라 `@OptIn`이 필요하며, 사용처를 이 컴포넌트 하나로 묶어 두었다.
+
+**`tab-bar`** — 홈·채팅·마이 고정 3탭. 배경 `{colors.surface}`, 위쪽 경계 `{colors.border}` 1dp. 아이콘(`{sizes.tab-icon}`) 아래에 이름을 `{typography.label-small}`로 둔다. 선택은 filled 아이콘 + `{colors.text}`, 비선택은 outline 아이콘 + `{colors.text-subtle}`이고 아이콘과 라벨이 같은 색을 쓴다. 라벨이 이름을 맡으므로 **아이콘은 장식으로 두고 접근성 이름을 붙이지 않는다** — 둘 다 붙이면 탐색 서비스가 같은 이름을 두 번 읽는다. 선택을 색 하나로만 구분하지 않고 아이콘 모양을 함께 바꾼다.
+
+**위쪽 경계선을 두는 이유는 바 배경이 화면 바탕과 같은 `{colors.surface}`이기 때문이다.** 콘텐츠는 바 아래로 흘러 들어가므로, 경계선이 없으면 어디까지가 콘텐츠인지 드러나지 않는다. 이 시스템은 그림자를 쓰지 않으니 경계선이 유일한 수단이다. 상단 헤더는 반대다 — 헤더 위로는 아무것도 흐르지 않아 구분할 대상이 없다.
+
+`NavigationBar` 위에서 지우는 것은 둘이다. **알약 모양 선택 표시자**는 표시자 색을 투명으로 두고, **눌림 피드백**은 `LocalRippleConfiguration`에 `null`을 내려 끈다 — 탭을 누르면 아이콘 모양과 색이 곧바로 바뀌므로 그 변화 자체가 반응이다. 바 높이·최소 터치 타깃·하단 안전 영역은 컴포넌트가 처리한다.
+
+선택에 `{colors.brand}` 계열을 쓰지 않는 것은 **이 시스템에서 초록이 "지금 누를 것"을 뜻하기 때문이다.** 하단 바는 늘 떠 있는 chrome 이라 초록을 상시 띄우면 화면 안의 주 동작과 강조가 겹치고, 어느 쪽이 다음 행동인지 흐려진다. 선택 여부는 아이콘 모양이 이미 말하므로 색은 위계(`{colors.text}` ↔ `{colors.text-subtle}`)만 맡는다.
+
 ### 로고
 
 **`logo-google`** — `res/drawable/ic_logo_google.xml`. 공식 4색 G를 그대로 씁니다. **tint·변형·재색칠 금지.**
@@ -505,11 +573,10 @@ components:
 
 ## 알려진 공백
 
-- **공용 컴포넌트가 없습니다.** `components:`는 토큰 용도에서 파생한 명세이고, 실제 컴포저블은 화면 작업과 함께 만듭니다.
+- **`components:` 명세 대부분이 아직 컴포저블이 아닙니다.** 실제로 있는 것은 위 `component/` 표의 넷뿐이고, 버튼·입력·카드·배너는 화면 코드가 조합으로 만들고 있습니다. 두 번째 사용처가 생길 때 올립니다.
 - **제목 굵기가 웹과 한 단계 다릅니다.** 토큰은 SemiBold(600)지만 앱은 Medium(500)입니다. 가변 폰트를 쓰는 웹은 600 그대로입니다.
 - **M3 확장 슬롯**(`*Fixed` 색, `*Emphasized` 타이포 등)은 파생 대상이 아닙니다. 해당 슬롯을 읽는 컴포넌트를 쓰게 되면 파생을 넓힙니다.
 - **폰트가 APK에서 약 5.3MB**를 차지합니다(원본 14MB, 압축 후). 줄여야 하면 Pretendard 공식 subset 빌드로 교체합니다.
 - **태블릿·폴더블·가로 모드 정책이 없습니다.**
 - **컨트롤 높이(`sizes.*`)는 토큰 정본이 아니라 이 레포가 정한 값입니다.** 웹과 맞추려면 토큰 생성기 쪽에 크기 층을 추가해야 합니다.
-- **모션·전환 토큰이 없습니다.** 눌림 상태는 색 변화로만 정의되어 있습니다.
-- **디자인 시스템의 최종 위치는 `:core:ui`입니다**(하네스 §3-3-2). 아직 그 모듈이 없어 `:app`에 두었고, 만들 때 `ui/theme/`·`res/font/`·로고 drawable을 통째로 옮깁니다.
+- **모션 토큰이 화면 전환 하나뿐입니다.** 눌림 상태는 여전히 색 변화로만 정의되어 있고, 등장·퇴장·스켈레톤 같은 나머지 모션은 정의되지 않았습니다. 필요해지는 시점에 `{motion.*}`에 단계를 추가합니다.
