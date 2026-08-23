@@ -27,6 +27,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import app.manyak.core.domain.session.SessionState
+import app.manyak.core.navigation.CreateKeywordRoute
 import app.manyak.core.navigation.LegalRoute
 import app.manyak.core.navigation.LoginRoute
 import app.manyak.core.navigation.MainTabsRoute
@@ -35,6 +36,7 @@ import app.manyak.core.ui.component.ManyakProgressIndicator
 import app.manyak.core.ui.component.rememberDelayedProgressVisibility
 import app.manyak.core.ui.error.messageResOrNull
 import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.feature.create.CreateKeywordScreen
 import app.manyak.feature.legal.LegalDocumentScreen
 import app.manyak.feature.login.LoginScreen
 
@@ -165,7 +167,14 @@ private fun MainNavDisplay() {
         popTransitionSpec = screenTransition,
         entryProvider =
             entryProvider<NavKey> {
-                entry<MainTabsRoute> { MainTabsScreen() }
+                entry<MainTabsRoute> {
+                    MainTabsScreen(onCreateStory = { backStack.add(CreateKeywordRoute) })
+                }
+                // 간편 제작 퍼널은 단계마다 목적지를 두고 다음 단계 이동을 push 로 표현한다.
+                // 키워드 단계의 뒤로가기는 이탈 가드 없이 진입 전 화면으로 나간다.
+                entry<CreateKeywordRoute> {
+                    CreateKeywordScreen(onLeaveFunnel = { backStack.removeLastOrNull() })
+                }
                 legalEntry(onLeaveDocument = { backStack.removeLastOrNull() })
             },
     )

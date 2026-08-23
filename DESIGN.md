@@ -259,6 +259,21 @@ components:
     iconSize: "{sizes.tab-icon}"
     textColor: "{colors.text-subtle}"
     typography: "{typography.label-small}"
+  fab:
+    backgroundColor: "{colors.background-brand-bold}"
+    iconColor: "{colors.text-inverse}"
+    rounded: "{rounded.card}"
+    size: 56dp
+  funnel-header:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.text}"
+    typography: "{typography.title-medium}"
+    minHeight: 56dp
+  step-indicator:
+    activeColor: "{colors.background-brand-bold}"
+    inactiveColor: "{colors.border}"
+    height: 4dp
+    rounded: "{rounded.pill}"
   logo-manyak:
     asset: "res/drawable/ic_logo_manyak.xml"
     color: "{colors.brand}"
@@ -527,6 +542,19 @@ components:
 `NavigationBar` 위에서 지우는 것은 둘이다. **알약 모양 선택 표시자**는 표시자 색을 투명으로 두고, **눌림 피드백**은 `LocalRippleConfiguration`에 `null`을 내려 끈다 — 탭을 누르면 아이콘 모양과 색이 곧바로 바뀌므로 그 변화 자체가 반응이다. 바 높이·최소 터치 타깃·하단 안전 영역은 컴포넌트가 처리한다.
 
 선택에 `{colors.brand}` 계열을 쓰지 않는 것은 **이 시스템에서 초록이 "지금 누를 것"을 뜻하기 때문이다.** 하단 바는 늘 떠 있는 chrome 이라 초록을 상시 띄우면 화면 안의 주 동작과 강조가 겹치고, 어느 쪽이 다음 행동인지 흐려진다. 선택 여부는 아이콘 모양이 이미 말하므로 색은 위계(`{colors.text}` ↔ `{colors.text-subtle}`)만 맡는다.
+
+### 퍼널
+
+> 간편 제작 퍼널은 셸을 두르지 않는 전체 화면이라 chrome 을 화면이 직접 그린다. 아래 세 컴포넌트는
+> 지금 `:feature:create`(FAB 은 `:feature:home`)가 소유하고, 두 번째 모듈 사용처가 생기면 `:core:ui`로 올린다.
+
+**`fab`** — 홈 우측 하단의 제작 진입 버튼. 배경 `{colors.background-brand-bold}`, 아이콘 `{colors.text-inverse}`, 모서리 `{rounded.card}`, 크기 56dp(M3 FAB 기본). **고도(그림자)를 0으로 없앤다** — 이 시스템은 층을 표면 색으로만 나눈다. 하단 바에 초록을 두지 않는 것과 어긋나지 않는다 — FAB 은 상시 chrome 이 아니라 화면의 주 동작 그 자체라서, 초록이 "지금 누를 것"을 가리킨다는 규칙 그대로다.
+
+**`funnel-header`** — 뒤로가기 아이콘 버튼과 화면 제목(`{typography.title-medium}`)을 나란히 둔다. 최소 높이 56dp — 웹 퍼널 헤더(h-14)와 같고, 섹션 헤더(64dp)보다 낮은 것은 로고 락업 없이 아이콘 버튼과 제목만 있기 때문이다. 구분선과 그림자를 두지 않는다.
+
+**`step-indicator`** — 헤더 아래 얇은 막대 분절로 퍼널 진행을 표시한다. 높이 4dp, 모서리 `{rounded.pill}`, 분절 사이 `{spacing.compact}`. 완료·현재 단계는 `{colors.background-brand-bold}`, 미도달 단계는 `{colors.border}`. 단계 이름은 시각 라벨 없이 접근성 텍스트로만 제공하고, 막대들은 장식이라 시맨틱을 하나로 묶는다. 채움에 주 동작 색을 쓰는 이유는 진행이 곧 "지금 하는 일"이기 때문이고, 미도달을 `{colors.background-neutral}`이 아니라 `{colors.border}`로 두는 이유는 표면(`{colors.surface}`) 위에서 전자가 거의 보이지 않기 때문이다.
+
+카테고리 탭은 M3 `TabRow` 기본을 쓴다 — 컨테이너 `{colors.surface}`, 선택 라벨 `{colors.text}`, 비선택 `{colors.text-subtle}`, 잠금 `{colors.text-disabled}`, 필수 표시 `*`는 `{colors.text-danger}`. 선택 표시선은 M3 슬롯 파생(primary = `{colors.background-brand-bold}`)을 그대로 둔다 — 탭은 하단 바와 달리 화면 안의 상호작용 요소라 초록이 맞다.
 
 ### 로고
 

@@ -36,6 +36,13 @@ data object ChatListRoute : NavKey
 data object MyRoute : NavKey
 
 /**
+ * 간편 제작 퍼널의 키워드 선택 단계. 퍼널은 단계마다 목적지를 두고 다음 단계 이동을 push 로 표현하므로,
+ * 시스템 뒤로가기가 곧 이전 단계 복귀가 된다. 셸을 두르지 않는 전체 화면이라 [MainTabsRoute] 위에 쌓인다.
+ */
+@Serializable
+data object CreateKeywordRoute : NavKey
+
+/**
  * 공용 법적 문서. **제품 백스택 밖에 두고 양쪽 백스택 모두에 등록해** 인증 상태와 무관하게 연다.
  * 뒤로가기는 진입한 화면으로 돌아가고, 여기서 임의의 메인 목적지로 이동하는 경로는 두지 않는다.
  */

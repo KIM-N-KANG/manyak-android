@@ -28,6 +28,30 @@
     <string name="main_tab_chat">채팅</string>
     <string name="main_tab_my">마이</string>
 
+    <!-- 홈 -->
+    <string name="home_create_story">스토리 만들기</string>
+
+    <!-- 간편 제작 퍼널. 문구 정본은 공통 클라이언트 스펙이고 앱이 새 문구를 만들지 않는다. -->
+    <string name="create_title">스토리 만들기</string>
+    <string name="create_step_keyword">키워드 선택</string>
+    <string name="create_step_storyline">스토리라인 선택</string>
+    <string name="create_step_additional_info">추가 정보 입력</string>
+    <!-- %1$s 는 단계 이름, %2$d·%3$d 는 현재/전체 단계 수. 인디케이터의 접근성 텍스트에만 쓴다. -->
+    <string name="create_step_progress">%1$s 단계 (%2$d/%3$d)</string>
+    <string name="create_keyword_title">만들고 싶은 스토리의\n키워드를 선택해주세요</string>
+    <string name="create_keyword_description">선택한 키워드로 AI가 스토리라인을 생성해요</string>
+    <string name="create_tab_genre">장르</string>
+    <string name="create_tab_protagonist">주인공 특징</string>
+    <string name="create_tab_supporting_character">주변 인물 특징</string>
+    <string name="create_tab_genre_description">스토리의 분위기와 소재를 정해요</string>
+    <string name="create_tab_protagonist_description">스토리 속 나를 설정해요</string>
+    <string name="create_tab_supporting_character_description">주변 인물들을 설정해요 (최대 5명)</string>
+    <string name="create_supporting_character_count">현재 %1$d명</string>
+    <string name="create_cta_previous">이전</string>
+    <string name="create_cta_next">다음</string>
+    <string name="create_cta_generate_storylines">스토리라인 만들기</string>
+    <string name="create_error_select_keyword">키워드를 하나 이상 선택해주세요</string>
+
     <!-- 마이 -->
     <string name="my_logout">로그아웃</string>
     <string name="my_logout_in_progress">로그아웃하는 중</string>
