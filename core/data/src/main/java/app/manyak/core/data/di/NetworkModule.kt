@@ -1,6 +1,7 @@
 package app.manyak.core.data.di
 
 import app.manyak.core.data.api.AuthApi
+import app.manyak.core.data.api.SimpleStoryApi
 import app.manyak.core.data.api.UserApi
 import app.manyak.core.data.interceptor.AuthInterceptor
 import app.manyak.core.data.interceptor.DeviceIdInterceptor
@@ -81,6 +82,14 @@ object NetworkModule {
         config: DataLayerConfig,
         json: Json,
     ): AuthApi = retrofit(client, config, json).create(AuthApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideSimpleStoryApi(
+        @PlainClient client: OkHttpClient,
+        config: DataLayerConfig,
+        json: Json,
+    ): SimpleStoryApi = retrofit(client, config, json).create(SimpleStoryApi::class.java)
 
     @Provides
     @Singleton

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,11 +21,12 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,13 +34,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.manyak.core.domain.story.StoryTag
+import app.manyak.core.domain.story.StoryTagCategory
 import app.manyak.core.ui.R
 import app.manyak.core.ui.theme.ManyakTheme
 
@@ -62,10 +63,7 @@ fun CreateKeywordScreen(
     CreateKeywordContent(
         state = state,
         onBack = onLeaveFunnel,
-        onSelectCategory = { category -> viewModel.onIntent(CreateKeywordIntent.SelectCategory(category)) },
-        onPrevious = { viewModel.onIntent(CreateKeywordIntent.GoPrevious) },
-        onNext = { viewModel.onIntent(CreateKeywordIntent.GoNext) },
-        onGenerateStorylines = { viewModel.onIntent(CreateKeywordIntent.GenerateStorylines) },
+        onIntent = viewModel::onIntent,
         modifier = modifier,
     )
 }
@@ -74,12 +72,12 @@ fun CreateKeywordScreen(
 private fun CreateKeywordContent(
     state: CreateKeywordUiState,
     onBack: () -> Unit,
-    onSelectCategory: (KeywordCategory) -> Unit,
-    onPrevious: () -> Unit,
-    onNext: () -> Unit,
-    onGenerateStorylines: () -> Unit,
+    onIntent: (CreateKeywordIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // 다이얼로그 열림은 표현 상태라 화면이 들고, 확정된 입력만 Intent 로 올라간다.
+    var addKeywordTarget by remember { mutableStateOf<KeywordTarget?>(null) }
+
     Column(
         modifier =
             modifier
@@ -98,15 +96,26 @@ private fun CreateKeywordContent(
                     .verticalScroll(rememberScrollState()),
         ) {
             KeywordStepTitle()
-            CategoryTabs(state = state, onSelectCategory = onSelectCategory)
+            CategoryTabs(state = state, onIntent = onIntent)
             CategoryDescription(state = state)
-            // 카테고리별 키워드 입력(태그 칩·인물 폼)은 다음 변경에서 이 자리에 붙는다.
+            CategoryContent(
+                state = state,
+                onIntent = onIntent,
+                onOpenAddKeyword = { target -> addKeywordTarget = target },
+            )
+            Spacer(modifier = Modifier.height(ManyakTheme.spacing.screenBottom))
         }
-        CreateKeywordFooter(
-            state = state,
-            onPrevious = onPrevious,
-            onNext = onNext,
-            onGenerateStorylines = onGenerateStorylines,
+        CreateKeywordFooter(state = state, onIntent = onIntent)
+    }
+
+    addKeywordTarget?.let { target ->
+        AddKeywordDialog(
+            categoryLabel = stringResource(target.category.labelRes),
+            onDismiss = { addKeywordTarget = null },
+            onSubmit = { name ->
+                onIntent(CreateKeywordIntent.AddCustomTag(target, name))
+                addKeywordTarget = null
+            },
         )
     }
 }
@@ -206,94 +215,6 @@ private fun KeywordStepTitle(modifier: Modifier = Modifier) {
     }
 }
 
-@Composable
-private fun CategoryTabs(
-    state: CreateKeywordUiState,
-    onSelectCategory: (KeywordCategory) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    TabRow(
-        modifier = modifier.fillMaxWidth(),
-        selectedTabIndex = state.activeCategory.ordinal,
-        containerColor = ManyakTheme.colors.surface,
-        contentColor = ManyakTheme.colors.text,
-    ) {
-        KeywordCategory.entries.forEach { category ->
-            val unlocked = state.isUnlocked(category)
-            Tab(
-                selected = category == state.activeCategory,
-                onClick = { onSelectCategory(category) },
-                enabled = unlocked,
-                text = {
-                    CategoryTabLabel(
-                        category = category,
-                        selected = category == state.activeCategory,
-                        unlocked = unlocked,
-                    )
-                },
-            )
-        }
-    }
-}
-
-@Composable
-private fun CategoryTabLabel(
-    category: KeywordCategory,
-    selected: Boolean,
-    unlocked: Boolean,
-) {
-    val labelColor =
-        when {
-            !unlocked -> ManyakTheme.colors.textDisabled
-            selected -> ManyakTheme.colors.text
-            else -> ManyakTheme.colors.textSubtle
-        }
-    val requiredMarkColor = if (unlocked) ManyakTheme.colors.textDanger else ManyakTheme.colors.textDisabled
-    val label =
-        buildAnnotatedString {
-            append(stringResource(category.labelRes))
-            if (category.required) {
-                withStyle(SpanStyle(color = requiredMarkColor)) { append("*") }
-            }
-        }
-    Text(
-        text = label,
-        style = ManyakTheme.typography.labelLarge,
-        color = labelColor,
-        maxLines = 1,
-    )
-}
-
-/**
- * 탭 아래의 카테고리 설명 줄. 주변 인물 탭에서는 오른쪽 끝에 현재 인원을 표시한다.
- */
-@Composable
-private fun CategoryDescription(
-    state: CreateKeywordUiState,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .padding(horizontal = ManyakTheme.spacing.gutter, vertical = ManyakTheme.spacing.component),
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(
-            text = stringResource(state.activeCategory.descriptionRes),
-            style = ManyakTheme.typography.bodySmall,
-            color = ManyakTheme.colors.textSubtle,
-        )
-        if (state.activeCategory == KeywordCategory.SUPPORTING_CHARACTER) {
-            Text(
-                text = stringResource(R.string.create_supporting_character_count, state.supportingCharacterCount),
-                style = ManyakTheme.typography.bodySmall,
-                color = ManyakTheme.colors.textSubtle,
-            )
-        }
-    }
-}
-
 /**
  * 하단 CTA. 필수 미충족 상태에서도 버튼은 활성이고, 누르면 이동하지 않고 버튼 위 푸터에 오류를
  * 표시한다. 오류가 있을 때만 푸터가 메시지 높이만큼 늘어난다.
@@ -301,9 +222,7 @@ private fun CategoryDescription(
 @Composable
 private fun CreateKeywordFooter(
     state: CreateKeywordUiState,
-    onPrevious: () -> Unit,
-    onNext: () -> Unit,
-    onGenerateStorylines: () -> Unit,
+    onIntent: (CreateKeywordIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val isFirstCategory = state.activeCategory.previous == null
@@ -316,77 +235,104 @@ private fun CreateKeywordFooter(
                 .padding(horizontal = ManyakTheme.spacing.gutter)
                 .padding(top = ManyakTheme.spacing.compact, bottom = ManyakTheme.spacing.gutter),
     ) {
-        if (state.validationErrorCategory == state.activeCategory) {
+        val footerErrorRes =
+            when {
+                state.validationErrorCategory == state.activeCategory -> R.string.create_error_select_keyword
+                state.showDuplicateNameFooterError -> R.string.create_error_duplicate_name_footer
+                else -> null
+            }
+        if (footerErrorRes != null) {
             Text(
                 modifier = Modifier.padding(bottom = ManyakTheme.spacing.compact),
-                text = stringResource(R.string.create_error_select_keyword),
+                text = stringResource(footerErrorRes),
                 style = ManyakTheme.typography.bodySmall,
                 color = ManyakTheme.colors.textDanger,
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact)) {
-            if (!isFirstCategory) {
-                Button(
-                    modifier =
-                        Modifier
-                            .weight(1f)
-                            .heightIn(min = ManyakTheme.sizes.control),
-                    onClick = onPrevious,
-                    shape = ManyakTheme.shapes.control,
-                    colors =
-                        ButtonDefaults.buttonColors(
-                            containerColor = ManyakTheme.colors.backgroundNeutral,
-                            contentColor = ManyakTheme.colors.text,
-                        ),
-                ) {
-                    Text(text = stringResource(R.string.create_cta_previous), style = ManyakTheme.typography.labelLarge)
-                }
-            }
+        FooterButtons(
+            isFirstCategory = isFirstCategory,
+            isLastCategory = isLastCategory,
+            onIntent = onIntent,
+        )
+    }
+}
+
+@Composable
+private fun FooterButtons(
+    isFirstCategory: Boolean,
+    isLastCategory: Boolean,
+    onIntent: (CreateKeywordIntent) -> Unit,
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact)) {
+        if (!isFirstCategory) {
             Button(
                 modifier =
                     Modifier
-                        .weight(if (isFirstCategory) 1f else 2f)
+                        .weight(1f)
                         .heightIn(min = ManyakTheme.sizes.control),
-                onClick = if (isLastCategory) onGenerateStorylines else onNext,
+                onClick = { onIntent(CreateKeywordIntent.GoPrevious) },
                 shape = ManyakTheme.shapes.control,
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = ManyakTheme.colors.backgroundNeutral,
+                        contentColor = ManyakTheme.colors.text,
+                    ),
             ) {
-                val labelRes =
-                    if (isLastCategory) R.string.create_cta_generate_storylines else R.string.create_cta_next
-                Text(text = stringResource(labelRes), style = ManyakTheme.typography.labelLarge)
+                Text(text = stringResource(R.string.create_cta_previous), style = ManyakTheme.typography.labelLarge)
             }
+        }
+        Button(
+            modifier =
+                Modifier
+                    .weight(if (isFirstCategory) 1f else 2f)
+                    .heightIn(min = ManyakTheme.sizes.control),
+            onClick = {
+                val intent =
+                    if (isLastCategory) {
+                        CreateKeywordIntent.GenerateStorylines
+                    } else {
+                        CreateKeywordIntent.GoNext
+                    }
+                onIntent(intent)
+            },
+            shape = ManyakTheme.shapes.control,
+            // 웹 primary 와 같은 브랜드 원색을 쓰는 퍼널 주 CTA 예외 — 근거는 DESIGN.md 퍼널 절.
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor = ManyakTheme.colors.brand,
+                    contentColor = ManyakTheme.colors.textInverse,
+                ),
+        ) {
+            val labelRes =
+                if (isLastCategory) R.string.create_cta_generate_storylines else R.string.create_cta_next
+            Text(text = stringResource(labelRes), style = ManyakTheme.typography.labelLarge)
         }
     }
 }
 
-private val KeywordCategory.labelRes: Int
-    @StringRes
-    get() =
-        when (this) {
-            KeywordCategory.GENRE -> R.string.create_tab_genre
-            KeywordCategory.PROTAGONIST -> R.string.create_tab_protagonist
-            KeywordCategory.SUPPORTING_CHARACTER -> R.string.create_tab_supporting_character
-        }
-
-private val KeywordCategory.descriptionRes: Int
-    @StringRes
-    get() =
-        when (this) {
-            KeywordCategory.GENRE -> R.string.create_tab_genre_description
-            KeywordCategory.PROTAGONIST -> R.string.create_tab_protagonist_description
-            KeywordCategory.SUPPORTING_CHARACTER -> R.string.create_tab_supporting_character_description
-        }
+private fun previewState(): CreateKeywordUiState =
+    CreateKeywordUiState(
+        providedTags =
+            ProvidedTags.Loaded(
+                mapOf(
+                    StoryTagCategory.GENRE to
+                        listOf(
+                            StoryTag(id = 1, name = "로맨스", category = StoryTagCategory.GENRE),
+                            StoryTag(id = 2, name = "판타지", category = StoryTagCategory.GENRE),
+                            StoryTag(id = 3, name = "미스터리", category = StoryTagCategory.GENRE),
+                        ),
+                ),
+            ),
+    )
 
 @Preview(showBackground = true, name = "키워드 선택 · 라이트")
 @Composable
 private fun CreateKeywordScreenPreview() {
     ManyakTheme(darkTheme = false) {
         CreateKeywordContent(
-            state = CreateKeywordUiState(),
+            state = previewState(),
             onBack = {},
-            onSelectCategory = {},
-            onPrevious = {},
-            onNext = {},
-            onGenerateStorylines = {},
+            onIntent = {},
         )
     }
 }
@@ -396,12 +342,9 @@ private fun CreateKeywordScreenPreview() {
 private fun CreateKeywordScreenValidationErrorPreview() {
     ManyakTheme(darkTheme = false) {
         CreateKeywordContent(
-            state = CreateKeywordUiState(validationErrorCategory = KeywordCategory.GENRE),
+            state = previewState().copy(validationErrorCategory = StoryTagCategory.GENRE),
             onBack = {},
-            onSelectCategory = {},
-            onPrevious = {},
-            onNext = {},
-            onGenerateStorylines = {},
+            onIntent = {},
         )
     }
 }

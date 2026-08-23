@@ -47,6 +47,38 @@
     <string name="create_tab_protagonist_description">스토리 속 나를 설정해요</string>
     <string name="create_tab_supporting_character_description">주변 인물들을 설정해요 (최대 5명)</string>
     <string name="create_supporting_character_count">현재 %1$d명</string>
+    <string name="create_tags_load_failed">키워드를 불러오지 못했어요</string>
+    <string name="create_section_genre">장르 (최대 3개)</string>
+    <string name="create_section_feature">특징 (최대 3개)</string>
+    <string name="create_section_basic_info">기본 정보</string>
+    <string name="create_add_keyword">키워드 추가</string>
+    <!-- %1$s 는 카테고리 탭 라벨(예: 장르). -->
+    <string name="create_add_keyword_dialog_title">%1$s 키워드 추가</string>
+    <string name="create_add_keyword_dialog_description">원하는 키워드를 입력해주세요</string>
+    <string name="create_add_keyword_error_empty">키워드를 입력해주세요</string>
+    <!-- %1$d 는 현재 글자 수, %2$d 는 상한. 키워드·인물 이름 입력의 카운터에 함께 쓴다. -->
+    <string name="create_input_counter">%1$d / %2$d</string>
+    <string name="create_dialog_close">닫기</string>
+    <string name="create_dialog_add">추가하기</string>
+    <string name="create_name_placeholder_protagonist">예: 서지우</string>
+    <string name="create_gender_random">랜덤 성별</string>
+    <string name="create_gender_male">남성</string>
+    <string name="create_gender_female">여성</string>
+    <string name="create_character_random_hint">비워두면 랜덤으로 설정해요</string>
+    <string name="create_feature_random_hint">선택하지 않으면 랜덤으로 설정해요</string>
+    <string name="create_supporting_card_label">주변 인물 %1$d</string>
+    <string name="create_supporting_delete">%1$s 삭제</string>
+    <string name="create_add_character">인물 추가</string>
+    <string name="create_error_duplicate_name">이미 사용한 이름이에요</string>
+    <string name="create_error_duplicate_name_footer">인물 이름이 겹치지 않게 해주세요</string>
+    <!-- 주변 인물 이름 placeholder. 카드 순서대로 순환한다. -->
+    <string-array name="create_name_placeholders_supporting">
+        <item>예: 한도윤</item>
+        <item>예: 이서연</item>
+        <item>예: 박시우</item>
+        <item>예: 정하린</item>
+        <item>예: 최은우</item>
+    </string-array>
     <string name="create_cta_previous">이전</string>
     <string name="create_cta_next">다음</string>
     <string name="create_cta_generate_storylines">스토리라인 만들기</string>
