@@ -59,7 +59,6 @@ private fun RowScope.NavigationTab(item: ManyakNavigationItem) {
             Icon(
                 modifier = Modifier.size(ManyakTheme.sizes.tabIcon),
                 painter = painterResource(if (item.selected) item.selectedIconRes else item.unselectedIconRes),
-                // 이름은 아래 라벨이 맡는다. 여기에도 넣으면 탐색 서비스가 같은 이름을 두 번 읽는다.
                 contentDescription = null,
             )
         },

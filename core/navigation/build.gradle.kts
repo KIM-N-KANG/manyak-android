@@ -48,6 +48,6 @@ android {
 }
 
 dependencies {
-    api(libs.androidx.navigation.compose)
+    api(libs.androidx.navigation3.runtime)
     api(libs.kotlinx.serialization.json)
 }
