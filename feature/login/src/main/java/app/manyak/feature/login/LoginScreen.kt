@@ -23,6 +23,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.platform.LocalView
@@ -227,8 +228,13 @@ private fun ProviderButton(
     border: BorderStroke? = null,
 ) {
     val isBusy = state.inProgress != null
+    // 로그인 중에는 두 버튼을 함께 흐려 잠겼음을 드러낸다. 어느 쪽을 눌렀는지는 스피너가 알린다.
     Button(
-        modifier = Modifier.fillMaxWidth().height(ManyakTheme.sizes.control),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(ManyakTheme.sizes.control)
+                .alpha(if (isBusy) DISABLED_BUTTON_ALPHA else 1f),
         onClick = { onClick(provider) },
         enabled = !isBusy,
         shape = ManyakTheme.shapes.control,
@@ -309,6 +315,7 @@ private const val LOGO_ASPECT_RATIO = 89f / 32f
 
 private val ProviderButtonBorderWidth = 1.dp
 private const val HEADLINE_SHADOW_BLUR = 12f
+private const val DISABLED_BUTTON_ALPHA = 0.75f
 
 private val KakaoContainerColor = Color(0xFFFEE500)
 private val KakaoContentColor = Color(0xE6000000)
