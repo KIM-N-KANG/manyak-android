@@ -5,15 +5,22 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Scaffold
@@ -78,12 +85,20 @@ private fun DarkSystemBars() {
         controller?.isAppearanceLightStatusBars = false
         controller?.isAppearanceLightNavigationBars = false
         onDispose {
-            wasLightStatusBars?.let { controller?.isAppearanceLightStatusBars = it }
-            wasLightNavigationBars?.let { controller?.isAppearanceLightNavigationBars = it }
+            wasLightStatusBars?.let { controller.isAppearanceLightStatusBars = it }
+            wasLightNavigationBars?.let { controller.isAppearanceLightNavigationBars = it }
         }
     }
 }
 
+/**
+ * 세로 공간이 모자라면 콘텐츠 전체가 스크롤된다.
+ *
+ * 배치를 `weight` 스페이서가 아니라 [Arrangement.SpaceBetween] 과 최소 높이로 만든 이유는,
+ * 스크롤 컨테이너가 자식에게 무한 높이를 주기 때문이다 — 그 안의 `weight` 는 남는 공간을 나눌 수
+ * 없어 0 이 되고 위아래가 붙어 버린다. 최소 높이를 화면 높이로 잡으면 세로가 넉넉할 때의 배치는
+ * 그대로 유지되고, 큰 글자나 낮은 화면에서만 늘어나 스크롤이 생긴다.
+ */
 @Composable
 private fun LoginContent(
     state: LoginUiState,
@@ -101,45 +116,63 @@ private fun LoginContent(
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             containerColor = Color.Transparent,
+            // 배경 이미지는 화면 끝까지 두고, 콘텐츠만 시스템 바·컷아웃·키보드를 피한다.
+            contentWindowInsets = WindowInsets.safeDrawing,
         ) { innerPadding ->
-            Column(
+            BoxWithConstraints(
                 modifier =
                     Modifier
-                        .padding(innerPadding)
                         .fillMaxSize()
-                        .padding(horizontal = ManyakTheme.spacing.gutter),
-                horizontalAlignment = Alignment.Start,
+                        .padding(innerPadding),
             ) {
-                Image(
+                val viewportHeight = maxHeight
+                Column(
                     modifier =
                         Modifier
-                            .padding(top = ManyakTheme.spacing.screenTop)
-                            .height(ManyakTheme.sizes.logo)
-                            .aspectRatio(LOGO_ASPECT_RATIO),
-                    painter = painterResource(R.drawable.ic_logo_manyak),
-                    contentDescription = stringResource(R.string.app_logo_description),
-                )
-                Text(
-                    modifier = Modifier.padding(top = ManyakTheme.spacing.component),
-                    text = stringResource(R.string.login_headline),
-                    style = ManyakTheme.typography.titleLarge.copy(shadow = headlineShadow()),
-                    color = ManyakTheme.colors.text,
-                )
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(horizontal = ManyakTheme.spacing.gutter)
+                            .heightIn(min = viewportHeight),
+                    horizontalAlignment = Alignment.Start,
+                    verticalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    LoginHeadline(modifier = Modifier.padding(bottom = ManyakTheme.spacing.block))
+                    Column {
+                        LoginMessages(state = state)
 
-                Spacer(modifier = Modifier.weight(1f))
+                        ProviderButtons(state = state, onSignIn = onSignIn)
 
-                LoginMessages(state = state)
+                        LegalConsent(
+                            modifier = Modifier.padding(top = ManyakTheme.spacing.component),
+                            onOpenLegalDocument = onOpenLegalDocument,
+                        )
 
-                ProviderButtons(state = state, onSignIn = onSignIn)
-
-                LegalConsent(
-                    modifier = Modifier.padding(top = ManyakTheme.spacing.component),
-                    onOpenLegalDocument = onOpenLegalDocument,
-                )
-
-                Spacer(modifier = Modifier.height(ManyakTheme.spacing.block))
+                        Spacer(modifier = Modifier.height(ManyakTheme.spacing.block))
+                    }
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun LoginHeadline(modifier: Modifier = Modifier) {
+    Column(modifier = modifier) {
+        Image(
+            modifier =
+                Modifier
+                    .padding(top = ManyakTheme.spacing.screenTop)
+                    .height(ManyakTheme.sizes.logo)
+                    .aspectRatio(LOGO_ASPECT_RATIO),
+            painter = painterResource(R.drawable.ic_logo_manyak),
+            contentDescription = stringResource(R.string.app_logo_description),
+        )
+        Text(
+            modifier = Modifier.padding(top = ManyakTheme.spacing.component),
+            text = stringResource(R.string.login_headline),
+            style = ManyakTheme.typography.titleLarge.copy(shadow = headlineShadow()),
+            color = ManyakTheme.colors.text,
+        )
     }
 }
 
@@ -228,17 +261,21 @@ private fun ProviderButton(
     border: BorderStroke? = null,
 ) {
     val isBusy = state.inProgress != null
-    // 로그인 중에는 두 버튼을 함께 흐려 잠겼음을 드러낸다. 어느 쪽을 눌렀는지는 스피너가 알린다.
     Button(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .height(ManyakTheme.sizes.control)
+                .heightIn(min = ManyakTheme.sizes.control)
                 .alpha(if (isBusy) DISABLED_BUTTON_ALPHA else 1f),
         onClick = { onClick(provider) },
         enabled = !isBusy,
         shape = ManyakTheme.shapes.control,
         border = border,
+        contentPadding =
+            PaddingValues(
+                horizontal = ManyakTheme.spacing.component,
+                vertical = ManyakTheme.spacing.compact,
+            ),
         colors =
             ButtonDefaults.buttonColors(
                 containerColor = containerColor,
