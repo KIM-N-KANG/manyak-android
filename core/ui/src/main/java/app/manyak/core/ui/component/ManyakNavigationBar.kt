@@ -1,7 +1,9 @@
 package app.manyak.core.ui.component
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.NavigationBar
@@ -15,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.R
 import app.manyak.core.ui.theme.ManyakTheme
 
@@ -28,18 +31,21 @@ import app.manyak.core.ui.theme.ManyakTheme
  * - **눌림 피드백** — [NavigationBarItem] 은 표시자 자리에 리플을 그리고 그 배치는 공개 API 로 바꿀
  *   수 없다. [LocalRippleConfiguration] 에 `null` 을 내려 이 하위 트리의 리플을 끈다. 탭을 누르면
  *   아이콘 모양과 색이 곧바로 바뀌므로 그 변화 자체가 반응이다.
+ *
+ * 대신 **위쪽 경계선을 더한다.** 바 배경이 화면 바탕과 같은 색이고 이 시스템은 그림자를 쓰지 않으므로,
+ * 경계선이 없으면 콘텐츠가 바 아래로 흘러 들어갈 때 어디까지가 콘텐츠인지 드러나지 않는다.
  */
 @Composable
 fun ManyakNavigationBar(
     items: List<ManyakNavigationItem>,
     modifier: Modifier = Modifier,
 ) {
-    CompositionLocalProvider(LocalRippleConfiguration provides null) {
-        NavigationBar(
-            modifier = modifier,
-            containerColor = ManyakTheme.colors.surface,
-        ) {
-            items.forEach { item -> NavigationTab(item) }
+    Column(modifier = modifier) {
+        HorizontalDivider(thickness = 1.dp, color = ManyakTheme.colors.border)
+        CompositionLocalProvider(LocalRippleConfiguration provides null) {
+            NavigationBar(containerColor = ManyakTheme.colors.surface) {
+                items.forEach { item -> NavigationTab(item) }
+            }
         }
     }
 }

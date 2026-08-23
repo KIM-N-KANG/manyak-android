@@ -246,7 +246,9 @@ components:
     padding: "{spacing.gutter}"
   tab-bar:
     backgroundColor: "{colors.surface}"
-    minHeight: 80dp"
+    borderTopColor: "{colors.border}"
+    borderTopWidth: 1dp
+    minHeight: 80dp
   tab-bar-item-selected:
     iconColor: "{colors.text}"
     iconSize: "{sizes.tab-icon}"
@@ -518,7 +520,9 @@ components:
 
 **`section-header`** — 메인 탭의 상단 헤더. `TopAppBar` 위에 배경 `{colors.surface}`와 제목 색 `{colors.text}`를 얹는다. 좌우 여백은 앱 바 기본값이 16dp 라 `{spacing.gutter}`와 같고, 로고와 섹션 이름(`{typography.title-medium}`) 사이도 `{spacing.gutter}`다. 높이는 최소 64dp 이고 제목이 커지면 함께 늘어난다. 구분선과 그림자를 두지 않는다. `TopAppBar`가 아직 실험 API 라 `@OptIn`이 필요하며, 사용처를 이 컴포넌트 하나로 묶어 두었다.
 
-**`tab-bar`** — 홈·채팅·마이 고정 3탭. 배경 `{colors.surface}`. 아이콘(`{sizes.tab-icon}`) 아래에 이름을 `{typography.label-small}`로 둔다. 선택은 filled 아이콘 + `{colors.text}`, 비선택은 outline 아이콘 + `{colors.text-subtle}`이고 아이콘과 라벨이 같은 색을 쓴다. 라벨이 이름을 맡으므로 **아이콘은 장식으로 두고 접근성 이름을 붙이지 않는다** — 둘 다 붙이면 탐색 서비스가 같은 이름을 두 번 읽는다. 선택을 색 하나로만 구분하지 않고 아이콘 모양을 함께 바꾼다.
+**`tab-bar`** — 홈·채팅·마이 고정 3탭. 배경 `{colors.surface}`, 위쪽 경계 `{colors.border}` 1dp. 아이콘(`{sizes.tab-icon}`) 아래에 이름을 `{typography.label-small}`로 둔다. 선택은 filled 아이콘 + `{colors.text}`, 비선택은 outline 아이콘 + `{colors.text-subtle}`이고 아이콘과 라벨이 같은 색을 쓴다. 라벨이 이름을 맡으므로 **아이콘은 장식으로 두고 접근성 이름을 붙이지 않는다** — 둘 다 붙이면 탐색 서비스가 같은 이름을 두 번 읽는다. 선택을 색 하나로만 구분하지 않고 아이콘 모양을 함께 바꾼다.
+
+**위쪽 경계선을 두는 이유는 바 배경이 화면 바탕과 같은 `{colors.surface}`이기 때문이다.** 콘텐츠는 바 아래로 흘러 들어가므로, 경계선이 없으면 어디까지가 콘텐츠인지 드러나지 않는다. 이 시스템은 그림자를 쓰지 않으니 경계선이 유일한 수단이다. 상단 헤더는 반대다 — 헤더 위로는 아무것도 흐르지 않아 구분할 대상이 없다.
 
 `NavigationBar` 위에서 지우는 것은 둘이다. **알약 모양 선택 표시자**는 표시자 색을 투명으로 두고, **눌림 피드백**은 `LocalRippleConfiguration`에 `null`을 내려 끈다 — 탭을 누르면 아이콘 모양과 색이 곧바로 바뀌므로 그 변화 자체가 반응이다. 바 높이·최소 터치 타깃·하단 안전 영역은 컴포넌트가 처리한다.
 
