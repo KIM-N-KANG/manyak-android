@@ -134,9 +134,12 @@ private fun SessionProgress() {
 @Composable
 private fun AuthNavDisplay() {
     val backStack = rememberNavBackStack(LoginRoute)
+    val screenTransition = rememberScreenTransition()
     NavDisplay(
         backStack = backStack,
         entryDecorators = rememberManyakEntryDecorators(),
+        transitionSpec = screenTransition,
+        popTransitionSpec = screenTransition,
         entryProvider =
             entryProvider<NavKey> {
                 entry<LoginRoute> {
@@ -154,9 +157,12 @@ private fun AuthNavDisplay() {
 @Composable
 private fun MainNavDisplay() {
     val backStack = rememberNavBackStack(MainTabsRoute)
+    val screenTransition = rememberScreenTransition()
     NavDisplay(
         backStack = backStack,
         entryDecorators = rememberManyakEntryDecorators(),
+        transitionSpec = screenTransition,
+        popTransitionSpec = screenTransition,
         entryProvider =
             entryProvider<NavKey> {
                 entry<MainTabsRoute> { MainTabsScreen() }
