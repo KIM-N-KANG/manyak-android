@@ -15,6 +15,16 @@ interface SessionRepository {
     val sessionState: StateFlow<SessionState>
 
     /**
+     * 진행 중인 로그인의 제공자. **프로세스 수명**이라 화면 회전이나 ViewModel 재생성에도 유지되고,
+     * 프로세스가 재생성되면 사라진다.
+     *
+     * 외부 제공자 화면에 다녀오는 동안 프로세스가 죽으면 기다리던 continuation 도 함께 사라진다.
+     * 진행 표시를 화면 상태로 들고 있으면 그 뒤 화면이 영구 로딩으로 남을 수 있어, 진행 여부의
+     * 정본을 여기에 둔다.
+     */
+    val signInInProgress: StateFlow<AuthProvider?>
+
+    /**
      * 제공자 SDK 인증과 서버 로그인을 순서대로 수행한다.
      *
      * 두 단계를 하나로 묶는 것은 로그인 경로에서만이다 — 계정 연동은 같은 SDK 인증을 쓰되

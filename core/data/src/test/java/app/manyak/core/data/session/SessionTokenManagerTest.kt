@@ -62,7 +62,7 @@ class SessionTokenManagerTest {
             assertEquals(SessionEndNotice.TOKEN_PERSISTENCE_FAILED, signal.notices.single())
             // 서버에서 구 refresh 는 이미 폐기됐으므로 새 refresh 로 서버 로그아웃을 시도해야 한다.
             assertEquals("new-refresh", signal.serverLogoutTokens.single())
-            assertEquals("old-access", storage.read()?.accessToken)
+            assertEquals("old-access", (storage.read() as TokenReadResult.Available).session.accessToken)
         }
 
     @Test
@@ -117,6 +117,7 @@ class SessionTokenManagerTest {
         tokenStore = storage,
         clock = FixedClock,
         anchorState = ProcessAnchorState(),
+        gate = SessionGate(),
         applicationScope = scope.backgroundScope,
         sessionEndSignal = Lazy { signal },
     )
@@ -161,7 +162,7 @@ class SessionTokenManagerTest {
         private var stored: StoredSession? = initial
         var writeSucceeds: Boolean = true
 
-        override suspend fun read(): StoredSession? = stored
+        override suspend fun read(): TokenReadResult = stored?.let(TokenReadResult::Available) ?: TokenReadResult.Absent
 
         override suspend fun write(session: StoredSession): Boolean {
             if (!writeSucceeds) return false
@@ -169,8 +170,9 @@ class SessionTokenManagerTest {
             return true
         }
 
-        override suspend fun clear() {
+        override suspend fun clear(): Boolean {
             stored = null
+            return true
         }
     }
 

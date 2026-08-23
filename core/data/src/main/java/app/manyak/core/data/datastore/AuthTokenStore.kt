@@ -9,6 +9,7 @@ import app.manyak.core.data.crypto.KeystoreCipher
 import app.manyak.core.data.di.AuthTokenDataStore
 import app.manyak.core.data.di.IoDispatcher
 import app.manyak.core.data.session.TokenAnchors
+import app.manyak.core.data.session.TokenReadResult
 import app.manyak.core.data.session.TokenStorage
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.first
@@ -42,24 +43,28 @@ class AuthTokenStore
         @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     ) : TokenStorage {
         /**
-         * 복호화·역직렬화에 실패하면 null 을 돌려주고 저장소를 비운다.
+         * 손상을 여기서 지우지 않고 [TokenReadResult.Corrupt] 로 알린다.
          *
-         * 기기 이전·백업 복원·키 무효화로 복호화가 실패할 수 있고, 그때 무한 시작 실패 대신
-         * 로컬 세션을 폐기하고 다시 로그인시키는 것이 계약이다.
+         * 기기 이전·백업 복원·키 무효화로 복호화가 실패할 수 있다. 이때 토큰만 지우고 "저장된 세션
+         * 없음"으로 돌려주면 이전 사용자의 프로필 캐시·제공자 상태·`device_id` 가 남은 채 인증 화면이
+         * 열린다. 폐기 범위를 정하는 것은 세션 종료 흐름의 몫이므로 판정만 올린다.
+         *
+         * 읽기 자체의 실패는 손상과 구분해 [TokenReadResult.Unavailable] 로 돌려준다 — 예외를
+         * 그대로 올리면 앱 시작 코루틴이 죽어 상태가 미확정에 갇힌다.
          */
-        override suspend fun read(): StoredSession? =
+        override suspend fun read(): TokenReadResult =
             withContext(ioDispatcher) {
-                val encoded = dataStore.data.first()[SESSION_KEY] ?: return@withContext null
+                val encoded =
+                    runCatching { dataStore.data.first()[SESSION_KEY] }
+                        .getOrElse { return@withContext TokenReadResult.Unavailable }
+                        ?: return@withContext TokenReadResult.Absent
                 val decoded =
                     runCatching { Base64.decode(encoded, Base64.NO_WRAP) }
                         .getOrNull()
                         ?.let(cipher::decrypt)
                         ?.let(::decodePayload)
-                if (decoded == null) {
-                    clear()
-                    return@withContext null
-                }
-                decoded.toStoredSession()
+                        ?: return@withContext TokenReadResult.Corrupt
+                TokenReadResult.Available(decoded.toStoredSession())
             }
 
         /** 원자적으로 한 번에 쓴다. 암호화나 쓰기가 실패하면 false 이며, 호출부는 세션을 종료해야 한다. */
@@ -75,13 +80,14 @@ class AuthTokenStore
                 }.isSuccess
             }
 
-        /** 토큰과 모든 만료 판정 앵커를 지운다. 여러 번 실행해도 안전하다. */
-        override suspend fun clear() {
+        /** 토큰과 모든 만료 판정 앵커를 지운다. 여러 번 실행해도 안전하고, 실패는 그대로 돌려준다. */
+        override suspend fun clear(): Boolean =
             withContext(ioDispatcher) {
-                runCatching { dataStore.edit { it.remove(SESSION_KEY) } }
-                cipher.destroyKey()
+                val removed = runCatching { dataStore.edit { it.remove(SESSION_KEY) } }.isSuccess
+                // 레코드가 남아 있는데 키만 지우면 다음 읽기가 손상으로 잡혀 정리가 다시 돈다.
+                if (removed) cipher.destroyKey()
+                removed
             }
-        }
 
         private fun decodePayload(bytes: ByteArray): StoredSessionPayload? =
             runCatching { json.decodeFromString<StoredSessionPayload>(bytes.decodeToString()) }.getOrNull()

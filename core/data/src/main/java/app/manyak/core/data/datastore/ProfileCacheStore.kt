@@ -49,11 +49,11 @@ class ProfileCacheStore
             }
         }
 
-        override suspend fun clearUserData() {
+        /** 실패를 삼키지 않는다. 종료 흐름이 재시도하고, 성공 전에는 다음 단계로 넘어가지 않는다. */
+        override suspend fun clearUserData(): Boolean =
             withContext(ioDispatcher) {
-                runCatching { dataStore.edit { it.remove(PROFILE_KEY) } }
+                runCatching { dataStore.edit { it.remove(PROFILE_KEY) } }.isSuccess
             }
-        }
 
         @Serializable
         private data class CachedProfile(

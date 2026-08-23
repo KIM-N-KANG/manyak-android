@@ -32,6 +32,7 @@
     <string name="session_ended_reauthentication_required">로그인이 만료되어 다시 로그인해야 해요</string>
     <string name="session_ended_account_suspended">이용이 제한된 계정이에요. 자세한 내용은 고객센터로 문의해주세요</string>
     <string name="session_ended_token_persistence_failed">로그인 정보를 저장하지 못해 다시 로그인해야 해요</string>
+    <string name="session_cleanup_failed">이전 로그인 정보를 정리하지 못했어요. 다시 시도해주세요</string>
 
     <!-- 오류 -->
     <string name="error_network">네트워크 연결을 확인해주세요</string>

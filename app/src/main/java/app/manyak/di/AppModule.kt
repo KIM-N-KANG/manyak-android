@@ -5,7 +5,6 @@ import app.manyak.core.data.di.DataLayerConfig
 import app.manyak.core.data.di.SocialAuthConfig
 import app.manyak.core.data.provider.ActivityProvider
 import app.manyak.core.data.session.SessionEndSignal
-import app.manyak.core.data.session.SessionTerminator
 import app.manyak.session.CurrentActivityProvider
 import app.manyak.session.SessionTerminationCoordinator
 import dagger.Binds
@@ -39,10 +38,6 @@ abstract class AppBindingModule {
     @Binds
     @Singleton
     abstract fun bindActivityProvider(impl: CurrentActivityProvider): ActivityProvider
-
-    @Binds
-    @Singleton
-    abstract fun bindSessionTerminator(impl: SessionTerminationCoordinator): SessionTerminator
 
     @Binds
     @Singleton

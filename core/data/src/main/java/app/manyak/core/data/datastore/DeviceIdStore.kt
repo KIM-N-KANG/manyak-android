@@ -42,11 +42,16 @@ class DeviceIdStore
                 readOrNull()
             }
 
-        /** 로그아웃 정리의 마지막 단계에서 저널에 고정해 둔 새 값으로 교체한다. 멱등하다. */
-        suspend fun replaceWith(newDeviceId: String) {
+        /**
+         * 로그아웃 정리의 마지막 단계에서 저널에 고정해 둔 새 값으로 교체한다. 멱등하다.
+         *
+         * 실패를 삼키면 이전 사용자와 같은 `device_id` 가 다음 계정에 그대로 실린다. 그래서
+         * 성공 여부를 돌려주고 호출부가 재시도한다.
+         */
+        suspend fun replaceWith(newDeviceId: String): Boolean {
             require(newDeviceId.isNotBlank()) { "device_id 는 빈 값일 수 없다" }
-            withContext(ioDispatcher) {
-                runCatching { dataStore.edit { it[DEVICE_ID_KEY] = newDeviceId } }
+            return withContext(ioDispatcher) {
+                runCatching { dataStore.edit { it[DEVICE_ID_KEY] = newDeviceId } }.isSuccess
             }
         }
 

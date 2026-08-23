@@ -1,17 +1,13 @@
 package app.manyak.core.data.provider
 
-import android.content.Context
-import app.manyak.core.data.di.SocialAuthConfig
 import app.manyak.core.domain.auth.AuthProvider
 import app.manyak.core.domain.error.DomainError
 import app.manyak.core.domain.error.DomainResult
 import app.manyak.core.domain.error.errorOrNull
 import com.kakao.sdk.auth.model.OAuthToken
-import com.kakao.sdk.common.KakaoSdk
 import com.kakao.sdk.common.model.ClientError
 import com.kakao.sdk.common.model.ClientErrorCause
 import com.kakao.sdk.user.UserApiClient
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -26,27 +22,25 @@ import kotlin.coroutines.resume
  * **사용자가 명시적으로 취소하면 폴백하지 않는다** — 취소를 폴백으로 처리하면
  * 사용자가 로그인을 그만둘 방법이 없어진다.
  *
- * SDK `logout()` 은 요청 성공 여부와 무관하게 SDK 저장 토큰을 폐기한다. 그래서 콜백이 오류를 주어도
- * 로컬 정리는 완료로 체크포인트하고 원격 실패만 무시한다.
+ * SDK `logout()` 은 요청 성공 여부와 무관하게 SDK 저장 토큰을 폐기하지만, 그렇게 판정할 수 있는 것은
+ * 콜백을 받았을 때뿐이다. 콜백 자체가 오지 않았거나 SDK 가 초기화되지 않았다면 정리 대기로 남긴다.
+ *
+ * SDK 초기화는 [KakaoSdkInitializer] 가 앱 시작에서 이미 끝낸다. 여기서 다시 부르는 것은 멱등한
+ * 확인일 뿐이며, 초기화되지 않았다면(앱 키 미주입) 조용히 기다리지 않고 즉시 실패로 드러낸다.
  */
 @Singleton
 class KakaoIdTokenProvider
     @Inject
     constructor(
-        @param:ApplicationContext private val context: Context,
         private val activityProvider: ActivityProvider,
-        private val config: SocialAuthConfig,
+        private val initializer: KakaoSdkInitializer,
     ) : SocialIdTokenProvider {
         override val provider: AuthProvider = AuthProvider.KAKAO
 
-        @Volatile
-        private var initialized: Boolean = false
-
         override suspend fun requestIdToken(): DomainResult<String> {
-            if (config.kakaoNativeAppKey.isBlank()) {
+            if (!initializer.initialize()) {
                 return DomainResult.Failure(DomainError.ProviderNotConfigured(provider))
             }
-            ensureInitialized()
             val activity =
                 activityProvider.currentActivity()
                     ?: return DomainResult.Failure(DomainError.ProviderFailed(provider, "no-activity"))
@@ -66,13 +60,13 @@ class KakaoIdTokenProvider
         }
 
         override suspend fun clearLocalState(): ProviderCleanupResult {
-            if (config.kakaoNativeAppKey.isBlank()) return ProviderCleanupResult.CLEARED
-            ensureInitialized()
+            // 초기화되지 않았다면 SDK 가 토큰을 들고 있을 수도 없다. 지울 상태가 없으므로 완료다.
+            if (!initializer.initialize()) return ProviderCleanupResult.CLEARED
             return withContext(Dispatchers.Main) {
                 suspendCancellableCoroutine { continuation ->
                     UserApiClient.instance.logout { _ ->
                         // 원격 폐기 실패와 무관하게 SDK 저장 토큰은 지워진다.
-                        continuation.resume(ProviderCleanupResult.CLEARED)
+                        if (continuation.isActive) continuation.resume(ProviderCleanupResult.CLEARED)
                     }
                 }
             }
@@ -84,14 +78,15 @@ class KakaoIdTokenProvider
         private suspend fun loginWithKakaoTalk(activity: android.app.Activity): DomainResult<String> =
             suspendCancellableCoroutine { continuation ->
                 UserApiClient.instance.loginWithKakaoTalk(activity) { token, error ->
-                    continuation.resume(toResult(token, error))
+                    // 프로세스 재생성 뒤 늦게 도착한 콜백은 기다리는 곳이 없다. 두 번 재개하지 않는다.
+                    if (continuation.isActive) continuation.resume(toResult(token, error))
                 }
             }
 
         private suspend fun loginWithKakaoAccount(activity: android.app.Activity): DomainResult<String> =
             suspendCancellableCoroutine { continuation ->
                 UserApiClient.instance.loginWithKakaoAccount(activity) { token, error ->
-                    continuation.resume(toResult(token, error))
+                    if (continuation.isActive) continuation.resume(toResult(token, error))
                 }
             }
 
@@ -107,15 +102,6 @@ class KakaoIdTokenProvider
                 // OIDC 가 꺼져 있으면 토큰은 오지만 idToken 이 비어 서버 로그인이 불가능하다.
                 error == null -> DomainResult.Failure(DomainError.ProviderFailed(provider, "missing-id-token"))
                 else -> DomainResult.Failure(DomainError.ProviderFailed(provider, error::class.simpleName))
-            }
-        }
-
-        private fun ensureInitialized() {
-            if (initialized) return
-            synchronized(this) {
-                if (initialized) return
-                KakaoSdk.init(context, config.kakaoNativeAppKey)
-                initialized = true
             }
         }
     }

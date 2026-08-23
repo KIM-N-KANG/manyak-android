@@ -63,12 +63,16 @@ class TerminationJournalStore
                 }.isSuccess
             }
 
-        /** 정리 장벽을 닫는다. 이 뒤에야 인증 그래프를 공개한다. */
-        suspend fun clear() {
+        /**
+         * 정리 장벽을 닫는다. 이 뒤에야 인증 그래프를 공개한다.
+         *
+         * 삭제에 실패했는데 로그인을 허용하면 다음 실행의 재개가 **새 사용자의 데이터**를 지운다.
+         * 그래서 실패를 돌려주고, 성공할 때까지 장벽을 유지한다.
+         */
+        suspend fun clear(): Boolean =
             withContext(ioDispatcher) {
-                runCatching { dataStore.edit { it.remove(JOURNAL_KEY) } }
+                runCatching { dataStore.edit { it.remove(JOURNAL_KEY) } }.isSuccess
             }
-        }
 
         private companion object {
             val JOURNAL_KEY = stringPreferencesKey("termination")

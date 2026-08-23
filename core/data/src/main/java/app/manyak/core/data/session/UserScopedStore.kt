@@ -13,5 +13,11 @@ interface UserScopedStore {
     /** 진단용 이름. 실패한 항목을 저널에 남길 때 쓴다. 사용자에게 보이지 않는다. */
     val storeName: String
 
-    suspend fun clearUserData()
+    /**
+     * 사용자 데이터를 지운다.
+     *
+     * **실패를 삼키지 않는다** — false 를 돌려주면 종료 흐름이 재시도하고, 성공할 때까지 다음
+     * 단계로 넘어가지 않는다.
+     */
+    suspend fun clearUserData(): Boolean
 }

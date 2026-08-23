@@ -1,7 +1,7 @@
 package app.manyak.core.domain.session
 
 /**
- * 화면이 관찰하는 공개 세션 상태. 앱에는 게스트가 없으므로 셋뿐이다.
+ * 화면이 관찰하는 공개 세션 상태. 앱에는 게스트가 없다.
  *
  * 종료 정리가 진행 중인 동안에도 공개 상태는 [Undetermined]에 머문다 — 정리가 끝나기 전에
  * 인증 그래프를 열면 새 로그인이 이전 사용자의 잔여 상태 위에서 시작될 수 있다.
@@ -18,6 +18,17 @@ sealed interface SessionState {
 
     /** 복호화 가능한 토큰 쌍이 있고 종료 중이 아니다. 메인 그래프를 띄운다. */
     data object Member : SessionState
+
+    /**
+     * 종료 정리가 재시도를 소진하고도 끝나지 않았다.
+     *
+     * 이전 사용자의 데이터가 남아 있으므로 인증 그래프도 메인 그래프도 열지 않는다. 화면은
+     * 다시 시도할 경로만 제공하고, 정리가 완료되어야 [SignedOut]으로 넘어간다.
+     */
+    data class CleanupFailed(
+        /** 이 종료가 시작된 이유. 정리가 끝나면 그대로 [SignedOut.notice]가 된다. */
+        val notice: SessionEndNotice,
+    ) : SessionState
 }
 
 /**
