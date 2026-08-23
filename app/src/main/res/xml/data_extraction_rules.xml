@@ -1,19 +1,24 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample data extraction rules file; uncomment and customize as necessary.
-   See https://developer.android.com/about/versions/12/backup-restore#xml-changes
-   for details.
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    API 31+ 의 백업·기기 이전 규칙. 토큰과 세션 종료 저널은 어느 경로로도 나가지 않는다.
+    Keystore 키는 기기를 벗어나지 못해 옮겨진 파일은 어차피 복호화되지 않지만,
+    파일 자체를 내보내지 않는다.
 -->
 <data-extraction-rules>
     <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
-        -->
+        <exclude
+            domain="file"
+            path="datastore/auth_tokens.preferences_pb" />
+        <exclude
+            domain="file"
+            path="datastore/session_journal.preferences_pb" />
     </cloud-backup>
-    <!--
     <device-transfer>
-        <include .../>
-        <exclude .../>
+        <exclude
+            domain="file"
+            path="datastore/auth_tokens.preferences_pb" />
+        <exclude
+            domain="file"
+            path="datastore/session_journal.preferences_pb" />
     </device-transfer>
-    -->
 </data-extraction-rules>

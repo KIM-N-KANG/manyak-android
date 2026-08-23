@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 로컬에서 manyak-server 를 직접 띄워 붙일 때만 쓰는 디버그 전용 설정이다.
+     배포되는 release 빌드에는 포함되지 않으므로 평문 통신이 열리지 않는다. -->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">127.0.0.1</domain>
+    </domain-config>
+</network-security-config>

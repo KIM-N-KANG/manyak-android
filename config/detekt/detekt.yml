@@ -16,6 +16,11 @@ style:
   MagicNumber:
     ignoreAnnotated: ['Composable', 'Preview']
 
+  # 인증·세션 코드는 안전하지 않은 조합을 앞에서 걸러내는 조기 반환이 많다.
+  # 기본값 2 에 맞추려고 합치면 오히려 어떤 조건에서 무엇을 막는지가 가려진다.
+  ReturnCount:
+    max: 4
+
 complexity:
   # Composable 은 중첩이 깊어지기 쉬워 기본값(임계 4)이 지나치게 엄격하다.
   LongParameterList:
