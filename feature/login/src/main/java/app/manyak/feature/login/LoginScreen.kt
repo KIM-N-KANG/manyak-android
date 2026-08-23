@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,6 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.manyak.core.domain.auth.AuthProvider
 import app.manyak.core.navigation.LegalDocument
 import app.manyak.core.ui.R
+import app.manyak.core.ui.component.ManyakProgressIndicator
 import app.manyak.core.ui.error.messageResOrNull
 import app.manyak.core.ui.theme.ManyakTheme
 
@@ -242,10 +242,7 @@ private fun ProviderButton(
             ),
     ) {
         if (state.inProgress == provider) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(ManyakTheme.sizes.icon),
-                color = ManyakTheme.colors.progressIndicator,
-            )
+            ManyakProgressIndicator(modifier = Modifier.size(ManyakTheme.sizes.icon))
         } else {
             Row(
                 verticalAlignment = Alignment.CenterVertically,

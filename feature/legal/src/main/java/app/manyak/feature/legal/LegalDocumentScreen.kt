@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -26,6 +25,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.manyak.core.navigation.LegalDocument
 import app.manyak.core.ui.R
+import app.manyak.core.ui.component.ManyakProgressIndicator
+import app.manyak.core.ui.component.rememberDelayedProgressVisibility
 import app.manyak.core.ui.theme.ManyakTheme
 
 /**
@@ -40,6 +41,7 @@ fun LegalDocumentScreen(
     viewModel: LegalViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val showLoadingIndicator = rememberDelayedProgressVisibility(inProgress = state.isLoading)
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -63,7 +65,7 @@ fun LegalDocumentScreen(
                         onRetry = { viewModel.onIntent(LegalIntent.Retry) },
                     )
 
-                state.isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                showLoadingIndicator -> ManyakProgressIndicator(modifier = Modifier.align(Alignment.Center))
             }
         }
     }

@@ -2,7 +2,6 @@ package app.manyak.root
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -19,6 +18,8 @@ import app.manyak.core.navigation.LegalDocument
 import app.manyak.core.navigation.LegalRoute
 import app.manyak.core.navigation.LoginRoute
 import app.manyak.core.navigation.MyRoute
+import app.manyak.core.ui.component.ManyakProgressIndicator
+import app.manyak.core.ui.component.rememberDelayedProgressVisibility
 import app.manyak.core.ui.theme.ManyakTheme
 import app.manyak.feature.legal.LegalDocumentScreen
 import app.manyak.feature.login.LoginScreen
@@ -37,10 +38,11 @@ fun ManyakApp(
     viewModel: RootViewModel = hiltViewModel(),
 ) {
     val sessionState by viewModel.sessionState.collectAsStateWithLifecycle()
+    val showSessionProgress = rememberDelayedProgressVisibility(sessionState == SessionState.Undetermined)
 
     Surface(modifier = modifier.fillMaxSize(), color = ManyakTheme.colors.surface) {
         when (sessionState) {
-            SessionState.Undetermined -> SessionProgress()
+            SessionState.Undetermined -> if (showSessionProgress) SessionProgress()
             is SessionState.SignedOut -> AuthNavHost()
             SessionState.Member -> MainNavHost()
         }
@@ -50,13 +52,14 @@ fun ManyakApp(
 /**
  * 상태가 미확정인 동안 보여 주는 표시.
  *
- * 앱 시작 직후에는 짧게 스쳐 가고, 로그아웃 중에는 정리가 끝날 때까지 유지된다. 종료 정리는 서버 호출과
- * 저장소 삭제를 포함해 눈에 띄는 시간이 걸리므로, 빈 화면 대신 진행 중임을 알린다.
+ * 로그아웃 중에는 정리가 끝날 때까지 유지된다. 종료 정리는 서버 호출과 저장소 삭제를 포함해 눈에 띄는
+ * 시간이 걸리므로, 빈 화면 대신 진행 중임을 알린다. 반대로 앱 시작 직후처럼 상태가 금방 확정되는
+ * 경우에는 호출부가 아예 그리지 않는다 — 스피너가 스쳐 가는 깜빡임을 만들지 않는다.
  */
 @Composable
 private fun SessionProgress() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        CircularProgressIndicator(color = ManyakTheme.colors.progressIndicator)
+        ManyakProgressIndicator()
     }
 }
 
