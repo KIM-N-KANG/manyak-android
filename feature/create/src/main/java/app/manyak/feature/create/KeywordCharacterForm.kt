@@ -13,12 +13,20 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,6 +51,7 @@ internal fun CharacterForm(
     atSelectionCap: Boolean,
     onIntent: (CreateKeywordIntent) -> Unit,
     onOpenAddKeyword: (KeywordTarget) -> Unit,
+    basicInfoModifier: Modifier = Modifier,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -55,6 +64,7 @@ internal fun CharacterForm(
             namePlaceholder = namePlaceholder,
             isDuplicateName = isDuplicateName,
             onIntent = onIntent,
+            modifier = basicInfoModifier,
         )
         KeywordSectionLabel(
             modifier = Modifier.padding(top = ManyakTheme.spacing.gutter),
@@ -87,8 +97,12 @@ private fun CharacterBasicInfo(
     namePlaceholder: String,
     isDuplicateName: Boolean,
     onIntent: (CreateKeywordIntent) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact)) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+    ) {
         KeywordSectionLabel(
             text = stringResource(R.string.create_section_basic_info),
             required = false,
@@ -242,6 +256,20 @@ internal fun SupportingCharacterList(
     modifier: Modifier = Modifier,
 ) {
     val namePlaceholders = stringArrayResource(R.array.create_name_placeholders_supporting)
+    val addedCharacterRequester = remember { BringIntoViewRequester() }
+    var previousCharacterCount by remember { mutableIntStateOf(state.supportingCharacters.size) }
+
+    LaunchedEffect(state.supportingCharacters.size) {
+        val currentCount = state.supportingCharacters.size
+        val characterWasAdded = currentCount > previousCharacterCount
+        previousCharacterCount = currentCount
+
+        if (characterWasAdded) {
+            withFrameNanos { }
+            addedCharacterRequester.bringIntoView()
+        }
+    }
+
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
@@ -265,6 +293,12 @@ internal fun SupportingCharacterList(
                 atSelectionCap = state.isAtSelectionCap(KeywordTarget.Supporting(character.id)),
                 onIntent = onIntent,
                 onOpenAddKeyword = onOpenAddKeyword,
+                basicInfoModifier =
+                    if (index == state.supportingCharacters.lastIndex) {
+                        Modifier.bringIntoViewRequester(addedCharacterRequester)
+                    } else {
+                        Modifier
+                    },
             )
         }
         AddCharacterTrigger(
@@ -307,6 +341,7 @@ private fun SupportingCharacterSection(
     atSelectionCap: Boolean,
     onIntent: (CreateKeywordIntent) -> Unit,
     onOpenAddKeyword: (KeywordTarget) -> Unit,
+    basicInfoModifier: Modifier,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -333,6 +368,7 @@ private fun SupportingCharacterSection(
             atSelectionCap = atSelectionCap,
             onIntent = onIntent,
             onOpenAddKeyword = onOpenAddKeyword,
+            basicInfoModifier = basicInfoModifier,
         )
     }
 }
