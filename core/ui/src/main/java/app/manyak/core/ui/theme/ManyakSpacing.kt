@@ -49,5 +49,5 @@ internal val ManyakDefaultSpacing =
         section = 24.dp,
         block = 32.dp,
         screenTop = 64.dp,
-        screenBottom = 40.dp,
+        screenBottom = 32.dp,
     )

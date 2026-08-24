@@ -103,7 +103,10 @@ internal fun CategoryContent(
         when (state.activeCategory) {
             StoryTagCategory.GENRE -> {
                 Column(
-                    modifier = Modifier.padding(ManyakTheme.spacing.gutter),
+                    modifier =
+                        Modifier
+                            .padding(horizontal = ManyakTheme.spacing.gutter)
+                            .padding(top = ManyakTheme.spacing.gutter),
                     verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
                 ) {
                     KeywordSectionLabel(
@@ -124,7 +127,10 @@ internal fun CategoryContent(
 
             StoryTagCategory.PROTAGONIST -> {
                 CharacterForm(
-                    modifier = Modifier.padding(ManyakTheme.spacing.gutter),
+                    modifier =
+                        Modifier
+                            .padding(horizontal = ManyakTheme.spacing.gutter)
+                            .padding(top = ManyakTheme.spacing.gutter),
                     target = KeywordTarget.Protagonist,
                     character = state.protagonist,
                     featureRequired = true,

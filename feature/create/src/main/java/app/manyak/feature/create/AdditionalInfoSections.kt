@@ -47,15 +47,14 @@ internal fun SelectedStorylineBox(
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     var collapsible by remember { mutableStateOf(false) }
-
     Column(
         modifier =
             modifier
                 .fillMaxWidth()
                 .animateContentSize()
                 .background(ManyakTheme.colors.backgroundNeutral)
-                .padding(horizontal = ManyakTheme.spacing.gutter, vertical = ManyakTheme.spacing.component),
-        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+                .padding(ManyakTheme.spacing.gutter),
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
     ) {
         Text(
             text = storyAnnotatedString(text),
@@ -96,14 +95,14 @@ private fun SelectedStorylineToggle(
     ) {
         Text(
             text = stringResource(labelRes),
-            style = ManyakTheme.typography.labelLarge,
-            color = ManyakTheme.colors.textSubtle,
+            style = ManyakTheme.typography.labelSmall,
+            color = ManyakTheme.colors.textSubtlest,
         )
         Icon(
             modifier = Modifier.size(16.dp),
             painter = painterResource(iconRes),
             contentDescription = null,
-            tint = ManyakTheme.colors.textSubtle,
+            tint = ManyakTheme.colors.textSubtlest,
         )
     }
 }
@@ -116,7 +115,10 @@ internal fun RecommendedInfoSection(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier.padding(ManyakTheme.spacing.gutter),
+        modifier =
+            modifier
+                .padding(horizontal = ManyakTheme.spacing.gutter)
+                .padding(top = ManyakTheme.spacing.block, bottom = ManyakTheme.spacing.gutter),
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
         KeywordSectionLabel(
@@ -186,7 +188,7 @@ internal fun AdditionalInfoHeader(modifier: Modifier = Modifier) {
                     CreateAdditionalInfoUiState.INPUT_MAX_COUNT,
                 ),
             style = ManyakTheme.typography.bodyMedium,
-            color = ManyakTheme.colors.textSubtle,
+            color = ManyakTheme.colors.text,
         )
     }
 }
@@ -212,8 +214,12 @@ internal fun AdditionalInfoRow(
             placeholder = placeholder,
             onValueChange = onValueChange,
         )
-        IconButton(onClick = onRemove) {
+        IconButton(
+            modifier = Modifier.size(32.dp),
+            onClick = onRemove,
+        ) {
             Icon(
+                modifier = Modifier.size(16.dp),
                 painter = painterResource(R.drawable.ic_close),
                 contentDescription = stringResource(R.string.create_additional_delete_description, index + 1),
                 tint = ManyakTheme.colors.textSubtle,

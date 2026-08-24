@@ -185,7 +185,8 @@ private fun StorylineBody(
         modifier =
             modifier
                 .fillMaxWidth()
-                .padding(ManyakTheme.spacing.gutter),
+                .padding(horizontal = ManyakTheme.spacing.gutter)
+                .padding(top = ManyakTheme.spacing.gutter),
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
     ) {
         Text(

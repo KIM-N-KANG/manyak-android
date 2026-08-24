@@ -144,7 +144,10 @@ private fun AdditionalInfoList(
 @Composable
 private fun AdditionalInfoStepTitle(modifier: Modifier = Modifier) {
     Column(
-        modifier = modifier.padding(ManyakTheme.spacing.gutter),
+        modifier =
+            modifier
+                .padding(horizontal = ManyakTheme.spacing.gutter)
+                .padding(top = ManyakTheme.spacing.gutter, bottom = ManyakTheme.spacing.block),
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
         Text(

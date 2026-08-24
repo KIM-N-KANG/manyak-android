@@ -50,9 +50,9 @@ internal val ManyakDefaultTypography =
         labelSmall =
             TextStyle(
                 fontFamily = Pretendard,
-                fontWeight = FontWeight.Normal,
-                fontSize = 11.sp,
-                lineHeight = 15.sp,
+                fontWeight = FontWeight.Medium,
+                fontSize = 12.sp,
+                lineHeight = 16.sp,
             ),
         // 버튼·탭 라벨
         labelLarge =

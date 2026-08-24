@@ -105,7 +105,7 @@
     <string name="create_additional_collapse">접기</string>
     <string name="create_additional_recommended_label">추천 추가 정보</string>
     <string name="create_additional_label">추가 정보</string>
-    <string name="create_additional_max_count">(최대 %1$d개 입력)</string>
+    <string name="create_additional_max_count">(최대 %1$d개)</string>
     <string name="create_additional_input_description">추가 정보 %1$d</string>
     <string name="create_additional_delete_description">추가 정보 %1$d 삭제</string>
     <string name="create_add_info">정보 추가</string>
