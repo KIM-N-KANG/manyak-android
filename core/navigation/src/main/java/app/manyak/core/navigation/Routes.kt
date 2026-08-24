@@ -40,6 +40,13 @@ data object MyRoute : NavKey
 data object CreateKeywordRoute : NavKey
 
 /**
+ * 스토리라인 선택 단계. [CreateKeywordRoute] 위에 쌓여 뒤로가기가 곧 키워드 단계 복귀이고,
+ * 백스택이 살아 있어 키워드 입력은 그대로 유지된다.
+ */
+@Serializable
+data object CreateStorylineRoute : NavKey
+
+/**
  * 공용 법적 문서. **제품 백스택 밖에 두고 양쪽 백스택 모두에 등록해** 인증 상태와 무관하게 연다.
  * 뒤로가기는 진입한 화면으로 돌아가고, 여기서 임의의 메인 목적지로 이동하는 경로는 두지 않는다.
  */

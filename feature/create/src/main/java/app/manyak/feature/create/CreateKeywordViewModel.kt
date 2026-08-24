@@ -244,12 +244,19 @@ sealed interface CreateKeywordEvent {
     ) : CreateKeywordEvent
 }
 
+sealed interface CreateKeywordEffect {
+    /** 검증을 통과한 "스토리라인 만들기" — 스토리라인 선택 단계로 넘어간다. */
+    data object NavigateToStoryline : CreateKeywordEffect
+}
+
 @HiltViewModel
 class CreateKeywordViewModel
     @Inject
     constructor(
         private val storyCreationRepository: StoryCreationRepository,
-    ) : MviViewModel<CreateKeywordIntent, CreateKeywordUiState, CreateKeywordEvent, Nothing>(CreateKeywordUiState()) {
+    ) : MviViewModel<CreateKeywordIntent, CreateKeywordUiState, CreateKeywordEvent, CreateKeywordEffect>(
+        CreateKeywordUiState(),
+    ) {
         private var tagsLoadJob: Job? = null
 
         init {
@@ -339,7 +346,8 @@ class CreateKeywordViewModel
         private suspend fun generateStorylines(state: CreateKeywordUiState) {
             dispatchEvent(CreateKeywordEvent.GenerateAttempted)
             if (!state.canGenerateStorylines) return
-            // 스토리라인 생성 요청과 다음 단계 전환은 스토리라인 선택 화면 구현과 함께 붙는다.
+            // 스토리라인 생성 요청은 생성 API 연동과 함께 붙는다. 지금은 단계 전환만 한다.
+            dispatchEffect(CreateKeywordEffect.NavigateToStoryline)
         }
 
         private suspend fun toggleProvidedTag(

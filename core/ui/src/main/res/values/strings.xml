@@ -87,6 +87,18 @@
     <string name="create_cta_next">다음</string>
     <string name="create_cta_generate_storylines">스토리라인 만들기</string>
     <string name="create_error_select_keyword">키워드를 하나 이상 선택해주세요</string>
+    <string name="create_storyline_title">마음에 드는\n스토리라인을 선택해주세요</string>
+    <string name="create_storyline_description">선택한 스토리라인이 스토리의 기본 흐름이 돼요</string>
+    <!-- 스토리라인 탭의 순번 라벨. 생성 결과 순서대로 대응한다. -->
+    <string-array name="create_storyline_tab_labels">
+        <item>첫 번째</item>
+        <item>두 번째</item>
+        <item>세 번째</item>
+    </string-array>
+    <string name="create_storyline_rating_good">이 스토리라인 좋아요</string>
+    <string name="create_storyline_rating_bad">이 스토리라인 싫어요</string>
+    <string name="create_cta_regenerate">다시 만들기</string>
+    <string name="create_cta_select_storyline">선택하기</string>
 
     <!-- 마이 -->
     <string name="my_logout">로그아웃</string>
