@@ -268,6 +268,12 @@ internal fun SupportingCharacterList(
             )
         }
         AddCharacterTrigger(
+            modifier =
+                if (state.supportingCharacters.isEmpty()) {
+                    Modifier.padding(top = ManyakTheme.spacing.gutter)
+                } else {
+                    Modifier
+                },
             enabled = state.supportingCharacters.size < CreateKeywordUiState.SUPPORTING_CHARACTER_MAX,
             onClick = { onIntent(CreateKeywordIntent.AddSupportingCharacter) },
         )
