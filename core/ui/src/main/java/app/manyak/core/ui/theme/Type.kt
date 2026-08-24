@@ -17,10 +17,10 @@ val Pretendard =
     )
 
 /** 서사 서체. 스토리 본문([ManyakTypography.bodyReading]) 전용이며 UI 요소에 쓰지 않는다. */
-val MaruBuri =
+val GowunBatang =
     FontFamily(
-        Font(R.font.maruburi_regular, FontWeight.Normal),
-        Font(R.font.maruburi_bold, FontWeight.Bold),
+        Font(R.font.gowun_batang_regular, FontWeight.Normal),
+        Font(R.font.gowun_batang_bold, FontWeight.Bold),
     )
 
 /**
@@ -89,7 +89,7 @@ internal val ManyakDefaultTypography =
         // 스토리 본문. 장문 전용이라 행간을 1.75로 벌린다
         bodyReading =
             TextStyle(
-                fontFamily = MaruBuri,
+                fontFamily = GowunBatang,
                 fontWeight = FontWeight.Normal,
                 fontSize = 16.sp,
                 lineHeight = 28.sp,
