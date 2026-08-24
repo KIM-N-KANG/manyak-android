@@ -28,6 +28,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import app.manyak.core.domain.session.SessionState
+import app.manyak.core.navigation.CreateAdditionalInfoRoute
 import app.manyak.core.navigation.CreateKeywordRoute
 import app.manyak.core.navigation.CreateStorylineRoute
 import app.manyak.core.navigation.LegalRoute
@@ -38,6 +39,7 @@ import app.manyak.core.ui.component.ManyakProgressIndicator
 import app.manyak.core.ui.component.rememberDelayedProgressVisibility
 import app.manyak.core.ui.error.messageResOrNull
 import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.feature.create.CreateAdditionalInfoScreen
 import app.manyak.feature.create.CreateKeywordScreen
 import app.manyak.feature.create.CreateStorylineScreen
 import app.manyak.feature.legal.LegalDocumentScreen
@@ -185,7 +187,18 @@ private fun MainNavDisplay() {
                     )
                 }
                 entry<CreateStorylineRoute> {
-                    CreateStorylineScreen(onBack = { backStack.removeLastOrNull() })
+                    CreateStorylineScreen(
+                        onBack = { backStack.removeLastOrNull() },
+                        onOpenAdditionalInfoStep = { storylineIndex ->
+                            backStack.add(CreateAdditionalInfoRoute(storylineIndex))
+                        },
+                    )
+                }
+                entry<CreateAdditionalInfoRoute> { route ->
+                    CreateAdditionalInfoScreen(
+                        storylineIndex = route.storylineIndex,
+                        onBack = { backStack.removeLastOrNull() },
+                    )
                 }
                 legalEntry(onLeaveDocument = { backStack.removeLastOrNull() })
             },

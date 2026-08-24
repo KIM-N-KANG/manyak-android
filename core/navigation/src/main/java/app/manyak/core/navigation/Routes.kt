@@ -47,6 +47,15 @@ data object CreateKeywordRoute : NavKey
 data object CreateStorylineRoute : NavKey
 
 /**
+ * 추가 정보 단계. 라우트에 식별자만 싣는 규칙에 따라 선택한 스토리라인의 순번만 담고,
+ * 화면이 그릴 스토리라인 본문·추천 정보는 목적지에서 다시 얻는다.
+ */
+@Serializable
+data class CreateAdditionalInfoRoute(
+    val storylineIndex: Int,
+) : NavKey
+
+/**
  * 공용 법적 문서. **제품 백스택 밖에 두고 양쪽 백스택 모두에 등록해** 인증 상태와 무관하게 연다.
  * 뒤로가기는 진입한 화면으로 돌아가고, 여기서 임의의 메인 목적지로 이동하는 경로는 두지 않는다.
  */

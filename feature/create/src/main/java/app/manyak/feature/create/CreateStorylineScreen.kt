@@ -24,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringArrayResource
@@ -31,7 +32,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.core.ui.R
 import app.manyak.core.ui.theme.ManyakTheme
 
@@ -39,10 +43,24 @@ import app.manyak.core.ui.theme.ManyakTheme
 @Composable
 fun CreateStorylineScreen(
     onBack: () -> Unit,
+    onOpenAdditionalInfoStep: (storylineIndex: Int) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: CreateStorylineViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val currentOnOpenAdditionalInfoStep by rememberUpdatedState(onOpenAdditionalInfoStep)
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    LaunchedEffect(viewModel, lifecycleOwner) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            viewModel.uiEffect.collect { effect ->
+                when (effect) {
+                    is CreateStorylineEffect.NavigateToAdditionalInfo ->
+                        currentOnOpenAdditionalInfoStep(effect.storylineIndex)
+                }
+            }
+        }
+    }
 
     CreateStorylineContent(
         state = state,

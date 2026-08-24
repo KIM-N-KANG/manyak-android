@@ -46,11 +46,18 @@ sealed interface CreateStorylineEvent {
     ) : CreateStorylineEvent
 }
 
+sealed interface CreateStorylineEffect {
+    /** 활성 스토리라인 "선택하기" — 추가 정보 단계로 넘어간다. */
+    data class NavigateToAdditionalInfo(
+        val storylineIndex: Int,
+    ) : CreateStorylineEffect
+}
+
 @HiltViewModel
 class CreateStorylineViewModel
     @Inject
     constructor() :
-    MviViewModel<CreateStorylineIntent, CreateStorylineUiState, CreateStorylineEvent, Nothing>(
+    MviViewModel<CreateStorylineIntent, CreateStorylineUiState, CreateStorylineEvent, CreateStorylineEffect>(
         CreateStorylineUiState(storylines = PLACEHOLDER_STORYLINES),
     ) {
         override suspend fun handleIntent(intent: CreateStorylineIntent) {
@@ -69,8 +76,10 @@ class CreateStorylineViewModel
                 // 재생성 요청과 평가 동기화는 생성 API 연동과 함께 붙는다.
                 CreateStorylineIntent.Regenerate -> Unit
 
-                // 추가 정보 단계 전환은 해당 화면 구현과 함께 붙는다.
-                CreateStorylineIntent.ConfirmSelection -> Unit
+                CreateStorylineIntent.ConfirmSelection ->
+                    if (state.activeStoryline != null) {
+                        dispatchEffect(CreateStorylineEffect.NavigateToAdditionalInfo(state.activeIndex))
+                    }
             }
         }
 
