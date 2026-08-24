@@ -2,6 +2,7 @@ package app.manyak.feature.create
 
 import app.manyak.core.domain.error.DomainError
 import app.manyak.core.domain.error.DomainResult
+import app.manyak.core.domain.story.StorylineRating
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -9,6 +10,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withTimeoutOrNull
@@ -55,7 +57,7 @@ class CreateStorylineViewModelTest {
             repository.queuedGenerationResults += DomainResult.Failure(DomainError.Network)
             val store = StorylineGenerationStore(repository)
             store.generate(sampleGenerationInput())
-            val viewModel = CreateStorylineViewModel(store)
+            val viewModel = CreateStorylineViewModel(store, repository)
             advanceUntilIdle()
 
             assertTrue(
@@ -97,9 +99,80 @@ class CreateStorylineViewModelTest {
 
             assertEquals(1, viewModel.uiState.value.activeIndex)
             assertEquals(
-                mapOf(0 to StorylineRating.GOOD, 1 to StorylineRating.BAD),
+                mapOf(1L to StorylineRating.GOOD, 2L to StorylineRating.BAD),
                 viewModel.uiState.value.ratings,
             )
+        }
+
+    @Test
+    fun `평가 연타는 디바운스 후 마지막 상태만 서버에 반영한다`() =
+        runTest(dispatcher) {
+            val (repository, _, viewModel) = loadedViewModel()
+
+            viewModel.onIntent(CreateStorylineIntent.ToggleRating(StorylineRating.GOOD))
+            runCurrent()
+            viewModel.onIntent(CreateStorylineIntent.ToggleRating(StorylineRating.BAD))
+            advanceUntilIdle()
+
+            assertEquals(listOf(1L to StorylineRating.BAD), repository.ratingCalls)
+            val effect = withTimeoutOrNull(1_000) { viewModel.uiEffect.first() }
+            assertEquals(
+                CreateStorylineEffect.ShowRatingFeedback(RatingFeedback.DISLIKED),
+                effect,
+            )
+        }
+
+    @Test
+    fun `평가 해제는 취소 요청으로 동기화되고 안내하지 않는다`() =
+        runTest(dispatcher) {
+            val (repository, _, viewModel) = loadedViewModel()
+
+            viewModel.onIntent(CreateStorylineIntent.ToggleRating(StorylineRating.GOOD))
+            advanceUntilIdle()
+            viewModel.onIntent(CreateStorylineIntent.ToggleRating(StorylineRating.GOOD))
+            advanceUntilIdle()
+
+            assertEquals(
+                listOf(1L to StorylineRating.GOOD, 1L to null),
+                repository.ratingCalls,
+            )
+            // 설정 성공 안내 하나만 남는다 — 해제는 안내하지 않는다.
+            assertEquals(
+                CreateStorylineEffect.ShowRatingFeedback(RatingFeedback.LIKED),
+                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
+            )
+            assertNull(viewModel.uiState.value.activeRating)
+        }
+
+    @Test
+    fun `평가 동기화 실패는 마지막 반영 값으로 되돌리고 실패를 알린다`() =
+        runTest(dispatcher) {
+            val (repository, _, viewModel) = loadedViewModel()
+            repository.queuedRatingResults += DomainResult.Failure(DomainError.Network)
+
+            viewModel.onIntent(CreateStorylineIntent.ToggleRating(StorylineRating.GOOD))
+            advanceUntilIdle()
+
+            assertNull(viewModel.uiState.value.activeRating)
+            assertEquals(
+                CreateStorylineEffect.ShowRatingFeedback(RatingFeedback.SYNC_FAILED),
+                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
+            )
+            // 되돌린 값과 서버 값이 같으므로 추가 요청을 보내지 않는다.
+            assertEquals(1, repository.ratingCalls.size)
+        }
+
+    @Test
+    fun `디바운스 대기 중 재생성하면 평가 동기화를 보내지 않는다`() =
+        runTest(dispatcher) {
+            val (repository, _, viewModel) = loadedViewModel()
+
+            viewModel.onIntent(CreateStorylineIntent.ToggleRating(StorylineRating.GOOD))
+            runCurrent()
+            viewModel.onIntent(CreateStorylineIntent.Regenerate)
+            advanceUntilIdle()
+
+            assertTrue(repository.ratingCalls.isEmpty())
         }
 
     @Test
@@ -159,7 +232,7 @@ class CreateStorylineViewModelTest {
         val repository = FakeStoryCreationRepository()
         val store = StorylineGenerationStore(repository)
         store.generate(sampleGenerationInput())
-        val viewModel = CreateStorylineViewModel(store)
+        val viewModel = CreateStorylineViewModel(store, repository)
         advanceUntilIdle()
         return Triple(repository, store, viewModel)
     }

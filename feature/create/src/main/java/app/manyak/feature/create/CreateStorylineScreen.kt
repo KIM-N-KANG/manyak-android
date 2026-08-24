@@ -1,5 +1,7 @@
 package app.manyak.feature.create
 
+import android.widget.Toast
+import androidx.annotation.StringRes
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -27,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -36,6 +39,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
+import app.manyak.core.domain.story.StorylineRating
 import app.manyak.core.ui.R
 import app.manyak.core.ui.theme.ManyakTheme
 
@@ -50,6 +54,7 @@ fun CreateStorylineScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val currentOnOpenAdditionalInfoStep by rememberUpdatedState(onOpenAdditionalInfoStep)
     val lifecycleOwner = LocalLifecycleOwner.current
+    val context = LocalContext.current
 
     LaunchedEffect(viewModel, lifecycleOwner) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -57,6 +62,11 @@ fun CreateStorylineScreen(
                 when (effect) {
                     is CreateStorylineEffect.NavigateToAdditionalInfo ->
                         currentOnOpenAdditionalInfoStep(effect.storylineIndex)
+
+                    is CreateStorylineEffect.ShowRatingFeedback ->
+                        Toast
+                            .makeText(context, effect.feedback.messageRes, Toast.LENGTH_SHORT)
+                            .show()
                 }
             }
         }
@@ -299,6 +309,14 @@ private fun CreateStorylineFooter(
 /** 서버 계약상 생성 결과는 3개다. 결과가 오기 전 탭 자리도 이 수만큼 그린다. */
 private const val EXPECTED_STORYLINE_COUNT = 3
 
+private val RatingFeedback.messageRes: Int
+    @StringRes get() =
+        when (this) {
+            RatingFeedback.LIKED -> R.string.create_storyline_rating_liked
+            RatingFeedback.DISLIKED -> R.string.create_storyline_rating_disliked
+            RatingFeedback.SYNC_FAILED -> R.string.create_storyline_rating_sync_failed
+        }
+
 @Preview(showBackground = true, name = "스토리라인 선택 · 라이트")
 @Composable
 private fun CreateStorylineScreenPreview() {
@@ -320,7 +338,7 @@ private fun CreateStorylineScreenRatedPreview() {
                 CreateStorylineUiState(
                     content = StorylineContent.Loaded(previewStorylines()),
                     activeIndex = 1,
-                    ratings = mapOf(1 to StorylineRating.GOOD),
+                    ratings = mapOf(2L to StorylineRating.GOOD),
                 ),
             onBack = {},
             onIntent = {},

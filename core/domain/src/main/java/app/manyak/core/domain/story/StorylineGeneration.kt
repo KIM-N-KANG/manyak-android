@@ -40,3 +40,9 @@ data class StorylineRecommendedInfo(
     val id: Long,
     val text: String,
 )
+
+/** 스토리라인 평가. 보조 신호이며 선택 진행을 막지 않는다. */
+enum class StorylineRating {
+    GOOD,
+    BAD,
+}

@@ -3,6 +3,7 @@ package app.manyak.core.data.di
 import app.manyak.core.data.api.AuthApi
 import app.manyak.core.data.api.SimpleStoryApi
 import app.manyak.core.data.api.StoryGenerationApi
+import app.manyak.core.data.api.StoryRatingApi
 import app.manyak.core.data.api.UserApi
 import app.manyak.core.data.interceptor.AuthInterceptor
 import app.manyak.core.data.interceptor.DeviceIdInterceptor
@@ -113,6 +114,14 @@ object NetworkModule {
                 .build()
         return retrofit(generationClient, config, json).create(StoryGenerationApi::class.java)
     }
+
+    @Provides
+    @Singleton
+    fun provideStoryRatingApi(
+        @AuthenticatedClient client: OkHttpClient,
+        config: DataLayerConfig,
+        json: Json,
+    ): StoryRatingApi = retrofit(client, config, json).create(StoryRatingApi::class.java)
 
     @Provides
     @Singleton

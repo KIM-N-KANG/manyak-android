@@ -109,6 +109,9 @@
     <string name="create_storyline_error_generate">스토리라인을 만들지 못했어요</string>
     <string name="create_storyline_error_regenerate">스토리라인을 다시 만들지 못했어요</string>
     <string name="create_storyline_empty">생성된 스토리라인이 없어요</string>
+    <string name="create_storyline_rating_liked">좋아요를 남겼어요</string>
+    <string name="create_storyline_rating_disliked">싫어요를 남겼어요</string>
+    <string name="create_storyline_rating_sync_failed">평가 저장에 실패했어요</string>
     <string name="create_storyline_rating_good">이 스토리라인 좋아요</string>
     <string name="create_storyline_rating_bad">이 스토리라인 싫어요</string>
     <string name="create_cta_regenerate">다시 만들기</string>

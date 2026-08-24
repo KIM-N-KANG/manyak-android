@@ -7,6 +7,7 @@ import app.manyak.core.domain.story.StoryTag
 import app.manyak.core.domain.story.Storyline
 import app.manyak.core.domain.story.StorylineGeneration
 import app.manyak.core.domain.story.StorylineGenerationCommand
+import app.manyak.core.domain.story.StorylineRating
 import app.manyak.core.domain.story.StorylineRecommendedInfo
 import kotlinx.coroutines.yield
 
@@ -41,6 +42,10 @@ internal open class FakeStoryCreationRepository(
     val generationCommands = mutableListOf<StorylineGenerationCommand>()
     val queuedGenerationResults = ArrayDeque<DomainResult<StorylineGeneration>>()
 
+    /** 평가 요청 기록. rating 이 null 이면 취소(DELETE) 호출이다. */
+    val ratingCalls = mutableListOf<Pair<Long, StorylineRating?>>()
+    val queuedRatingResults = ArrayDeque<DomainResult<Unit>>()
+
     override suspend fun tags(): DomainResult<List<StoryTag>> = tagsResult
 
     override suspend fun generateStorylines(command: StorylineGenerationCommand): DomainResult<StorylineGeneration> {
@@ -48,5 +53,20 @@ internal open class FakeStoryCreationRepository(
         yield()
         generationCommands += command
         return queuedGenerationResults.removeFirstOrNull() ?: DomainResult.Success(sampleStorylineGeneration())
+    }
+
+    override suspend fun rateStoryline(
+        storylineId: Long,
+        rating: StorylineRating,
+    ): DomainResult<Unit> {
+        yield()
+        ratingCalls += storylineId to rating
+        return queuedRatingResults.removeFirstOrNull() ?: DomainResult.Success(Unit)
+    }
+
+    override suspend fun clearStorylineRating(storylineId: Long): DomainResult<Unit> {
+        yield()
+        ratingCalls += storylineId to null
+        return queuedRatingResults.removeFirstOrNull() ?: DomainResult.Success(Unit)
     }
 }
