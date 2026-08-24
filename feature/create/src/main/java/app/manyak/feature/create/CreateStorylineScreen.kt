@@ -1,7 +1,6 @@
 package app.manyak.feature.create
 
 import android.widget.Toast
-import androidx.annotation.StringRes
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -63,9 +62,9 @@ fun CreateStorylineScreen(
                     is CreateStorylineEffect.NavigateToAdditionalInfo ->
                         currentOnOpenAdditionalInfoStep(effect.storylineIndex)
 
-                    is CreateStorylineEffect.ShowRatingFeedback ->
+                    CreateStorylineEffect.ShowRatingSyncFailed ->
                         Toast
-                            .makeText(context, effect.feedback.messageRes, Toast.LENGTH_SHORT)
+                            .makeText(context, R.string.create_storyline_rating_sync_failed, Toast.LENGTH_SHORT)
                             .show()
                 }
             }
@@ -308,14 +307,6 @@ private fun CreateStorylineFooter(
 
 /** 서버 계약상 생성 결과는 3개다. 결과가 오기 전 탭 자리도 이 수만큼 그린다. */
 private const val EXPECTED_STORYLINE_COUNT = 3
-
-private val RatingFeedback.messageRes: Int
-    @StringRes get() =
-        when (this) {
-            RatingFeedback.LIKED -> R.string.create_storyline_rating_liked
-            RatingFeedback.DISLIKED -> R.string.create_storyline_rating_disliked
-            RatingFeedback.SYNC_FAILED -> R.string.create_storyline_rating_sync_failed
-        }
 
 @Preview(showBackground = true, name = "스토리라인 선택 · 라이트")
 @Composable

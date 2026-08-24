@@ -115,15 +115,12 @@ class CreateStorylineViewModelTest {
             advanceUntilIdle()
 
             assertEquals(listOf(1L to StorylineRating.BAD), repository.ratingCalls)
-            val effect = withTimeoutOrNull(1_000) { viewModel.uiEffect.first() }
-            assertEquals(
-                CreateStorylineEffect.ShowRatingFeedback(RatingFeedback.DISLIKED),
-                effect,
-            )
+            // 성공은 버튼 상태로 충분해 따로 안내하지 않는다.
+            assertNull(withTimeoutOrNull(1_000) { viewModel.uiEffect.first() })
         }
 
     @Test
-    fun `평가 해제는 취소 요청으로 동기화되고 안내하지 않는다`() =
+    fun `평가 해제는 취소 요청으로 동기화된다`() =
         runTest(dispatcher) {
             val (repository, _, viewModel) = loadedViewModel()
 
@@ -135,11 +132,6 @@ class CreateStorylineViewModelTest {
             assertEquals(
                 listOf(1L to StorylineRating.GOOD, 1L to null),
                 repository.ratingCalls,
-            )
-            // 설정 성공 안내 하나만 남는다 — 해제는 안내하지 않는다.
-            assertEquals(
-                CreateStorylineEffect.ShowRatingFeedback(RatingFeedback.LIKED),
-                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
             )
             assertNull(viewModel.uiState.value.activeRating)
         }
@@ -155,7 +147,7 @@ class CreateStorylineViewModelTest {
 
             assertNull(viewModel.uiState.value.activeRating)
             assertEquals(
-                CreateStorylineEffect.ShowRatingFeedback(RatingFeedback.SYNC_FAILED),
+                CreateStorylineEffect.ShowRatingSyncFailed,
                 withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
             )
             // 되돌린 값과 서버 값이 같으므로 추가 요청을 보내지 않는다.

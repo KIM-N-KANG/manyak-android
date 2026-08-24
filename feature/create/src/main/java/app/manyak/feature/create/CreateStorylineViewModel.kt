@@ -67,22 +67,14 @@ sealed interface CreateStorylineEvent {
     ) : CreateStorylineEvent
 }
 
-/** 평가 동기화 결과 안내. 문구 변환은 화면이 한다. */
-enum class RatingFeedback {
-    LIKED,
-    DISLIKED,
-    SYNC_FAILED,
-}
-
 sealed interface CreateStorylineEffect {
     /** 활성 스토리라인 "선택하기" — 추가 정보 단계로 넘어간다. */
     data class NavigateToAdditionalInfo(
         val storylineIndex: Int,
     ) : CreateStorylineEffect
 
-    data class ShowRatingFeedback(
-        val feedback: RatingFeedback,
-    ) : CreateStorylineEffect
+    /** 평가 동기화 실패 안내. 성공은 버튼 상태로 충분해 따로 알리지 않는다. */
+    data object ShowRatingSyncFailed : CreateStorylineEffect
 }
 
 @HiltViewModel
@@ -185,19 +177,13 @@ class CreateStorylineViewModel
                     storyCreationRepository.rateStoryline(storylineId, desired)
                 }
             when (result) {
-                is DomainResult.Success -> {
-                    syncedRatings.putOrRemove(storylineId, desired)
-                    // 응답 전에 다른 선택으로 바뀌었으면(stale) 안내 없이 후속 동기화에 맡긴다.
-                    if (desired != null && desiredRatings[storylineId] == desired) {
-                        dispatchEffect(CreateStorylineEffect.ShowRatingFeedback(desired.toFeedback()))
-                    }
-                }
+                is DomainResult.Success -> syncedRatings.putOrRemove(storylineId, desired)
 
                 is DomainResult.Failure -> {
                     // 마지막으로 서버에 반영된 값으로 되돌리고 실패를 알린다.
                     desiredRatings.putOrRemove(storylineId, synced)
                     dispatchEvent(CreateStorylineEvent.RatingChanged(storylineId, synced))
-                    dispatchEffect(CreateStorylineEffect.ShowRatingFeedback(RatingFeedback.SYNC_FAILED))
+                    dispatchEffect(CreateStorylineEffect.ShowRatingSyncFailed)
                 }
             }
         }
@@ -272,12 +258,6 @@ class CreateStorylineViewModel
         companion object {
             const val RATING_SYNC_DEBOUNCE_MS: Long = 300
         }
-    }
-
-private fun StorylineRating.toFeedback(): RatingFeedback =
-    when (this) {
-        StorylineRating.GOOD -> RatingFeedback.LIKED
-        StorylineRating.BAD -> RatingFeedback.DISLIKED
     }
 
 private fun MutableMap<Long, StorylineRating>.putOrRemove(
