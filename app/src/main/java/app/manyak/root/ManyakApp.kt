@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -109,6 +110,11 @@ private fun CleanupFailed(
                     .heightIn(min = ManyakTheme.sizes.control),
             onClick = onRetry,
             shape = ManyakTheme.shapes.control,
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor = ManyakTheme.colors.brand,
+                    contentColor = ManyakTheme.colors.textInverse,
+                ),
         ) {
             Text(text = stringResource(R.string.common_retry), style = ManyakTheme.typography.labelLarge)
         }
@@ -170,8 +176,6 @@ private fun MainNavDisplay() {
                 entry<MainTabsRoute> {
                     MainTabsScreen(onCreateStory = { backStack.add(CreateKeywordRoute) })
                 }
-                // 간편 제작 퍼널은 단계마다 목적지를 두고 다음 단계 이동을 push 로 표현한다.
-                // 키워드 단계의 뒤로가기는 이탈 가드 없이 진입 전 화면으로 나간다.
                 entry<CreateKeywordRoute> {
                     CreateKeywordScreen(onLeaveFunnel = { backStack.removeLastOrNull() })
                 }

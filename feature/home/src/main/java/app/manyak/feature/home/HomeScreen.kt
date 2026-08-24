@@ -48,9 +48,6 @@ fun HomeScreen(
     }
 }
 
-/**
- * 간편 제작 진입 버튼. 주 동작 색을 쓰고, 이 디자인 시스템은 그림자를 쓰지 않으므로 고도를 없앤다.
- */
 @Composable
 private fun CreateStoryFab(
     onClick: () -> Unit,
@@ -59,8 +56,8 @@ private fun CreateStoryFab(
     FloatingActionButton(
         modifier = modifier,
         onClick = onClick,
-        shape = ManyakTheme.shapes.card,
-        containerColor = ManyakTheme.colors.backgroundBrandBold,
+        shape = ManyakTheme.shapes.pill,
+        containerColor = ManyakTheme.colors.brand,
         contentColor = ManyakTheme.colors.textInverse,
         elevation =
             FloatingActionButtonDefaults.elevation(

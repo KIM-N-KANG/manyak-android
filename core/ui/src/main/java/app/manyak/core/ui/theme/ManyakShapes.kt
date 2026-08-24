@@ -12,20 +12,23 @@ import androidx.compose.ui.unit.dp
  */
 @Immutable
 data class ManyakShapes(
-    /** 썸네일·작은 아이콘 컨테이너 */
+    /** 10dp — 셀렉트 메뉴 항목 */
+    val menuItem: CornerBasedShape,
+    /** 12dp — 썸네일·작은 아이콘 컨테이너 */
     val thumbnail: CornerBasedShape,
-    /** 버튼·입력창·탭 */
+    /** 14dp — 버튼·입력창·탭 */
     val control: CornerBasedShape,
-    /** 카드·리스트 항목 */
+    /** 16dp — 카드·리스트 항목 */
     val card: CornerBasedShape,
-    /** 바텀시트·다이얼로그 */
+    /** 20dp — 바텀시트·다이얼로그 */
     val overlay: CornerBasedShape,
-    /** 배지·칩·아바타 */
+    /** CircleShape — 배지·칩·아바타 */
     val pill: CornerBasedShape,
 )
 
 internal val ManyakDefaultShapes =
     ManyakShapes(
+        menuItem = RoundedCornerShape(10.dp),
         thumbnail = RoundedCornerShape(12.dp),
         control = RoundedCornerShape(14.dp),
         card = RoundedCornerShape(16.dp),

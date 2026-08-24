@@ -31,7 +31,7 @@
     <!-- 홈 -->
     <string name="home_create_story">스토리 만들기</string>
 
-    <!-- 간편 제작 퍼널. 문구 정본은 공통 클라이언트 스펙이고 앱이 새 문구를 만들지 않는다. -->
+    <!-- 간편 제작 퍼널 -->
     <string name="create_title">스토리 만들기</string>
     <string name="create_step_keyword">키워드 선택</string>
     <string name="create_step_storyline">스토리라인 선택</string>
@@ -41,13 +41,11 @@
     <string name="create_keyword_title">만들고 싶은 스토리의\n키워드를 선택해주세요</string>
     <string name="create_keyword_description">선택한 키워드로 AI가 스토리라인을 생성해요</string>
     <string name="create_tab_genre">장르</string>
-    <string name="create_tab_protagonist">주인공 특징</string>
-    <string name="create_tab_supporting_character">주변 인물 특징</string>
-    <string name="create_tab_genre_description">스토리의 분위기와 소재를 정해요</string>
-    <string name="create_tab_protagonist_description">스토리 속 나를 설정해요</string>
-    <string name="create_tab_supporting_character_description">주변 인물들을 설정해요 (최대 5명)</string>
-    <string name="create_supporting_character_count">현재 %1$d명</string>
+    <string name="create_tab_protagonist">주인공 (나)</string>
+    <string name="create_tab_supporting_character">주변 인물</string>
     <string name="create_tags_load_failed">키워드를 불러오지 못했어요</string>
+    <string name="create_tags_reload_description">아래 버튼으로 다시 시도해주세요</string>
+    <string name="create_tags_reload">다시 불러오기</string>
     <string name="create_section_genre">장르 (최대 3개)</string>
     <string name="create_section_feature">특징 (최대 3개)</string>
     <string name="create_section_basic_info">기본 정보</string>
@@ -55,6 +53,10 @@
     <!-- %1$s 는 카테고리 탭 라벨(예: 장르). -->
     <string name="create_add_keyword_dialog_title">%1$s 키워드 추가</string>
     <string name="create_add_keyword_dialog_description">원하는 키워드를 입력해주세요</string>
+    <string name="create_add_keyword_label">키워드</string>
+    <string name="create_add_keyword_placeholder_genre">예: 타임루프, 영지물, 먼치킨</string>
+    <string name="create_add_keyword_placeholder_protagonist">예: 사랑에 서툰, 타인을 믿지 못하는</string>
+    <string name="create_add_keyword_placeholder_supporting_character">예: 상냥해서 더 위험한, 어딘가 망가진</string>
     <string name="create_add_keyword_error_empty">키워드를 입력해주세요</string>
     <!-- %1$d 는 현재 글자 수, %2$d 는 상한. 키워드·인물 이름 입력의 카운터에 함께 쓴다. -->
     <string name="create_input_counter">%1$d / %2$d</string>
@@ -66,12 +68,14 @@
     <string name="create_gender_female">여성</string>
     <string name="create_character_random_hint">비워두면 랜덤으로 설정해요</string>
     <string name="create_feature_random_hint">선택하지 않으면 랜덤으로 설정해요</string>
-    <string name="create_supporting_card_label">주변 인물 %1$d</string>
-    <string name="create_supporting_delete">%1$s 삭제</string>
+    <string name="create_supporting_character_label">주변 인물 %1$d</string>
+    <string name="create_supporting_character_count">%1$d/%2$d</string>
+    <string name="create_supporting_delete">삭제</string>
+    <string name="create_supporting_delete_description">%1$s 삭제</string>
     <string name="create_add_character">인물 추가</string>
     <string name="create_error_duplicate_name">이미 사용한 이름이에요</string>
     <string name="create_error_duplicate_name_footer">인물 이름이 겹치지 않게 해주세요</string>
-    <!-- 주변 인물 이름 placeholder. 카드 순서대로 순환한다. -->
+    <!-- 주변 인물 이름 placeholder. 입력 섹션 순서대로 순환한다. -->
     <string-array name="create_name_placeholders_supporting">
         <item>예: 한도윤</item>
         <item>예: 이서연</item>

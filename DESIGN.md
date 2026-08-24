@@ -9,6 +9,7 @@ colors:
   text-subtle: "#575757"
   text-subtlest: "#747474"
   text-disabled: "#969696"
+  step-indicator-active: "#9F9F9F"
   text-inverse: "#FFFFFF"
   text-brand: "#00804B"
   text-danger: "#C1191C"
@@ -41,6 +42,7 @@ colors-dark:
   text-subtle: "#9F9F9F"
   text-subtlest: "#7E7E7E"
   text-disabled: "#5E5E5E"
+  step-indicator-active: "#666666"
   text-inverse: "#FFFFFF"
   text-brand: "#58C58F"
   text-danger: "#FF7669"
@@ -115,6 +117,7 @@ typography:
     lineHeight: 15sp
 
 rounded:
+  menu-item: 10dp
   thumbnail: 12dp
   control: 14dp
   card: 16dp
@@ -122,6 +125,7 @@ rounded:
   pill: CircleShape
 
 sizes:
+  input: 40dp
   control: 48dp
   icon: 20dp
   tab-icon: 24dp
@@ -130,8 +134,11 @@ sizes:
 spacing:
   hairline: 2dp
   inline: 4dp
+  dense: 6dp
   compact: 8dp
+  control-vertical: 10dp
   component: 12dp
+  control-horizontal: 14dp
   gutter: 16dp
   section: 24dp
   block: 32dp
@@ -144,14 +151,14 @@ components:
     typography: "{typography.body-medium}"
     padding: "{spacing.gutter}"
   button-primary:
-    backgroundColor: "{colors.background-brand-bold}"
+    backgroundColor: "{colors.brand}"
     textColor: "{colors.text-inverse}"
     typography: "{typography.label-large}"
     rounded: "{rounded.control}"
     height: "{sizes.control}"
     padding: "{spacing.compact} {spacing.component}"
   button-primary-pressed:
-    backgroundColor: "{colors.background-brand-bold-pressed}"
+    backgroundColor: "{colors.background-brand-bold}"
     textColor: "{colors.text-inverse}"
     rounded: "{rounded.control}"
   button-danger:
@@ -180,18 +187,19 @@ components:
     typography: "{typography.label-large}"
     rounded: "{rounded.control}"
   text-field:
-    backgroundColor: "{colors.background-neutral}"
+    backgroundColor: "{colors.surface-raised}"
     textColor: "{colors.text}"
-    typography: "{typography.body-large}"
+    typography: "{typography.body-medium}"
+    borderColor: "{colors.border}"
+    rounded: "{rounded.control}"
+    minHeight: "{sizes.input}"
+    padding: "{spacing.control-vertical} {spacing.control-horizontal}"
+  text-field-focused:
+    backgroundColor: "{colors.surface-raised}"
     borderColor: "{colors.border-input}"
     rounded: "{rounded.control}"
-    padding: "{spacing.component}"
-  text-field-focused:
-    backgroundColor: "{colors.background-neutral}"
-    borderColor: "{colors.border-focused}"
-    rounded: "{rounded.control}"
   text-field-error:
-    backgroundColor: "{colors.background-neutral}"
+    backgroundColor: "{colors.surface-raised}"
     borderColor: "{colors.border-danger}"
     rounded: "{rounded.control}"
   card:
@@ -260,20 +268,34 @@ components:
     textColor: "{colors.text-subtle}"
     typography: "{typography.label-small}"
   fab:
-    backgroundColor: "{colors.background-brand-bold}"
+    backgroundColor: "{colors.brand}"
     iconColor: "{colors.text-inverse}"
-    rounded: "{rounded.card}"
+    rounded: "{rounded.pill}"
     size: 56dp
   funnel-header:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.text}"
     typography: "{typography.title-medium}"
-    minHeight: 56dp
+    minHeight: 64dp
   step-indicator:
-    activeColor: "{colors.background-brand-bold}"
+    completedColor: "{colors.text-disabled}"
+    activeColor: "{colors.step-indicator-active}"
     inactiveColor: "{colors.border}"
-    height: 4dp
+    height: 3dp
     rounded: "{rounded.pill}"
+  chip:
+    backgroundColor: "{colors.surface-raised}"
+    textColor: "{colors.text}"
+    borderColor: "{colors.border}"
+    typography: "{typography.body-medium}"
+    rounded: "{rounded.control}"
+    minHeight: "{sizes.input}"
+    padding: "{spacing.control-vertical} {spacing.control-horizontal}"
+  chip-selected:
+    backgroundColor: "{colors.background-brand-subtle}"
+    textColor: "{colors.text-brand}"
+    borderColor: "{colors.border-brand}"
+    rounded: "{rounded.control}"
   logo-manyak:
     asset: "res/drawable/ic_logo_manyak.xml"
     color: "{colors.brand}"
@@ -313,9 +335,9 @@ components:
 | --- | --- |
 | `Color.kt` | 팔레트(private)와 시맨틱 색 30종, 라이트·다크 인스턴스 |
 | `Type.kt` | `Pretendard`·`MaruBuri` FontFamily와 타이포 롤 9종 |
-| `ManyakSpacing.kt` | 여백 8단계 |
-| `ManyakShapes.kt` | 모서리 5종 |
-| `ManyakSizes.kt` | 크기 4종 |
+| `ManyakSpacing.kt` | 시맨틱 여백 |
+| `ManyakShapes.kt` | 시맨틱 모서리 |
+| `ManyakSizes.kt` | 크기 5종 |
 | `ManyakMotion.kt` | 전환 시간 1종 |
 | `Theme.kt` | `ManyakTheme` 컴포저블·접근자, M3 슬롯 파생 |
 
@@ -338,8 +360,8 @@ components:
 
 ### 브랜드
 
-- **브랜드 초록** (`{colors.brand}` — #05A66B): 로고·일러스트 등 **큰 그래픽 전용**입니다. 이 색 위에 흰 텍스트를 얹으면 대비가 3.15로 AA에 못 미칩니다. 다만 **버튼 배경에는 예외로 그대로 쓸 수 있습니다**(2026-08-24 결정) — 웹 primary 와 같은 값으로 맞추는 것을 대비 미달보다 우선했습니다.
-- **주 버튼 배경** (`{colors.background-brand-bold}` — #00804B): 한 단계 어두운 초록. 흰 텍스트와 5.01을 확보합니다. 라이트·다크가 같은 값입니다.
+- **브랜드 초록** (`{colors.brand}` — #05A66B): 로고·일러스트 등 큰 그래픽과 **주 버튼의 배경**입니다. **버튼에 프라이머리 색을 넣을 때는 반드시 이 기본 프라이머리(브랜드 원색)를 씁니다**(2026-08-24 결정) — 한 단계 어두운 `{colors.background-brand-bold}`를 버튼 기본 배경으로 쓰지 않습니다. 웹 primary 와 같은 값으로 맞추는 것을, 흰 텍스트와의 대비 3.15(AA 미달)보다 우선한 결정입니다.
+- **짙은 브랜드 초록** (`{colors.background-brand-bold}` — #00804B): 한 단계 어두운 초록. 주 버튼의 **눌림 상태**에 씁니다. 라이트·다크가 같은 값입니다.
 - **브랜드 텍스트** (`{colors.text-brand}`): 링크·강조 텍스트. 라이트 #00804B, 다크 #58C58F — 다크에서 어두운 초록은 읽히지 않기 때문입니다.
 
 ### 표면
@@ -422,8 +444,11 @@ components:
 | --- | --- | --- |
 | `{spacing.hairline}` | 2dp | 아이콘과 라벨 사이 |
 | `{spacing.inline}` | 4dp | 인접한 인라인 요소 |
+| `{spacing.dense}` | 6dp | 촘촘한 요소 사이 |
 | `{spacing.compact}` | 8dp | 리스트 항목 간격·버튼 내부 세로 |
+| `{spacing.control-vertical}` | 10dp | 입력·칩·메뉴 항목의 세로 패딩 |
 | `{spacing.component}` | 12dp | 컴포넌트 내부 기본 |
+| `{spacing.control-horizontal}` | 14dp | 입력·칩·메뉴 항목의 가로 패딩 |
 | `{spacing.gutter}` | 16dp | 화면 좌우 여백 |
 | `{spacing.section}` | 24dp | 섹션 사이 |
 | `{spacing.block}` | 32dp | 큰 구획 사이 |
@@ -452,7 +477,8 @@ components:
 
 | 토큰 | 값 | 용도 |
 | --- | --- | --- |
-| `{sizes.control}` | 48dp | 버튼·입력창·탭처럼 탭 가능한 컨트롤의 높이 |
+| `{sizes.input}` | 40dp | 입력창·칩·셀렉트 앵커의 최소 높이 |
+| `{sizes.control}` | 48dp | 버튼·탭처럼 탭 가능한 일반 컨트롤의 높이 |
 | `{sizes.icon}` | 20dp | 라벨 옆 아이콘·제공자 로고 |
 | `{sizes.tab-icon}` | 24dp | 하단 탭 아이콘 |
 | `{sizes.logo}` | 24dp | 마냑 로고 락업의 높이. 폭은 원본 비율(89:32)로 따라간다 |
@@ -461,9 +487,9 @@ components:
 라벨 옆에 붙어 글자 크기에 맞추지만, 탭 아이콘은 라벨 위에 놓인 탭의 주된 시각 요소다. 웹 하단
 네비게이션도 같은 24px이다.
 
-`{sizes.control}`은 안드로이드 최소 터치 타깃과 같은 값이다. Material3 기본 버튼은 시각 높이 40dp 에
-터치 영역만 48dp 로 넓히므로 **보이는 크기와 눌리는 크기가 어긋난다** — 그 차이를 없애려고 둘을 맞췄다.
-토큰 정본에는 높이가 없어 이 값은 이 레포가 소유한다.
+`{sizes.control}`은 안드로이드 최소 터치 타깃과 같은 값이다. 버튼·탭은 보이는 크기와 눌리는 크기를
+48dp 로 맞추고, 여러 개가 밀집하는 입력창·칩·셀렉트 앵커는 `{sizes.input}` 40dp 로 구분한다.
+토큰 정본에는 높이가 없어 두 값은 이 레포가 소유한다.
 
 ## 모션
 
@@ -485,6 +511,7 @@ components:
 
 | 토큰 | 값 | 용도 |
 | --- | --- | --- |
+| `{rounded.menu-item}` | 10dp | 셀렉트 메뉴 항목 |
 | `{rounded.thumbnail}` | 12dp | 썸네일·작은 아이콘 컨테이너 |
 | `{rounded.control}` | 14dp | 버튼·입력창·탭 |
 | `{rounded.card}` | 16dp | 카드·리스트 항목 |
@@ -499,7 +526,7 @@ components:
 
 ### 버튼
 
-**`button-primary`** — 주 동작. 배경 `{colors.background-brand-bold}`, 텍스트 `{colors.text-inverse}`, `{typography.label-large}`, 모서리 `{rounded.control}`, 내부 여백 세로 `{spacing.compact}` · 가로 `{spacing.component}`. 눌림은 `{component.button-primary-pressed}`로 배경만 한 단계 어둡게 바꿉니다.
+**`button-primary`** — 주 동작. 배경은 **기본 프라이머리 `{colors.brand}`** 이고(버튼의 프라이머리는 반드시 이 색 — 위 브랜드 절), 텍스트 `{colors.text-inverse}`, `{typography.label-large}`, 모서리 `{rounded.control}`, 내부 여백 세로 `{spacing.compact}` · 가로 `{spacing.component}`. 눌림은 `{component.button-primary-pressed}`로 배경만 `{colors.background-brand-bold}`로 한 단계 어둡게 바꿉니다. M3 슬롯 파생(primary = `{colors.background-brand-bold}`)은 안전망일 뿐이므로, 기본 `Button` 색에 기대지 말고 이 색을 명시합니다.
 
 **`button-danger`** — 파괴적 동작(탈퇴·삭제). 같은 형태에 배경만 `{colors.background-danger-bold}`. 눌림은 `{component.button-danger-pressed}`.
 
@@ -509,11 +536,13 @@ components:
 
 ### 입력
 
-**`text-field`** — 배경 `{colors.background-neutral}`, 경계 `{colors.border-input}` 1dp, 텍스트 `{typography.body-large}`, 모서리 `{rounded.control}`, 내부 여백 `{spacing.component}`. 경계색이 채움색 기준으로 3:1을 넘기므로 경계만으로도 식별됩니다.
+**`text-field`** — 배경 `{colors.surface-raised}`(흰색), 경계 `{colors.border}`(옅은 회색) 1dp, 텍스트 `{typography.body-medium}`, 모서리 `{rounded.control}`, 내부 여백은 세로 `{spacing.control-vertical}` · 가로 `{spacing.control-horizontal}`, 최소 높이 `{sizes.input}` — 칩과 같은 밀도로 맞춘 값이라 컨트롤(48dp)보다 낮고, 터치 타깃 미달은 칩과 같은 이유로 수용한다.
 
-**`text-field-focused`** — 경계를 `{colors.border-focused}`로 바꿉니다.
+**`text-field-focused`** — 경계를 한 단계 진한 회색 `{colors.border-input}`으로 바꿉니다. 포커스에 브랜드 색을 쓰지 않습니다(2026-08-24 결정 — 입력 경계는 무채색 사다리로만 말합니다).
 
 **`text-field-error`** — 경계를 `{colors.border-danger}`로 바꾸고, 오류 문구를 `{colors.text-danger}` + `{typography.body-small}`로 아래에 둡니다. 색만으로 오류를 알리지 않습니다.
+
+**셀렉트 메뉴**(성별 등) — 앵커는 text-field 와 같은 형태이고, 미선택(랜덤) 값은 placeholder 색(`{colors.text-disabled}`)으로 낮춥니다. 메뉴는 앵커와 같은 폭으로 항상 앵커 아래에 `{spacing.inline}` 떨어져 열리며, 배경 `{colors.surface-raised}` + 경계 `{colors.border}` + **연한 그림자**를 쓰고, 각 항목은 `{rounded.menu-item}` 모서리와 세로 `{spacing.control-vertical}` · 가로 `{spacing.control-horizontal}` 여백을 사용합니다. 선택된 항목은 `{colors.background-neutral}` 채움과 체크 표시로 드러냅니다 — 그림자 금지 규칙의 예외로, 떠 있는 흰 메뉴가 흰 앵커·표면과 겹쳐 경계만으로는 층이 드러나지 않기 때문입니다.
 
 ### 컨테이너
 
@@ -533,7 +562,7 @@ components:
 
 > 셸의 두 컴포넌트는 **M3 컴포넌트 위에 색만 얹어** 만든다. 인셋·높이·최소 터치 타깃·시맨틱을 직접 계산하지 않기 위해서다. 이 시스템에 없는 요소만 골라 지운다.
 
-**`section-header`** — 메인 탭의 상단 헤더. `TopAppBar` 위에 배경 `{colors.surface}`와 제목 색 `{colors.text}`를 얹는다. 좌우 여백은 앱 바 기본값이 16dp 라 `{spacing.gutter}`와 같고, 로고와 섹션 이름(`{typography.title-medium}`) 사이도 `{spacing.gutter}`다. 높이는 최소 64dp 이고 제목이 커지면 함께 늘어난다. 구분선과 그림자를 두지 않는다. `TopAppBar`가 아직 실험 API 라 `@OptIn`이 필요하며, 사용처를 이 컴포넌트 하나로 묶어 두었다.
+**`section-header`** — 메인 탭의 상단 헤더. `TopAppBar` 위에 배경 `{colors.surface}`와 제목 색 `{colors.text}`를 얹는다. 좌우 여백은 앱 바 기본값이 16dp 라 `{spacing.gutter}`와 같고, 로고와 섹션 이름(`{typography.title-medium}`) 사이도 `{spacing.gutter}`다. 높이는 최소 64dp 이고 제목이 커지면 함께 늘어난다. 구분선과 그림자를 두지 않는다. `TopAppBar`가 아직 실험 API 라 `@OptIn`이 필요하며, 사용처는 이 컴포넌트와 퍼널 헤더(`funnel-header`) 둘이다.
 
 **`tab-bar`** — 홈·채팅·마이 고정 3탭. 배경 `{colors.surface}`, 위쪽 경계 `{colors.border}` 1dp. 아이콘(`{sizes.tab-icon}`) 아래에 이름을 `{typography.label-small}`로 둔다. 선택은 filled 아이콘 + `{colors.text}`, 비선택은 outline 아이콘 + `{colors.text-subtle}`이고 아이콘과 라벨이 같은 색을 쓴다. 라벨이 이름을 맡으므로 **아이콘은 장식으로 두고 접근성 이름을 붙이지 않는다** — 둘 다 붙이면 탐색 서비스가 같은 이름을 두 번 읽는다. 선택을 색 하나로만 구분하지 않고 아이콘 모양을 함께 바꾼다.
 
@@ -548,13 +577,17 @@ components:
 > 간편 제작 퍼널은 셸을 두르지 않는 전체 화면이라 chrome 을 화면이 직접 그린다. 아래 세 컴포넌트는
 > 지금 `:feature:create`(FAB 은 `:feature:home`)가 소유하고, 두 번째 모듈 사용처가 생기면 `:core:ui`로 올린다.
 
-**`fab`** — 홈 우측 하단의 제작 진입 버튼. 배경 `{colors.background-brand-bold}`, 아이콘 `{colors.text-inverse}`, 모서리 `{rounded.card}`, 크기 56dp(M3 FAB 기본). **고도(그림자)를 0으로 없앤다** — 이 시스템은 층을 표면 색으로만 나눈다. 하단 바에 초록을 두지 않는 것과 어긋나지 않는다 — FAB 은 상시 chrome 이 아니라 화면의 주 동작 그 자체라서, 초록이 "지금 누를 것"을 가리킨다는 규칙 그대로다.
+**`fab`** — 홈 우측 하단의 제작 진입 버튼. **원형**(`{rounded.pill}`)이고 배경은 주 버튼(`{component.button-primary}`)과 같은 브랜드 원색 `{colors.brand}`, 아이콘 `{colors.text-inverse}`, 크기 56dp(M3 FAB 기본). **고도(그림자)를 0으로 없앤다** — 이 시스템은 층을 표면 색으로만 나눈다. 하단 바에 초록을 두지 않는 것과 어긋나지 않는다 — FAB 은 상시 chrome 이 아니라 화면의 주 동작 그 자체라서, 초록이 "지금 누를 것"을 가리킨다는 규칙 그대로다.
 
-**`funnel-header`** — 뒤로가기 아이콘 버튼과 화면 제목(`{typography.title-medium}`)을 나란히 둔다. 최소 높이 56dp — 웹 퍼널 헤더(h-14)와 같고, 섹션 헤더(64dp)보다 낮은 것은 로고 락업 없이 아이콘 버튼과 제목만 있기 때문이다. 구분선과 그림자를 두지 않는다.
+**`funnel-header`** — 섹션 헤더처럼 M3 `TopAppBar` 위에 색만 얹고, 로고 대신 뒤로가기 아이콘 버튼과 화면 제목(`{typography.title-medium}`)을 둔다. 높이는 앱 바 기본 64dp 다. 구분선과 그림자를 두지 않는다.
 
-**`step-indicator`** — 헤더 아래 얇은 막대 분절로 퍼널 진행을 표시한다. 높이 4dp, 모서리 `{rounded.pill}`, 분절 사이 `{spacing.compact}`. 완료·현재 단계는 `{colors.background-brand-bold}`, 미도달 단계는 `{colors.border}`. 단계 이름은 시각 라벨 없이 접근성 텍스트로만 제공하고, 막대들은 장식이라 시맨틱을 하나로 묶는다. 채움에 주 동작 색을 쓰는 이유는 진행이 곧 "지금 하는 일"이기 때문이고, 미도달을 `{colors.background-neutral}`이 아니라 `{colors.border}`로 두는 이유는 표면(`{colors.surface}`) 위에서 전자가 거의 보이지 않기 때문이다.
+**`step-indicator`** — 헤더 아래 얇은 막대 분절로 퍼널 진행을 표시한다. 높이 3dp, 양끝 `{rounded.pill}` 라운드, 분절 사이 `{spacing.component}`, 좌우 여백 `{spacing.gutter}`. 완료 단계는 `{colors.text-disabled}`, 현재 단계는 그보다 반 단계 연한 `{colors.step-indicator-active}`(라이트 #9F9F9F · 다크 #666666), 미도달 단계는 `{colors.border}`다. 단계 이름은 시각 라벨 없이 접근성 텍스트로만 제공하고, 막대들은 장식이라 시맨틱을 하나로 묶는다. 채움에 브랜드 초록을 쓰지 않는 이유는 진행 표시가 정보이지 눌러야 할 동작이 아니기 때문이고, 미도달을 `{colors.background-neutral}`이 아니라 `{colors.border}`로 두는 이유는 표면(`{colors.surface}`) 위에서 전자가 거의 보이지 않기 때문이다.
 
-카테고리 탭은 M3 `TabRow` 기본을 쓴다 — 컨테이너 `{colors.surface}`, 선택 라벨 `{colors.text}`, 비선택 `{colors.text-subtle}`, 잠금 `{colors.text-disabled}`, 필수 표시 `*`는 `{colors.text-danger}`. 선택 표시선은 M3 슬롯 파생(primary = `{colors.background-brand-bold}`)을 그대로 둔다 — 탭은 하단 바와 달리 화면 안의 상호작용 요소라 초록이 맞다.
+**퍼널 하단 CTA** — 주 버튼(다음·스토리라인 만들기)은 `{component.button-primary}` 그대로이고 보조 버튼(이전)은 `{component.button-neutral}`이다. 두 버튼은 같은 폭(1:1)으로 하단을 나눈다.
+
+**키워드 칩** — 제공·커스텀 태그는 `{component.chip}`(흰 배경 + 옅은 경계)이고 선택은 `{component.chip-selected}`(브랜드 subtle 채움 + 브랜드 경계 + 브랜드 텍스트)로 색 하나가 아니라 채움·경계·글자 셋으로 말한다. 높이는 `{sizes.input}`으로 컨트롤(48dp)보다 낮다 — 여럿이 흐르는 밀도 높은 선택 요소라서이고, 터치 타깃이 최소 48dp 에 못 미치는 것은 알고 수용한다. 모서리는 입력창과 같은 `{rounded.control}`이고, 선택 변화 자체가 반응이므로 눌림 리플을 그리지 않는다. "키워드 추가"·"인물 추가" 트리거는 같은 모양에 `{colors.background-neutral}` 채움 + `{colors.border}` 경계이고, `+` 아이콘은 16dp 로 라벨 크기에 맞춘다. 인물 추가는 폭을 채우지 않고 가운데에 놓인다. 상한에 도달하면 미선택 칩과 트리거를 비활성 색(`{colors.text-disabled}`)으로 내린다.
+
+카테고리 탭은 M3 `SecondaryTabRow` 기본을 쓴다(`TabRow`는 deprecated) — 컨테이너 `{colors.surface}`, 선택 라벨 `{colors.text}`, 비선택 `{colors.text-subtle}`, 잠금 `{colors.text-disabled}`, 필수 표시 `*`는 `{colors.text-danger}`. 선택 표시선은 탭 폭에 맞는 `{colors.text}` 1.5dp 선이다 — 선택 표시는 상태이지 다음 동작이 아니라서 초록을 쓰지 않고, 선택 라벨과 같은 색으로 묶는다. **눌림 리플은 끈다** — 탭을 누르면 라벨 색과 표시선이 곧바로 바뀌므로 그 변화 자체가 반응이고, 하단 내비게이션과 같은 이유다. 스크롤 시 탭만 상단에 고정하고 각 카테고리 콘텐츠는 탭 아래에서 시작한다.
 
 ### 로고
 
@@ -567,7 +600,7 @@ components:
 ### 해야 할 것
 
 - 색·크기·여백·모서리는 `ManyakTheme`의 접근자로만 읽습니다.
-- 주 동작은 `{colors.background-brand-bold}`, 파괴적 동작은 `{colors.background-danger-bold}`로 구분합니다.
+- 주 동작 버튼은 기본 프라이머리 `{colors.brand}`, 파괴적 동작은 `{colors.background-danger-bold}`로 구분합니다. 버튼에 프라이머리 색을 넣을 때는 반드시 `{colors.brand}`를 씁니다.
 - 보조 설명은 `{colors.text-subtle}`, 강한 대비가 필요 없는 장식만 `{colors.text-disabled}`에 둡니다.
 - 배지·칩·아바타는 `{rounded.pill}`(=`CircleShape`)로 그립니다.
 - 스토리 본문에는 `{typography.body-reading}`을 씁니다.
@@ -577,7 +610,7 @@ components:
 
 - `MaterialTheme.colorScheme`·`MaterialTheme.typography`를 직접 참조하지 않습니다. `ManyakTheme`이 두 값을 토큰에서 파생해 채우지만 이는 M3 기본값(보라색·Roboto)이 새는 것을 막는 **안전망**일 뿐 정본이 아닙니다.
 - dynamic color를 켜지 않습니다. 브랜드 색이 기기 배경화면에 덮입니다.
-- `{colors.brand}`를 텍스트 배경으로 쓰지 않습니다. 큰 그래픽 전용이되, **버튼 배경만은 예외로 허용**합니다(위 브랜드 절).
+- `{colors.brand}`를 텍스트 배경으로 쓰지 않습니다. 큰 그래픽과 버튼 배경(주 동작)에만 씁니다. 버튼에는 `{colors.background-brand-bold}`를 기본 배경으로 쓰지 않습니다 — 그 색은 눌림 상태 전용입니다.
 - 그림자로 층을 만들지 않습니다. 표면 색을 바꿉니다.
 - `{rounded.pill}`을 큰 dp 값으로 대체하지 않습니다.
 - 팔레트 값(`#05A66B` 등)을 화면 코드에 직접 적지 않습니다.

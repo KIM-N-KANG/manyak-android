@@ -1,34 +1,37 @@
 package app.manyak.feature.create
 
-import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.R
 import app.manyak.core.ui.theme.ManyakTheme
 
-/**
- * 인물 폼. 주인공과 주변 인물이 같은 폼을 쓴다 — 기본 정보(이름·성별) 아래 특징 칩이 온다.
- * 특징이 필수인 주인공만 라벨에 `*` 가 붙고, 주변 인물은 칩 아래에 랜덤 안내를 둔다.
- */
 @Composable
 internal fun CharacterForm(
     target: KeywordTarget,
@@ -46,38 +49,15 @@ internal fun CharacterForm(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
-        KeywordSectionLabel(text = stringResource(R.string.create_section_basic_info), required = false)
-        KeywordTextField(
-            value = character.name,
-            onValueChange = { name -> onIntent(CreateKeywordIntent.ChangeCharacterName(target, name)) },
-            placeholder = namePlaceholder,
-            isError = isDuplicateName,
-            trailing = {
-                InputCounter(
-                    length = character.name.length,
-                    maxLength = CreateKeywordUiState.CHARACTER_NAME_MAX_LENGTH,
-                )
-            },
+        CharacterBasicInfo(
+            target = target,
+            character = character,
+            namePlaceholder = namePlaceholder,
+            isDuplicateName = isDuplicateName,
+            onIntent = onIntent,
         )
-        if (isDuplicateName) {
-            Text(
-                text = stringResource(R.string.create_error_duplicate_name),
-                style = ManyakTheme.typography.bodySmall,
-                color = ManyakTheme.colors.textDanger,
-            )
-        }
-        GenderSelectField(
-            gender = character.gender,
-            onGenderChange = { gender -> onIntent(CreateKeywordIntent.ChangeCharacterGender(target, gender)) },
-        )
-        Text(
-            text = stringResource(R.string.create_character_random_hint),
-            style = ManyakTheme.typography.bodySmall,
-            color = ManyakTheme.colors.textSubtle,
-        )
-
         KeywordSectionLabel(
-            modifier = Modifier.padding(top = ManyakTheme.spacing.component),
+            modifier = Modifier.padding(top = ManyakTheme.spacing.gutter),
             text = stringResource(R.string.create_section_feature),
             required = featureRequired,
         )
@@ -93,17 +73,61 @@ internal fun CharacterForm(
         if (!featureRequired) {
             Text(
                 text = stringResource(R.string.create_feature_random_hint),
-                style = ManyakTheme.typography.bodySmall,
+                style = ManyakTheme.typography.bodyMedium,
                 color = ManyakTheme.colors.textSubtle,
             )
         }
     }
 }
 
-/**
- * 제공 태그·커스텀 태그 칩과 "키워드 추가" 트리거. 로딩은 스켈레톤으로, 실패는 인라인 오류로
- * 표시하되 직접 추가는 계속 할 수 있다.
- */
+@Composable
+private fun CharacterBasicInfo(
+    target: KeywordTarget,
+    character: KeywordCharacter,
+    namePlaceholder: String,
+    isDuplicateName: Boolean,
+    onIntent: (CreateKeywordIntent) -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact)) {
+        KeywordSectionLabel(
+            text = stringResource(R.string.create_section_basic_info),
+            required = false,
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact)) {
+            KeywordTextField(
+                modifier = Modifier.weight(3f),
+                value = character.name,
+                onValueChange = { name -> onIntent(CreateKeywordIntent.ChangeCharacterName(target, name)) },
+                placeholder = namePlaceholder,
+                isError = isDuplicateName,
+                trailing = {
+                    InputCounter(
+                        length = character.name.length,
+                        maxLength = CreateKeywordUiState.CHARACTER_NAME_MAX_LENGTH,
+                    )
+                },
+            )
+            GenderSelectField(
+                modifier = Modifier.weight(2f),
+                gender = character.gender,
+                onGenderChange = { gender -> onIntent(CreateKeywordIntent.ChangeCharacterGender(target, gender)) },
+            )
+        }
+        if (isDuplicateName) {
+            Text(
+                text = stringResource(R.string.create_error_duplicate_name),
+                style = ManyakTheme.typography.bodySmall,
+                color = ManyakTheme.colors.textDanger,
+            )
+        }
+        Text(
+            text = stringResource(R.string.create_character_random_hint),
+            style = ManyakTheme.typography.bodyMedium,
+            color = ManyakTheme.colors.textSubtle,
+        )
+    }
+}
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun KeywordChipArea(
@@ -120,18 +144,13 @@ internal fun KeywordChipArea(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
-        if (providedTags is ProvidedTags.Failed) {
-            Text(
-                text = stringResource(R.string.create_tags_load_failed),
-                style = ManyakTheme.typography.bodySmall,
-                color = ManyakTheme.colors.textDanger,
-            )
-        }
         when (providedTags) {
-            ProvidedTags.Loading -> KeywordChipSkeleton()
+            ProvidedTags.Loading -> {
+                KeywordChipSkeleton()
+            }
 
-            is ProvidedTags.Loaded, ProvidedTags.Failed -> {
-                val tags = (providedTags as? ProvidedTags.Loaded)?.byCategory[target.category].orEmpty()
+            is ProvidedTags.Loaded -> {
+                val tags = providedTags.byCategory[target.category].orEmpty()
                 FlowRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
@@ -154,17 +173,67 @@ internal fun KeywordChipArea(
                             onClick = { onIntent(CreateKeywordIntent.ToggleCustomTag(target, index)) },
                         )
                     }
-                    AddKeywordTrigger(enabled = !atSelectionCap, onClick = { onOpenAddKeyword(target) })
+                    AddTrigger(
+                        label = stringResource(R.string.create_add_keyword),
+                        enabled = !atSelectionCap,
+                        onClick = { onOpenAddKeyword(target) },
+                    )
                 }
+            }
+
+            ProvidedTags.Failed -> {
+                TagsLoadFailure(onRetry = { onIntent(CreateKeywordIntent.RetryTags) })
             }
         }
     }
 }
 
-/**
- * 주변 인물 목록. 카드마다 삭제 버튼이 있어 0명까지 줄일 수 있고, "인물 추가"로 5명까지 늘린다.
- * 항목을 채우지 않은 카드도 인원으로 센다.
- */
+@Composable
+internal fun TagsLoadFailure(
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.block),
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+        ) {
+            Text(
+                text = stringResource(R.string.create_tags_load_failed),
+                style = MaterialTheme.typography.titleMedium,
+                color = ManyakTheme.colors.textDanger,
+                textAlign = TextAlign.Center,
+            )
+            Text(
+                text = stringResource(R.string.create_tags_reload_description),
+                style = MaterialTheme.typography.bodyLarge,
+                color = ManyakTheme.colors.text,
+                textAlign = TextAlign.Center,
+            )
+        }
+        Button(
+            modifier = Modifier.height(ManyakTheme.sizes.control),
+            onClick = onRetry,
+            shape = ManyakTheme.shapes.control,
+            border = BorderStroke(1.dp, ManyakTheme.colors.border),
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor = ManyakTheme.colors.surfaceRaised,
+                    contentColor = ManyakTheme.colors.text,
+                ),
+        ) {
+            Text(
+                text = stringResource(R.string.create_tags_reload),
+                style = ManyakTheme.typography.labelLarge,
+            )
+        }
+    }
+}
+
 @Composable
 internal fun SupportingCharacterList(
     state: CreateKeywordUiState,
@@ -175,11 +244,19 @@ internal fun SupportingCharacterList(
     val namePlaceholders = stringArrayResource(R.array.create_name_placeholders_supporting)
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.component),
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
     ) {
         state.supportingCharacters.forEachIndexed { index, character ->
-            SupportingCharacterCard(
-                orderLabel = stringResource(R.string.create_supporting_card_label, index + 1),
+            val order = index + 1
+            val fallbackLabel = stringResource(R.string.create_supporting_character_label, order)
+            SupportingCharacterSection(
+                headerLabel = character.name.ifBlank { fallbackLabel },
+                countLabel =
+                    stringResource(
+                        R.string.create_supporting_character_count,
+                        order,
+                        CreateKeywordUiState.SUPPORTING_CHARACTER_MAX,
+                    ),
                 target = KeywordTarget.Supporting(character.id),
                 character = character,
                 namePlaceholder = namePlaceholders[index % namePlaceholders.size],
@@ -190,30 +267,32 @@ internal fun SupportingCharacterList(
                 onOpenAddKeyword = onOpenAddKeyword,
             )
         }
-        Button(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = ManyakTheme.sizes.control),
-            onClick = { onIntent(CreateKeywordIntent.AddSupportingCharacter) },
+        AddCharacterTrigger(
             enabled = state.supportingCharacters.size < CreateKeywordUiState.SUPPORTING_CHARACTER_MAX,
-            shape = ManyakTheme.shapes.control,
-            colors =
-                ButtonDefaults.buttonColors(
-                    containerColor = ManyakTheme.colors.backgroundNeutral,
-                    contentColor = ManyakTheme.colors.text,
-                    disabledContainerColor = ManyakTheme.colors.backgroundDisabled,
-                    disabledContentColor = ManyakTheme.colors.textDisabled,
-                ),
-        ) {
-            Text(text = stringResource(R.string.create_add_character), style = ManyakTheme.typography.labelLarge)
-        }
+            onClick = { onIntent(CreateKeywordIntent.AddSupportingCharacter) },
+        )
     }
 }
 
 @Composable
-private fun SupportingCharacterCard(
-    orderLabel: String,
+private fun AddCharacterTrigger(
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        AddTrigger(
+            label = stringResource(R.string.create_add_character),
+            enabled = enabled,
+            onClick = onClick,
+        )
+    }
+}
+
+@Composable
+private fun SupportingCharacterSection(
+    headerLabel: String,
+    countLabel: String,
     target: KeywordTarget,
     character: KeywordCharacter,
     namePlaceholder: String,
@@ -225,38 +304,20 @@ private fun SupportingCharacterCard(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .border(1.dp, ManyakTheme.colors.border, ManyakTheme.shapes.card)
-                .padding(ManyakTheme.spacing.component),
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                modifier = Modifier.weight(1f),
-                text = orderLabel,
-                style = ManyakTheme.typography.labelLarge,
-                color = ManyakTheme.colors.text,
-            )
-            IconButton(
-                onClick = {
-                    (target as? KeywordTarget.Supporting)?.let {
-                        onIntent(CreateKeywordIntent.RemoveSupportingCharacter(it.characterId))
-                    }
-                },
-            ) {
-                Icon(
-                    modifier = Modifier.size(ManyakTheme.sizes.icon),
-                    painter = painterResource(R.drawable.ic_close),
-                    contentDescription = stringResource(R.string.create_supporting_delete, orderLabel),
-                    tint = ManyakTheme.colors.textSubtle,
-                )
-            }
-        }
+        SupportingCharacterHeader(
+            headerLabel = headerLabel,
+            countLabel = countLabel,
+            onDelete = {
+                (target as? KeywordTarget.Supporting)?.let {
+                    onIntent(CreateKeywordIntent.RemoveSupportingCharacter(it.characterId))
+                }
+            },
+        )
         CharacterForm(
+            modifier = Modifier.padding(horizontal = ManyakTheme.spacing.gutter),
             target = target,
             character = character,
             featureRequired = false,
@@ -267,5 +328,67 @@ private fun SupportingCharacterCard(
             onIntent = onIntent,
             onOpenAddKeyword = onOpenAddKeyword,
         )
+    }
+}
+
+@Composable
+private fun SupportingCharacterHeader(
+    headerLabel: String,
+    countLabel: String,
+    onDelete: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val deleteDescription = stringResource(R.string.create_supporting_delete_description, headerLabel)
+    Row(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .background(ManyakTheme.colors.backgroundNeutral)
+                .padding(horizontal = ManyakTheme.spacing.gutter),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Row(
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                modifier = Modifier.weight(1f, fill = false),
+                text = headerLabel,
+                style = ManyakTheme.typography.labelLarge,
+                color = ManyakTheme.colors.textSubtle,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                modifier =
+                    Modifier
+                        .clip(ManyakTheme.shapes.pill)
+                        .background(ManyakTheme.colors.backgroundNeutralPressed)
+                        .padding(
+                            horizontal = ManyakTheme.spacing.compact,
+                            vertical = ManyakTheme.spacing.inline,
+                        ),
+                text = countLabel,
+                style = ManyakTheme.typography.bodySmall,
+                color = ManyakTheme.colors.textSubtle,
+            )
+        }
+        TextButton(
+            modifier =
+                Modifier
+                    .width(ManyakTheme.sizes.control)
+                    .semantics { contentDescription = deleteDescription },
+            onClick = onDelete,
+            contentPadding = PaddingValues(0.dp),
+        ) {
+            Text(
+                modifier = Modifier.fillMaxWidth(),
+                text = stringResource(R.string.create_supporting_delete),
+                style = ManyakTheme.typography.labelLarge,
+                color = ManyakTheme.colors.textSubtle,
+                textAlign = TextAlign.End,
+            )
+        }
     }
 }

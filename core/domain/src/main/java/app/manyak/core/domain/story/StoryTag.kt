@@ -9,7 +9,6 @@ enum class StoryTagCategory {
     SUPPORTING_CHARACTER,
 }
 
-/** 서버가 제공하는 사전 정의 태그. */
 data class StoryTag(
     val id: Long,
     val name: String,

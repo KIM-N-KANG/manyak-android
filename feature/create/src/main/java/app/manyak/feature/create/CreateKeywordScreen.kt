@@ -1,7 +1,10 @@
 package app.manyak.feature.create
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,13 +20,15 @@ import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,6 +37,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -48,12 +55,7 @@ import app.manyak.core.ui.theme.ManyakTheme
 /** 진행 표시기가 노출하는 단계 수. 완료(생성 로딩)는 단계로 세지 않는다. */
 private const val INDICATOR_STEP_COUNT = 3
 
-/**
- * 간편 제작 퍼널의 키워드 선택 단계. 셸을 두르지 않는 전체 화면이라 헤더·인디케이터를 직접 그린다.
- *
- * 뒤로가기(헤더·시스템 모두)는 확인 없이 퍼널을 나간다 — 이탈 가드는 키워드 단계를 제외한
- * 단계에서만 활성이다.
- */
+/** 키워드 단계는 이탈 가드 없이 퍼널 진입 전 화면으로 돌아간다. */
 @Composable
 fun CreateKeywordScreen(
     onLeaveFunnel: () -> Unit,
@@ -70,7 +72,7 @@ fun CreateKeywordScreen(
     )
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
 private fun CreateKeywordContent(
     state: CreateKeywordUiState,
@@ -78,40 +80,47 @@ private fun CreateKeywordContent(
     onIntent: (CreateKeywordIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // 다이얼로그 열림은 표현 상태라 화면이 들고, 확정된 입력만 Intent 로 올라간다.
     var addKeywordTarget by remember { mutableStateOf<KeywordTarget?>(null) }
     val imeVisible = WindowInsets.isImeVisible
+    val focusManager = LocalFocusManager.current
 
     Column(
         modifier =
             modifier
                 .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.safeDrawing),
+                .windowInsetsPadding(WindowInsets.safeDrawing)
+                .pointerInput(Unit) {
+                    detectTapGestures(onTap = { focusManager.clearFocus() })
+                },
     ) {
         CreateFunnelHeader(onBack = onBack)
         CreateStepIndicator(
             currentStep = 0,
             stepNameRes = R.string.create_step_keyword,
         )
-        Column(
-            modifier =
-                Modifier
-                    .weight(1f)
-                    .verticalScroll(rememberScrollState()),
-        ) {
-            KeywordStepTitle()
-            CategoryTabs(state = state, onIntent = onIntent)
-            CategoryDescription(state = state)
-            CategoryContent(
+        if (state.providedTags is ProvidedTags.Failed) {
+            CreateKeywordFailureContent(
+                modifier = Modifier.weight(1f),
                 state = state,
                 onIntent = onIntent,
-                onOpenAddKeyword = { target -> addKeywordTarget = target },
             )
-            Spacer(modifier = Modifier.height(ManyakTheme.spacing.screenBottom))
+        } else {
+            LazyColumn(modifier = Modifier.weight(1f)) {
+                item { KeywordStepTitle() }
+                stickyHeader {
+                    CategoryTabs(state = state, onIntent = onIntent)
+                }
+                item {
+                    CategoryContent(
+                        state = state,
+                        onIntent = onIntent,
+                        onOpenAddKeyword = { target -> addKeywordTarget = target },
+                    )
+                }
+                item { Spacer(modifier = Modifier.height(ManyakTheme.spacing.screenBottom)) }
+            }
         }
-        // 키보드가 떠 있는 동안에는 CTA 를 숨긴다 — CTA 가 키보드에 얹혀 따라 올라오는 것도,
-        // CTA 자리만큼 키보드 위가 비어 보이는 것도 피한다. 그 자리는 콘텐츠 영역이 차지해
-        // 입력 중인 필드가 키보드 위로 보인다.
+        // IME가 열리면 CTA 영역을 콘텐츠에 돌려 입력 필드가 키보드 위로 스크롤되게 한다.
         if (!imeVisible) {
             CreateKeywordFooter(state = state, onIntent = onIntent)
         }
@@ -120,6 +129,7 @@ private fun CreateKeywordContent(
     addKeywordTarget?.let { target ->
         AddKeywordDialog(
             categoryLabel = stringResource(target.category.labelRes),
+            placeholder = stringResource(target.category.addKeywordPlaceholderRes),
             onDismiss = { addKeywordTarget = null },
             onSubmit = { name ->
                 onIntent(CreateKeywordIntent.AddCustomTag(target, name))
@@ -129,44 +139,67 @@ private fun CreateKeywordContent(
     }
 }
 
-/**
- * 퍼널 공통 헤더. 뒤로가기 버튼과 화면 제목을 둔다.
- */
+@Composable
+private fun CreateKeywordFailureContent(
+    state: CreateKeywordUiState,
+    onIntent: (CreateKeywordIntent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier.fillMaxSize()) {
+        KeywordStepTitle()
+        CategoryTabs(state = state, onIntent = onIntent)
+        Box(
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+        ) {
+            TagsLoadFailure(
+                modifier =
+                    Modifier
+                        .align(Alignment.Center)
+                        .padding(horizontal = ManyakTheme.spacing.gutter),
+                onRetry = { onIntent(CreateKeywordIntent.RetryTags) },
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CreateFunnelHeader(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .heightIn(min = 56.dp)
-                .padding(horizontal = ManyakTheme.spacing.inline),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        IconButton(onClick = onBack) {
-            Icon(
-                painter = painterResource(R.drawable.ic_arrow_back),
-                contentDescription = stringResource(R.string.common_back),
-                tint = ManyakTheme.colors.text,
+    TopAppBar(
+        modifier = modifier,
+        title = {
+            Text(
+                text = stringResource(R.string.create_title),
+                style = ManyakTheme.typography.titleMedium,
+                color = ManyakTheme.colors.text,
             )
-        }
-        Text(
-            modifier = Modifier.padding(start = ManyakTheme.spacing.inline),
-            text = stringResource(R.string.create_title),
-            style = ManyakTheme.typography.titleMedium,
-            color = ManyakTheme.colors.text,
-        )
-    }
+        },
+        navigationIcon = {
+            IconButton(onClick = onBack) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_arrow_back),
+                    contentDescription = stringResource(R.string.common_back),
+                    tint = ManyakTheme.colors.text,
+                )
+            }
+        },
+        // 화면 루트에서 적용한 safeDrawing 인셋이 중복되지 않게 한다.
+        windowInsets = WindowInsets(0, 0, 0, 0),
+        colors =
+            TopAppBarDefaults.topAppBarColors(
+                containerColor = ManyakTheme.colors.surface,
+                titleContentColor = ManyakTheme.colors.text,
+            ),
+    )
 }
 
-/**
- * 단계 인디케이터. 얇은 막대 3분절이며 완료·현재 단계는 주 동작 색으로 채운다.
- *
- * 단계 이름은 시각 라벨 없이 접근성 텍스트로만 제공한다(웹과 같은 계약). 막대들은 장식이므로
- * 시맨틱을 하나로 묶어 진행 상태 문장만 읽히게 한다.
- */
+/** 장식용 막대 셋을 하나의 접근성 진행 문장으로 노출한다. */
 @Composable
 private fun CreateStepIndicator(
     currentStep: Int,
@@ -185,21 +218,24 @@ private fun CreateStepIndicator(
             modifier
                 .fillMaxWidth()
                 .padding(horizontal = ManyakTheme.spacing.gutter)
-                .padding(top = ManyakTheme.spacing.compact, bottom = ManyakTheme.spacing.compact)
+                .padding(bottom = ManyakTheme.spacing.gutter)
                 .clearAndSetSemantics { contentDescription = description },
-        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.component),
     ) {
         repeat(INDICATOR_STEP_COUNT) { index ->
-            val reached = index <= currentStep
+            val color =
+                when {
+                    index < currentStep -> ManyakTheme.colors.textDisabled
+                    index == currentStep -> ManyakTheme.colors.stepIndicatorActive
+                    else -> ManyakTheme.colors.border
+                }
             Box(
                 modifier =
                     Modifier
                         .weight(1f)
-                        .height(4.dp)
+                        .height(3.dp)
                         .clip(ManyakTheme.shapes.pill)
-                        .background(
-                            if (reached) ManyakTheme.colors.backgroundBrandBold else ManyakTheme.colors.border,
-                        ),
+                        .background(color),
             )
         }
     }
@@ -218,16 +254,13 @@ private fun KeywordStepTitle(modifier: Modifier = Modifier) {
         )
         Text(
             text = stringResource(R.string.create_keyword_description),
-            style = ManyakTheme.typography.bodyMedium,
+            style = ManyakTheme.typography.bodyLarge,
             color = ManyakTheme.colors.textSubtle,
         )
     }
 }
 
-/**
- * 하단 CTA. 필수 미충족 상태에서도 버튼은 활성이고, 누르면 이동하지 않고 버튼 위 푸터에 오류를
- * 표시한다. 오류가 있을 때만 푸터가 메시지 높이만큼 늘어난다.
- */
+/** 필수 입력 검증 실패는 오류를 노출하고, 태그 조회 실패는 CTA를 비활성화한다. */
 @Composable
 private fun CreateKeywordFooter(
     state: CreateKeywordUiState,
@@ -246,6 +279,7 @@ private fun CreateKeywordFooter(
     ) {
         val footerErrorRes =
             when {
+                !state.isFooterEnabled -> null
                 state.validationErrorCategory == state.activeCategory -> R.string.create_error_select_keyword
                 state.showDuplicateNameFooterError -> R.string.create_error_duplicate_name_footer
                 else -> null
@@ -254,13 +288,14 @@ private fun CreateKeywordFooter(
             Text(
                 modifier = Modifier.padding(bottom = ManyakTheme.spacing.compact),
                 text = stringResource(footerErrorRes),
-                style = ManyakTheme.typography.bodySmall,
+                style = ManyakTheme.typography.bodyMedium,
                 color = ManyakTheme.colors.textDanger,
             )
         }
         FooterButtons(
             isFirstCategory = isFirstCategory,
             isLastCategory = isLastCategory,
+            enabled = state.isFooterEnabled,
             onIntent = onIntent,
         )
     }
@@ -270,6 +305,7 @@ private fun CreateKeywordFooter(
 private fun FooterButtons(
     isFirstCategory: Boolean,
     isLastCategory: Boolean,
+    enabled: Boolean,
     onIntent: (CreateKeywordIntent) -> Unit,
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact)) {
@@ -279,12 +315,16 @@ private fun FooterButtons(
                     Modifier
                         .weight(1f)
                         .heightIn(min = ManyakTheme.sizes.control),
+                enabled = enabled,
                 onClick = { onIntent(CreateKeywordIntent.GoPrevious) },
                 shape = ManyakTheme.shapes.control,
+                border = BorderStroke(1.dp, ManyakTheme.colors.border),
                 colors =
                     ButtonDefaults.buttonColors(
                         containerColor = ManyakTheme.colors.backgroundNeutral,
                         contentColor = ManyakTheme.colors.text,
+                        disabledContainerColor = ManyakTheme.colors.backgroundDisabled,
+                        disabledContentColor = ManyakTheme.colors.textDisabled,
                     ),
             ) {
                 Text(text = stringResource(R.string.create_cta_previous), style = ManyakTheme.typography.labelLarge)
@@ -293,8 +333,9 @@ private fun FooterButtons(
         Button(
             modifier =
                 Modifier
-                    .weight(if (isFirstCategory) 1f else 2f)
+                    .weight(1f)
                     .heightIn(min = ManyakTheme.sizes.control),
+            enabled = enabled,
             onClick = {
                 val intent =
                     if (isLastCategory) {
@@ -305,11 +346,12 @@ private fun FooterButtons(
                 onIntent(intent)
             },
             shape = ManyakTheme.shapes.control,
-            // 웹 primary 와 같은 브랜드 원색을 쓰는 퍼널 주 CTA 예외 — 근거는 DESIGN.md 퍼널 절.
             colors =
                 ButtonDefaults.buttonColors(
                     containerColor = ManyakTheme.colors.brand,
                     contentColor = ManyakTheme.colors.textInverse,
+                    disabledContainerColor = ManyakTheme.colors.backgroundDisabled,
+                    disabledContentColor = ManyakTheme.colors.textDisabled,
                 ),
         ) {
             val labelRes =
@@ -352,6 +394,47 @@ private fun CreateKeywordScreenValidationErrorPreview() {
     ManyakTheme(darkTheme = false) {
         CreateKeywordContent(
             state = previewState().copy(validationErrorCategory = StoryTagCategory.GENRE),
+            onBack = {},
+            onIntent = {},
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "키워드 선택 · 태그 로드 오류")
+@Composable
+private fun CreateKeywordScreenTagsLoadFailurePreview() {
+    ManyakTheme(darkTheme = false) {
+        CreateKeywordContent(
+            state = CreateKeywordUiState(providedTags = ProvidedTags.Failed),
+            onBack = {},
+            onIntent = {},
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "키워드 선택 · 주변 인물")
+@Composable
+private fun CreateKeywordSupportingCharactersPreview() {
+    ManyakTheme(darkTheme = false) {
+        CreateKeywordContent(
+            state =
+                previewState().copy(
+                    activeCategory = StoryTagCategory.SUPPORTING_CHARACTER,
+                    selectedGenreTagIds = setOf(1),
+                    protagonist =
+                        KeywordCharacter(
+                            id = CreateKeywordUiState.PROTAGONIST_ID,
+                            selectedTagIds = setOf(1),
+                        ),
+                    supportingCharacters =
+                        listOf(
+                            KeywordCharacter(
+                                id = CreateKeywordUiState.FIRST_SUPPORTING_ID,
+                                name = "한도윤",
+                            ),
+                            KeywordCharacter(id = CreateKeywordUiState.FIRST_SUPPORTING_ID + 1),
+                        ),
+                ),
             onBack = {},
             onIntent = {},
         )

@@ -42,7 +42,6 @@ class CreateKeywordUiStateTest {
                 protagonist = KeywordCharacter(id = 0, name = "서지우"),
                 supportingCharacters =
                     listOf(
-                        // NFC 정규화 → 공백 제거 → 소문자 기준으로 주인공과 같은 이름이다.
                         KeywordCharacter(id = 1, name = "서 지우"),
                         KeywordCharacter(id = 2, name = "한도윤"),
                     ),
@@ -79,5 +78,11 @@ class CreateKeywordUiStateTest {
                 supportingCharacters = listOf(KeywordCharacter(id = 1, name = "지우")),
             )
         assertFalse(duplicated.canGenerateStorylines)
+    }
+
+    @Test
+    fun `태그 조회 실패 중에는 하단 CTA가 비활성화된다`() {
+        assertTrue(CreateKeywordUiState(providedTags = ProvidedTags.Loading).isFooterEnabled)
+        assertFalse(CreateKeywordUiState(providedTags = ProvidedTags.Failed).isFooterEnabled)
     }
 }

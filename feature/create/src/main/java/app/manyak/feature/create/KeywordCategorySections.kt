@@ -3,7 +3,6 @@ package app.manyak.feature.create
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -24,10 +23,6 @@ import app.manyak.core.domain.story.StoryTagCategory
 import app.manyak.core.ui.R
 import app.manyak.core.ui.theme.ManyakTheme
 
-/**
- * 카테고리 탭. 탭을 누르면 라벨 색과 표시선이 곧바로 바뀌므로 그 변화 자체가 반응이다 —
- * 하단 내비게이션과 같은 이유로 리플을 끈다.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun CategoryTabs(
@@ -85,6 +80,7 @@ private fun CategoryTabLabel(
         buildAnnotatedString {
             append(stringResource(category.labelRes))
             if (category.required) {
+                append(" ")
                 withStyle(SpanStyle(color = requiredMarkColor)) { append("*") }
             }
         }
@@ -96,41 +92,6 @@ private fun CategoryTabLabel(
     )
 }
 
-/**
- * 탭 아래의 카테고리 설명 줄. 주변 인물 탭에서는 오른쪽 끝에 현재 인원을 표시한다.
- */
-@Composable
-internal fun CategoryDescription(
-    state: CreateKeywordUiState,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .padding(horizontal = ManyakTheme.spacing.gutter, vertical = ManyakTheme.spacing.component),
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(
-            text = stringResource(state.activeCategory.descriptionRes),
-            style = ManyakTheme.typography.bodySmall,
-            color = ManyakTheme.colors.textSubtle,
-        )
-        if (state.activeCategory == StoryTagCategory.SUPPORTING_CHARACTER) {
-            Text(
-                text =
-                    stringResource(
-                        R.string.create_supporting_character_count,
-                        state.supportingCharacters.size,
-                    ),
-                style = ManyakTheme.typography.bodySmall,
-                color = ManyakTheme.colors.textSubtle,
-            )
-        }
-    }
-}
-
-/** 활성 카테고리의 키워드 입력 본문. 탭을 오가도 각 카테고리의 입력은 상태에 남는다. */
 @Composable
 internal fun CategoryContent(
     state: CreateKeywordUiState,
@@ -138,10 +99,13 @@ internal fun CategoryContent(
     onOpenAddKeyword: (KeywordTarget) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier.padding(horizontal = ManyakTheme.spacing.gutter)) {
+    Column(modifier = modifier) {
         when (state.activeCategory) {
-            StoryTagCategory.GENRE ->
-                Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact)) {
+            StoryTagCategory.GENRE -> {
+                Column(
+                    modifier = Modifier.padding(ManyakTheme.spacing.gutter),
+                    verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+                ) {
                     KeywordSectionLabel(
                         text = stringResource(R.string.create_section_genre),
                         required = true,
@@ -156,9 +120,11 @@ internal fun CategoryContent(
                         onOpenAddKeyword = onOpenAddKeyword,
                     )
                 }
+            }
 
-            StoryTagCategory.PROTAGONIST ->
+            StoryTagCategory.PROTAGONIST -> {
                 CharacterForm(
+                    modifier = Modifier.padding(ManyakTheme.spacing.gutter),
                     target = KeywordTarget.Protagonist,
                     character = state.protagonist,
                     featureRequired = true,
@@ -169,13 +135,15 @@ internal fun CategoryContent(
                     onIntent = onIntent,
                     onOpenAddKeyword = onOpenAddKeyword,
                 )
+            }
 
-            StoryTagCategory.SUPPORTING_CHARACTER ->
+            StoryTagCategory.SUPPORTING_CHARACTER -> {
                 SupportingCharacterList(
                     state = state,
                     onIntent = onIntent,
                     onOpenAddKeyword = onOpenAddKeyword,
                 )
+            }
         }
     }
 }
@@ -189,11 +157,11 @@ internal val StoryTagCategory.labelRes: Int
             StoryTagCategory.SUPPORTING_CHARACTER -> R.string.create_tab_supporting_character
         }
 
-private val StoryTagCategory.descriptionRes: Int
+internal val StoryTagCategory.addKeywordPlaceholderRes: Int
     @StringRes
     get() =
         when (this) {
-            StoryTagCategory.GENRE -> R.string.create_tab_genre_description
-            StoryTagCategory.PROTAGONIST -> R.string.create_tab_protagonist_description
-            StoryTagCategory.SUPPORTING_CHARACTER -> R.string.create_tab_supporting_character_description
+            StoryTagCategory.GENRE -> R.string.create_add_keyword_placeholder_genre
+            StoryTagCategory.PROTAGONIST -> R.string.create_add_keyword_placeholder_protagonist
+            StoryTagCategory.SUPPORTING_CHARACTER -> R.string.create_add_keyword_placeholder_supporting_character
         }

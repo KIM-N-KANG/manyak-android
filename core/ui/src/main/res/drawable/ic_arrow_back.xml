@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     뒤로가기 화살표. 색은 사용처에서 tint 하므로 자산 자체는 단색으로 둔다.
+    원본: arrow-left-outline.svg (24×24).
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
@@ -9,6 +10,7 @@
     android:viewportHeight="24">
 
     <path
-        android:pathData="M20,11H7.83L13.42,5.41L12,4L4,12L12,20L13.41,18.59L7.83,13H20V11Z"
-        android:fillColor="#FF000000" />
+        android:pathData="M10.5303,5.4697C10.8232,5.7626 10.8232,6.2374 10.5303,6.5303L5.8107,11.25H20C20.4142,11.25 20.75,11.5858 20.75,12C20.75,12.4142 20.4142,12.75 20,12.75H5.8107L10.5303,17.4697C10.8232,17.7626 10.8232,18.2374 10.5303,18.5303C10.2374,18.8232 9.7626,18.8232 9.4697,18.5303L3.4697,12.5303C3.1768,12.2374 3.1768,11.7626 3.4697,11.4697L9.4697,5.4697C9.7626,5.1768 10.2374,5.1768 10.5303,5.4697Z"
+        android:fillColor="#FF000000"
+        android:fillType="evenOdd" />
 </vector>

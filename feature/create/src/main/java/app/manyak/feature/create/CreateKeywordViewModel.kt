@@ -8,17 +8,18 @@ import app.manyak.core.domain.story.StoryTag
 import app.manyak.core.domain.story.StoryTagCategory
 import app.manyak.core.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.text.Normalizer
 import javax.inject.Inject
 
-/** 직접 추가한 키워드. 선택 해제해도 목록에 남고, 선택된 것만 요청에 나간다. */
+/** 직접 추가한 키워드는 선택 해제해도 목록에 남는다. */
 data class CustomTag(
     val name: String,
     val selected: Boolean,
 )
 
-/** 키워드 단계의 인물 입력. [id] 는 화면 안에서만 쓰는 로컬 식별자다. */
+/** [id]는 서버 ID가 아닌 화면 로컬 식별자다. */
 data class KeywordCharacter(
     val id: Long,
     val name: String = "",
@@ -29,7 +30,6 @@ data class KeywordCharacter(
     val featureCount: Int get() = selectedTagIds.size + customTags.count { it.selected }
 }
 
-/** 키워드 입력의 대상. 장르 하나와 인물들(주인공·주변 인물)이 같은 태그 조작 계약을 쓴다. */
 sealed interface KeywordTarget {
     data object Genre : KeywordTarget
 
@@ -48,7 +48,7 @@ val KeywordTarget.category: StoryTagCategory
             is KeywordTarget.Supporting -> StoryTagCategory.SUPPORTING_CHARACTER
         }
 
-/** 제공 태그 목록의 로드 상태. 실패는 인라인 오류로 보여 주고 선택 입력 자체는 막지 않는다. */
+/** 제공 태그 조회 상태. */
 sealed interface ProvidedTags {
     data object Loading : ProvidedTags
 
@@ -69,7 +69,7 @@ data class CreateKeywordUiState(
     val selectedGenreTagIds: Set<Long> = emptySet(),
     val customGenreTags: List<CustomTag> = emptyList(),
     val protagonist: KeywordCharacter = KeywordCharacter(id = PROTAGONIST_ID),
-    /** 퍼널 진입 시 빈 주변 인물 카드 1장이 놓여 있다. 빈 카드도 인원으로 센다. */
+    /** 퍼널 진입 시 빈 주변 인물 입력 섹션 1개가 놓여 있다. 빈 섹션도 인원으로 센다. */
     val supportingCharacters: List<KeywordCharacter> = listOf(KeywordCharacter(id = FIRST_SUPPORTING_ID)),
     val nextSupportingId: Long = FIRST_SUPPORTING_ID + 1,
 ) {
@@ -98,14 +98,12 @@ data class CreateKeywordUiState(
             is KeywordTarget.Supporting -> supportingCharacters.firstOrNull { it.id == target.characterId }
         }
 
-    /** 상한 도달 시 미선택 칩과 "키워드 추가" 트리거를 비활성화한다(제공 태그·직접 추가 합산). */
     fun isAtSelectionCap(target: KeywordTarget): Boolean =
         when (target) {
             KeywordTarget.Genre -> genreSelectedCount >= GENRE_MAX_SELECTION
             else -> (character(target)?.featureCount ?: 0) >= FEATURE_MAX_SELECTION
         }
 
-    /** 필수 카테고리만 완료 조건이 있다. 주변 인물은 선택 항목이라 항상 통과한다. */
     fun isComplete(category: StoryTagCategory): Boolean =
         when (category) {
             StoryTagCategory.GENRE -> genreSelectedCount > 0
@@ -113,7 +111,6 @@ data class CreateKeywordUiState(
             StoryTagCategory.SUPPORTING_CHARACTER -> true
         }
 
-    /** 앞선 필수 카테고리가 완료되어야 잠금 해제된다. */
     fun isUnlocked(category: StoryTagCategory): Boolean =
         StoryTagCategory.entries
             .take(category.ordinal)
@@ -127,6 +124,9 @@ data class CreateKeywordUiState(
 
     val showDuplicateNameFooterError: Boolean
         get() = hasAttemptedGenerate && duplicateNameCharacterIds.isNotEmpty()
+
+    val isFooterEnabled: Boolean
+        get() = providedTags !is ProvidedTags.Failed
 
     companion object {
         const val PROTAGONIST_ID: Long = 0
@@ -158,6 +158,8 @@ sealed interface CreateKeywordIntent {
     data object GoNext : CreateKeywordIntent
 
     data object GenerateStorylines : CreateKeywordIntent
+
+    data object RetryTags : CreateKeywordIntent
 
     data class ToggleProvidedTag(
         val target: KeywordTarget,
@@ -197,6 +199,8 @@ sealed interface CreateKeywordEvent {
     ) : CreateKeywordEvent
 
     data object TagsLoadFailed : CreateKeywordEvent
+
+    data object TagsReloadStarted : CreateKeywordEvent
 
     data class CategoryChanged(
         val category: StoryTagCategory,
@@ -240,20 +244,25 @@ sealed interface CreateKeywordEvent {
     ) : CreateKeywordEvent
 }
 
-/**
- * 키워드 선택 단계. 카테고리 이동·검증과 키워드 선택 상태를 소유한다.
- *
- * 필수 미충족 상태에서도 "다음"은 활성이고, 누르면 이동하지 않고 오류를 표시한다. 오류는 그 카테고리에서
- * 키워드를 선택하면 지워진다. 태그 목록 로드 실패는 인라인 오류로만 보여 주고 직접 추가 입력은 막지 않는다.
- */
 @HiltViewModel
 class CreateKeywordViewModel
     @Inject
     constructor(
         private val storyCreationRepository: StoryCreationRepository,
     ) : MviViewModel<CreateKeywordIntent, CreateKeywordUiState, CreateKeywordEvent, Nothing>(CreateKeywordUiState()) {
+        private var tagsLoadJob: Job? = null
+
         init {
-            viewModelScope.launch { loadTags() }
+            startTagsLoad()
+        }
+
+        private fun startTagsLoad(showLoading: Boolean = false) {
+            if (tagsLoadJob?.isActive == true) return
+            tagsLoadJob =
+                viewModelScope.launch {
+                    if (showLoading) dispatchEvent(CreateKeywordEvent.TagsReloadStarted)
+                    loadTags()
+                }
         }
 
         private suspend fun loadTags() {
@@ -278,6 +287,11 @@ class CreateKeywordViewModel
 
                 CreateKeywordIntent.GoNext -> goNext(state)
                 CreateKeywordIntent.GenerateStorylines -> generateStorylines(state)
+                CreateKeywordIntent.RetryTags ->
+                    if (state.providedTags is ProvidedTags.Failed) {
+                        startTagsLoad(showLoading = true)
+                    }
+
                 else -> handleKeywordInput(state, intent)
             }
         }
@@ -372,6 +386,7 @@ class CreateKeywordViewModel
             when (event) {
                 is CreateKeywordEvent.TagsLoaded -> state.copy(providedTags = ProvidedTags.Loaded(event.byCategory))
                 CreateKeywordEvent.TagsLoadFailed -> state.copy(providedTags = ProvidedTags.Failed)
+                CreateKeywordEvent.TagsReloadStarted -> state.copy(providedTags = ProvidedTags.Loading)
                 is CreateKeywordEvent.CategoryChanged -> state.copy(activeCategory = event.category)
                 is CreateKeywordEvent.ValidationFailed -> state.copy(validationErrorCategory = event.category)
                 CreateKeywordEvent.GenerateAttempted -> state.copy(hasAttemptedGenerate = true)
@@ -432,7 +447,6 @@ class CreateKeywordViewModel
 
 private fun Set<Long>.toggle(id: Long): Set<Long> = if (id in this) this - id else this + id
 
-/** 인물 대상이면 해당 인물을 갱신하고, 장르 대상이면 상태를 그대로 돌려준다. */
 private fun CreateKeywordUiState.updateTarget(
     target: KeywordTarget,
     transform: (KeywordCharacter) -> KeywordCharacter,
@@ -456,7 +470,6 @@ private fun CreateKeywordUiState.updateCustomTags(
         else -> updateTarget(target) { it.copy(customTags = transform(it.customTags)) }
     }
 
-/** 오류가 났던 카테고리에서 키워드를 선택해 완료 조건을 채우면 푸터 오류를 지운다. */
 private fun CreateKeywordUiState.clearValidationErrorIfComplete(category: StoryTagCategory): CreateKeywordUiState =
     if (validationErrorCategory == category && isComplete(category)) {
         copy(validationErrorCategory = null)
@@ -467,5 +480,4 @@ private fun CreateKeywordUiState.clearValidationErrorIfComplete(category: StoryT
 val StoryTagCategory.previous: StoryTagCategory? get() = StoryTagCategory.entries.getOrNull(ordinal - 1)
 val StoryTagCategory.next: StoryTagCategory? get() = StoryTagCategory.entries.getOrNull(ordinal + 1)
 
-/** 필수 카테고리(장르·주인공)의 탭 라벨에는 `*` 를 붙인다. */
 val StoryTagCategory.required: Boolean get() = this != StoryTagCategory.SUPPORTING_CHARACTER

@@ -21,8 +21,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -43,11 +42,9 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import app.manyak.core.domain.story.CharacterGender
 import app.manyak.core.ui.R
 import app.manyak.core.ui.theme.ManyakTheme
 
-/** 칩 목록 위의 섹션 라벨. 필수 항목에는 `*` 를 붙인다. */
 @Composable
 internal fun KeywordSectionLabel(
     text: String,
@@ -58,6 +55,7 @@ internal fun KeywordSectionLabel(
         buildAnnotatedString {
             append(text)
             if (required) {
+                append(" ")
                 withStyle(SpanStyle(color = ManyakTheme.colors.textDanger)) { append("*") }
             }
         }
@@ -69,10 +67,6 @@ internal fun KeywordSectionLabel(
     )
 }
 
-/**
- * 선택 가능한 키워드 칩. 선택은 색과 테두리 둘로 말한다 — 색 하나로만 구분하지 않는다.
- * 상한에 도달하면 미선택 칩을 비활성화한다.
- */
 @Composable
 internal fun KeywordChip(
     name: String,
@@ -81,7 +75,8 @@ internal fun KeywordChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val background = if (selected) ManyakTheme.colors.backgroundBrandSubtle else ManyakTheme.colors.backgroundNeutral
+    val background = if (selected) ManyakTheme.colors.backgroundBrandSubtle else ManyakTheme.colors.surfaceRaised
+    val borderColor = if (selected) ManyakTheme.colors.borderBrand else ManyakTheme.colors.border
     val textColor =
         when {
             selected -> ManyakTheme.colors.textBrand
@@ -91,24 +86,28 @@ internal fun KeywordChip(
     Box(
         modifier =
             modifier
-                .clip(ManyakTheme.shapes.pill)
+                .heightIn(min = ManyakTheme.sizes.input)
+                .clip(ManyakTheme.shapes.control)
                 .background(background)
-                .then(
-                    if (selected) {
-                        Modifier.border(1.dp, ManyakTheme.colors.borderBrand, ManyakTheme.shapes.pill)
-                    } else {
-                        Modifier
-                    },
-                ).clickable(enabled = enabled, onClick = onClick)
-                .padding(horizontal = ManyakTheme.spacing.component, vertical = ManyakTheme.spacing.compact),
+                .border(1.dp, borderColor, ManyakTheme.shapes.control)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    enabled = enabled,
+                    onClick = onClick,
+                ).padding(
+                    horizontal = ManyakTheme.spacing.controlHorizontal,
+                    vertical = ManyakTheme.spacing.controlVertical,
+                ),
+        contentAlignment = Alignment.Center,
     ) {
         Text(text = name, style = ManyakTheme.typography.bodyMedium, color = textColor, maxLines = 1)
     }
 }
 
-/** "키워드 추가" 트리거. 상한에 도달하면 비활성화한다. */
 @Composable
-internal fun AddKeywordTrigger(
+internal fun AddTrigger(
+    label: String,
     enabled: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -117,21 +116,26 @@ internal fun AddKeywordTrigger(
     Row(
         modifier =
             modifier
-                .clip(ManyakTheme.shapes.pill)
+                .heightIn(min = ManyakTheme.sizes.input)
+                .clip(ManyakTheme.shapes.control)
                 .background(ManyakTheme.colors.backgroundNeutral)
+                .border(1.dp, ManyakTheme.colors.border, ManyakTheme.shapes.control)
                 .clickable(enabled = enabled, onClick = onClick)
-                .padding(horizontal = ManyakTheme.spacing.component, vertical = ManyakTheme.spacing.compact),
+                .padding(
+                    horizontal = ManyakTheme.spacing.controlHorizontal,
+                    vertical = ManyakTheme.spacing.controlVertical,
+                ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
     ) {
         Icon(
-            modifier = Modifier.size(ManyakTheme.sizes.icon),
+            modifier = Modifier.size(16.dp),
             painter = painterResource(R.drawable.ic_add),
             contentDescription = null,
             tint = contentColor,
         )
         Text(
-            text = stringResource(R.string.create_add_keyword),
+            text = label,
             style = ManyakTheme.typography.bodyMedium,
             color = contentColor,
             maxLines = 1,
@@ -139,7 +143,6 @@ internal fun AddKeywordTrigger(
     }
 }
 
-/** 태그 로딩 중의 스켈레톤 칩. 실제 칩과 같은 높이·모양으로 자리를 잡는다. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun KeywordChipSkeleton(modifier: Modifier = Modifier) {
@@ -154,18 +157,14 @@ internal fun KeywordChipSkeleton(modifier: Modifier = Modifier) {
                 modifier =
                     Modifier
                         .width(width.dp)
-                        .heightIn(min = 36.dp)
-                        .clip(ManyakTheme.shapes.pill)
+                        .heightIn(min = ManyakTheme.sizes.input)
+                        .clip(ManyakTheme.shapes.control)
                         .background(ManyakTheme.colors.backgroundNeutral),
             )
         }
     }
 }
 
-/**
- * 단일 행 입력 필드. 디자인 시스템의 text-field 조합(중립 배경 + 경계 + 포커스/오류 경계색)을 따른다.
- * [trailing] 은 글자 수 카운터처럼 입력 오른쪽에 붙는 내용이다.
- */
 @Composable
 internal fun KeywordTextField(
     value: String,
@@ -182,18 +181,21 @@ internal fun KeywordTextField(
     val borderColor =
         when {
             isError -> ManyakTheme.colors.borderDanger
-            focused -> ManyakTheme.colors.borderFocused
-            else -> ManyakTheme.colors.borderInput
+            focused -> ManyakTheme.colors.borderInput
+            else -> ManyakTheme.colors.border
         }
     Row(
         modifier =
             modifier
                 .fillMaxWidth()
-                .heightIn(min = ManyakTheme.sizes.control)
+                .heightIn(min = ManyakTheme.sizes.input)
                 .clip(ManyakTheme.shapes.control)
-                .background(ManyakTheme.colors.backgroundNeutral)
+                .background(ManyakTheme.colors.surfaceRaised)
                 .border(1.dp, borderColor, ManyakTheme.shapes.control)
-                .padding(horizontal = ManyakTheme.spacing.component),
+                .padding(
+                    horizontal = ManyakTheme.spacing.controlHorizontal,
+                    vertical = ManyakTheme.spacing.controlVertical,
+                ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
@@ -201,7 +203,7 @@ internal fun KeywordTextField(
             if (value.isEmpty()) {
                 Text(
                     text = placeholder,
-                    style = ManyakTheme.typography.bodyLarge,
+                    style = ManyakTheme.typography.bodyMedium,
                     color = ManyakTheme.colors.textDisabled,
                     maxLines = 1,
                 )
@@ -210,7 +212,7 @@ internal fun KeywordTextField(
                 modifier = Modifier.fillMaxWidth(),
                 value = value,
                 onValueChange = onValueChange,
-                textStyle = ManyakTheme.typography.bodyLarge.copy(color = ManyakTheme.colors.text),
+                textStyle = ManyakTheme.typography.bodyMedium.copy(color = ManyakTheme.colors.text),
                 cursorBrush = SolidColor(ManyakTheme.colors.text),
                 singleLine = true,
                 keyboardOptions = keyboardOptions,
@@ -222,7 +224,6 @@ internal fun KeywordTextField(
     }
 }
 
-/** 입력 오른쪽의 글자 수 카운터. */
 @Composable
 internal fun InputCounter(
     length: Int,
@@ -235,13 +236,10 @@ internal fun InputCounter(
     )
 }
 
-/**
- * 커스텀 키워드 추가 다이얼로그. "추가하기"는 빈 입력에서도 활성이고, 빈 값으로 누르면 입력창 아래에
- * 오류를 표시한다. 유효한 값을 입력하거나 다이얼로그를 닫으면 오류가 사라진다.
- */
 @Composable
 internal fun AddKeywordDialog(
     categoryLabel: String,
+    placeholder: String,
     onDismiss: () -> Unit,
     onSubmit: (String) -> Unit,
 ) {
@@ -263,20 +261,33 @@ internal fun AddKeywordDialog(
             )
         },
         text = {
-            AddKeywordDialogBody(
-                input = input,
-                showEmptyError = showEmptyError,
-                onInputChange = { newValue ->
-                    input = newValue.take(CreateKeywordUiState.CUSTOM_TAG_MAX_LENGTH)
-                    if (newValue.isNotBlank()) showEmptyError = false
-                },
-                onDone = submit,
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact)) {
+                Text(
+                    text = stringResource(R.string.create_add_keyword_dialog_description),
+                    style = ManyakTheme.typography.bodyMedium,
+                    color = ManyakTheme.colors.textSubtle,
+                )
+                AddKeywordDialogBody(
+                    input = input,
+                    placeholder = placeholder,
+                    showEmptyError = showEmptyError,
+                    onInputChange = { newValue ->
+                        input = newValue.take(CreateKeywordUiState.CUSTOM_TAG_MAX_LENGTH)
+                        if (newValue.isNotBlank()) showEmptyError = false
+                    },
+                    onDone = submit,
+                )
+            }
         },
         confirmButton = {
             Button(
                 onClick = submit,
                 shape = ManyakTheme.shapes.control,
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = ManyakTheme.colors.brand,
+                        contentColor = ManyakTheme.colors.textInverse,
+                    ),
             ) {
                 Text(text = stringResource(R.string.create_dialog_add), style = ManyakTheme.typography.labelLarge)
             }
@@ -296,20 +307,22 @@ internal fun AddKeywordDialog(
 @Composable
 private fun AddKeywordDialogBody(
     input: String,
+    placeholder: String,
     showEmptyError: Boolean,
     onInputChange: (String) -> Unit,
     onDone: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact)) {
         Text(
-            text = stringResource(R.string.create_add_keyword_dialog_description),
-            style = ManyakTheme.typography.bodyMedium,
-            color = ManyakTheme.colors.textSubtle,
+            modifier = Modifier.padding(top = ManyakTheme.spacing.compact),
+            text = stringResource(R.string.create_add_keyword_label),
+            style = ManyakTheme.typography.labelLarge,
+            color = ManyakTheme.colors.text,
         )
         KeywordTextField(
             value = input,
             onValueChange = onInputChange,
-            placeholder = "",
+            placeholder = placeholder,
             isError = showEmptyError,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { onDone() }),
@@ -326,58 +339,6 @@ private fun AddKeywordDialogBody(
                 style = ManyakTheme.typography.bodySmall,
                 color = ManyakTheme.colors.textDanger,
             )
-        }
-    }
-}
-
-/**
- * 성별 셀렉트. 기본값(랜덤)은 고르지 않은 상태와 같아 null 로 남는다.
- */
-@Composable
-internal fun GenderSelectField(
-    gender: CharacterGender?,
-    onGenderChange: (CharacterGender?) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    var expanded by remember { mutableStateOf(false) }
-    val options =
-        listOf(
-            null to stringResource(R.string.create_gender_random),
-            CharacterGender.MALE to stringResource(R.string.create_gender_male),
-            CharacterGender.FEMALE to stringResource(R.string.create_gender_female),
-        )
-    val selectedLabel = options.first { it.first == gender }.second
-
-    Box(modifier = modifier) {
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = ManyakTheme.sizes.control)
-                    .clip(ManyakTheme.shapes.control)
-                    .background(ManyakTheme.colors.backgroundNeutral)
-                    .border(1.dp, ManyakTheme.colors.borderInput, ManyakTheme.shapes.control)
-                    .clickable { expanded = true }
-                    .padding(horizontal = ManyakTheme.spacing.component),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = selectedLabel,
-                style = ManyakTheme.typography.bodyLarge,
-                // 랜덤은 고르지 않은 상태라 placeholder 처럼 낮춰 보여 준다.
-                color = if (gender == null) ManyakTheme.colors.textSubtle else ManyakTheme.colors.text,
-            )
-        }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            options.forEach { (value, label) ->
-                DropdownMenuItem(
-                    text = { Text(text = label, style = ManyakTheme.typography.bodyMedium) },
-                    onClick = {
-                        expanded = false
-                        onGenderChange(value)
-                    },
-                )
-            }
         }
     }
 }
