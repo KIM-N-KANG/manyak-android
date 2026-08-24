@@ -222,7 +222,7 @@ internal fun AdditionalInfoRow(
                 modifier = Modifier.size(16.dp),
                 painter = painterResource(R.drawable.ic_close),
                 contentDescription = stringResource(R.string.create_additional_delete_description, index + 1),
-                tint = ManyakTheme.colors.textSubtle,
+                tint = ManyakTheme.colors.textSubtlest,
             )
         }
     }

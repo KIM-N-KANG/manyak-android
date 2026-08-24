@@ -61,27 +61,29 @@ private fun CreateAdditionalInfoContent(
     val imeVisible = WindowInsets.isImeVisible
     val focusManager = LocalFocusManager.current
 
-    Column(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.safeDrawing)
-                .clearFocusOnTap(focusManager),
-    ) {
-        CreateFunnelHeader(onBack = onBack)
-        CreateStepIndicator(
-            currentStep = 2,
-            stepNameRes = R.string.create_step_additional_info,
-        )
-        AdditionalInfoList(
-            modifier = Modifier.weight(1f),
-            storylineIndex = storylineIndex,
-            state = state,
-            onIntent = onIntent,
-        )
-        // IME가 열리면 CTA 영역을 콘텐츠에 돌려 입력 필드가 키보드 위로 스크롤되게 한다.
-        if (!imeVisible) {
-            CreateAdditionalInfoFooter(onBack = onBack, onIntent = onIntent)
+    FunnelFocusScroll {
+        Column(
+            modifier =
+                modifier
+                    .fillMaxSize()
+                    .windowInsetsPadding(WindowInsets.safeDrawing)
+                    .clearFocusOnTap(focusManager),
+        ) {
+            CreateFunnelHeader(onBack = onBack)
+            CreateStepIndicator(
+                currentStep = 2,
+                stepNameRes = R.string.create_step_additional_info,
+            )
+            AdditionalInfoList(
+                modifier = Modifier.weight(1f),
+                storylineIndex = storylineIndex,
+                state = state,
+                onIntent = onIntent,
+            )
+            // IME가 열리면 CTA 영역을 콘텐츠에 돌려 입력 필드가 키보드 위로 스크롤되게 한다.
+            if (!imeVisible) {
+                CreateAdditionalInfoFooter(onBack = onBack, onIntent = onIntent)
+            }
         }
     }
 }

@@ -81,43 +81,45 @@ private fun CreateKeywordContent(
     val imeVisible = WindowInsets.isImeVisible
     val focusManager = LocalFocusManager.current
 
-    Column(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.safeDrawing)
-                .clearFocusOnTap(focusManager),
-    ) {
-        CreateFunnelHeader(onBack = onBack)
-        CreateStepIndicator(
-            currentStep = 0,
-            stepNameRes = R.string.create_step_keyword,
-        )
-        if (state.providedTags is ProvidedTags.Failed) {
-            CreateKeywordFailureContent(
-                modifier = Modifier.weight(1f),
-                state = state,
-                onIntent = onIntent,
+    FunnelFocusScroll {
+        Column(
+            modifier =
+                modifier
+                    .fillMaxSize()
+                    .windowInsetsPadding(WindowInsets.safeDrawing)
+                    .clearFocusOnTap(focusManager),
+        ) {
+            CreateFunnelHeader(onBack = onBack)
+            CreateStepIndicator(
+                currentStep = 0,
+                stepNameRes = R.string.create_step_keyword,
             )
-        } else {
-            LazyColumn(modifier = Modifier.weight(1f)) {
-                item { KeywordStepTitle() }
-                stickyHeader {
-                    CategoryTabs(state = state, onIntent = onIntent)
+            if (state.providedTags is ProvidedTags.Failed) {
+                CreateKeywordFailureContent(
+                    modifier = Modifier.weight(1f),
+                    state = state,
+                    onIntent = onIntent,
+                )
+            } else {
+                LazyColumn(modifier = Modifier.weight(1f)) {
+                    item { KeywordStepTitle() }
+                    stickyHeader {
+                        CategoryTabs(state = state, onIntent = onIntent)
+                    }
+                    item {
+                        CategoryContent(
+                            state = state,
+                            onIntent = onIntent,
+                            onOpenAddKeyword = { target -> addKeywordTarget = target },
+                        )
+                    }
+                    item { Spacer(modifier = Modifier.height(ManyakTheme.spacing.screenBottom)) }
                 }
-                item {
-                    CategoryContent(
-                        state = state,
-                        onIntent = onIntent,
-                        onOpenAddKeyword = { target -> addKeywordTarget = target },
-                    )
-                }
-                item { Spacer(modifier = Modifier.height(ManyakTheme.spacing.screenBottom)) }
             }
-        }
-        // IME가 열리면 CTA 영역을 콘텐츠에 돌려 입력 필드가 키보드 위로 스크롤되게 한다.
-        if (!imeVisible) {
-            CreateKeywordFooter(state = state, onIntent = onIntent)
+            // IME가 열리면 CTA 영역을 콘텐츠에 돌려 입력 필드가 키보드 위로 스크롤되게 한다.
+            if (!imeVisible) {
+                CreateKeywordFooter(state = state, onIntent = onIntent)
+            }
         }
     }
 
