@@ -171,7 +171,7 @@ private fun StorylineBody(
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
     ) {
         Text(
-            text = text,
+            text = storyAnnotatedString(text),
             style = ManyakTheme.typography.bodyReading,
             color = ManyakTheme.colors.text,
         )
