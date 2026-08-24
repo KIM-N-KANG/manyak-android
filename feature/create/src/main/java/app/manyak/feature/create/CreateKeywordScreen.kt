@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -68,6 +70,7 @@ fun CreateKeywordScreen(
     )
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun CreateKeywordContent(
     state: CreateKeywordUiState,
@@ -77,6 +80,7 @@ private fun CreateKeywordContent(
 ) {
     // 다이얼로그 열림은 표현 상태라 화면이 들고, 확정된 입력만 Intent 로 올라간다.
     var addKeywordTarget by remember { mutableStateOf<KeywordTarget?>(null) }
+    val imeVisible = WindowInsets.isImeVisible
 
     Column(
         modifier =
@@ -105,7 +109,12 @@ private fun CreateKeywordContent(
             )
             Spacer(modifier = Modifier.height(ManyakTheme.spacing.screenBottom))
         }
-        CreateKeywordFooter(state = state, onIntent = onIntent)
+        // 키보드가 떠 있는 동안에는 CTA 를 숨긴다 — CTA 가 키보드에 얹혀 따라 올라오는 것도,
+        // CTA 자리만큼 키보드 위가 비어 보이는 것도 피한다. 그 자리는 콘텐츠 영역이 차지해
+        // 입력 중인 필드가 키보드 위로 보인다.
+        if (!imeVisible) {
+            CreateKeywordFooter(state = state, onIntent = onIntent)
+        }
     }
 
     addKeywordTarget?.let { target ->
