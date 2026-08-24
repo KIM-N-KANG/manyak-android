@@ -95,11 +95,9 @@ private fun AdditionalInfoList(
     onIntent: (CreateAdditionalInfoIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // 생성 API 연동 전까지 본문·추천 정보를 임시 데이터에서 얻는다.
-    val storylineText =
-        CreateStorylineViewModel.PLACEHOLDER_STORYLINES.getOrNull(storylineIndex).orEmpty()
-    val recommendations =
-        CreateAdditionalInfoViewModel.PLACEHOLDER_RECOMMENDED_INFOS.getOrNull(storylineIndex).orEmpty()
+    val storyline = state.storylines.getOrNull(storylineIndex)
+    val storylineText = storyline?.text.orEmpty()
+    val recommendations = storyline?.recommendedInfos.orEmpty()
     val placeholders = stringArrayResource(R.array.create_additional_placeholders)
     val rowPadding =
         Modifier
@@ -194,13 +192,24 @@ private fun CreateAdditionalInfoFooter(
     }
 }
 
+private fun previewAdditionalInfoState(): CreateAdditionalInfoUiState =
+    CreateAdditionalInfoUiState(
+        storylines =
+            previewStorylines().map { storyline ->
+                AdditionalInfoStoryline(
+                    text = storyline.storyline,
+                    recommendedInfos = storyline.recommendedInfos.map { it.text },
+                )
+            },
+    )
+
 @Preview(showBackground = true, name = "추가 정보 · 라이트")
 @Composable
 private fun CreateAdditionalInfoScreenPreview() {
     ManyakTheme(darkTheme = false) {
         CreateAdditionalInfoContent(
             storylineIndex = 0,
-            state = CreateAdditionalInfoUiState(),
+            state = previewAdditionalInfoState(),
             onBack = {},
             onIntent = {},
         )
@@ -211,12 +220,17 @@ private fun CreateAdditionalInfoScreenPreview() {
 @Composable
 private fun CreateAdditionalInfoScreenSelectedPreview() {
     ManyakTheme(darkTheme = false) {
+        val base = previewAdditionalInfoState()
         CreateAdditionalInfoContent(
             storylineIndex = 0,
             state =
-                CreateAdditionalInfoUiState(
+                base.copy(
                     selectedRecommendations =
-                        setOf(CreateAdditionalInfoViewModel.PLACEHOLDER_RECOMMENDED_INFOS[0][0]),
+                        base.storylines
+                            .first()
+                            .recommendedInfos
+                            .take(1)
+                            .toSet(),
                     additionalInfos =
                         listOf(
                             AdditionalInfoInput(id = 0, value = "배경은 현대의 서울로 해줘"),

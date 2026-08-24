@@ -10,7 +10,15 @@ data class AdditionalInfoInput(
     val value: String = "",
 )
 
+/** 화면이 그릴 스토리라인 본문과 추천 추가 정보. 생성 결과 순번대로 담긴다. */
+data class AdditionalInfoStoryline(
+    val text: String,
+    val recommendedInfos: List<String>,
+)
+
 data class CreateAdditionalInfoUiState(
+    /** 생성 결과 스냅숏. 이 화면에 머무는 동안 재생성은 일어나지 않는다. */
+    val storylines: List<AdditionalInfoStoryline> = emptyList(),
     /** 선택한 추천 추가 정보 텍스트. 완성 요청에 자유 텍스트보다 앞서 실린다. */
     val selectedRecommendations: Set<String> = emptySet(),
     val additionalInfos: List<AdditionalInfoInput> =
@@ -65,10 +73,23 @@ sealed interface CreateAdditionalInfoEvent {
 @HiltViewModel
 class CreateAdditionalInfoViewModel
     @Inject
-    constructor() :
-    MviViewModel<CreateAdditionalInfoIntent, CreateAdditionalInfoUiState, CreateAdditionalInfoEvent, Nothing>(
-        CreateAdditionalInfoUiState(),
-    ) {
+    constructor(
+        storylineGenerationStore: StorylineGenerationStore,
+    ) : MviViewModel<CreateAdditionalInfoIntent, CreateAdditionalInfoUiState, CreateAdditionalInfoEvent, Nothing>(
+            CreateAdditionalInfoUiState(
+                storylines =
+                    storylineGenerationStore.state.value
+                        .resultOrNull()
+                        ?.storylines
+                        .orEmpty()
+                        .map { storyline ->
+                            AdditionalInfoStoryline(
+                                text = storyline.storyline,
+                                recommendedInfos = storyline.recommendedInfos.map { it.text },
+                            )
+                        },
+            ),
+        ) {
         override suspend fun handleIntent(intent: CreateAdditionalInfoIntent) {
             val state = uiState.value
             when (intent) {
@@ -130,26 +151,4 @@ class CreateAdditionalInfoViewModel
                             },
                     )
             }
-
-        companion object {
-            /** 생성 API 연동 전까지 화면 확인용 임시 추천 추가 정보. 스토리라인 순번과 짝을 이룬다. */
-            val PLACEHOLDER_RECOMMENDED_INFOS: List<List<String>> =
-                listOf(
-                    listOf(
-                        "게이트가 열린 도시의 폐허 묘사를 자세히 그려줘",
-                        "동우의 각성 장면을 회상으로 보여줘",
-                        "도윤과의 재회 장면에 긴장감을 더해줘",
-                    ),
-                    listOf(
-                        "동우가 힘의 근원을 숨기는 이유를 초반에 암시해줘",
-                        "서연이 보고서를 덮는 장면을 비중 있게 다뤄줘",
-                        "게이트 안의 풍경을 낯설고 아름답게 그려줘",
-                    ),
-                    listOf(
-                        "도윤이 사라지던 날의 회상으로 시작해줘",
-                        "동우의 죄책감을 독백으로 드러내줘",
-                        "서연이 손을 내미는 마지막 장면을 여운 있게 마무리해줘",
-                    ),
-                )
-        }
     }

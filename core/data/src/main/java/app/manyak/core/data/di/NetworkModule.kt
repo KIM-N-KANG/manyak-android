@@ -2,6 +2,7 @@ package app.manyak.core.data.di
 
 import app.manyak.core.data.api.AuthApi
 import app.manyak.core.data.api.SimpleStoryApi
+import app.manyak.core.data.api.StoryGenerationApi
 import app.manyak.core.data.api.UserApi
 import app.manyak.core.data.interceptor.AuthInterceptor
 import app.manyak.core.data.interceptor.DeviceIdInterceptor
@@ -15,6 +16,7 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
+import java.util.concurrent.TimeUnit
 import javax.inject.Qualifier
 import javax.inject.Singleton
 
@@ -91,6 +93,27 @@ object NetworkModule {
         json: Json,
     ): SimpleStoryApi = retrofit(client, config, json).create(SimpleStoryApi::class.java)
 
+    /**
+     * 생성 계열 API 는 서버가 AI 를 동기 호출한 뒤에야 응답해 기본 읽기 상한(10초)으로는 항상
+     * 끊긴다. 인증 클라이언트에서 파생해 연결 풀·인터셉터는 공유하되 읽기와 전체 요청 상한만
+     * 늘린다.
+     */
+    @Provides
+    @Singleton
+    fun provideStoryGenerationApi(
+        @AuthenticatedClient client: OkHttpClient,
+        config: DataLayerConfig,
+        json: Json,
+    ): StoryGenerationApi {
+        val generationClient =
+            client
+                .newBuilder()
+                .readTimeout(GENERATION_READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .callTimeout(GENERATION_CALL_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .build()
+        return retrofit(generationClient, config, json).create(StoryGenerationApi::class.java)
+    }
+
     @Provides
     @Singleton
     fun provideUserApi(
@@ -110,4 +133,7 @@ object NetworkModule {
             .client(client)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
+
+    private const val GENERATION_READ_TIMEOUT_SECONDS = 120L
+    private const val GENERATION_CALL_TIMEOUT_SECONDS = 150L
 }

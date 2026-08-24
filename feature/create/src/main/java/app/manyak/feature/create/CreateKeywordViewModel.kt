@@ -3,11 +3,13 @@ package app.manyak.feature.create
 import androidx.lifecycle.viewModelScope
 import app.manyak.core.domain.error.DomainResult
 import app.manyak.core.domain.story.CharacterGender
+import app.manyak.core.domain.story.StoryCharacterInput
 import app.manyak.core.domain.story.StoryCreationRepository
 import app.manyak.core.domain.story.StoryTag
 import app.manyak.core.domain.story.StoryTagCategory
 import app.manyak.core.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.text.Normalizer
@@ -65,6 +67,8 @@ data class CreateKeywordUiState(
     val validationErrorCategory: StoryTagCategory? = null,
     /** "스토리라인 만들기"를 한 번이라도 눌렀는지. 이름 중복 푸터 오류는 이 뒤에만 노출한다. */
     val hasAttemptedGenerate: Boolean = false,
+    /** 스토리라인 생성 요청 진행 중. CTA 를 스피너로 바꾸고 중복 요청을 막는다. */
+    val isGeneratingStorylines: Boolean = false,
     val providedTags: ProvidedTags = ProvidedTags.Loading,
     val selectedGenreTagIds: Set<Long> = emptySet(),
     val customGenreTags: List<CustomTag> = emptyList(),
@@ -212,6 +216,10 @@ sealed interface CreateKeywordEvent {
 
     data object GenerateAttempted : CreateKeywordEvent
 
+    data object StorylineGenerationStarted : CreateKeywordEvent
+
+    data object StorylineGenerationFinished : CreateKeywordEvent
+
     data class ProvidedTagToggled(
         val target: KeywordTarget,
         val tagId: Long,
@@ -254,10 +262,12 @@ class CreateKeywordViewModel
     @Inject
     constructor(
         private val storyCreationRepository: StoryCreationRepository,
+        private val storylineGenerationStore: StorylineGenerationStore,
     ) : MviViewModel<CreateKeywordIntent, CreateKeywordUiState, CreateKeywordEvent, CreateKeywordEffect>(
-        CreateKeywordUiState(),
-    ) {
+            CreateKeywordUiState(),
+        ) {
         private var tagsLoadJob: Job? = null
+        private var generateJob: Job? = null
 
         init {
             startTagsLoad()
@@ -343,10 +353,19 @@ class CreateKeywordViewModel
             }
         }
 
+        /** 요청을 시작하면서 동시에 스토리라인 단계로 전환한다 — 로딩은 다음 단계 화면이 그린다. */
         private suspend fun generateStorylines(state: CreateKeywordUiState) {
             dispatchEvent(CreateKeywordEvent.GenerateAttempted)
             if (!state.canGenerateStorylines) return
-            // 스토리라인 생성 요청은 생성 API 연동과 함께 붙는다. 지금은 단계 전환만 한다.
+            if (generateJob?.isActive == true) return
+            dispatchEvent(CreateKeywordEvent.StorylineGenerationStarted)
+            // UNDISPATCHED — 화면 전환 효과보다 먼저 스토어가 Generating 으로 바뀌어야
+            // 스토리라인 화면이 첫 프레임부터 로딩을 그린다.
+            generateJob =
+                viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+                    storylineGenerationStore.generate(state.toGenerationInput())
+                    dispatchEvent(CreateKeywordEvent.StorylineGenerationFinished)
+                }
             dispatchEffect(CreateKeywordEffect.NavigateToStoryline)
         }
 
@@ -398,6 +417,8 @@ class CreateKeywordViewModel
                 is CreateKeywordEvent.CategoryChanged -> state.copy(activeCategory = event.category)
                 is CreateKeywordEvent.ValidationFailed -> state.copy(validationErrorCategory = event.category)
                 CreateKeywordEvent.GenerateAttempted -> state.copy(hasAttemptedGenerate = true)
+                CreateKeywordEvent.StorylineGenerationStarted -> state.copy(isGeneratingStorylines = true)
+                CreateKeywordEvent.StorylineGenerationFinished -> state.copy(isGeneratingStorylines = false)
                 else -> reduceKeywordInput(state, event)
             }
 
@@ -452,6 +473,30 @@ class CreateKeywordViewModel
                 else -> state
             }
     }
+
+private fun CreateKeywordUiState.toGenerationInput(): StorylineGenerationInput =
+    StorylineGenerationInput(
+        genreTagIds = selectedGenreTagIds.toList(),
+        customGenreTags = customGenreTags.filter(CustomTag::selected).map(CustomTag::name),
+        protagonist = protagonist.toCharacterInput(),
+        // 퍼널 진입 시 놓이는 빈 주변 인물 섹션을 그대로 보내면 의도하지 않은 인물이 AI 로
+        // 채워지므로, 아무것도 입력하지 않은 섹션은 인원 의사가 없는 것으로 보고 제외한다.
+        supportingCharacters =
+            supportingCharacters
+                .map(KeywordCharacter::toCharacterInput)
+                .filterNot(StoryCharacterInput::isEmpty),
+    )
+
+private fun KeywordCharacter.toCharacterInput(): StoryCharacterInput =
+    StoryCharacterInput(
+        name = name.trim().ifEmpty { null },
+        gender = gender,
+        featureTagIds = selectedTagIds.toList(),
+        customTags = customTags.filter(CustomTag::selected).map(CustomTag::name),
+    )
+
+private fun StoryCharacterInput.isEmpty(): Boolean =
+    name == null && gender == null && featureTagIds.isEmpty() && customTags.isEmpty()
 
 private fun Set<Long>.toggle(id: Long): Set<Long> = if (id in this) this - id else this + id
 

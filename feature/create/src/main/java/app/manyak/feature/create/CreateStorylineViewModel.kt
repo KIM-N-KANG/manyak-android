@@ -1,7 +1,12 @@
 package app.manyak.feature.create
 
+import androidx.lifecycle.viewModelScope
+import app.manyak.core.domain.story.Storyline
 import app.manyak.core.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /** 스토리라인 평가. 보조 신호이며 선택 진행을 막지 않는다. */
@@ -10,13 +15,26 @@ enum class StorylineRating {
     BAD,
 }
 
+/** 생성 진행 중이거나, 결과(실패 시 빈 목록 포함)를 보여 주는 화면 콘텐츠. */
+sealed interface StorylineContent {
+    data object Generating : StorylineContent
+
+    data class Loaded(
+        val storylines: List<Storyline>,
+    ) : StorylineContent
+}
+
 data class CreateStorylineUiState(
-    val storylines: List<String> = emptyList(),
+    val content: StorylineContent = StorylineContent.Generating,
+    /** 생성·재생성 실패. 직전 결과가 남아 있으면 그대로 보여 주며 인라인 오류만 덧붙인다. */
+    val hasGenerationError: Boolean = false,
     val activeIndex: Int = 0,
     /** 스토리라인 순번별 평가. 같은 평가를 다시 누르면 해제된다. */
     val ratings: Map<Int, StorylineRating> = emptyMap(),
 ) {
-    val activeStoryline: String? get() = storylines.getOrNull(activeIndex)
+    val storylines: List<Storyline> get() = (content as? StorylineContent.Loaded)?.storylines.orEmpty()
+
+    val activeStoryline: Storyline? get() = storylines.getOrNull(activeIndex)
 
     val activeRating: StorylineRating? get() = ratings[activeIndex]
 }
@@ -44,6 +62,10 @@ sealed interface CreateStorylineEvent {
         val index: Int,
         val rating: StorylineRating,
     ) : CreateStorylineEvent
+
+    data class GenerationStateChanged(
+        val generation: StorylineGenerationState,
+    ) : CreateStorylineEvent
 }
 
 sealed interface CreateStorylineEffect {
@@ -56,10 +78,21 @@ sealed interface CreateStorylineEffect {
 @HiltViewModel
 class CreateStorylineViewModel
     @Inject
-    constructor() :
-    MviViewModel<CreateStorylineIntent, CreateStorylineUiState, CreateStorylineEvent, CreateStorylineEffect>(
-        CreateStorylineUiState(storylines = PLACEHOLDER_STORYLINES),
-    ) {
+    constructor(
+        private val storylineGenerationStore: StorylineGenerationStore,
+    ) : MviViewModel<CreateStorylineIntent, CreateStorylineUiState, CreateStorylineEvent, CreateStorylineEffect>(
+            CreateStorylineUiState(),
+        ) {
+        private var regenerateJob: Job? = null
+
+        init {
+            viewModelScope.launch {
+                storylineGenerationStore.state.collect { generation ->
+                    dispatchEvent(CreateStorylineEvent.GenerationStateChanged(generation))
+                }
+            }
+        }
+
         override suspend fun handleIntent(intent: CreateStorylineIntent) {
             val state = uiState.value
             when (intent) {
@@ -68,19 +101,29 @@ class CreateStorylineViewModel
                         dispatchEvent(CreateStorylineEvent.ActiveStorylineChanged(intent.index))
                     }
 
+                // 평가는 화면 로컬 상태다. 서버 동기화(PUT·DELETE)는 평가 API 연동과 함께 붙는다.
                 is CreateStorylineIntent.ToggleRating ->
                     if (state.activeStoryline != null) {
                         dispatchEvent(CreateStorylineEvent.RatingToggled(state.activeIndex, intent.rating))
                     }
 
-                // 재생성 요청과 평가 동기화는 생성 API 연동과 함께 붙는다.
-                CreateStorylineIntent.Regenerate -> Unit
+                CreateStorylineIntent.Regenerate -> startRegenerate(state)
 
                 CreateStorylineIntent.ConfirmSelection ->
                     if (state.activeStoryline != null) {
                         dispatchEffect(CreateStorylineEffect.NavigateToAdditionalInfo(state.activeIndex))
                     }
             }
+        }
+
+        private fun startRegenerate(state: CreateStorylineUiState) {
+            if (state.content is StorylineContent.Generating) return
+            if (regenerateJob?.isActive == true) return
+            // UNDISPATCHED — 버튼을 누른 즉시 스토어가 Generating 으로 바뀌어 중복 탭을 막는다.
+            regenerateJob =
+                viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+                    storylineGenerationStore.regenerate()
+                }
         }
 
         override fun reduce(
@@ -98,57 +141,37 @@ class CreateStorylineViewModel
                                 state.ratings + (event.index to event.rating)
                             },
                     )
+
+                is CreateStorylineEvent.GenerationStateChanged -> reduceGeneration(state, event.generation)
             }
 
-        companion object {
-            /** 생성 API 연동 전까지 화면 확인용 임시 스토리라인. 연동 시 생성 결과로 대체한다. */
-            val PLACEHOLDER_STORYLINES: List<String> =
-                listOf(
-                    """
-                    첫 번째 게이트가 열린 날, 동우는 주변의 모든 것을 잃었다.
+        private fun reduceGeneration(
+            state: CreateStorylineUiState,
+            generation: StorylineGenerationState,
+        ): CreateStorylineUiState =
+            when (generation) {
+                StorylineGenerationState.Generating ->
+                    state.copy(content = StorylineContent.Generating, hasGenerationError = false)
 
-                    그 후, 그는 혼자서 살아남는 법을 배웠고, 그 과정에서 천재적인 능력을 각성했다.
+                is StorylineGenerationState.Generated ->
+                    state.copy(
+                        content = StorylineContent.Loaded(generation.result.storylines),
+                        hasGenerationError = false,
+                        activeIndex = 0,
+                        ratings = emptyMap(),
+                    )
 
-                    도윤은 폐허에서 다시 만난 후, 냉담한 말투로 동우를 밀어냈지만 끝내 함께하기로 했다.
+                // 재생성 실패면 직전 결과를 그대로 두고 인라인 오류만 켠다. 선택·평가 상태는
+                // Generating 전이가 건드리지 않았으므로 직전 목록과 그대로 짝이 맞는다.
+                is StorylineGenerationState.Failed ->
+                    state.copy(
+                        content = StorylineContent.Loaded(generation.previousResult?.storylines.orEmpty()),
+                        hasGenerationError = true,
+                    )
 
-                    서연은 다른 세력에 속해 있었지만, 동우의 힘을 알고 협력을 제안했다.
-
-                    그녀는 동우의 재능을 인정하지 않으면서도, 살아남기 위해 손을 잡았다.
-
-                    셋은 버려진 연구소에서 괴물의 근원을 발견하고, 그것을 파괴하기로 결심한다.
-
-                    동우는 이제 자신의 힘이 세상을 바꿀 수 있음을 알고, 마지막 선택을 준비한다.
-                    """.trimIndent(),
-                    """
-                    게이트가 열리던 순간, 동우는 아무 힘도 없는 평범한 사람이었다.
-
-                    괴물에게 쫓기던 그를 구한 것은 이미 각성자였던 도윤이었고, 그날 이후 두 사람은 서로를 떠나지 못했다.
-
-                    동우는 도윤의 곁에서 천천히 자신의 능력을 깨달아 갔지만, *그 힘이 괴물과 같은 근원에서 나온다는 사실*은 숨겼다.
-
-                    서연은 각성자를 관리하는 조직의 감시자로 동우에게 접근했다.
-
-                    그녀는 동우의 정체를 의심하면서도, 그가 보여 주는 선의 앞에서 번번이 보고서를 덮었다.
-
-                    조직이 동우를 **제거 대상**으로 분류한 날, 도윤과 서연은 각자의 이유로 그의 앞을 막아섰다.
-
-                    동우는 자신을 믿어 준 두 사람을 위해, 힘의 근원을 마주하러 게이트 안으로 걸어 들어간다.
-                    """.trimIndent(),
-                    """
-                    세 번째 게이트가 닫힌 뒤, 세상은 동우를 **영웅**이라 불렀다.
-
-                    하지만 동우만은 알고 있었다. 그날 게이트를 닫은 것은 자신이 아니라, 이름조차 남기지 못한 도윤이었다는 것을.
-
-                    *도윤이 사라진 자리에서, 동우는 그의 힘을 물려받았다.*
-
-                    서연은 진실을 아는 유일한 목격자로, 동우의 거짓 영웅 행세를 경멸하면서도 침묵했다.
-
-                    새로운 게이트가 열리고, 그 너머에서 도윤의 목소리가 들려오기 시작한다.
-
-                    동우는 영웅의 자리를 버리고 도윤을 찾으러 갈 것인지, 세상이 원하는 거짓을 계속 살아갈 것인지 갈림길에 선다.
-
-                    서연은 처음으로 동우에게 손을 내밀며 말한다. "같이 가. 진실은 둘이 들어야 덜 무거워."
-                    """.trimIndent(),
-                )
-        }
+                // 프로세스 재시작 복원 등으로 결과가 사라진 경우. 복구 대응이 정해지기 전까지는
+                // 실패와 같은 화면으로 보여 준다("다시 만들기"는 직전 명령이 없어 동작하지 않는다).
+                StorylineGenerationState.Idle ->
+                    state.copy(content = StorylineContent.Loaded(emptyList()), hasGenerationError = true)
+            }
     }

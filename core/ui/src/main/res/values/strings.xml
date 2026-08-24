@@ -95,6 +95,20 @@
         <item>두 번째</item>
         <item>세 번째</item>
     </string-array>
+    <string name="create_storyline_loading_title">스토리라인을 만들고 있어요\n잠시만 기다려 주세요</string>
+    <string name="create_storyline_loading_description">키워드를 바탕으로 스토리라인을 구상하고 있어요</string>
+    <string name="create_storyline_loading_label">스토리라인 생성 중</string>
+    <!-- 로딩 중 타자기형으로 순환하는 문구. -->
+    <string-array name="create_storyline_loading_phrases">
+        <item>선택한 키워드 살펴보는 중...</item>
+        <item>이야기의 뼈대 잡는 중...</item>
+        <item>장면 순서 엮는 중...</item>
+    </string-array>
+    <string name="create_storyline_loading_hint_delayed">스토리라인을 잡는 데 시간이 조금 더 걸리고 있어요</string>
+    <string name="create_storyline_loading_hint_long">장면 흐름을 다시 맞춰보고 있어요</string>
+    <string name="create_storyline_error_generate">스토리라인을 만들지 못했어요</string>
+    <string name="create_storyline_error_regenerate">스토리라인을 다시 만들지 못했어요</string>
+    <string name="create_storyline_empty">생성된 스토리라인이 없어요</string>
     <string name="create_storyline_rating_good">이 스토리라인 좋아요</string>
     <string name="create_storyline_rating_bad">이 스토리라인 싫어요</string>
     <string name="create_cta_regenerate">다시 만들기</string>

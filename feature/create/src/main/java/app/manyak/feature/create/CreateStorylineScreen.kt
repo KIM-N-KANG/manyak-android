@@ -70,7 +70,6 @@ fun CreateStorylineScreen(
     )
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun CreateStorylineContent(
     state: CreateStorylineUiState,
@@ -78,13 +77,6 @@ private fun CreateStorylineContent(
     onIntent: (CreateStorylineIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val listState = rememberLazyListState()
-
-    // 다른 스토리라인으로 전환하면 본문을 처음부터 읽도록 스크롤을 되돌린다.
-    LaunchedEffect(state.activeIndex) {
-        listState.scrollToItem(0)
-    }
-
     Column(
         modifier =
             modifier
@@ -96,21 +88,67 @@ private fun CreateStorylineContent(
             currentStep = 1,
             stepNameRes = R.string.create_step_storyline,
         )
-        LazyColumn(modifier = Modifier.weight(1f), state = listState) {
-            item { StorylineStepTitle() }
-            stickyHeader {
-                StorylineTabs(state = state, onIntent = onIntent)
-            }
+        if (state.content is StorylineContent.Generating) {
+            StorylineGeneratingContent(modifier = Modifier.weight(1f))
+        } else {
+            StorylineResultContent(
+                modifier = Modifier.weight(1f),
+                state = state,
+                onIntent = onIntent,
+            )
+            CreateStorylineFooter(hasStoryline = state.activeStoryline != null, onIntent = onIntent)
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun StorylineResultContent(
+    state: CreateStorylineUiState,
+    onIntent: (CreateStorylineIntent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val listState = rememberLazyListState()
+
+    // 다른 스토리라인으로 전환하면 본문을 처음부터 읽도록 스크롤을 되돌린다.
+    LaunchedEffect(state.activeIndex) {
+        listState.scrollToItem(0)
+    }
+
+    LazyColumn(modifier = modifier, state = listState) {
+        item { StorylineStepTitle() }
+        stickyHeader {
+            StorylineTabs(state = state, onIntent = onIntent)
+        }
+        state.activeStoryline?.let { storyline ->
             item {
                 StorylineBody(
-                    text = state.activeStoryline.orEmpty(),
+                    text = storyline.storyline,
                     rating = state.activeRating,
                     onToggleRating = { rating -> onIntent(CreateStorylineIntent.ToggleRating(rating)) },
                 )
             }
-            item { Spacer(modifier = Modifier.height(ManyakTheme.spacing.screenBottom)) }
         }
-        CreateStorylineFooter(hasStoryline = state.activeStoryline != null, onIntent = onIntent)
+        when {
+            state.hasGenerationError ->
+                item {
+                    StorylineNotice(
+                        text =
+                            stringResource(
+                                if (state.storylines.isEmpty()) {
+                                    R.string.create_storyline_error_generate
+                                } else {
+                                    R.string.create_storyline_error_regenerate
+                                },
+                            ),
+                        isError = true,
+                    )
+                }
+
+            state.storylines.isEmpty() ->
+                item { StorylineNotice(text = stringResource(R.string.create_storyline_empty), isError = false) }
+        }
+        item { Spacer(modifier = Modifier.height(ManyakTheme.spacing.screenBottom)) }
     }
 }
 
@@ -133,6 +171,25 @@ private fun StorylineStepTitle(modifier: Modifier = Modifier) {
     }
 }
 
+/** 실패 인라인 오류와 빈 결과 안내. 재시도는 푸터의 "다시 만들기"가 담당한다. */
+@Composable
+private fun StorylineNotice(
+    text: String,
+    isError: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(horizontal = ManyakTheme.spacing.gutter)
+                .padding(top = ManyakTheme.spacing.gutter),
+        text = text,
+        style = ManyakTheme.typography.bodyMedium,
+        color = if (isError) ManyakTheme.colors.textDanger else ManyakTheme.colors.textSubtle,
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun StorylineTabs(
@@ -141,6 +198,7 @@ private fun StorylineTabs(
     modifier: Modifier = Modifier,
 ) {
     val labels = stringArrayResource(R.array.create_storyline_tab_labels)
+    val tabCount = if (state.storylines.isEmpty()) EXPECTED_STORYLINE_COUNT else state.storylines.size
     CompositionLocalProvider(LocalRippleConfiguration provides null) {
         SecondaryTabRow(
             modifier = modifier.fillMaxWidth(),
@@ -155,16 +213,23 @@ private fun StorylineTabs(
                 )
             },
         ) {
-            state.storylines.forEachIndexed { index, _ ->
+            repeat(tabCount) { index ->
                 val selected = index == state.activeIndex
+                val enabled = index in state.storylines.indices
                 Tab(
                     selected = selected,
+                    enabled = enabled,
                     onClick = { onIntent(CreateStorylineIntent.SelectStoryline(index)) },
                     text = {
                         Text(
                             text = labels.getOrElse(index) { (index + 1).toString() },
                             style = ManyakTheme.typography.labelLarge,
-                            color = if (selected) ManyakTheme.colors.text else ManyakTheme.colors.textSubtle,
+                            color =
+                                when {
+                                    !enabled -> ManyakTheme.colors.textDisabled
+                                    selected -> ManyakTheme.colors.text
+                                    else -> ManyakTheme.colors.textSubtle
+                                },
                             maxLines = 1,
                         )
                     },
@@ -231,12 +296,15 @@ private fun CreateStorylineFooter(
     }
 }
 
+/** 서버 계약상 생성 결과는 3개다. 결과가 오기 전 탭 자리도 이 수만큼 그린다. */
+private const val EXPECTED_STORYLINE_COUNT = 3
+
 @Preview(showBackground = true, name = "스토리라인 선택 · 라이트")
 @Composable
 private fun CreateStorylineScreenPreview() {
     ManyakTheme(darkTheme = false) {
         CreateStorylineContent(
-            state = CreateStorylineUiState(storylines = CreateStorylineViewModel.PLACEHOLDER_STORYLINES),
+            state = CreateStorylineUiState(content = StorylineContent.Loaded(previewStorylines())),
             onBack = {},
             onIntent = {},
         )
@@ -250,9 +318,25 @@ private fun CreateStorylineScreenRatedPreview() {
         CreateStorylineContent(
             state =
                 CreateStorylineUiState(
-                    storylines = CreateStorylineViewModel.PLACEHOLDER_STORYLINES,
+                    content = StorylineContent.Loaded(previewStorylines()),
                     activeIndex = 1,
                     ratings = mapOf(1 to StorylineRating.GOOD),
+                ),
+            onBack = {},
+            onIntent = {},
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "스토리라인 선택 · 생성 실패")
+@Composable
+private fun CreateStorylineScreenFailedPreview() {
+    ManyakTheme(darkTheme = false) {
+        CreateStorylineContent(
+            state =
+                CreateStorylineUiState(
+                    content = StorylineContent.Loaded(emptyList()),
+                    hasGenerationError = true,
                 ),
             onBack = {},
             onIntent = {},

@@ -16,18 +16,23 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.input.pointer.PointerEventPass
@@ -169,17 +174,18 @@ internal fun CreateStepIndicator(
     }
 }
 
-/** 퍼널 하단의 주 동작 버튼(다음·스토리라인 만들기·선택하기). */
+/** 퍼널 하단의 주 동작 버튼(다음·스토리라인 만들기·선택하기). [loading] 이면 비활성화하고 문구 자리에 스피너를 겹친다. */
 @Composable
 internal fun FunnelPrimaryButton(
     label: String,
     enabled: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    loading: Boolean = false,
 ) {
     Button(
         modifier = modifier.heightIn(min = ManyakTheme.sizes.control),
-        enabled = enabled,
+        enabled = enabled && !loading,
         onClick = onClick,
         shape = ManyakTheme.shapes.control,
         colors =
@@ -190,7 +196,21 @@ internal fun FunnelPrimaryButton(
                 disabledContentColor = ManyakTheme.colors.textDisabled,
             ),
     ) {
-        Text(text = label, style = ManyakTheme.typography.labelLarge)
+        Box(contentAlignment = Alignment.Center) {
+            // 문구를 투명하게 남겨 스피너가 떠도 버튼 크기가 흔들리지 않게 한다.
+            Text(
+                modifier = Modifier.alpha(if (loading) 0f else 1f),
+                text = label,
+                style = ManyakTheme.typography.labelLarge,
+            )
+            if (loading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(ManyakTheme.sizes.icon),
+                    color = LocalContentColor.current,
+                    strokeWidth = 2.dp,
+                )
+            }
+        }
     }
 }
 

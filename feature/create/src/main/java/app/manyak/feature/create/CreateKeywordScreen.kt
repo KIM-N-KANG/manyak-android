@@ -217,6 +217,7 @@ private fun CreateKeywordFooter(
             isFirstCategory = isFirstCategory,
             isLastCategory = isLastCategory,
             enabled = state.isFooterEnabled,
+            isGenerating = state.isGeneratingStorylines,
             onIntent = onIntent,
         )
     }
@@ -227,6 +228,7 @@ private fun FooterButtons(
     isFirstCategory: Boolean,
     isLastCategory: Boolean,
     enabled: Boolean,
+    isGenerating: Boolean,
     onIntent: (CreateKeywordIntent) -> Unit,
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact)) {
@@ -244,6 +246,7 @@ private fun FooterButtons(
             modifier = Modifier.weight(1f),
             label = stringResource(primaryLabelRes),
             enabled = enabled,
+            loading = isLastCategory && isGenerating,
             onClick = {
                 val intent =
                     if (isLastCategory) {

@@ -28,10 +28,35 @@ class CreateAdditionalInfoViewModelTest {
         Dispatchers.resetMain()
     }
 
+    private fun viewModel(
+        store: StorylineGenerationStore = StorylineGenerationStore(FakeStoryCreationRepository()),
+    ): CreateAdditionalInfoViewModel = CreateAdditionalInfoViewModel(store)
+
+    @Test
+    fun `생성 결과의 본문과 추천 추가 정보가 화면 상태로 스냅숏된다`() =
+        runTest(dispatcher) {
+            val store = StorylineGenerationStore(FakeStoryCreationRepository())
+            store.generate(sampleGenerationInput())
+
+            val viewModel = viewModel(store)
+
+            assertEquals(
+                listOf("첫 번째 스토리라인", "두 번째 스토리라인", "세 번째 스토리라인"),
+                viewModel.uiState.value.storylines
+                    .map { it.text },
+            )
+            assertEquals(
+                listOf("폐허를 자세히 그려줘"),
+                viewModel.uiState.value.storylines
+                    .first()
+                    .recommendedInfos,
+            )
+        }
+
     @Test
     fun `추천 추가 정보는 다시 누르면 해제된다`() =
         runTest(dispatcher) {
-            val viewModel = CreateAdditionalInfoViewModel()
+            val viewModel = viewModel()
 
             viewModel.onIntent(CreateAdditionalInfoIntent.ToggleRecommendation("배경을 자세히 그려줘"))
             advanceUntilIdle()
@@ -39,13 +64,16 @@ class CreateAdditionalInfoViewModelTest {
 
             viewModel.onIntent(CreateAdditionalInfoIntent.ToggleRecommendation("배경을 자세히 그려줘"))
             advanceUntilIdle()
-            assertTrue(viewModel.uiState.value.selectedRecommendations.isEmpty())
+            assertTrue(
+                viewModel.uiState.value.selectedRecommendations
+                    .isEmpty(),
+            )
         }
 
     @Test
     fun `입력은 상한까지만 추가되고 삭제한 입력은 목록에서 빠진다`() =
         runTest(dispatcher) {
-            val viewModel = CreateAdditionalInfoViewModel()
+            val viewModel = viewModel()
 
             repeat(CreateAdditionalInfoUiState.INPUT_MAX_COUNT) {
                 viewModel.onIntent(CreateAdditionalInfoIntent.AddInput)
@@ -57,7 +85,10 @@ class CreateAdditionalInfoViewModelTest {
             )
             assertFalse(viewModel.uiState.value.canAddInput)
 
-            val firstId = viewModel.uiState.value.additionalInfos.first().id
+            val firstId =
+                viewModel.uiState.value.additionalInfos
+                    .first()
+                    .id
             viewModel.onIntent(CreateAdditionalInfoIntent.RemoveInput(firstId))
             advanceUntilIdle()
 
@@ -65,14 +96,20 @@ class CreateAdditionalInfoViewModelTest {
                 CreateAdditionalInfoUiState.INPUT_MAX_COUNT - 1,
                 viewModel.uiState.value.additionalInfos.size,
             )
-            assertTrue(viewModel.uiState.value.additionalInfos.none { it.id == firstId })
+            assertTrue(
+                viewModel.uiState.value.additionalInfos
+                    .none { it.id == firstId },
+            )
         }
 
     @Test
     fun `입력값은 최대 길이까지만 반영된다`() =
         runTest(dispatcher) {
-            val viewModel = CreateAdditionalInfoViewModel()
-            val inputId = viewModel.uiState.value.additionalInfos.first().id
+            val viewModel = viewModel()
+            val inputId =
+                viewModel.uiState.value.additionalInfos
+                    .first()
+                    .id
             val overflow = "가".repeat(CreateAdditionalInfoUiState.INPUT_MAX_LENGTH + 10)
 
             viewModel.onIntent(CreateAdditionalInfoIntent.ChangeInput(inputId, overflow))
