@@ -5,6 +5,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import app.manyak.core.ui.R
 
@@ -86,13 +87,14 @@ internal val ManyakDefaultTypography =
                 fontSize = 16.sp,
                 lineHeight = 24.sp,
             ),
-        // 스토리 본문. 장문 전용이라 행간을 1.75로 벌린다
+        // 스토리 본문. 장문 전용이라 행간을 1.75로 벌리고 자간을 2% 좁힌다
         bodyReading =
             TextStyle(
                 fontFamily = GowunBatang,
                 fontWeight = FontWeight.Normal,
                 fontSize = 16.sp,
                 lineHeight = 28.sp,
+                letterSpacing = (-0.02).em,
             ),
         // 섹션·카드 제목
         titleMedium =
