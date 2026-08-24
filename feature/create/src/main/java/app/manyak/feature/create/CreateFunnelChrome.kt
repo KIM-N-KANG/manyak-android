@@ -38,15 +38,27 @@ import app.manyak.core.ui.theme.ManyakTheme
 /** 진행 표시기가 노출하는 단계 수. 완료(생성 로딩)는 단계로 세지 않는다. */
 internal const val INDICATOR_STEP_COUNT = 3
 
-/** 클릭 가능한 자식이 이벤트를 소비하기 전에 기존 입력 포커스를 해제한다. */
+/**
+ * 클릭 가능한 자식이 이벤트를 소비하기 전에 기존 입력 포커스를 해제한다.
+ *
+ * 손가락이 슬롭 안에 머문 채 떨어진 제스처만 탭으로 본다. 눌림만 보고 지우면 목록을 넘기려는
+ * 첫 접촉에도 포커스가 풀려 입력 중에 스크롤을 할 수 없다.
+ */
 internal fun Modifier.clearFocusOnTap(focusManager: FocusManager): Modifier =
     pointerInput(focusManager) {
         awaitEachGesture {
-            awaitFirstDown(
-                requireUnconsumed = false,
-                pass = PointerEventPass.Initial,
-            )
-            focusManager.clearFocus()
+            val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+            var dragged = false
+            var pressed = true
+            while (pressed) {
+                val event = awaitPointerEvent(PointerEventPass.Initial)
+                val change = event.changes.firstOrNull { it.id == down.id }
+                if (change != null && (change.position - down.position).getDistance() > viewConfiguration.touchSlop) {
+                    dragged = true
+                }
+                pressed = change?.pressed == true
+            }
+            if (!dragged) focusManager.clearFocus()
         }
     }
 

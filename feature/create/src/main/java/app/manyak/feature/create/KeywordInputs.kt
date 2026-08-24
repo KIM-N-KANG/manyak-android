@@ -165,6 +165,10 @@ internal fun KeywordChipSkeleton(modifier: Modifier = Modifier) {
     }
 }
 
+/**
+ * 테두리·트레일링을 decorationBox 안에 둔다. 포커스가 들어올 때 스크롤 컨테이너가 끌어올리는
+ * 범위가 decorationBox 전체라, 밖에 두면 커서 줄만 올라오고 나머지는 키보드에 가린다.
+ */
 @Composable
 internal fun KeywordTextField(
     value: String,
@@ -184,44 +188,47 @@ internal fun KeywordTextField(
             focused -> ManyakTheme.colors.borderInput
             else -> ManyakTheme.colors.border
         }
-    Row(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .heightIn(min = ManyakTheme.sizes.input)
-                .clip(ManyakTheme.shapes.control)
-                .background(ManyakTheme.colors.surfaceRaised)
-                .border(1.dp, borderColor, ManyakTheme.shapes.control)
-                .padding(
-                    horizontal = ManyakTheme.spacing.controlHorizontal,
-                    vertical = ManyakTheme.spacing.controlVertical,
-                ),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
-    ) {
-        Box(modifier = Modifier.weight(1f)) {
-            if (value.isEmpty()) {
-                Text(
-                    text = placeholder,
-                    style = ManyakTheme.typography.bodyMedium,
-                    color = ManyakTheme.colors.textDisabled,
-                    maxLines = 1,
-                )
+    BasicTextField(
+        modifier = modifier,
+        value = value,
+        onValueChange = onValueChange,
+        textStyle = ManyakTheme.typography.bodyMedium.copy(color = ManyakTheme.colors.text),
+        cursorBrush = SolidColor(ManyakTheme.colors.text),
+        singleLine = true,
+        keyboardOptions = keyboardOptions,
+        keyboardActions = keyboardActions,
+        interactionSource = interactionSource,
+        decorationBox = { innerTextField ->
+            Row(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = ManyakTheme.sizes.input)
+                        .clip(ManyakTheme.shapes.control)
+                        .background(ManyakTheme.colors.surfaceRaised)
+                        .border(1.dp, borderColor, ManyakTheme.shapes.control)
+                        .padding(
+                            horizontal = ManyakTheme.spacing.controlHorizontal,
+                            vertical = ManyakTheme.spacing.controlVertical,
+                        ),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+            ) {
+                Box(modifier = Modifier.weight(1f)) {
+                    if (value.isEmpty()) {
+                        Text(
+                            text = placeholder,
+                            style = ManyakTheme.typography.bodyMedium,
+                            color = ManyakTheme.colors.textDisabled,
+                            maxLines = 1,
+                        )
+                    }
+                    innerTextField()
+                }
+                trailing?.invoke()
             }
-            BasicTextField(
-                modifier = Modifier.fillMaxWidth(),
-                value = value,
-                onValueChange = onValueChange,
-                textStyle = ManyakTheme.typography.bodyMedium.copy(color = ManyakTheme.colors.text),
-                cursorBrush = SolidColor(ManyakTheme.colors.text),
-                singleLine = true,
-                keyboardOptions = keyboardOptions,
-                keyboardActions = keyboardActions,
-                interactionSource = interactionSource,
-            )
-        }
-        trailing?.invoke()
-    }
+        },
+    )
 }
 
 @Composable

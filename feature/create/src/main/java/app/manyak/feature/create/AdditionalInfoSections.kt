@@ -228,7 +228,12 @@ internal fun AdditionalInfoRow(
     }
 }
 
-/** 여러 줄 입력과 글자 수 카운터를 담은 자유 텍스트 필드. 시각 문법은 [KeywordTextField]와 같다. */
+/**
+ * 여러 줄 입력과 글자 수 카운터를 담은 자유 텍스트 필드. 시각 문법은 [KeywordTextField]와 같다.
+ *
+ * 테두리·카운터를 decorationBox 안에 두는 것이 중요하다. 포커스가 들어올 때 스크롤 컨테이너가
+ * 끌어올리는 범위는 decorationBox 전체라, 밖에 두면 커서 줄만 올라오고 카운터는 키보드에 가린다.
+ */
 @Composable
 private fun AdditionalInfoField(
     value: String,
@@ -240,43 +245,43 @@ private fun AdditionalInfoField(
     val interactionSource = remember { MutableInteractionSource() }
     val focused by interactionSource.collectIsFocusedAsState()
     val borderColor = if (focused) ManyakTheme.colors.borderInput else ManyakTheme.colors.border
-    Column(
-        modifier =
-            modifier
-                .clip(ManyakTheme.shapes.control)
-                .background(ManyakTheme.colors.surfaceRaised)
-                .border(1.dp, borderColor, ManyakTheme.shapes.control)
-                .padding(
-                    horizontal = ManyakTheme.spacing.controlHorizontal,
-                    vertical = ManyakTheme.spacing.controlVertical,
-                ),
-        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
-    ) {
-        Box {
-            if (value.isEmpty()) {
-                Text(
-                    text = placeholder,
-                    style = ManyakTheme.typography.bodyMedium,
-                    color = ManyakTheme.colors.textDisabled,
-                )
-            }
-            BasicTextField(
+    BasicTextField(
+        modifier = modifier.semantics { contentDescription = label },
+        value = value,
+        onValueChange = onValueChange,
+        textStyle = ManyakTheme.typography.bodyMedium.copy(color = ManyakTheme.colors.text),
+        cursorBrush = SolidColor(ManyakTheme.colors.text),
+        interactionSource = interactionSource,
+        decorationBox = { innerTextField ->
+            Column(
                 modifier =
                     Modifier
-                        .fillMaxWidth()
-                        .semantics { contentDescription = label },
-                value = value,
-                onValueChange = onValueChange,
-                textStyle = ManyakTheme.typography.bodyMedium.copy(color = ManyakTheme.colors.text),
-                cursorBrush = SolidColor(ManyakTheme.colors.text),
-                interactionSource = interactionSource,
-            )
-        }
-        Box(modifier = Modifier.align(Alignment.End)) {
-            InputCounter(
-                length = value.length,
-                maxLength = CreateAdditionalInfoUiState.INPUT_MAX_LENGTH,
-            )
-        }
-    }
+                        .clip(ManyakTheme.shapes.control)
+                        .background(ManyakTheme.colors.surfaceRaised)
+                        .border(1.dp, borderColor, ManyakTheme.shapes.control)
+                        .padding(
+                            horizontal = ManyakTheme.spacing.controlHorizontal,
+                            vertical = ManyakTheme.spacing.controlVertical,
+                        ),
+                verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
+            ) {
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    if (value.isEmpty()) {
+                        Text(
+                            text = placeholder,
+                            style = ManyakTheme.typography.bodyMedium,
+                            color = ManyakTheme.colors.textDisabled,
+                        )
+                    }
+                    innerTextField()
+                }
+                Box(modifier = Modifier.align(Alignment.End)) {
+                    InputCounter(
+                        length = value.length,
+                        maxLength = CreateAdditionalInfoUiState.INPUT_MAX_LENGTH,
+                    )
+                }
+            }
+        },
+    )
 }
