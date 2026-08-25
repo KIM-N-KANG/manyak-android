@@ -40,6 +40,12 @@ enum class CompletionFailure {
 }
 
 data class CreateAdditionalInfoUiState(
+    /**
+     * 스토어가 비어 있어 진행 레코드 복원을 기다리는 중. 어떤 스토리라인을 골랐고 무엇을 입력해
+     * 뒀는지 아직 모르므로 아무것도 그리지 않는다 — 재개 진입에서 빈 입력 화면이 스쳐 지나가지
+     * 않게 한다.
+     */
+    val isRestoring: Boolean = false,
     /** 완성 요청에 싣는 간편 제작 진행 ID. 복원 전 잠깐을 제외하면 항상 있다. */
     val simpleCreationId: Long? = null,
     /** 생성 결과 스냅숏. 이 화면에 머무는 동안 재생성은 일어나지 않는다. */
@@ -132,7 +138,7 @@ class CreateAdditionalInfoViewModel
             CreateAdditionalInfoEvent,
             CreateAdditionalInfoEffect,
         >(
-            storylineGenerationStore.toAdditionalInfoSnapshot(),
+            storylineGenerationStore.toInitialAdditionalInfoState(),
         ) {
         private var completeJob: Job? = null
 
@@ -146,16 +152,24 @@ class CreateAdditionalInfoViewModel
             viewModelScope.launch {
                 // 프로세스 재시작·재개 진입이면 진행 레코드에서 스토어를 먼저 복원한다.
                 storylineGenerationStore.ensureRestored()
-                if (uiState.value.simpleCreationId == null) {
-                    val snapshot = storylineGenerationStore.toAdditionalInfoSnapshot()
-                    if (snapshot.simpleCreationId != null) {
-                        dispatchEvent(CreateAdditionalInfoEvent.SnapshotRestored(snapshot))
+                if (uiState.value.isRestoring) {
+                    // 완성 진행 중이던 레코드는 입력 화면이 아니라 완성 로딩으로 이어진다. 복구
+                    // 폴링이 같은 전이를 내지만 한 박자 늦어, 입력 화면이 한 프레임 비친다.
+                    if (storylineGenerationStore.completionRecoveryTarget.value != null) {
+                        dispatchEvent(CreateAdditionalInfoEvent.CompletionStarted)
                     }
+                    dispatchEvent(
+                        CreateAdditionalInfoEvent.SnapshotRestored(
+                            storylineGenerationStore.toAdditionalInfoSnapshot(),
+                        ),
+                    )
                 }
             }
             viewModelScope.launch {
                 // 입력·추천 선택을 스토어에 미러링해 이탈 시 임시 저장 재료로 쓴다.
                 uiState.collect { state ->
+                    // 복원 전의 빈 입력을 미러링하면 되살릴 임시 저장 재료를 덮어쓴다.
+                    if (state.isRestoring) return@collect
                     storylineGenerationStore.updateAdditionalInfoProgress(
                         inputs = state.additionalInfos.map(AdditionalInfoInput::value),
                         recommendations = state.selectedRecommendations.toList(),
@@ -391,7 +405,9 @@ class CreateAdditionalInfoViewModel
 
                 is CreateAdditionalInfoEvent.SnapshotRestored ->
                     // 복원 스냅숏이 늦게 도착하는 동안 화면 조작은 불가능했으므로 통째로 대체한다.
+                    // 되살릴 레코드가 없었더라도 복원 대기는 여기서 끝난다 — 빈 화면으로 남지 않는다.
                     event.snapshot.copy(
+                        isRestoring = false,
                         isCompletingStory = state.isCompletingStory,
                         completionFailure = state.completionFailure,
                     )
@@ -402,6 +418,19 @@ class CreateAdditionalInfoViewModel
 private fun CreateAdditionalInfoUiState.submittedAdditionalInfos(): List<String> =
     selectedRecommendations.toList() +
         additionalInfos.map { it.value.trim() }.filter(String::isNotEmpty)
+
+/**
+ * 스토어의 현재 상태로 첫 프레임을 만든다.
+ *
+ * 스토리라인 단계에서 넘어온 진입은 스토어에 결과가 있어 입력 화면이 곧바로 그려지고, 스토어가 빈
+ * 재개 진입은 복원 결과를 알기 전까지 [CreateAdditionalInfoUiState.isRestoring] 으로 남는다.
+ */
+private fun StorylineGenerationStore.toInitialAdditionalInfoState(): CreateAdditionalInfoUiState =
+    if (state.value is StorylineGenerationState.Idle) {
+        CreateAdditionalInfoUiState(isRestoring = true)
+    } else {
+        toAdditionalInfoSnapshot()
+    }
 
 /** 스토어의 생성 결과·진행 미러로 초기 상태를 만든다. 임시 저장 복원 입력도 여기서 되살아난다. */
 internal fun StorylineGenerationStore.toAdditionalInfoSnapshot(): CreateAdditionalInfoUiState {

@@ -130,15 +130,21 @@ private fun CreateStorylineContent(
             currentStep = 1,
             stepNameRes = R.string.create_step_storyline,
         )
-        if (state.content is StorylineContent.Generating) {
-            StorylineGeneratingContent(modifier = Modifier.weight(1f))
-        } else {
-            StorylineResultContent(
-                modifier = Modifier.weight(1f),
-                state = state,
-                onIntent = onIntent,
-            )
-            CreateStorylineFooter(hasStoryline = state.activeStoryline != null, onIntent = onIntent)
+        when (state.content) {
+            // 복원 결과를 기다리는 동안은 본문을 비워 둔다 — 로딩과 결과 중 무엇을 그려도 곧
+            // 다른 쪽으로 바뀌어 재개 진입에서 화면이 번쩍인다.
+            StorylineContent.Restoring -> Spacer(modifier = Modifier.weight(1f))
+
+            StorylineContent.Generating -> StorylineGeneratingContent(modifier = Modifier.weight(1f))
+
+            is StorylineContent.Loaded -> {
+                StorylineResultContent(
+                    modifier = Modifier.weight(1f),
+                    state = state,
+                    onIntent = onIntent,
+                )
+                CreateStorylineFooter(hasStoryline = state.activeStoryline != null, onIntent = onIntent)
+            }
         }
     }
 }

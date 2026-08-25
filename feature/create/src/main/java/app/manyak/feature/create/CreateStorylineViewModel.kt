@@ -14,6 +14,12 @@ import javax.inject.Inject
 
 /** 생성 진행 중이거나, 결과(실패 시 빈 목록 포함)를 보여 주는 화면 콘텐츠. */
 sealed interface StorylineContent {
+    /**
+     * 스토어가 비어 있어 진행 레코드 복원을 기다리는 중. 생성 중인지 이미 결과가 있는지 아직
+     * 모르므로 어느 쪽도 그리지 않는다 — 재개 진입에서 로딩 화면이 스쳐 지나가지 않게 한다.
+     */
+    data object Restoring : StorylineContent
+
     data object Generating : StorylineContent
 
     data class Loaded(
@@ -22,7 +28,7 @@ sealed interface StorylineContent {
 }
 
 data class CreateStorylineUiState(
-    val content: StorylineContent = StorylineContent.Generating,
+    val content: StorylineContent = StorylineContent.Restoring,
     /** 생성·재생성 실패. 직전 결과가 남아 있으면 그대로 보여 주며 인라인 오류만 덧붙인다. */
     val hasGenerationError: Boolean = false,
     /** 보존할 내용 없이 이탈을 시도해 소실 경고 다이얼로그를 띄운 상태(3-1 이탈 가드). */
@@ -105,7 +111,7 @@ class CreateStorylineViewModel
         private val storylineGenerationStore: StorylineGenerationStore,
         private val storyCreationRepository: StoryCreationRepository,
     ) : MviViewModel<CreateStorylineIntent, CreateStorylineUiState, CreateStorylineEvent, CreateStorylineEffect>(
-            CreateStorylineUiState(),
+            storylineGenerationStore.toStorylineSnapshot(),
         ) {
         /**
          * 평가 동기화 판정의 정본. UiState 반영은 이벤트 채널을 거쳐 한 박자 늦을 수 있어,
@@ -283,44 +289,60 @@ class CreateStorylineViewModel
                     state.copy(showExitWarningDialog = event.visible)
             }
 
-        private fun reduceGeneration(
-            state: CreateStorylineUiState,
-            generation: StorylineGenerationState,
-            restoredActiveIndex: Int,
-        ): CreateStorylineUiState =
-            when (generation) {
-                StorylineGenerationState.Generating ->
-                    state.copy(content = StorylineContent.Generating, hasGenerationError = false)
-
-                is StorylineGenerationState.Generated ->
-                    state.copy(
-                        content = StorylineContent.Loaded(generation.result.storylines),
-                        hasGenerationError = false,
-                        activeIndex =
-                            restoredActiveIndex.coerceIn(
-                                0,
-                                (generation.result.storylines.size - 1).coerceAtLeast(0),
-                            ),
-                        ratings = emptyMap(),
-                    )
-
-                // 재생성 실패면 직전 결과를 그대로 두고 인라인 오류만 켠다. 선택·평가 상태는
-                // Generating 전이가 건드리지 않았으므로 직전 목록과 그대로 짝이 맞는다.
-                is StorylineGenerationState.Failed ->
-                    state.copy(
-                        content = StorylineContent.Loaded(generation.previousResult?.storylines.orEmpty()),
-                        hasGenerationError = true,
-                    )
-
-                // 복원할 진행 레코드조차 없이 결과가 사라진 경우. 실패와 같은 화면으로 보여 준다
-                // ("다시 만들기"는 직전 명령이 없어 동작하지 않는다).
-                StorylineGenerationState.Idle ->
-                    state.copy(content = StorylineContent.Loaded(emptyList()), hasGenerationError = true)
-            }
-
         companion object {
             const val RATING_SYNC_DEBOUNCE_MS: Long = 300
         }
+    }
+
+/**
+ * 스토어의 현재 생성 상태로 첫 프레임을 만든다.
+ *
+ * 키워드 단계에서 넘어온 진입은 스토어가 이미 생성 중이라 로딩이 곧바로 그려지고, 스토어가 빈
+ * 재개 진입은 복원 결과를 알기 전까지 [StorylineContent.Restoring] 으로 남는다. 초기값을
+ * 생성 중으로 고정하면 복원이 끝나는 한두 프레임 동안 재개 진입에서 로딩 화면이 번쩍인다.
+ */
+internal fun StorylineGenerationStore.toStorylineSnapshot(): CreateStorylineUiState {
+    val generation = state.value
+    return if (generation is StorylineGenerationState.Idle) {
+        CreateStorylineUiState()
+    } else {
+        reduceGeneration(CreateStorylineUiState(), generation, progress.activeStorylineIndex)
+    }
+}
+
+private fun reduceGeneration(
+    state: CreateStorylineUiState,
+    generation: StorylineGenerationState,
+    restoredActiveIndex: Int,
+): CreateStorylineUiState =
+    when (generation) {
+        StorylineGenerationState.Generating ->
+            state.copy(content = StorylineContent.Generating, hasGenerationError = false)
+
+        is StorylineGenerationState.Generated ->
+            state.copy(
+                content = StorylineContent.Loaded(generation.result.storylines),
+                hasGenerationError = false,
+                activeIndex =
+                    restoredActiveIndex.coerceIn(
+                        0,
+                        (generation.result.storylines.size - 1).coerceAtLeast(0),
+                    ),
+                ratings = emptyMap(),
+            )
+
+        // 재생성 실패면 직전 결과를 그대로 두고 인라인 오류만 켠다. 선택·평가 상태는
+        // Generating 전이가 건드리지 않았으므로 직전 목록과 그대로 짝이 맞는다.
+        is StorylineGenerationState.Failed ->
+            state.copy(
+                content = StorylineContent.Loaded(generation.previousResult?.storylines.orEmpty()),
+                hasGenerationError = true,
+            )
+
+        // 복원할 진행 레코드조차 없이 결과가 사라진 경우. 실패와 같은 화면으로 보여 준다
+        // ("다시 만들기"는 직전 명령이 없어 동작하지 않는다).
+        StorylineGenerationState.Idle ->
+            state.copy(content = StorylineContent.Loaded(emptyList()), hasGenerationError = true)
     }
 
 private fun MutableMap<Long, StorylineRating>.putOrRemove(

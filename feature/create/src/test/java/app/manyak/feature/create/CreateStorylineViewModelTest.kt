@@ -2,6 +2,7 @@ package app.manyak.feature.create
 
 import app.manyak.core.domain.error.DomainError
 import app.manyak.core.domain.error.DomainResult
+import app.manyak.core.domain.story.CreationProgress
 import app.manyak.core.domain.story.PendingStoryCreation
 import app.manyak.core.domain.story.StorylineRating
 import kotlinx.coroutines.Dispatchers
@@ -307,6 +308,44 @@ class CreateStorylineViewModelTest {
             // 번쩍이지 않도록 마지막 콘텐츠를 유지한다.
             assertEquals(3, viewModel.uiState.value.storylines.size)
             assertFalse(viewModel.uiState.value.hasGenerationError)
+        }
+
+    @Test
+    fun `재개 진입은 복원이 끝나기 전에 생성 중 화면을 그리지 않는다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryCreationRepository()
+            val pendingStore =
+                FakePendingStoryCreationStore(
+                    initial =
+                        PendingStoryCreation.Draft(
+                            generationCommand = null,
+                            generation = sampleStorylineGeneration(),
+                            progress = CreationProgress(),
+                        ),
+                )
+            val store = StorylineGenerationStore(repository, pendingStore, this)
+
+            val viewModel = CreateStorylineViewModel(store, repository)
+
+            // 복원 결과가 오기 전 첫 프레임. 여기서 로딩을 확정해 그리면 재개 진입 때마다
+            // "스토리라인을 만들고 있어요"가 스쳐 지나간다.
+            assertEquals(StorylineContent.Restoring, viewModel.uiState.value.content)
+
+            advanceUntilIdle()
+            assertEquals(3, viewModel.uiState.value.storylines.size)
+        }
+
+    @Test
+    fun `키워드 단계에서 넘어온 진입은 첫 프레임부터 생성 중이다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryCreationRepository()
+            val store = StorylineGenerationStore(repository, FakePendingStoryCreationStore(), this)
+            // 키워드 화면이 생성을 시작한 직후 — 아직 응답 전이라 스토어는 생성 중이다.
+            store.generate(sampleGenerationInput())
+
+            val viewModel = CreateStorylineViewModel(store, repository)
+
+            assertEquals(StorylineContent.Generating, viewModel.uiState.value.content)
         }
 
     /** 생성 성공까지 끝낸 스토어를 관찰하는 ViewModel 을 만든다. */

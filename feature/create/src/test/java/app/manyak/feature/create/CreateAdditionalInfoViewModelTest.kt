@@ -6,6 +6,7 @@ import app.manyak.core.domain.story.CompletedStory
 import app.manyak.core.domain.story.CreationProgress
 import app.manyak.core.domain.story.CreationRequestSnapshot
 import app.manyak.core.domain.story.PendingStoryCreation
+import app.manyak.core.domain.story.StoryCompletionCommand
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -331,6 +332,96 @@ class CreateAdditionalInfoViewModelTest {
             assertEquals(listOf("배경은 서울", ""), state.additionalInfos.map { it.value })
             // 현재 생성 결과에 없는 추천 선택은 복원하지 않는다 — 완성 요청에 섞여 실리지 않게 한다.
             assertEquals(setOf("폐허를 자세히 그려줘"), state.selectedRecommendations)
+        }
+
+    @Test
+    fun `재개 진입은 복원이 끝나기 전에 입력 화면을 그리지 않는다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryCreationRepository()
+            val pendingStore =
+                FakePendingStoryCreationStore(
+                    initial =
+                        PendingStoryCreation.Draft(
+                            generationCommand = null,
+                            generation = sampleStorylineGeneration(),
+                            progress = CreationProgress(selectedStorylineIndex = 0),
+                        ),
+                )
+            val store = StorylineGenerationStore(repository, pendingStore, this)
+
+            val viewModel =
+                CreateAdditionalInfoViewModel(store, repository, FakeChatRepository(), pendingStore)
+
+            // 복원 결과가 오기 전 첫 프레임. 여기서 입력 화면을 그리면 본문 없는 화면이 스쳐 지나간다.
+            assertTrue(viewModel.uiState.value.isRestoring)
+
+            advanceUntilIdle()
+            assertFalse(viewModel.uiState.value.isRestoring)
+            assertEquals(3, viewModel.uiState.value.storylines.size)
+        }
+
+    @Test
+    fun `스토리라인 단계에서 넘어온 진입은 첫 프레임부터 입력 화면이다`() =
+        runTest(dispatcher) {
+            val viewModel = loadedViewModel().viewModel
+
+            assertFalse(viewModel.uiState.value.isRestoring)
+        }
+
+    @Test
+    fun `완성 진행 레코드 재개는 입력 화면을 거치지 않고 완성 로딩으로 들어간다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryCreationRepository()
+            val pendingStore =
+                FakePendingStoryCreationStore(
+                    initial =
+                        PendingStoryCreation.CompletingStory(
+                            generationCommand = null,
+                            generation = sampleStorylineGeneration(),
+                            command =
+                                StoryCompletionCommand(
+                                    requestId = "req-1",
+                                    simpleCreationId = 10,
+                                    storylineId = 1,
+                                    additionalInfos = emptyList(),
+                                ),
+                            progress = CreationProgress(selectedStorylineIndex = 0),
+                        ),
+                )
+            val store = StorylineGenerationStore(repository, pendingStore, this)
+            val viewModel =
+                CreateAdditionalInfoViewModel(store, repository, FakeChatRepository(), pendingStore)
+
+            advanceUntilIdle()
+
+            assertFalse(viewModel.uiState.value.isRestoring)
+            assertTrue(viewModel.uiState.value.isCompletingStory)
+        }
+
+    @Test
+    fun `복원을 기다리는 동안에는 빈 입력이 임시 저장 재료로 미러링되지 않는다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryCreationRepository()
+            val inputs = listOf("배경은 서울", "")
+            val pendingStore =
+                FakePendingStoryCreationStore(
+                    initial =
+                        PendingStoryCreation.Draft(
+                            generationCommand = null,
+                            generation = sampleStorylineGeneration(),
+                            progress =
+                                CreationProgress(
+                                    selectedStorylineIndex = 0,
+                                    additionalInfoInputs = inputs,
+                                ),
+                        ),
+                )
+            val store = StorylineGenerationStore(repository, pendingStore, this)
+
+            CreateAdditionalInfoViewModel(store, repository, FakeChatRepository(), pendingStore)
+            advanceUntilIdle()
+
+            assertEquals(inputs, store.progress.additionalInfoInputs)
         }
 
     @Test

@@ -108,22 +108,28 @@ private fun CreateAdditionalInfoContent(
                 currentStep = 2,
                 stepNameRes = R.string.create_step_additional_info,
             )
-            if (state.isCompletingStory) {
-                StoryCompletingContent(modifier = Modifier.weight(1f))
-            } else {
-                AdditionalInfoList(
-                    modifier = Modifier.weight(1f),
-                    storylineIndex = storylineIndex,
-                    state = state,
-                    onIntent = onIntent,
-                )
-                // IME가 열리면 CTA 영역을 콘텐츠에 돌려 입력 필드가 키보드 위로 스크롤되게 한다.
-                if (!imeVisible) {
-                    CreateAdditionalInfoFooter(
+            when {
+                // 복원 결과를 기다리는 동안은 본문을 비워 둔다 — 고른 스토리라인도 입력도 아직
+                // 모르는 채로 그리면 재개 진입에서 빈 입력 화면이 번쩍인다.
+                state.isRestoring -> Spacer(modifier = Modifier.weight(1f))
+
+                state.isCompletingStory -> StoryCompletingContent(modifier = Modifier.weight(1f))
+
+                else -> {
+                    AdditionalInfoList(
+                        modifier = Modifier.weight(1f),
                         storylineIndex = storylineIndex,
-                        onBack = onBack,
+                        state = state,
                         onIntent = onIntent,
                     )
+                    // IME가 열리면 CTA 영역을 콘텐츠에 돌려 입력 필드가 키보드 위로 스크롤되게 한다.
+                    if (!imeVisible) {
+                        CreateAdditionalInfoFooter(
+                            storylineIndex = storylineIndex,
+                            onBack = onBack,
+                            onIntent = onIntent,
+                        )
+                    }
                 }
             }
         }
