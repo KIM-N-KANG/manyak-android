@@ -33,7 +33,7 @@
 | E12 | 키워드 이탈 시 진행 중 레코드(`STORYLINE_GENERATION`·`STORY_COMPLETION`)가 있으면 덮어쓰지 않는다 | 3-1의 "진행 중 요청 우선" 규칙. 서버에서 실제로 돌고 있는 복구 대상이 편집 스냅숏보다 우선한다 |
 | E13 | 키워드 화면은 진입 시 `KEYWORD_DRAFT`가 있으면 복원하고 레코드를 소비한다. 복원 대기 중에는 입력 미러링을 막는다 | "레코드가 남아 있는 진입은 곧 재개"라는 기존 규칙을 그대로 따른다. 미러링을 막지 않으면 복원 전 빈 입력이 저장분을 덮어쓴다 |
 | E14 | 저장 수단은 Room 단일 행 테이블 `pending_story_creation`(`id` 고정 0) | 사용자 결정. 단일 슬롯 계약은 그대로 두고 수단만 바꾼다. 앞으로 Room이 필요한 저장소가 늘 것을 보고 기반을 먼저 깐다 |
-| E15 | 컬럼은 `id`·`stage`·`updatedAt`만 정규화하고 페이로드는 `generationCommand`·`completionCommand`·`generation`·`progress`·`keywordSnapshot` 다섯 개의 nullable JSON 컬럼에 담는다 | 슬롯이 1개라 조인할 대상이 없어 중첩 리스트까지 테이블로 쪼갤 이유가 없다. 기존 `PendingRecordDto`의 최상위 필드와 1:1로 대응시켜 직렬화 코드를 재사용한다 |
+| E15 | 컬럼은 `id`·`stage`만 정규화하고 페이로드는 `generationCommand`·`completionCommand`·`generation`·`progress`·`keywordSnapshot` 다섯 개의 nullable JSON 컬럼에 담는다. 타임스탬프 컬럼은 두지 않는다 | 슬롯이 1개라 조인할 대상이 없어 중첩 리스트까지 테이블로 쪼갤 이유가 없다. 기존 `PendingRecordDto`의 최상위 필드와 1:1로 대응시켜 직렬화 코드를 재사용한다. TTL은 3-1에서 범위 밖이고 정렬할 행도 없어 타임스탬프를 읽을 곳이 없다 |
 | E16 | 스키마를 export하고 마이그레이션은 파괴적 폴백을 쓴다 | 진행 레코드는 재생성 가능한 스냅숏이고, 현행 스토어도 "해석 불가 = 없음"으로 폐기한다. 같은 규칙을 DB 수준에서 유지한다 |
 | E17 | 기존 DataStore 레코드는 옮기지 않고 폐기하며, `pending_creation` DataStore 파일 삭제를 정리 코드에 넣는다 | 미출시 단계의 진행 스냅숏이라 이관 가치가 없다. 파일을 남기면 쓰는 곳 없는 사용자 귀속 데이터가 기기에 남는다 |
 
