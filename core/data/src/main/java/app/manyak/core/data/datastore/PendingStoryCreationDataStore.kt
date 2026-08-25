@@ -152,6 +152,9 @@ private const val STAGE_STORY_DRAFT = "STORY_DRAFT"
 
 private fun PendingStoryCreation.toDto(): PendingRecordDto =
     when (this) {
+        is PendingStoryCreation.KeywordDraft ->
+            error("Keyword drafts require the Room-backed pending creation store")
+
         is PendingStoryCreation.GeneratingStorylines ->
             PendingRecordDto(
                 stage = STAGE_STORYLINE_GENERATION,
