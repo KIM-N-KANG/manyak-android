@@ -155,6 +155,10 @@
     <string name="create_exit_warning_description">지금 나가면 만들고 있는 내용이 사라져요</string>
     <string name="create_exit_warning_stay">계속 만들기</string>
     <string name="create_exit_warning_leave">그만 만들기</string>
+    <string name="create_reselect_warning_title">스토리라인을 다시 고를까요?</string>
+    <string name="create_reselect_warning_description">지금 다시 고르면 입력한 추가 정보가 사라져요</string>
+    <string name="create_reselect_warning_confirm">다시 선택하기</string>
+    <string name="create_reselect_warning_cancel">그대로 두기</string>
     <!-- 추가 정보 입력 placeholder. 입력 순서대로 순환한다. 인물 정보는 키워드 단계에서 받으므로 예시에서 뺀다. -->
     <string-array name="create_additional_placeholders">
         <item>예: 배경은 현대의 서울로 해줘</item>

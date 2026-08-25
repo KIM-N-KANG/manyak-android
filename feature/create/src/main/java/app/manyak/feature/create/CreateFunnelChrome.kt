@@ -295,3 +295,60 @@ internal fun ExitWarningDialog(
         },
     )
 }
+
+/**
+ * "다시 선택하기"가 추가 정보를 버린다고 알리는 다이얼로그.
+ *
+ * 기본 동작은 그대로 두기다 — 스토리라인을 다시 고르는 쪽이 파괴적인 선택이라 확인 버튼 자리를
+ * 되돌리기 쉬운 쪽에 준다.
+ */
+@Composable
+internal fun ReselectWarningDialog(
+    onConfirmReselect: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = ManyakTheme.colors.surfaceRaised,
+        shape = ManyakTheme.shapes.overlay,
+        title = {
+            Text(
+                text = stringResource(R.string.create_reselect_warning_title),
+                style = ManyakTheme.typography.titleMedium,
+                color = ManyakTheme.colors.text,
+            )
+        },
+        text = {
+            Text(
+                text = stringResource(R.string.create_reselect_warning_description),
+                style = ManyakTheme.typography.bodyMedium,
+                color = ManyakTheme.colors.textSubtle,
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = onDismiss,
+                shape = ManyakTheme.shapes.control,
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = ManyakTheme.colors.brand,
+                        contentColor = ManyakTheme.colors.textInverse,
+                    ),
+            ) {
+                Text(
+                    text = stringResource(R.string.create_reselect_warning_cancel),
+                    style = ManyakTheme.typography.labelLarge,
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onConfirmReselect) {
+                Text(
+                    text = stringResource(R.string.create_reselect_warning_confirm),
+                    style = ManyakTheme.typography.labelLarge,
+                    color = ManyakTheme.colors.textSubtle,
+                )
+            }
+        },
+    )
+}

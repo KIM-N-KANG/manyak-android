@@ -209,7 +209,14 @@ private fun MainNavDisplay() {
                 entry<CreateAdditionalInfoRoute> { route ->
                     CreateAdditionalInfoScreen(
                         storylineIndex = route.storylineIndex,
-                        onBack = { backStack.removeLastOrNull() },
+                        // 이탈은 퍼널 단계를 전부 걷어내고 홈으로 돌아간다. 스토리라인 단계만
+                        // pop 하면 홈으로 나가려던 조작이 한 단계 뒤로 가기로 보인다.
+                        onLeaveFunnel = {
+                            while (backStack.size > 1 && backStack.lastOrNull() != MainTabsRoute) {
+                                backStack.removeLastOrNull()
+                            }
+                        },
+                        onBackToStoryline = { backStack.removeLastOrNull() },
                         // 완성 성공 — 퍼널 단계를 모두 걷어내고 생성된 채팅방을 쌓는다(웹의 채팅 화면
                         // `replace` 대응). 채팅방에서 뒤로가기는 홈 복귀다.
                         onEnterChat = { chatId ->

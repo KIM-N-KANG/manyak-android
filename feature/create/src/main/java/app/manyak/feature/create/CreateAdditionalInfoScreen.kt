@@ -1,6 +1,7 @@
 package app.manyak.feature.create
 
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,19 +38,29 @@ import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.core.ui.R
 import app.manyak.core.ui.theme.ManyakTheme
 
-/** 추가 정보 단계. 뒤로가기와 "다시 선택하기" 모두 스토리라인 선택 단계 복귀다. */
+/**
+ * 추가 정보 단계. 앱 바 arrow-down 과 디바이스 뒤로가기는 퍼널 이탈(홈 복귀)이고, 스토리라인
+ * 단계로 되돌아가는 수단은 하단 "다시 선택하기" 하나뿐이다 — 이탈과 단계 복귀가 같은 제스처를
+ * 쓰면 어느 쪽인지 알 수 없다.
+ */
 @Composable
 fun CreateAdditionalInfoScreen(
     storylineIndex: Int,
-    onBack: () -> Unit,
+    onLeaveFunnel: () -> Unit,
+    onBackToStoryline: () -> Unit,
     onEnterChat: (chatId: String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: CreateAdditionalInfoViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val currentOnEnterChat by rememberUpdatedState(onEnterChat)
+    val currentOnLeaveFunnel by rememberUpdatedState(onLeaveFunnel)
+    val currentOnBackToStoryline by rememberUpdatedState(onBackToStoryline)
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
+
+    // 디바이스 뒤로가기도 앱 바 arrow-down 과 같은 이탈 처리를 거친다.
+    BackHandler { viewModel.onIntent(CreateAdditionalInfoIntent.LeaveFunnel) }
 
     // 응답을 못 받았거나 409 로 거절된 완성 요청의 복구 폴링. STARTED 동안만 돌아 백그라운드에서
     // 멈추고 복귀 시 재개된다.
@@ -70,9 +81,16 @@ fun CreateAdditionalInfoScreen(
                         currentOnEnterChat(effect.chatId)
                     }
 
-                    is CreateAdditionalInfoEffect.ExitFunnel -> Unit
+                    is CreateAdditionalInfoEffect.ExitFunnel -> {
+                        if (effect.contentPreserved) {
+                            Toast
+                                .makeText(context, R.string.create_draft_saved, Toast.LENGTH_SHORT)
+                                .show()
+                        }
+                        currentOnLeaveFunnel()
+                    }
 
-                    CreateAdditionalInfoEffect.NavigateBackToStoryline -> Unit
+                    CreateAdditionalInfoEffect.NavigateBackToStoryline -> currentOnBackToStoryline()
                 }
             }
         }
@@ -81,10 +99,23 @@ fun CreateAdditionalInfoScreen(
     CreateAdditionalInfoContent(
         storylineIndex = storylineIndex,
         state = state,
-        onBack = onBack,
         onIntent = viewModel::onIntent,
         modifier = modifier,
     )
+
+    if (state.showExitWarningDialog) {
+        ExitWarningDialog(
+            onConfirmLeave = { viewModel.onIntent(CreateAdditionalInfoIntent.ConfirmLeaveFunnel) },
+            onDismiss = { viewModel.onIntent(CreateAdditionalInfoIntent.DismissExitWarning) },
+        )
+    }
+
+    if (state.showReselectWarningDialog) {
+        ReselectWarningDialog(
+            onConfirmReselect = { viewModel.onIntent(CreateAdditionalInfoIntent.ConfirmReselect) },
+            onDismiss = { viewModel.onIntent(CreateAdditionalInfoIntent.DismissReselectWarning) },
+        )
+    }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -92,7 +123,6 @@ fun CreateAdditionalInfoScreen(
 private fun CreateAdditionalInfoContent(
     storylineIndex: Int,
     state: CreateAdditionalInfoUiState,
-    onBack: () -> Unit,
     onIntent: (CreateAdditionalInfoIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -107,7 +137,7 @@ private fun CreateAdditionalInfoContent(
                     .windowInsetsPadding(WindowInsets.safeDrawing)
                     .clearFocusOnTap(focusManager),
         ) {
-            CreateFunnelHeader(onClose = onBack)
+            CreateFunnelHeader(onClose = { onIntent(CreateAdditionalInfoIntent.LeaveFunnel) })
             CreateStepIndicator(
                 currentStep = 2,
                 stepNameRes = R.string.create_step_additional_info,
@@ -130,7 +160,6 @@ private fun CreateAdditionalInfoContent(
                     if (!imeVisible) {
                         CreateAdditionalInfoFooter(
                             storylineIndex = storylineIndex,
-                            onBack = onBack,
                             onIntent = onIntent,
                         )
                     }
@@ -245,7 +274,6 @@ private fun AdditionalInfoStepTitle(modifier: Modifier = Modifier) {
 @Composable
 private fun CreateAdditionalInfoFooter(
     storylineIndex: Int,
-    onBack: () -> Unit,
     onIntent: (CreateAdditionalInfoIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -261,7 +289,7 @@ private fun CreateAdditionalInfoFooter(
             modifier = Modifier.weight(1f),
             label = stringResource(R.string.create_cta_reselect_storyline),
             enabled = true,
-            onClick = onBack,
+            onClick = { onIntent(CreateAdditionalInfoIntent.ReselectStoryline) },
         )
         FunnelPrimaryButton(
             modifier = Modifier.weight(1f),
@@ -291,7 +319,6 @@ private fun CreateAdditionalInfoScreenPreview() {
         CreateAdditionalInfoContent(
             storylineIndex = 0,
             state = previewAdditionalInfoState(),
-            onBack = {},
             onIntent = {},
         )
     }
@@ -319,7 +346,6 @@ private fun CreateAdditionalInfoScreenSelectedPreview() {
                         ),
                     nextInputId = 2,
                 ),
-            onBack = {},
             onIntent = {},
         )
     }
