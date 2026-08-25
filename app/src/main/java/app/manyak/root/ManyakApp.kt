@@ -28,6 +28,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import app.manyak.core.domain.session.SessionState
+import app.manyak.core.domain.story.CreationResumePoint
 import app.manyak.core.navigation.ChatRoomRoute
 import app.manyak.core.navigation.CreateAdditionalInfoRoute
 import app.manyak.core.navigation.CreateKeywordRoute
@@ -180,7 +181,19 @@ private fun MainNavDisplay() {
         entryProvider =
             entryProvider<NavKey> {
                 entry<MainTabsRoute> {
-                    MainTabsScreen(onCreateStory = { backStack.add(CreateKeywordRoute) })
+                    MainTabsScreen(
+                        onCreateStory = { backStack.add(CreateKeywordRoute) },
+                        // 재개·복구 진입 — 레코드 단계까지 단계 체인 전체를 쌓아 복원 후에도
+                        // 단계 복귀 불변이 유지되게 한다(§3-3-5). 키워드 입력은 저장 범위 밖이라
+                        // 복원된 키워드 화면은 비어 있다.
+                        onResumeCreation = { resumePoint ->
+                            backStack.add(CreateKeywordRoute)
+                            backStack.add(CreateStorylineRoute)
+                            if (resumePoint is CreationResumePoint.AdditionalInfoStep) {
+                                backStack.add(CreateAdditionalInfoRoute(resumePoint.storylineIndex))
+                            }
+                        },
+                    )
                 }
                 entry<CreateKeywordRoute> {
                     CreateKeywordScreen(

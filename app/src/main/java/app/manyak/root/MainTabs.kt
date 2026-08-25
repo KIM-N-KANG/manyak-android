@@ -18,6 +18,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberDecoratedNavEntries
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import app.manyak.core.domain.story.CreationResumePoint
 import app.manyak.core.navigation.ChatListRoute
 import app.manyak.core.navigation.HomeRoute
 import app.manyak.core.navigation.MyRoute
@@ -67,6 +68,7 @@ private enum class MainTab(
 @Composable
 fun MainTabsScreen(
     onCreateStory: () -> Unit,
+    onResumeCreation: (CreationResumePoint) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var selectedTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
@@ -92,6 +94,7 @@ fun MainTabsScreen(
             contentPadding = innerPadding,
             onLeaveTab = { selectedTab = MainTab.HOME },
             onCreateStory = onCreateStory,
+            onResumeCreation = onResumeCreation,
         )
     }
 }
@@ -126,6 +129,7 @@ private fun MainTabsContent(
     contentPadding: PaddingValues,
     onLeaveTab: () -> Unit,
     onCreateStory: () -> Unit,
+    onResumeCreation: (CreationResumePoint) -> Unit,
 ) {
     // 목적지는 백스택이 바뀔 때만 다시 만들어지므로, 그 사이에 바뀌는 여백을 값으로 붙잡으면 오래된 값이
     // 화면에 남는다. 상태로 넘겨 화면이 그릴 때마다 현재 값을 읽게 한다.
@@ -139,7 +143,11 @@ private fun MainTabsContent(
             entryProvider =
                 entryProvider<NavKey> {
                     entry<HomeRoute> {
-                        HomeScreen(contentPadding = padding.value, onCreateStory = onCreateStory)
+                        HomeScreen(
+                            contentPadding = padding.value,
+                            onCreateStory = onCreateStory,
+                            onResumeCreation = onResumeCreation,
+                        )
                     }
                 },
         )
