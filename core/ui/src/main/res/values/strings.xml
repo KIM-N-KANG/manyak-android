@@ -165,6 +165,9 @@
     <string name="session_ended_token_persistence_failed">로그인 정보를 저장하지 못해 다시 로그인해야 해요</string>
     <string name="session_cleanup_failed">이전 로그인 정보를 정리하지 못했어요. 다시 시도해주세요</string>
 
+    <!-- 채팅방 -->
+    <string name="chat_room_load_error">채팅을 불러오지 못했어요</string>
+
     <!-- 오류 -->
     <string name="error_network">네트워크 연결을 확인해주세요</string>
     <string name="error_server">잠시 후 다시 시도해주세요</string>
