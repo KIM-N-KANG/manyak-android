@@ -1,6 +1,6 @@
 package app.manyak.core.data.di
 
-import app.manyak.core.data.datastore.PendingStoryCreationDataStore
+import app.manyak.core.data.database.PendingStoryCreationRoomStore
 import app.manyak.core.data.datastore.ProfileCacheStore
 import app.manyak.core.data.provider.GoogleIdTokenProvider
 import app.manyak.core.data.provider.KakaoIdTokenProvider
@@ -66,5 +66,5 @@ abstract class AuthModule {
     /** 간편 제작 진행 레코드 — 3-1 의 로그아웃 슬롯 전량 삭제 조항을 이 정리 계약으로 충족한다. */
     @Binds
     @IntoSet
-    abstract fun bindPendingCreationAsUserScoped(impl: PendingStoryCreationDataStore): UserScopedStore
+    abstract fun bindPendingCreationAsUserScoped(impl: PendingStoryCreationRoomStore): UserScopedStore
 }

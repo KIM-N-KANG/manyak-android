@@ -219,6 +219,9 @@ class StorylineGenerationStore
                 when (val record = pendingCreationStore.read()) {
                     null -> Unit
 
+                    // 키워드 입력은 키워드 화면이 직접 복원하고 소비한다.
+                    is PendingStoryCreation.KeywordDraft -> Unit
+
                     is PendingStoryCreation.GeneratingStorylines -> {
                         lastCommand = record.command
                         mutableState.value = StorylineGenerationState.Generating

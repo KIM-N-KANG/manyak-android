@@ -183,14 +183,8 @@ private fun MainNavDisplay() {
                 entry<MainTabsRoute> {
                     MainTabsScreen(
                         onCreateStory = { backStack.add(CreateKeywordRoute) },
-                        // 재개·복구 진입 — 레코드 단계까지 단계 체인 전체를 쌓는다(§3-3-5).
-                        // 스토리라인 단계가 키워드를 대체하는 구조라 키워드는 체인에 없다.
-                        onResumeCreation = { resumePoint ->
-                            backStack.add(CreateStorylineRoute)
-                            if (resumePoint is CreationResumePoint.AdditionalInfoStep) {
-                                backStack.add(CreateAdditionalInfoRoute(resumePoint.storylineIndex))
-                            }
-                        },
+                        // 재개·복구 진입 — 레코드가 가리키는 단계까지 체인을 쌓는다.
+                        onResumeCreation = { resumePoint -> backStack.addCreationResumeChain(resumePoint) },
                     )
                 }
                 entry<CreateKeywordRoute> {
@@ -235,6 +229,17 @@ private fun MainNavDisplay() {
                 legalEntry(onLeaveDocument = { backStack.removeLastOrNull() })
             },
     )
+}
+
+private fun MutableList<NavKey>.addCreationResumeChain(resumePoint: CreationResumePoint) {
+    when (resumePoint) {
+        CreationResumePoint.KeywordStep -> add(CreateKeywordRoute)
+        CreationResumePoint.StorylineStep -> add(CreateStorylineRoute)
+        is CreationResumePoint.AdditionalInfoStep -> {
+            add(CreateStorylineRoute)
+            add(CreateAdditionalInfoRoute(resumePoint.storylineIndex))
+        }
+    }
 }
 
 /**
