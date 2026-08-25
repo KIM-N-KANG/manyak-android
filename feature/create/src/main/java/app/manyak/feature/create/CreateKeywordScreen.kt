@@ -115,26 +115,34 @@ private fun CreateKeywordContent(
                 currentStep = 0,
                 stepNameRes = R.string.create_step_keyword,
             )
-            if (state.providedTags is ProvidedTags.Failed) {
-                CreateKeywordFailureContent(
-                    modifier = Modifier.weight(1f),
-                    state = state,
-                    onIntent = onIntent,
-                )
-            } else {
-                LazyColumn(modifier = Modifier.weight(1f)) {
-                    item { KeywordStepTitle() }
-                    stickyHeader {
-                        CategoryTabs(state = state, onIntent = onIntent)
+            when {
+                // 복원 결과를 기다리는 동안은 본문을 비워 둔다 — 저장해 둔 키워드가 있는지
+                // 모르는 채로 빈 입력 화면을 그리면 재개 진입에서 화면이 번쩍인다.
+                state.isRestoring -> Spacer(modifier = Modifier.weight(1f))
+
+                state.providedTags is ProvidedTags.Failed -> {
+                    CreateKeywordFailureContent(
+                        modifier = Modifier.weight(1f),
+                        state = state,
+                        onIntent = onIntent,
+                    )
+                }
+
+                else -> {
+                    LazyColumn(modifier = Modifier.weight(1f)) {
+                        item { KeywordStepTitle() }
+                        stickyHeader {
+                            CategoryTabs(state = state, onIntent = onIntent)
+                        }
+                        item {
+                            CategoryContent(
+                                state = state,
+                                onIntent = onIntent,
+                                onOpenAddKeyword = { target -> addKeywordTarget = target },
+                            )
+                        }
+                        item { Spacer(modifier = Modifier.height(ManyakTheme.spacing.screenBottom)) }
                     }
-                    item {
-                        CategoryContent(
-                            state = state,
-                            onIntent = onIntent,
-                            onOpenAddKeyword = { target -> addKeywordTarget = target },
-                        )
-                    }
-                    item { Spacer(modifier = Modifier.height(ManyakTheme.spacing.screenBottom)) }
                 }
             }
             // IME가 열리면 CTA 영역을 콘텐츠에 돌려 입력 필드가 키보드 위로 스크롤되게 한다.
