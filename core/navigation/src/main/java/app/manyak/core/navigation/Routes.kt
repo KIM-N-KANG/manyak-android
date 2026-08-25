@@ -56,6 +56,15 @@ data class CreateAdditionalInfoRoute(
 ) : NavKey
 
 /**
+ * 채팅방. 셸 없이 [MainTabsRoute] 위에 쌓이는 전체 화면이다.
+ * 규칙대로 식별자만 싣고, 화면이 그릴 제목·프롤로그·턴 이력은 목적지에서 상세 조회로 얻는다.
+ */
+@Serializable
+data class ChatRoomRoute(
+    val chatId: String,
+) : NavKey
+
+/**
  * 공용 법적 문서. **제품 백스택 밖에 두고 양쪽 백스택 모두에 등록해** 인증 상태와 무관하게 연다.
  * 뒤로가기는 진입한 화면으로 돌아가고, 여기서 임의의 메인 목적지로 이동하는 경로는 두지 않는다.
  */

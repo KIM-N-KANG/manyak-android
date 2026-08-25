@@ -1,6 +1,7 @@
 package app.manyak.core.data.di
 
 import app.manyak.core.data.api.AuthApi
+import app.manyak.core.data.api.ChatApi
 import app.manyak.core.data.api.SimpleStoryApi
 import app.manyak.core.data.api.StoryGenerationApi
 import app.manyak.core.data.api.StoryRatingApi
@@ -114,6 +115,14 @@ object NetworkModule {
                 .build()
         return retrofit(generationClient, config, json).create(StoryGenerationApi::class.java)
     }
+
+    @Provides
+    @Singleton
+    fun provideChatApi(
+        @AuthenticatedClient client: OkHttpClient,
+        config: DataLayerConfig,
+        json: Json,
+    ): ChatApi = retrofit(client, config, json).create(ChatApi::class.java)
 
     @Provides
     @Singleton
