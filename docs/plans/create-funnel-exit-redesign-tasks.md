@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - 커밋 메시지는 `[KNK-778] {태그}: {제목}` 형식이며 제목·본문 모두 한국어다. 태그는 `Feat`·`Fix`·`Docs`·`Refactor`·`Chore` 중 변경에 맞는 것을 쓴다.
-- 커밋에 Claude 귀속 trailer(`Co-Authored-By` 등)를 넣지 않는다.
+- 커밋 메시지에 AI 도구 귀속 문구를 넣지 않는다 — `Co-Authored-By`, `Generated with`, 도구 이름이 들어간 trailer 모두 해당한다.
 - 요청 없이 push하거나 PR을 만들지 않는다.
 - 코드 주석에 하네스 절 번호(`§3-3-5`)·`FE-SCREEN-*`·검수 항목 번호를 적지 않는다. 왜 그렇게 했는지만 남긴다.
 - 모든 사용자 노출 문자열은 `core/ui/src/main/res/values/strings.xml`에 둔다. 화면 코드에 리터럴을 쓰지 않는다.
