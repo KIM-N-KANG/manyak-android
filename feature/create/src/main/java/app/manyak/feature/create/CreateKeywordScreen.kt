@@ -110,7 +110,7 @@ private fun CreateKeywordContent(
                     .windowInsetsPadding(WindowInsets.safeDrawing)
                     .clearFocusOnTap(focusManager),
         ) {
-            CreateFunnelHeader(onBack = onBack)
+            CreateFunnelHeader(onClose = onBack)
             CreateStepIndicator(
                 currentStep = 0,
                 stepNameRes = R.string.create_step_keyword,

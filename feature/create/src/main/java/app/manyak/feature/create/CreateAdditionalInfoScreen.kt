@@ -103,7 +103,7 @@ private fun CreateAdditionalInfoContent(
                     .windowInsetsPadding(WindowInsets.safeDrawing)
                     .clearFocusOnTap(focusManager),
         ) {
-            CreateFunnelHeader(onBack = onBack)
+            CreateFunnelHeader(onClose = onBack)
             CreateStepIndicator(
                 currentStep = 2,
                 stepNameRes = R.string.create_step_additional_info,

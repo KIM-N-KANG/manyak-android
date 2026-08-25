@@ -103,7 +103,7 @@ internal fun FunnelFocusScroll(content: @Composable () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun CreateFunnelHeader(
-    onBack: () -> Unit,
+    onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     TopAppBar(
@@ -115,11 +115,13 @@ internal fun CreateFunnelHeader(
                 color = ManyakTheme.colors.text,
             )
         },
-        navigationIcon = {
-            IconButton(onClick = onBack) {
+        // 퍼널은 아래에서 올라와 아래로 닫히는 한 덩어리로 보이므로, 이탈 버튼도 그 방향과
+        // 짝이 맞는 아래 화살표를 오른쪽 끝에 둔다.
+        actions = {
+            IconButton(onClick = onClose) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_arrow_back),
-                    contentDescription = stringResource(R.string.common_back),
+                    painter = painterResource(R.drawable.ic_angle_down),
+                    contentDescription = stringResource(R.string.create_close_funnel),
                     tint = ManyakTheme.colors.text,
                 )
             }

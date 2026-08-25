@@ -125,7 +125,7 @@ private fun CreateStorylineContent(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.safeDrawing),
     ) {
-        CreateFunnelHeader(onBack = onBack)
+        CreateFunnelHeader(onClose = onBack)
         CreateStepIndicator(
             currentStep = 1,
             stepNameRes = R.string.create_step_storyline,
