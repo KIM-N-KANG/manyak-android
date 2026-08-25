@@ -35,21 +35,32 @@ class CreateAdditionalInfoViewModelTest {
 
     private fun viewModel(): CreateAdditionalInfoViewModel {
         val repository = FakeStoryCreationRepository()
-        return CreateAdditionalInfoViewModel(StorylineGenerationStore(repository), repository)
+        return CreateAdditionalInfoViewModel(StorylineGenerationStore(repository), repository, FakeChatRepository())
     }
 
+    private class LoadedFixture(
+        val repository: FakeStoryCreationRepository,
+        val chatRepository: FakeChatRepository,
+        val viewModel: CreateAdditionalInfoViewModel,
+    )
+
     /** 스토리라인 생성 성공 결과를 스냅숏한 ViewModel 을 만든다. */
-    private suspend fun loadedViewModel(): Pair<FakeStoryCreationRepository, CreateAdditionalInfoViewModel> {
+    private suspend fun loadedViewModel(): LoadedFixture {
         val repository = FakeStoryCreationRepository()
+        val chatRepository = FakeChatRepository()
         val store = StorylineGenerationStore(repository)
         store.generate(sampleGenerationInput())
-        return repository to CreateAdditionalInfoViewModel(store, repository)
+        return LoadedFixture(
+            repository = repository,
+            chatRepository = chatRepository,
+            viewModel = CreateAdditionalInfoViewModel(store, repository, chatRepository),
+        )
     }
 
     @Test
     fun `생성 결과의 본문과 추천 추가 정보가 화면 상태로 스냅숏된다`() =
         runTest(dispatcher) {
-            val (_, viewModel) = loadedViewModel()
+            val viewModel = loadedViewModel().viewModel
 
             assertEquals(10L, viewModel.uiState.value.simpleCreationId)
             assertEquals(
@@ -68,7 +79,9 @@ class CreateAdditionalInfoViewModelTest {
     @Test
     fun `스토리 완성 요청은 추천 채택분을 앞세우고 빈 자유 입력을 뺀다`() =
         runTest(dispatcher) {
-            val (repository, viewModel) = loadedViewModel()
+            val fixture = loadedViewModel()
+            val repository = fixture.repository
+            val viewModel = fixture.viewModel
 
             viewModel.onIntent(CreateAdditionalInfoIntent.ToggleRecommendation("폐허를 자세히 그려줘"))
             advanceUntilIdle()
@@ -85,8 +98,10 @@ class CreateAdditionalInfoViewModelTest {
             assertEquals(10L, command.simpleCreationId)
             assertEquals(1L, command.storylineId)
             assertEquals(listOf("폐허를 자세히 그려줘", "배경은 현대의 서울로 해줘"), command.additionalInfos)
+            // 완성 성공은 완성된 스토리로 채팅을 만들어 채팅방 진입 효과를 낸다.
+            assertEquals(listOf("story-1"), fixture.chatRepository.createChatStoryIds)
             assertEquals(
-                CreateAdditionalInfoEffect.ExitFunnelAfterCompletion,
+                CreateAdditionalInfoEffect.EnterChatAfterCompletion(chatId = "chat-1"),
                 withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
             )
         }
@@ -94,7 +109,9 @@ class CreateAdditionalInfoViewModelTest {
     @Test
     fun `완성 실패는 입력 화면으로 복귀하고 같은 페이로드 재시도는 요청 ID 를 재사용한다`() =
         runTest(dispatcher) {
-            val (repository, viewModel) = loadedViewModel()
+            val fixture = loadedViewModel()
+            val repository = fixture.repository
+            val viewModel = fixture.viewModel
             repository.queuedCompletionResults += DomainResult.Failure(DomainError.Network)
 
             viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
@@ -109,7 +126,32 @@ class CreateAdditionalInfoViewModelTest {
             val (first, second) = repository.completionCommands
             assertEquals(first.requestId, second.requestId)
             assertEquals(
-                CreateAdditionalInfoEffect.ExitFunnelAfterCompletion,
+                CreateAdditionalInfoEffect.EnterChatAfterCompletion(chatId = "chat-1"),
+                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
+            )
+        }
+
+    @Test
+    fun `채팅 생성 실패 재시도는 스토리 완성을 건너뛰고 채팅 생성만 재호출한다`() =
+        runTest(dispatcher) {
+            val fixture = loadedViewModel()
+            val viewModel = fixture.viewModel
+            fixture.chatRepository.queuedCreateChatResults += DomainResult.Failure(DomainError.Network)
+
+            viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
+            advanceUntilIdle()
+
+            // 채팅 생성 실패는 완성 실패와 같은 인라인 오류로 안내한다.
+            assertFalse(viewModel.uiState.value.isCompletingStory)
+            assertEquals(CompletionFailure.GENERAL, viewModel.uiState.value.completionFailure)
+
+            viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
+            advanceUntilIdle()
+
+            assertEquals(1, fixture.repository.completionCommands.size)
+            assertEquals(listOf("story-1", "story-1"), fixture.chatRepository.createChatStoryIds)
+            assertEquals(
+                CreateAdditionalInfoEffect.EnterChatAfterCompletion(chatId = "chat-1"),
                 withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
             )
         }
@@ -117,7 +159,9 @@ class CreateAdditionalInfoViewModelTest {
     @Test
     fun `페이로드가 바뀐 재시도는 새 요청 ID 를 쓴다`() =
         runTest(dispatcher) {
-            val (repository, viewModel) = loadedViewModel()
+            val fixture = loadedViewModel()
+            val repository = fixture.repository
+            val viewModel = fixture.viewModel
             repository.queuedCompletionResults += DomainResult.Failure(DomainError.Network)
 
             viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
@@ -138,7 +182,9 @@ class CreateAdditionalInfoViewModelTest {
     @Test
     fun `크레딧 부족 402 는 실패 사유를 구분한다`() =
         runTest(dispatcher) {
-            val (repository, viewModel) = loadedViewModel()
+            val fixture = loadedViewModel()
+            val repository = fixture.repository
+            val viewModel = fixture.viewModel
             repository.queuedCompletionResults +=
                 DomainResult.Failure(DomainError.Server(status = 402, code = null, requestId = null))
 

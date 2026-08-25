@@ -28,6 +28,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import app.manyak.core.domain.session.SessionState
+import app.manyak.core.navigation.ChatRoomRoute
 import app.manyak.core.navigation.CreateAdditionalInfoRoute
 import app.manyak.core.navigation.CreateKeywordRoute
 import app.manyak.core.navigation.CreateStorylineRoute
@@ -39,6 +40,7 @@ import app.manyak.core.ui.component.ManyakProgressIndicator
 import app.manyak.core.ui.component.rememberDelayedProgressVisibility
 import app.manyak.core.ui.error.messageResOrNull
 import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.feature.chat.ChatRoomScreen
 import app.manyak.feature.create.CreateAdditionalInfoScreen
 import app.manyak.feature.create.CreateKeywordScreen
 import app.manyak.feature.create.CreateStorylineScreen
@@ -198,13 +200,20 @@ private fun MainNavDisplay() {
                     CreateAdditionalInfoScreen(
                         storylineIndex = route.storylineIndex,
                         onBack = { backStack.removeLastOrNull() },
-                        // 완성 성공 — 퍼널 단계를 모두 걷어 홈으로 돌아간다.
-                        // 완성된 스토리의 채팅 진입은 채팅 기능 구현과 함께 붙는다.
-                        onStoryCompleted = {
+                        // 완성 성공 — 퍼널 단계를 모두 걷어내고 생성된 채팅방을 쌓는다(웹의 채팅 화면
+                        // `replace` 대응). 채팅방에서 뒤로가기는 홈 복귀다.
+                        onEnterChat = { chatId ->
                             while (backStack.size > 1 && backStack.lastOrNull() != MainTabsRoute) {
                                 backStack.removeLastOrNull()
                             }
+                            backStack.add(ChatRoomRoute(chatId))
                         },
+                    )
+                }
+                entry<ChatRoomRoute> { route ->
+                    ChatRoomScreen(
+                        chatId = route.chatId,
+                        onBack = { backStack.removeLastOrNull() },
                     )
                 }
                 legalEntry(onLeaveDocument = { backStack.removeLastOrNull() })

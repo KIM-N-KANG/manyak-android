@@ -42,12 +42,12 @@ import app.manyak.core.ui.theme.ManyakTheme
 fun CreateAdditionalInfoScreen(
     storylineIndex: Int,
     onBack: () -> Unit,
-    onStoryCompleted: () -> Unit,
+    onEnterChat: (chatId: String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: CreateAdditionalInfoViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val currentOnStoryCompleted by rememberUpdatedState(onStoryCompleted)
+    val currentOnEnterChat by rememberUpdatedState(onEnterChat)
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
 
@@ -55,11 +55,11 @@ fun CreateAdditionalInfoScreen(
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
             viewModel.uiEffect.collect { effect ->
                 when (effect) {
-                    CreateAdditionalInfoEffect.ExitFunnelAfterCompletion -> {
+                    is CreateAdditionalInfoEffect.EnterChatAfterCompletion -> {
                         Toast
                             .makeText(context, R.string.create_story_completed, Toast.LENGTH_SHORT)
                             .show()
-                        currentOnStoryCompleted()
+                        currentOnEnterChat(effect.chatId)
                     }
                 }
             }

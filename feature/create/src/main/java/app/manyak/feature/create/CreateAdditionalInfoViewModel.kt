@@ -1,6 +1,7 @@
 package app.manyak.feature.create
 
 import androidx.lifecycle.viewModelScope
+import app.manyak.core.domain.chat.ChatRepository
 import app.manyak.core.domain.error.DomainError
 import app.manyak.core.domain.error.DomainResult
 import app.manyak.core.domain.story.StoryCompletionCommand
@@ -103,8 +104,10 @@ sealed interface CreateAdditionalInfoEvent {
 }
 
 sealed interface CreateAdditionalInfoEffect {
-    /** 완성 성공 — 퍼널을 닫는다. 완성된 스토리의 채팅 진입은 채팅 기능 구현과 함께 붙는다. */
-    data object ExitFunnelAfterCompletion : CreateAdditionalInfoEffect
+    /** 완성 성공 — 생성된 채팅방으로 진입하며 퍼널을 닫는다(웹의 채팅 화면 `replace` 대응). */
+    data class EnterChatAfterCompletion(
+        val chatId: String,
+    ) : CreateAdditionalInfoEffect
 }
 
 @HiltViewModel
@@ -113,6 +116,7 @@ class CreateAdditionalInfoViewModel
     constructor(
         storylineGenerationStore: StorylineGenerationStore,
         private val storyCreationRepository: StoryCreationRepository,
+        private val chatRepository: ChatRepository,
     ) : MviViewModel<
             CreateAdditionalInfoIntent,
             CreateAdditionalInfoUiState,
@@ -125,6 +129,12 @@ class CreateAdditionalInfoViewModel
 
         /** 같은 페이로드의 재시도가 requestId 를 재사용하도록 마지막 완성 명령을 기억한다. */
         private var lastCompletionCommand: StoryCompletionCommand? = null
+
+        /**
+         * 스토리 완성은 성공했는데 채팅 생성이 실패한 경우의 스토리 ID.
+         * 재시도는 스토리 완성을 건너뛰고 채팅 생성만 재호출해 스토리를 중복 생성하지 않는다.
+         */
+        private var completedStoryId: String? = null
 
         override suspend fun handleIntent(intent: CreateAdditionalInfoIntent) {
             val state = uiState.value
@@ -159,6 +169,15 @@ class CreateAdditionalInfoViewModel
             storylineIndex: Int,
         ) {
             if (state.isCompletingStory || completeJob?.isActive == true) return
+
+            // 스토리는 완성됐고 채팅 생성만 실패한 재시도 — 완성 요청을 건너뛴다(3-1 완성 재시도 분기).
+            val alreadyCompletedStoryId = completedStoryId
+            if (alreadyCompletedStoryId != null) {
+                dispatchEvent(CreateAdditionalInfoEvent.CompletionStarted)
+                completeJob = viewModelScope.launch { startChat(alreadyCompletedStoryId) }
+                return
+            }
+
             val simpleCreationId = state.simpleCreationId ?: return
             val storylineId = state.storylines.getOrNull(storylineIndex)?.id ?: return
             val command =
@@ -172,8 +191,10 @@ class CreateAdditionalInfoViewModel
             completeJob =
                 viewModelScope.launch {
                     when (val result = storyCreationRepository.completeStory(command)) {
-                        is DomainResult.Success ->
-                            dispatchEffect(CreateAdditionalInfoEffect.ExitFunnelAfterCompletion)
+                        is DomainResult.Success -> {
+                            completedStoryId = result.value.id
+                            startChat(result.value.id)
+                        }
 
                         is DomainResult.Failure ->
                             dispatchEvent(
@@ -181,6 +202,17 @@ class CreateAdditionalInfoViewModel
                             )
                     }
                 }
+        }
+
+        /** 완성 흐름의 마지막 단계 — 채팅을 만들어 바로 진입한다. 실패는 완성 실패와 같은 인라인 오류다. */
+        private suspend fun startChat(storyId: String) {
+            when (val result = chatRepository.createChat(storyId)) {
+                is DomainResult.Success ->
+                    dispatchEffect(CreateAdditionalInfoEffect.EnterChatAfterCompletion(result.value.id))
+
+                is DomainResult.Failure ->
+                    dispatchEvent(CreateAdditionalInfoEvent.CompletionFailed(CompletionFailure.GENERAL))
+            }
         }
 
         /**
