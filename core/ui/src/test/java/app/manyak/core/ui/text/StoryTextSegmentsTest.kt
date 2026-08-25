@@ -1,4 +1,4 @@
-package app.manyak.feature.create
+package app.manyak.core.ui.text
 
 import org.junit.Assert.assertEquals
 import org.junit.Test

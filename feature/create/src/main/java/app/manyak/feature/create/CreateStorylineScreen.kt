@@ -40,6 +40,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.core.domain.story.StorylineRating
 import app.manyak.core.ui.R
+import app.manyak.core.ui.text.storyAnnotatedString
 import app.manyak.core.ui.theme.ManyakTheme
 
 /** 스토리라인 선택 단계. 뒤로가기는 키워드 단계 복귀이며 키워드 입력은 백스택에 남아 유지된다. */

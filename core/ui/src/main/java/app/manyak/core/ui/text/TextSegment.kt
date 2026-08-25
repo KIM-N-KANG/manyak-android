@@ -1,4 +1,4 @@
-package app.manyak.feature.create
+package app.manyak.core.ui.text
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.AnnotatedString
@@ -9,7 +9,7 @@ import androidx.compose.ui.text.withStyle
 import app.manyak.core.ui.theme.ManyakTheme
 
 /** 텍스트를 스타일별로 나눈 조각. */
-internal data class TextSegment(
+data class TextSegment(
     val text: String,
     /** 단일 *...* — 내레이션·속마음(보조 색상). */
     val emphasis: Boolean = false,
@@ -21,7 +21,7 @@ internal data class TextSegment(
 private val segmentPattern = Regex("""\*\*([^*\n]+?)\*\*|(?<!\*)\*(?!\*)([^*\n]+?)\*(?!\*)""")
 
 /** 서사 텍스트를 마크다운 유사 문법에 따라 세그먼트로 나눈다. 규칙은 웹 클라이언트와 같다. */
-internal fun parseTextSegments(line: String): List<TextSegment> {
+fun parseTextSegments(line: String): List<TextSegment> {
     val segments = mutableListOf<TextSegment>()
     var lastIndex = 0
 
@@ -50,7 +50,7 @@ internal fun parseTextSegments(line: String): List<TextSegment> {
 
 /** 파싱한 세그먼트를 스타일 있는 문자열로 조립한다. 강조는 보조 색으로, 볼드는 굵기로만 구분한다. */
 @Composable
-internal fun storyAnnotatedString(text: String): AnnotatedString =
+fun storyAnnotatedString(text: String): AnnotatedString =
     buildAnnotatedString {
         parseTextSegments(text).forEach { segment ->
             when {
