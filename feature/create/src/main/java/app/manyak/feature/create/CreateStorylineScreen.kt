@@ -56,6 +56,13 @@ fun CreateStorylineScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
 
+    // 응답을 못 받은 생성 요청의 복구 폴링. STARTED 동안만 돌아 백그라운드에서 멈추고 복귀 시 재개된다.
+    LaunchedEffect(viewModel, lifecycleOwner) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            viewModel.driveRecovery()
+        }
+    }
+
     LaunchedEffect(viewModel, lifecycleOwner) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
             viewModel.uiEffect.collect { effect ->

@@ -165,6 +165,9 @@ sealed interface CreateKeywordIntent {
 
     data object RetryTags : CreateKeywordIntent
 
+    /** 시스템·헤더 뒤로가기 — 퍼널 이탈. 남은 내용의 임시 저장 처리 뒤 나간다. */
+    data object LeaveFunnel : CreateKeywordIntent
+
     data class ToggleProvidedTag(
         val target: KeywordTarget,
         val tagId: Long,
@@ -255,6 +258,11 @@ sealed interface CreateKeywordEvent {
 sealed interface CreateKeywordEffect {
     /** 검증을 통과한 "스토리라인 만들기" — 스토리라인 선택 단계로 넘어간다. */
     data object NavigateToStoryline : CreateKeywordEffect
+
+    /** 퍼널 이탈 확정. 내용이 남았으면 "임시 저장되었어요" 토스트를 함께 띄운다. */
+    data class ExitFunnel(
+        val contentPreserved: Boolean,
+    ) : CreateKeywordEffect
 }
 
 @HiltViewModel
@@ -304,6 +312,13 @@ class CreateKeywordViewModel
 
                 CreateKeywordIntent.GoNext -> goNext(state)
                 CreateKeywordIntent.GenerateStorylines -> generateStorylines(state)
+                CreateKeywordIntent.LeaveFunnel -> {
+                    // 진행 중 요청 레코드 유지 또는 임시 저장을 끝낸 뒤에야 나간다 — 뒤 단계의
+                    // 생성 결과·입력이 이탈로 사라지지 않게 한다(3-1 이탈 가드).
+                    val preserved = storylineGenerationStore.leaveFunnel()
+                    dispatchEffect(CreateKeywordEffect.ExitFunnel(contentPreserved = preserved))
+                }
+
                 CreateKeywordIntent.RetryTags ->
                     if (state.providedTags is ProvidedTags.Failed) {
                         startTagsLoad(showLoading = true)

@@ -2,6 +2,7 @@ package app.manyak.feature.create
 
 import app.manyak.core.domain.error.DomainError
 import app.manyak.core.domain.error.DomainResult
+import app.manyak.core.domain.story.PendingStoryCreation
 import app.manyak.core.domain.story.StoryCreationRepository
 import app.manyak.core.domain.story.StoryTag
 import app.manyak.core.domain.story.StoryTagCategory
@@ -39,7 +40,7 @@ class CreateKeywordViewModelTest {
     private fun viewModel(repository: StoryCreationRepository): CreateKeywordViewModel =
         CreateKeywordViewModel(
             storyCreationRepository = repository,
-            storylineGenerationStore = StorylineGenerationStore(repository),
+            storylineGenerationStore = StorylineGenerationStore(repository, FakePendingStoryCreationStore()),
         )
 
     @Test
@@ -141,6 +142,49 @@ class CreateKeywordViewModelTest {
             // 실패로 끝나도 진행 플래그는 해제된다 — 실패 처리는 스토리라인 화면이 담당한다.
             assertFalse(viewModel.uiState.value.isGeneratingStorylines)
             assertEquals(1, repository.generationCommands.size)
+        }
+
+    @Test
+    fun `퍼널 이탈은 남은 생성 결과를 임시 저장한 뒤 이탈 효과를 낸다`() =
+        runTest(dispatcher) {
+            val repository = fixedTagsRepository()
+            val pendingStore = FakePendingStoryCreationStore()
+            val store = StorylineGenerationStore(repository, pendingStore)
+            store.generate(sampleGenerationInput())
+            val viewModel =
+                CreateKeywordViewModel(
+                    storyCreationRepository = repository,
+                    storylineGenerationStore = store,
+                )
+
+            viewModel.onIntent(CreateKeywordIntent.LeaveFunnel)
+            advanceUntilIdle()
+
+            assertTrue(pendingStore.current is PendingStoryCreation.Draft)
+            assertEquals(
+                CreateKeywordEffect.ExitFunnel(contentPreserved = true),
+                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
+            )
+        }
+
+    @Test
+    fun `남은 내용이 없는 퍼널 이탈은 저장 없이 나간다`() =
+        runTest(dispatcher) {
+            val pendingStore = FakePendingStoryCreationStore()
+            val viewModel =
+                CreateKeywordViewModel(
+                    storyCreationRepository = fixedTagsRepository(),
+                    storylineGenerationStore = StorylineGenerationStore(fixedTagsRepository(), pendingStore),
+                )
+
+            viewModel.onIntent(CreateKeywordIntent.LeaveFunnel)
+            advanceUntilIdle()
+
+            assertNull(pendingStore.current)
+            assertEquals(
+                CreateKeywordEffect.ExitFunnel(contentPreserved = false),
+                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
+            )
         }
 
     private fun fixedTagsRepository(): FakeStoryCreationRepository =

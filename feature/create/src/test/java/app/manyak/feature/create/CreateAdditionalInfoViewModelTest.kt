@@ -2,9 +2,14 @@ package app.manyak.feature.create
 
 import app.manyak.core.domain.error.DomainError
 import app.manyak.core.domain.error.DomainResult
+import app.manyak.core.domain.story.CompletedStory
+import app.manyak.core.domain.story.CreationProgress
+import app.manyak.core.domain.story.CreationRequestSnapshot
+import app.manyak.core.domain.story.PendingStoryCreation
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -35,12 +40,19 @@ class CreateAdditionalInfoViewModelTest {
 
     private fun viewModel(): CreateAdditionalInfoViewModel {
         val repository = FakeStoryCreationRepository()
-        return CreateAdditionalInfoViewModel(StorylineGenerationStore(repository), repository, FakeChatRepository())
+        val pendingStore = FakePendingStoryCreationStore()
+        return CreateAdditionalInfoViewModel(
+            StorylineGenerationStore(repository, pendingStore),
+            repository,
+            FakeChatRepository(),
+            pendingStore,
+        )
     }
 
     private class LoadedFixture(
         val repository: FakeStoryCreationRepository,
         val chatRepository: FakeChatRepository,
+        val pendingStore: FakePendingStoryCreationStore,
         val viewModel: CreateAdditionalInfoViewModel,
     )
 
@@ -48,12 +60,14 @@ class CreateAdditionalInfoViewModelTest {
     private suspend fun loadedViewModel(): LoadedFixture {
         val repository = FakeStoryCreationRepository()
         val chatRepository = FakeChatRepository()
-        val store = StorylineGenerationStore(repository)
+        val pendingStore = FakePendingStoryCreationStore()
+        val store = StorylineGenerationStore(repository, pendingStore)
         store.generate(sampleGenerationInput())
         return LoadedFixture(
             repository = repository,
             chatRepository = chatRepository,
-            viewModel = CreateAdditionalInfoViewModel(store, repository, chatRepository),
+            pendingStore = pendingStore,
+            viewModel = CreateAdditionalInfoViewModel(store, repository, chatRepository, pendingStore),
         )
     }
 
@@ -241,6 +255,80 @@ class CreateAdditionalInfoViewModelTest {
                 viewModel.uiState.value.additionalInfos
                     .none { it.id == firstId },
             )
+        }
+
+    @Test
+    fun `완성 요청은 시작 전에 영속되고 채팅 진입 후 레코드가 지워진다`() =
+        runTest(dispatcher) {
+            val fixture = loadedViewModel()
+            val viewModel = fixture.viewModel
+
+            viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
+            advanceUntilIdle()
+
+            val written = fixture.pendingStore.writes.last() as PendingStoryCreation.CompletingStory
+            val sentCommand = fixture.repository.completionCommands.single()
+            assertEquals(sentCommand.requestId, written.command.requestId)
+            assertEquals(null, fixture.pendingStore.current)
+        }
+
+    @Test
+    fun `완성 재시도 409 는 복구 폴링으로 결과를 되찾아 채팅 생성으로 잇는다`() =
+        runTest(dispatcher) {
+            val fixture = loadedViewModel()
+            val repository = fixture.repository
+            val viewModel = fixture.viewModel
+            repository.queuedCompletionResults +=
+                DomainResult.Failure(DomainError.Server(status = 409, code = null, requestId = null))
+
+            viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
+            advanceUntilIdle()
+            // 409 는 실패 화면이 아니라 로딩을 유지한 채 복구 폴링 대상이 된다.
+            assertTrue(viewModel.uiState.value.isCompletingStory)
+
+            repository.queuedCreationRequestResults +=
+                DomainResult.Success(CreationRequestSnapshot.StoryReady(CompletedStory(id = "story-7", title = "복구")))
+            val recovery = launch { viewModel.driveCompletionRecovery() }
+            advanceUntilIdle()
+
+            assertEquals(listOf("story-7"), fixture.chatRepository.createChatStoryIds)
+            assertEquals(null, fixture.pendingStore.current)
+            assertEquals(
+                CreateAdditionalInfoEffect.EnterChatAfterCompletion(chatId = "chat-1"),
+                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
+            )
+            recovery.cancel()
+        }
+
+    @Test
+    fun `임시 저장본 재개는 스토어 복원 스냅숏으로 입력과 추천 선택을 되살린다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryCreationRepository()
+            val pendingStore =
+                FakePendingStoryCreationStore(
+                    initial =
+                        PendingStoryCreation.Draft(
+                            generationCommand = null,
+                            generation = sampleStorylineGeneration(),
+                            progress =
+                                CreationProgress(
+                                    selectedStorylineIndex = 0,
+                                    activeStorylineIndex = 0,
+                                    additionalInfoInputs = listOf("배경은 서울", ""),
+                                    selectedRecommendations = listOf("폐허를 자세히 그려줘", "사라진 추천"),
+                                ),
+                        ),
+                )
+            val store = StorylineGenerationStore(repository, pendingStore)
+            val viewModel =
+                CreateAdditionalInfoViewModel(store, repository, FakeChatRepository(), pendingStore)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertEquals(10L, state.simpleCreationId)
+            assertEquals(listOf("배경은 서울", ""), state.additionalInfos.map { it.value })
+            // 현재 생성 결과에 없는 추천 선택은 복원하지 않는다 — 완성 요청에 섞여 실리지 않게 한다.
+            assertEquals(setOf("폐허를 자세히 그려줘"), state.selectedRecommendations)
         }
 
     @Test

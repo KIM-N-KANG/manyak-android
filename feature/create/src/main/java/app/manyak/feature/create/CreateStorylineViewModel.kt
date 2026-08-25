@@ -64,6 +64,8 @@ sealed interface CreateStorylineEvent {
 
     data class GenerationStateChanged(
         val generation: StorylineGenerationState,
+        /** 복원된 결과의 활성 탭. 새 생성은 미러가 초기화되어 0 이다. */
+        val restoredActiveIndex: Int = 0,
     ) : CreateStorylineEvent
 }
 
@@ -99,11 +101,26 @@ class CreateStorylineViewModel
 
         init {
             viewModelScope.launch {
+                // 프로세스 재시작·재개 진입으로 스토어가 비어 있으면 진행 레코드에서 먼저 복원한다.
+                storylineGenerationStore.ensureRestored()
                 storylineGenerationStore.state.collect { generation ->
                     if (generation is StorylineGenerationState.Generated) resetRatingSync()
-                    dispatchEvent(CreateStorylineEvent.GenerationStateChanged(generation))
+                    dispatchEvent(
+                        CreateStorylineEvent.GenerationStateChanged(
+                            generation = generation,
+                            restoredActiveIndex = storylineGenerationStore.progress.activeStorylineIndex,
+                        ),
+                    )
                 }
             }
+        }
+
+        /**
+         * 응답을 못 받은 생성 요청의 복구 폴링. 화면이 STARTED 동안 수집해 백그라운드에서 멈추고
+         * 복귀 시 재개된다. 복구 대상이 없으면 아무 일도 하지 않는다.
+         */
+        suspend fun driveRecovery() {
+            storylineGenerationStore.runStorylineRecovery()
         }
 
         override suspend fun handleIntent(intent: CreateStorylineIntent) {
@@ -111,6 +128,7 @@ class CreateStorylineViewModel
             when (intent) {
                 is CreateStorylineIntent.SelectStoryline ->
                     if (intent.index in state.storylines.indices) {
+                        storylineGenerationStore.updateActiveStoryline(intent.index)
                         dispatchEvent(CreateStorylineEvent.ActiveStorylineChanged(intent.index))
                     }
 
@@ -121,6 +139,7 @@ class CreateStorylineViewModel
 
                 CreateStorylineIntent.ConfirmSelection ->
                     if (state.activeStoryline != null) {
+                        storylineGenerationStore.markStorylineSelected(state.activeIndex)
                         dispatchEffect(CreateStorylineEffect.NavigateToAdditionalInfo(state.activeIndex))
                     }
             }
@@ -222,12 +241,14 @@ class CreateStorylineViewModel
                             },
                     )
 
-                is CreateStorylineEvent.GenerationStateChanged -> reduceGeneration(state, event.generation)
+                is CreateStorylineEvent.GenerationStateChanged ->
+                    reduceGeneration(state, event.generation, event.restoredActiveIndex)
             }
 
         private fun reduceGeneration(
             state: CreateStorylineUiState,
             generation: StorylineGenerationState,
+            restoredActiveIndex: Int,
         ): CreateStorylineUiState =
             when (generation) {
                 StorylineGenerationState.Generating ->
@@ -237,7 +258,11 @@ class CreateStorylineViewModel
                     state.copy(
                         content = StorylineContent.Loaded(generation.result.storylines),
                         hasGenerationError = false,
-                        activeIndex = 0,
+                        activeIndex =
+                            restoredActiveIndex.coerceIn(
+                                0,
+                                (generation.result.storylines.size - 1).coerceAtLeast(0),
+                            ),
                         ratings = emptyMap(),
                     )
 
@@ -249,8 +274,8 @@ class CreateStorylineViewModel
                         hasGenerationError = true,
                     )
 
-                // 프로세스 재시작 복원 등으로 결과가 사라진 경우. 복구 대응이 정해지기 전까지는
-                // 실패와 같은 화면으로 보여 준다("다시 만들기"는 직전 명령이 없어 동작하지 않는다).
+                // 복원할 진행 레코드조차 없이 결과가 사라진 경우. 실패와 같은 화면으로 보여 준다
+                // ("다시 만들기"는 직전 명령이 없어 동작하지 않는다).
                 StorylineGenerationState.Idle ->
                     state.copy(content = StorylineContent.Loaded(emptyList()), hasGenerationError = true)
             }

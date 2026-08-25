@@ -55,6 +55,8 @@ dependencies {
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.coroutines.core)
+    // 키워드 단계의 시스템 뒤로가기 인터셉트(BackHandler — 퍼널 이탈 처리).
+    implementation(libs.androidx.activity.compose)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

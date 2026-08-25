@@ -1,5 +1,7 @@
 package app.manyak.feature.create
 
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,6 +28,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -39,7 +42,11 @@ import app.manyak.core.domain.story.StoryTagCategory
 import app.manyak.core.ui.R
 import app.manyak.core.ui.theme.ManyakTheme
 
-/** 키워드 단계는 이탈 가드 없이 퍼널 진입 전 화면으로 돌아간다. */
+/**
+ * 키워드 단계 뒤로가기는 퍼널 이탈이다. 다이얼로그 없이 나가되, 뒤 단계의 생성 결과·입력이
+ * 남아 있으면 임시 저장(또는 진행 중 레코드 유지) 후 토스트로 알린다 — 앱의 이탈 지점은
+ * 여기 하나뿐이라 이 화면이 이탈 처리를 소유한다.
+ */
 @Composable
 fun CreateKeywordScreen(
     onLeaveFunnel: () -> Unit,
@@ -49,13 +56,27 @@ fun CreateKeywordScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val currentOnOpenStorylineStep by rememberUpdatedState(onOpenStorylineStep)
+    val currentOnLeaveFunnel by rememberUpdatedState(onLeaveFunnel)
     val lifecycleOwner = LocalLifecycleOwner.current
+    val context = LocalContext.current
+
+    // 시스템 뒤로가기도 헤더 뒤로가기와 같은 이탈 처리를 거친다.
+    BackHandler { viewModel.onIntent(CreateKeywordIntent.LeaveFunnel) }
 
     LaunchedEffect(viewModel, lifecycleOwner) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
             viewModel.uiEffect.collect { effect ->
                 when (effect) {
                     CreateKeywordEffect.NavigateToStoryline -> currentOnOpenStorylineStep()
+
+                    is CreateKeywordEffect.ExitFunnel -> {
+                        if (effect.contentPreserved) {
+                            Toast
+                                .makeText(context, R.string.create_draft_saved, Toast.LENGTH_SHORT)
+                                .show()
+                        }
+                        currentOnLeaveFunnel()
+                    }
                 }
             }
         }
@@ -63,7 +84,7 @@ fun CreateKeywordScreen(
 
     CreateKeywordContent(
         state = state,
-        onBack = onLeaveFunnel,
+        onBack = { viewModel.onIntent(CreateKeywordIntent.LeaveFunnel) },
         onIntent = viewModel::onIntent,
         modifier = modifier,
     )

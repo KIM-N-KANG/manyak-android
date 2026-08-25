@@ -2,6 +2,9 @@ package app.manyak.feature.create
 
 import app.manyak.core.domain.error.DomainResult
 import app.manyak.core.domain.story.CompletedStory
+import app.manyak.core.domain.story.CreationRequestSnapshot
+import app.manyak.core.domain.story.PendingStoryCreation
+import app.manyak.core.domain.story.PendingStoryCreationStore
 import app.manyak.core.domain.story.StoryCharacterInput
 import app.manyak.core.domain.story.StoryCompletionCommand
 import app.manyak.core.domain.story.StoryCreationRepository
@@ -11,6 +14,8 @@ import app.manyak.core.domain.story.StorylineGeneration
 import app.manyak.core.domain.story.StorylineGenerationCommand
 import app.manyak.core.domain.story.StorylineRating
 import app.manyak.core.domain.story.StorylineRecommendedInfo
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.yield
 
 internal fun sampleStorylineGeneration(simpleCreationId: Long = 10): StorylineGeneration =
@@ -80,5 +85,38 @@ internal open class FakeStoryCreationRepository(
         yield()
         ratingCalls += storylineId to null
         return queuedRatingResults.removeFirstOrNull() ?: DomainResult.Success(Unit)
+    }
+
+    val creationRequestIds = mutableListOf<String>()
+    val queuedCreationRequestResults = ArrayDeque<DomainResult<CreationRequestSnapshot>>()
+
+    override suspend fun creationRequest(requestId: String): DomainResult<CreationRequestSnapshot> {
+        yield()
+        creationRequestIds += requestId
+        return queuedCreationRequestResults.removeFirstOrNull()
+            ?: DomainResult.Success(CreationRequestSnapshot.Pending)
+    }
+}
+
+/** 진행 레코드 단일 슬롯의 인메모리 구현. 기록 이력으로 영속 시점을 검증한다. */
+internal class FakePendingStoryCreationStore(
+    initial: PendingStoryCreation? = null,
+) : PendingStoryCreationStore {
+    private val state = MutableStateFlow(initial)
+
+    override val record: Flow<PendingStoryCreation?> = state
+
+    val current: PendingStoryCreation? get() = state.value
+    val writes = mutableListOf<PendingStoryCreation>()
+
+    override suspend fun read(): PendingStoryCreation? = state.value
+
+    override suspend fun write(record: PendingStoryCreation) {
+        writes += record
+        state.value = record
+    }
+
+    override suspend fun clear() {
+        state.value = null
     }
 }

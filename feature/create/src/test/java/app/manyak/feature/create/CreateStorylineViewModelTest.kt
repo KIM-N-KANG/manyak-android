@@ -55,7 +55,7 @@ class CreateStorylineViewModelTest {
         runTest(dispatcher) {
             val repository = FakeStoryCreationRepository()
             repository.queuedGenerationResults += DomainResult.Failure(DomainError.Network)
-            val store = StorylineGenerationStore(repository)
+            val store = StorylineGenerationStore(repository, FakePendingStoryCreationStore())
             store.generate(sampleGenerationInput())
             val viewModel = CreateStorylineViewModel(store, repository)
             advanceUntilIdle()
@@ -222,7 +222,7 @@ class CreateStorylineViewModelTest {
         CreateStorylineViewModel,
     > {
         val repository = FakeStoryCreationRepository()
-        val store = StorylineGenerationStore(repository)
+        val store = StorylineGenerationStore(repository, FakePendingStoryCreationStore())
         store.generate(sampleGenerationInput())
         val viewModel = CreateStorylineViewModel(store, repository)
         advanceUntilIdle()
