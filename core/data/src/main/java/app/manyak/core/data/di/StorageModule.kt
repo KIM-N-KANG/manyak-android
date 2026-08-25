@@ -60,6 +60,14 @@ object StorageModule {
 
     @Provides
     @Singleton
+    @PendingCreationDataStore
+    fun providePendingCreationDataStore(
+        @ApplicationContext context: Context,
+    ): DataStore<Preferences> =
+        PreferenceDataStoreFactory.create { context.preferencesDataStoreFile(PENDING_CREATION_STORE_NAME) }
+
+    @Provides
+    @Singleton
     @IoDispatcher
     fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
 
@@ -77,6 +85,7 @@ object StorageModule {
     private const val DEVICE_STORE_NAME = "device"
     private const val PROFILE_STORE_NAME = "profile"
     private const val SESSION_JOURNAL_STORE_NAME = "session_journal"
+    private const val PENDING_CREATION_STORE_NAME = "pending_creation"
 }
 
 @Module

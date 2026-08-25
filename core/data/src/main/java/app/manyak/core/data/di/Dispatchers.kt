@@ -31,3 +31,8 @@ annotation class ProfileDataStore
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class SessionJournalDataStore
+
+/** 간편 제작 진행 레코드 전용 DataStore. 사용자 귀속 데이터라 세션 종료 정리 대상이다. */
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class PendingCreationDataStore

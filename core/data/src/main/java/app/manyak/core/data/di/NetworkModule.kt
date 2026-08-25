@@ -2,6 +2,7 @@ package app.manyak.core.data.di
 
 import app.manyak.core.data.api.AuthApi
 import app.manyak.core.data.api.ChatApi
+import app.manyak.core.data.api.CreationRequestApi
 import app.manyak.core.data.api.SimpleStoryApi
 import app.manyak.core.data.api.StoryGenerationApi
 import app.manyak.core.data.api.StoryRatingApi
@@ -32,6 +33,9 @@ annotation class PlainClient
 @Retention(AnnotationRetention.BINARY)
 annotation class AuthenticatedClient
 
+// API 인터페이스마다 provider 가 하나씩 필요해 함수 수 상한과 구조적으로 충돌한다. 나누면
+// retrofit() 구성이 흩어지므로 이 모듈만 예외로 둔다.
+@Suppress("TooManyFunctions")
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
@@ -115,6 +119,14 @@ object NetworkModule {
                 .build()
         return retrofit(generationClient, config, json).create(StoryGenerationApi::class.java)
     }
+
+    @Provides
+    @Singleton
+    fun provideCreationRequestApi(
+        @AuthenticatedClient client: OkHttpClient,
+        config: DataLayerConfig,
+        json: Json,
+    ): CreationRequestApi = retrofit(client, config, json).create(CreationRequestApi::class.java)
 
     @Provides
     @Singleton

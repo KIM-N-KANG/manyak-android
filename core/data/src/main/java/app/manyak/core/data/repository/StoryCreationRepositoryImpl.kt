@@ -1,5 +1,6 @@
 package app.manyak.core.data.repository
 
+import app.manyak.core.data.api.CreationRequestApi
 import app.manyak.core.data.api.SimpleStoryApi
 import app.manyak.core.data.api.StoryGenerationApi
 import app.manyak.core.data.api.StoryRatingApi
@@ -8,15 +9,19 @@ import app.manyak.core.data.api.dto.toDomain
 import app.manyak.core.data.api.dto.toDomainOrNull
 import app.manyak.core.data.api.dto.toRequestDto
 import app.manyak.core.data.api.emptyBodyApiCall
+import app.manyak.core.domain.error.DomainError
 import app.manyak.core.domain.error.DomainResult
 import app.manyak.core.domain.error.map
 import app.manyak.core.domain.story.CompletedStory
+import app.manyak.core.domain.story.CreationRequestSnapshot
 import app.manyak.core.domain.story.StoryCompletionCommand
 import app.manyak.core.domain.story.StoryCreationRepository
 import app.manyak.core.domain.story.StoryTag
 import app.manyak.core.domain.story.StorylineGeneration
 import app.manyak.core.domain.story.StorylineGenerationCommand
 import app.manyak.core.domain.story.StorylineRating
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.json.Json
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -27,6 +32,8 @@ class StoryCreationRepositoryImpl
         private val simpleStoryApi: SimpleStoryApi,
         private val storyGenerationApi: StoryGenerationApi,
         private val storyRatingApi: StoryRatingApi,
+        private val creationRequestApi: CreationRequestApi,
+        private val json: Json,
     ) : StoryCreationRepository {
         override suspend fun tags(): DomainResult<List<StoryTag>> =
             apiCall { simpleStoryApi.tags() }.map { tags -> tags.mapNotNull { it.toDomainOrNull() } }
@@ -39,6 +46,22 @@ class StoryCreationRepositoryImpl
 
         override suspend fun completeStory(command: StoryCompletionCommand): DomainResult<CompletedStory> =
             apiCall { storyGenerationApi.completeStory(command.toRequestDto()) }.map { it.toDomain() }
+
+        override suspend fun creationRequest(requestId: String): DomainResult<CreationRequestSnapshot> =
+            when (val result = apiCall { creationRequestApi.creationRequest(requestId) }) {
+                is DomainResult.Success ->
+                    // 단계별 결과 해석은 응답 수신 뒤라 apiCall 의 직렬화 판정 밖이다. 여기서 같은 오류로 접는다.
+                    try {
+                        result.value
+                            .toDomainOrNull(json)
+                            ?.let { DomainResult.Success(it) }
+                            ?: DomainResult.Failure(DomainError.Serialization)
+                    } catch (_: SerializationException) {
+                        DomainResult.Failure(DomainError.Serialization)
+                    }
+
+                is DomainResult.Failure -> result
+            }
 
         override suspend fun rateStoryline(
             storylineId: Long,

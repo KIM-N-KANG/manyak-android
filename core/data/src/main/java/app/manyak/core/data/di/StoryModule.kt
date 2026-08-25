@@ -1,6 +1,8 @@
 package app.manyak.core.data.di
 
+import app.manyak.core.data.datastore.PendingStoryCreationDataStore
 import app.manyak.core.data.repository.StoryCreationRepositoryImpl
+import app.manyak.core.domain.story.PendingStoryCreationStore
 import app.manyak.core.domain.story.StoryCreationRepository
 import dagger.Binds
 import dagger.Module
@@ -14,4 +16,8 @@ abstract class StoryModule {
     @Binds
     @Singleton
     abstract fun bindStoryCreationRepository(impl: StoryCreationRepositoryImpl): StoryCreationRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindPendingStoryCreationStore(impl: PendingStoryCreationDataStore): PendingStoryCreationStore
 }
