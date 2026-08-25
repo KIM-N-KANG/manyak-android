@@ -420,7 +420,7 @@ components:
 | `{typography.title-large}` | 20sp | 500 | 27sp | 화면 제목 |
 | `{typography.title-medium}` | 18sp | 500 | 26sp | 섹션·카드 제목 |
 | `{typography.body-large}` | 16sp | 400 | 24sp | 강조 본문·입력 필드 |
-| `{typography.body-reading}` | 16sp | 400 | 28sp | 스토리 본문 (GowunBatang) |
+| `{typography.body-reading}` | 16sp | 400 | 28sp | 스토리 본문 (GowunBatang · 자간 −2%) |
 | `{typography.body-medium}` | 14sp | 400 | 20sp | 본문 기본 |
 | `{typography.label-large}` | 14sp | 500 | 20sp | 버튼·탭 라벨 |
 | `{typography.body-small}` | 12sp | 400 | 16sp | 메타 정보·보조 설명 |
@@ -430,6 +430,7 @@ components:
 
 - **행간은 배수가 아니라 sp 절대값입니다.** Compose `TextStyle`이 절대값만 받으므로, 배수로 두면 플랫폼마다 반올림이 갈립니다.
 - **UI 롤의 행간은 1.25~1.5입니다.** `{typography.body-reading}`만 1.75로 벌립니다 — 스토리 본문은 한 화면을 채우는 장문이라 UI 기준 그대로는 답답합니다.
+- **자간은 `{typography.body-reading}`만 −2%로 좁힙니다.** GowunBatang의 기본 자간이 장문에서 벌어져 보여 본문 롤에만 보정하고, UI 롤은 기본 자간을 유지합니다.
 - **GowunBatang은 `{typography.body-reading}` 전용입니다.** 버튼·라벨·제목에 쓰지 않습니다.
 - **굵기 사다리는 400 / 500 / 700입니다.** 토큰의 제목 롤은 SemiBold(600)지만 앱은 Medium(500)으로 내립니다 — 번들에 없는 굵기를 요구하면 Bold로 대체 렌더되어 의도보다 두꺼워지기 때문입니다.
 - 화면 기본 텍스트 스타일은 `{typography.body-medium}`이고 기본 색은 `{colors.text}`입니다. `ManyakTheme`이 `LocalTextStyle`·`LocalContentColor`로 내립니다.
