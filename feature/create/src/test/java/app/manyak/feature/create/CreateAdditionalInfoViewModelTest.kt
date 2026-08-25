@@ -22,6 +22,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -55,21 +56,25 @@ class CreateAdditionalInfoViewModelTest {
         val repository: FakeStoryCreationRepository,
         val chatRepository: FakeChatRepository,
         val pendingStore: FakePendingStoryCreationStore,
+        val store: StorylineGenerationStore,
         val viewModel: CreateAdditionalInfoViewModel,
     )
 
     /** 스토리라인 생성 성공 결과를 스냅숏한 ViewModel 을 만든다. */
-    private fun TestScope.loadedViewModel(): LoadedFixture {
+    private fun TestScope.loadedViewModel(selectedStorylineIndex: Int? = null): LoadedFixture {
         val repository = FakeStoryCreationRepository()
         val chatRepository = FakeChatRepository()
         val pendingStore = FakePendingStoryCreationStore()
         val store = StorylineGenerationStore(repository, pendingStore, this)
         store.generate(sampleGenerationInput())
         advanceUntilIdle()
+        // "선택하기"로 추가 정보 단계에 들어온 상태를 만든다. 재개 지점이 이 값으로 갈린다.
+        selectedStorylineIndex?.let(store::markStorylineSelected)
         return LoadedFixture(
             repository = repository,
             chatRepository = chatRepository,
             pendingStore = pendingStore,
+            store = store,
             viewModel = CreateAdditionalInfoViewModel(store, repository, chatRepository, pendingStore),
         )
     }
@@ -443,5 +448,124 @@ class CreateAdditionalInfoViewModelTest {
                     .first()
                     .value.length,
             )
+        }
+
+    @Test
+    fun `이탈하면 선택 순번과 입력이 담긴 임시 저장본이 남는다`() =
+        runTest(dispatcher) {
+            val fixture = loadedViewModel(selectedStorylineIndex = 1)
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.ChangeInput(inputId = 0, value = "배경은 서울"))
+            advanceUntilIdle()
+
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.LeaveFunnel)
+            advanceUntilIdle()
+
+            val record = fixture.pendingStore.read() as PendingStoryCreation.Draft
+            assertEquals(1, record.progress.selectedStorylineIndex)
+            assertEquals(listOf("배경은 서울", "", ""), record.progress.additionalInfoInputs)
+        }
+
+    @Test
+    fun `이탈은 임시 저장 여부와 함께 이탈 효과를 낸다`() =
+        runTest(dispatcher) {
+            val fixture = loadedViewModel(selectedStorylineIndex = 0)
+
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.LeaveFunnel)
+            advanceUntilIdle()
+
+            assertEquals(
+                CreateAdditionalInfoEffect.ExitFunnel(contentPreserved = true),
+                fixture.viewModel.uiEffect.first(),
+            )
+        }
+
+    @Test
+    fun `추가 정보가 없으면 다시 선택하기는 곧바로 돌아간다`() =
+        runTest(dispatcher) {
+            val fixture = loadedViewModel(selectedStorylineIndex = 0)
+
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.ReselectStoryline)
+            advanceUntilIdle()
+
+            assertFalse(fixture.viewModel.uiState.value.showReselectWarningDialog)
+            assertEquals(
+                CreateAdditionalInfoEffect.NavigateBackToStoryline,
+                fixture.viewModel.uiEffect.first(),
+            )
+        }
+
+    @Test
+    fun `입력이 있으면 다시 선택하기는 초기화 경고를 띄운다`() =
+        runTest(dispatcher) {
+            val fixture = loadedViewModel(selectedStorylineIndex = 0)
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.ChangeInput(inputId = 0, value = "배경은 서울"))
+            advanceUntilIdle()
+
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.ReselectStoryline)
+            advanceUntilIdle()
+
+            assertTrue(fixture.viewModel.uiState.value.showReselectWarningDialog)
+            assertNull(withTimeoutOrNull(100) { fixture.viewModel.uiEffect.first() })
+        }
+
+    @Test
+    fun `추천만 골라도 다시 선택하기는 초기화 경고를 띄운다`() =
+        runTest(dispatcher) {
+            val fixture = loadedViewModel(selectedStorylineIndex = 0)
+            val recommendation =
+                fixture.viewModel.uiState.value.storylines
+                    .first()
+                    .recommendedInfos
+                    .first()
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.ToggleRecommendation(recommendation))
+            advanceUntilIdle()
+
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.ReselectStoryline)
+            advanceUntilIdle()
+
+            assertTrue(fixture.viewModel.uiState.value.showReselectWarningDialog)
+        }
+
+    @Test
+    fun `초기화를 확정하면 선택 순번이 사라져 다음 이탈은 스토리라인 단계로 재개한다`() =
+        runTest(dispatcher) {
+            val fixture = loadedViewModel(selectedStorylineIndex = 0)
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.ChangeInput(inputId = 0, value = "배경은 서울"))
+            advanceUntilIdle()
+
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.ReselectStoryline)
+            advanceUntilIdle()
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.ConfirmReselect)
+            advanceUntilIdle()
+
+            assertNull(fixture.store.progress.selectedStorylineIndex)
+            assertEquals(emptyList<String>(), fixture.store.progress.additionalInfoInputs)
+            assertEquals(emptyList<String>(), fixture.store.progress.selectedRecommendations)
+            assertEquals(
+                CreateAdditionalInfoEffect.NavigateBackToStoryline,
+                fixture.viewModel.uiEffect.first(),
+            )
+        }
+
+    @Test
+    fun `초기화를 취소하면 입력이 남는다`() =
+        runTest(dispatcher) {
+            val fixture = loadedViewModel(selectedStorylineIndex = 0)
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.ChangeInput(inputId = 0, value = "배경은 서울"))
+            advanceUntilIdle()
+
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.ReselectStoryline)
+            advanceUntilIdle()
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.DismissReselectWarning)
+            advanceUntilIdle()
+
+            assertFalse(fixture.viewModel.uiState.value.showReselectWarningDialog)
+            assertEquals(
+                "배경은 서울",
+                fixture.viewModel.uiState.value.additionalInfos
+                    .first()
+                    .value,
+            )
+            assertEquals(0, fixture.store.progress.selectedStorylineIndex)
         }
 }

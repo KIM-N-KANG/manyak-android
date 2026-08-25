@@ -69,6 +69,10 @@ fun CreateAdditionalInfoScreen(
                             .show()
                         currentOnEnterChat(effect.chatId)
                     }
+
+                    is CreateAdditionalInfoEffect.ExitFunnel -> Unit
+
+                    CreateAdditionalInfoEffect.NavigateBackToStoryline -> Unit
                 }
             }
         }

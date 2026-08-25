@@ -349,6 +349,19 @@ class StorylineGenerationStore
         }
 
         /**
+         * "다시 선택하기"로 스토리라인 단계에 되돌아간다. 입력·추천 선택과 함께 선택 순번도
+         * 지운다 — 순번이 남으면 이후 이탈이 추가 정보 단계로 재개되어 이미 버린 입력 화면으로 돌아간다.
+         */
+        fun clearAdditionalInfoProgress() {
+            progress =
+                progress.copy(
+                    selectedStorylineIndex = null,
+                    additionalInfoInputs = emptyList(),
+                    selectedRecommendations = emptyList(),
+                )
+        }
+
+        /**
          * 이탈 시 보존할 내용이 있는지 — 진행 중 레코드 또는 생성 결과. 없으면 호출부가
          * 소실 경고 다이얼로그(3-1)를 띄운 뒤에야 [leaveFunnel] 을 부른다.
          */

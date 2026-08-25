@@ -58,8 +58,16 @@ data class CreateAdditionalInfoUiState(
     /** 완성 요청 진행 중. 입력 화면 대신 완성 로딩을 그린다. */
     val isCompletingStory: Boolean = false,
     val completionFailure: CompletionFailure? = null,
+    /** 보존할 내용 없이 이탈을 시도해 소실 경고 다이얼로그를 띄운 상태. */
+    val showExitWarningDialog: Boolean = false,
+    /** "다시 선택하기"가 추가 정보를 버린다고 알리는 중. */
+    val showReselectWarningDialog: Boolean = false,
 ) {
     val canAddInput: Boolean get() = additionalInfos.size < INPUT_MAX_COUNT
+
+    /** 버리면 아쉬운 추가 정보가 있는지. 빈 입력 칸만 있는 상태는 아니다. */
+    val hasAdditionalInfo: Boolean
+        get() = selectedRecommendations.isNotEmpty() || additionalInfos.any { it.value.isNotBlank() }
 
     companion object {
         const val INITIAL_INPUT_COUNT: Int = 3
@@ -87,6 +95,24 @@ sealed interface CreateAdditionalInfoIntent {
     data class CompleteStory(
         val storylineIndex: Int,
     ) : CreateAdditionalInfoIntent
+
+    sealed interface FunnelNavigation : CreateAdditionalInfoIntent
+
+    /** 앱 바 arrow-down·디바이스 뒤로가기 — 퍼널 이탈. */
+    data object LeaveFunnel : FunnelNavigation
+
+    /** 소실 경고 다이얼로그의 "그만 만들기". */
+    data object ConfirmLeaveFunnel : FunnelNavigation
+
+    data object DismissExitWarning : FunnelNavigation
+
+    /** 하단 "다시 선택하기" — 스토리라인 단계 복귀. */
+    data object ReselectStoryline : FunnelNavigation
+
+    /** 초기화 경고 다이얼로그의 "다시 선택하기". */
+    data object ConfirmReselect : FunnelNavigation
+
+    data object DismissReselectWarning : FunnelNavigation
 }
 
 sealed interface CreateAdditionalInfoEvent {
@@ -115,6 +141,14 @@ sealed interface CreateAdditionalInfoEvent {
     data class SnapshotRestored(
         val snapshot: CreateAdditionalInfoUiState,
     ) : CreateAdditionalInfoEvent
+
+    data class ExitWarningVisibleChanged(
+        val visible: Boolean,
+    ) : CreateAdditionalInfoEvent
+
+    data class ReselectWarningVisibleChanged(
+        val visible: Boolean,
+    ) : CreateAdditionalInfoEvent
 }
 
 sealed interface CreateAdditionalInfoEffect {
@@ -122,6 +156,14 @@ sealed interface CreateAdditionalInfoEffect {
     data class EnterChatAfterCompletion(
         val chatId: String,
     ) : CreateAdditionalInfoEffect
+
+    /** 퍼널 이탈 확정. 내용이 남았으면 "임시 저장되었어요" 토스트를 함께 띄운다. */
+    data class ExitFunnel(
+        val contentPreserved: Boolean,
+    ) : CreateAdditionalInfoEffect
+
+    /** "다시 선택하기" 확정 — 스토리라인 단계로 pop 한다. */
+    data object NavigateBackToStoryline : CreateAdditionalInfoEffect
 }
 
 @HiltViewModel
@@ -148,6 +190,12 @@ class CreateAdditionalInfoViewModel
          */
         private var completedStoryId: String? = null
 
+        /**
+         * 이탈·초기화 처리 중. 이 전이는 스토어의 진행 미러를 비우는데, 그 사이 화면 상태를
+         * 미러링하면 방금 저장한 재료를 빈 값으로 덮어쓴다. 이후 미러링을 멈춘다.
+         */
+        private var isLeaving = false
+
         init {
             viewModelScope.launch {
                 // 프로세스 재시작·재개 진입이면 진행 레코드에서 스토어를 먼저 복원한다.
@@ -169,7 +217,7 @@ class CreateAdditionalInfoViewModel
                 // 입력·추천 선택을 스토어에 미러링해 이탈 시 임시 저장 재료로 쓴다.
                 uiState.collect { state ->
                     // 복원 전의 빈 입력을 미러링하면 되살릴 임시 저장 재료를 덮어쓴다.
-                    if (state.isRestoring) return@collect
+                    if (state.isRestoring || isLeaving) return@collect
                     storylineGenerationStore.updateAdditionalInfoProgress(
                         inputs = state.additionalInfos.map(AdditionalInfoInput::value),
                         recommendations = state.selectedRecommendations.toList(),
@@ -260,7 +308,60 @@ class CreateAdditionalInfoViewModel
                     )
 
                 is CreateAdditionalInfoIntent.CompleteStory -> completeStory(state, intent.storylineIndex)
+
+                is CreateAdditionalInfoIntent.FunnelNavigation -> handleFunnelNavigation(intent, state)
             }
+        }
+
+        private suspend fun handleFunnelNavigation(
+            intent: CreateAdditionalInfoIntent.FunnelNavigation,
+            state: CreateAdditionalInfoUiState,
+        ) {
+            when (intent) {
+                CreateAdditionalInfoIntent.LeaveFunnel ->
+                    if (storylineGenerationStore.hasContentToPreserve()) {
+                        isLeaving = true
+                        val preserved = storylineGenerationStore.leaveFunnel()
+                        dispatchEffect(CreateAdditionalInfoEffect.ExitFunnel(contentPreserved = preserved))
+                    } else {
+                        dispatchEvent(CreateAdditionalInfoEvent.ExitWarningVisibleChanged(visible = true))
+                    }
+
+                CreateAdditionalInfoIntent.ConfirmLeaveFunnel -> {
+                    isLeaving = true
+                    storylineGenerationStore.leaveFunnel()
+                    dispatchEvent(CreateAdditionalInfoEvent.ExitWarningVisibleChanged(visible = false))
+                    dispatchEffect(CreateAdditionalInfoEffect.ExitFunnel(contentPreserved = false))
+                }
+
+                CreateAdditionalInfoIntent.DismissExitWarning ->
+                    dispatchEvent(CreateAdditionalInfoEvent.ExitWarningVisibleChanged(visible = false))
+
+                CreateAdditionalInfoIntent.ReselectStoryline ->
+                    if (state.hasAdditionalInfo) {
+                        dispatchEvent(CreateAdditionalInfoEvent.ReselectWarningVisibleChanged(visible = true))
+                    } else {
+                        confirmReselect()
+                    }
+
+                CreateAdditionalInfoIntent.ConfirmReselect -> {
+                    dispatchEvent(CreateAdditionalInfoEvent.ReselectWarningVisibleChanged(visible = false))
+                    confirmReselect()
+                }
+
+                CreateAdditionalInfoIntent.DismissReselectWarning ->
+                    dispatchEvent(CreateAdditionalInfoEvent.ReselectWarningVisibleChanged(visible = false))
+            }
+        }
+
+        /**
+         * 스토리라인 단계로 되돌아간다. 미러링을 먼저 끊고 스토어를 비운다 — 순서를 바꾸면
+         * 남아 있던 화면 상태가 방금 비운 진행을 다시 채운다.
+         */
+        private suspend fun confirmReselect() {
+            isLeaving = true
+            storylineGenerationStore.clearAdditionalInfoProgress()
+            dispatchEffect(CreateAdditionalInfoEffect.NavigateBackToStoryline)
         }
 
         private suspend fun completeStory(
@@ -410,7 +511,15 @@ class CreateAdditionalInfoViewModel
                         isRestoring = false,
                         isCompletingStory = state.isCompletingStory,
                         completionFailure = state.completionFailure,
+                        showExitWarningDialog = state.showExitWarningDialog,
+                        showReselectWarningDialog = state.showReselectWarningDialog,
                     )
+
+                is CreateAdditionalInfoEvent.ExitWarningVisibleChanged ->
+                    state.copy(showExitWarningDialog = event.visible)
+
+                is CreateAdditionalInfoEvent.ReselectWarningVisibleChanged ->
+                    state.copy(showReselectWarningDialog = event.visible)
             }
     }
 
