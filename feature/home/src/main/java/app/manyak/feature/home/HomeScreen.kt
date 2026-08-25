@@ -13,7 +13,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -94,12 +93,10 @@ private fun HomeContent(
             PendingCreationBannerRow(
                 banner = banner,
                 onResume = { onIntent(HomeIntent.ResumeCreation) },
-                onDismiss = { onIntent(HomeIntent.DismissPendingCreation) },
                 modifier =
                     Modifier
                         .align(Alignment.TopCenter)
-                        .padding(horizontal = ManyakTheme.spacing.gutter)
-                        .padding(top = ManyakTheme.spacing.compact),
+                        .padding(horizontal = ManyakTheme.spacing.gutter),
             )
         }
         CreateStoryFab(
@@ -124,15 +121,14 @@ private fun HomeContent(
 private fun PendingCreationBannerRow(
     banner: PendingCreationBanner,
     onResume: () -> Unit,
-    onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
         modifier =
             modifier
                 .fillMaxWidth()
-                .background(color = ManyakTheme.colors.surfaceRaised, shape = ManyakTheme.shapes.card)
-                .padding(start = ManyakTheme.spacing.component, end = ManyakTheme.spacing.dense)
+                .background(color = ManyakTheme.colors.backgroundNeutral, shape = ManyakTheme.shapes.card)
+                .padding(start = ManyakTheme.spacing.gutter, end = ManyakTheme.spacing.inline)
                 .padding(vertical = ManyakTheme.spacing.dense),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -154,13 +150,6 @@ private fun PendingCreationBannerRow(
                 text = stringResource(R.string.home_pending_banner_resume),
                 style = ManyakTheme.typography.labelLarge,
                 color = ManyakTheme.colors.brand,
-            )
-        }
-        IconButton(onClick = onDismiss) {
-            Icon(
-                painter = painterResource(R.drawable.ic_close),
-                contentDescription = stringResource(R.string.home_pending_banner_dismiss),
-                tint = ManyakTheme.colors.textSubtle,
             )
         }
     }

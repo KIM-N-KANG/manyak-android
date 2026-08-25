@@ -30,9 +30,6 @@ sealed interface HomeIntent {
     /** 배너의 "이어서 만들기". */
     data object ResumeCreation : HomeIntent
 
-    /** 배너 닫기 — 레코드를 폐기해 다음 진입은 새 생성부터 시작한다. */
-    data object DismissPendingCreation : HomeIntent
-
     /** 다이얼로그의 "새로 만들기" — 레코드를 폐기하고 키워드 단계부터 시작한다. */
     data object StartNewCreation : HomeIntent
 
@@ -88,8 +85,6 @@ class HomeViewModel
                         dispatchEvent(HomeEvent.ResumeChoiceDialogVisibleChanged(visible = false))
                         dispatchEffect(HomeEffect.NavigateToResume(banner.resumePoint))
                     }
-
-                HomeIntent.DismissPendingCreation -> pendingCreationStore.clear()
 
                 HomeIntent.StartNewCreation -> {
                     // 레코드 폐기가 진입보다 먼저다 — 레코드가 남은 채 들어가면 재개로 복원된다.

@@ -72,20 +72,6 @@ class HomeViewModelTest {
         }
 
     @Test
-    fun `배너 닫기는 레코드를 폐기해 다음 진입이 새 생성이 된다`() =
-        runTest(dispatcher) {
-            val store = FakePendingStoryCreationStore(initial = generatingRecord())
-            val viewModel = HomeViewModel(store)
-            advanceUntilIdle()
-
-            viewModel.onIntent(HomeIntent.DismissPendingCreation)
-            advanceUntilIdle()
-
-            assertNull(store.current)
-            assertNull(viewModel.uiState.value.pendingBanner)
-        }
-
-    @Test
     fun `레코드가 있는 FAB 진입은 다이얼로그로 묻고 새로 만들기는 폐기 후 진입한다`() =
         runTest(dispatcher) {
             val store = FakePendingStoryCreationStore(initial = generatingRecord())
