@@ -198,6 +198,13 @@ private fun MainNavDisplay() {
                     CreateAdditionalInfoScreen(
                         storylineIndex = route.storylineIndex,
                         onBack = { backStack.removeLastOrNull() },
+                        // 완성 성공 — 퍼널 단계를 모두 걷어 홈으로 돌아간다.
+                        // 완성된 스토리의 채팅 진입은 채팅 기능 구현과 함께 붙는다.
+                        onStoryCompleted = {
+                            while (backStack.size > 1 && backStack.lastOrNull() != MainTabsRoute) {
+                                backStack.removeLastOrNull()
+                            }
+                        },
                     )
                 }
                 legalEntry(onLeaveDocument = { backStack.removeLastOrNull() })

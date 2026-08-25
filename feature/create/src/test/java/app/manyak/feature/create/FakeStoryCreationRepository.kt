@@ -1,7 +1,9 @@
 package app.manyak.feature.create
 
 import app.manyak.core.domain.error.DomainResult
+import app.manyak.core.domain.story.CompletedStory
 import app.manyak.core.domain.story.StoryCharacterInput
+import app.manyak.core.domain.story.StoryCompletionCommand
 import app.manyak.core.domain.story.StoryCreationRepository
 import app.manyak.core.domain.story.StoryTag
 import app.manyak.core.domain.story.Storyline
@@ -53,6 +55,16 @@ internal open class FakeStoryCreationRepository(
         yield()
         generationCommands += command
         return queuedGenerationResults.removeFirstOrNull() ?: DomainResult.Success(sampleStorylineGeneration())
+    }
+
+    val completionCommands = mutableListOf<StoryCompletionCommand>()
+    val queuedCompletionResults = ArrayDeque<DomainResult<CompletedStory>>()
+
+    override suspend fun completeStory(command: StoryCompletionCommand): DomainResult<CompletedStory> {
+        yield()
+        completionCommands += command
+        return queuedCompletionResults.removeFirstOrNull()
+            ?: DomainResult.Success(CompletedStory(id = "story-1", title = "완성 스토리"))
     }
 
     override suspend fun rateStoryline(

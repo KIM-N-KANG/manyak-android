@@ -10,6 +10,8 @@ import app.manyak.core.data.api.dto.toRequestDto
 import app.manyak.core.data.api.emptyBodyApiCall
 import app.manyak.core.domain.error.DomainResult
 import app.manyak.core.domain.error.map
+import app.manyak.core.domain.story.CompletedStory
+import app.manyak.core.domain.story.StoryCompletionCommand
 import app.manyak.core.domain.story.StoryCreationRepository
 import app.manyak.core.domain.story.StoryTag
 import app.manyak.core.domain.story.StorylineGeneration
@@ -34,6 +36,9 @@ class StoryCreationRepositoryImpl
             command: StorylineGenerationCommand,
         ): DomainResult<StorylineGeneration> =
             apiCall { storyGenerationApi.generateStorylines(command.toRequestDto()) }.map { it.toDomain() }
+
+        override suspend fun completeStory(command: StoryCompletionCommand): DomainResult<CompletedStory> =
+            apiCall { storyGenerationApi.completeStory(command.toRequestDto()) }.map { it.toDomain() }
 
         override suspend fun rateStoryline(
             storylineId: Long,

@@ -1,5 +1,7 @@
 package app.manyak.core.data.api
 
+import app.manyak.core.data.api.dto.StoryCompletionRequestDto
+import app.manyak.core.data.api.dto.StoryCompletionResponseDto
 import app.manyak.core.data.api.dto.StorylineGenerationRequestDto
 import app.manyak.core.data.api.dto.StorylineGenerationResponseDto
 import retrofit2.Response
@@ -15,4 +17,9 @@ interface StoryGenerationApi {
     suspend fun generateStorylines(
         @Body body: StorylineGenerationRequestDto,
     ): Response<StorylineGenerationResponseDto>
+
+    @POST("stories/simple")
+    suspend fun completeStory(
+        @Body body: StoryCompletionRequestDto,
+    ): Response<StoryCompletionResponseDto>
 }

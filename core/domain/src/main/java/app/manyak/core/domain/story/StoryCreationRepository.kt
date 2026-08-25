@@ -9,6 +9,9 @@ interface StoryCreationRepository {
     /** 태그 선택으로 스토리라인 3개를 생성한다. AI 동기 호출이라 오래 걸릴 수 있다. */
     suspend fun generateStorylines(command: StorylineGenerationCommand): DomainResult<StorylineGeneration>
 
+    /** 선택한 스토리라인과 추가 정보로 최종 스토리를 완성한다. AI 동기 호출이라 오래 걸릴 수 있다. */
+    suspend fun completeStory(command: StoryCompletionCommand): DomainResult<CompletedStory>
+
     /** 평가 설정. 스토리라인당 1건 upsert 라 새 평가가 기존 평가를 덮는다. */
     suspend fun rateStoryline(
         storylineId: Long,

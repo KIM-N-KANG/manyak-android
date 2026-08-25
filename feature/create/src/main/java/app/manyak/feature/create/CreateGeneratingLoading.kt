@@ -1,5 +1,10 @@
+// 파일이 담는 것은 로딩 컴포저블 셋이고 GenerationHint 는 그 파라미터 타입일 뿐이다.
+@file:Suppress("MatchingDeclarationName")
+
 package app.manyak.feature.create
 
+import androidx.annotation.ArrayRes
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -21,10 +26,58 @@ import app.manyak.core.ui.R
 import app.manyak.core.ui.theme.ManyakTheme
 import kotlinx.coroutines.delay
 
-/** 스토리라인 생성 중 로딩 화면 — 로딩 제목, 타자기형 문구, 15·30초 지연 힌트. */
+/** 생성이 길어지면 [delayMs] 시점에 드러내는 힌트. */
+internal data class GenerationHint(
+    val delayMs: Long,
+    @param:StringRes val textRes: Int,
+)
+
+/** 스토리라인 생성 중 로딩 화면 — 로딩 제목, 타자기형 문구, 지연 힌트. */
 @Composable
 internal fun StorylineGeneratingContent(modifier: Modifier = Modifier) {
-    val loadingLabel = stringResource(R.string.create_storyline_loading_label)
+    GeneratingLoadingContent(
+        modifier = modifier,
+        titleRes = R.string.create_storyline_loading_title,
+        descriptionRes = R.string.create_storyline_loading_description,
+        loadingLabelRes = R.string.create_storyline_loading_label,
+        phrasesRes = R.array.create_storyline_loading_phrases,
+        hints =
+            listOf(
+                GenerationHint(delayMs = 15_000, textRes = R.string.create_storyline_loading_hint_delayed),
+                GenerationHint(delayMs = 30_000, textRes = R.string.create_storyline_loading_hint_long),
+            ),
+    )
+}
+
+/** 스토리 완성 중 로딩 화면. 완성은 별도 목적지가 아니라 추가 정보 화면의 종료 상태다. */
+@Composable
+internal fun StoryCompletingContent(modifier: Modifier = Modifier) {
+    GeneratingLoadingContent(
+        modifier = modifier,
+        titleRes = R.string.create_completion_loading_title,
+        descriptionRes = R.string.create_completion_loading_description,
+        loadingLabelRes = R.string.create_completion_loading_label,
+        phrasesRes = R.array.create_completion_loading_phrases,
+        hints =
+            listOf(
+                GenerationHint(delayMs = 15_000, textRes = R.string.create_completion_loading_hint_delayed),
+                GenerationHint(delayMs = 30_000, textRes = R.string.create_completion_loading_hint_long),
+                GenerationHint(delayMs = 60_000, textRes = R.string.create_completion_loading_hint_almost),
+            ),
+    )
+}
+
+/** 생성 계열 로딩 화면의 공용 골격. */
+@Composable
+private fun GeneratingLoadingContent(
+    @StringRes titleRes: Int,
+    @StringRes descriptionRes: Int,
+    @StringRes loadingLabelRes: Int,
+    @ArrayRes phrasesRes: Int,
+    hints: List<GenerationHint>,
+    modifier: Modifier = Modifier,
+) {
+    val loadingLabel = stringResource(loadingLabelRes)
     Column(
         modifier = modifier.semantics { contentDescription = loadingLabel },
     ) {
@@ -33,12 +86,12 @@ internal fun StorylineGeneratingContent(modifier: Modifier = Modifier) {
             verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
         ) {
             Text(
-                text = stringResource(R.string.create_storyline_loading_title),
+                text = stringResource(titleRes),
                 style = ManyakTheme.typography.titleLarge,
                 color = ManyakTheme.colors.text,
             )
             Text(
-                text = stringResource(R.string.create_storyline_loading_description),
+                text = stringResource(descriptionRes),
                 style = ManyakTheme.typography.bodyLarge,
                 color = ManyakTheme.colors.textSubtle,
             )
@@ -50,8 +103,8 @@ internal fun StorylineGeneratingContent(modifier: Modifier = Modifier) {
                     .padding(top = ManyakTheme.spacing.block),
             verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
         ) {
-            TypewriterPhrases(phrases = stringArrayResource(R.array.create_storyline_loading_phrases).toList())
-            GenerationHints()
+            TypewriterPhrases(phrases = stringArrayResource(phrasesRes).toList())
+            GenerationHints(hints = hints)
         }
     }
 }
@@ -88,30 +141,30 @@ private fun TypewriterPhrases(
     )
 }
 
-/** 생성이 길어지면 15·30초 시점에 힌트를 하나씩 쌓아 보여 준다. */
+/** 생성이 길어지면 각 힌트 시점에 하나씩 쌓아 보여 준다. */
 @Composable
-private fun GenerationHints(modifier: Modifier = Modifier) {
+private fun GenerationHints(
+    hints: List<GenerationHint>,
+    modifier: Modifier = Modifier,
+) {
     var revealedCount by remember { mutableIntStateOf(0) }
 
-    LaunchedEffect(Unit) {
-        delay(GENERATION_HINT_INTERVAL_MS)
-        revealedCount = 1
-        delay(GENERATION_HINT_INTERVAL_MS)
-        revealedCount = 2
+    LaunchedEffect(hints) {
+        var elapsedMs = 0L
+        hints.forEachIndexed { index, hint ->
+            delay(hint.delayMs - elapsedMs)
+            elapsedMs = hint.delayMs
+            revealedCount = index + 1
+        }
     }
 
-    val hints =
-        listOf(
-            stringResource(R.string.create_storyline_loading_hint_delayed),
-            stringResource(R.string.create_storyline_loading_hint_long),
-        )
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
         hints.take(revealedCount).forEach { hint ->
             Text(
-                text = hint,
+                text = stringResource(hint.textRes),
                 style = ManyakTheme.typography.bodyMedium,
                 color = ManyakTheme.colors.textSubtle,
             )
@@ -121,12 +174,19 @@ private fun GenerationHints(modifier: Modifier = Modifier) {
 
 private const val TYPEWRITER_CHAR_DELAY_MS = 60L
 private const val TYPEWRITER_PHRASE_HOLD_MS = 1_400L
-private const val GENERATION_HINT_INTERVAL_MS = 15_000L
 
 @Preview(showBackground = true, name = "스토리라인 선택 · 생성 중")
 @Composable
 private fun StorylineGeneratingContentPreview() {
     ManyakTheme(darkTheme = false) {
         StorylineGeneratingContent()
+    }
+}
+
+@Preview(showBackground = true, name = "추가 정보 · 완성 중")
+@Composable
+private fun StoryCompletingContentPreview() {
+    ManyakTheme(darkTheme = false) {
+        StoryCompletingContent()
     }
 }

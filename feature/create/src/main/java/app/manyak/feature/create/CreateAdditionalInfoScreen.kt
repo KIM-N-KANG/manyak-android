@@ -1,5 +1,6 @@
 package app.manyak.feature.create
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,15 +19,21 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.core.ui.R
 import app.manyak.core.ui.theme.ManyakTheme
 
@@ -35,10 +42,29 @@ import app.manyak.core.ui.theme.ManyakTheme
 fun CreateAdditionalInfoScreen(
     storylineIndex: Int,
     onBack: () -> Unit,
+    onStoryCompleted: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: CreateAdditionalInfoViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val currentOnStoryCompleted by rememberUpdatedState(onStoryCompleted)
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val context = LocalContext.current
+
+    LaunchedEffect(viewModel, lifecycleOwner) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            viewModel.uiEffect.collect { effect ->
+                when (effect) {
+                    CreateAdditionalInfoEffect.ExitFunnelAfterCompletion -> {
+                        Toast
+                            .makeText(context, R.string.create_story_completed, Toast.LENGTH_SHORT)
+                            .show()
+                        currentOnStoryCompleted()
+                    }
+                }
+            }
+        }
+    }
 
     CreateAdditionalInfoContent(
         storylineIndex = storylineIndex,
@@ -74,15 +100,23 @@ private fun CreateAdditionalInfoContent(
                 currentStep = 2,
                 stepNameRes = R.string.create_step_additional_info,
             )
-            AdditionalInfoList(
-                modifier = Modifier.weight(1f),
-                storylineIndex = storylineIndex,
-                state = state,
-                onIntent = onIntent,
-            )
-            // IME가 열리면 CTA 영역을 콘텐츠에 돌려 입력 필드가 키보드 위로 스크롤되게 한다.
-            if (!imeVisible) {
-                CreateAdditionalInfoFooter(onBack = onBack, onIntent = onIntent)
+            if (state.isCompletingStory) {
+                StoryCompletingContent(modifier = Modifier.weight(1f))
+            } else {
+                AdditionalInfoList(
+                    modifier = Modifier.weight(1f),
+                    storylineIndex = storylineIndex,
+                    state = state,
+                    onIntent = onIntent,
+                )
+                // IME가 열리면 CTA 영역을 콘텐츠에 돌려 입력 필드가 키보드 위로 스크롤되게 한다.
+                if (!imeVisible) {
+                    CreateAdditionalInfoFooter(
+                        storylineIndex = storylineIndex,
+                        onBack = onBack,
+                        onIntent = onIntent,
+                    )
+                }
             }
         }
     }
@@ -137,8 +171,35 @@ private fun AdditionalInfoList(
                 )
             }
         }
+        state.completionFailure?.let { failure ->
+            item { CompletionFailureNotice(failure = failure) }
+        }
         item { Spacer(modifier = Modifier.height(ManyakTheme.spacing.screenBottom)) }
     }
+}
+
+/** 완성 실패 인라인 오류. 재시도는 "스토리 완성하기"를 다시 누르는 것이다. */
+@Composable
+private fun CompletionFailureNotice(
+    failure: CompletionFailure,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(horizontal = ManyakTheme.spacing.gutter)
+                .padding(top = ManyakTheme.spacing.gutter),
+        text =
+            stringResource(
+                when (failure) {
+                    CompletionFailure.CREDIT -> R.string.create_completion_error_credit
+                    CompletionFailure.GENERAL -> R.string.create_completion_error
+                },
+            ),
+        style = ManyakTheme.typography.bodyMedium,
+        color = ManyakTheme.colors.textDanger,
+    )
 }
 
 @Composable
@@ -165,6 +226,7 @@ private fun AdditionalInfoStepTitle(modifier: Modifier = Modifier) {
 
 @Composable
 private fun CreateAdditionalInfoFooter(
+    storylineIndex: Int,
     onBack: () -> Unit,
     onIntent: (CreateAdditionalInfoIntent) -> Unit,
     modifier: Modifier = Modifier,
@@ -187,7 +249,7 @@ private fun CreateAdditionalInfoFooter(
             modifier = Modifier.weight(1f),
             label = stringResource(R.string.create_cta_complete_story),
             enabled = true,
-            onClick = { onIntent(CreateAdditionalInfoIntent.CompleteStory) },
+            onClick = { onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex)) },
         )
     }
 }
@@ -197,6 +259,7 @@ private fun previewAdditionalInfoState(): CreateAdditionalInfoUiState =
         storylines =
             previewStorylines().map { storyline ->
                 AdditionalInfoStoryline(
+                    id = storyline.id,
                     text = storyline.storyline,
                     recommendedInfos = storyline.recommendedInfos.map { it.text },
                 )
