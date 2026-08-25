@@ -43,9 +43,9 @@ import app.manyak.core.ui.R
 import app.manyak.core.ui.theme.ManyakTheme
 
 /**
- * 키워드 단계 뒤로가기는 생성 전 퍼널 이탈이다. 3-1 의 키워드 단계 제외 규칙대로 다이얼로그 없이
- * 나간다. 스토리라인 단계가 이 목적지를 대체하므로 생성 후 이탈 처리는 그 화면이 소유하고,
- * 여기서는 방어적으로 스토어 정리(임시 저장 판정 포함)만 거친다.
+ * 키워드 단계 뒤로가기는 생성 전 퍼널 이탈이다. 소실 경고 없이 입력이 있으면 임시 저장하고,
+ * 없으면 조용히 나간다. 스토리라인 단계가 이 목적지를 대체하므로 생성 후 이탈 처리는 그 화면이
+ * 소유하고, 여기서는 방어적으로 스토어 정리(진행 중 레코드 우선 판정 포함)만 거친다.
  */
 @Composable
 fun CreateKeywordScreen(
@@ -291,6 +291,7 @@ private fun FooterButtons(
 
 private fun previewState(): CreateKeywordUiState =
     CreateKeywordUiState(
+        isRestoring = false,
         providedTags =
             ProvidedTags.Loaded(
                 mapOf(
@@ -333,7 +334,7 @@ private fun CreateKeywordScreenValidationErrorPreview() {
 private fun CreateKeywordScreenTagsLoadFailurePreview() {
     ManyakTheme(darkTheme = false) {
         CreateKeywordContent(
-            state = CreateKeywordUiState(providedTags = ProvidedTags.Failed),
+            state = CreateKeywordUiState(isRestoring = false, providedTags = ProvidedTags.Failed),
             onBack = {},
             onIntent = {},
         )
