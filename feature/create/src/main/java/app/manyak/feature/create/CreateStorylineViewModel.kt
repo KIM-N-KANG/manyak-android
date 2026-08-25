@@ -7,7 +7,6 @@ import app.manyak.core.domain.story.Storyline
 import app.manyak.core.domain.story.StorylineRating
 import app.manyak.core.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -26,6 +25,8 @@ data class CreateStorylineUiState(
     val content: StorylineContent = StorylineContent.Generating,
     /** 생성·재생성 실패. 직전 결과가 남아 있으면 그대로 보여 주며 인라인 오류만 덧붙인다. */
     val hasGenerationError: Boolean = false,
+    /** 보존할 내용 없이 이탈을 시도해 소실 경고 다이얼로그를 띄운 상태(3-1 이탈 가드). */
+    val showExitWarningDialog: Boolean = false,
     val activeIndex: Int = 0,
     /** 스토리라인 ID별 평가. 같은 평가를 다시 누르면 해제된다. */
     val ratings: Map<Long, StorylineRating> = emptyMap(),
@@ -49,6 +50,15 @@ sealed interface CreateStorylineIntent {
     data object Regenerate : CreateStorylineIntent
 
     data object ConfirmSelection : CreateStorylineIntent
+
+    /** 시스템·헤더 뒤로가기 — 퍼널 이탈(이 단계가 키워드를 대체하므로 홈 복귀). */
+    data object LeaveFunnel : CreateStorylineIntent
+
+    /** 소실 경고 다이얼로그의 "그만 만들기". */
+    data object ConfirmLeaveFunnel : CreateStorylineIntent
+
+    /** 소실 경고 다이얼로그의 "계속 만들기"·바깥 탭. */
+    data object DismissExitWarning : CreateStorylineIntent
 }
 
 sealed interface CreateStorylineEvent {
@@ -67,6 +77,10 @@ sealed interface CreateStorylineEvent {
         /** 복원된 결과의 활성 탭. 새 생성은 미러가 초기화되어 0 이다. */
         val restoredActiveIndex: Int = 0,
     ) : CreateStorylineEvent
+
+    data class ExitWarningVisibleChanged(
+        val visible: Boolean,
+    ) : CreateStorylineEvent
 }
 
 sealed interface CreateStorylineEffect {
@@ -77,6 +91,11 @@ sealed interface CreateStorylineEffect {
 
     /** 평가 동기화 실패 안내. 성공은 버튼 상태로 충분해 따로 알리지 않는다. */
     data object ShowRatingSyncFailed : CreateStorylineEffect
+
+    /** 퍼널 이탈 확정. 내용이 남았으면 "임시 저장되었어요" 토스트를 함께 띄운다. */
+    data class ExitFunnel(
+        val contentPreserved: Boolean,
+    ) : CreateStorylineEffect
 }
 
 @HiltViewModel
@@ -88,8 +107,6 @@ class CreateStorylineViewModel
     ) : MviViewModel<CreateStorylineIntent, CreateStorylineUiState, CreateStorylineEvent, CreateStorylineEffect>(
             CreateStorylineUiState(),
         ) {
-        private var regenerateJob: Job? = null
-
         /**
          * 평가 동기화 판정의 정본. UiState 반영은 이벤트 채널을 거쳐 한 박자 늦을 수 있어,
          * 원하는 값·서버 반영 값은 인텐트 처리 시점에 즉시 갱신되는 이 장부로 판정한다.
@@ -135,7 +152,26 @@ class CreateStorylineViewModel
                 is CreateStorylineIntent.ToggleRating ->
                     state.activeStoryline?.let { storyline -> toggleRating(storyline.id, intent.rating) }
 
-                CreateStorylineIntent.Regenerate -> startRegenerate(state)
+                // 스토어가 상태 전이를 동기로 수행해 중복 탭을 막고, 실행은 퍼널 스코프가 담는다.
+                CreateStorylineIntent.Regenerate -> storylineGenerationStore.regenerate()
+
+                CreateStorylineIntent.LeaveFunnel ->
+                    if (storylineGenerationStore.hasContentToPreserve()) {
+                        val preserved = storylineGenerationStore.leaveFunnel()
+                        dispatchEffect(CreateStorylineEffect.ExitFunnel(contentPreserved = preserved))
+                    } else {
+                        // 복원할 결과가 없는 소실 — 3-1 이탈 가드의 소실 경고 다이얼로그.
+                        dispatchEvent(CreateStorylineEvent.ExitWarningVisibleChanged(visible = true))
+                    }
+
+                CreateStorylineIntent.ConfirmLeaveFunnel -> {
+                    storylineGenerationStore.leaveFunnel()
+                    dispatchEvent(CreateStorylineEvent.ExitWarningVisibleChanged(visible = false))
+                    dispatchEffect(CreateStorylineEffect.ExitFunnel(contentPreserved = false))
+                }
+
+                CreateStorylineIntent.DismissExitWarning ->
+                    dispatchEvent(CreateStorylineEvent.ExitWarningVisibleChanged(visible = false))
 
                 CreateStorylineIntent.ConfirmSelection ->
                     if (state.activeStoryline != null) {
@@ -215,16 +251,6 @@ class CreateStorylineViewModel
             syncedRatings.clear()
         }
 
-        private fun startRegenerate(state: CreateStorylineUiState) {
-            if (state.content is StorylineContent.Generating) return
-            if (regenerateJob?.isActive == true) return
-            // UNDISPATCHED — 버튼을 누른 즉시 스토어가 Generating 으로 바뀌어 중복 탭을 막는다.
-            regenerateJob =
-                viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
-                    storylineGenerationStore.regenerate()
-                }
-        }
-
         override fun reduce(
             state: CreateStorylineUiState,
             event: CreateStorylineEvent,
@@ -243,6 +269,9 @@ class CreateStorylineViewModel
 
                 is CreateStorylineEvent.GenerationStateChanged ->
                     reduceGeneration(state, event.generation, event.restoredActiveIndex)
+
+                is CreateStorylineEvent.ExitWarningVisibleChanged ->
+                    state.copy(showExitWarningDialog = event.visible)
             }
 
         private fun reduceGeneration(

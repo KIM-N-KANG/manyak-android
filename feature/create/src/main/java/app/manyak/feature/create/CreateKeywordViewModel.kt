@@ -9,7 +9,6 @@ import app.manyak.core.domain.story.StoryTag
 import app.manyak.core.domain.story.StoryTagCategory
 import app.manyak.core.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.text.Normalizer
@@ -221,8 +220,6 @@ sealed interface CreateKeywordEvent {
 
     data object StorylineGenerationStarted : CreateKeywordEvent
 
-    data object StorylineGenerationFinished : CreateKeywordEvent
-
     data class ProvidedTagToggled(
         val target: KeywordTarget,
         val tagId: Long,
@@ -275,7 +272,6 @@ class CreateKeywordViewModel
             CreateKeywordUiState(),
         ) {
         private var tagsLoadJob: Job? = null
-        private var generateJob: Job? = null
 
         init {
             startTagsLoad()
@@ -368,19 +364,17 @@ class CreateKeywordViewModel
             }
         }
 
-        /** 요청을 시작하면서 동시에 스토리라인 단계로 전환한다 — 로딩은 다음 단계 화면이 그린다. */
+        /**
+         * 요청을 시작하면서 동시에 스토리라인 단계로 전환한다 — 로딩은 다음 단계 화면이 그리고,
+         * 이 화면은 스토리라인 목적지로 대체되어 사라지므로 진행 플래그는 해제하지 않는다.
+         * 실행은 스토어의 퍼널 스코프가 담아 이 ViewModel 이 죽어도 계속된다.
+         */
         private suspend fun generateStorylines(state: CreateKeywordUiState) {
             dispatchEvent(CreateKeywordEvent.GenerateAttempted)
             if (!state.canGenerateStorylines) return
-            if (generateJob?.isActive == true) return
+            if (state.isGeneratingStorylines) return
             dispatchEvent(CreateKeywordEvent.StorylineGenerationStarted)
-            // UNDISPATCHED — 화면 전환 효과보다 먼저 스토어가 Generating 으로 바뀌어야
-            // 스토리라인 화면이 첫 프레임부터 로딩을 그린다.
-            generateJob =
-                viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
-                    storylineGenerationStore.generate(state.toGenerationInput())
-                    dispatchEvent(CreateKeywordEvent.StorylineGenerationFinished)
-                }
+            storylineGenerationStore.generate(state.toGenerationInput())
             dispatchEffect(CreateKeywordEffect.NavigateToStoryline)
         }
 
@@ -433,7 +427,6 @@ class CreateKeywordViewModel
                 is CreateKeywordEvent.ValidationFailed -> state.copy(validationErrorCategory = event.category)
                 CreateKeywordEvent.GenerateAttempted -> state.copy(hasAttemptedGenerate = true)
                 CreateKeywordEvent.StorylineGenerationStarted -> state.copy(isGeneratingStorylines = true)
-                CreateKeywordEvent.StorylineGenerationFinished -> state.copy(isGeneratingStorylines = false)
                 else -> reduceKeywordInput(state, event)
             }
 

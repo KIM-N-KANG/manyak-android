@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -25,6 +26,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -238,4 +240,56 @@ internal fun FunnelNeutralButton(
     ) {
         Text(text = label, style = ManyakTheme.typography.labelLarge)
     }
+}
+
+/** 복원할 결과가 없는 퍼널 이탈의 소실 경고 다이얼로그(3-1 이탈 가드). */
+@Composable
+internal fun ExitWarningDialog(
+    onConfirmLeave: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = ManyakTheme.colors.surfaceRaised,
+        shape = ManyakTheme.shapes.overlay,
+        title = {
+            Text(
+                text = stringResource(R.string.create_exit_warning_title),
+                style = ManyakTheme.typography.titleMedium,
+                color = ManyakTheme.colors.text,
+            )
+        },
+        text = {
+            Text(
+                text = stringResource(R.string.create_exit_warning_description),
+                style = ManyakTheme.typography.bodyMedium,
+                color = ManyakTheme.colors.textSubtle,
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = onDismiss,
+                shape = ManyakTheme.shapes.control,
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = ManyakTheme.colors.brand,
+                        contentColor = ManyakTheme.colors.textInverse,
+                    ),
+            ) {
+                Text(
+                    text = stringResource(R.string.create_exit_warning_stay),
+                    style = ManyakTheme.typography.labelLarge,
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onConfirmLeave) {
+                Text(
+                    text = stringResource(R.string.create_exit_warning_leave),
+                    style = ManyakTheme.typography.labelLarge,
+                    color = ManyakTheme.colors.textSubtle,
+                )
+            }
+        },
+    )
 }

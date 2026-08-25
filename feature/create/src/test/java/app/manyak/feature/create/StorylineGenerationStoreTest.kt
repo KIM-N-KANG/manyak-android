@@ -24,9 +24,11 @@ class StorylineGenerationStoreTest {
     fun `생성 성공은 결과를 발행하고 최초 생성 필드를 명시한다`() =
         runTest {
             val repository = FakeStoryCreationRepository()
-            val store = StorylineGenerationStore(repository, FakePendingStoryCreationStore())
+            val store = StorylineGenerationStore(repository, FakePendingStoryCreationStore(), this)
 
             store.generate(sampleGenerationInput())
+
+            advanceUntilIdle()
 
             val command = repository.generationCommands.single()
             assertNull(command.parentCreationId)
@@ -41,10 +43,13 @@ class StorylineGenerationStoreTest {
     fun `성공 결과의 재생성은 새 요청 ID 에 직전 요청 ID 를 부모로 싣는다`() =
         runTest {
             val repository = FakeStoryCreationRepository()
-            val store = StorylineGenerationStore(repository, FakePendingStoryCreationStore())
+            val store = StorylineGenerationStore(repository, FakePendingStoryCreationStore(), this)
 
             store.generate(sampleGenerationInput())
+
+            advanceUntilIdle()
             store.regenerate()
+            advanceUntilIdle()
 
             val (first, second) = repository.generationCommands
             assertNotEquals(first.requestId, second.requestId)
@@ -58,12 +63,16 @@ class StorylineGenerationStoreTest {
         runTest {
             val repository = FakeStoryCreationRepository()
             repository.queuedGenerationResults += DomainResult.Failure(DomainError.Network)
-            val store = StorylineGenerationStore(repository, FakePendingStoryCreationStore())
+            val store = StorylineGenerationStore(repository, FakePendingStoryCreationStore(), this)
 
             store.generate(sampleGenerationInput())
+
+            advanceUntilIdle()
             assertEquals(StorylineGenerationState.Failed(previousResult = null), store.state.value)
 
             store.regenerate()
+
+            advanceUntilIdle()
 
             val (first, second) = repository.generationCommands
             assertEquals(first.requestId, second.requestId)
@@ -75,11 +84,14 @@ class StorylineGenerationStoreTest {
     fun `재생성 실패는 직전 성공 결과를 유지한다`() =
         runTest {
             val repository = FakeStoryCreationRepository()
-            val store = StorylineGenerationStore(repository, FakePendingStoryCreationStore())
+            val store = StorylineGenerationStore(repository, FakePendingStoryCreationStore(), this)
 
             store.generate(sampleGenerationInput())
+
+            advanceUntilIdle()
             repository.queuedGenerationResults += DomainResult.Failure(DomainError.Network)
             store.regenerate()
+            advanceUntilIdle()
 
             assertEquals(
                 StorylineGenerationState.Failed(previousResult = sampleStorylineGeneration()),
@@ -91,9 +103,11 @@ class StorylineGenerationStoreTest {
     fun `직전 명령이 없으면 재생성 요청을 보내지 않는다`() =
         runTest {
             val repository = FakeStoryCreationRepository()
-            val store = StorylineGenerationStore(repository, FakePendingStoryCreationStore())
+            val store = StorylineGenerationStore(repository, FakePendingStoryCreationStore(), this)
 
             store.regenerate()
+
+            advanceUntilIdle()
 
             assertTrue(repository.generationCommands.isEmpty())
             assertEquals(StorylineGenerationState.Idle, store.state.value)
@@ -103,11 +117,14 @@ class StorylineGenerationStoreTest {
     fun `새 생성은 이전 퍼널의 결과를 버린다`() =
         runTest {
             val repository = FakeStoryCreationRepository()
-            val store = StorylineGenerationStore(repository, FakePendingStoryCreationStore())
+            val store = StorylineGenerationStore(repository, FakePendingStoryCreationStore(), this)
 
             store.generate(sampleGenerationInput())
+
+            advanceUntilIdle()
             repository.queuedGenerationResults += DomainResult.Failure(DomainError.Network)
             store.generate(sampleGenerationInput())
+            advanceUntilIdle()
 
             assertEquals(StorylineGenerationState.Failed(previousResult = null), store.state.value)
         }
@@ -117,9 +134,11 @@ class StorylineGenerationStoreTest {
         runTest {
             val repository = FakeStoryCreationRepository()
             val pendingStore = FakePendingStoryCreationStore()
-            val store = StorylineGenerationStore(repository, pendingStore)
+            val store = StorylineGenerationStore(repository, pendingStore, this)
 
             store.generate(sampleGenerationInput())
+
+            advanceUntilIdle()
 
             val written = pendingStore.writes.single() as PendingStoryCreation.GeneratingStorylines
             assertEquals(repository.generationCommands.single().requestId, written.command.requestId)
@@ -131,15 +150,17 @@ class StorylineGenerationStoreTest {
         runTest {
             val repository = FakeStoryCreationRepository()
             val pendingStore = FakePendingStoryCreationStore()
-            val store = StorylineGenerationStore(repository, pendingStore)
+            val store = StorylineGenerationStore(repository, pendingStore, this)
 
             repository.queuedGenerationResults += DomainResult.Failure(DomainError.Network)
             store.generate(sampleGenerationInput())
+            advanceUntilIdle()
             assertTrue(pendingStore.current is PendingStoryCreation.GeneratingStorylines)
 
             repository.queuedGenerationResults +=
                 DomainResult.Failure(DomainError.Server(status = 502, code = null, requestId = null))
             store.regenerate()
+            advanceUntilIdle()
             assertNull(pendingStore.current)
         }
 
@@ -148,13 +169,16 @@ class StorylineGenerationStoreTest {
         runTest {
             val repository = FakeStoryCreationRepository()
             val pendingStore = FakePendingStoryCreationStore()
-            val store = StorylineGenerationStore(repository, pendingStore)
+            val store = StorylineGenerationStore(repository, pendingStore, this)
             repository.queuedGenerationResults += DomainResult.Failure(DomainError.Network)
             store.generate(sampleGenerationInput())
+            advanceUntilIdle()
             repository.queuedGenerationResults +=
                 DomainResult.Failure(DomainError.Server(status = 409, code = null, requestId = null))
 
             store.regenerate()
+
+            advanceUntilIdle()
             assertEquals(StorylineGenerationState.Generating, store.state.value)
 
             repository.queuedCreationRequestResults += DomainResult.Success(CreationRequestSnapshot.Pending)
@@ -180,7 +204,7 @@ class StorylineGenerationStoreTest {
             val command = sampleGenerationCommand()
             val pendingStore =
                 FakePendingStoryCreationStore(initial = PendingStoryCreation.GeneratingStorylines(command))
-            val store = StorylineGenerationStore(repository, pendingStore)
+            val store = StorylineGenerationStore(repository, pendingStore, this)
 
             store.ensureRestored()
             assertEquals(StorylineGenerationState.Generating, store.state.value)
@@ -214,7 +238,7 @@ class StorylineGenerationStoreTest {
                             progress = progress,
                         ),
                 )
-            val store = StorylineGenerationStore(repository, pendingStore)
+            val store = StorylineGenerationStore(repository, pendingStore, this)
 
             store.ensureRestored()
 
@@ -227,6 +251,7 @@ class StorylineGenerationStoreTest {
 
             // 복원된 명령으로 "다시 만들기" 체인이 이어진다.
             store.regenerate()
+            advanceUntilIdle()
             assertEquals(sampleGenerationCommand().requestId, repository.generationCommands.single().parentCreationId)
         }
 
@@ -235,10 +260,11 @@ class StorylineGenerationStoreTest {
         runTest {
             val repository = FakeStoryCreationRepository()
             val pendingStore = FakePendingStoryCreationStore()
-            val store = StorylineGenerationStore(repository, pendingStore)
+            val store = StorylineGenerationStore(repository, pendingStore, this)
 
             // 결과가 남은 이탈 — 임시 저장.
             store.generate(sampleGenerationInput())
+            advanceUntilIdle()
             store.updateActiveStoryline(2)
             assertTrue(store.leaveFunnel())
             val draft = pendingStore.current as PendingStoryCreation.Draft
@@ -250,6 +276,7 @@ class StorylineGenerationStoreTest {
             store.ensureRestored()
             repository.queuedGenerationResults += DomainResult.Failure(DomainError.Network)
             store.generate(sampleGenerationInput())
+            advanceUntilIdle()
             assertTrue(store.leaveFunnel())
             assertTrue(pendingStore.current is PendingStoryCreation.GeneratingStorylines)
 

@@ -183,11 +183,9 @@ private fun MainNavDisplay() {
                 entry<MainTabsRoute> {
                     MainTabsScreen(
                         onCreateStory = { backStack.add(CreateKeywordRoute) },
-                        // 재개·복구 진입 — 레코드 단계까지 단계 체인 전체를 쌓아 복원 후에도
-                        // 단계 복귀 불변이 유지되게 한다(§3-3-5). 키워드 입력은 저장 범위 밖이라
-                        // 복원된 키워드 화면은 비어 있다.
+                        // 재개·복구 진입 — 레코드 단계까지 단계 체인 전체를 쌓는다(§3-3-5).
+                        // 스토리라인 단계가 키워드를 대체하는 구조라 키워드는 체인에 없다.
                         onResumeCreation = { resumePoint ->
-                            backStack.add(CreateKeywordRoute)
                             backStack.add(CreateStorylineRoute)
                             if (resumePoint is CreationResumePoint.AdditionalInfoStep) {
                                 backStack.add(CreateAdditionalInfoRoute(resumePoint.storylineIndex))
@@ -198,12 +196,17 @@ private fun MainNavDisplay() {
                 entry<CreateKeywordRoute> {
                     CreateKeywordScreen(
                         onLeaveFunnel = { backStack.removeLastOrNull() },
-                        onOpenStorylineStep = { backStack.add(CreateStorylineRoute) },
+                        // 스토리라인 단계는 키워드 목적지를 대체한다 — 그 화면의 뒤로가기가
+                        // 홈 복귀(퍼널 이탈)가 되도록 한다(§3-3-3 결정 기록 수정).
+                        onOpenStorylineStep = {
+                            backStack.removeLastOrNull()
+                            backStack.add(CreateStorylineRoute)
+                        },
                     )
                 }
                 entry<CreateStorylineRoute> {
                     CreateStorylineScreen(
-                        onBack = { backStack.removeLastOrNull() },
+                        onLeaveFunnel = { backStack.removeLastOrNull() },
                         onOpenAdditionalInfoStep = { storylineIndex ->
                             backStack.add(CreateAdditionalInfoRoute(storylineIndex))
                         },

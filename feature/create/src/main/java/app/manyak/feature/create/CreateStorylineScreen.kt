@@ -1,6 +1,7 @@
 package app.manyak.feature.create
 
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -43,18 +44,26 @@ import app.manyak.core.ui.R
 import app.manyak.core.ui.text.storyAnnotatedString
 import app.manyak.core.ui.theme.ManyakTheme
 
-/** 스토리라인 선택 단계. 뒤로가기는 키워드 단계 복귀이며 키워드 입력은 백스택에 남아 유지된다. */
+/**
+ * 스토리라인 선택 단계. 이 목적지는 키워드 목적지를 대체하므로 뒤로가기는 홈 복귀(퍼널 이탈)다.
+ * 이탈 시 내용이 남으면 임시 저장(또는 진행 중 레코드 유지) 후 토스트를 띄우고, 보존할 것이 없으면
+ * 소실 경고 다이얼로그를 거친다(3-1 이탈 가드).
+ */
 @Composable
 fun CreateStorylineScreen(
-    onBack: () -> Unit,
+    onLeaveFunnel: () -> Unit,
     onOpenAdditionalInfoStep: (storylineIndex: Int) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: CreateStorylineViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val currentOnOpenAdditionalInfoStep by rememberUpdatedState(onOpenAdditionalInfoStep)
+    val currentOnLeaveFunnel by rememberUpdatedState(onLeaveFunnel)
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
+
+    // 시스템 뒤로가기도 헤더 뒤로가기와 같은 이탈 처리를 거친다.
+    BackHandler { viewModel.onIntent(CreateStorylineIntent.LeaveFunnel) }
 
     // 응답을 못 받은 생성 요청의 복구 폴링. STARTED 동안만 돌아 백그라운드에서 멈추고 복귀 시 재개된다.
     LaunchedEffect(viewModel, lifecycleOwner) {
@@ -74,6 +83,15 @@ fun CreateStorylineScreen(
                         Toast
                             .makeText(context, R.string.create_storyline_rating_sync_failed, Toast.LENGTH_SHORT)
                             .show()
+
+                    is CreateStorylineEffect.ExitFunnel -> {
+                        if (effect.contentPreserved) {
+                            Toast
+                                .makeText(context, R.string.create_draft_saved, Toast.LENGTH_SHORT)
+                                .show()
+                        }
+                        currentOnLeaveFunnel()
+                    }
                 }
             }
         }
@@ -81,10 +99,17 @@ fun CreateStorylineScreen(
 
     CreateStorylineContent(
         state = state,
-        onBack = onBack,
+        onBack = { viewModel.onIntent(CreateStorylineIntent.LeaveFunnel) },
         onIntent = viewModel::onIntent,
         modifier = modifier,
     )
+
+    if (state.showExitWarningDialog) {
+        ExitWarningDialog(
+            onConfirmLeave = { viewModel.onIntent(CreateStorylineIntent.ConfirmLeaveFunnel) },
+            onDismiss = { viewModel.onIntent(CreateStorylineIntent.DismissExitWarning) },
+        )
+    }
 }
 
 @Composable

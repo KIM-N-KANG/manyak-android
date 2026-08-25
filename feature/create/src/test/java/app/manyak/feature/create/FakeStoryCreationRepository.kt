@@ -14,6 +14,7 @@ import app.manyak.core.domain.story.StorylineGeneration
 import app.manyak.core.domain.story.StorylineGenerationCommand
 import app.manyak.core.domain.story.StorylineRating
 import app.manyak.core.domain.story.StorylineRecommendedInfo
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.yield
@@ -49,6 +50,9 @@ internal open class FakeStoryCreationRepository(
     val generationCommands = mutableListOf<StorylineGenerationCommand>()
     val queuedGenerationResults = ArrayDeque<DomainResult<StorylineGeneration>>()
 
+    /** true 면 생성 요청이 응답 없이 매달린다 — 대기 중 이탈·취소 시나리오용. */
+    var holdGeneration = false
+
     /** 평가 요청 기록. rating 이 null 이면 취소(DELETE) 호출이다. */
     val ratingCalls = mutableListOf<Pair<Long, StorylineRating?>>()
     val queuedRatingResults = ArrayDeque<DomainResult<Unit>>()
@@ -59,6 +63,7 @@ internal open class FakeStoryCreationRepository(
         // 실제 네트워크 호출처럼 반드시 한 번 양보한다 — 관찰자가 Generating 전이를 볼 수 있어야 한다.
         yield()
         generationCommands += command
+        if (holdGeneration) awaitCancellation()
         return queuedGenerationResults.removeFirstOrNull() ?: DomainResult.Success(sampleStorylineGeneration())
     }
 

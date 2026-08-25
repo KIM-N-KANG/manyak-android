@@ -13,10 +13,13 @@ import app.manyak.core.domain.story.StorylineGeneration
 import app.manyak.core.domain.story.StorylineGenerationCommand
 import dagger.hilt.android.scopes.ActivityRetainedScoped
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.UUID
@@ -59,7 +62,8 @@ fun StorylineGenerationState.resultOrNull(): StorylineGeneration? =
  *
  * 단계마다 목적지가 나뉘어 ViewModel 이 각각 생기므로, 키워드 화면이 시작한 생성을 스토리라인
  * 화면이 관찰하고 추가 정보 화면이 결과를 읽는 자리가 필요하다. 라우트에는 식별자만 싣는 규칙에
- * 따라 결과 본문은 여기에 둔다. 실행은 호출한 ViewModel 의 스코프를 쓴다.
+ * 따라 결과 본문은 여기에 둔다. 생성 실행은 퍼널 수명 스코프([FunnelScope])가 담는다 —
+ * 스토리라인 단계가 키워드 목적지를 대체해, 요청을 시작한 화면의 ViewModel 은 응답 전에 죽는다.
  *
  * 생성·완성 요청은 시작 전에 진행 레코드로 영속되어, 응답을 못 받은 채 퍼널을 떠나거나 프로세스가
  * 재시작해도 복구 조회로 결과를 되찾는다. 이탈 시에는 진행 스냅숏을 임시 저장한다.
@@ -74,6 +78,7 @@ class StorylineGenerationStore
     constructor(
         private val storyCreationRepository: StoryCreationRepository,
         private val pendingCreationStore: PendingStoryCreationStore,
+        @param:FunnelScope private val funnelScope: CoroutineScope,
     ) {
         private val mutableState = MutableStateFlow<StorylineGenerationState>(StorylineGenerationState.Idle)
         val state: StateFlow<StorylineGenerationState> = mutableState.asStateFlow()
@@ -98,6 +103,8 @@ class StorylineGenerationStore
         private val restoreMutex = Mutex()
         private var restoreAttempted = false
 
+        private var runJob: Job? = null
+
         /** 스토리라인 단계 복구 폴링 대상. 스토리라인 화면이 STARTED 동안 [runStorylineRecovery] 로 소비한다. */
         private val storylineRecoveryTarget = MutableStateFlow<StorylineGenerationCommand?>(null)
 
@@ -108,13 +115,13 @@ class StorylineGenerationStore
             mutableCompletionRecoveryTarget.asStateFlow()
 
         /** 키워드 입력으로 새 생성을 시작한다. 이전 퍼널의 결과·진행 레코드는 덮인다. */
-        suspend fun generate(input: StorylineGenerationInput) {
+        fun generate(input: StorylineGenerationInput) {
             if (mutableState.value is StorylineGenerationState.Generating) return
             leftFunnel = false
             lastResult = null
             lastCompletionCommand = null
             progress = CreationProgress()
-            run(
+            startRun(
                 StorylineGenerationCommand(
                     requestId = newRequestId(),
                     genreTagIds = input.genreTagIds,
@@ -134,7 +141,7 @@ class StorylineGenerationStore
          * 부모 체인으로 싣고, 실패 재시도는 같은 요청 ID 를 재사용한다 — 서버가 실패한 요청은
          * 재실행하고 완료된 요청은 저장된 결과를 돌려주는 멱등 계약이 있다.
          */
-        suspend fun regenerate() {
+        fun regenerate() {
             if (mutableState.value is StorylineGenerationState.Generating) return
             val previous = lastCommand ?: return
             val command =
@@ -148,12 +155,17 @@ class StorylineGenerationStore
 
                     else -> previous
                 }
-            run(command)
+            startRun(command)
+        }
+
+        /** 상태 전이는 호출 지점에서 동기로 일어나 중복 시작을 막고, 실행은 퍼널 스코프로 넘긴다. */
+        private fun startRun(command: StorylineGenerationCommand) {
+            lastCommand = command
+            mutableState.value = StorylineGenerationState.Generating
+            runJob = funnelScope.launch { run(command) }
         }
 
         private suspend fun run(command: StorylineGenerationCommand) {
-            lastCommand = command
-            mutableState.value = StorylineGenerationState.Generating
             // 요청 전에 영속한다 — 응답을 못 받아도 재진입 복구 조회가 이 requestId 를 쓴다.
             pendingCreationStore.write(PendingStoryCreation.GeneratingStorylines(command))
             val result =
@@ -334,31 +346,43 @@ class StorylineGenerationStore
         }
 
         /**
+         * 이탈 시 보존할 내용이 있는지 — 진행 중 레코드 또는 생성 결과. 없으면 호출부가
+         * 소실 경고 다이얼로그(3-1)를 띄운 뒤에야 [leaveFunnel] 을 부른다.
+         */
+        suspend fun hasContentToPreserve(): Boolean = lastResult != null || pendingCreationStore.read().isInFlight()
+
+        /** 완성 성공으로 퍼널이 닫혔다. 남은 결과가 다음 이탈에서 임시 저장으로 둔갑하지 않게 비운다. */
+        fun resetAfterCompletion() {
+            leftFunnel = true
+            resetInMemory()
+        }
+
+        /**
          * 퍼널 이탈 처리. 진행 중 레코드는 유지하고, 없으면 생성 결과를 임시 저장한다.
          * 내용이 남았으면 true 를 돌려주고 호출부가 토스트를 띄운다. 스토어는 초기화된다.
          */
         suspend fun leaveFunnel(): Boolean {
             leftFunnel = true
+            // 서버는 끝까지 진행하므로 클라이언트 대기만 끊는다. 레코드가 복구 대상으로 남는다.
+            runJob?.cancel()
+            val result = lastResult
             val preserved =
-                when (pendingCreationStore.read()) {
-                    is PendingStoryCreation.GeneratingStorylines, is PendingStoryCreation.CompletingStory -> true
+                when {
+                    pendingCreationStore.read().isInFlight() -> true
 
-                    else -> {
-                        val result = lastResult
-                        if (result != null) {
-                            pendingCreationStore.write(
-                                PendingStoryCreation.Draft(
-                                    generationCommand = lastCommand,
-                                    generation = result,
-                                    progress = progress,
-                                    lastCompletionCommand = lastCompletionCommand,
-                                ),
-                            )
-                            true
-                        } else {
-                            false
-                        }
+                    result != null -> {
+                        pendingCreationStore.write(
+                            PendingStoryCreation.Draft(
+                                generationCommand = lastCommand,
+                                generation = result,
+                                progress = progress,
+                                lastCompletionCommand = lastCompletionCommand,
+                            ),
+                        )
+                        true
                     }
+
+                    else -> false
                 }
             resetInMemory()
             return preserved
@@ -384,5 +408,9 @@ class StorylineGenerationStore
 
 /** requestId 재사용이 서버 `PENDING` 과 겹친 409 판정. */
 internal fun DomainError.isConflict(): Boolean = this is DomainError.Server && status == HTTP_CONFLICT
+
+/** 서버에서 실제로 생성이 돌고 있(었)을 수 있는 복구 대상 레코드인지. 임시 저장본은 아니다. */
+private fun PendingStoryCreation?.isInFlight(): Boolean =
+    this is PendingStoryCreation.GeneratingStorylines || this is PendingStoryCreation.CompletingStory
 
 private const val HTTP_CONFLICT = 409

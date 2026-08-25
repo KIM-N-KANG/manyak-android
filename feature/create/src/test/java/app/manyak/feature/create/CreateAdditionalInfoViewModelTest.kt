@@ -11,6 +11,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -38,11 +39,11 @@ class CreateAdditionalInfoViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel(): CreateAdditionalInfoViewModel {
+    private fun TestScope.viewModel(): CreateAdditionalInfoViewModel {
         val repository = FakeStoryCreationRepository()
         val pendingStore = FakePendingStoryCreationStore()
         return CreateAdditionalInfoViewModel(
-            StorylineGenerationStore(repository, pendingStore),
+            StorylineGenerationStore(repository, pendingStore, this),
             repository,
             FakeChatRepository(),
             pendingStore,
@@ -57,12 +58,13 @@ class CreateAdditionalInfoViewModelTest {
     )
 
     /** 스토리라인 생성 성공 결과를 스냅숏한 ViewModel 을 만든다. */
-    private suspend fun loadedViewModel(): LoadedFixture {
+    private fun TestScope.loadedViewModel(): LoadedFixture {
         val repository = FakeStoryCreationRepository()
         val chatRepository = FakeChatRepository()
         val pendingStore = FakePendingStoryCreationStore()
-        val store = StorylineGenerationStore(repository, pendingStore)
+        val store = StorylineGenerationStore(repository, pendingStore, this)
         store.generate(sampleGenerationInput())
+        advanceUntilIdle()
         return LoadedFixture(
             repository = repository,
             chatRepository = chatRepository,
@@ -319,7 +321,7 @@ class CreateAdditionalInfoViewModelTest {
                                 ),
                         ),
                 )
-            val store = StorylineGenerationStore(repository, pendingStore)
+            val store = StorylineGenerationStore(repository, pendingStore, this)
             val viewModel =
                 CreateAdditionalInfoViewModel(store, repository, FakeChatRepository(), pendingStore)
             advanceUntilIdle()

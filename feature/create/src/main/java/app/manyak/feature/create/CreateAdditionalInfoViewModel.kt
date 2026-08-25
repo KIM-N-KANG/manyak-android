@@ -316,6 +316,8 @@ class CreateAdditionalInfoViewModel
             when (val result = chatRepository.createChat(storyId)) {
                 is DomainResult.Success -> {
                     pendingCreationStore.clear()
+                    // 스토어를 비워야 다음 퍼널 이탈에서 이미 완성된 결과가 임시 저장으로 둔갑하지 않는다.
+                    storylineGenerationStore.resetAfterCompletion()
                     dispatchEffect(CreateAdditionalInfoEffect.EnterChatAfterCompletion(result.value.id))
                 }
 

@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -37,10 +38,11 @@ class CreateKeywordViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel(repository: StoryCreationRepository): CreateKeywordViewModel =
+    private fun TestScope.viewModel(repository: StoryCreationRepository): CreateKeywordViewModel =
         CreateKeywordViewModel(
             storyCreationRepository = repository,
-            storylineGenerationStore = StorylineGenerationStore(repository, FakePendingStoryCreationStore()),
+            storylineGenerationStore =
+                StorylineGenerationStore(repository, FakePendingStoryCreationStore(), this),
         )
 
     @Test
@@ -121,11 +123,12 @@ class CreateKeywordViewModelTest {
             assertTrue(command.supportingCharacters.isEmpty())
             assertNull(command.parentCreationId)
             assertFalse(command.isRegenerated)
-            assertFalse(viewModel.uiState.value.isGeneratingStorylines)
+            // 이 화면은 스토리라인 목적지로 대체되어 사라지므로 진행 플래그는 해제되지 않는다.
+            assertTrue(viewModel.uiState.value.isGeneratingStorylines)
         }
 
     @Test
-    fun `생성 요청이 진행 중이면 CTA 진행 상태가 유지되고 끝나면 풀린다`() =
+    fun `생성 요청은 한 번만 시작되고 실패 처리는 스토리라인 화면이 담당한다`() =
         runTest(dispatcher) {
             val repository = fixedTagsRepository()
             repository.queuedGenerationResults += DomainResult.Failure(DomainError.Network)
@@ -137,10 +140,11 @@ class CreateKeywordViewModelTest {
             viewModel.onIntent(CreateKeywordIntent.ToggleProvidedTag(KeywordTarget.Protagonist, tagId = 2))
             advanceUntilIdle()
             viewModel.onIntent(CreateKeywordIntent.GenerateStorylines)
+            viewModel.onIntent(CreateKeywordIntent.GenerateStorylines)
             advanceUntilIdle()
 
-            // 실패로 끝나도 진행 플래그는 해제된다 — 실패 처리는 스토리라인 화면이 담당한다.
-            assertFalse(viewModel.uiState.value.isGeneratingStorylines)
+            // 진행 플래그가 중복 시작을 막고, 실패 상태 표시는 스토리라인 화면 몫이다.
+            assertTrue(viewModel.uiState.value.isGeneratingStorylines)
             assertEquals(1, repository.generationCommands.size)
         }
 
@@ -149,8 +153,9 @@ class CreateKeywordViewModelTest {
         runTest(dispatcher) {
             val repository = fixedTagsRepository()
             val pendingStore = FakePendingStoryCreationStore()
-            val store = StorylineGenerationStore(repository, pendingStore)
+            val store = StorylineGenerationStore(repository, pendingStore, this)
             store.generate(sampleGenerationInput())
+            advanceUntilIdle()
             val viewModel =
                 CreateKeywordViewModel(
                     storyCreationRepository = repository,
@@ -174,7 +179,8 @@ class CreateKeywordViewModelTest {
             val viewModel =
                 CreateKeywordViewModel(
                     storyCreationRepository = fixedTagsRepository(),
-                    storylineGenerationStore = StorylineGenerationStore(fixedTagsRepository(), pendingStore),
+                    storylineGenerationStore =
+                        StorylineGenerationStore(fixedTagsRepository(), pendingStore, this),
                 )
 
             viewModel.onIntent(CreateKeywordIntent.LeaveFunnel)

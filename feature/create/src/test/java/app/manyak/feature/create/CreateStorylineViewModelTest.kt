@@ -2,6 +2,7 @@ package app.manyak.feature.create
 
 import app.manyak.core.domain.error.DomainError
 import app.manyak.core.domain.error.DomainResult
+import app.manyak.core.domain.story.PendingStoryCreation
 import app.manyak.core.domain.story.StorylineRating
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -55,8 +56,9 @@ class CreateStorylineViewModelTest {
         runTest(dispatcher) {
             val repository = FakeStoryCreationRepository()
             repository.queuedGenerationResults += DomainResult.Failure(DomainError.Network)
-            val store = StorylineGenerationStore(repository, FakePendingStoryCreationStore())
+            val store = StorylineGenerationStore(repository, FakePendingStoryCreationStore(), this)
             store.generate(sampleGenerationInput())
+            advanceUntilIdle()
             val viewModel = CreateStorylineViewModel(store, repository)
             advanceUntilIdle()
 
@@ -215,6 +217,78 @@ class CreateStorylineViewModelTest {
             assertTrue(viewModel.uiState.value.hasGenerationError)
         }
 
+    @Test
+    fun `결과가 남은 이탈은 임시 저장하고 이탈 효과에 보존 여부를 싣는다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryCreationRepository()
+            val pendingStore = FakePendingStoryCreationStore()
+            val store = StorylineGenerationStore(repository, pendingStore, this)
+            store.generate(sampleGenerationInput())
+            advanceUntilIdle()
+            val viewModel = CreateStorylineViewModel(store, repository)
+            advanceUntilIdle()
+
+            viewModel.onIntent(CreateStorylineIntent.LeaveFunnel)
+            advanceUntilIdle()
+
+            assertTrue(pendingStore.current is PendingStoryCreation.Draft)
+            assertEquals(
+                CreateStorylineEffect.ExitFunnel(contentPreserved = true),
+                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
+            )
+        }
+
+    @Test
+    fun `보존할 결과가 없는 이탈은 소실 경고 다이얼로그를 거쳐 이탈한다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryCreationRepository()
+            // HTTP 오류는 레코드도 지워져 보존할 것이 남지 않는다.
+            repository.queuedGenerationResults +=
+                DomainResult.Failure(DomainError.Server(status = 502, code = null, requestId = null))
+            val pendingStore = FakePendingStoryCreationStore()
+            val store = StorylineGenerationStore(repository, pendingStore, this)
+            store.generate(sampleGenerationInput())
+            advanceUntilIdle()
+            val viewModel = CreateStorylineViewModel(store, repository)
+            advanceUntilIdle()
+
+            viewModel.onIntent(CreateStorylineIntent.LeaveFunnel)
+            advanceUntilIdle()
+            assertTrue(viewModel.uiState.value.showExitWarningDialog)
+
+            viewModel.onIntent(CreateStorylineIntent.ConfirmLeaveFunnel)
+            advanceUntilIdle()
+
+            assertFalse(viewModel.uiState.value.showExitWarningDialog)
+            assertNull(pendingStore.current)
+            assertEquals(
+                CreateStorylineEffect.ExitFunnel(contentPreserved = false),
+                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
+            )
+        }
+
+    @Test
+    fun `생성 대기 중 이탈은 진행 레코드를 유지한 채 이탈한다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryCreationRepository()
+            repository.holdGeneration = true
+            val pendingStore = FakePendingStoryCreationStore()
+            val store = StorylineGenerationStore(repository, pendingStore, this)
+            store.generate(sampleGenerationInput())
+            advanceUntilIdle()
+            val viewModel = CreateStorylineViewModel(store, repository)
+            advanceUntilIdle()
+
+            viewModel.onIntent(CreateStorylineIntent.LeaveFunnel)
+            advanceUntilIdle()
+
+            assertTrue(pendingStore.current is PendingStoryCreation.GeneratingStorylines)
+            assertEquals(
+                CreateStorylineEffect.ExitFunnel(contentPreserved = true),
+                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
+            )
+        }
+
     /** 생성 성공까지 끝낸 스토어를 관찰하는 ViewModel 을 만든다. */
     private suspend fun TestScope.loadedViewModel(): Triple<
         FakeStoryCreationRepository,
@@ -222,8 +296,9 @@ class CreateStorylineViewModelTest {
         CreateStorylineViewModel,
     > {
         val repository = FakeStoryCreationRepository()
-        val store = StorylineGenerationStore(repository, FakePendingStoryCreationStore())
+        val store = StorylineGenerationStore(repository, FakePendingStoryCreationStore(), this)
         store.generate(sampleGenerationInput())
+        advanceUntilIdle()
         val viewModel = CreateStorylineViewModel(store, repository)
         advanceUntilIdle()
         return Triple(repository, store, viewModel)
