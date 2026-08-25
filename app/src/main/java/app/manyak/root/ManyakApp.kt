@@ -187,7 +187,7 @@ private fun MainNavDisplay() {
                         onResumeCreation = { resumePoint -> backStack.addCreationResumeChain(resumePoint) },
                     )
                 }
-                entry<CreateKeywordRoute> {
+                entry<CreateKeywordRoute>(metadata = funnelScreenMetadata()) {
                     CreateKeywordScreen(
                         onLeaveFunnel = { backStack.removeLastOrNull() },
                         // 스토리라인 단계는 키워드 목적지를 대체한다 — 그 화면의 뒤로가기가
@@ -198,7 +198,7 @@ private fun MainNavDisplay() {
                         },
                     )
                 }
-                entry<CreateStorylineRoute> {
+                entry<CreateStorylineRoute>(metadata = funnelScreenMetadata()) {
                     CreateStorylineScreen(
                         onLeaveFunnel = { backStack.removeLastOrNull() },
                         onOpenAdditionalInfoStep = { storylineIndex ->
@@ -206,7 +206,7 @@ private fun MainNavDisplay() {
                         },
                     )
                 }
-                entry<CreateAdditionalInfoRoute> { route ->
+                entry<CreateAdditionalInfoRoute>(metadata = funnelScreenMetadata()) { route ->
                     CreateAdditionalInfoScreen(
                         storylineIndex = route.storylineIndex,
                         // 이탈은 퍼널 단계를 전부 걷어내고 홈으로 돌아간다. 스토리라인 단계만
