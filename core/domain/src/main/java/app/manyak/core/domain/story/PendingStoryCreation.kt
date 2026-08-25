@@ -42,10 +42,23 @@ sealed interface PendingStoryCreation {
         /** 같은 페이로드의 완성 재시도가 requestId 를 재사용하도록 남기는 마지막 완성 명령. */
         val lastCompletionCommand: StoryCompletionCommand? = null,
     ) : PendingStoryCreation
+
+    /**
+     * 키워드 단계에서 이탈하며 저장한 입력 스냅숏.
+     *
+     * 공용 계약은 키워드 단계를 저장 범위 밖에 두지만 앱은 확장해 재개를 지원한다. 복원할 AI
+     * 생성 결과가 없다는 점이 다른 스테이지와 구분되므로 별도 변형으로 둔다 — 기존 세 스테이지의
+     * "생성 결과가 반드시 있다"는 불변식을 깨지 않기 위해서다.
+     */
+    data class KeywordDraft(
+        val snapshot: KeywordDraftSnapshot,
+    ) : PendingStoryCreation
 }
 
 /** 재개 진입이 쌓아야 할 퍼널 단계. 라우트 구성은 앱 계층의 몫이다. */
 sealed interface CreationResumePoint {
+    data object KeywordStep : CreationResumePoint
+
     data object StorylineStep : CreationResumePoint
 
     data class AdditionalInfoStep(
@@ -55,6 +68,8 @@ sealed interface CreationResumePoint {
 
 fun PendingStoryCreation.resumePoint(): CreationResumePoint =
     when (this) {
+        is PendingStoryCreation.KeywordDraft -> CreationResumePoint.KeywordStep
+
         is PendingStoryCreation.GeneratingStorylines -> CreationResumePoint.StorylineStep
 
         is PendingStoryCreation.CompletingStory ->
