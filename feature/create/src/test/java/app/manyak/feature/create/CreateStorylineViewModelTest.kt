@@ -289,6 +289,26 @@ class CreateStorylineViewModelTest {
             )
         }
 
+    @Test
+    fun `이탈 처리 중에는 스토어 초기화가 화면 상태를 되그리지 않는다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryCreationRepository()
+            val pendingStore = FakePendingStoryCreationStore()
+            val store = StorylineGenerationStore(repository, pendingStore, this)
+            store.generate(sampleGenerationInput())
+            advanceUntilIdle()
+            val viewModel = CreateStorylineViewModel(store, repository)
+            advanceUntilIdle()
+
+            viewModel.onIntent(CreateStorylineIntent.LeaveFunnel)
+            advanceUntilIdle()
+
+            // 이탈로 스토어는 Idle 이 됐지만, pop 애니메이션 동안 나가는 화면이 빈 실패 상태로
+            // 번쩍이지 않도록 마지막 콘텐츠를 유지한다.
+            assertEquals(3, viewModel.uiState.value.storylines.size)
+            assertFalse(viewModel.uiState.value.hasGenerationError)
+        }
+
     /** 생성 성공까지 끝낸 스토어를 관찰하는 ViewModel 을 만든다. */
     private suspend fun TestScope.loadedViewModel(): Triple<
         FakeStoryCreationRepository,

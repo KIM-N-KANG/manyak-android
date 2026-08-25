@@ -116,11 +116,18 @@ class CreateStorylineViewModel
         private val ratingSyncTimers = mutableMapOf<Long, Job>()
         private val ratingSyncInFlight = mutableSetOf<Long>()
 
+        /**
+         * 이탈 처리 중. 이탈은 스토어를 초기화(Idle)하는데, 그 전이를 화면에 반영하면 pop
+         * 애니메이션 동안 나가는 화면이 빈 실패 상태로 번쩍인다. 이후 상태 반영을 멈춘다.
+         */
+        private var isLeaving = false
+
         init {
             viewModelScope.launch {
                 // 프로세스 재시작·재개 진입으로 스토어가 비어 있으면 진행 레코드에서 먼저 복원한다.
                 storylineGenerationStore.ensureRestored()
                 storylineGenerationStore.state.collect { generation ->
+                    if (isLeaving) return@collect
                     if (generation is StorylineGenerationState.Generated) resetRatingSync()
                     dispatchEvent(
                         CreateStorylineEvent.GenerationStateChanged(
@@ -157,6 +164,7 @@ class CreateStorylineViewModel
 
                 CreateStorylineIntent.LeaveFunnel ->
                     if (storylineGenerationStore.hasContentToPreserve()) {
+                        isLeaving = true
                         val preserved = storylineGenerationStore.leaveFunnel()
                         dispatchEffect(CreateStorylineEffect.ExitFunnel(contentPreserved = preserved))
                     } else {
@@ -165,6 +173,7 @@ class CreateStorylineViewModel
                     }
 
                 CreateStorylineIntent.ConfirmLeaveFunnel -> {
+                    isLeaving = true
                     storylineGenerationStore.leaveFunnel()
                     dispatchEvent(CreateStorylineEvent.ExitWarningVisibleChanged(visible = false))
                     dispatchEffect(CreateStorylineEffect.ExitFunnel(contentPreserved = false))
