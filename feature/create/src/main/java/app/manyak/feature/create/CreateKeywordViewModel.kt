@@ -3,6 +3,11 @@ package app.manyak.feature.create
 import androidx.lifecycle.viewModelScope
 import app.manyak.core.domain.error.DomainResult
 import app.manyak.core.domain.story.CharacterGender
+import app.manyak.core.domain.story.KeywordCharacterSnapshot
+import app.manyak.core.domain.story.KeywordCustomTagSnapshot
+import app.manyak.core.domain.story.KeywordDraftSnapshot
+import app.manyak.core.domain.story.PendingStoryCreation
+import app.manyak.core.domain.story.PendingStoryCreationStore
 import app.manyak.core.domain.story.StoryCharacterInput
 import app.manyak.core.domain.story.StoryCreationRepository
 import app.manyak.core.domain.story.StoryTag
@@ -10,6 +15,7 @@ import app.manyak.core.domain.story.StoryTagCategory
 import app.manyak.core.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.text.Normalizer
 import javax.inject.Inject
@@ -61,6 +67,11 @@ sealed interface ProvidedTags {
 }
 
 data class CreateKeywordUiState(
+    /**
+     * 진행 레코드 복원을 기다리는 중. 저장해 둔 키워드가 있는지 아직 몰라 화면을 그리지 않는다 —
+     * 빈 입력 화면이 스쳐 간 뒤 값이 채워지면 재개 진입에서 화면이 번쩍인다.
+     */
+    val isRestoring: Boolean = true,
     val activeCategory: StoryTagCategory = StoryTagCategory.GENRE,
     /** "다음"을 눌러 검증에 실패한 카테고리. 그 카테고리가 활성일 때만 푸터에 오류를 표시한다. */
     val validationErrorCategory: StoryTagCategory? = null,
@@ -200,6 +211,14 @@ sealed interface CreateKeywordIntent {
 }
 
 sealed interface CreateKeywordEvent {
+    /** 키워드 임시 저장본이 도착했다. */
+    data class SnapshotRestored(
+        val snapshot: KeywordDraftSnapshot,
+    ) : CreateKeywordEvent
+
+    /** 되살릴 저장본이 없었다. 복원 대기만 끝낸다. */
+    data object RestoreFinished : CreateKeywordEvent
+
     data class TagsLoaded(
         val byCategory: Map<StoryTagCategory, List<StoryTag>>,
     ) : CreateKeywordEvent
@@ -268,6 +287,7 @@ class CreateKeywordViewModel
     constructor(
         private val storyCreationRepository: StoryCreationRepository,
         private val storylineGenerationStore: StorylineGenerationStore,
+        private val pendingCreationStore: PendingStoryCreationStore,
     ) : MviViewModel<CreateKeywordIntent, CreateKeywordUiState, CreateKeywordEvent, CreateKeywordEffect>(
             CreateKeywordUiState(),
         ) {
@@ -275,6 +295,17 @@ class CreateKeywordViewModel
 
         init {
             startTagsLoad()
+            viewModelScope.launch {
+                // 레코드가 남아 있는 진입은 곧 재개다. 재개 의도를 따로 저장하지 않는다.
+                val record = pendingCreationStore.read()
+                if (record is PendingStoryCreation.KeywordDraft) {
+                    // 복원은 레코드를 소비한다 — 재개 후 다시 이탈하면 그 시점 상태로 새로 저장된다.
+                    pendingCreationStore.clear()
+                    dispatchEvent(CreateKeywordEvent.SnapshotRestored(record.snapshot))
+                } else {
+                    dispatchEvent(CreateKeywordEvent.RestoreFinished)
+                }
+            }
         }
 
         private fun startTagsLoad(showLoading: Boolean = false) {
@@ -282,17 +313,13 @@ class CreateKeywordViewModel
             tagsLoadJob =
                 viewModelScope.launch {
                     if (showLoading) dispatchEvent(CreateKeywordEvent.TagsReloadStarted)
-                    loadTags()
+                    when (val result = storyCreationRepository.tags()) {
+                        is DomainResult.Success ->
+                            dispatchEvent(CreateKeywordEvent.TagsLoaded(result.value.groupBy(StoryTag::category)))
+
+                        is DomainResult.Failure -> dispatchEvent(CreateKeywordEvent.TagsLoadFailed)
+                    }
                 }
-        }
-
-        private suspend fun loadTags() {
-            when (val result = storyCreationRepository.tags()) {
-                is DomainResult.Success ->
-                    dispatchEvent(CreateKeywordEvent.TagsLoaded(result.value.groupBy(StoryTag::category)))
-
-                is DomainResult.Failure -> dispatchEvent(CreateKeywordEvent.TagsLoadFailed)
-            }
         }
 
         override suspend fun handleIntent(intent: CreateKeywordIntent) {
@@ -308,12 +335,7 @@ class CreateKeywordViewModel
 
                 CreateKeywordIntent.GoNext -> goNext(state)
                 CreateKeywordIntent.GenerateStorylines -> generateStorylines(state)
-                CreateKeywordIntent.LeaveFunnel -> {
-                    // 진행 중 요청 레코드 유지 또는 임시 저장을 끝낸 뒤에야 나간다 — 뒤 단계의
-                    // 생성 결과·입력이 이탈로 사라지지 않게 한다(3-1 이탈 가드).
-                    val preserved = storylineGenerationStore.leaveFunnel()
-                    dispatchEffect(CreateKeywordEffect.ExitFunnel(contentPreserved = preserved))
-                }
+                CreateKeywordIntent.LeaveFunnel -> leaveFunnel()
 
                 CreateKeywordIntent.RetryTags ->
                     if (state.providedTags is ProvidedTags.Failed) {
@@ -362,6 +384,32 @@ class CreateKeywordViewModel
             } else {
                 dispatchEvent(CreateKeywordEvent.ValidationFailed(state.activeCategory))
             }
+        }
+
+        /**
+         * 키워드 단계 이탈. 생성 전이라 소실 경고는 없고, 입력이 남아 있으면 조용히 저장한다.
+         *
+         * 복원이 화면에 반영될 때까지 기다린다 — 헤더는 복원 중에도 눌리므로, 기다리지 않으면
+         * 아직 비어 있는 상태를 스냅숏해 방금 소비한 저장분을 잃는다.
+         *
+         * 뒤 단계의 진행 중 레코드가 슬롯에 있으면 덮지 않는다 — 서버에서 실제로 돌고 있는
+         * 복구 대상이 편집 스냅숏보다 우선한다. 뒤 단계에서 시작한 생성 결과의 임시 저장도
+         * 스토어가 이미 처리하므로 여기서는 판정만 승계한다.
+         */
+        private suspend fun leaveFunnel() {
+            val restored = uiState.first { !it.isRestoring }
+            val storePreserved = storylineGenerationStore.leaveFunnel()
+            if (storePreserved) {
+                dispatchEffect(CreateKeywordEffect.ExitFunnel(contentPreserved = true))
+                return
+            }
+            val snapshot = restored.toKeywordSnapshot()
+            if (!snapshot.hasInput) {
+                dispatchEffect(CreateKeywordEffect.ExitFunnel(contentPreserved = false))
+                return
+            }
+            pendingCreationStore.write(PendingStoryCreation.KeywordDraft(snapshot))
+            dispatchEffect(CreateKeywordEffect.ExitFunnel(contentPreserved = true))
         }
 
         /**
@@ -420,6 +468,8 @@ class CreateKeywordViewModel
             event: CreateKeywordEvent,
         ): CreateKeywordUiState =
             when (event) {
+                is CreateKeywordEvent.SnapshotRestored -> event.snapshot.toKeywordUiState(state)
+                CreateKeywordEvent.RestoreFinished -> state.copy(isRestoring = false)
                 is CreateKeywordEvent.TagsLoaded -> state.copy(providedTags = ProvidedTags.Loaded(event.byCategory))
                 CreateKeywordEvent.TagsLoadFailed -> state.copy(providedTags = ProvidedTags.Failed)
                 CreateKeywordEvent.TagsReloadStarted -> state.copy(providedTags = ProvidedTags.Loading)
@@ -481,6 +531,60 @@ class CreateKeywordViewModel
                 else -> state
             }
     }
+
+/** 이탈 시 저장할 편집 상태. 선택 해제된 커스텀 키워드도 그대로 담는다. */
+internal fun CreateKeywordUiState.toKeywordSnapshot(): KeywordDraftSnapshot =
+    KeywordDraftSnapshot(
+        selectedGenreTagIds = selectedGenreTagIds.toList(),
+        customGenreTags = customGenreTags.map { KeywordCustomTagSnapshot(it.name, it.selected) },
+        protagonist = protagonist.toSnapshot(),
+        supportingCharacters = supportingCharacters.map { it.toSnapshot() },
+    )
+
+private fun KeywordCharacter.toSnapshot(): KeywordCharacterSnapshot =
+    KeywordCharacterSnapshot(
+        name = name,
+        gender = gender,
+        selectedTagIds = selectedTagIds.toList(),
+        customTags = customTags.map { KeywordCustomTagSnapshot(it.name, it.selected) },
+    )
+
+/**
+ * 저장본으로 화면 상태를 되살린다. 인물 식별자는 화면 로컬 값이라 저장하지 않고 다시 매긴다.
+ * 활성 카테고리는 담지 않아 항상 첫 탭에서 시작한다 — 완료된 카테고리는 잠금이 풀려 있어
+ * 사용자가 바로 이동할 수 있다.
+ */
+internal fun KeywordDraftSnapshot.toKeywordUiState(base: CreateKeywordUiState): CreateKeywordUiState {
+    val supporting =
+        supportingCharacters.mapIndexed { index, character ->
+            KeywordCharacter(
+                id = CreateKeywordUiState.FIRST_SUPPORTING_ID + index,
+                name = character.name,
+                gender = character.gender,
+                selectedTagIds = character.selectedTagIds.toSet(),
+                customTags = character.customTags.map { CustomTag(it.name, it.selected) },
+            )
+        }
+    return base.copy(
+        isRestoring = false,
+        selectedGenreTagIds = selectedGenreTagIds.toSet(),
+        customGenreTags = customGenreTags.map { CustomTag(it.name, it.selected) },
+        protagonist =
+            KeywordCharacter(
+                id = CreateKeywordUiState.PROTAGONIST_ID,
+                name = protagonist.name,
+                gender = protagonist.gender,
+                selectedTagIds = protagonist.selectedTagIds.toSet(),
+                customTags = protagonist.customTags.map { CustomTag(it.name, it.selected) },
+            ),
+        // 저장본에 인물이 없으면 진입 때와 같이 빈 섹션 하나를 놓는다.
+        supportingCharacters =
+            supporting.ifEmpty {
+                listOf(KeywordCharacter(id = CreateKeywordUiState.FIRST_SUPPORTING_ID))
+            },
+        nextSupportingId = CreateKeywordUiState.FIRST_SUPPORTING_ID + supporting.size.coerceAtLeast(1),
+    )
+}
 
 private fun CreateKeywordUiState.toGenerationInput(): StorylineGenerationInput =
     StorylineGenerationInput(

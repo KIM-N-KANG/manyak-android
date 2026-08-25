@@ -2,10 +2,16 @@ package app.manyak.feature.create
 
 import app.manyak.core.domain.error.DomainError
 import app.manyak.core.domain.error.DomainResult
+import app.manyak.core.domain.story.CharacterGender
+import app.manyak.core.domain.story.KeywordCharacterSnapshot
+import app.manyak.core.domain.story.KeywordCustomTagSnapshot
+import app.manyak.core.domain.story.KeywordDraftSnapshot
 import app.manyak.core.domain.story.PendingStoryCreation
+import app.manyak.core.domain.story.StoryCharacterInput
 import app.manyak.core.domain.story.StoryCreationRepository
 import app.manyak.core.domain.story.StoryTag
 import app.manyak.core.domain.story.StoryTagCategory
+import app.manyak.core.domain.story.StorylineGenerationCommand
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -38,11 +44,14 @@ class CreateKeywordViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun TestScope.viewModel(repository: StoryCreationRepository): CreateKeywordViewModel =
+    private fun TestScope.viewModel(
+        repository: StoryCreationRepository,
+        pending: FakePendingStoryCreationStore = FakePendingStoryCreationStore(),
+    ): CreateKeywordViewModel =
         CreateKeywordViewModel(
             storyCreationRepository = repository,
-            storylineGenerationStore =
-                StorylineGenerationStore(repository, FakePendingStoryCreationStore(), this),
+            storylineGenerationStore = StorylineGenerationStore(repository, pending, this),
+            pendingCreationStore = pending,
         )
 
     @Test
@@ -160,6 +169,7 @@ class CreateKeywordViewModelTest {
                 CreateKeywordViewModel(
                     storyCreationRepository = repository,
                     storylineGenerationStore = store,
+                    pendingCreationStore = pendingStore,
                 )
 
             viewModel.onIntent(CreateKeywordIntent.LeaveFunnel)
@@ -181,6 +191,7 @@ class CreateKeywordViewModelTest {
                     storyCreationRepository = fixedTagsRepository(),
                     storylineGenerationStore =
                         StorylineGenerationStore(fixedTagsRepository(), pendingStore, this),
+                    pendingCreationStore = pendingStore,
                 )
 
             viewModel.onIntent(CreateKeywordIntent.LeaveFunnel)
@@ -192,6 +203,151 @@ class CreateKeywordViewModelTest {
                 withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
             )
         }
+
+    @Test
+    fun `입력이 없으면 이탈해도 레코드를 남기지 않는다`() =
+        runTest(dispatcher) {
+            val pending = FakePendingStoryCreationStore()
+            val viewModel = viewModel(fixedTagsRepository(), pending)
+            advanceUntilIdle()
+
+            viewModel.onIntent(CreateKeywordIntent.LeaveFunnel)
+            advanceUntilIdle()
+
+            assertNull(pending.read())
+            assertEquals(
+                CreateKeywordEffect.ExitFunnel(contentPreserved = false),
+                viewModel.uiEffect.first(),
+            )
+        }
+
+    @Test
+    fun `장르를 고르고 이탈하면 키워드 임시 저장본이 남는다`() =
+        runTest(dispatcher) {
+            val pending = FakePendingStoryCreationStore()
+            val viewModel = viewModel(fixedTagsRepository(), pending)
+            advanceUntilIdle()
+            viewModel.onIntent(CreateKeywordIntent.ToggleProvidedTag(KeywordTarget.Genre, tagId = 1L))
+            advanceUntilIdle()
+
+            viewModel.onIntent(CreateKeywordIntent.LeaveFunnel)
+            advanceUntilIdle()
+
+            val record = pending.read() as PendingStoryCreation.KeywordDraft
+            assertEquals(listOf(1L), record.snapshot.selectedGenreTagIds)
+            assertEquals(
+                CreateKeywordEffect.ExitFunnel(contentPreserved = true),
+                viewModel.uiEffect.first(),
+            )
+        }
+
+    @Test
+    fun `진행 중 레코드가 있으면 키워드 스냅숏이 덮어쓰지 않는다`() =
+        runTest(dispatcher) {
+            val pending = FakePendingStoryCreationStore()
+            val inFlight = PendingStoryCreation.GeneratingStorylines(command = generationCommand())
+            pending.write(inFlight)
+            val viewModel = viewModel(fixedTagsRepository(), pending)
+            advanceUntilIdle()
+            viewModel.onIntent(CreateKeywordIntent.ToggleProvidedTag(KeywordTarget.Genre, tagId = 1L))
+            advanceUntilIdle()
+
+            viewModel.onIntent(CreateKeywordIntent.LeaveFunnel)
+            advanceUntilIdle()
+
+            assertEquals(inFlight, pending.read())
+        }
+
+    @Test
+    fun `키워드 임시 저장본이 있으면 복원하고 레코드를 소비한다`() =
+        runTest(dispatcher) {
+            val pending = FakePendingStoryCreationStore()
+            pending.write(
+                PendingStoryCreation.KeywordDraft(
+                    snapshot =
+                        KeywordDraftSnapshot(
+                            selectedGenreTagIds = listOf(2L),
+                            customGenreTags = listOf(KeywordCustomTagSnapshot("느와르", selected = false)),
+                            protagonist =
+                                KeywordCharacterSnapshot(
+                                    name = "홍길동",
+                                    gender = CharacterGender.MALE,
+                                    selectedTagIds = listOf(10L),
+                                    customTags = emptyList(),
+                                ),
+                            supportingCharacters = emptyList(),
+                        ),
+                ),
+            )
+            val viewModel = viewModel(fixedTagsRepository(), pending)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertFalse(state.isRestoring)
+            assertEquals(setOf(2L), state.selectedGenreTagIds)
+            assertEquals(listOf(CustomTag("느와르", selected = false)), state.customGenreTags)
+            assertEquals("홍길동", state.protagonist.name)
+            assertEquals(CharacterGender.MALE, state.protagonist.gender)
+            assertEquals(setOf(10L), state.protagonist.selectedTagIds)
+            assertNull(pending.read())
+        }
+
+    @Test
+    fun `복원할 레코드가 없어도 복원 대기는 끝난다`() =
+        runTest(dispatcher) {
+            val viewModel = viewModel(fixedTagsRepository())
+            advanceUntilIdle()
+
+            assertFalse(viewModel.uiState.value.isRestoring)
+        }
+
+    @Test
+    fun `복원이 끝나기 전에 이탈해도 저장해 둔 입력을 잃지 않는다`() =
+        runTest(dispatcher) {
+            val pending = FakePendingStoryCreationStore()
+            pending.write(
+                PendingStoryCreation.KeywordDraft(
+                    snapshot =
+                        KeywordDraftSnapshot(
+                            selectedGenreTagIds = listOf(2L),
+                            customGenreTags = emptyList(),
+                            protagonist =
+                                KeywordCharacterSnapshot(
+                                    name = "홍길동",
+                                    gender = null,
+                                    selectedTagIds = emptyList(),
+                                    customTags = emptyList(),
+                                ),
+                            supportingCharacters = emptyList(),
+                        ),
+                ),
+            )
+            val viewModel = viewModel(fixedTagsRepository(), pending)
+
+            viewModel.onIntent(CreateKeywordIntent.LeaveFunnel)
+            advanceUntilIdle()
+
+            val record = pending.read() as PendingStoryCreation.KeywordDraft
+            assertEquals(listOf(2L), record.snapshot.selectedGenreTagIds)
+            assertEquals("홍길동", record.snapshot.protagonist.name)
+        }
+
+    private fun generationCommand() =
+        StorylineGenerationCommand(
+            requestId = "req-1",
+            genreTagIds = listOf(1L, 2L),
+            customGenreTags = listOf("느와르"),
+            protagonist =
+                StoryCharacterInput(
+                    name = "홍길동",
+                    gender = CharacterGender.MALE,
+                    featureTagIds = listOf(10L),
+                    customTags = listOf("과묵함"),
+                ),
+            supportingCharacters = emptyList(),
+            parentCreationId = null,
+            isRegenerated = false,
+        )
 
     private fun fixedTagsRepository(): FakeStoryCreationRepository =
         FakeStoryCreationRepository(
