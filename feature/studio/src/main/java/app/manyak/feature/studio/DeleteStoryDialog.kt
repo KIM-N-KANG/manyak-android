@@ -1,13 +1,19 @@
 package app.manyak.feature.studio
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
 import app.manyak.core.ui.R
+import app.manyak.core.ui.component.ManyakProgressIndicator
 import app.manyak.core.ui.theme.ManyakTheme
 
 /**
@@ -49,15 +55,24 @@ internal fun DeleteStoryDialog(
                     ButtonDefaults.buttonColors(
                         containerColor = ManyakTheme.colors.backgroundDangerBold,
                         contentColor = ManyakTheme.colors.textInverse,
+                        disabledContainerColor = ManyakTheme.colors.backgroundDangerBold,
+                        disabledContentColor = ManyakTheme.colors.textInverse,
                     ),
             ) {
-                Text(
-                    text =
-                        stringResource(
-                            if (isDeleting) R.string.studio_deleting else R.string.studio_story_delete,
-                        ),
-                    style = ManyakTheme.typography.labelLarge,
-                )
+                Box(contentAlignment = Alignment.Center) {
+                    // 진행 중에도 라벨 자리를 유지해 버튼 폭이 스피너 폭으로 줄지 않게 한다.
+                    Text(
+                        modifier = Modifier.alpha(if (isDeleting) 0f else 1f),
+                        text = stringResource(R.string.studio_story_delete),
+                        style = ManyakTheme.typography.labelLarge,
+                    )
+                    if (isDeleting) {
+                        ManyakProgressIndicator(
+                            modifier = Modifier.size(ManyakTheme.sizes.icon),
+                            color = ManyakTheme.colors.textInverse,
+                        )
+                    }
+                }
             }
         },
         dismissButton = {
