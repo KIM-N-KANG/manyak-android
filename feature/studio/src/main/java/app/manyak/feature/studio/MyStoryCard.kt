@@ -174,7 +174,8 @@ private fun StoryCardMenu(
         Column(
             modifier =
                 Modifier
-                    .shadow(elevation = 1.dp, shape = ManyakTheme.shapes.control)
+                    // 사진 배경 위에서도 경계가 보이도록 성별 선택 메뉴와 같은 깊이를 쓴다.
+                    .shadow(elevation = MenuShadowElevation, shape = ManyakTheme.shapes.control)
                     .background(ManyakTheme.colors.surfaceRaised, ManyakTheme.shapes.control)
                     .border(1.dp, ManyakTheme.colors.border, ManyakTheme.shapes.control)
                     .clip(ManyakTheme.shapes.control)
@@ -226,3 +227,5 @@ private val MoreIconSize = 14.dp
 private val MenuItemMinWidth = 120.dp
 
 private val MenuItemIconSize = 16.dp
+
+private val MenuShadowElevation = 4.dp
