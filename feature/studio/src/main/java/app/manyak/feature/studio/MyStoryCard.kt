@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -184,13 +185,13 @@ private fun StoryCardMenu(
     }
 }
 
-/** 파괴적 항목이라 텍스트를 danger 색으로 둔다. 확인은 다이얼로그가 한 번 더 묻는다. */
+/** 파괴적 항목이라 아이콘·텍스트를 danger 색으로 둔다. 확인은 다이얼로그가 한 번 더 묻는다. */
 @Composable
 private fun DeleteMenuItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Text(
+    Row(
         modifier =
             modifier
                 // 한 단어 항목이라 내용 폭만으로는 누를 자리가 좁다.
@@ -201,10 +202,21 @@ private fun DeleteMenuItem(
                     horizontal = ManyakTheme.spacing.controlHorizontal,
                     vertical = ManyakTheme.spacing.controlVertical,
                 ),
-        text = stringResource(R.string.studio_story_delete),
-        style = ManyakTheme.typography.bodyMedium,
-        color = ManyakTheme.colors.textDanger,
-    )
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+    ) {
+        Icon(
+            modifier = Modifier.size(MenuItemIconSize),
+            painter = painterResource(R.drawable.ic_delete),
+            contentDescription = null,
+            tint = ManyakTheme.colors.textDanger,
+        )
+        Text(
+            text = stringResource(R.string.studio_story_delete),
+            style = ManyakTheme.typography.bodyMedium,
+            color = ManyakTheme.colors.textDanger,
+        )
+    }
 }
 
 private val MoreButtonSize = 28.dp
@@ -212,3 +224,5 @@ private val MoreButtonSize = 28.dp
 private val MoreIconSize = 14.dp
 
 private val MenuItemMinWidth = 120.dp
+
+private val MenuItemIconSize = 16.dp
