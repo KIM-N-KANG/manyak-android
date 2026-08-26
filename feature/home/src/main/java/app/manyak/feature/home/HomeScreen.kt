@@ -82,7 +82,7 @@ private fun HomeContent(
             OriginalStories(
                 modifier = modifier,
                 stories = state.stories,
-                contentPadding = contentPadding.withScreenMargins(),
+                contentPadding = contentPadding,
             )
     }
 }
@@ -96,8 +96,10 @@ private fun OriginalStories(
     LazyVerticalGrid(
         modifier = modifier.fillMaxSize(),
         columns = GridCells.Fixed(GRID_COLUMNS),
-        contentPadding = contentPadding,
+        contentPadding = contentPadding.withScreenMargins(),
         horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+        // 제목도 그리드의 한 줄이라 이 값이 제목 아래 간격까지 겸한다. 둘을 다르게 두려면 제목
+        // 아이템에 padding 을 더한다.
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
     ) {
         item(key = SECTION_TITLE_KEY, span = { GridItemSpan(maxLineSpan) }) {
@@ -115,7 +117,7 @@ private fun SectionTitle(modifier: Modifier = Modifier) {
     Text(
         modifier = modifier.fillMaxWidth(),
         text = stringResource(R.string.home_original_stories),
-        style = ManyakTheme.typography.titleLarge,
+        style = ManyakTheme.typography.titleMediumStrong,
         color = ManyakTheme.colors.text,
     )
 }
