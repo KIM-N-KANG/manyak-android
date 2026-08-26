@@ -1,14 +1,28 @@
 package app.manyak.feature.studio
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import app.manyak.core.domain.story.StorySummary
+import app.manyak.core.ui.R
+import app.manyak.core.ui.component.StoryOverlayScrim
 import app.manyak.core.ui.component.StoryThumbnail
 import app.manyak.core.ui.theme.ManyakTheme
 
@@ -23,13 +37,20 @@ import app.manyak.core.ui.theme.ManyakTheme
 @Composable
 internal fun MyStoryCard(
     story: StorySummary,
+    onMoreClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
-        StoryThumbnail(thumbnailUrl = story.thumbnailUrl, turnCount = story.turnCount)
+        StoryThumbnail(thumbnailUrl = story.thumbnailUrl, turnCount = story.turnCount) {
+            MoreMenuButton(
+                onClick = onMoreClick,
+                // 턴 수 뱃지가 아래·오른쪽에서 띄우는 만큼과 같은 간격으로 위·오른쪽에서 띄운다.
+                modifier = Modifier.align(Alignment.TopEnd).padding(ManyakTheme.spacing.compact),
+            )
+        }
         Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.hairline)) {
             Text(
                 text = story.title,
@@ -61,3 +82,31 @@ internal fun MyStoryCard(
         }
     }
 }
+
+/** 카드별 드랍다운 메뉴를 여는 트리거. 표지 위에 놓이므로 턴 수 뱃지와 같은 반투명 필드를 깐다. */
+@Composable
+private fun MoreMenuButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier =
+            modifier
+                .size(MoreButtonSize)
+                .clip(ManyakTheme.shapes.pill)
+                .background(StoryOverlayScrim)
+                .clickable(role = Role.Button, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            modifier = Modifier.size(MoreIconSize),
+            painter = painterResource(R.drawable.ic_more),
+            contentDescription = stringResource(R.string.studio_story_more),
+            tint = Color.White,
+        )
+    }
+}
+
+private val MoreButtonSize = 28.dp
+
+private val MoreIconSize = 14.dp

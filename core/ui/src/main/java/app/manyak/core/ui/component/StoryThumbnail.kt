@@ -85,7 +85,7 @@ private fun TurnCountBadge(
         modifier =
             modifier
                 .clip(ManyakTheme.shapes.pill)
-                .background(OverlayScrim)
+                .background(StoryOverlayScrim)
                 .padding(
                     horizontal = ManyakTheme.spacing.compact,
                     vertical = ManyakTheme.spacing.hairline,
@@ -117,7 +117,8 @@ private val BadgeIconSize = 14.dp
 private val ThumbnailPlaceholderSize = 32.dp
 
 /**
- * 태그 도안이 쓰는 것과 같은 반투명 필드라 두 겹침 요소의 질감이 맞는다.
+ * 표지 위 겹침 요소(턴 수 뱃지와 [overlay] 의 카드별 요소)가 함께 쓰는 반투명 필드.
+ * 태그 도안도 같은 필드를 그려 겹침 요소끼리 질감이 맞는다.
  * 값을 바꾸면 `ic_story_original_tag` 의 `fillAlpha` 도 같이 바꿔야 한다.
  *
  * 웹은 여기에 backdrop blur 를 더하지만 앱은 반투명만 쓴다 — 뒤 콘텐츠를 흐리는 수단이
@@ -125,6 +126,6 @@ private val ThumbnailPlaceholderSize = 32.dp
  * 카드마다 레이어를 기록하는 비용도 크다. 블러가 표지의 잔무늬를 지워 주지 않는 만큼 웹의 20% 보다
  * 진하게 가려야 흰 글자가 읽힌다.
  */
-private const val OVERLAY_SCRIM_ALPHA = 0.7f
+val StoryOverlayScrim = Color(0xFF111414).copy(alpha = OVERLAY_SCRIM_ALPHA)
 
-private val OverlayScrim = Color(0xFF111414).copy(alpha = OVERLAY_SCRIM_ALPHA)
+private const val OVERLAY_SCRIM_ALPHA = 0.7f

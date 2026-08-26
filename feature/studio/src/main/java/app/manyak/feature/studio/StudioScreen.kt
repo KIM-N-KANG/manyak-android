@@ -193,7 +193,8 @@ private fun MyStories(
             SectionTitle()
         }
         items(stories, key = { story -> story.id }) { story ->
-            MyStoryCard(story = story)
+            // 메뉴 항목은 아직 없다 — 트리거 버튼만 먼저 둔다.
+            MyStoryCard(story = story, onMoreClick = {})
         }
     }
 }
