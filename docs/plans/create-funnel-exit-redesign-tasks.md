@@ -2,15 +2,17 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 퍼널 전 화면의 이탈 수단을 오른쪽 끝 arrow-down으로 통일하고, 어느 단계에서 나가도 그 단계로 재개할 수 있게 한다.
+**Goal:** 퍼널 전 화면의 이탈 수단을 오른쪽 끝 닫기(X)로 통일하고, 어느 단계에서 나가도 그 단계로 재개할 수 있게 한다.
 
-**Architecture:** 이탈 지점을 퍼널 3개 목적지 전부로 넓힌다. 재개 지점은 이미 있는 `CreationProgress.selectedStorylineIndex` 미러 하나로 가른다. 키워드 단계 입력은 새 `KEYWORD_DRAFT` 레코드로 저장하고, 진행 레코드의 저장 수단을 Preferences DataStore에서 Room 단일 행으로 옮긴다. 퍼널 진입·이탈 전환은 `NavEntry.metadata` 표식을 전역 `transitionSpec`이 읽어 수직 슬라이드로 바꾼다.
+**Architecture:** 이탈 지점을 퍼널 3개 목적지 전부로 넓힌다. 재개 지점은 이미 있는 `CreationProgress.selectedStorylineIndex` 미러 하나로 가른다. 키워드 단계 입력은 새 `KEYWORD_DRAFT` 레코드로 저장하고, 진행 레코드의 저장 수단을 Preferences DataStore에서 Room 단일 행으로 옮긴다. 화면 전환은 퍼널 전용 분기 없이 앱의 공통 교차 페이드를 쓴다.
 
 **Tech Stack:** Kotlin, Jetpack Compose, Navigation 3 (1.1.6), Hilt, Room 2.8.4, kotlinx.serialization, JUnit4 + kotlinx-coroutines-test
 
 **Spec:** `docs/plans/create-funnel-exit-redesign.md`
 
 > **후속 결정(2026-08-25):** 아래 원래 태스크의 “이탈할 때 저장”·“복원 시 레코드 소비” 설명은 더 이상 적용하지 않는다. 키워드·스토리라인 선택·추가 정보는 마지막 변경 300ms 뒤 자동 저장하고 이탈 시 대기분을 즉시 플러시한다. 생성 성공은 즉시 `STORY_DRAFT`로 저장하며, `KEYWORD_DRAFT`·`STORY_DRAFT`는 복원해도 유지한다. 헤더에는 편집 직후부터 Room 쓰기가 끝날 때까지 회색 `임시 저장중`, 쓰기 성공 뒤에는 브랜드 색 `임시 저장됨` 뱃지를 같은 위치에 표시한다. 이탈할 때 별도의 임시 저장 완료 토스트는 띄우지 않는다. 상세 근거는 설계 문서 E11~E13·E18~E21이 정본이다.
+
+> **후속 결정(2026-08-26):** 아래 원래 태스크의 arrow-down·수직 슬라이드 설명은 더 이상 적용하지 않는다. 헤더는 기존 `ic_close`를 쓰는 닫기(X)로 바꾸고, 퍼널 전환 metadata·방향 판정·`FunnelSceneTransitionTest`를 제거해 앱 공통 교차 페이드로 복귀한다. 상세 근거는 설계 문서 E1·E6·E7이 정본이다.
 
 ## Global Constraints
 
@@ -39,15 +41,15 @@
 | `core/data/.../datastore/PendingStoryCreationDataStore.kt` | Room 스토어로 대체 | 삭제 |
 | `core/data/.../datastore/LegacyPendingCreationFile.kt` | 구버전 DataStore 파일 삭제 | 생성 |
 | `core/ui/.../values/strings.xml` | 앱 바 접근성 이름, 초기화 경고 문구 | 수정 |
-| `feature/create/.../CreateFunnelChrome.kt` | 앱 바 arrow-down, 초기화 경고 다이얼로그 | 수정 |
+| `feature/create/.../CreateFunnelChrome.kt` | 앱 바 닫기(X), 초기화 경고 다이얼로그 | 수정 |
 | `feature/create/.../StorylineGenerationStore.kt` | 추가 정보 진행 초기화 API | 수정 |
 | `feature/create/.../CreateAdditionalInfoViewModel.kt` | 이탈·초기화 인텐트와 미러링 차단 | 수정 |
 | `feature/create/.../CreateAdditionalInfoScreen.kt` | `BackHandler`, 이탈 콜백, 초기화 경고 표시 | 수정 |
 | `feature/create/.../CreateKeywordViewModel.kt` | 키워드 스냅숏 저장·복원 | 수정 |
 | `feature/create/.../CreateKeywordReducers.kt` | 키워드 상태의 순수 리듀서 | 생성 |
 | `feature/create/.../CreateKeywordScreen.kt` | 복원 대기 중 본문 비우기 | 수정 |
-| `app/.../root/NavTransitions.kt` | 퍼널 표식과 수직 전환 판정 | 수정 |
-| `app/.../root/ManyakApp.kt` | 퍼널 엔트리 메타데이터, 추가 정보 이탈 배선, 키워드 재개 체인 | 수정 |
+| `app/.../root/NavTransitions.kt` | 앱 공통 교차 페이드 | 수정 |
+| `app/.../root/ManyakApp.kt` | 추가 정보 이탈 배선, 키워드 재개 체인 | 수정 |
 
 ---
 

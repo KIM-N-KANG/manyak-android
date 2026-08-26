@@ -116,13 +116,12 @@ internal fun CreateFunnelHeader(
                 color = ManyakTheme.colors.text,
             )
         },
-        // 퍼널은 아래에서 올라와 아래로 닫히는 한 덩어리로 보이므로, 이탈 버튼도 그 방향과
-        // 짝이 맞는 아래 화살표를 오른쪽 끝에 둔다.
+        // 어느 단계에서든 퍼널 전체를 닫는 동작임을 분명히 알 수 있게 오른쪽 끝에 닫기를 둔다.
         actions = {
             DraftSaveBadge(draftSaveStatus)
             IconButton(onClick = onClose) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_angle_down),
+                    painter = painterResource(R.drawable.ic_close),
                     contentDescription = stringResource(R.string.create_close_funnel),
                     tint = ManyakTheme.colors.text,
                 )

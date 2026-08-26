@@ -39,7 +39,7 @@ import app.manyak.core.ui.R
 import app.manyak.core.ui.theme.ManyakTheme
 
 /**
- * 추가 정보 단계. 앱 바 arrow-down 과 디바이스 뒤로가기는 퍼널 이탈(홈 복귀)이고, 스토리라인
+ * 추가 정보 단계. 앱 바 닫기와 디바이스 뒤로가기는 퍼널 이탈(홈 복귀)이고, 스토리라인
  * 단계로 되돌아가는 수단은 하단 "다시 선택하기" 하나뿐이다 — 이탈과 단계 복귀가 같은 제스처를
  * 쓰면 어느 쪽인지 알 수 없다.
  */
@@ -60,7 +60,7 @@ fun CreateAdditionalInfoScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
 
-    // 디바이스 뒤로가기도 앱 바 arrow-down 과 같은 이탈 처리를 거친다.
+    // 디바이스 뒤로가기도 앱 바 닫기와 같은 이탈 처리를 거친다.
     BackHandler { viewModel.onIntent(CreateAdditionalInfoIntent.LeaveFunnel) }
 
     // 응답을 못 받았거나 409 로 거절된 완성 요청의 복구 폴링. STARTED 동안만 돌아 백그라운드에서

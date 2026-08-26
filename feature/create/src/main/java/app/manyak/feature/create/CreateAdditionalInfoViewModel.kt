@@ -98,7 +98,7 @@ sealed interface CreateAdditionalInfoIntent {
 
     sealed interface FunnelNavigation : CreateAdditionalInfoIntent
 
-    /** 앱 바 arrow-down·디바이스 뒤로가기 — 퍼널 이탈. */
+    /** 앱 바 닫기·디바이스 뒤로가기 — 퍼널 이탈. */
     data object LeaveFunnel : FunnelNavigation
 
     /** 소실 경고 다이얼로그의 "그만 만들기". */
