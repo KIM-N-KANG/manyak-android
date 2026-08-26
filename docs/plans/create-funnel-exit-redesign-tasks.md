@@ -1548,10 +1548,10 @@ Task 5의 인텐트를 화면과 백스택에 붙여 요구 2·3·4·5·6을 완
 `core/ui/src/main/res/values/strings.xml`의 `create_exit_warning_leave` 아래에 추가한다.
 
 ```xml
-    <string name="create_reselect_warning_title">스토리라인을 다시 고를까요?</string>
-    <string name="create_reselect_warning_description">지금 다시 고르면 입력한 추가 정보가 사라져요</string>
+    <string name="create_reselect_warning_title">스토리라인을 바꿀까요?</string>
+    <string name="create_reselect_warning_description">입력한 추가 정보는 모두 사라져요</string>
     <string name="create_reselect_warning_confirm">다시 선택하기</string>
-    <string name="create_reselect_warning_cancel">그대로 두기</string>
+    <string name="create_reselect_warning_cancel">닫기</string>
 ```
 
 - [ ] **Step 2: 초기화 경고 다이얼로그 작성**
@@ -1562,7 +1562,7 @@ Task 5의 인텐트를 화면과 백스택에 붙여 요구 2·3·4·5·6을 완
 /**
  * "다시 선택하기"가 추가 정보를 버린다고 알리는 다이얼로그.
  *
- * 기본 동작은 그대로 두기다 — 스토리라인을 다시 고르는 쪽이 파괴적인 선택이라 확인 버튼 자리를
+ * 기본 동작은 다이얼로그 닫기다 — 스토리라인을 다시 고르는 쪽이 파괴적인 선택이라 확인 버튼 자리를
  * 되돌리기 쉬운 쪽에 준다.
  */
 @Composable
@@ -1749,7 +1749,7 @@ Expected: BUILD SUCCESSFUL, 테스트 PASS
 1. 추가 정보 화면에서 arrow-down → 홈으로 가고 "임시 저장되었어요" 토스트가 뜬다.
 2. 홈 배너 "이어서 만들기" → 추가 정보 화면으로 오고 선택한 스토리라인·추천 선택·입력값이 그대로다.
 3. 추가 정보 화면에서 디바이스 뒤로가기 → 1번과 같다.
-4. 입력이 있는 상태에서 "다시 선택하기" → 초기화 경고가 뜬다. "그대로 두기"면 입력이 남는다.
+4. 입력이 있는 상태에서 "다시 선택하기" → 초기화 경고가 뜬다. "닫기"를 누르면 입력이 남는다.
 5. 초기화를 확정해 스토리라인 화면으로 온 뒤 arrow-down → 재개하면 **스토리라인 화면**으로 온다.
 
 - [ ] **Step 7: 정적 검사와 커밋**
