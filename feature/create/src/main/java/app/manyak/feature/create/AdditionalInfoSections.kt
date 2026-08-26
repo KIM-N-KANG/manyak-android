@@ -113,7 +113,8 @@ internal fun RecommendedInfoSection(
         modifier =
             modifier
                 .padding(horizontal = ManyakTheme.spacing.gutter)
-                .padding(top = ManyakTheme.spacing.block, bottom = ManyakTheme.spacing.gutter),
+                // 아래는 "추가 정보" 섹션이 이어지므로 섹션 사이 토큰을 쓴다 — 키워드 화면의 섹션 간격과 같다.
+                .padding(top = ManyakTheme.spacing.block, bottom = ManyakTheme.spacing.section),
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
         KeywordSectionLabel(
