@@ -9,6 +9,9 @@
     웹은 바탕에 backdrop blur 를 함께 걸지만 앱은 반투명만 쓴다 — 뒤 콘텐츠를 흐리는 수단이
     RenderEffect(API 31+) 뿐이라 minSdk 24 의 전 기기에 걸리지 않고, 스크롤되는 그리드에서
     카드마다 레이어를 기록하는 비용도 크다.
+
+    그래서 바탕 불투명도는 원본(20%)이 아니라 70% 다. 블러가 표지의 잔무늬를 지워 주지 않는 만큼
+    바탕이 더 가려 줘야 흰 글자가 읽힌다. 우하단 턴 수 뱃지도 같은 값을 쓴다.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="72dp"
@@ -19,7 +22,7 @@
     <path
         android:pathData="M92 0H600V170A46 46 0 0 1 554 216H0V92A92 92 0 0 1 92 0Z"
         android:fillColor="#111414"
-        android:fillAlpha="0.2" />
+        android:fillAlpha="0.7" />
 
     <group
         android:translateX="31"
