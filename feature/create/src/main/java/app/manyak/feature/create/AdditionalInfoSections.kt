@@ -40,14 +40,13 @@ import app.manyak.core.ui.R
 import app.manyak.core.ui.text.storyAnnotatedString
 import app.manyak.core.ui.theme.ManyakTheme
 
-/** 선택한 스토리라인 본문. 기본은 한 줄로 접혀 있고 더보기·접기로 펼친다. */
+/** 선택한 스토리라인 본문. 진입 뒤 높이가 바뀌지 않게 더보기·접기 토글을 처음부터 함께 그린다. */
 @Composable
 internal fun SelectedStorylineBox(
     text: String,
     modifier: Modifier = Modifier,
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
-    var collapsible by remember { mutableStateOf(false) }
     Column(
         modifier =
             modifier
@@ -63,17 +62,12 @@ internal fun SelectedStorylineBox(
             color = ManyakTheme.colors.text,
             maxLines = if (expanded) Int.MAX_VALUE else 1,
             overflow = TextOverflow.Ellipsis,
-            onTextLayout = { layoutResult ->
-                if (!expanded) collapsible = layoutResult.hasVisualOverflow
-            },
         )
-        if (collapsible) {
-            SelectedStorylineToggle(
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-                expanded = expanded,
-                onClick = { expanded = !expanded },
-            )
-        }
+        SelectedStorylineToggle(
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+            expanded = expanded,
+            onClick = { expanded = !expanded },
+        )
     }
 }
 
