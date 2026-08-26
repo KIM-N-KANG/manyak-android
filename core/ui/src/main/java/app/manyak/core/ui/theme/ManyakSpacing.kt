@@ -10,23 +10,29 @@ import androidx.compose.ui.unit.dp
  */
 @Immutable
 data class ManyakSpacing(
-    /** 아이콘과 라벨 사이 */
+    /** 2dp — 아이콘과 라벨 사이 */
     val hairline: Dp,
-    /** 인접한 인라인 요소 */
+    /** 4dp — 인접한 인라인 요소 */
     val inline: Dp,
-    /** 리스트 항목 간격·버튼 내부 세로 */
+    /** 6dp — 촘촘한 요소 사이 */
+    val dense: Dp,
+    /** 8dp — 리스트 항목 간격·버튼 내부 세로 */
     val compact: Dp,
-    /** 컴포넌트 내부 기본 */
+    /** 10dp — 입력·칩·메뉴 항목의 세로 패딩 */
+    val controlVertical: Dp,
+    /** 12dp — 컴포넌트 내부 기본 */
     val component: Dp,
-    /** 화면 좌우 여백 */
+    /** 14dp — 입력·칩·메뉴 항목의 가로 패딩 */
+    val controlHorizontal: Dp,
+    /** 16dp — 화면 좌우 여백 */
     val gutter: Dp,
-    /** 섹션 사이 */
+    /** 24dp — 섹션 사이 */
     val section: Dp,
-    /** 큰 구획 사이 */
+    /** 32dp — 큰 구획 사이 */
     val block: Dp,
-    /** 화면 상단 첫 요소 위 여유 */
+    /** 64dp — 화면 상단 첫 요소 위 여유 */
     val screenTop: Dp,
-    /** 스크롤 영역 하단 여유 */
+    /** 40dp — 스크롤 영역 하단 여유 */
     val screenBottom: Dp,
 )
 
@@ -34,11 +40,14 @@ internal val ManyakDefaultSpacing =
     ManyakSpacing(
         hairline = 2.dp,
         inline = 4.dp,
+        dense = 6.dp,
         compact = 8.dp,
+        controlVertical = 10.dp,
         component = 12.dp,
+        controlHorizontal = 14.dp,
         gutter = 16.dp,
         section = 24.dp,
         block = 32.dp,
         screenTop = 64.dp,
-        screenBottom = 40.dp,
+        screenBottom = 32.dp,
     )

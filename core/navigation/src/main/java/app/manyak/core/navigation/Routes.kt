@@ -35,6 +35,35 @@ data object ChatListRoute : NavKey
 @Serializable
 data object MyRoute : NavKey
 
+/** 퍼널 단계는 각각 목적지이며, 이 화면은 셸 없이 [MainTabsRoute] 위에 쌓인다. */
+@Serializable
+data object CreateKeywordRoute : NavKey
+
+/**
+ * 스토리라인 선택 단계. [CreateKeywordRoute] 위에 쌓여 뒤로가기가 곧 키워드 단계 복귀이고,
+ * 백스택이 살아 있어 키워드 입력은 그대로 유지된다.
+ */
+@Serializable
+data object CreateStorylineRoute : NavKey
+
+/**
+ * 추가 정보 단계. 라우트에 식별자만 싣는 규칙에 따라 선택한 스토리라인의 순번만 담고,
+ * 화면이 그릴 스토리라인 본문·추천 정보는 목적지에서 다시 얻는다.
+ */
+@Serializable
+data class CreateAdditionalInfoRoute(
+    val storylineIndex: Int,
+) : NavKey
+
+/**
+ * 채팅방. 셸 없이 [MainTabsRoute] 위에 쌓이는 전체 화면이다.
+ * 규칙대로 식별자만 싣고, 화면이 그릴 제목·프롤로그·턴 이력은 목적지에서 상세 조회로 얻는다.
+ */
+@Serializable
+data class ChatRoomRoute(
+    val chatId: String,
+) : NavKey
+
 /**
  * 공용 법적 문서. **제품 백스택 밖에 두고 양쪽 백스택 모두에 등록해** 인증 상태와 무관하게 연다.
  * 뒤로가기는 진입한 화면으로 돌아가고, 여기서 임의의 메인 목적지로 이동하는 경로는 두지 않는다.

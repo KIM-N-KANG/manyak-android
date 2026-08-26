@@ -415,6 +415,18 @@
     "050": {
       "$type": "dimension",
       "$value": "4px"
+    },
+    "075": {
+      "$type": "dimension",
+      "$value": "6px"
+    },
+    "125": {
+      "$type": "dimension",
+      "$value": "10px"
+    },
+    "175": {
+      "$type": "dimension",
+      "$value": "14px"
     }
   },
   "font": {
@@ -498,6 +510,10 @@
     }
   },
   "radius": {
+    "xs": {
+      "$type": "dimension",
+      "$value": "10px"
+    },
     "sm": {
       "$type": "dimension",
       "$value": "12px"
@@ -526,6 +542,11 @@
           "$type": "color",
           "$value": "{color.green.600}",
           "$description": "로고·일러스트 등 큰 그래픽 전용"
+        },
+        "step-indicator-active": {
+          "$type": "color",
+          "$value": "{color.gray.300}",
+          "$description": "퍼널에서 현재 진행 중인 단계의 장식 막대"
         },
         "text": {
           "@": {
@@ -704,6 +725,11 @@
           "$type": "color",
           "$value": "{color.green.600}",
           "$description": "로고·일러스트 등 큰 그래픽 전용"
+        },
+        "step-indicator-active": {
+          "$type": "color",
+          "$value": "{color.gray.650}",
+          "$description": "퍼널에서 현재 진행 중인 단계의 장식 막대"
         },
         "text": {
           "@": {
@@ -887,15 +913,30 @@
         "$value": "{space.050}",
         "$description": "인접한 인라인 요소"
       },
+      "dense": {
+        "$type": "dimension",
+        "$value": "{space.075}",
+        "$description": "촘촘한 요소 사이"
+      },
       "compact": {
         "$type": "dimension",
         "$value": "{space.100}",
         "$description": "리스트 항목 간격·버튼 내부 세로"
       },
+      "control-vertical": {
+        "$type": "dimension",
+        "$value": "{space.125}",
+        "$description": "입력·칩·메뉴 항목의 세로 패딩"
+      },
       "component": {
         "$type": "dimension",
         "$value": "{space.150}",
         "$description": "컴포넌트 내부 기본"
+      },
+      "control-horizontal": {
+        "$type": "dimension",
+        "$value": "{space.175}",
+        "$description": "입력·칩·메뉴 항목의 가로 패딩"
       },
       "gutter": {
         "$type": "dimension",
@@ -919,6 +960,11 @@
       }
     },
     "radius": {
+      "menu-item": {
+        "$type": "dimension",
+        "$value": "{radius.xs}",
+        "$description": "셀렉트 메뉴 항목"
+      },
       "thumbnail": {
         "$type": "dimension",
         "$value": "{radius.sm}",
@@ -1016,7 +1062,7 @@
             "fontWeight": "{font.weight.regular}",
             "lineHeight": "28px"
           },
-          "$description": "스토리 본문(MaruBuri). 장문 전용 롤",
+          "$description": "스토리 본문(GowunBatang). 장문 전용 롤",
           "$extensions": {
             "app.manyak.ratio": 1.75,
             "app.manyak.family": "serif"
@@ -1718,13 +1764,14 @@
         "weight": "regular",
         "lineHeight": 28,
         "family": "serif",
-        "use": "스토리 본문(MaruBuri). 장문 전용 롤",
+        "use": "스토리 본문(GowunBatang). 장문 전용 롤",
         "px": 16,
         "weightValue": 400,
         "ratio": 1.75
       }
     },
     "app.manyak.radius": {
+      "xs": 10,
       "sm": 12,
       "md": 14,
       "lg": 16,
@@ -1732,6 +1779,11 @@
       "full": 9999
     },
     "app.manyak.radiusSemantic": {
+      "radius.menu-item": {
+        "ref": "xs",
+        "use": "셀렉트 메뉴 항목",
+        "px": 10
+      },
       "radius.thumbnail": {
         "ref": "sm",
         "use": "썸네일·작은 아이콘 컨테이너",
@@ -1768,12 +1820,24 @@
         4
       ],
       [
+        "075",
+        6
+      ],
+      [
         "100",
         8
       ],
       [
+        "125",
+        10
+      ],
+      [
         "150",
         12
+      ],
+      [
+        "175",
+        14
       ],
       [
         "200",

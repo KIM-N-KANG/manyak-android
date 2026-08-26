@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,6 +28,11 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import app.manyak.core.domain.session.SessionState
+import app.manyak.core.domain.story.CreationResumePoint
+import app.manyak.core.navigation.ChatRoomRoute
+import app.manyak.core.navigation.CreateAdditionalInfoRoute
+import app.manyak.core.navigation.CreateKeywordRoute
+import app.manyak.core.navigation.CreateStorylineRoute
 import app.manyak.core.navigation.LegalRoute
 import app.manyak.core.navigation.LoginRoute
 import app.manyak.core.navigation.MainTabsRoute
@@ -35,6 +41,10 @@ import app.manyak.core.ui.component.ManyakProgressIndicator
 import app.manyak.core.ui.component.rememberDelayedProgressVisibility
 import app.manyak.core.ui.error.messageResOrNull
 import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.feature.chat.ChatRoomScreen
+import app.manyak.feature.create.CreateAdditionalInfoScreen
+import app.manyak.feature.create.CreateKeywordScreen
+import app.manyak.feature.create.CreateStorylineScreen
 import app.manyak.feature.legal.LegalDocumentScreen
 import app.manyak.feature.login.LoginScreen
 
@@ -107,6 +117,11 @@ private fun CleanupFailed(
                     .heightIn(min = ManyakTheme.sizes.control),
             onClick = onRetry,
             shape = ManyakTheme.shapes.control,
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor = ManyakTheme.colors.brand,
+                    contentColor = ManyakTheme.colors.textInverse,
+                ),
         ) {
             Text(text = stringResource(R.string.common_retry), style = ManyakTheme.typography.labelLarge)
         }
@@ -165,10 +180,73 @@ private fun MainNavDisplay() {
         popTransitionSpec = screenTransition,
         entryProvider =
             entryProvider<NavKey> {
-                entry<MainTabsRoute> { MainTabsScreen() }
+                entry<MainTabsRoute> {
+                    MainTabsScreen(
+                        onCreateStory = { backStack.add(CreateKeywordRoute) },
+                        // 재개·복구 진입 — 레코드가 가리키는 단계까지 체인을 쌓는다.
+                        onResumeCreation = { resumePoint -> backStack.addCreationResumeChain(resumePoint) },
+                    )
+                }
+                entry<CreateKeywordRoute> {
+                    CreateKeywordScreen(
+                        onLeaveFunnel = { backStack.removeLastOrNull() },
+                        // 스토리라인 단계는 키워드 목적지를 대체한다 — 그 화면의 뒤로가기가
+                        // 홈 복귀(퍼널 이탈)가 되도록 한다(§3-3-3 결정 기록 수정).
+                        onOpenStorylineStep = {
+                            backStack.removeLastOrNull()
+                            backStack.add(CreateStorylineRoute)
+                        },
+                    )
+                }
+                entry<CreateStorylineRoute> {
+                    CreateStorylineScreen(
+                        onLeaveFunnel = { backStack.removeLastOrNull() },
+                        onOpenAdditionalInfoStep = { storylineIndex ->
+                            backStack.add(CreateAdditionalInfoRoute(storylineIndex))
+                        },
+                    )
+                }
+                entry<CreateAdditionalInfoRoute> { route ->
+                    CreateAdditionalInfoScreen(
+                        storylineIndex = route.storylineIndex,
+                        // 이탈은 퍼널 단계를 전부 걷어내고 홈으로 돌아간다. 스토리라인 단계만
+                        // pop 하면 홈으로 나가려던 조작이 한 단계 뒤로 가기로 보인다.
+                        onLeaveFunnel = {
+                            while (backStack.size > 1 && backStack.lastOrNull() != MainTabsRoute) {
+                                backStack.removeLastOrNull()
+                            }
+                        },
+                        onBackToStoryline = { backStack.removeLastOrNull() },
+                        // 완성 성공 — 퍼널 단계를 모두 걷어내고 생성된 채팅방을 쌓는다(웹의 채팅 화면
+                        // `replace` 대응). 채팅방에서 뒤로가기는 홈 복귀다.
+                        onEnterChat = { chatId ->
+                            while (backStack.size > 1 && backStack.lastOrNull() != MainTabsRoute) {
+                                backStack.removeLastOrNull()
+                            }
+                            backStack.add(ChatRoomRoute(chatId))
+                        },
+                    )
+                }
+                entry<ChatRoomRoute> { route ->
+                    ChatRoomScreen(
+                        chatId = route.chatId,
+                        onBack = { backStack.removeLastOrNull() },
+                    )
+                }
                 legalEntry(onLeaveDocument = { backStack.removeLastOrNull() })
             },
     )
+}
+
+private fun MutableList<NavKey>.addCreationResumeChain(resumePoint: CreationResumePoint) {
+    when (resumePoint) {
+        CreationResumePoint.KeywordStep -> add(CreateKeywordRoute)
+        CreationResumePoint.StorylineStep -> add(CreateStorylineRoute)
+        is CreationResumePoint.AdditionalInfoStep -> {
+            add(CreateStorylineRoute)
+            add(CreateAdditionalInfoRoute(resumePoint.storylineIndex))
+        }
+    }
 }
 
 /**

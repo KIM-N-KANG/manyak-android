@@ -88,6 +88,7 @@ data class ManyakColors(
     val borderWarning: Color,
     val borderInformation: Color,
     val borderFocused: Color,
+    val stepIndicatorActive: Color,
     val progressIndicator: Color,
 )
 
@@ -123,6 +124,7 @@ internal val ManyakLightColors =
         borderWarning = Amber700,
         borderInformation = Blue700,
         borderFocused = Green700,
+        stepIndicatorActive = Gray300,
         progressIndicator = Gray400,
     )
 
@@ -158,5 +160,6 @@ internal val ManyakDarkColors =
         borderWarning = Amber400,
         borderInformation = Blue400,
         borderFocused = Green400,
+        stepIndicatorActive = Gray650,
         progressIndicator = Gray400,
     )

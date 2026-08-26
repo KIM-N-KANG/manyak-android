@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    위 방향 화살표(셀렉트 열림). 색은 사용처에서 tint 하므로 자산 자체는 단색으로 둔다.
+    원본: angle-up-outline.svg (24×24).
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <path
+        android:pathData="M6.4697,14.5303C6.7626,14.8232 7.2374,14.8232 7.5303,14.5303L12,10.0607L16.4697,14.5303C16.7626,14.8232 17.2374,14.8232 17.5303,14.5303C17.8232,14.2374 17.8232,13.7626 17.5303,13.4697L12.5303,8.4697C12.2374,8.1768 11.7626,8.1768 11.4697,8.4697L6.4697,13.4697C6.1768,13.7626 6.1768,14.2374 6.4697,14.5303Z"
+        android:fillColor="#FF000000" />
+</vector>

@@ -24,6 +24,24 @@ suspend fun <T : Any> apiCall(request: suspend () -> Response<T>): DomainResult<
         DomainResult.Failure(DomainError.Serialization)
     }
 
+/**
+ * 본문 없는 성공(204 등)을 다루는 변형. Retrofit 은 204·205 응답의 본문을 컨버터에 넘기지
+ * 않아 `body()` 가 null 이므로, [apiCall] 의 "성공인데 본문 없음 = 역직렬화 실패" 판정을 쓸 수 없다.
+ */
+suspend fun emptyBodyApiCall(request: suspend () -> Response<Unit>): DomainResult<Unit> =
+    try {
+        val response = request()
+        if (response.isSuccessful) {
+            DomainResult.Success(Unit)
+        } else {
+            DomainResult.Failure(response.toDomainError())
+        }
+    } catch (_: IOException) {
+        DomainResult.Failure(DomainError.Network)
+    } catch (_: SerializationException) {
+        DomainResult.Failure(DomainError.Serialization)
+    }
+
 fun <T : Any> Response<T>.toDomainResult(): DomainResult<T> {
     val body = body()
     return when {

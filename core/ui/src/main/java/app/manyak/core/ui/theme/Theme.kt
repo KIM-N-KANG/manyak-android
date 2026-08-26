@@ -3,6 +3,7 @@ package app.manyak.core.ui.theme
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
@@ -57,6 +58,8 @@ fun ManyakTheme(
             CompositionLocalProvider(
                 LocalTextStyle provides ManyakDefaultTypography.bodyMedium,
                 LocalContentColor provides colors.text,
+                // 눌림 리플은 앱 전역에서 끈다 — 이 시스템은 눌림을 색 변화로만 말한다.
+                LocalRippleConfiguration provides null,
                 content = content,
             )
         }
