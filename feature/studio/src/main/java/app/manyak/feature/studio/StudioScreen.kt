@@ -1,5 +1,6 @@
 package app.manyak.feature.studio
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -55,6 +57,7 @@ fun StudioScreen(
     val currentOnCreateStory by rememberUpdatedState(onCreateStory)
     val currentOnResumeCreation by rememberUpdatedState(onResumeCreation)
     val lifecycleOwner = LocalLifecycleOwner.current
+    val context = LocalContext.current
 
     LaunchedEffect(viewModel, lifecycleOwner) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -62,6 +65,12 @@ fun StudioScreen(
                 when (effect) {
                     StudioEffect.NavigateToCreate -> currentOnCreateStory()
                     is StudioEffect.NavigateToResume -> currentOnResumeCreation(effect.resumePoint)
+
+                    StudioEffect.ShowStoryDeleted ->
+                        Toast.makeText(context, R.string.studio_story_deleted, Toast.LENGTH_SHORT).show()
+
+                    StudioEffect.ShowStoryDeleteFailed ->
+                        Toast.makeText(context, R.string.studio_story_delete_failed, Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -136,6 +145,14 @@ private fun StudioContent(
             onDismiss = { onIntent(StudioIntent.DismissResumeChoiceDialog) },
         )
     }
+
+    if (state.deleteTarget != null) {
+        DeleteStoryDialog(
+            isDeleting = state.isDeleting,
+            onConfirm = { onIntent(StudioIntent.ConfirmDeleteStory) },
+            onDismiss = { onIntent(StudioIntent.DismissDeleteDialog) },
+        )
+    }
 }
 
 /**
@@ -193,8 +210,10 @@ private fun MyStories(
             SectionTitle()
         }
         items(stories, key = { story -> story.id }) { story ->
-            // 메뉴 항목은 아직 없다 — 트리거 버튼만 먼저 둔다.
-            MyStoryCard(story = story, onMoreClick = {})
+            MyStoryCard(
+                story = story,
+                onDeleteClick = { onIntent(StudioIntent.RequestDeleteStory(story)) },
+            )
         }
     }
 }

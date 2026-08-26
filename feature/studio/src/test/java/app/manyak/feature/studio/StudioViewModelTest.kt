@@ -145,6 +145,75 @@ class StudioViewModelTest {
             assertEquals(sampleStories(), state.stories)
             assertEquals(2, repository.myStoriesCallCount)
         }
+
+    @Test
+    fun `삭제는 확인을 거쳐 목록에서 대상만 제거하고 완료 안내를 보낸다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryRepository()
+            val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository)
+            advanceUntilIdle()
+            val loadedState = viewModel.uiState.value
+            val target = loadedState.stories.first()
+
+            viewModel.onIntent(StudioIntent.RequestDeleteStory(target))
+            advanceUntilIdle()
+            assertEquals(target, viewModel.uiState.value.deleteTarget)
+
+            viewModel.onIntent(StudioIntent.ConfirmDeleteStory)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertNull(state.deleteTarget)
+            assertFalse(state.isDeleting)
+            assertEquals(listOf(target.id), repository.deletedStoryIds)
+            assertFalse(state.stories.any { story -> story.id == target.id })
+            assertEquals(
+                StudioEffect.ShowStoryDeleted,
+                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
+            )
+        }
+
+    @Test
+    fun `삭제 실패는 목록을 그대로 두고 실패 안내를 보낸다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryRepository()
+            repository.queuedDeleteResults.add(DomainResult.Failure(DomainError.Network))
+            val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository)
+            advanceUntilIdle()
+            val loadedState = viewModel.uiState.value
+            val target = loadedState.stories.first()
+
+            // 실제 화면처럼 다이얼로그가 뜬 뒤에야 확인을 누를 수 있다.
+            viewModel.onIntent(StudioIntent.RequestDeleteStory(target))
+            advanceUntilIdle()
+            viewModel.onIntent(StudioIntent.ConfirmDeleteStory)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertNull(state.deleteTarget)
+            assertEquals(sampleStories(), state.stories)
+            assertEquals(
+                StudioEffect.ShowStoryDeleteFailed,
+                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
+            )
+        }
+
+    @Test
+    fun `삭제 다이얼로그는 닫기 요청으로 대상 없이 닫힌다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryRepository()
+            val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository)
+            advanceUntilIdle()
+            val loadedState = viewModel.uiState.value
+            val target = loadedState.stories.first()
+
+            viewModel.onIntent(StudioIntent.RequestDeleteStory(target))
+            viewModel.onIntent(StudioIntent.DismissDeleteDialog)
+            advanceUntilIdle()
+
+            assertNull(viewModel.uiState.value.deleteTarget)
+            assertTrue(repository.deletedStoryIds.isEmpty())
+        }
 }
 
 private class FakePendingStoryCreationStore(

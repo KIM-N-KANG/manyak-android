@@ -14,4 +14,10 @@ interface StoryRepository {
      * 제외한다. 인증이 필요한 조회다.
      */
     suspend fun myStories(): DomainResult<List<StorySummary>>
+
+    /**
+     * 내가 만든 스토리 삭제(소프트). 이미 삭제된 스토리도 성공으로 본다 — 목록에서 사라지는
+     * 목표가 이미 달성된 상태라서다.
+     */
+    suspend fun deleteStory(storyId: String): DomainResult<Unit>
 }

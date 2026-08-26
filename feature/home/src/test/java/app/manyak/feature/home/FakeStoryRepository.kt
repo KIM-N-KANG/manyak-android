@@ -45,4 +45,6 @@ internal class FakeStoryRepository : StoryRepository {
     }
 
     override suspend fun myStories(): DomainResult<List<StorySummary>> = DomainResult.Success(emptyList())
+
+    override suspend fun deleteStory(storyId: String): DomainResult<Unit> = DomainResult.Success(Unit)
 }

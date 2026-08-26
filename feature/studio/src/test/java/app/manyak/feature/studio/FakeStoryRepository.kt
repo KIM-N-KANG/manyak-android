@@ -40,4 +40,13 @@ internal class FakeStoryRepository : StoryRepository {
         myStoriesCallCount++
         return queuedResults.removeFirstOrNull() ?: DomainResult.Success(sampleStories())
     }
+
+    val deletedStoryIds = mutableListOf<String>()
+    val queuedDeleteResults = ArrayDeque<DomainResult<Unit>>()
+
+    override suspend fun deleteStory(storyId: String): DomainResult<Unit> {
+        yield()
+        deletedStoryIds += storyId
+        return queuedDeleteResults.removeFirstOrNull() ?: DomainResult.Success(Unit)
+    }
 }

@@ -28,6 +28,9 @@ data class StudioUiState(
     val pendingBanner: PendingCreationBanner? = null,
     /** FAB 등 배너가 아닌 경로로 진입하려는데 임시 저장본이 있어 이어서/새로 만들기를 묻는 중. */
     val showResumeChoiceDialog: Boolean = false,
+    /** 삭제 확인을 묻는 대상. null 이면 다이얼로그가 없다. */
+    val deleteTarget: StorySummary? = null,
+    val isDeleting: Boolean = false,
 )
 
 sealed interface StudioIntent {
@@ -44,6 +47,15 @@ sealed interface StudioIntent {
 
     /** 목록 조회 실패 화면의 다시 시도. */
     data object Retry : StudioIntent
+
+    /** 카드 더보기 메뉴의 "삭제하기" — 바로 지우지 않고 확인을 묻는다. */
+    data class RequestDeleteStory(
+        val story: StorySummary,
+    ) : StudioIntent
+
+    data object ConfirmDeleteStory : StudioIntent
+
+    data object DismissDeleteDialog : StudioIntent
 }
 
 sealed interface StudioEvent {
@@ -54,6 +66,20 @@ sealed interface StudioEvent {
     ) : StudioEvent
 
     data object LoadFailed : StudioEvent
+
+    data class DeleteRequested(
+        val story: StorySummary,
+    ) : StudioEvent
+
+    data object DeleteDialogDismissed : StudioEvent
+
+    data object DeleteStarted : StudioEvent
+
+    data class DeleteSucceeded(
+        val storyId: String,
+    ) : StudioEvent
+
+    data object DeleteFailed : StudioEvent
 
     data class PendingCreationChanged(
         val banner: PendingCreationBanner?,
@@ -72,6 +98,10 @@ sealed interface StudioEffect {
     data class NavigateToResume(
         val resumePoint: CreationResumePoint,
     ) : StudioEffect
+
+    data object ShowStoryDeleted : StudioEffect
+
+    data object ShowStoryDeleteFailed : StudioEffect
 }
 
 /**
@@ -88,6 +118,7 @@ class StudioViewModel
         private val storyRepository: StoryRepository,
     ) : MviViewModel<StudioIntent, StudioUiState, StudioEvent, StudioEffect>(StudioUiState()) {
         private var loadJob: Job? = null
+        private var deleteJob: Job? = null
 
         init {
             viewModelScope.launch {
@@ -102,6 +133,14 @@ class StudioViewModel
             val state = uiState.value
             when (intent) {
                 StudioIntent.Retry -> load()
+
+                is StudioIntent.RequestDeleteStory -> dispatchEvent(StudioEvent.DeleteRequested(intent.story))
+
+                StudioIntent.ConfirmDeleteStory -> state.deleteTarget?.let { target -> delete(target) }
+
+                StudioIntent.DismissDeleteDialog ->
+                    // 삭제가 진행 중이면 닫지 않는다 — 결과가 정해진 뒤 상태 전이가 닫는다.
+                    if (deleteJob?.isActive != true) dispatchEvent(StudioEvent.DeleteDialogDismissed)
                 StudioIntent.CreateStory ->
                     if (state.pendingBanner == null) {
                         dispatchEffect(StudioEffect.NavigateToCreate)
@@ -139,6 +178,25 @@ class StudioViewModel
                 }
         }
 
+        private fun delete(target: StorySummary) {
+            if (deleteJob?.isActive == true) return
+            deleteJob =
+                viewModelScope.launch {
+                    dispatchEvent(StudioEvent.DeleteStarted)
+                    when (storyRepository.deleteStory(target.id)) {
+                        is DomainResult.Success -> {
+                            dispatchEvent(StudioEvent.DeleteSucceeded(target.id))
+                            dispatchEffect(StudioEffect.ShowStoryDeleted)
+                        }
+
+                        is DomainResult.Failure -> {
+                            dispatchEvent(StudioEvent.DeleteFailed)
+                            dispatchEffect(StudioEffect.ShowStoryDeleteFailed)
+                        }
+                    }
+                }
+        }
+
         override fun reduce(
             state: StudioUiState,
             event: StudioEvent,
@@ -150,6 +208,22 @@ class StudioViewModel
                     state.copy(isLoading = false, stories = event.stories, loadFailed = false)
 
                 StudioEvent.LoadFailed -> state.copy(isLoading = false, stories = emptyList(), loadFailed = true)
+
+                is StudioEvent.DeleteRequested -> state.copy(deleteTarget = event.story)
+
+                StudioEvent.DeleteDialogDismissed -> state.copy(deleteTarget = null)
+
+                StudioEvent.DeleteStarted -> state.copy(isDeleting = true)
+
+                // 서버 재조회 대신 로컬 제거로 목록을 맞춘다 — 서버가 지운 것을 다시 물을 이유가 없다.
+                is StudioEvent.DeleteSucceeded ->
+                    state.copy(
+                        isDeleting = false,
+                        deleteTarget = null,
+                        stories = state.stories.filterNot { story -> story.id == event.storyId },
+                    )
+
+                StudioEvent.DeleteFailed -> state.copy(isDeleting = false, deleteTarget = null)
 
                 is StudioEvent.PendingCreationChanged ->
                     state.copy(

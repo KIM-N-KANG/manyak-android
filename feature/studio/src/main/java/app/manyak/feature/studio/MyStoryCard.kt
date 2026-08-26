@@ -1,6 +1,7 @@
 package app.manyak.feature.studio
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -8,18 +9,32 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.window.PopupProperties
 import app.manyak.core.domain.story.StorySummary
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.StoryOverlayScrim
@@ -37,19 +52,32 @@ import app.manyak.core.ui.theme.ManyakTheme
 @Composable
 internal fun MyStoryCard(
     story: StorySummary,
-    onMoreClick: () -> Unit,
+    onDeleteClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // 메뉴 펼침은 이 카드 밖에서 알 필요가 없는 표현 상태라 로컬에 둔다.
+    var menuExpanded by remember { mutableStateOf(false) }
+
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
         StoryThumbnail(thumbnailUrl = story.thumbnailUrl, turnCount = story.turnCount) {
-            MoreMenuButton(
-                onClick = onMoreClick,
+            Box(
                 // 턴 수 뱃지가 아래·오른쪽에서 띄우는 만큼과 같은 간격으로 위·오른쪽에서 띄운다.
                 modifier = Modifier.align(Alignment.TopEnd).padding(ManyakTheme.spacing.compact),
-            )
+            ) {
+                MoreMenuButton(onClick = { menuExpanded = true })
+                if (menuExpanded) {
+                    StoryCardMenu(
+                        onDismiss = { menuExpanded = false },
+                        onDelete = {
+                            menuExpanded = false
+                            onDeleteClick()
+                        },
+                    )
+                }
+            }
         }
         Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.hairline)) {
             Text(
@@ -107,6 +135,80 @@ private fun MoreMenuButton(
     }
 }
 
+/**
+ * 카드 더보기 메뉴. 트리거 오른쪽 끝에 맞춰 아래로 연다 — 트리거가 표지 우상단에 있어
+ * 왼쪽 정렬로 열면 카드 밖으로 나간다.
+ *
+ * M3 `DropdownMenu` 대신 GenderSelect 와 같은 Popup 직접 구성을 쓴다. 항목이 하나뿐인 메뉴가
+ * 공간에 따라 위로 뒤집히면 트리거를 가리기 때문이다.
+ */
+@Composable
+private fun StoryCardMenu(
+    onDismiss: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    val density = LocalDensity.current
+    val gapPx = with(density) { ManyakTheme.spacing.inline.roundToPx() }
+    val positionProvider =
+        remember(gapPx) {
+            object : PopupPositionProvider {
+                override fun calculatePosition(
+                    anchorBounds: IntRect,
+                    windowSize: IntSize,
+                    layoutDirection: LayoutDirection,
+                    popupContentSize: IntSize,
+                ): IntOffset =
+                    IntOffset(
+                        x = (anchorBounds.right - popupContentSize.width).coerceAtLeast(0),
+                        y = anchorBounds.bottom + gapPx,
+                    )
+            }
+        }
+
+    Popup(
+        popupPositionProvider = positionProvider,
+        onDismissRequest = onDismiss,
+        properties = PopupProperties(focusable = true),
+    ) {
+        Column(
+            modifier =
+                Modifier
+                    .shadow(elevation = 1.dp, shape = ManyakTheme.shapes.control)
+                    .background(ManyakTheme.colors.surfaceRaised, ManyakTheme.shapes.control)
+                    .border(1.dp, ManyakTheme.colors.border, ManyakTheme.shapes.control)
+                    .clip(ManyakTheme.shapes.control)
+                    .padding(ManyakTheme.spacing.compact),
+        ) {
+            DeleteMenuItem(onClick = onDelete)
+        }
+    }
+}
+
+/** 파괴적 항목이라 텍스트를 danger 색으로 둔다. 확인은 다이얼로그가 한 번 더 묻는다. */
+@Composable
+private fun DeleteMenuItem(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        modifier =
+            modifier
+                // 한 단어 항목이라 내용 폭만으로는 누를 자리가 좁다.
+                .widthIn(min = MenuItemMinWidth)
+                .clip(ManyakTheme.shapes.menuItem)
+                .clickable(role = Role.Button, onClick = onClick)
+                .padding(
+                    horizontal = ManyakTheme.spacing.controlHorizontal,
+                    vertical = ManyakTheme.spacing.controlVertical,
+                ),
+        text = stringResource(R.string.studio_story_delete),
+        style = ManyakTheme.typography.bodyMedium,
+        color = ManyakTheme.colors.textDanger,
+    )
+}
+
 private val MoreButtonSize = 28.dp
 
 private val MoreIconSize = 14.dp
+
+private val MenuItemMinWidth = 120.dp
