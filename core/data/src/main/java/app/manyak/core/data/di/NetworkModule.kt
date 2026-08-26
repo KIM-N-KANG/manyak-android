@@ -4,6 +4,7 @@ import app.manyak.core.data.api.AuthApi
 import app.manyak.core.data.api.ChatApi
 import app.manyak.core.data.api.CreationRequestApi
 import app.manyak.core.data.api.SimpleStoryApi
+import app.manyak.core.data.api.StoryApi
 import app.manyak.core.data.api.StoryGenerationApi
 import app.manyak.core.data.api.StoryRatingApi
 import app.manyak.core.data.api.UserApi
@@ -90,6 +91,15 @@ object NetworkModule {
         config: DataLayerConfig,
         json: Json,
     ): AuthApi = retrofit(client, config, json).create(AuthApi::class.java)
+
+    /** 오리지널 목록은 인증을 요구하지 않아 토큰 없는 클라이언트로 부른다. */
+    @Provides
+    @Singleton
+    fun provideStoryApi(
+        @PlainClient client: OkHttpClient,
+        config: DataLayerConfig,
+        json: Json,
+    ): StoryApi = retrofit(client, config, json).create(StoryApi::class.java)
 
     @Provides
     @Singleton

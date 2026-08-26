@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    오리지널 스토리 카드 썸네일 좌상단에 얹는 ORIGINAL 태그.
+    원본: manyak-web public/stories/manyak-original-tag-black-green-translucent.svg (600x216).
+
+    다색 자산이라 사용처에서 tint 하지 않는다. 모서리 라운드(좌상단 11dp 상당, 우하단 6dp 상당)는
+    바탕 path 에 이미 들어 있어 별도 clip 이 필요 없다.
+
+    웹은 바탕에 backdrop blur 를 함께 걸지만 앱은 반투명만 쓴다 — 뒤 콘텐츠를 흐리는 수단이
+    RenderEffect(API 31+) 뿐이라 minSdk 24 의 전 기기에 걸리지 않고, 스크롤되는 그리드에서
+    카드마다 레이어를 기록하는 비용도 크다.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="72dp"
+    android:height="26dp"
+    android:viewportWidth="600"
+    android:viewportHeight="216">
+
+    <path
+        android:pathData="M92 0H600V170A46 46 0 0 1 554 216H0V92A92 92 0 0 1 92 0Z"
+        android:fillColor="#111414"
+        android:fillAlpha="0.2" />
+
+    <group
+        android:translateX="31"
+        android:translateY="52"
+        android:scaleX="1.75"
+        android:scaleY="1.75">
+
+        <path
+            android:pathData="M30 44H24A12 12 0 0 1 12 32V20A12 12 0 0 1 24 8H40A12 12 0 0 1 52 20V44C52 51 50 56 44 56H16"
+            android:strokeColor="#05A66B"
+            android:strokeWidth="7.6"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round" />
+
+        <!-- 원본의 <circle cx="25" cy="24" r="4"> — VectorDrawable 은 원 요소가 없어 호로 옮긴다. -->
+        <path
+            android:pathData="M21,24a4,4 0 1,0 8,0a4,4 0 1,0 -8,0Z"
+            android:fillColor="#05A66B" />
+
+        <!-- 원본의 <circle cx="39" cy="24" r="4">. -->
+        <path
+            android:pathData="M35,24a4,4 0 1,0 8,0a4,4 0 1,0 -8,0Z"
+            android:fillColor="#05A66B" />
+    </group>
+
+    <!-- ORIGINAL 워드마크. 원본이 y 축을 뒤집어 그리므로 scaleY 가 음수다. -->
+    <group
+        android:translateX="155"
+        android:translateY="150"
+        android:scaleX="0.129775281"
+        android:scaleY="-0.117977528">
+
+        <path
+            android:pathData="M42.0 544Q42.0 587 57.0 620.0Q72.0 653 97.0 675Q121.0 696 151.5 707.0Q182.0 718 213.0 718Q244.0 718 274.5 707.0Q305.0 696 330.0 675Q354.0 653 369.0 620.0Q384.0 587 384.0 544V168Q384.0 123 369.0 91.0Q354.0 59 330.0 38Q305.0 16 274.5 5.0Q244.0 -6 213.0 -6Q182.0 -6 151.5 5.0Q121.0 16 97.0 38Q72.0 59 57.0 91.0Q42.0 123 42.0 168ZM144.0 168Q144.0 131 164.5 113.5Q185.0 96 213.0 96Q241.0 96 261.5 113.5Q282.0 131 282.0 168V544Q282.0 581 261.5 598.5Q241.0 616 213.0 616Q185.0 616 164.5 598.5Q144.0 581 144.0 544ZM601.0 616V394H659.0Q686.0 394 702.0 401.5Q718.0 409 727.0 423Q735.0 437 738.0 457.5Q741.0 478 741.0 505Q741.0 532 738.0 552.5Q735.0 573 726.0 588Q707.0 616 654.0 616ZM499.0 0V712H663.0Q843.0 712 843.0 503Q843.0 440 823.5 396.0Q804.0 352 755.0 325L865.0 0H757.0L662.0 304H601.0V0ZM953.0 0V712H1055.0V0ZM1173.0 544Q1173.0 587 1188.0 620.0Q1203.0 653 1228.0 675Q1252.0 696 1282.5 707.0Q1313.0 718 1344.0 718Q1375.0 718 1405.5 707.0Q1436.0 696 1461.0 675Q1485.0 653 1500.0 620.0Q1515.0 587 1515.0 544V508H1413.0V544Q1413.0 581 1392.5 598.5Q1372.0 616 1344.0 616Q1316.0 616 1295.5 598.5Q1275.0 581 1275.0 544V168Q1275.0 131 1295.5 113.5Q1316.0 96 1344.0 96Q1372.0 96 1392.5 113.5Q1413.0 131 1413.0 168V302H1332.0V392H1515.0V168Q1515.0 123 1500.0 91.0Q1485.0 59 1461.0 38Q1436.0 16 1405.5 5.0Q1375.0 -6 1344.0 -6Q1313.0 -6 1282.5 5.0Q1252.0 16 1228.0 38Q1203.0 59 1188.0 91.0Q1173.0 123 1173.0 168ZM1633.0 0V712H1735.0V0ZM1855.0 0V712H1953.0L2107.0 283H2109.0V712H2211.0V0H2115.0L1959.0 428H1957.0V0ZM2534.0 249 2484.0 507H2482.0L2432.0 249ZM2282.0 0 2441.0 712H2526.0L2685.0 0H2583.0L2553.0 153H2414.0L2384.0 0ZM2760.0 0V712H2862.0V102H3064.0V0Z"
+            android:fillColor="#FFFFFF" />
+    </group>
+</vector>

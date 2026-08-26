@@ -1,0 +1,140 @@
+package app.manyak.feature.home
+
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
+import app.manyak.core.ui.R
+import app.manyak.core.ui.theme.ManyakTheme
+
+/**
+ * 조회 중 자리를 잡아 두는 골격. 카드와 **같은 구조**(3:4 표지 + 제목 줄 + 제작자 줄)라
+ * 목록이 도착할 때 요소가 튀지 않는다.
+ *
+ * 표시 여부는 호출부가 지연 판정으로 정한다 — 금방 끝나는 조회에서는 아예 그리지 않는다.
+ */
+@Composable
+internal fun OriginalStoriesSkeleton(
+    contentPadding: PaddingValues,
+    modifier: Modifier = Modifier,
+) {
+    val description = stringResource(R.string.home_loading)
+    val alpha = rememberPulseAlpha()
+
+    LazyVerticalGrid(
+        modifier = modifier.fillMaxSize().semantics { contentDescription = description },
+        columns = GridCells.Fixed(GRID_COLUMNS),
+        contentPadding = contentPadding,
+        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
+        // 아직 아무것도 없는 자리이므로 스크롤로 더 볼 것이 없다.
+        userScrollEnabled = false,
+    ) {
+        item(span = { GridItemSpan(maxLineSpan) }) {
+            Placeholder(
+                modifier = Modifier.width(SectionTitleWidth).height(SectionTitleHeight),
+                alpha = alpha,
+            )
+        }
+        items(PLACEHOLDER_CARD_COUNT) {
+            CardPlaceholder(alpha = alpha)
+        }
+    }
+}
+
+@Composable
+private fun CardPlaceholder(
+    alpha: Float,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+    ) {
+        Placeholder(
+            modifier = Modifier.fillMaxWidth().aspectRatio(THUMBNAIL_ASPECT_RATIO),
+            alpha = alpha,
+            shape = ManyakTheme.shapes.thumbnail,
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.hairline)) {
+            Placeholder(
+                modifier = Modifier.fillMaxWidth(TITLE_WIDTH_FRACTION).height(TitleLineHeight),
+                alpha = alpha,
+            )
+            Placeholder(
+                modifier = Modifier.fillMaxWidth(AUTHOR_WIDTH_FRACTION).height(AuthorLineHeight),
+                alpha = alpha,
+            )
+        }
+    }
+}
+
+@Composable
+private fun Placeholder(
+    alpha: Float,
+    modifier: Modifier = Modifier,
+    shape: Shape = ManyakTheme.shapes.pill,
+) {
+    Box(
+        modifier =
+            modifier
+                .alpha(alpha)
+                .clip(shape)
+                .background(ManyakTheme.colors.backgroundNeutral),
+    )
+}
+
+/** 정지한 회색 덩어리는 비어 있는 화면과 구분되지 않아, 옅게 맥동시켜 조회 중임을 드러낸다. */
+@Composable
+private fun rememberPulseAlpha(): Float {
+    val transition = rememberInfiniteTransition(label = "skeleton-pulse")
+    val alpha by transition.animateFloat(
+        initialValue = 1f,
+        targetValue = PULSE_MIN_ALPHA,
+        animationSpec =
+            infiniteRepeatable(
+                animation = tween(durationMillis = PULSE_DURATION_MILLIS),
+                repeatMode = RepeatMode.Reverse,
+            ),
+        label = "skeleton-pulse-alpha",
+    )
+    return alpha
+}
+
+/** 스펙이 정한 골격 카드 수. 첫 화면을 채우고도 남는 만큼이다. */
+private const val PLACEHOLDER_CARD_COUNT = 6
+
+private const val TITLE_WIDTH_FRACTION = 0.75f
+private const val AUTHOR_WIDTH_FRACTION = 0.5f
+
+private const val PULSE_MIN_ALPHA = 0.4f
+private const val PULSE_DURATION_MILLIS = 700
+
+private val SectionTitleWidth = 128.dp
+private val SectionTitleHeight = 28.dp
+private val TitleLineHeight = 24.dp
+private val AuthorLineHeight = 20.dp
