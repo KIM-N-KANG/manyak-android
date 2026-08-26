@@ -12,7 +12,9 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberDecoratedNavEntries
@@ -22,6 +24,7 @@ import app.manyak.core.domain.story.CreationResumePoint
 import app.manyak.core.navigation.ChatListRoute
 import app.manyak.core.navigation.HomeRoute
 import app.manyak.core.navigation.MyRoute
+import app.manyak.core.navigation.StudioRoute
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ManyakNavigationBar
 import app.manyak.core.ui.component.ManyakNavigationItem
@@ -30,6 +33,7 @@ import app.manyak.core.ui.theme.ManyakTheme
 import app.manyak.feature.chat.ChatListScreen
 import app.manyak.feature.home.HomeScreen
 import app.manyak.feature.my.MyScreen
+import app.manyak.feature.studio.StudioScreen
 
 /**
  * 목적지와 탭의 대응을 맺는 유일한 자리.
@@ -51,6 +55,11 @@ private enum class MainTab(
         unselectedIconRes = R.drawable.ic_nav_chat_outline,
         nameRes = R.string.main_tab_chat,
     ),
+    STUDIO(
+        selectedIconRes = R.drawable.ic_nav_studio_filled,
+        unselectedIconRes = R.drawable.ic_nav_studio_outline,
+        nameRes = R.string.main_tab_studio,
+    ),
     MY(
         selectedIconRes = R.drawable.ic_nav_my_filled,
         unselectedIconRes = R.drawable.ic_nav_my_outline,
@@ -59,7 +68,7 @@ private enum class MainTab(
 }
 
 /**
- * 하단 탭 셋을 두르는 셸. 헤더와 하단 바를 여기서만 그리고, 탭 화면에는 chrome 이 차지한 여백만 넘긴다.
+ * 하단 탭 넷을 두르는 셸. 헤더와 하단 바를 여기서만 그리고, 탭 화면에는 chrome 이 차지한 여백만 넘긴다.
  *
  * **탭마다 백스택을 따로 소유한다.** 탭을 옮겨도 떠난 탭의 백스택과 그에 묶인 상태가 남아 있어,
  * 돌아왔을 때 스크롤 위치와 목록 상태가 유지된다. 탭 전환 자체는 어느 백스택을 그릴지 고르는 일이라
@@ -137,43 +146,33 @@ private fun MainTabsContent(
     val screenTransition = rememberScreenTransition()
 
     val homeEntries =
-        rememberDecoratedNavEntries(
-            backStack = backStacks.getValue(MainTab.HOME),
-            entryDecorators = rememberManyakEntryDecorators(),
-            entryProvider =
-                entryProvider<NavKey> {
-                    entry<HomeRoute> {
-                        HomeScreen(
-                            contentPadding = padding.value,
-                            onCreateStory = onCreateStory,
-                            onResumeCreation = onResumeCreation,
-                        )
-                    }
-                },
-        )
+        rememberTabEntries(backStacks.getValue(MainTab.HOME)) {
+            entry<HomeRoute> { HomeScreen(contentPadding = padding.value) }
+        }
     val chatEntries =
-        rememberDecoratedNavEntries(
-            backStack = backStacks.getValue(MainTab.CHAT),
-            entryDecorators = rememberManyakEntryDecorators(),
-            entryProvider =
-                entryProvider<NavKey> {
-                    entry<ChatListRoute> { ChatListScreen(contentPadding = padding.value) }
-                },
-        )
+        rememberTabEntries(backStacks.getValue(MainTab.CHAT)) {
+            entry<ChatListRoute> { ChatListScreen(contentPadding = padding.value) }
+        }
+    val studioEntries =
+        rememberTabEntries(backStacks.getValue(MainTab.STUDIO)) {
+            entry<StudioRoute> {
+                StudioScreen(
+                    contentPadding = padding.value,
+                    onCreateStory = onCreateStory,
+                    onResumeCreation = onResumeCreation,
+                )
+            }
+        }
     val myEntries =
-        rememberDecoratedNavEntries(
-            backStack = backStacks.getValue(MainTab.MY),
-            entryDecorators = rememberManyakEntryDecorators(),
-            entryProvider =
-                entryProvider<NavKey> {
-                    entry<MyRoute> { MyScreen(contentPadding = padding.value) }
-                },
-        )
+        rememberTabEntries(backStacks.getValue(MainTab.MY)) {
+            entry<MyRoute> { MyScreen(contentPadding = padding.value) }
+        }
 
     val entries =
         when (selectedTab) {
             MainTab.HOME -> homeEntries
             MainTab.CHAT -> homeEntries.take(1) + chatEntries
+            MainTab.STUDIO -> homeEntries.take(1) + studioEntries
             MainTab.MY -> homeEntries.take(1) + myEntries
         }
 
@@ -188,13 +187,31 @@ private fun MainTabsContent(
     )
 }
 
+/** 탭마다 백스택과 등록할 목적지만 다르고 데코레이터는 같으므로, 그 배선은 여기 한 곳에만 둔다. */
+@Composable
+private fun rememberTabEntries(
+    backStack: NavBackStack<NavKey>,
+    builder: EntryProviderScope<NavKey>.() -> Unit,
+): List<NavEntry<NavKey>> =
+    rememberDecoratedNavEntries(
+        backStack = backStack,
+        entryDecorators = rememberManyakEntryDecorators(),
+        entryProvider = entryProvider(builder = builder),
+    )
+
 @Composable
 private fun rememberTabBackStacks(): Map<MainTab, NavBackStack<NavKey>> {
     val home = rememberNavBackStack(HomeRoute)
     val chat = rememberNavBackStack(ChatListRoute)
+    val studio = rememberNavBackStack(StudioRoute)
     val my = rememberNavBackStack(MyRoute)
-    return remember(home, chat, my) {
-        mapOf(MainTab.HOME to home, MainTab.CHAT to chat, MainTab.MY to my)
+    return remember(home, chat, studio, my) {
+        mapOf(
+            MainTab.HOME to home,
+            MainTab.CHAT to chat,
+            MainTab.STUDIO to studio,
+            MainTab.MY to my,
+        )
     }
 }
 

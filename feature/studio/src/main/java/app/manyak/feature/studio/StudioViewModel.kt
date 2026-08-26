@@ -1,4 +1,4 @@
-package app.manyak.feature.home
+package app.manyak.feature.studio
 
 import androidx.lifecycle.viewModelScope
 import app.manyak.core.domain.story.CreationResumePoint
@@ -17,100 +17,100 @@ data class PendingCreationBanner(
     val resumePoint: CreationResumePoint,
 )
 
-data class HomeUiState(
+data class StudioUiState(
     val pendingBanner: PendingCreationBanner? = null,
     /** FAB 등 배너가 아닌 경로로 진입하려는데 임시 저장본이 있어 이어서/새로 만들기를 묻는 중. */
     val showResumeChoiceDialog: Boolean = false,
 )
 
-sealed interface HomeIntent {
+sealed interface StudioIntent {
     /** 제작 퍼널 진입 시도(FAB). 진행 레코드가 있으면 다이얼로그로 묻는다. */
-    data object CreateStory : HomeIntent
+    data object CreateStory : StudioIntent
 
     /** 배너의 "이어서 만들기". */
-    data object ResumeCreation : HomeIntent
+    data object ResumeCreation : StudioIntent
 
     /** 다이얼로그의 "새로 만들기" — 레코드를 폐기하고 키워드 단계부터 시작한다. */
-    data object StartNewCreation : HomeIntent
+    data object StartNewCreation : StudioIntent
 
-    data object DismissResumeChoiceDialog : HomeIntent
+    data object DismissResumeChoiceDialog : StudioIntent
 }
 
-sealed interface HomeEvent {
+sealed interface StudioEvent {
     data class PendingCreationChanged(
         val banner: PendingCreationBanner?,
-    ) : HomeEvent
+    ) : StudioEvent
 
     data class ResumeChoiceDialogVisibleChanged(
         val visible: Boolean,
-    ) : HomeEvent
+    ) : StudioEvent
 }
 
-sealed interface HomeEffect {
+sealed interface StudioEffect {
     /** 새 생성으로 퍼널 진입 — 키워드 단계부터. */
-    data object NavigateToCreate : HomeEffect
+    data object NavigateToCreate : StudioEffect
 
     /** 재개 진입 — 레코드 단계까지 퍼널 백스택을 쌓는다. */
     data class NavigateToResume(
         val resumePoint: CreationResumePoint,
-    ) : HomeEffect
+    ) : StudioEffect
 }
 
 @HiltViewModel
-class HomeViewModel
+class StudioViewModel
     @Inject
     constructor(
         private val pendingCreationStore: PendingStoryCreationStore,
-    ) : MviViewModel<HomeIntent, HomeUiState, HomeEvent, HomeEffect>(HomeUiState()) {
+    ) : MviViewModel<StudioIntent, StudioUiState, StudioEvent, StudioEffect>(StudioUiState()) {
         init {
             viewModelScope.launch {
                 pendingCreationStore.record.collect { record ->
-                    dispatchEvent(HomeEvent.PendingCreationChanged(record?.toBanner()))
+                    dispatchEvent(StudioEvent.PendingCreationChanged(record?.toBanner()))
                 }
             }
         }
 
-        override suspend fun handleIntent(intent: HomeIntent) {
+        override suspend fun handleIntent(intent: StudioIntent) {
             val state = uiState.value
             when (intent) {
-                HomeIntent.CreateStory ->
+                StudioIntent.CreateStory ->
                     if (state.pendingBanner == null) {
-                        dispatchEffect(HomeEffect.NavigateToCreate)
+                        dispatchEffect(StudioEffect.NavigateToCreate)
                     } else {
-                        dispatchEvent(HomeEvent.ResumeChoiceDialogVisibleChanged(visible = true))
+                        dispatchEvent(StudioEvent.ResumeChoiceDialogVisibleChanged(visible = true))
                     }
 
-                HomeIntent.ResumeCreation ->
+                StudioIntent.ResumeCreation ->
                     state.pendingBanner?.let { banner ->
-                        dispatchEvent(HomeEvent.ResumeChoiceDialogVisibleChanged(visible = false))
-                        dispatchEffect(HomeEffect.NavigateToResume(banner.resumePoint))
+                        dispatchEvent(StudioEvent.ResumeChoiceDialogVisibleChanged(visible = false))
+                        dispatchEffect(StudioEffect.NavigateToResume(banner.resumePoint))
                     }
 
-                HomeIntent.StartNewCreation -> {
+                StudioIntent.StartNewCreation -> {
                     // 레코드 폐기가 진입보다 먼저다 — 레코드가 남은 채 들어가면 재개로 복원된다.
                     pendingCreationStore.clear()
-                    dispatchEvent(HomeEvent.ResumeChoiceDialogVisibleChanged(visible = false))
-                    dispatchEffect(HomeEffect.NavigateToCreate)
+                    dispatchEvent(StudioEvent.ResumeChoiceDialogVisibleChanged(visible = false))
+                    dispatchEffect(StudioEffect.NavigateToCreate)
                 }
 
-                HomeIntent.DismissResumeChoiceDialog ->
-                    dispatchEvent(HomeEvent.ResumeChoiceDialogVisibleChanged(visible = false))
+                StudioIntent.DismissResumeChoiceDialog ->
+                    dispatchEvent(StudioEvent.ResumeChoiceDialogVisibleChanged(visible = false))
             }
         }
 
         override fun reduce(
-            state: HomeUiState,
-            event: HomeEvent,
-        ): HomeUiState =
+            state: StudioUiState,
+            event: StudioEvent,
+        ): StudioUiState =
             when (event) {
-                is HomeEvent.PendingCreationChanged ->
+                is StudioEvent.PendingCreationChanged ->
                     state.copy(
                         pendingBanner = event.banner,
                         // 다이얼로그가 열린 사이 레코드가 사라졌으면 물을 것도 없다.
                         showResumeChoiceDialog = state.showResumeChoiceDialog && event.banner != null,
                     )
 
-                is HomeEvent.ResumeChoiceDialogVisibleChanged ->
+                is StudioEvent.ResumeChoiceDialogVisibleChanged ->
                     state.copy(showResumeChoiceDialog = event.visible)
             }
     }

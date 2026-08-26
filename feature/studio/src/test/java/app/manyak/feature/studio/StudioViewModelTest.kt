@@ -1,4 +1,4 @@
-package app.manyak.feature.home
+package app.manyak.feature.studio
 
 import app.manyak.core.domain.story.CreationProgress
 import app.manyak.core.domain.story.CreationResumePoint
@@ -29,7 +29,7 @@ import org.junit.Before
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class HomeViewModelTest {
+class StudioViewModelTest {
     private val dispatcher = StandardTestDispatcher()
 
     @Before
@@ -45,16 +45,16 @@ class HomeViewModelTest {
     @Test
     fun `진행 레코드가 없으면 배너 없이 바로 새 생성으로 진입한다`() =
         runTest(dispatcher) {
-            val viewModel = HomeViewModel(FakePendingStoryCreationStore())
+            val viewModel = StudioViewModel(FakePendingStoryCreationStore())
             advanceUntilIdle()
 
             assertNull(viewModel.uiState.value.pendingBanner)
 
-            viewModel.onIntent(HomeIntent.CreateStory)
+            viewModel.onIntent(StudioIntent.CreateStory)
             advanceUntilIdle()
 
             assertEquals(
-                HomeEffect.NavigateToCreate,
+                StudioEffect.NavigateToCreate,
                 withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
             )
         }
@@ -63,7 +63,7 @@ class HomeViewModelTest {
     fun `완성 진행 레코드는 완성 중 배너와 추가 정보 재개 지점이 된다`() =
         runTest(dispatcher) {
             val store = FakePendingStoryCreationStore(initial = completingRecord(selectedIndex = 2))
-            val viewModel = HomeViewModel(store)
+            val viewModel = StudioViewModel(store)
             advanceUntilIdle()
 
             val banner = viewModel.uiState.value.pendingBanner
@@ -75,20 +75,20 @@ class HomeViewModelTest {
     fun `레코드가 있는 FAB 진입은 다이얼로그로 묻고 새로 만들기는 폐기 후 진입한다`() =
         runTest(dispatcher) {
             val store = FakePendingStoryCreationStore(initial = generatingRecord())
-            val viewModel = HomeViewModel(store)
+            val viewModel = StudioViewModel(store)
             advanceUntilIdle()
 
-            viewModel.onIntent(HomeIntent.CreateStory)
+            viewModel.onIntent(StudioIntent.CreateStory)
             advanceUntilIdle()
             assertTrue(viewModel.uiState.value.showResumeChoiceDialog)
 
-            viewModel.onIntent(HomeIntent.StartNewCreation)
+            viewModel.onIntent(StudioIntent.StartNewCreation)
             advanceUntilIdle()
 
             assertNull(store.current)
             assertFalse(viewModel.uiState.value.showResumeChoiceDialog)
             assertEquals(
-                HomeEffect.NavigateToCreate,
+                StudioEffect.NavigateToCreate,
                 withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
             )
         }
@@ -97,14 +97,14 @@ class HomeViewModelTest {
     fun `이어서 만들기는 레코드 단계의 재개 지점으로 진입한다`() =
         runTest(dispatcher) {
             val store = FakePendingStoryCreationStore(initial = generatingRecord())
-            val viewModel = HomeViewModel(store)
+            val viewModel = StudioViewModel(store)
             advanceUntilIdle()
 
-            viewModel.onIntent(HomeIntent.ResumeCreation)
+            viewModel.onIntent(StudioIntent.ResumeCreation)
             advanceUntilIdle()
 
             assertEquals(
-                HomeEffect.NavigateToResume(CreationResumePoint.StorylineStep),
+                StudioEffect.NavigateToResume(CreationResumePoint.StorylineStep),
                 withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
             )
         }

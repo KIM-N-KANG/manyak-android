@@ -120,6 +120,13 @@ private fun previewItems(): List<ManyakNavigationItem> =
             onSelect = {},
         ),
         ManyakNavigationItem(
+            selectedIconRes = R.drawable.ic_nav_studio_filled,
+            unselectedIconRes = R.drawable.ic_nav_studio_outline,
+            nameRes = R.string.main_tab_studio,
+            selected = false,
+            onSelect = {},
+        ),
+        ManyakNavigationItem(
             selectedIconRes = R.drawable.ic_nav_my_filled,
             unselectedIconRes = R.drawable.ic_nav_my_outline,
             nameRes = R.string.main_tab_my,
