@@ -1,12 +1,16 @@
 package app.manyak.feature.studio
 
 import androidx.lifecycle.viewModelScope
+import app.manyak.core.domain.error.DomainResult
 import app.manyak.core.domain.story.CreationResumePoint
 import app.manyak.core.domain.story.PendingStoryCreation
 import app.manyak.core.domain.story.PendingStoryCreationStore
+import app.manyak.core.domain.story.StoryRepository
+import app.manyak.core.domain.story.StorySummary
 import app.manyak.core.domain.story.resumePoint
 import app.manyak.core.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -18,6 +22,9 @@ data class PendingCreationBanner(
 )
 
 data class StudioUiState(
+    val isLoading: Boolean = true,
+    val stories: List<StorySummary> = emptyList(),
+    val loadFailed: Boolean = false,
     val pendingBanner: PendingCreationBanner? = null,
     /** FAB 등 배너가 아닌 경로로 진입하려는데 임시 저장본이 있어 이어서/새로 만들기를 묻는 중. */
     val showResumeChoiceDialog: Boolean = false,
@@ -34,9 +41,20 @@ sealed interface StudioIntent {
     data object StartNewCreation : StudioIntent
 
     data object DismissResumeChoiceDialog : StudioIntent
+
+    /** 목록 조회 실패 화면의 다시 시도. */
+    data object Retry : StudioIntent
 }
 
 sealed interface StudioEvent {
+    data object LoadStarted : StudioEvent
+
+    data class StoriesLoaded(
+        val stories: List<StorySummary>,
+    ) : StudioEvent
+
+    data object LoadFailed : StudioEvent
+
     data class PendingCreationChanged(
         val banner: PendingCreationBanner?,
     ) : StudioEvent
@@ -56,23 +74,34 @@ sealed interface StudioEffect {
     ) : StudioEffect
 }
 
+/**
+ * 제작 탭. 내가 만든 스토리 목록을 진입 시 한 번 조회하고, 진행 중인 제작 레코드를 구독한다.
+ *
+ * 목록을 주기적으로 다시 읽거나 당겨서 새로고침하지 않는다 — 실패했을 때 다시 부를 수단은
+ * 재시도로 충분하다. 제작 완료 뒤 탭에 돌아왔을 때의 갱신 정책은 완료 흐름과 함께 정한다.
+ */
 @HiltViewModel
 class StudioViewModel
     @Inject
     constructor(
         private val pendingCreationStore: PendingStoryCreationStore,
+        private val storyRepository: StoryRepository,
     ) : MviViewModel<StudioIntent, StudioUiState, StudioEvent, StudioEffect>(StudioUiState()) {
+        private var loadJob: Job? = null
+
         init {
             viewModelScope.launch {
                 pendingCreationStore.record.collect { record ->
                     dispatchEvent(StudioEvent.PendingCreationChanged(record?.toBanner()))
                 }
             }
+            load()
         }
 
         override suspend fun handleIntent(intent: StudioIntent) {
             val state = uiState.value
             when (intent) {
+                StudioIntent.Retry -> load()
                 StudioIntent.CreateStory ->
                     if (state.pendingBanner == null) {
                         dispatchEffect(StudioEffect.NavigateToCreate)
@@ -98,11 +127,30 @@ class StudioViewModel
             }
         }
 
+        private fun load() {
+            if (loadJob?.isActive == true) return
+            loadJob =
+                viewModelScope.launch {
+                    dispatchEvent(StudioEvent.LoadStarted)
+                    when (val result = storyRepository.myStories()) {
+                        is DomainResult.Success -> dispatchEvent(StudioEvent.StoriesLoaded(result.value))
+                        is DomainResult.Failure -> dispatchEvent(StudioEvent.LoadFailed)
+                    }
+                }
+        }
+
         override fun reduce(
             state: StudioUiState,
             event: StudioEvent,
         ): StudioUiState =
             when (event) {
+                StudioEvent.LoadStarted -> state.copy(isLoading = true, loadFailed = false)
+
+                is StudioEvent.StoriesLoaded ->
+                    state.copy(isLoading = false, stories = event.stories, loadFailed = false)
+
+                StudioEvent.LoadFailed -> state.copy(isLoading = false, stories = emptyList(), loadFailed = true)
+
                 is StudioEvent.PendingCreationChanged ->
                     state.copy(
                         pendingBanner = event.banner,

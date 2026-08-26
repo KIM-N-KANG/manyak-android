@@ -1,5 +1,7 @@
 package app.manyak.feature.studio
 
+import app.manyak.core.domain.error.DomainError
+import app.manyak.core.domain.error.DomainResult
 import app.manyak.core.domain.story.CreationProgress
 import app.manyak.core.domain.story.CreationResumePoint
 import app.manyak.core.domain.story.PendingStoryCreation
@@ -45,7 +47,7 @@ class StudioViewModelTest {
     @Test
     fun `진행 레코드가 없으면 배너 없이 바로 새 생성으로 진입한다`() =
         runTest(dispatcher) {
-            val viewModel = StudioViewModel(FakePendingStoryCreationStore())
+            val viewModel = StudioViewModel(FakePendingStoryCreationStore(), FakeStoryRepository())
             advanceUntilIdle()
 
             assertNull(viewModel.uiState.value.pendingBanner)
@@ -63,7 +65,7 @@ class StudioViewModelTest {
     fun `완성 진행 레코드는 완성 중 배너와 추가 정보 재개 지점이 된다`() =
         runTest(dispatcher) {
             val store = FakePendingStoryCreationStore(initial = completingRecord(selectedIndex = 2))
-            val viewModel = StudioViewModel(store)
+            val viewModel = StudioViewModel(store, FakeStoryRepository())
             advanceUntilIdle()
 
             val banner = viewModel.uiState.value.pendingBanner
@@ -75,7 +77,7 @@ class StudioViewModelTest {
     fun `레코드가 있는 FAB 진입은 다이얼로그로 묻고 새로 만들기는 폐기 후 진입한다`() =
         runTest(dispatcher) {
             val store = FakePendingStoryCreationStore(initial = generatingRecord())
-            val viewModel = StudioViewModel(store)
+            val viewModel = StudioViewModel(store, FakeStoryRepository())
             advanceUntilIdle()
 
             viewModel.onIntent(StudioIntent.CreateStory)
@@ -97,7 +99,7 @@ class StudioViewModelTest {
     fun `이어서 만들기는 레코드 단계의 재개 지점으로 진입한다`() =
         runTest(dispatcher) {
             val store = FakePendingStoryCreationStore(initial = generatingRecord())
-            val viewModel = StudioViewModel(store)
+            val viewModel = StudioViewModel(store, FakeStoryRepository())
             advanceUntilIdle()
 
             viewModel.onIntent(StudioIntent.ResumeCreation)
@@ -107,6 +109,41 @@ class StudioViewModelTest {
                 StudioEffect.NavigateToResume(CreationResumePoint.StorylineStep),
                 withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
             )
+        }
+
+    @Test
+    fun `진입 시 내 스토리를 조회해 목록 상태가 된다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryRepository()
+            val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertFalse(state.isLoading)
+            assertFalse(state.loadFailed)
+            assertEquals(sampleStories(), state.stories)
+            assertEquals(1, repository.myStoriesCallCount)
+        }
+
+    @Test
+    fun `조회 실패는 실패 상태가 되고 재시도가 다시 조회한다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryRepository()
+            repository.queuedResults.add(DomainResult.Failure(DomainError.Network))
+            val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository)
+            advanceUntilIdle()
+
+            val failedState = viewModel.uiState.value
+            assertTrue(failedState.loadFailed)
+            assertTrue(failedState.stories.isEmpty())
+
+            viewModel.onIntent(StudioIntent.Retry)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertFalse(state.loadFailed)
+            assertEquals(sampleStories(), state.stories)
+            assertEquals(2, repository.myStoriesCallCount)
         }
 }
 

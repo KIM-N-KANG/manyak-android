@@ -60,9 +60,6 @@ dependencies {
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
 
-    // 네트워크 fetcher(coil-network-okhttp)는 런타임 배선이라 composition root 인 :app 이 갖는다.
-    implementation(libs.coil.compose)
-
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     testImplementation(libs.junit)

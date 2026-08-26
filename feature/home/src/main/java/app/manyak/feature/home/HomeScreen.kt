@@ -2,34 +2,27 @@ package app.manyak.feature.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.manyak.core.domain.story.StorySummary
 import app.manyak.core.ui.R
+import app.manyak.core.ui.component.LoadFailedContent
 import app.manyak.core.ui.component.rememberDelayedProgressVisibility
+import app.manyak.core.ui.component.withScreenMargins
 import app.manyak.core.ui.theme.ManyakTheme
 
 /**
@@ -72,9 +65,14 @@ private fun HomeContent(
             }
 
         state.loadFailed ->
-            LoadFailed(
-                modifier = modifier.fillMaxSize().padding(contentPadding),
+            LoadFailedContent(
+                message = stringResource(R.string.story_load_failed),
                 onRetry = { onIntent(HomeIntent.Retry) },
+                modifier =
+                    modifier
+                        .fillMaxSize()
+                        .padding(contentPadding)
+                        .padding(horizontal = ManyakTheme.spacing.gutter),
             )
 
         // 빈 목록은 섹션 자체를 그리지 않는다 — 제목만 남으면 없는 것을 있다고 말하는 셈이다.
@@ -122,53 +120,6 @@ private fun SectionTitle(modifier: Modifier = Modifier) {
     )
 }
 
-@Composable
-private fun LoadFailed(
-    onRetry: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier.padding(horizontal = ManyakTheme.spacing.gutter),
-        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.component, Alignment.CenterVertically),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            modifier = Modifier.fillMaxWidth(),
-            text = stringResource(R.string.home_load_failed),
-            style = ManyakTheme.typography.bodyMedium,
-            color = ManyakTheme.colors.text,
-            textAlign = TextAlign.Center,
-        )
-        Button(
-            modifier = Modifier.heightIn(min = ManyakTheme.sizes.control),
-            onClick = onRetry,
-            shape = ManyakTheme.shapes.control,
-            colors =
-                ButtonDefaults.buttonColors(
-                    containerColor = ManyakTheme.colors.brand,
-                    contentColor = ManyakTheme.colors.textInverse,
-                ),
-        ) {
-            Text(text = stringResource(R.string.common_retry), style = ManyakTheme.typography.labelLarge)
-        }
-    }
-}
-
-/**
- * 셸이 넘긴 여백에 화면 좌우 여백과 하단 여유를 더한다. 목록 항목이 화면 가장자리에 닿지 않게
- * 하면서도, 스크롤되는 콘텐츠가 헤더·탭 아래로 흘러 들어가는 성질은 그대로 둔다.
- */
-@Composable
-private fun PaddingValues.withScreenMargins(): PaddingValues {
-    val layoutDirection = LocalLayoutDirection.current
-    return PaddingValues(
-        start = calculateStartPadding(layoutDirection) + ManyakTheme.spacing.gutter,
-        top = calculateTopPadding(),
-        end = calculateEndPadding(layoutDirection) + ManyakTheme.spacing.gutter,
-        bottom = calculateBottomPadding() + ManyakTheme.spacing.screenBottom,
-    )
-}
-
 internal const val GRID_COLUMNS = 2
 
 private const val SECTION_TITLE_KEY = "section-title"
@@ -199,14 +150,23 @@ private fun HomeLoadFailedPreview() {
 
 private fun previewStories(): List<StorySummary> =
     listOf(
-        StorySummary(id = "1", title = "두 번째 시계공", authorNickname = "마냑", thumbnailUrl = null, turnCount = 1_284),
-        StorySummary(id = "2", title = "달빛 아래의 계약", authorNickname = "마냑", thumbnailUrl = null, turnCount = 312),
-        StorySummary(
-            id = "3",
-            title = "아주 긴 제목은 한 줄에서 잘려 카드 높이를 흔들지 않는다",
-            authorNickname = "마냑",
-            thumbnailUrl = null,
-            turnCount = 7,
-        ),
-        StorySummary(id = "4", title = "잊힌 등대", authorNickname = "마냑", thumbnailUrl = null, turnCount = 0),
+        previewStory(id = "1", title = "두 번째 시계공", turnCount = 1_284),
+        previewStory(id = "2", title = "달빛 아래의 계약", turnCount = 312),
+        previewStory(id = "3", title = "아주 긴 제목은 한 줄에서 잘려 카드 높이를 흔들지 않는다", turnCount = 7),
+        previewStory(id = "4", title = "잊힌 등대", turnCount = 0),
+    )
+
+private fun previewStory(
+    id: String,
+    title: String,
+    turnCount: Long,
+): StorySummary =
+    StorySummary(
+        id = id,
+        title = title,
+        authorNickname = "마냑",
+        thumbnailUrl = null,
+        oneLineIntro = "",
+        genres = emptyList(),
+        turnCount = turnCount,
     )
