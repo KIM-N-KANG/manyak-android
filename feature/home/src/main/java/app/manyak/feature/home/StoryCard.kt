@@ -144,7 +144,7 @@ private fun TurnCountBadge(
     ) {
         Icon(
             modifier = Modifier.size(BadgeIconSize),
-            painter = painterResource(R.drawable.ic_nav_chat_outline),
+            painter = painterResource(R.drawable.ic_dialog),
             contentDescription = null,
             tint = Color.White,
         )
