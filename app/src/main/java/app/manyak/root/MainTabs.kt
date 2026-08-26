@@ -26,6 +26,7 @@ import app.manyak.core.navigation.HomeRoute
 import app.manyak.core.navigation.MyRoute
 import app.manyak.core.navigation.StudioRoute
 import app.manyak.core.ui.R
+import app.manyak.core.ui.component.ManyakBrandHeader
 import app.manyak.core.ui.component.ManyakNavigationBar
 import app.manyak.core.ui.component.ManyakNavigationItem
 import app.manyak.core.ui.component.ManyakSectionHeader
@@ -86,7 +87,14 @@ fun MainTabsScreen(
     Scaffold(
         modifier = modifier,
         containerColor = ManyakTheme.colors.surface,
-        topBar = { ManyakSectionHeader(titleRes = selectedTab.nameRes) },
+        // 홈은 로고가 그 자리의 이름을 대신하고, 나머지 탭은 이름만 둔다.
+        topBar = {
+            if (selectedTab == MainTab.HOME) {
+                ManyakBrandHeader()
+            } else {
+                ManyakSectionHeader(titleRes = selectedTab.nameRes)
+            }
+        },
         bottomBar = {
             MainTabsBar(
                 selectedTab = selectedTab,
