@@ -106,6 +106,8 @@ internal open class FakeStoryCreationRepository(
 /** 진행 레코드 단일 슬롯의 인메모리 구현. 기록 이력으로 영속 시점을 검증한다. */
 internal class FakePendingStoryCreationStore(
     initial: PendingStoryCreation? = null,
+    var writeSucceeds: Boolean = true,
+    var clearSucceeds: Boolean = true,
 ) : PendingStoryCreationStore {
     private val state = MutableStateFlow(initial)
 
@@ -116,12 +118,16 @@ internal class FakePendingStoryCreationStore(
 
     override suspend fun read(): PendingStoryCreation? = state.value
 
-    override suspend fun write(record: PendingStoryCreation) {
+    override suspend fun write(record: PendingStoryCreation): Boolean {
+        if (!writeSucceeds) return false
         writes += record
         state.value = record
+        return true
     }
 
-    override suspend fun clear() {
+    override suspend fun clear(): Boolean {
+        if (!clearSucceeds) return false
         state.value = null
+        return true
     }
 }

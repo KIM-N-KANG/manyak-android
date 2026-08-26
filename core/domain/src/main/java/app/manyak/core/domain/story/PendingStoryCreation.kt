@@ -34,7 +34,7 @@ sealed interface PendingStoryCreation {
         val progress: CreationProgress,
     ) : PendingStoryCreation
 
-    /** 이탈 시 저장한 임시 저장본. */
+    /** 생성 성공 직후와 이후 편집 변경에 맞춰 갱신되는 임시 저장본. */
     data class Draft(
         val generationCommand: StorylineGenerationCommand?,
         val generation: StorylineGeneration,
@@ -44,7 +44,7 @@ sealed interface PendingStoryCreation {
     ) : PendingStoryCreation
 
     /**
-     * 키워드 단계에서 이탈하며 저장한 입력 스냅숏.
+     * 키워드 단계에서 편집 중 저장한 입력 스냅숏.
      *
      * 공용 계약은 키워드 단계를 저장 범위 밖에 두지만 앱은 확장해 재개를 지원한다. 복원할 AI
      * 생성 결과가 없다는 점이 다른 스테이지와 구분되므로 별도 변형으로 둔다 — 기존 세 스테이지의
@@ -91,7 +91,9 @@ interface PendingStoryCreationStore {
 
     suspend fun read(): PendingStoryCreation?
 
-    suspend fun write(record: PendingStoryCreation)
+    /** 레코드가 영속 저장소에 반영됐을 때만 true. */
+    suspend fun write(record: PendingStoryCreation): Boolean
 
-    suspend fun clear()
+    /** 단일 슬롯이 비워졌을 때만 true. */
+    suspend fun clear(): Boolean
 }

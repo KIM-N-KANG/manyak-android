@@ -17,8 +17,10 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withTimeoutOrNull
@@ -242,6 +244,49 @@ class CreateKeywordViewModelTest {
         }
 
     @Test
+    fun `키워드 입력은 마지막 변경 300ms 뒤 임시 저장된다`() =
+        runTest(dispatcher) {
+            val pending = FakePendingStoryCreationStore()
+            val viewModel = viewModel(fixedTagsRepository(), pending)
+            advanceUntilIdle()
+
+            viewModel.onIntent(CreateKeywordIntent.ToggleProvidedTag(KeywordTarget.Genre, tagId = 1L))
+            runCurrent()
+
+            assertNull(pending.read())
+            assertEquals(DraftSaveStatus.SAVING, viewModel.uiState.value.draftSaveStatus)
+            advanceTimeBy(299)
+            runCurrent()
+            assertNull(pending.read())
+            assertEquals(DraftSaveStatus.SAVING, viewModel.uiState.value.draftSaveStatus)
+
+            advanceTimeBy(1)
+            runCurrent()
+
+            val record = pending.read() as PendingStoryCreation.KeywordDraft
+            assertEquals(listOf(1L), record.snapshot.selectedGenreTagIds)
+            assertEquals(DraftSaveStatus.SAVED, viewModel.uiState.value.draftSaveStatus)
+
+            viewModel.onIntent(CreateKeywordIntent.ChangeCharacterName(KeywordTarget.Protagonist, "새 이름"))
+            runCurrent()
+            assertEquals(DraftSaveStatus.SAVING, viewModel.uiState.value.draftSaveStatus)
+        }
+
+    @Test
+    fun `키워드 임시 저장 쓰기가 실패하면 저장 완료로 표시하지 않는다`() =
+        runTest(dispatcher) {
+            val pending = FakePendingStoryCreationStore(writeSucceeds = false)
+            val viewModel = viewModel(fixedTagsRepository(), pending)
+            advanceUntilIdle()
+
+            viewModel.onIntent(CreateKeywordIntent.ToggleProvidedTag(KeywordTarget.Genre, tagId = 1L))
+            advanceUntilIdle()
+
+            assertNull(pending.read())
+            assertEquals(DraftSaveStatus.HIDDEN, viewModel.uiState.value.draftSaveStatus)
+        }
+
+    @Test
     fun `진행 중 레코드가 있으면 키워드 스냅숏이 덮어쓰지 않는다`() =
         runTest(dispatcher) {
             val pending = FakePendingStoryCreationStore()
@@ -259,7 +304,7 @@ class CreateKeywordViewModelTest {
         }
 
     @Test
-    fun `키워드 임시 저장본이 있으면 복원하고 레코드를 소비한다`() =
+    fun `키워드 임시 저장본이 있으면 복원하고 레코드를 유지한다`() =
         runTest(dispatcher) {
             val pending = FakePendingStoryCreationStore()
             pending.write(
@@ -289,7 +334,8 @@ class CreateKeywordViewModelTest {
             assertEquals("홍길동", state.protagonist.name)
             assertEquals(CharacterGender.MALE, state.protagonist.gender)
             assertEquals(setOf(10L), state.protagonist.selectedTagIds)
-            assertNull(pending.read())
+            assertEquals(DraftSaveStatus.SAVED, state.draftSaveStatus)
+            assertTrue(pending.read() is PendingStoryCreation.KeywordDraft)
         }
 
     @Test

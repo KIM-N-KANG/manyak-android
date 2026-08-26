@@ -121,12 +121,14 @@ private class FakePendingStoryCreationStore(
 
     override suspend fun read(): PendingStoryCreation? = state.value
 
-    override suspend fun write(record: PendingStoryCreation) {
+    override suspend fun write(record: PendingStoryCreation): Boolean {
         state.value = record
+        return true
     }
 
-    override suspend fun clear() {
+    override suspend fun clear(): Boolean {
         state.value = null
+        return true
     }
 }
 

@@ -1,6 +1,5 @@
 package app.manyak.feature.create
 
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
@@ -28,7 +27,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -58,7 +56,6 @@ fun CreateKeywordScreen(
     val currentOnOpenStorylineStep by rememberUpdatedState(onOpenStorylineStep)
     val currentOnLeaveFunnel by rememberUpdatedState(onLeaveFunnel)
     val lifecycleOwner = LocalLifecycleOwner.current
-    val context = LocalContext.current
 
     // 시스템 뒤로가기도 헤더 뒤로가기와 같은 이탈 처리를 거친다.
     BackHandler { viewModel.onIntent(CreateKeywordIntent.LeaveFunnel) }
@@ -69,14 +66,7 @@ fun CreateKeywordScreen(
                 when (effect) {
                     CreateKeywordEffect.NavigateToStoryline -> currentOnOpenStorylineStep()
 
-                    is CreateKeywordEffect.ExitFunnel -> {
-                        if (effect.contentPreserved) {
-                            Toast
-                                .makeText(context, R.string.create_draft_saved, Toast.LENGTH_SHORT)
-                                .show()
-                        }
-                        currentOnLeaveFunnel()
-                    }
+                    is CreateKeywordEffect.ExitFunnel -> currentOnLeaveFunnel()
                 }
             }
         }
@@ -110,7 +100,7 @@ private fun CreateKeywordContent(
                     .windowInsetsPadding(WindowInsets.safeDrawing)
                     .clearFocusOnTap(focusManager),
         ) {
-            CreateFunnelHeader(onClose = onBack)
+            CreateFunnelHeader(draftSaveStatus = state.draftSaveStatus, onClose = onBack)
             CreateStepIndicator(
                 currentStep = 0,
                 stepNameRes = R.string.create_step_keyword,

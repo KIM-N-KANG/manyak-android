@@ -41,17 +41,15 @@ class PendingStoryCreationRoomStore
                     ?.toDomainOrNull()
             }
 
-        override suspend fun write(record: PendingStoryCreation) {
+        override suspend fun write(record: PendingStoryCreation): Boolean =
             withContext(ioDispatcher) {
-                runCatching { dao.upsert(record.toEntity()) }
+                runCatching { dao.upsert(record.toEntity()) }.isSuccess
             }
-        }
 
-        override suspend fun clear() {
+        override suspend fun clear(): Boolean =
             withContext(ioDispatcher) {
-                runCatching { dao.clear() }
+                runCatching { dao.clear() }.isSuccess
             }
-        }
 
         override suspend fun clearUserData(): Boolean =
             withContext(ioDispatcher) {

@@ -53,6 +53,7 @@ fun CreateAdditionalInfoScreen(
     viewModel: CreateAdditionalInfoViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val draftSaveStatus by viewModel.draftSaveStatus.collectAsStateWithLifecycle()
     val currentOnEnterChat by rememberUpdatedState(onEnterChat)
     val currentOnLeaveFunnel by rememberUpdatedState(onLeaveFunnel)
     val currentOnBackToStoryline by rememberUpdatedState(onBackToStoryline)
@@ -81,14 +82,7 @@ fun CreateAdditionalInfoScreen(
                         currentOnEnterChat(effect.chatId)
                     }
 
-                    is CreateAdditionalInfoEffect.ExitFunnel -> {
-                        if (effect.contentPreserved) {
-                            Toast
-                                .makeText(context, R.string.create_draft_saved, Toast.LENGTH_SHORT)
-                                .show()
-                        }
-                        currentOnLeaveFunnel()
-                    }
+                    is CreateAdditionalInfoEffect.ExitFunnel -> currentOnLeaveFunnel()
 
                     CreateAdditionalInfoEffect.NavigateBackToStoryline -> currentOnBackToStoryline()
                 }
@@ -101,6 +95,7 @@ fun CreateAdditionalInfoScreen(
         state = state,
         onIntent = viewModel::onIntent,
         modifier = modifier,
+        draftSaveStatus = draftSaveStatus,
     )
 
     if (state.showExitWarningDialog) {
@@ -125,6 +120,7 @@ private fun CreateAdditionalInfoContent(
     state: CreateAdditionalInfoUiState,
     onIntent: (CreateAdditionalInfoIntent) -> Unit,
     modifier: Modifier = Modifier,
+    draftSaveStatus: DraftSaveStatus = DraftSaveStatus.HIDDEN,
 ) {
     val imeVisible = WindowInsets.isImeVisible
     val focusManager = LocalFocusManager.current
@@ -137,7 +133,10 @@ private fun CreateAdditionalInfoContent(
                     .windowInsetsPadding(WindowInsets.safeDrawing)
                     .clearFocusOnTap(focusManager),
         ) {
-            CreateFunnelHeader(onClose = { onIntent(CreateAdditionalInfoIntent.LeaveFunnel) })
+            CreateFunnelHeader(
+                draftSaveStatus = draftSaveStatus,
+                onClose = { onIntent(CreateAdditionalInfoIntent.LeaveFunnel) },
+            )
             CreateStepIndicator(
                 currentStep = 2,
                 stepNameRes = R.string.create_step_additional_info,

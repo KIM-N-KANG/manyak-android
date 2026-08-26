@@ -66,7 +66,7 @@ fun StorylineGenerationState.resultOrNull(): StorylineGeneration? =
  * 스토리라인 단계가 키워드 목적지를 대체해, 요청을 시작한 화면의 ViewModel 은 응답 전에 죽는다.
  *
  * 생성·완성 요청은 시작 전에 진행 레코드로 영속되어, 응답을 못 받은 채 퍼널을 떠나거나 프로세스가
- * 재시작해도 복구 조회로 결과를 되찾는다. 이탈 시에는 진행 스냅숏을 임시 저장한다.
+ * 재시작해도 복구 조회로 결과를 되찾는다. 생성 성공과 이후 편집 변경은 진행 스냅숏으로 계속 저장한다.
  *
  * 생성 실행·요청 영속·복구 폴링·진행 미러가 한 수명(퍼널)을 공유하는 조정자라 함수 수 상한을
  * 넘는다. 나누면 상태 소유가 흩어져 더 위험하므로 이 클래스만 예외로 둔다.
@@ -83,6 +83,11 @@ class StorylineGenerationStore
         private val mutableState = MutableStateFlow<StorylineGenerationState>(StorylineGenerationState.Idle)
         val state: StateFlow<StorylineGenerationState> = mutableState.asStateFlow()
 
+        private val mutableDraftSaveStatus = MutableStateFlow(DraftSaveStatus.HIDDEN)
+
+        /** 현재 화면에서 관찰하는 진행 스냅숏의 임시 저장 상태. */
+        val draftSaveStatus: StateFlow<DraftSaveStatus> = mutableDraftSaveStatus.asStateFlow()
+
         private var lastCommand: StorylineGenerationCommand? = null
         private var lastResult: StorylineGeneration? = null
 
@@ -90,7 +95,7 @@ class StorylineGenerationStore
         var lastCompletionCommand: StoryCompletionCommand? = null
             private set
 
-        /** 임시 저장·복원 재료. 단계 ViewModel 이 입력 변화를 미러링한다. */
+        /** 임시 저장·복원 재료. 단계 ViewModel 이 입력 변화를 미러링하고 300ms 뒤 영속한다. */
         var progress: CreationProgress = CreationProgress()
             private set
 
@@ -102,6 +107,12 @@ class StorylineGenerationStore
 
         private val restoreMutex = Mutex()
         private var restoreAttempted = false
+
+        /** 자동 저장과 요청 단계 저장이 단일 슬롯을 덮는 순서를 직렬화한다. */
+        private val persistenceMutex = Mutex()
+        private var draftAutosaveJob: Job? = null
+        private var draftRevision: Long = 0
+        private var draftAutosaveEnabled = false
 
         private var runJob: Job? = null
 
@@ -160,6 +171,7 @@ class StorylineGenerationStore
 
         /** 상태 전이는 호출 지점에서 동기로 일어나 중복 시작을 막고, 실행은 퍼널 스코프로 넘긴다. */
         private fun startRun(command: StorylineGenerationCommand) {
+            disableDraftAutosave(DraftSaveStatus.SAVING)
             lastCommand = command
             mutableState.value = StorylineGenerationState.Generating
             runJob = funnelScope.launch { run(command) }
@@ -167,7 +179,7 @@ class StorylineGenerationStore
 
         private suspend fun run(command: StorylineGenerationCommand) {
             // 요청 전에 영속한다 — 응답을 못 받아도 재진입 복구 조회가 이 requestId 를 쓴다.
-            pendingCreationStore.write(PendingStoryCreation.GeneratingStorylines(command))
+            persistStage(PendingStoryCreation.GeneratingStorylines(command))
             val result =
                 try {
                     storyCreationRepository.generateStorylines(command)
@@ -185,7 +197,8 @@ class StorylineGenerationStore
                     lastResult = result.value
                     progress = CreationProgress()
                     mutableState.value = StorylineGenerationState.Generated(result.value)
-                    pendingCreationStore.clear()
+                    enableDraftAutosave()
+                    persistDraftImmediately()
                 }
 
                 is DomainResult.Failure ->
@@ -201,7 +214,12 @@ class StorylineGenerationStore
 
                         else -> {
                             mutableState.value = StorylineGenerationState.Failed(lastResult)
-                            pendingCreationStore.clear()
+                            if (lastResult == null) {
+                                clearPendingRecord()
+                            } else {
+                                enableDraftAutosave()
+                                persistDraftImmediately()
+                            }
                         }
                     }
             }
@@ -226,6 +244,7 @@ class StorylineGenerationStore
                         lastCommand = record.command
                         mutableState.value = StorylineGenerationState.Generating
                         storylineRecoveryTarget.value = record.command
+                        mutableDraftSaveStatus.value = DraftSaveStatus.SAVED
                     }
 
                     is PendingStoryCreation.CompletingStory -> {
@@ -235,6 +254,7 @@ class StorylineGenerationStore
                         progress = record.progress
                         mutableState.value = StorylineGenerationState.Generated(record.generation)
                         mutableCompletionRecoveryTarget.value = record.command
+                        mutableDraftSaveStatus.value = DraftSaveStatus.SAVED
                     }
 
                     is PendingStoryCreation.Draft -> {
@@ -243,8 +263,7 @@ class StorylineGenerationStore
                         lastCompletionCommand = record.lastCompletionCommand
                         progress = record.progress
                         mutableState.value = StorylineGenerationState.Generated(record.generation)
-                        // 복원은 레코드를 소비한다 — 재개 후 다시 이탈하면 그 시점 상태로 새로 저장된다.
-                        pendingCreationStore.clear()
+                        enableDraftAutosave(DraftSaveStatus.SAVED)
                     }
                 }
             }
@@ -272,7 +291,8 @@ class StorylineGenerationStore
                                 lastResult = snapshot.generation
                                 progress = CreationProgress()
                                 mutableState.value = StorylineGenerationState.Generated(snapshot.generation)
-                                pendingCreationStore.clear()
+                                enableDraftAutosave()
+                                persistDraftImmediately()
                                 storylineRecoveryTarget.value = null
                                 return
                             }
@@ -303,7 +323,12 @@ class StorylineGenerationStore
 
         private suspend fun finishStorylineRecoveryAsFailure() {
             mutableState.value = StorylineGenerationState.Failed(lastResult)
-            pendingCreationStore.clear()
+            if (lastResult == null) {
+                clearPendingRecord()
+            } else {
+                enableDraftAutosave()
+                persistDraftImmediately()
+            }
             storylineRecoveryTarget.value = null
         }
 
@@ -311,7 +336,8 @@ class StorylineGenerationStore
         suspend fun beginCompletion(command: StoryCompletionCommand) {
             lastCompletionCommand = command
             val generation = lastResult ?: return
-            pendingCreationStore.write(
+            disableDraftAutosave(DraftSaveStatus.SAVING)
+            persistStage(
                 PendingStoryCreation.CompletingStory(
                     generationCommand = lastCommand,
                     generation = generation,
@@ -319,6 +345,13 @@ class StorylineGenerationStore
                     progress = progress,
                 ),
             )
+        }
+
+        /** 서버가 완성을 확정적으로 거절했으면 생성 결과·입력을 다시 Draft 단계로 보존한다. */
+        suspend fun restoreDraftAfterCompletionFailure() {
+            mutableCompletionRecoveryTarget.value = null
+            enableDraftAutosave()
+            persistDraftImmediately()
         }
 
         /** 완성 재시도가 409 로 거절됐다 — 서버가 진행 중이므로 복구 폴링으로 전환한다. */
@@ -332,12 +365,12 @@ class StorylineGenerationStore
 
         /** 스토리라인 선택 화면의 활성 탭 미러. */
         fun updateActiveStoryline(index: Int) {
-            progress = progress.copy(activeStorylineIndex = index)
+            updateProgress(progress.copy(activeStorylineIndex = index))
         }
 
         /** "선택하기"로 추가 정보 단계에 넘긴 스토리라인 순번 미러. */
         fun markStorylineSelected(index: Int) {
-            progress = progress.copy(selectedStorylineIndex = index)
+            updateProgress(progress.copy(selectedStorylineIndex = index))
         }
 
         /** 추가 정보 화면의 입력·추천 선택 미러. */
@@ -345,7 +378,9 @@ class StorylineGenerationStore
             inputs: List<String>,
             recommendations: List<String>,
         ) {
-            progress = progress.copy(additionalInfoInputs = inputs, selectedRecommendations = recommendations)
+            updateProgress(
+                progress.copy(additionalInfoInputs = inputs, selectedRecommendations = recommendations),
+            )
         }
 
         /**
@@ -353,12 +388,19 @@ class StorylineGenerationStore
          * 지운다 — 순번이 남으면 이후 이탈이 추가 정보 단계로 재개되어 이미 버린 입력 화면으로 돌아간다.
          */
         fun clearAdditionalInfoProgress() {
-            progress =
+            updateProgress(
                 progress.copy(
                     selectedStorylineIndex = null,
                     additionalInfoInputs = emptyList(),
                     selectedRecommendations = emptyList(),
-                )
+                ),
+            )
+        }
+
+        private fun updateProgress(updated: CreationProgress) {
+            if (updated == progress) return
+            progress = updated
+            scheduleDraftAutosave()
         }
 
         /**
@@ -379,6 +421,12 @@ class StorylineGenerationStore
          */
         suspend fun leaveFunnel(): Boolean {
             leftFunnel = true
+            // 생성 직후 곧바로 닫아도 복구 requestId 가 디스크에 남도록 요청 단계를 한 번 더 확정한다.
+            val generatingCommand =
+                lastCommand.takeIf { mutableState.value is StorylineGenerationState.Generating }
+            if (generatingCommand != null) {
+                persistStage(PendingStoryCreation.GeneratingStorylines(generatingCommand))
+            }
             // 서버는 끝까지 진행하므로 클라이언트 대기만 끊는다. 레코드가 복구 대상으로 남는다.
             runJob?.cancel()
             val result = lastResult
@@ -387,15 +435,8 @@ class StorylineGenerationStore
                     pendingCreationStore.read().isInFlight() -> true
 
                     result != null -> {
-                        pendingCreationStore.write(
-                            PendingStoryCreation.Draft(
-                                generationCommand = lastCommand,
-                                generation = result,
-                                progress = progress,
-                                lastCompletionCommand = lastCompletionCommand,
-                            ),
-                        )
-                        true
+                        enableDraftAutosave()
+                        persistDraftImmediately()
                     }
 
                     else -> false
@@ -404,7 +445,84 @@ class StorylineGenerationStore
             return preserved
         }
 
+        private fun enableDraftAutosave(status: DraftSaveStatus = DraftSaveStatus.SAVING) {
+            draftAutosaveEnabled = true
+            mutableDraftSaveStatus.value = status
+        }
+
+        private fun disableDraftAutosave(status: DraftSaveStatus = DraftSaveStatus.HIDDEN) {
+            draftAutosaveEnabled = false
+            draftRevision += 1
+            draftAutosaveJob?.cancel()
+            draftAutosaveJob = null
+            mutableDraftSaveStatus.value = status
+        }
+
+        private fun scheduleDraftAutosave() {
+            val draft = currentDraft() ?: return
+            if (!draftAutosaveEnabled) return
+            draftRevision += 1
+            val revision = draftRevision
+            draftAutosaveJob?.cancel()
+            mutableDraftSaveStatus.value = DraftSaveStatus.SAVING
+            draftAutosaveJob =
+                funnelScope.launch {
+                    delay(DRAFT_AUTOSAVE_DEBOUNCE_MS)
+                    persistDraft(draft, revision)
+                }
+        }
+
+        private suspend fun persistDraftImmediately(): Boolean {
+            val draft = currentDraft() ?: return false
+            draftRevision += 1
+            val revision = draftRevision
+            draftAutosaveJob?.cancel()
+            draftAutosaveJob = null
+            mutableDraftSaveStatus.value = DraftSaveStatus.SAVING
+            return persistDraft(draft, revision)
+        }
+
+        private suspend fun persistDraft(
+            draft: PendingStoryCreation.Draft,
+            revision: Long,
+        ): Boolean {
+            val saved =
+                persistenceMutex.withLock {
+                    if (!draftAutosaveEnabled || revision != draftRevision) return@withLock null
+                    pendingCreationStore.write(draft)
+                } ?: return false
+            if (draftAutosaveEnabled && revision == draftRevision) {
+                mutableDraftSaveStatus.value =
+                    if (saved) DraftSaveStatus.SAVED else DraftSaveStatus.HIDDEN
+            }
+            return saved
+        }
+
+        private suspend fun persistStage(record: PendingStoryCreation): Boolean {
+            mutableDraftSaveStatus.value = DraftSaveStatus.SAVING
+            val saved = persistenceMutex.withLock { pendingCreationStore.write(record) }
+            mutableDraftSaveStatus.value =
+                if (saved) DraftSaveStatus.SAVED else DraftSaveStatus.HIDDEN
+            return saved
+        }
+
+        private suspend fun clearPendingRecord(): Boolean {
+            disableDraftAutosave()
+            return persistenceMutex.withLock { pendingCreationStore.clear() }
+        }
+
+        private fun currentDraft(): PendingStoryCreation.Draft? {
+            val result = lastResult ?: return null
+            return PendingStoryCreation.Draft(
+                generationCommand = lastCommand,
+                generation = result,
+                progress = progress,
+                lastCompletionCommand = lastCompletionCommand,
+            )
+        }
+
         private fun resetInMemory() {
+            disableDraftAutosave()
             mutableState.value = StorylineGenerationState.Idle
             lastCommand = null
             lastResult = null
@@ -419,6 +537,7 @@ class StorylineGenerationStore
 
         companion object {
             const val RECOVERY_POLL_INTERVAL_MS: Long = 3_000
+            const val DRAFT_AUTOSAVE_DEBOUNCE_MS: Long = 300
         }
     }
 

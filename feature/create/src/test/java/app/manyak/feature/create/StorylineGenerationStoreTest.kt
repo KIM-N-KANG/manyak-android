@@ -6,10 +6,13 @@ import app.manyak.core.domain.story.CreationProgress
 import app.manyak.core.domain.story.CreationRequestSnapshot
 import app.manyak.core.domain.story.PendingStoryCreation
 import app.manyak.core.domain.story.StoryCharacterInput
+import app.manyak.core.domain.story.StoryCompletionCommand
 import app.manyak.core.domain.story.StorylineGenerationCommand
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -130,7 +133,7 @@ class StorylineGenerationStoreTest {
         }
 
     @Test
-    fun `생성 요청은 시작 전에 영속되고 성공 반영 후 레코드가 지워진다`() =
+    fun `생성 요청은 시작 전에 영속되고 성공 결과는 즉시 임시 저장된다`() =
         runTest {
             val repository = FakeStoryCreationRepository()
             val pendingStore = FakePendingStoryCreationStore()
@@ -140,9 +143,11 @@ class StorylineGenerationStoreTest {
 
             advanceUntilIdle()
 
-            val written = pendingStore.writes.single() as PendingStoryCreation.GeneratingStorylines
+            val written = pendingStore.writes.first() as PendingStoryCreation.GeneratingStorylines
             assertEquals(repository.generationCommands.single().requestId, written.command.requestId)
-            assertNull(pendingStore.current)
+            val draft = pendingStore.current as PendingStoryCreation.Draft
+            assertEquals(sampleStorylineGeneration(), draft.generation)
+            assertEquals(DraftSaveStatus.SAVED, store.draftSaveStatus.value)
         }
 
     @Test
@@ -193,7 +198,7 @@ class StorylineGenerationStoreTest {
             )
             val retriedRequestId = repository.generationCommands.first().requestId
             assertEquals(listOf(retriedRequestId, retriedRequestId), repository.creationRequestIds)
-            assertNull(pendingStore.current)
+            assertTrue(pendingStore.current is PendingStoryCreation.Draft)
             recovery.cancel()
         }
 
@@ -219,7 +224,7 @@ class StorylineGenerationStoreTest {
         }
 
     @Test
-    fun `임시 저장본 복원은 결과·진행 스냅숏을 되살리고 레코드를 소비한다`() =
+    fun `임시 저장본 복원은 결과·진행 스냅숏을 되살리고 레코드를 유지한다`() =
         runTest {
             val repository = FakeStoryCreationRepository()
             val progress =
@@ -247,12 +252,75 @@ class StorylineGenerationStoreTest {
                 (store.state.value as StorylineGenerationState.Generated).result,
             )
             assertEquals(progress, store.progress)
-            assertNull(pendingStore.current)
+            assertTrue(pendingStore.current is PendingStoryCreation.Draft)
 
             // 복원된 명령으로 "다시 만들기" 체인이 이어진다.
             store.regenerate()
             advanceUntilIdle()
             assertEquals(sampleGenerationCommand().requestId, repository.generationCommands.single().parentCreationId)
+        }
+
+    @Test
+    fun `스토리라인 진행 변경은 마지막 변경 300ms 뒤 임시 저장된다`() =
+        runTest {
+            val pendingStore = FakePendingStoryCreationStore()
+            val store = StorylineGenerationStore(FakeStoryCreationRepository(), pendingStore, this)
+            store.generate(sampleGenerationInput())
+            advanceUntilIdle()
+
+            store.updateActiveStoryline(2)
+            runCurrent()
+            assertEquals(DraftSaveStatus.SAVING, store.draftSaveStatus.value)
+            assertEquals(0, (pendingStore.current as PendingStoryCreation.Draft).progress.activeStorylineIndex)
+
+            advanceTimeBy(299)
+            runCurrent()
+            assertEquals(DraftSaveStatus.SAVING, store.draftSaveStatus.value)
+            assertEquals(0, (pendingStore.current as PendingStoryCreation.Draft).progress.activeStorylineIndex)
+
+            advanceTimeBy(1)
+            runCurrent()
+            assertEquals(2, (pendingStore.current as PendingStoryCreation.Draft).progress.activeStorylineIndex)
+            assertEquals(DraftSaveStatus.SAVED, store.draftSaveStatus.value)
+        }
+
+    @Test
+    fun `임시 저장 쓰기가 실패하면 저장 완료로 표시하지 않는다`() =
+        runTest {
+            val pendingStore = FakePendingStoryCreationStore(writeSucceeds = false)
+            val store = StorylineGenerationStore(FakeStoryCreationRepository(), pendingStore, this)
+
+            store.generate(sampleGenerationInput())
+            advanceUntilIdle()
+
+            assertTrue(store.state.value is StorylineGenerationState.Generated)
+            assertEquals(DraftSaveStatus.HIDDEN, store.draftSaveStatus.value)
+            assertNull(pendingStore.current)
+        }
+
+    @Test
+    fun `대기 중 Draft 저장은 완성 요청 레코드를 덮어쓰지 않는다`() =
+        runTest {
+            val pendingStore = FakePendingStoryCreationStore()
+            val store = StorylineGenerationStore(FakeStoryCreationRepository(), pendingStore, this)
+            store.generate(sampleGenerationInput())
+            advanceUntilIdle()
+            store.updateAdditionalInfoProgress(listOf("배경은 서울"), emptyList())
+
+            val generation = sampleStorylineGeneration()
+            val command =
+                StoryCompletionCommand(
+                    requestId = "completion-request",
+                    simpleCreationId = generation.simpleCreationId,
+                    storylineId = generation.storylines.first().id,
+                    additionalInfos = listOf("배경은 서울"),
+                )
+            store.beginCompletion(command)
+            advanceUntilIdle()
+
+            val record = pendingStore.current as PendingStoryCreation.CompletingStory
+            assertEquals(command, record.command)
+            assertEquals(listOf("배경은 서울"), record.progress.additionalInfoInputs)
         }
 
     @Test

@@ -196,6 +196,8 @@ class CreateAdditionalInfoViewModel
          */
         private var isLeaving = false
 
+        val draftSaveStatus = storylineGenerationStore.draftSaveStatus
+
         init {
             viewModelScope.launch {
                 // 프로세스 재시작·재개 진입이면 진행 레코드에서 스토어를 먼저 복원한다.
@@ -278,8 +280,7 @@ class CreateAdditionalInfoViewModel
         }
 
         private suspend fun finishRecoveryAsFailure() {
-            storylineGenerationStore.clearCompletionRecovery()
-            pendingCreationStore.clear()
+            storylineGenerationStore.restoreDraftAfterCompletionFailure()
             dispatchEvent(CreateAdditionalInfoEvent.CompletionFailed(CompletionFailure.GENERAL))
         }
 
@@ -386,6 +387,11 @@ class CreateAdditionalInfoViewModel
                     storylineId = storylineId,
                     additionalInfos = state.submittedAdditionalInfos(),
                 )
+            // UiState가 이벤트 채널보다 먼저 읽힌 직후에도 완성 레코드에는 최신 입력이 들어가야 한다.
+            storylineGenerationStore.updateAdditionalInfoProgress(
+                inputs = state.additionalInfos.map(AdditionalInfoInput::value),
+                recommendations = state.selectedRecommendations.toList(),
+            )
             // 요청 전에 영속한다 — 응답을 못 받아도 재진입 복구 조회가 이 requestId 를 쓴다.
             storylineGenerationStore.beginCompletion(command)
             dispatchEvent(CreateAdditionalInfoEvent.CompletionStarted)
@@ -417,7 +423,7 @@ class CreateAdditionalInfoViewModel
                     dispatchEvent(CreateAdditionalInfoEvent.CompletionFailed(error.toCompletionFailure()))
 
                 else -> {
-                    pendingCreationStore.clear()
+                    storylineGenerationStore.restoreDraftAfterCompletionFailure()
                     dispatchEvent(CreateAdditionalInfoEvent.CompletionFailed(error.toCompletionFailure()))
                 }
             }

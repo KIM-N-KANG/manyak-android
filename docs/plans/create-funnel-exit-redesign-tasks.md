@@ -10,6 +10,8 @@
 
 **Spec:** `docs/plans/create-funnel-exit-redesign.md`
 
+> **후속 결정(2026-08-25):** 아래 원래 태스크의 “이탈할 때 저장”·“복원 시 레코드 소비” 설명은 더 이상 적용하지 않는다. 키워드·스토리라인 선택·추가 정보는 마지막 변경 300ms 뒤 자동 저장하고 이탈 시 대기분을 즉시 플러시한다. 생성 성공은 즉시 `STORY_DRAFT`로 저장하며, `KEYWORD_DRAFT`·`STORY_DRAFT`는 복원해도 유지한다. 헤더에는 편집 직후부터 Room 쓰기가 끝날 때까지 회색 `임시 저장중`, 쓰기 성공 뒤에는 브랜드 색 `임시 저장됨` 뱃지를 같은 위치에 표시한다. 이탈할 때 별도의 임시 저장 완료 토스트는 띄우지 않는다. 상세 근거는 설계 문서 E11~E13·E18~E21이 정본이다.
+
 ## Global Constraints
 
 - 커밋 메시지는 `[KNK-778] {태그}: {제목}` 형식이며 제목·본문 모두 한국어다. 태그는 `Feat`·`Fix`·`Docs`·`Refactor`·`Chore` 중 변경에 맞는 것을 쓴다.
@@ -42,6 +44,7 @@
 | `feature/create/.../CreateAdditionalInfoViewModel.kt` | 이탈·초기화 인텐트와 미러링 차단 | 수정 |
 | `feature/create/.../CreateAdditionalInfoScreen.kt` | `BackHandler`, 이탈 콜백, 초기화 경고 표시 | 수정 |
 | `feature/create/.../CreateKeywordViewModel.kt` | 키워드 스냅숏 저장·복원 | 수정 |
+| `feature/create/.../CreateKeywordReducers.kt` | 키워드 상태의 순수 리듀서 | 생성 |
 | `feature/create/.../CreateKeywordScreen.kt` | 복원 대기 중 본문 비우기 | 수정 |
 | `app/.../root/NavTransitions.kt` | 퍼널 표식과 수직 전환 판정 | 수정 |
 | `app/.../root/ManyakApp.kt` | 퍼널 엔트리 메타데이터, 추가 정보 이탈 배선, 키워드 재개 체인 | 수정 |

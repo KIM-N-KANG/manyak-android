@@ -13,8 +13,10 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withTimeoutOrNull
@@ -214,6 +216,8 @@ class CreateAdditionalInfoViewModelTest {
             advanceUntilIdle()
 
             assertEquals(CompletionFailure.CREDIT, viewModel.uiState.value.completionFailure)
+            assertTrue(fixture.pendingStore.current is PendingStoryCreation.Draft)
+            assertEquals(DraftSaveStatus.SAVED, fixture.store.draftSaveStatus.value)
         }
 
     @Test
@@ -231,6 +235,32 @@ class CreateAdditionalInfoViewModelTest {
                 viewModel.uiState.value.selectedRecommendations
                     .isEmpty(),
             )
+        }
+
+    @Test
+    fun `추가 정보 입력은 마지막 변경 300ms 뒤 임시 저장된다`() =
+        runTest(dispatcher) {
+            val fixture = loadedViewModel(selectedStorylineIndex = 0)
+            advanceUntilIdle()
+            val inputId =
+                fixture.viewModel.uiState.value.additionalInfos
+                    .first()
+                    .id
+
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.ChangeInput(inputId, "배경은 서울"))
+            runCurrent()
+
+            assertEquals(DraftSaveStatus.SAVING, fixture.store.draftSaveStatus.value)
+            advanceTimeBy(299)
+            runCurrent()
+            assertEquals(DraftSaveStatus.SAVING, fixture.store.draftSaveStatus.value)
+
+            advanceTimeBy(1)
+            runCurrent()
+
+            val draft = fixture.pendingStore.current as PendingStoryCreation.Draft
+            assertEquals("배경은 서울", draft.progress.additionalInfoInputs.first())
+            assertEquals(DraftSaveStatus.SAVED, fixture.store.draftSaveStatus.value)
         }
 
     @Test

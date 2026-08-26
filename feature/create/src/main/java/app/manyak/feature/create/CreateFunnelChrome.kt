@@ -103,6 +103,7 @@ internal fun FunnelFocusScroll(content: @Composable () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun CreateFunnelHeader(
+    draftSaveStatus: DraftSaveStatus,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -118,6 +119,7 @@ internal fun CreateFunnelHeader(
         // 퍼널은 아래에서 올라와 아래로 닫히는 한 덩어리로 보이므로, 이탈 버튼도 그 방향과
         // 짝이 맞는 아래 화살표를 오른쪽 끝에 둔다.
         actions = {
+            DraftSaveBadge(draftSaveStatus)
             IconButton(onClick = onClose) {
                 Icon(
                     painter = painterResource(R.drawable.ic_angle_down),
@@ -134,6 +136,37 @@ internal fun CreateFunnelHeader(
                 titleContentColor = ManyakTheme.colors.text,
             ),
     )
+}
+
+@Composable
+private fun DraftSaveBadge(status: DraftSaveStatus) {
+    if (status == DraftSaveStatus.HIDDEN) return
+    val isSaving = status == DraftSaveStatus.SAVING
+    Box(
+        modifier =
+            Modifier
+                .clip(ManyakTheme.shapes.pill)
+                .background(
+                    if (isSaving) {
+                        ManyakTheme.colors.backgroundNeutral
+                    } else {
+                        ManyakTheme.colors.backgroundBrandSubtle
+                    },
+                ).padding(
+                    horizontal = ManyakTheme.spacing.compact,
+                    vertical = ManyakTheme.spacing.inline,
+                ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text =
+                stringResource(
+                    if (isSaving) R.string.create_draft_saving_badge else R.string.create_draft_saved_badge,
+                ),
+            style = ManyakTheme.typography.labelSmall,
+            color = if (isSaving) ManyakTheme.colors.textSubtle else ManyakTheme.colors.textBrand,
+        )
+    }
 }
 
 /** 장식용 막대 셋을 하나의 접근성 진행 문장으로 노출한다. */
@@ -298,9 +331,6 @@ internal fun ExitWarningDialog(
 
 /**
  * "다시 선택하기"가 추가 정보를 버린다고 알리는 다이얼로그.
- *
- * 기본 동작은 그대로 두기다 — 스토리라인을 다시 고르는 쪽이 파괴적인 선택이라 확인 버튼 자리를
- * 되돌리기 쉬운 쪽에 준다.
  */
 @Composable
 internal fun ReselectWarningDialog(
@@ -327,24 +357,24 @@ internal fun ReselectWarningDialog(
         },
         confirmButton = {
             Button(
-                onClick = onDismiss,
+                onClick = onConfirmReselect,
                 shape = ManyakTheme.shapes.control,
                 colors =
                     ButtonDefaults.buttonColors(
-                        containerColor = ManyakTheme.colors.brand,
-                        contentColor = ManyakTheme.colors.textInverse,
+                        containerColor = ManyakTheme.colors.backgroundDangerSubtle,
+                        contentColor = ManyakTheme.colors.textDanger,
                     ),
             ) {
                 Text(
-                    text = stringResource(R.string.create_reselect_warning_cancel),
+                    text = stringResource(R.string.create_reselect_warning_confirm),
                     style = ManyakTheme.typography.labelLarge,
                 )
             }
         },
         dismissButton = {
-            TextButton(onClick = onConfirmReselect) {
+            TextButton(onClick = onDismiss) {
                 Text(
-                    text = stringResource(R.string.create_reselect_warning_confirm),
+                    text = stringResource(R.string.create_reselect_warning_cancel),
                     style = ManyakTheme.typography.labelLarge,
                     color = ManyakTheme.colors.textSubtle,
                 )

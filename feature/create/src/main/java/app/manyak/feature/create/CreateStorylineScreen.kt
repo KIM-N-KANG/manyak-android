@@ -57,6 +57,7 @@ fun CreateStorylineScreen(
     viewModel: CreateStorylineViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val draftSaveStatus by viewModel.draftSaveStatus.collectAsStateWithLifecycle()
     val currentOnOpenAdditionalInfoStep by rememberUpdatedState(onOpenAdditionalInfoStep)
     val currentOnLeaveFunnel by rememberUpdatedState(onLeaveFunnel)
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -84,14 +85,7 @@ fun CreateStorylineScreen(
                             .makeText(context, R.string.create_storyline_rating_sync_failed, Toast.LENGTH_SHORT)
                             .show()
 
-                    is CreateStorylineEffect.ExitFunnel -> {
-                        if (effect.contentPreserved) {
-                            Toast
-                                .makeText(context, R.string.create_draft_saved, Toast.LENGTH_SHORT)
-                                .show()
-                        }
-                        currentOnLeaveFunnel()
-                    }
+                    is CreateStorylineEffect.ExitFunnel -> currentOnLeaveFunnel()
                 }
             }
         }
@@ -102,6 +96,7 @@ fun CreateStorylineScreen(
         onBack = { viewModel.onIntent(CreateStorylineIntent.LeaveFunnel) },
         onIntent = viewModel::onIntent,
         modifier = modifier,
+        draftSaveStatus = draftSaveStatus,
     )
 
     if (state.showExitWarningDialog) {
@@ -118,6 +113,7 @@ private fun CreateStorylineContent(
     onBack: () -> Unit,
     onIntent: (CreateStorylineIntent) -> Unit,
     modifier: Modifier = Modifier,
+    draftSaveStatus: DraftSaveStatus = DraftSaveStatus.HIDDEN,
 ) {
     Column(
         modifier =
@@ -125,7 +121,10 @@ private fun CreateStorylineContent(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.safeDrawing),
     ) {
-        CreateFunnelHeader(onClose = onBack)
+        CreateFunnelHeader(
+            draftSaveStatus = draftSaveStatus,
+            onClose = onBack,
+        )
         CreateStepIndicator(
             currentStep = 1,
             stepNameRes = R.string.create_step_storyline,

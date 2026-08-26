@@ -15,7 +15,13 @@ import app.manyak.core.domain.story.StoryTagCategory
 import app.manyak.core.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.text.Normalizer
 import javax.inject.Inject
@@ -72,6 +78,8 @@ data class CreateKeywordUiState(
      * 빈 입력 화면이 스쳐 간 뒤 값이 채워지면 재개 진입에서 화면이 번쩍인다.
      */
     val isRestoring: Boolean = true,
+    /** 현재 편집 스냅숏의 임시 저장 상태. */
+    val draftSaveStatus: DraftSaveStatus = DraftSaveStatus.HIDDEN,
     val activeCategory: StoryTagCategory = StoryTagCategory.GENRE,
     /** "다음"을 눌러 검증에 실패한 카테고리. 그 카테고리가 활성일 때만 푸터에 오류를 표시한다. */
     val validationErrorCategory: StoryTagCategory? = null,
@@ -219,6 +227,13 @@ sealed interface CreateKeywordEvent {
     /** 되살릴 저장본이 없었다. 복원 대기만 끝낸다. */
     data object RestoreFinished : CreateKeywordEvent
 
+    data object DraftSavePending : CreateKeywordEvent
+
+    data class DraftSaveFinished(
+        val snapshot: KeywordDraftSnapshot,
+        val saved: Boolean,
+    ) : CreateKeywordEvent
+
     data class TagsLoaded(
         val byCategory: Map<StoryTagCategory, List<StoryTag>>,
     ) : CreateKeywordEvent
@@ -292,20 +307,34 @@ class CreateKeywordViewModel
             CreateKeywordUiState(),
         ) {
         private var tagsLoadJob: Job? = null
+        private var autosaveJob: Job? = null
 
         init {
             startTagsLoad()
-            viewModelScope.launch {
-                // 레코드가 남아 있는 진입은 곧 재개다. 재개 의도를 따로 저장하지 않는다.
-                val record = pendingCreationStore.read()
-                if (record is PendingStoryCreation.KeywordDraft) {
-                    // 복원은 레코드를 소비한다 — 재개 후 다시 이탈하면 그 시점 상태로 새로 저장된다.
-                    pendingCreationStore.clear()
-                    dispatchEvent(CreateKeywordEvent.SnapshotRestored(record.snapshot))
-                } else {
-                    dispatchEvent(CreateKeywordEvent.RestoreFinished)
+            autosaveJob =
+                viewModelScope.launch {
+                    // 레코드가 남아 있는 진입은 곧 재개다. 재개 의도를 따로 저장하지 않는다.
+                    val record = pendingCreationStore.read()
+                    if (record is PendingStoryCreation.KeywordDraft) {
+                        dispatchEvent(CreateKeywordEvent.SnapshotRestored(record.snapshot))
+                    } else {
+                        dispatchEvent(CreateKeywordEvent.RestoreFinished)
+                    }
+
+                    // 복원 직후의 현재값은 이미 저장된 상태이므로 건너뛰고, 이후 편집 스냅숏만
+                    // 마지막 변경 300ms 뒤 저장한다. collectLatest 취소가 디바운스 타이머가 된다.
+                    uiState.first { !it.isRestoring }
+                    uiState
+                        .map(CreateKeywordUiState::toKeywordSnapshot)
+                        .distinctUntilChanged()
+                        .drop(1)
+                        .collectLatest { snapshot ->
+                            dispatchEvent(CreateKeywordEvent.DraftSavePending)
+                            delay(StorylineGenerationStore.DRAFT_AUTOSAVE_DEBOUNCE_MS)
+                            val saved = pendingCreationStore.persistKeywordSnapshot(snapshot)
+                            dispatchEvent(CreateKeywordEvent.DraftSaveFinished(snapshot, saved))
+                        }
                 }
-            }
         }
 
         private fun startTagsLoad(showLoading: Boolean = false) {
@@ -398,18 +427,15 @@ class CreateKeywordViewModel
          */
         private suspend fun leaveFunnel() {
             val restored = uiState.first { !it.isRestoring }
+            stopAutosave()
             val storePreserved = storylineGenerationStore.leaveFunnel()
             if (storePreserved) {
                 dispatchEffect(CreateKeywordEffect.ExitFunnel(contentPreserved = true))
                 return
             }
             val snapshot = restored.toKeywordSnapshot()
-            if (!snapshot.hasInput) {
-                dispatchEffect(CreateKeywordEffect.ExitFunnel(contentPreserved = false))
-                return
-            }
-            pendingCreationStore.write(PendingStoryCreation.KeywordDraft(snapshot))
-            dispatchEffect(CreateKeywordEffect.ExitFunnel(contentPreserved = true))
+            val saved = pendingCreationStore.persistKeywordSnapshot(snapshot)
+            dispatchEffect(CreateKeywordEffect.ExitFunnel(contentPreserved = saved))
         }
 
         /**
@@ -421,9 +447,16 @@ class CreateKeywordViewModel
             dispatchEvent(CreateKeywordEvent.GenerateAttempted)
             if (!state.canGenerateStorylines) return
             if (state.isGeneratingStorylines) return
+            // 대기 중 KeywordDraft 쓰기가 요청 직전 Generating 레코드를 늦게 덮지 않게 먼저 합류한다.
+            stopAutosave()
             dispatchEvent(CreateKeywordEvent.StorylineGenerationStarted)
             storylineGenerationStore.generate(state.toGenerationInput())
             dispatchEffect(CreateKeywordEffect.NavigateToStoryline)
+        }
+
+        private suspend fun stopAutosave() {
+            autosaveJob?.cancelAndJoin()
+            autosaveJob = null
         }
 
         private suspend fun toggleProvidedTag(
@@ -466,73 +499,21 @@ class CreateKeywordViewModel
         override fun reduce(
             state: CreateKeywordUiState,
             event: CreateKeywordEvent,
-        ): CreateKeywordUiState =
-            when (event) {
-                is CreateKeywordEvent.SnapshotRestored -> event.snapshot.toKeywordUiState(state)
-                CreateKeywordEvent.RestoreFinished -> state.copy(isRestoring = false)
-                is CreateKeywordEvent.TagsLoaded -> state.copy(providedTags = ProvidedTags.Loaded(event.byCategory))
-                CreateKeywordEvent.TagsLoadFailed -> state.copy(providedTags = ProvidedTags.Failed)
-                CreateKeywordEvent.TagsReloadStarted -> state.copy(providedTags = ProvidedTags.Loading)
-                is CreateKeywordEvent.CategoryChanged -> state.copy(activeCategory = event.category)
-                is CreateKeywordEvent.ValidationFailed -> state.copy(validationErrorCategory = event.category)
-                CreateKeywordEvent.GenerateAttempted -> state.copy(hasAttemptedGenerate = true)
-                CreateKeywordEvent.StorylineGenerationStarted -> state.copy(isGeneratingStorylines = true)
-                else -> reduceKeywordInput(state, event)
-            }
-
-        private fun reduceKeywordInput(
-            state: CreateKeywordUiState,
-            event: CreateKeywordEvent,
-        ): CreateKeywordUiState =
-            when (event) {
-                is CreateKeywordEvent.ProvidedTagToggled ->
-                    state
-                        .updateTarget(event.target) { character ->
-                            character.copy(selectedTagIds = character.selectedTagIds.toggle(event.tagId))
-                        }.let {
-                            if (event.target == KeywordTarget.Genre) {
-                                it.copy(selectedGenreTagIds = it.selectedGenreTagIds.toggle(event.tagId))
-                            } else {
-                                it
-                            }
-                        }.clearValidationErrorIfComplete(event.target.category)
-
-                is CreateKeywordEvent.CustomTagToggled ->
-                    state
-                        .updateCustomTags(event.target) { tags ->
-                            tags.mapIndexed { index, tag ->
-                                if (index == event.index) tag.copy(selected = !tag.selected) else tag
-                            }
-                        }.clearValidationErrorIfComplete(event.target.category)
-
-                is CreateKeywordEvent.CustomTagAdded ->
-                    state
-                        .updateCustomTags(event.target) { tags -> tags + CustomTag(name = event.name, selected = true) }
-                        .clearValidationErrorIfComplete(event.target.category)
-
-                is CreateKeywordEvent.CharacterNameChanged ->
-                    state.updateTarget(event.target) { it.copy(name = event.name) }
-
-                is CreateKeywordEvent.CharacterGenderChanged ->
-                    state.updateTarget(event.target) { it.copy(gender = event.gender) }
-
-                CreateKeywordEvent.SupportingCharacterAdded ->
-                    state.copy(
-                        supportingCharacters =
-                            state.supportingCharacters + KeywordCharacter(id = state.nextSupportingId),
-                        nextSupportingId = state.nextSupportingId + 1,
-                    )
-
-                is CreateKeywordEvent.SupportingCharacterRemoved ->
-                    state.copy(
-                        supportingCharacters = state.supportingCharacters.filterNot { it.id == event.characterId },
-                    )
-
-                else -> state
-            }
+        ): CreateKeywordUiState = reduceKeywordState(state, event)
     }
 
-/** 이탈 시 저장할 편집 상태. 선택 해제된 커스텀 키워드도 그대로 담는다. */
+/** 뒤 단계의 생성·완성·결과 레코드는 키워드 편집본보다 우선한다. */
+private suspend fun PendingStoryCreationStore.persistKeywordSnapshot(snapshot: KeywordDraftSnapshot): Boolean {
+    val current = read()
+    if (current != null && current !is PendingStoryCreation.KeywordDraft) return false
+    if (!snapshot.hasInput) {
+        if (current is PendingStoryCreation.KeywordDraft) clear()
+        return false
+    }
+    return write(PendingStoryCreation.KeywordDraft(snapshot))
+}
+
+/** 자동 저장할 편집 상태. 선택 해제된 커스텀 키워드도 그대로 담는다. */
 internal fun CreateKeywordUiState.toKeywordSnapshot(): KeywordDraftSnapshot =
     KeywordDraftSnapshot(
         selectedGenreTagIds = selectedGenreTagIds.toList(),
@@ -567,6 +548,7 @@ internal fun KeywordDraftSnapshot.toKeywordUiState(base: CreateKeywordUiState): 
         }
     return base.copy(
         isRestoring = false,
+        draftSaveStatus = DraftSaveStatus.SAVED,
         selectedGenreTagIds = selectedGenreTagIds.toSet(),
         customGenreTags = customGenreTags.map { CustomTag(it.name, it.selected) },
         protagonist =
@@ -609,38 +591,6 @@ private fun KeywordCharacter.toCharacterInput(): StoryCharacterInput =
 
 private fun StoryCharacterInput.isEmpty(): Boolean =
     name == null && gender == null && featureTagIds.isEmpty() && customTags.isEmpty()
-
-private fun Set<Long>.toggle(id: Long): Set<Long> = if (id in this) this - id else this + id
-
-private fun CreateKeywordUiState.updateTarget(
-    target: KeywordTarget,
-    transform: (KeywordCharacter) -> KeywordCharacter,
-): CreateKeywordUiState =
-    when (target) {
-        KeywordTarget.Genre -> this
-        KeywordTarget.Protagonist -> copy(protagonist = transform(protagonist))
-        is KeywordTarget.Supporting ->
-            copy(
-                supportingCharacters =
-                    supportingCharacters.map { if (it.id == target.characterId) transform(it) else it },
-            )
-    }
-
-private fun CreateKeywordUiState.updateCustomTags(
-    target: KeywordTarget,
-    transform: (List<CustomTag>) -> List<CustomTag>,
-): CreateKeywordUiState =
-    when (target) {
-        KeywordTarget.Genre -> copy(customGenreTags = transform(customGenreTags))
-        else -> updateTarget(target) { it.copy(customTags = transform(it.customTags)) }
-    }
-
-private fun CreateKeywordUiState.clearValidationErrorIfComplete(category: StoryTagCategory): CreateKeywordUiState =
-    if (validationErrorCategory == category && isComplete(category)) {
-        copy(validationErrorCategory = null)
-    } else {
-        this
-    }
 
 val StoryTagCategory.previous: StoryTagCategory? get() = StoryTagCategory.entries.getOrNull(ordinal - 1)
 val StoryTagCategory.next: StoryTagCategory? get() = StoryTagCategory.entries.getOrNull(ordinal + 1)

@@ -128,6 +128,8 @@ class CreateStorylineViewModel
          */
         private var isLeaving = false
 
+        val draftSaveStatus = storylineGenerationStore.draftSaveStatus
+
         init {
             viewModelScope.launch {
                 // 프로세스 재시작·재개 진입으로 스토어가 비어 있으면 진행 레코드에서 먼저 복원한다.
