@@ -25,6 +25,8 @@ data class StudioUiState(
     val isLoading: Boolean = true,
     val stories: List<StorySummary> = emptyList(),
     val loadFailed: Boolean = false,
+    /** 목록을 그린 채로 다시 읽는 중. 골격이 아니라 당김 표시자가 이 상태를 말한다. */
+    val isRefreshing: Boolean = false,
     val pendingBanner: PendingCreationBanner? = null,
     /** FAB 등 배너가 아닌 경로로 진입하려는데 임시 저장본이 있어 이어서/새로 만들기를 묻는 중. */
     val showResumeChoiceDialog: Boolean = false,
@@ -51,6 +53,9 @@ sealed interface StudioIntent {
     /** 목록 조회 실패 화면의 다시 시도. */
     data object Retry : StudioIntent
 
+    /** 목록을 당겨서 새로고침. */
+    data object Refresh : StudioIntent
+
     /** 카드 더보기 메뉴의 "삭제하기" — 바로 지우지 않고 확인을 묻는다. */
     data class RequestDeleteStory(
         val story: StorySummary,
@@ -64,11 +69,15 @@ sealed interface StudioIntent {
 sealed interface StudioEvent {
     data object LoadStarted : StudioEvent
 
+    data object RefreshStarted : StudioEvent
+
     data class StoriesLoaded(
         val stories: List<StorySummary>,
     ) : StudioEvent
 
     data object LoadFailed : StudioEvent
+
+    data object RefreshFailed : StudioEvent
 
     data class DeleteRequested(
         val story: StorySummary,
@@ -105,6 +114,8 @@ sealed interface StudioEffect {
     data object ShowStoryDeleted : StudioEffect
 
     data object ShowStoryDeleteFailed : StudioEffect
+
+    data object ShowRefreshFailed : StudioEffect
 }
 
 /**
@@ -114,8 +125,8 @@ sealed interface StudioEffect {
  * 스토리를 완성하고 채팅으로 넘어갔다 돌아온 자리가 대표적이다. 이미 그릴 목록이 있는 갱신은
  * 골격 없이 조용히 바꿔 끼우고 실패해도 보고 있던 목록을 지우지 않는다.
  *
- * 목록을 주기적으로 다시 읽거나 당겨서 새로고침하지는 않는다 — 화면 복귀가 갱신 지점이고,
- * 실패했을 때 다시 부를 수단은 재시도로 충분하다.
+ * 목록을 보는 중에도 서버와 맞출 수 있게 당겨서 새로고침을 둔다. 화면 복귀 갱신과 달리 사용자가
+ * 명시적으로 요청한 것이라 실패를 조용히 넘기지 않고 토스트로 알린다. 주기적 재조회는 두지 않는다.
  */
 @HiltViewModel
 class StudioViewModel
@@ -139,23 +150,20 @@ class StudioViewModel
             val state = uiState.value
             when (intent) {
                 // 이미 그릴 목록이 있으면 갱신이 보이지 않아야 한다 — 골격이 다시 깔리면 복귀가 재진입처럼 보인다.
-                StudioIntent.ScreenShown -> load(showProgress = state.stories.isEmpty())
+                StudioIntent.ScreenShown ->
+                    load(if (state.stories.isEmpty()) LoadKind.Blocking else LoadKind.Silent)
 
-                StudioIntent.Retry -> load(showProgress = true)
+                StudioIntent.Retry -> load(LoadKind.Blocking)
+
+                StudioIntent.Refresh -> load(LoadKind.Refresh)
 
                 is StudioIntent.RequestDeleteStory -> dispatchEvent(StudioEvent.DeleteRequested(intent.story))
 
-                StudioIntent.ConfirmDeleteStory -> state.deleteTarget?.let { target -> delete(target) }
+                StudioIntent.ConfirmDeleteStory -> confirmDelete(state.deleteTarget)
 
-                StudioIntent.DismissDeleteDialog ->
-                    // 삭제가 진행 중이면 닫지 않는다 — 결과가 정해진 뒤 상태 전이가 닫는다.
-                    if (deleteJob?.isActive != true) dispatchEvent(StudioEvent.DeleteDialogDismissed)
-                StudioIntent.CreateStory ->
-                    if (state.pendingBanner == null) {
-                        dispatchEffect(StudioEffect.NavigateToCreate)
-                    } else {
-                        dispatchEvent(StudioEvent.ResumeChoiceDialogVisibleChanged(visible = true))
-                    }
+                StudioIntent.DismissDeleteDialog -> dismissDeleteDialog()
+
+                StudioIntent.CreateStory -> startCreation(state.pendingBanner)
 
                 StudioIntent.ResumeCreation ->
                     state.pendingBanner?.let { banner ->
@@ -175,20 +183,57 @@ class StudioViewModel
             }
         }
 
-        /**
-         * @param showProgress 그릴 목록이 없을 때만 true. 목록이 있는 갱신은 골격도 실패 화면도 띄우지
-         *  않는다 — 보고 있던 목록이 사라지는 쪽이 갱신 실패보다 나쁘다.
-         */
-        private fun load(showProgress: Boolean) {
-            if (loadJob?.isActive == true) return
+        private fun load(kind: LoadKind) {
+            // 명시적 요청인 새로고침은 진행 중인 조회를 기다리지 않고 취소한 뒤 시작한다.
+            if (kind == LoadKind.Refresh) {
+                loadJob?.cancel()
+            } else if (loadJob?.isActive == true) {
+                return
+            }
             loadJob =
                 viewModelScope.launch {
-                    if (showProgress) dispatchEvent(StudioEvent.LoadStarted)
+                    when (kind) {
+                        LoadKind.Blocking -> dispatchEvent(StudioEvent.LoadStarted)
+                        LoadKind.Refresh -> dispatchEvent(StudioEvent.RefreshStarted)
+                        LoadKind.Silent -> Unit
+                    }
                     when (val result = storyRepository.myStories()) {
                         is DomainResult.Success -> dispatchEvent(StudioEvent.StoriesLoaded(result.value))
-                        is DomainResult.Failure -> if (showProgress) dispatchEvent(StudioEvent.LoadFailed)
+                        is DomainResult.Failure -> reportLoadFailure(kind)
                     }
                 }
+        }
+
+        private suspend fun reportLoadFailure(kind: LoadKind) {
+            when (kind) {
+                LoadKind.Blocking -> dispatchEvent(StudioEvent.LoadFailed)
+
+                LoadKind.Refresh -> {
+                    dispatchEvent(StudioEvent.RefreshFailed)
+                    dispatchEffect(StudioEffect.ShowRefreshFailed)
+                }
+
+                LoadKind.Silent -> Unit
+            }
+        }
+
+        /** FAB 등 배너가 아닌 경로의 진입. 임시 저장본이 있으면 바로 들어가지 않고 묻는다. */
+        private suspend fun startCreation(pendingBanner: PendingCreationBanner?) {
+            if (pendingBanner == null) {
+                dispatchEffect(StudioEffect.NavigateToCreate)
+            } else {
+                dispatchEvent(StudioEvent.ResumeChoiceDialogVisibleChanged(visible = true))
+            }
+        }
+
+        /** 다이얼로그가 이미 닫힌 뒤 확인이 도착하면 대상이 없다. */
+        private fun confirmDelete(target: StorySummary?) {
+            if (target != null) delete(target)
+        }
+
+        /** 삭제가 진행 중이면 닫지 않는다 — 결과가 정해진 뒤 상태 전이가 닫는다. */
+        private suspend fun dismissDeleteDialog() {
+            if (deleteJob?.isActive != true) dispatchEvent(StudioEvent.DeleteDialogDismissed)
         }
 
         private fun delete(target: StorySummary) {
@@ -215,12 +260,23 @@ class StudioViewModel
             event: StudioEvent,
         ): StudioUiState =
             when (event) {
-                StudioEvent.LoadStarted -> state.copy(isLoading = true, loadFailed = false)
+                StudioEvent.LoadStarted -> state.copy(isLoading = true, loadFailed = false, isRefreshing = false)
+
+                StudioEvent.RefreshStarted -> state.copy(isRefreshing = true)
 
                 is StudioEvent.StoriesLoaded ->
-                    state.copy(isLoading = false, stories = event.stories, loadFailed = false)
+                    state.copy(
+                        isLoading = false,
+                        stories = event.stories,
+                        loadFailed = false,
+                        isRefreshing = false,
+                    )
 
-                StudioEvent.LoadFailed -> state.copy(isLoading = false, stories = emptyList(), loadFailed = true)
+                StudioEvent.LoadFailed ->
+                    state.copy(isLoading = false, stories = emptyList(), loadFailed = true, isRefreshing = false)
+
+                // 새로고침 실패는 보고 있던 목록을 건드리지 않는다 — 알림은 토스트가 맡는다.
+                StudioEvent.RefreshFailed -> state.copy(isRefreshing = false)
 
                 is StudioEvent.DeleteRequested -> state.copy(deleteTarget = event.story)
 
@@ -249,6 +305,18 @@ class StudioViewModel
                     state.copy(showResumeChoiceDialog = event.visible)
             }
     }
+
+/** 목록 조회를 부른 자리. 진행을 어떻게 보이고 실패를 어떻게 알릴지가 여기서 갈린다. */
+private enum class LoadKind {
+    /** 첫 조회·재시도. 골격을 깔고 실패하면 재시도 화면으로 바꾼다. */
+    Blocking,
+
+    /** 화면 복귀. 보고 있던 목록을 건드리지 않고, 실패해도 아무것도 알리지 않는다. */
+    Silent,
+
+    /** 당겨서 새로고침. 당김 표시자로 진행을 알리고 실패는 토스트로 알린다. */
+    Refresh,
+}
 
 private fun PendingStoryCreation.toBanner(): PendingCreationBanner =
     PendingCreationBanner(

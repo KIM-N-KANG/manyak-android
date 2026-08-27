@@ -360,6 +360,7 @@ components:
 | `ManyakSectionHeader.kt` | 메인 탭 상단 헤더 |
 | `ManyakNavigationBar.kt` · `ManyakNavigationItem.kt` | 하단 탭 바와 그 항목 |
 | `ProgressIndicator.kt` | 로딩 스피너와 지연 표시 헬퍼 |
+| `PullToRefresh.kt` | 당겨서 새로고침 컨테이너. 표시자를 셸 헤더 아래로 내린다 |
 
 이름은 세 표기가 1:1로 대응합니다 — 이 문서 `{colors.text-subtle}` ↔ Kotlin `ManyakTheme.colors.textSubtle` ↔ 토큰 JSON `color.text.subtle`.
 
@@ -585,6 +586,8 @@ components:
 `NavigationBar` 위에서 지우는 것은 둘이다. **알약 모양 선택 표시자**는 표시자 색을 투명으로 두고, **눌림 피드백**은 `LocalRippleConfiguration`에 `null`을 내려 끈다 — 탭을 누르면 아이콘 모양과 색이 곧바로 바뀌므로 그 변화 자체가 반응이다. 바 높이·최소 터치 타깃·하단 안전 영역은 컴포넌트가 처리한다.
 
 선택에 `{colors.brand}` 계열을 쓰지 않는 것은 **이 시스템에서 초록이 "지금 누를 것"을 뜻하기 때문이다.** 하단 바는 늘 떠 있는 chrome 이라 초록을 상시 띄우면 화면 안의 주 동작과 강조가 겹치고, 어느 쪽이 다음 행동인지 흐려진다. 선택 여부는 아이콘 모양이 이미 말하므로 색은 위계(`{colors.text}` ↔ `{colors.text-subtle}`)만 맡는다.
+
+**`pull-to-refresh`** — 목록을 당겨서 새로고침할 때의 표시자. M3 `PullToRefreshBox` 기본 표시자 위에 배경 `{colors.surface-raised}`와 스피너 색 `{colors.progress-indicator}`를 얹는다. 목록은 셸 헤더 아래로 흘러 들어가도 되지만 표시자는 그 자리에서 헤더에 완전히 가리므로, 셸이 넘긴 콘텐츠 여백의 **상단만큼 내려** 헤더 뒤에서 나오게 한다. 목록이 그려진 상태에만 두고 골격·조회 실패·빈 목록에는 두지 않는다.
 
 ### 퍼널
 

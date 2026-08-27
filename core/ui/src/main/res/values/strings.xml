@@ -31,6 +31,8 @@
 
     <!-- 스토리 목록 카드 공통. 홈(오리지널)과 제작(내가 만든) 목록이 함께 쓴다. -->
     <string name="story_load_failed">스토리를 불러오지 못했어요</string>
+    <!-- 목록을 보고 있는 중에 당겨서 새로고침한 결과. 목록은 그대로 남으므로 "불러오지 못했어요"와 구분한다. -->
+    <string name="story_refresh_failed">새로고침하지 못했어요</string>
     <!-- 턴 수 뱃지. 숫자만 보이므로 화면 낭독기에는 무엇의 수인지 함께 읽힌다. -->
     <string name="story_turn_count_description">누적 턴 수 %1$s</string>
     <string name="story_thumbnail_placeholder">썸네일 없음</string>
