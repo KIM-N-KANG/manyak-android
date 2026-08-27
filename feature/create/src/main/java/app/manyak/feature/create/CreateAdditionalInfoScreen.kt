@@ -53,7 +53,7 @@ fun CreateAdditionalInfoScreen(
     viewModel: CreateAdditionalInfoViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val draftSaveStatus by viewModel.draftSaveStatus.collectAsStateWithLifecycle()
+    val draftSave by viewModel.draftSave.collectAsStateWithLifecycle()
     val currentOnEnterChat by rememberUpdatedState(onEnterChat)
     val currentOnLeaveFunnel by rememberUpdatedState(onLeaveFunnel)
     val currentOnBackToStoryline by rememberUpdatedState(onBackToStoryline)
@@ -62,6 +62,8 @@ fun CreateAdditionalInfoScreen(
 
     // 디바이스 뒤로가기도 앱 바 닫기와 같은 이탈 처리를 거친다.
     BackHandler { viewModel.onIntent(CreateAdditionalInfoIntent.LeaveFunnel) }
+
+    SaveDraftWhenBackgrounded { viewModel.onIntent(CreateAdditionalInfoIntent.SaveDraft) }
 
     // 응답을 못 받았거나 409 로 거절된 완성 요청의 복구 폴링. STARTED 동안만 돌아 백그라운드에서
     // 멈추고 복귀 시 재개된다.
@@ -95,11 +97,12 @@ fun CreateAdditionalInfoScreen(
         state = state,
         onIntent = viewModel::onIntent,
         modifier = modifier,
-        draftSaveStatus = draftSaveStatus,
+        draftSave = draftSave,
     )
 
-    if (state.showExitWarningDialog) {
-        ExitWarningDialog(
+    state.exitWarning?.let { warning ->
+        FunnelExitWarningDialog(
+            warning = warning,
             onConfirmLeave = { viewModel.onIntent(CreateAdditionalInfoIntent.ConfirmLeaveFunnel) },
             onDismiss = { viewModel.onIntent(CreateAdditionalInfoIntent.DismissExitWarning) },
         )
@@ -120,7 +123,7 @@ private fun CreateAdditionalInfoContent(
     state: CreateAdditionalInfoUiState,
     onIntent: (CreateAdditionalInfoIntent) -> Unit,
     modifier: Modifier = Modifier,
-    draftSaveStatus: DraftSaveStatus = DraftSaveStatus.HIDDEN,
+    draftSave: DraftSaveUiState = DraftSaveUiState(),
 ) {
     val imeVisible = WindowInsets.isImeVisible
     val focusManager = LocalFocusManager.current
@@ -134,7 +137,8 @@ private fun CreateAdditionalInfoContent(
                     .clearFocusOnTap(focusManager),
         ) {
             CreateFunnelHeader(
-                draftSaveStatus = draftSaveStatus,
+                draftSave = draftSave,
+                onSaveDraft = { onIntent(CreateAdditionalInfoIntent.SaveDraft) },
                 onClose = { onIntent(CreateAdditionalInfoIntent.LeaveFunnel) },
             )
             CreateStepIndicator(

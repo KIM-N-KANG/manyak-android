@@ -1,5 +1,7 @@
 package app.manyak.feature.create
 
+import app.manyak.core.domain.story.StoryTag
+import app.manyak.core.domain.story.StoryTagCategory
 import app.manyak.core.domain.story.Storyline
 import app.manyak.core.domain.story.StorylineRecommendedInfo
 
@@ -57,4 +59,21 @@ internal fun previewStorylines(): List<Storyline> =
                     StorylineRecommendedInfo(id = 9, text = "서연이 손을 내미는 마지막 장면을 여운 있게 마무리해줘"),
                 ),
         ),
+    )
+
+/** 프리뷰 확인용 키워드 단계 기본 상태. 태그 조회가 끝나 장르 목록이 놓인 시점이다. */
+internal fun previewKeywordState(): CreateKeywordUiState =
+    CreateKeywordUiState(
+        isRestoring = false,
+        providedTags =
+            ProvidedTags.Loaded(
+                mapOf(
+                    StoryTagCategory.GENRE to
+                        listOf(
+                            StoryTag(id = 1, name = "로맨스", category = StoryTagCategory.GENRE),
+                            StoryTag(id = 2, name = "판타지", category = StoryTagCategory.GENRE),
+                            StoryTag(id = 3, name = "미스터리", category = StoryTagCategory.GENRE),
+                        ),
+                ),
+            ),
     )

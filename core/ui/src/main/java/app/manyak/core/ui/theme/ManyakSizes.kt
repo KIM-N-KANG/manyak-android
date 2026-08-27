@@ -14,8 +14,10 @@ import androidx.compose.ui.unit.dp
 data class ManyakSizes(
     /** 48dp — 버튼·탭처럼 탭 가능한 일반 컨트롤의 높이 */
     val control: Dp,
-    /** 40dp — 입력창·칩·셀렉트 앵커의 최소 높이 */
+    /** 40dp — 입력창·칩·셀렉트 앵커·앱 바 액션 버튼처럼 밀도 높은 컨트롤의 최소 높이 */
     val input: Dp,
+    /** 16dp — 밀도 높은 컨트롤 안에서 라벨 옆에 붙는 작은 아이콘 */
+    val iconSmall: Dp,
     /** 20dp — 라벨 옆에 붙는 아이콘·제공자 로고 */
     val icon: Dp,
     /** 24dp — 하단 탭 아이콘. 라벨 옆이 아니라 위에 놓여 탭의 주된 시각 요소이므로 [icon]보다 크다 */
@@ -28,6 +30,7 @@ internal val ManyakDefaultSizes =
     ManyakSizes(
         control = 48.dp,
         input = 40.dp,
+        iconSmall = 16.dp,
         icon = 20.dp,
         tabIcon = 24.dp,
         logo = 24.dp,

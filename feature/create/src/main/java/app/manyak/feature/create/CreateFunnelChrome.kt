@@ -1,5 +1,6 @@
 package app.manyak.feature.create
 
+import androidx.activity.compose.LocalActivity
 import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -10,6 +11,7 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -45,6 +47,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.compose.LifecycleEventEffect
 import app.manyak.core.ui.R
 import app.manyak.core.ui.theme.ManyakTheme
 
@@ -103,7 +108,8 @@ internal fun FunnelFocusScroll(content: @Composable () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun CreateFunnelHeader(
-    draftSaveStatus: DraftSaveStatus,
+    draftSave: DraftSaveUiState,
+    onSaveDraft: () -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -118,7 +124,7 @@ internal fun CreateFunnelHeader(
         },
         // 어느 단계에서든 퍼널 전체를 닫는 동작임을 분명히 알 수 있게 오른쪽 끝에 닫기를 둔다.
         actions = {
-            DraftSaveBadge(draftSaveStatus)
+            DraftSaveButton(draftSave = draftSave, onClick = onSaveDraft)
             IconButton(onClick = onClose) {
                 Icon(
                     painter = painterResource(R.drawable.ic_close),
@@ -137,34 +143,87 @@ internal fun CreateFunnelHeader(
     )
 }
 
+/**
+ * 헤더의 임시 저장 버튼. 편집은 화면 안에 모아 두었다가 이 버튼이나 백그라운드 전환에서만
+ * 디스크로 나가므로, 저장 여부를 사용자가 직접 결정한다.
+ *
+ * 저장 중에는 라벨 자리에 스피너를 겹치고, 성공하면 잠깐 체크와 "임시 저장됨"으로 바꾸며
+ * 브랜드 배경을 입는다. 두 상태 모두 버튼을 잠근다 — 방금 저장한 것을 곧바로 다시 저장할
+ * 이유가 없다.
+ *
+ * 상태마다 색을 직접 정해 잠금 여부와 무관하게 같은 값을 넘긴다. `enabled` 에 색까지 맡기면
+ * 저장 완료로 잠긴 버튼이 "누를 수 없음" 회색으로 보인다.
+ */
 @Composable
-private fun DraftSaveBadge(status: DraftSaveStatus) {
-    if (status == DraftSaveStatus.HIDDEN) return
-    val isSaving = status == DraftSaveStatus.SAVING
-    Box(
-        modifier =
-            Modifier
-                .clip(ManyakTheme.shapes.pill)
-                .background(
-                    if (isSaving) {
-                        ManyakTheme.colors.backgroundNeutral
-                    } else {
-                        ManyakTheme.colors.backgroundBrandSubtle
-                    },
-                ).padding(
-                    horizontal = ManyakTheme.spacing.compact,
-                    vertical = ManyakTheme.spacing.inline,
-                ),
-        contentAlignment = Alignment.Center,
+private fun DraftSaveButton(
+    draftSave: DraftSaveUiState,
+    onClick: () -> Unit,
+) {
+    val isSaving = draftSave.status == DraftSaveStatus.SAVING
+    val isSaved = draftSave.status == DraftSaveStatus.SAVED
+    val isEnabled = draftSave.canSave && draftSave.status == DraftSaveStatus.IDLE
+    val labelRes = if (isSaved) R.string.create_draft_saved else R.string.create_draft_save
+    val (containerColor, contentColor) =
+        when {
+            isSaved -> ManyakTheme.colors.backgroundBrandSubtle to ManyakTheme.colors.textBrand
+            isEnabled || isSaving -> ManyakTheme.colors.backgroundNeutral to ManyakTheme.colors.text
+            else -> ManyakTheme.colors.backgroundDisabled to ManyakTheme.colors.textDisabled
+        }
+    Button(
+        modifier = Modifier.height(ManyakTheme.sizes.input),
+        enabled = isEnabled,
+        onClick = onClick,
+        shape = ManyakTheme.shapes.control,
+        // 저장 완료는 브랜드 배경만으로 충분히 구분된다 — 테두리까지 두르면 과하다.
+        border = if (isSaved) null else BorderStroke(1.dp, ManyakTheme.colors.border),
+        contentPadding = PaddingValues(horizontal = ManyakTheme.spacing.component),
+        colors =
+            ButtonDefaults.buttonColors(
+                containerColor = containerColor,
+                contentColor = contentColor,
+                disabledContainerColor = containerColor,
+                disabledContentColor = contentColor,
+            ),
     ) {
-        Text(
-            text =
-                stringResource(
-                    if (isSaving) R.string.create_draft_saving_badge else R.string.create_draft_saved_badge,
-                ),
-            style = ManyakTheme.typography.labelSmall,
-            color = if (isSaving) ManyakTheme.colors.textSubtle else ManyakTheme.colors.textBrand,
-        )
+        Box(contentAlignment = Alignment.Center) {
+            // 문구를 투명하게 남겨 스피너가 떠도 버튼 폭이 흔들리지 않게 한다.
+            Row(
+                modifier = Modifier.alpha(if (isSaving) 0f else 1f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
+            ) {
+                if (isSaved) {
+                    Icon(
+                        modifier = Modifier.size(ManyakTheme.sizes.iconSmall),
+                        painter = painterResource(R.drawable.ic_check),
+                        contentDescription = null,
+                        tint = LocalContentColor.current,
+                    )
+                }
+                Text(text = stringResource(labelRes), style = ManyakTheme.typography.labelLarge)
+            }
+            if (isSaving) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(ManyakTheme.sizes.iconSmall),
+                    color = LocalContentColor.current,
+                    strokeWidth = 2.dp,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * 앱이 백그라운드로 갈 때 모아 둔 편집 스냅숏을 한 번에 저장한다.
+ *
+ * 목적지가 아니라 Activity 수명을 본다 — 목적지 수명은 퍼널을 떠나는 이동에서도 멈추므로,
+ * 저장하지 않고 나가기로 한 조작까지 저장해 버린다.
+ */
+@Composable
+internal fun SaveDraftWhenBackgrounded(onSave: () -> Unit) {
+    val activityLifecycleOwner = LocalActivity.current as? LifecycleOwner
+    if (activityLifecycleOwner != null) {
+        LifecycleEventEffect(Lifecycle.Event.ON_STOP, activityLifecycleOwner, onSave)
     }
 }
 
@@ -276,87 +335,88 @@ internal fun FunnelNeutralButton(
     }
 }
 
-/** 복원할 결과가 없는 퍼널 이탈의 소실 경고 다이얼로그(3-1 이탈 가드). */
+/** 퍼널을 떠나면 무엇이 사라지는지 알리고 되돌아갈 길을 먼저 주는 이탈 경고. */
 @Composable
-internal fun ExitWarningDialog(
+internal fun FunnelExitWarningDialog(
+    warning: FunnelExitWarning,
     onConfirmLeave: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = ManyakTheme.colors.surfaceRaised,
-        shape = ManyakTheme.shapes.overlay,
-        title = {
-            Text(
-                text = stringResource(R.string.create_exit_warning_title),
-                style = ManyakTheme.typography.titleMedium,
-                color = ManyakTheme.colors.text,
+    when (warning) {
+        FunnelExitWarning.UNSAVED_CHANGES ->
+            FunnelWarningDialog(
+                titleRes = R.string.create_unsaved_warning_title,
+                descriptionRes = R.string.create_unsaved_warning_description,
+                confirmRes = R.string.create_unsaved_warning_leave,
+                dismissRes = R.string.create_unsaved_warning_stay,
+                onConfirm = onConfirmLeave,
+                onDismiss = onDismiss,
             )
-        },
-        text = {
-            Text(
-                text = stringResource(R.string.create_exit_warning_description),
-                style = ManyakTheme.typography.bodyMedium,
-                color = ManyakTheme.colors.textSubtle,
+
+        FunnelExitWarning.NOTHING_TO_PRESERVE ->
+            FunnelWarningDialog(
+                titleRes = R.string.create_exit_warning_title,
+                descriptionRes = R.string.create_exit_warning_description,
+                confirmRes = R.string.create_exit_warning_leave,
+                dismissRes = R.string.create_exit_warning_stay,
+                onConfirm = onConfirmLeave,
+                onDismiss = onDismiss,
             )
-        },
-        confirmButton = {
-            Button(
-                onClick = onDismiss,
-                shape = ManyakTheme.shapes.control,
-                colors =
-                    ButtonDefaults.buttonColors(
-                        containerColor = ManyakTheme.colors.brand,
-                        contentColor = ManyakTheme.colors.textInverse,
-                    ),
-            ) {
-                Text(
-                    text = stringResource(R.string.create_exit_warning_stay),
-                    style = ManyakTheme.typography.labelLarge,
-                )
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onConfirmLeave) {
-                Text(
-                    text = stringResource(R.string.create_exit_warning_leave),
-                    style = ManyakTheme.typography.labelLarge,
-                    color = ManyakTheme.colors.textSubtle,
-                )
-            }
-        },
-    )
+    }
 }
 
-/**
- * "다시 선택하기"가 추가 정보를 버린다고 알리는 다이얼로그.
- */
+/** "다시 선택하기"가 추가 정보를 버린다고 알리는 다이얼로그. */
 @Composable
 internal fun ReselectWarningDialog(
     onConfirmReselect: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    FunnelWarningDialog(
+        titleRes = R.string.create_reselect_warning_title,
+        descriptionRes = R.string.create_reselect_warning_description,
+        confirmRes = R.string.create_reselect_warning_confirm,
+        dismissRes = R.string.create_reselect_warning_cancel,
+        onConfirm = onConfirmReselect,
+        onDismiss = onDismiss,
+    )
+}
+
+/**
+ * 만들던 내용을 버리는 동작을 확인받는 다이얼로그.
+ *
+ * 버리는 쪽을 오른쪽 위험 버튼에, 되돌아가는 쪽을 왼쪽 텍스트 버튼에 둔다 — 퍼널의 모든
+ * 경고가 같은 자리에 같은 성격의 버튼을 놓아야 어느 쪽이 무엇을 버리는지 매번 다시 읽지 않는다.
+ */
+@Composable
+private fun FunnelWarningDialog(
+    @StringRes titleRes: Int,
+    @StringRes descriptionRes: Int,
+    @StringRes confirmRes: Int,
+    @StringRes dismissRes: Int,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = ManyakTheme.colors.surfaceRaised,
         shape = ManyakTheme.shapes.overlay,
         title = {
             Text(
-                text = stringResource(R.string.create_reselect_warning_title),
+                text = stringResource(titleRes),
                 style = ManyakTheme.typography.titleMedium,
                 color = ManyakTheme.colors.text,
             )
         },
         text = {
             Text(
-                text = stringResource(R.string.create_reselect_warning_description),
+                text = stringResource(descriptionRes),
                 style = ManyakTheme.typography.bodyMedium,
                 color = ManyakTheme.colors.textSubtle,
             )
         },
         confirmButton = {
             Button(
-                onClick = onConfirmReselect,
+                onClick = onConfirm,
                 shape = ManyakTheme.shapes.control,
                 colors =
                     ButtonDefaults.buttonColors(
@@ -364,16 +424,13 @@ internal fun ReselectWarningDialog(
                         contentColor = ManyakTheme.colors.textDanger,
                     ),
             ) {
-                Text(
-                    text = stringResource(R.string.create_reselect_warning_confirm),
-                    style = ManyakTheme.typography.labelLarge,
-                )
+                Text(text = stringResource(confirmRes), style = ManyakTheme.typography.labelLarge)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text(
-                    text = stringResource(R.string.create_reselect_warning_cancel),
+                    text = stringResource(dismissRes),
                     style = ManyakTheme.typography.labelLarge,
                     color = ManyakTheme.colors.textSubtle,
                 )

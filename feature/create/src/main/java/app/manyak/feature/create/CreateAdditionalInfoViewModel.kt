@@ -58,8 +58,8 @@ data class CreateAdditionalInfoUiState(
     /** 완성 요청 진행 중. 입력 화면 대신 완성 로딩을 그린다. */
     val isCompletingStory: Boolean = false,
     val completionFailure: CompletionFailure? = null,
-    /** 보존할 내용 없이 이탈을 시도해 소실 경고 다이얼로그를 띄운 상태. */
-    val showExitWarningDialog: Boolean = false,
+    /** 이탈을 막고 띄운 경고. */
+    val exitWarning: FunnelExitWarning? = null,
     /** "다시 선택하기"가 추가 정보를 버린다고 알리는 중. */
     val showReselectWarningDialog: Boolean = false,
 ) {
@@ -96,12 +96,15 @@ sealed interface CreateAdditionalInfoIntent {
         val storylineIndex: Int,
     ) : CreateAdditionalInfoIntent
 
+    /** 헤더의 임시 저장 버튼과 백그라운드 전환. */
+    data object SaveDraft : CreateAdditionalInfoIntent
+
     sealed interface FunnelNavigation : CreateAdditionalInfoIntent
 
     /** 앱 바 닫기·디바이스 뒤로가기 — 퍼널 이탈. */
     data object LeaveFunnel : FunnelNavigation
 
-    /** 소실 경고 다이얼로그의 "그만 만들기". */
+    /** 이탈 경고의 "나가기"·"그만 만들기". */
     data object ConfirmLeaveFunnel : FunnelNavigation
 
     data object DismissExitWarning : FunnelNavigation
@@ -142,8 +145,8 @@ sealed interface CreateAdditionalInfoEvent {
         val snapshot: CreateAdditionalInfoUiState,
     ) : CreateAdditionalInfoEvent
 
-    data class ExitWarningVisibleChanged(
-        val visible: Boolean,
+    data class ExitWarningChanged(
+        val warning: FunnelExitWarning?,
     ) : CreateAdditionalInfoEvent
 
     data class ReselectWarningVisibleChanged(
@@ -157,10 +160,8 @@ sealed interface CreateAdditionalInfoEffect {
         val chatId: String,
     ) : CreateAdditionalInfoEffect
 
-    /** 퍼널 이탈 확정. 내용이 남았으면 "임시 저장되었어요" 토스트를 함께 띄운다. */
-    data class ExitFunnel(
-        val contentPreserved: Boolean,
-    ) : CreateAdditionalInfoEffect
+    /** 퍼널 이탈 확정. */
+    data object ExitFunnel : CreateAdditionalInfoEffect
 
     /** "다시 선택하기" 확정 — 스토리라인 단계로 pop 한다. */
     data object NavigateBackToStoryline : CreateAdditionalInfoEffect
@@ -196,7 +197,7 @@ class CreateAdditionalInfoViewModel
          */
         private var isLeaving = false
 
-        val draftSaveStatus = storylineGenerationStore.draftSaveStatus
+        val draftSave = storylineGenerationStore.draftSave
 
         init {
             viewModelScope.launch {
@@ -310,6 +311,15 @@ class CreateAdditionalInfoViewModel
 
                 is CreateAdditionalInfoIntent.CompleteStory -> completeStory(state, intent.storylineIndex)
 
+                CreateAdditionalInfoIntent.SaveDraft -> {
+                    // 미러링 수집이 UiState 보다 늦게 돌아도 저장에는 지금 입력이 들어가야 한다.
+                    storylineGenerationStore.updateAdditionalInfoProgress(
+                        inputs = state.additionalInfos.map(AdditionalInfoInput::value),
+                        recommendations = state.selectedRecommendations.toList(),
+                    )
+                    storylineGenerationStore.saveDraft()
+                }
+
                 is CreateAdditionalInfoIntent.FunnelNavigation -> handleFunnelNavigation(intent, state)
             }
         }
@@ -319,24 +329,12 @@ class CreateAdditionalInfoViewModel
             state: CreateAdditionalInfoUiState,
         ) {
             when (intent) {
-                CreateAdditionalInfoIntent.LeaveFunnel ->
-                    if (storylineGenerationStore.hasContentToPreserve()) {
-                        isLeaving = true
-                        val preserved = storylineGenerationStore.leaveFunnel()
-                        dispatchEffect(CreateAdditionalInfoEffect.ExitFunnel(contentPreserved = preserved))
-                    } else {
-                        dispatchEvent(CreateAdditionalInfoEvent.ExitWarningVisibleChanged(visible = true))
-                    }
+                CreateAdditionalInfoIntent.LeaveFunnel -> leaveFunnel(confirmed = false)
 
-                CreateAdditionalInfoIntent.ConfirmLeaveFunnel -> {
-                    isLeaving = true
-                    storylineGenerationStore.leaveFunnel()
-                    dispatchEvent(CreateAdditionalInfoEvent.ExitWarningVisibleChanged(visible = false))
-                    dispatchEffect(CreateAdditionalInfoEffect.ExitFunnel(contentPreserved = false))
-                }
+                CreateAdditionalInfoIntent.ConfirmLeaveFunnel -> leaveFunnel(confirmed = true)
 
                 CreateAdditionalInfoIntent.DismissExitWarning ->
-                    dispatchEvent(CreateAdditionalInfoEvent.ExitWarningVisibleChanged(visible = false))
+                    dispatchEvent(CreateAdditionalInfoEvent.ExitWarningChanged(null))
 
                 CreateAdditionalInfoIntent.ReselectStoryline ->
                     if (state.hasAdditionalInfo) {
@@ -353,6 +351,30 @@ class CreateAdditionalInfoViewModel
                 CreateAdditionalInfoIntent.DismissReselectWarning ->
                     dispatchEvent(CreateAdditionalInfoEvent.ReselectWarningVisibleChanged(visible = false))
             }
+        }
+
+        /**
+         * 저장하지 않은 편집이 있으면 먼저 경고하고, 저장할 것도 저장된 것도 없으면 소실 경고를 띄운다.
+         * 둘 다 아니면 마지막 저장분이 그대로 재개 지점이므로 조용히 나간다.
+         */
+        private suspend fun leaveFunnel(confirmed: Boolean) {
+            val warning =
+                when {
+                    confirmed -> null
+                    storylineGenerationStore.draftSave.value.hasUnsavedChanges ->
+                        FunnelExitWarning.UNSAVED_CHANGES
+
+                    storylineGenerationStore.hasContentToPreserve() -> null
+                    else -> FunnelExitWarning.NOTHING_TO_PRESERVE
+                }
+            if (warning != null) {
+                dispatchEvent(CreateAdditionalInfoEvent.ExitWarningChanged(warning))
+                return
+            }
+            if (confirmed) dispatchEvent(CreateAdditionalInfoEvent.ExitWarningChanged(null))
+            isLeaving = true
+            storylineGenerationStore.leaveFunnel()
+            dispatchEffect(CreateAdditionalInfoEffect.ExitFunnel)
         }
 
         /**
@@ -383,6 +405,7 @@ class CreateAdditionalInfoViewModel
             val storylineId = state.storylines.getOrNull(storylineIndex)?.id ?: return
             val command =
                 buildCompletionCommand(
+                    previous = storylineGenerationStore.lastCompletionCommand,
                     simpleCreationId = simpleCreationId,
                     storylineId = storylineId,
                     additionalInfos = state.submittedAdditionalInfos(),
@@ -447,31 +470,6 @@ class CreateAdditionalInfoViewModel
             }
         }
 
-        /**
-         * 같은 페이로드의 재시도는 requestId 를 재사용한다 — 서버가 이미 완성했다면(응답 유실)
-         * AI 재호출 없이 저장된 결과를 돌려받아 중복 생성·중복 과금이 없다(멱등 계약).
-         * 마지막 명령은 스토어가 기억해 임시 저장 재개 후의 재시도에도 승계된다.
-         */
-        private fun buildCompletionCommand(
-            simpleCreationId: Long,
-            storylineId: Long,
-            additionalInfos: List<String>,
-        ): StoryCompletionCommand {
-            val reusableRequestId =
-                storylineGenerationStore.lastCompletionCommand
-                    ?.takeIf {
-                        it.simpleCreationId == simpleCreationId &&
-                            it.storylineId == storylineId &&
-                            it.additionalInfos == additionalInfos
-                    }?.requestId
-            return StoryCompletionCommand(
-                requestId = reusableRequestId ?: UUID.randomUUID().toString(),
-                simpleCreationId = simpleCreationId,
-                storylineId = storylineId,
-                additionalInfos = additionalInfos,
-            )
-        }
-
         override fun reduce(
             state: CreateAdditionalInfoUiState,
             event: CreateAdditionalInfoEvent,
@@ -517,17 +515,42 @@ class CreateAdditionalInfoViewModel
                         isRestoring = false,
                         isCompletingStory = state.isCompletingStory,
                         completionFailure = state.completionFailure,
-                        showExitWarningDialog = state.showExitWarningDialog,
+                        exitWarning = state.exitWarning,
                         showReselectWarningDialog = state.showReselectWarningDialog,
                     )
 
-                is CreateAdditionalInfoEvent.ExitWarningVisibleChanged ->
-                    state.copy(showExitWarningDialog = event.visible)
+                is CreateAdditionalInfoEvent.ExitWarningChanged -> state.copy(exitWarning = event.warning)
 
                 is CreateAdditionalInfoEvent.ReselectWarningVisibleChanged ->
                     state.copy(showReselectWarningDialog = event.visible)
             }
     }
+
+/**
+ * 같은 페이로드의 재시도는 requestId 를 재사용한다 — 서버가 이미 완성했다면(응답 유실)
+ * AI 재호출 없이 저장된 결과를 돌려받아 중복 생성·중복 과금이 없다(멱등 계약).
+ * [previous] 는 스토어가 기억한 마지막 명령이라 임시 저장 재개 후의 재시도에도 승계된다.
+ */
+private fun buildCompletionCommand(
+    previous: StoryCompletionCommand?,
+    simpleCreationId: Long,
+    storylineId: Long,
+    additionalInfos: List<String>,
+): StoryCompletionCommand {
+    val reusableRequestId =
+        previous
+            ?.takeIf {
+                it.simpleCreationId == simpleCreationId &&
+                    it.storylineId == storylineId &&
+                    it.additionalInfos == additionalInfos
+            }?.requestId
+    return StoryCompletionCommand(
+        requestId = reusableRequestId ?: UUID.randomUUID().toString(),
+        simpleCreationId = simpleCreationId,
+        storylineId = storylineId,
+        additionalInfos = additionalInfos,
+    )
+}
 
 /** 추천 채택분이 앞, 그 뒤로 공백을 정리한 자유 입력이 실린다. 빈 입력은 보내지 않는다. */
 private fun CreateAdditionalInfoUiState.submittedAdditionalInfos(): List<String> =

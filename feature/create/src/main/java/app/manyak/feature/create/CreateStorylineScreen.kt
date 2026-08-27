@@ -57,14 +57,16 @@ fun CreateStorylineScreen(
     viewModel: CreateStorylineViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val draftSaveStatus by viewModel.draftSaveStatus.collectAsStateWithLifecycle()
+    val draftSave by viewModel.draftSave.collectAsStateWithLifecycle()
     val currentOnOpenAdditionalInfoStep by rememberUpdatedState(onOpenAdditionalInfoStep)
     val currentOnLeaveFunnel by rememberUpdatedState(onLeaveFunnel)
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
 
-    // 시스템 뒤로가기도 헤더 뒤로가기와 같은 이탈 처리를 거친다.
+    // 시스템 뒤로가기도 헤더 닫기와 같은 이탈 처리를 거친다.
     BackHandler { viewModel.onIntent(CreateStorylineIntent.LeaveFunnel) }
+
+    SaveDraftWhenBackgrounded { viewModel.onIntent(CreateStorylineIntent.SaveDraft) }
 
     // 응답을 못 받은 생성 요청의 복구 폴링. STARTED 동안만 돌아 백그라운드에서 멈추고 복귀 시 재개된다.
     LaunchedEffect(viewModel, lifecycleOwner) {
@@ -93,14 +95,14 @@ fun CreateStorylineScreen(
 
     CreateStorylineContent(
         state = state,
-        onBack = { viewModel.onIntent(CreateStorylineIntent.LeaveFunnel) },
         onIntent = viewModel::onIntent,
         modifier = modifier,
-        draftSaveStatus = draftSaveStatus,
+        draftSave = draftSave,
     )
 
-    if (state.showExitWarningDialog) {
-        ExitWarningDialog(
+    state.exitWarning?.let { warning ->
+        FunnelExitWarningDialog(
+            warning = warning,
             onConfirmLeave = { viewModel.onIntent(CreateStorylineIntent.ConfirmLeaveFunnel) },
             onDismiss = { viewModel.onIntent(CreateStorylineIntent.DismissExitWarning) },
         )
@@ -110,10 +112,9 @@ fun CreateStorylineScreen(
 @Composable
 private fun CreateStorylineContent(
     state: CreateStorylineUiState,
-    onBack: () -> Unit,
     onIntent: (CreateStorylineIntent) -> Unit,
     modifier: Modifier = Modifier,
-    draftSaveStatus: DraftSaveStatus = DraftSaveStatus.HIDDEN,
+    draftSave: DraftSaveUiState = DraftSaveUiState(),
 ) {
     Column(
         modifier =
@@ -122,8 +123,9 @@ private fun CreateStorylineContent(
                 .windowInsetsPadding(WindowInsets.safeDrawing),
     ) {
         CreateFunnelHeader(
-            draftSaveStatus = draftSaveStatus,
-            onClose = onBack,
+            draftSave = draftSave,
+            onSaveDraft = { onIntent(CreateStorylineIntent.SaveDraft) },
+            onClose = { onIntent(CreateStorylineIntent.LeaveFunnel) },
         )
         CreateStepIndicator(
             currentStep = 1,
@@ -352,7 +354,6 @@ private fun CreateStorylineScreenPreview() {
     ManyakTheme(darkTheme = false) {
         CreateStorylineContent(
             state = CreateStorylineUiState(content = StorylineContent.Loaded(previewStorylines())),
-            onBack = {},
             onIntent = {},
         )
     }
@@ -369,7 +370,6 @@ private fun CreateStorylineScreenRatedPreview() {
                     activeIndex = 1,
                     ratings = mapOf(2L to StorylineRating.GOOD),
                 ),
-            onBack = {},
             onIntent = {},
         )
     }
@@ -385,7 +385,6 @@ private fun CreateStorylineScreenFailedPreview() {
                     content = StorylineContent.Loaded(emptyList()),
                     hasGenerationError = true,
                 ),
-            onBack = {},
             onIntent = {},
         )
     }

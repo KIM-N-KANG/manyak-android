@@ -31,8 +31,8 @@ data class CreateStorylineUiState(
     val content: StorylineContent = StorylineContent.Restoring,
     /** 생성·재생성 실패. 직전 결과가 남아 있으면 그대로 보여 주며 인라인 오류만 덧붙인다. */
     val hasGenerationError: Boolean = false,
-    /** 보존할 내용 없이 이탈을 시도해 소실 경고 다이얼로그를 띄운 상태(3-1 이탈 가드). */
-    val showExitWarningDialog: Boolean = false,
+    /** 이탈을 막고 띄운 경고. */
+    val exitWarning: FunnelExitWarning? = null,
     val activeIndex: Int = 0,
     /** 스토리라인 ID별 평가. 같은 평가를 다시 누르면 해제된다. */
     val ratings: Map<Long, StorylineRating> = emptyMap(),
@@ -57,13 +57,16 @@ sealed interface CreateStorylineIntent {
 
     data object ConfirmSelection : CreateStorylineIntent
 
+    /** 헤더의 임시 저장 버튼과 백그라운드 전환. */
+    data object SaveDraft : CreateStorylineIntent
+
     /** 시스템·헤더 뒤로가기 — 퍼널 이탈(이 단계가 키워드를 대체하므로 홈 복귀). */
     data object LeaveFunnel : CreateStorylineIntent
 
-    /** 소실 경고 다이얼로그의 "그만 만들기". */
+    /** 이탈 경고의 "나가기"·"그만 만들기". */
     data object ConfirmLeaveFunnel : CreateStorylineIntent
 
-    /** 소실 경고 다이얼로그의 "계속 만들기"·바깥 탭. */
+    /** 이탈 경고의 머무르기·바깥 탭. */
     data object DismissExitWarning : CreateStorylineIntent
 }
 
@@ -84,8 +87,8 @@ sealed interface CreateStorylineEvent {
         val restoredActiveIndex: Int = 0,
     ) : CreateStorylineEvent
 
-    data class ExitWarningVisibleChanged(
-        val visible: Boolean,
+    data class ExitWarningChanged(
+        val warning: FunnelExitWarning?,
     ) : CreateStorylineEvent
 }
 
@@ -98,10 +101,8 @@ sealed interface CreateStorylineEffect {
     /** 평가 동기화 실패 안내. 성공은 버튼 상태로 충분해 따로 알리지 않는다. */
     data object ShowRatingSyncFailed : CreateStorylineEffect
 
-    /** 퍼널 이탈 확정. 내용이 남았으면 "임시 저장되었어요" 토스트를 함께 띄운다. */
-    data class ExitFunnel(
-        val contentPreserved: Boolean,
-    ) : CreateStorylineEffect
+    /** 퍼널 이탈 확정. */
+    data object ExitFunnel : CreateStorylineEffect
 }
 
 @HiltViewModel
@@ -128,7 +129,7 @@ class CreateStorylineViewModel
          */
         private var isLeaving = false
 
-        val draftSaveStatus = storylineGenerationStore.draftSaveStatus
+        val draftSave = storylineGenerationStore.draftSave
 
         init {
             viewModelScope.launch {
@@ -170,25 +171,14 @@ class CreateStorylineViewModel
                 // 스토어가 상태 전이를 동기로 수행해 중복 탭을 막고, 실행은 퍼널 스코프가 담는다.
                 CreateStorylineIntent.Regenerate -> storylineGenerationStore.regenerate()
 
-                CreateStorylineIntent.LeaveFunnel ->
-                    if (storylineGenerationStore.hasContentToPreserve()) {
-                        isLeaving = true
-                        val preserved = storylineGenerationStore.leaveFunnel()
-                        dispatchEffect(CreateStorylineEffect.ExitFunnel(contentPreserved = preserved))
-                    } else {
-                        // 복원할 결과가 없는 소실 — 3-1 이탈 가드의 소실 경고 다이얼로그.
-                        dispatchEvent(CreateStorylineEvent.ExitWarningVisibleChanged(visible = true))
-                    }
+                CreateStorylineIntent.SaveDraft -> storylineGenerationStore.saveDraft()
 
-                CreateStorylineIntent.ConfirmLeaveFunnel -> {
-                    isLeaving = true
-                    storylineGenerationStore.leaveFunnel()
-                    dispatchEvent(CreateStorylineEvent.ExitWarningVisibleChanged(visible = false))
-                    dispatchEffect(CreateStorylineEffect.ExitFunnel(contentPreserved = false))
-                }
+                CreateStorylineIntent.LeaveFunnel -> leaveFunnel(confirmed = false)
+
+                CreateStorylineIntent.ConfirmLeaveFunnel -> leaveFunnel(confirmed = true)
 
                 CreateStorylineIntent.DismissExitWarning ->
-                    dispatchEvent(CreateStorylineEvent.ExitWarningVisibleChanged(visible = false))
+                    dispatchEvent(CreateStorylineEvent.ExitWarningChanged(null))
 
                 CreateStorylineIntent.ConfirmSelection ->
                     if (state.activeStoryline != null) {
@@ -196,6 +186,30 @@ class CreateStorylineViewModel
                         dispatchEffect(CreateStorylineEffect.NavigateToAdditionalInfo(state.activeIndex))
                     }
             }
+        }
+
+        /**
+         * 저장하지 않은 편집이 있으면 먼저 경고하고, 저장할 것도 저장된 것도 없으면 소실 경고를 띄운다.
+         * 둘 다 아니면 마지막 저장분이 그대로 재개 지점이므로 조용히 나간다.
+         */
+        private suspend fun leaveFunnel(confirmed: Boolean) {
+            val warning =
+                when {
+                    confirmed -> null
+                    storylineGenerationStore.draftSave.value.hasUnsavedChanges ->
+                        FunnelExitWarning.UNSAVED_CHANGES
+
+                    storylineGenerationStore.hasContentToPreserve() -> null
+                    else -> FunnelExitWarning.NOTHING_TO_PRESERVE
+                }
+            if (warning != null) {
+                dispatchEvent(CreateStorylineEvent.ExitWarningChanged(warning))
+                return
+            }
+            if (confirmed) dispatchEvent(CreateStorylineEvent.ExitWarningChanged(null))
+            isLeaving = true
+            storylineGenerationStore.leaveFunnel()
+            dispatchEffect(CreateStorylineEffect.ExitFunnel)
         }
 
         /** UI 에는 즉시 반영하고 서버 동기화는 디바운스한다. */
@@ -287,8 +301,7 @@ class CreateStorylineViewModel
                 is CreateStorylineEvent.GenerationStateChanged ->
                     reduceGeneration(state, event.generation, event.restoredActiveIndex)
 
-                is CreateStorylineEvent.ExitWarningVisibleChanged ->
-                    state.copy(showExitWarningDialog = event.visible)
+                is CreateStorylineEvent.ExitWarningChanged -> state.copy(exitWarning = event.warning)
             }
 
         companion object {

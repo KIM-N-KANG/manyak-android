@@ -219,7 +219,7 @@ class CreateStorylineViewModelTest {
         }
 
     @Test
-    fun `결과가 남은 이탈은 임시 저장하고 이탈 효과에 보존 여부를 싣는다`() =
+    fun `저장한 결과만 남은 이탈은 경고 없이 나간다`() =
         runTest(dispatcher) {
             val repository = FakeStoryCreationRepository()
             val pendingStore = FakePendingStoryCreationStore()
@@ -232,11 +232,56 @@ class CreateStorylineViewModelTest {
             viewModel.onIntent(CreateStorylineIntent.LeaveFunnel)
             advanceUntilIdle()
 
+            assertNull(viewModel.uiState.value.exitWarning)
             assertTrue(pendingStore.current is PendingStoryCreation.Draft)
             assertEquals(
-                CreateStorylineEffect.ExitFunnel(contentPreserved = true),
+                CreateStorylineEffect.ExitFunnel,
                 withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
             )
+        }
+
+    @Test
+    fun `탭만 옮긴 이탈은 잃을 내용이 없어 경고 없이 나간다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryCreationRepository()
+            val pendingStore = FakePendingStoryCreationStore()
+            val store = StorylineGenerationStore(repository, pendingStore, this)
+            store.generate(sampleGenerationInput())
+            advanceUntilIdle()
+            val viewModel = CreateStorylineViewModel(store, repository)
+            advanceUntilIdle()
+            viewModel.onIntent(CreateStorylineIntent.SelectStoryline(1))
+            advanceUntilIdle()
+
+            viewModel.onIntent(CreateStorylineIntent.LeaveFunnel)
+            advanceUntilIdle()
+
+            assertNull(viewModel.uiState.value.exitWarning)
+            assertFalse(viewModel.draftSave.value.hasUnsavedChanges)
+            assertEquals(
+                CreateStorylineEffect.ExitFunnel,
+                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
+            )
+        }
+
+    @Test
+    fun `임시 저장은 지금 탭 선택을 레코드에 반영한다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryCreationRepository()
+            val pendingStore = FakePendingStoryCreationStore()
+            val store = StorylineGenerationStore(repository, pendingStore, this)
+            store.generate(sampleGenerationInput())
+            advanceUntilIdle()
+            val viewModel = CreateStorylineViewModel(store, repository)
+            advanceUntilIdle()
+            viewModel.onIntent(CreateStorylineIntent.SelectStoryline(1))
+            advanceUntilIdle()
+
+            viewModel.onIntent(CreateStorylineIntent.SaveDraft)
+            advanceUntilIdle()
+
+            assertEquals(1, (pendingStore.current as PendingStoryCreation.Draft).progress.activeStorylineIndex)
+            assertFalse(viewModel.draftSave.value.hasUnsavedChanges)
         }
 
     @Test
@@ -255,15 +300,15 @@ class CreateStorylineViewModelTest {
 
             viewModel.onIntent(CreateStorylineIntent.LeaveFunnel)
             advanceUntilIdle()
-            assertTrue(viewModel.uiState.value.showExitWarningDialog)
+            assertEquals(FunnelExitWarning.NOTHING_TO_PRESERVE, viewModel.uiState.value.exitWarning)
 
             viewModel.onIntent(CreateStorylineIntent.ConfirmLeaveFunnel)
             advanceUntilIdle()
 
-            assertFalse(viewModel.uiState.value.showExitWarningDialog)
+            assertNull(viewModel.uiState.value.exitWarning)
             assertNull(pendingStore.current)
             assertEquals(
-                CreateStorylineEffect.ExitFunnel(contentPreserved = false),
+                CreateStorylineEffect.ExitFunnel,
                 withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
             )
         }
@@ -285,7 +330,7 @@ class CreateStorylineViewModelTest {
 
             assertTrue(pendingStore.current is PendingStoryCreation.GeneratingStorylines)
             assertEquals(
-                CreateStorylineEffect.ExitFunnel(contentPreserved = true),
+                CreateStorylineEffect.ExitFunnel,
                 withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
             )
         }

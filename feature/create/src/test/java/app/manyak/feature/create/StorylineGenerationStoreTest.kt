@@ -147,7 +147,7 @@ class StorylineGenerationStoreTest {
             assertEquals(repository.generationCommands.single().requestId, written.command.requestId)
             val draft = pendingStore.current as PendingStoryCreation.Draft
             assertEquals(sampleStorylineGeneration(), draft.generation)
-            assertEquals(DraftSaveStatus.SAVED, store.draftSaveStatus.value)
+            assertFalse(store.draftSave.value.hasUnsavedChanges)
         }
 
     @Test
@@ -261,7 +261,7 @@ class StorylineGenerationStoreTest {
         }
 
     @Test
-    fun `스토리라인 진행 변경은 마지막 변경 300ms 뒤 임시 저장된다`() =
+    fun `스토리라인 진행 변경은 모아 두었다가 임시 저장에서 한 번에 나간다`() =
         runTest {
             val pendingStore = FakePendingStoryCreationStore()
             val store = StorylineGenerationStore(FakeStoryCreationRepository(), pendingStore, this)
@@ -269,19 +269,83 @@ class StorylineGenerationStoreTest {
             advanceUntilIdle()
 
             store.updateActiveStoryline(2)
-            runCurrent()
-            assertEquals(DraftSaveStatus.SAVING, store.draftSaveStatus.value)
+            store.markStorylineSelected(2)
+            advanceUntilIdle()
+
+            assertTrue(store.draftSave.value.hasUnsavedChanges)
             assertEquals(0, (pendingStore.current as PendingStoryCreation.Draft).progress.activeStorylineIndex)
 
-            advanceTimeBy(299)
+            store.saveDraft()
+            advanceUntilIdle()
+
+            val progress = (pendingStore.current as PendingStoryCreation.Draft).progress
+            assertEquals(2, progress.activeStorylineIndex)
+            assertEquals(2, progress.selectedStorylineIndex)
+            assertFalse(store.draftSave.value.hasUnsavedChanges)
+        }
+
+    @Test
+    fun `임시 저장을 연달아 눌러도 바뀐 것이 없으면 한 번만 쓴다`() =
+        runTest {
+            val pendingStore = FakePendingStoryCreationStore()
+            val store = StorylineGenerationStore(FakeStoryCreationRepository(), pendingStore, this)
+            store.generate(sampleGenerationInput())
+            advanceUntilIdle()
+            val writesAfterGeneration = pendingStore.writes.size
+
+            repeat(5) { store.saveDraft() }
+            advanceTimeBy(DRAFT_SAVED_DISPLAY_MS - 1)
             runCurrent()
-            assertEquals(DraftSaveStatus.SAVING, store.draftSaveStatus.value)
-            assertEquals(0, (pendingStore.current as PendingStoryCreation.Draft).progress.activeStorylineIndex)
+
+            assertEquals(writesAfterGeneration, pendingStore.writes.size)
+            assertEquals(DraftSaveStatus.SAVED, store.draftSave.value.status)
+            // 생성 성공이 이미 저장해 둬 누를 것이 없다.
+            assertFalse(store.draftSave.value.canSave)
+
+            // 내용이 바뀌면 다시 쓴다.
+            store.markStorylineSelected(1)
+            assertTrue(store.draftSave.value.canSave)
+            store.saveDraft()
+            advanceUntilIdle()
+
+            assertEquals(writesAfterGeneration + 1, pendingStore.writes.size)
+        }
+
+    @Test
+    fun `저장 완료 표시는 3초 뒤 기본 상태로 돌아간다`() =
+        runTest {
+            val store =
+                StorylineGenerationStore(FakeStoryCreationRepository(), FakePendingStoryCreationStore(), this)
+            store.generate(sampleGenerationInput())
+            advanceTimeBy(DRAFT_SAVED_DISPLAY_MS - 1)
+            runCurrent()
+
+            assertEquals(DraftSaveStatus.SAVED, store.draftSave.value.status)
 
             advanceTimeBy(1)
             runCurrent()
-            assertEquals(2, (pendingStore.current as PendingStoryCreation.Draft).progress.activeStorylineIndex)
-            assertEquals(DraftSaveStatus.SAVED, store.draftSaveStatus.value)
+
+            assertEquals(DraftSaveStatus.IDLE, store.draftSave.value.status)
+        }
+
+    @Test
+    fun `생성 중에는 진행 레코드를 덮지 않도록 임시 저장을 잠근다`() =
+        runTest {
+            val repository = FakeStoryCreationRepository()
+            repository.holdGeneration = true
+            val pendingStore = FakePendingStoryCreationStore()
+            val store = StorylineGenerationStore(repository, pendingStore, this)
+
+            store.generate(sampleGenerationInput())
+            advanceUntilIdle()
+
+            assertFalse(store.draftSave.value.canSave)
+            store.saveDraft()
+            advanceUntilIdle()
+
+            assertTrue(pendingStore.current is PendingStoryCreation.GeneratingStorylines)
+            // 응답을 기다리는 요청을 끊어 테스트 스코프가 끝나게 한다.
+            store.leaveFunnel()
         }
 
     @Test
@@ -294,7 +358,7 @@ class StorylineGenerationStoreTest {
             advanceUntilIdle()
 
             assertTrue(store.state.value is StorylineGenerationState.Generated)
-            assertEquals(DraftSaveStatus.HIDDEN, store.draftSaveStatus.value)
+            assertEquals(DraftSaveStatus.IDLE, store.draftSave.value.status)
             assertNull(pendingStore.current)
         }
 
@@ -324,33 +388,33 @@ class StorylineGenerationStoreTest {
         }
 
     @Test
-    fun `이탈은 결과가 있으면 임시 저장하고 진행 중 레코드는 유지하며 스토어를 초기화한다`() =
+    fun `이탈은 저장하지 않은 변경을 버리고 진행 중 레코드는 유지하며 스토어를 초기화한다`() =
         runTest {
             val repository = FakeStoryCreationRepository()
             val pendingStore = FakePendingStoryCreationStore()
             val store = StorylineGenerationStore(repository, pendingStore, this)
 
-            // 결과가 남은 이탈 — 임시 저장.
+            // 저장하지 않은 탭 변경은 마지막 저장 스냅숏을 덮지 않는다.
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
             store.updateActiveStoryline(2)
-            assertTrue(store.leaveFunnel())
+            store.leaveFunnel()
             val draft = pendingStore.current as PendingStoryCreation.Draft
             assertEquals(sampleStorylineGeneration(), draft.generation)
-            assertEquals(2, draft.progress.activeStorylineIndex)
+            assertEquals(0, draft.progress.activeStorylineIndex)
             assertEquals(StorylineGenerationState.Idle, store.state.value)
 
-            // 진행 중 레코드가 있는 이탈 — 임시 저장으로 덮지 않고 유지.
+            // 진행 중 레코드가 있는 이탈 — 그대로 유지한다.
             store.ensureRestored()
             repository.queuedGenerationResults += DomainResult.Failure(DomainError.Network)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
-            assertTrue(store.leaveFunnel())
+            store.leaveFunnel()
             assertTrue(pendingStore.current is PendingStoryCreation.GeneratingStorylines)
 
             // 남은 것이 없는 이탈 — 조용히 나간다.
             pendingStore.clear()
-            assertFalse(store.leaveFunnel())
+            store.leaveFunnel()
             assertNull(pendingStore.current)
         }
 }

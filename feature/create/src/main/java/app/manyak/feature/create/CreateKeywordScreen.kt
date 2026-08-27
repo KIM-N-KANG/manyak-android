@@ -35,13 +35,12 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
-import app.manyak.core.domain.story.StoryTag
 import app.manyak.core.domain.story.StoryTagCategory
 import app.manyak.core.ui.R
 import app.manyak.core.ui.theme.ManyakTheme
 
 /**
- * 키워드 단계 뒤로가기는 생성 전 퍼널 이탈이다. 소실 경고 없이 입력이 있으면 임시 저장하고,
+ * 키워드 단계 뒤로가기는 생성 전 퍼널 이탈이다. 임시 저장하지 않은 입력이 있으면 경고를 거치고,
  * 없으면 조용히 나간다. 스토리라인 단계가 이 목적지를 대체하므로 생성 후 이탈 처리는 그 화면이
  * 소유하고, 여기서는 방어적으로 스토어 정리(진행 중 레코드 우선 판정 포함)만 거친다.
  */
@@ -57,8 +56,10 @@ fun CreateKeywordScreen(
     val currentOnLeaveFunnel by rememberUpdatedState(onLeaveFunnel)
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    // 시스템 뒤로가기도 헤더 뒤로가기와 같은 이탈 처리를 거친다.
+    // 시스템 뒤로가기도 헤더 닫기와 같은 이탈 처리를 거친다.
     BackHandler { viewModel.onIntent(CreateKeywordIntent.LeaveFunnel) }
+
+    SaveDraftWhenBackgrounded { viewModel.onIntent(CreateKeywordIntent.SaveDraft) }
 
     LaunchedEffect(viewModel, lifecycleOwner) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -74,17 +75,23 @@ fun CreateKeywordScreen(
 
     CreateKeywordContent(
         state = state,
-        onBack = { viewModel.onIntent(CreateKeywordIntent.LeaveFunnel) },
         onIntent = viewModel::onIntent,
         modifier = modifier,
     )
+
+    state.exitWarning?.let { warning ->
+        FunnelExitWarningDialog(
+            warning = warning,
+            onConfirmLeave = { viewModel.onIntent(CreateKeywordIntent.ConfirmLeaveFunnel) },
+            onDismiss = { viewModel.onIntent(CreateKeywordIntent.DismissExitWarning) },
+        )
+    }
 }
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
 private fun CreateKeywordContent(
     state: CreateKeywordUiState,
-    onBack: () -> Unit,
     onIntent: (CreateKeywordIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -100,41 +107,21 @@ private fun CreateKeywordContent(
                     .windowInsetsPadding(WindowInsets.safeDrawing)
                     .clearFocusOnTap(focusManager),
         ) {
-            CreateFunnelHeader(draftSaveStatus = state.draftSaveStatus, onClose = onBack)
+            CreateFunnelHeader(
+                draftSave = state.draftSave,
+                onSaveDraft = { onIntent(CreateKeywordIntent.SaveDraft) },
+                onClose = { onIntent(CreateKeywordIntent.LeaveFunnel) },
+            )
             CreateStepIndicator(
                 currentStep = 0,
                 stepNameRes = R.string.create_step_keyword,
             )
-            when {
-                // 복원 결과를 기다리는 동안은 본문을 비워 둔다 — 저장해 둔 키워드가 있는지
-                // 모르는 채로 빈 입력 화면을 그리면 재개 진입에서 화면이 번쩍인다.
-                state.isRestoring -> Spacer(modifier = Modifier.weight(1f))
-
-                state.providedTags is ProvidedTags.Failed -> {
-                    CreateKeywordFailureContent(
-                        modifier = Modifier.weight(1f),
-                        state = state,
-                        onIntent = onIntent,
-                    )
-                }
-
-                else -> {
-                    LazyColumn(modifier = Modifier.weight(1f)) {
-                        item { KeywordStepTitle() }
-                        stickyHeader {
-                            CategoryTabs(state = state, onIntent = onIntent)
-                        }
-                        item {
-                            CategoryContent(
-                                state = state,
-                                onIntent = onIntent,
-                                onOpenAddKeyword = { target -> addKeywordTarget = target },
-                            )
-                        }
-                        item { Spacer(modifier = Modifier.height(ManyakTheme.spacing.screenBottom)) }
-                    }
-                }
-            }
+            KeywordStepBody(
+                modifier = Modifier.weight(1f),
+                state = state,
+                onIntent = onIntent,
+                onOpenAddKeyword = { target -> addKeywordTarget = target },
+            )
             // IME가 열리면 CTA 영역을 콘텐츠에 돌려 입력 필드가 키보드 위로 스크롤되게 한다.
             if (!imeVisible) {
                 CreateKeywordFooter(state = state, onIntent = onIntent)
@@ -152,6 +139,40 @@ private fun CreateKeywordContent(
                 addKeywordTarget = null
             },
         )
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun KeywordStepBody(
+    state: CreateKeywordUiState,
+    onIntent: (CreateKeywordIntent) -> Unit,
+    onOpenAddKeyword: (KeywordTarget) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    when {
+        // 복원 결과를 기다리는 동안은 본문을 비워 둔다 — 저장해 둔 키워드가 있는지
+        // 모르는 채로 빈 입력 화면을 그리면 재개 진입에서 화면이 번쩍인다.
+        state.isRestoring -> Spacer(modifier = modifier)
+
+        state.providedTags is ProvidedTags.Failed ->
+            CreateKeywordFailureContent(modifier = modifier, state = state, onIntent = onIntent)
+
+        else ->
+            LazyColumn(modifier = modifier) {
+                item { KeywordStepTitle() }
+                stickyHeader {
+                    CategoryTabs(state = state, onIntent = onIntent)
+                }
+                item {
+                    CategoryContent(
+                        state = state,
+                        onIntent = onIntent,
+                        onOpenAddKeyword = onOpenAddKeyword,
+                    )
+                }
+                item { Spacer(modifier = Modifier.height(ManyakTheme.spacing.screenBottom)) }
+            }
     }
 }
 
@@ -279,29 +300,12 @@ private fun FooterButtons(
     }
 }
 
-private fun previewState(): CreateKeywordUiState =
-    CreateKeywordUiState(
-        isRestoring = false,
-        providedTags =
-            ProvidedTags.Loaded(
-                mapOf(
-                    StoryTagCategory.GENRE to
-                        listOf(
-                            StoryTag(id = 1, name = "로맨스", category = StoryTagCategory.GENRE),
-                            StoryTag(id = 2, name = "판타지", category = StoryTagCategory.GENRE),
-                            StoryTag(id = 3, name = "미스터리", category = StoryTagCategory.GENRE),
-                        ),
-                ),
-            ),
-    )
-
 @Preview(showBackground = true, name = "키워드 선택 · 라이트")
 @Composable
 private fun CreateKeywordScreenPreview() {
     ManyakTheme(darkTheme = false) {
         CreateKeywordContent(
-            state = previewState(),
-            onBack = {},
+            state = previewKeywordState(),
             onIntent = {},
         )
     }
@@ -312,8 +316,7 @@ private fun CreateKeywordScreenPreview() {
 private fun CreateKeywordScreenValidationErrorPreview() {
     ManyakTheme(darkTheme = false) {
         CreateKeywordContent(
-            state = previewState().copy(validationErrorCategory = StoryTagCategory.GENRE),
-            onBack = {},
+            state = previewKeywordState().copy(validationErrorCategory = StoryTagCategory.GENRE),
             onIntent = {},
         )
     }
@@ -325,7 +328,6 @@ private fun CreateKeywordScreenTagsLoadFailurePreview() {
     ManyakTheme(darkTheme = false) {
         CreateKeywordContent(
             state = CreateKeywordUiState(isRestoring = false, providedTags = ProvidedTags.Failed),
-            onBack = {},
             onIntent = {},
         )
     }
@@ -337,7 +339,7 @@ private fun CreateKeywordSupportingCharactersPreview() {
     ManyakTheme(darkTheme = false) {
         CreateKeywordContent(
             state =
-                previewState().copy(
+                previewKeywordState().copy(
                     activeCategory = StoryTagCategory.SUPPORTING_CHARACTER,
                     selectedGenreTagIds = setOf(1),
                     protagonist =
@@ -354,7 +356,6 @@ private fun CreateKeywordSupportingCharactersPreview() {
                             KeywordCharacter(id = CreateKeywordUiState.FIRST_SUPPORTING_ID + 1),
                         ),
                 ),
-            onBack = {},
             onIntent = {},
         )
     }
