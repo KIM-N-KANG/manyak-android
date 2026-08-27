@@ -25,6 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
@@ -44,6 +45,9 @@ import app.manyak.core.ui.theme.ManyakTheme
  *
  * 제작 퍼널 진입 FAB 과 이어서 만들기 배너는 셸이 아니라 이 화면이 소유한다. 진행 레코드가 있으면
  * 상단에 배너를 표시하고, FAB 등 배너가 아닌 경로의 진입은 이어서/새로 만들기 다이얼로그로 묻는다.
+ *
+ * 목록 조회는 화면이 보일 때 시작한다. 퍼널·채팅방은 이 화면 위가 아니라 셸 위에 쌓여 돌아와도
+ * ViewModel 이 그대로 살아 있으므로, 조회 시점을 화면 수명에 맞춰야 떠난 사이의 변화가 반영된다.
  */
 @Composable
 fun StudioScreen(
@@ -75,6 +79,9 @@ fun StudioScreen(
             }
         }
     }
+
+    // 화면을 떠난 사이 늘어난 목록을 반영한다 — 스토리를 완성하고 채팅으로 넘어갔다 돌아온 자리가 대표적이다.
+    LifecycleEventEffect(Lifecycle.Event.ON_START) { viewModel.onIntent(StudioIntent.ScreenShown) }
 
     StudioContent(
         state = state,

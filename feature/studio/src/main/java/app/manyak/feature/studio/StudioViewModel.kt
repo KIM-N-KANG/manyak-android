@@ -45,6 +45,9 @@ sealed interface StudioIntent {
 
     data object DismissResumeChoiceDialog : StudioIntent
 
+    /** 화면이 다시 보였다. 떠난 사이 바뀐 목록을 서버와 맞춘다. */
+    data object ScreenShown : StudioIntent
+
     /** 목록 조회 실패 화면의 다시 시도. */
     data object Retry : StudioIntent
 
@@ -105,10 +108,14 @@ sealed interface StudioEffect {
 }
 
 /**
- * 제작 탭. 내가 만든 스토리 목록을 진입 시 한 번 조회하고, 진행 중인 제작 레코드를 구독한다.
+ * 제작 탭. 내가 만든 스토리 목록을 화면이 보일 때마다 조회하고, 진행 중인 제작 레코드를 구독한다.
  *
- * 목록을 주기적으로 다시 읽거나 당겨서 새로고침하지 않는다 — 실패했을 때 다시 부를 수단은
- * 재시도로 충분하다. 제작 완료 뒤 탭에 돌아왔을 때의 갱신 정책은 완료 흐름과 함께 정한다.
+ * 목록은 서버가 소유하고 제작 완료로 늘어나므로, 화면을 떠났다 돌아오면 다시 읽어 맞춘다 —
+ * 스토리를 완성하고 채팅으로 넘어갔다 돌아온 자리가 대표적이다. 이미 그릴 목록이 있는 갱신은
+ * 골격 없이 조용히 바꿔 끼우고 실패해도 보고 있던 목록을 지우지 않는다.
+ *
+ * 목록을 주기적으로 다시 읽거나 당겨서 새로고침하지는 않는다 — 화면 복귀가 갱신 지점이고,
+ * 실패했을 때 다시 부를 수단은 재시도로 충분하다.
  */
 @HiltViewModel
 class StudioViewModel
@@ -126,13 +133,15 @@ class StudioViewModel
                     dispatchEvent(StudioEvent.PendingCreationChanged(record?.toBanner()))
                 }
             }
-            load()
         }
 
         override suspend fun handleIntent(intent: StudioIntent) {
             val state = uiState.value
             when (intent) {
-                StudioIntent.Retry -> load()
+                // 이미 그릴 목록이 있으면 갱신이 보이지 않아야 한다 — 골격이 다시 깔리면 복귀가 재진입처럼 보인다.
+                StudioIntent.ScreenShown -> load(showProgress = state.stories.isEmpty())
+
+                StudioIntent.Retry -> load(showProgress = true)
 
                 is StudioIntent.RequestDeleteStory -> dispatchEvent(StudioEvent.DeleteRequested(intent.story))
 
@@ -166,14 +175,18 @@ class StudioViewModel
             }
         }
 
-        private fun load() {
+        /**
+         * @param showProgress 그릴 목록이 없을 때만 true. 목록이 있는 갱신은 골격도 실패 화면도 띄우지
+         *  않는다 — 보고 있던 목록이 사라지는 쪽이 갱신 실패보다 나쁘다.
+         */
+        private fun load(showProgress: Boolean) {
             if (loadJob?.isActive == true) return
             loadJob =
                 viewModelScope.launch {
-                    dispatchEvent(StudioEvent.LoadStarted)
+                    if (showProgress) dispatchEvent(StudioEvent.LoadStarted)
                     when (val result = storyRepository.myStories()) {
                         is DomainResult.Success -> dispatchEvent(StudioEvent.StoriesLoaded(result.value))
-                        is DomainResult.Failure -> dispatchEvent(StudioEvent.LoadFailed)
+                        is DomainResult.Failure -> if (showProgress) dispatchEvent(StudioEvent.LoadFailed)
                     }
                 }
         }

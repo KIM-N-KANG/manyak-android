@@ -48,6 +48,7 @@ class StudioViewModelTest {
     fun `진행 레코드가 없으면 배너 없이 바로 새 생성으로 진입한다`() =
         runTest(dispatcher) {
             val viewModel = StudioViewModel(FakePendingStoryCreationStore(), FakeStoryRepository())
+            viewModel.onIntent(StudioIntent.ScreenShown)
             advanceUntilIdle()
 
             assertNull(viewModel.uiState.value.pendingBanner)
@@ -66,6 +67,7 @@ class StudioViewModelTest {
         runTest(dispatcher) {
             val store = FakePendingStoryCreationStore(initial = completingRecord(selectedIndex = 2))
             val viewModel = StudioViewModel(store, FakeStoryRepository())
+            viewModel.onIntent(StudioIntent.ScreenShown)
             advanceUntilIdle()
 
             val banner = viewModel.uiState.value.pendingBanner
@@ -78,6 +80,7 @@ class StudioViewModelTest {
         runTest(dispatcher) {
             val store = FakePendingStoryCreationStore(initial = generatingRecord())
             val viewModel = StudioViewModel(store, FakeStoryRepository())
+            viewModel.onIntent(StudioIntent.ScreenShown)
             advanceUntilIdle()
 
             viewModel.onIntent(StudioIntent.CreateStory)
@@ -100,6 +103,7 @@ class StudioViewModelTest {
         runTest(dispatcher) {
             val store = FakePendingStoryCreationStore(initial = generatingRecord())
             val viewModel = StudioViewModel(store, FakeStoryRepository())
+            viewModel.onIntent(StudioIntent.ScreenShown)
             advanceUntilIdle()
 
             viewModel.onIntent(StudioIntent.ResumeCreation)
@@ -112,10 +116,11 @@ class StudioViewModelTest {
         }
 
     @Test
-    fun `진입 시 내 스토리를 조회해 목록 상태가 된다`() =
+    fun `화면이 보이면 내 스토리를 조회해 목록 상태가 된다`() =
         runTest(dispatcher) {
             val repository = FakeStoryRepository()
             val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository)
+            viewModel.onIntent(StudioIntent.ScreenShown)
             advanceUntilIdle()
 
             val state = viewModel.uiState.value
@@ -126,11 +131,50 @@ class StudioViewModelTest {
         }
 
     @Test
+    fun `화면에 다시 보이면 목록을 다시 읽어 새로 만든 스토리를 반영한다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryRepository()
+            repository.queuedResults.add(DomainResult.Success(sampleStories().take(1)))
+            val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository)
+            viewModel.onIntent(StudioIntent.ScreenShown)
+            advanceUntilIdle()
+            assertEquals(sampleStories().take(1), viewModel.uiState.value.stories)
+
+            // 퍼널·채팅방을 거쳐 돌아온 자리.
+            viewModel.onIntent(StudioIntent.ScreenShown)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertEquals(sampleStories(), state.stories)
+            assertFalse(state.isLoading)
+            assertEquals(2, repository.myStoriesCallCount)
+        }
+
+    @Test
+    fun `갱신이 실패해도 보고 있던 목록을 그대로 둔다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryRepository()
+            val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository)
+            viewModel.onIntent(StudioIntent.ScreenShown)
+            advanceUntilIdle()
+
+            repository.queuedResults.add(DomainResult.Failure(DomainError.Network))
+            viewModel.onIntent(StudioIntent.ScreenShown)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertEquals(sampleStories(), state.stories)
+            assertFalse(state.loadFailed)
+            assertFalse(state.isLoading)
+        }
+
+    @Test
     fun `조회 실패는 실패 상태가 되고 재시도가 다시 조회한다`() =
         runTest(dispatcher) {
             val repository = FakeStoryRepository()
             repository.queuedResults.add(DomainResult.Failure(DomainError.Network))
             val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository)
+            viewModel.onIntent(StudioIntent.ScreenShown)
             advanceUntilIdle()
 
             val failedState = viewModel.uiState.value
@@ -151,6 +195,7 @@ class StudioViewModelTest {
         runTest(dispatcher) {
             val repository = FakeStoryRepository()
             val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository)
+            viewModel.onIntent(StudioIntent.ScreenShown)
             advanceUntilIdle()
             val loadedState = viewModel.uiState.value
             val target = loadedState.stories.first()
@@ -179,6 +224,7 @@ class StudioViewModelTest {
             val repository = FakeStoryRepository()
             repository.queuedDeleteResults.add(DomainResult.Failure(DomainError.Network))
             val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository)
+            viewModel.onIntent(StudioIntent.ScreenShown)
             advanceUntilIdle()
             val loadedState = viewModel.uiState.value
             val target = loadedState.stories.first()
@@ -203,6 +249,7 @@ class StudioViewModelTest {
         runTest(dispatcher) {
             val repository = FakeStoryRepository()
             val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository)
+            viewModel.onIntent(StudioIntent.ScreenShown)
             advanceUntilIdle()
             val loadedState = viewModel.uiState.value
             val target = loadedState.stories.first()
