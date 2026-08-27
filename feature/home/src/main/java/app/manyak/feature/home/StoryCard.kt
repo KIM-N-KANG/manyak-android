@@ -39,7 +39,11 @@ internal fun StoryCard(
         modifier = modifier.clickable(role = Role.Button, onClick = onClick),
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
-        StoryThumbnail(thumbnailUrl = story.thumbnailUrl, turnCount = story.turnCount) {
+        StoryThumbnail(
+            thumbnailUrl = story.thumbnailUrl,
+            turnCount = story.turnCount,
+            showBorder = true,
+        ) {
             // 스크롤로 섹션 제목이 밀려 나가도 공식 스토리임이 카드 자체로 드러나게 하는 표시다.
             Image(
                 modifier =

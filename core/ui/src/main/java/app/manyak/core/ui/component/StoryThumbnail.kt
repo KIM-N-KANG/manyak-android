@@ -1,6 +1,7 @@
 package app.manyak.core.ui.component
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -36,6 +37,9 @@ import java.text.NumberFormat
  *
  * 화면 폭을 꽉 채우는 자리에서는 [shape] 를 각지게 바꾼다 — 가장자리에 닿은 둥근 모서리는
  * 화면이 잘린 것처럼 보인다.
+ *
+ * 목록 카드처럼 표지가 배경 위에 떠 있는 자리에서는 [showBorder] 로 테두리를 둘러 밝은 표지의
+ * 가장자리가 배경에 묻히지 않게 한다.
  */
 @Composable
 fun StoryThumbnail(
@@ -44,31 +48,53 @@ fun StoryThumbnail(
     modifier: Modifier = Modifier,
     badgeScale: StoryBadgeScale = StoryBadgeScale.Compact,
     shape: Shape = ManyakTheme.shapes.thumbnail,
+    showBorder: Boolean = false,
     overlay: @Composable BoxScope.() -> Unit = {},
 ) {
+    // border 는 자기 안쪽을 먼저 그린 뒤 선을 얹으므로 표지 위로 올라온다. clip 보다 앞에 둬야
+    // 선의 바깥쪽이 잘리지 않는다.
+    val borderModifier =
+        if (showBorder) {
+            Modifier.border(ThumbnailBorderWidth, ManyakTheme.colors.border, shape)
+        } else {
+            Modifier
+        }
+
     Box(
         modifier =
             modifier
                 .fillMaxWidth()
                 .aspectRatio(STORY_THUMBNAIL_ASPECT_RATIO)
+                .then(borderModifier)
                 .clip(shape)
                 .background(ManyakTheme.colors.backgroundNeutral),
     ) {
-        if (thumbnailUrl == null) {
-            Icon(
-                modifier = Modifier.align(Alignment.Center).size(ThumbnailPlaceholderSize),
-                painter = painterResource(R.drawable.ic_image),
-                contentDescription = stringResource(R.string.story_thumbnail_placeholder),
-                tint = ManyakTheme.colors.textSubtlest,
-            )
-        } else {
-            AsyncImage(
-                modifier = Modifier.fillMaxSize(),
-                model = thumbnailUrl,
-                // 표지는 카드의 텍스트 줄이 이미 말하는 것을 되풀이하므로 낭독 대상이 아니다.
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-            )
+        // 표지는 선 두께만큼 안으로 들인다. 표지와 선의 경계가 같은 픽셀에 겹치면 두 안티에일리어싱이
+        // 합성돼 곡률에서만 진한 띠가 생기고, 그 띠가 직선부의 선보다 도드라진다.
+        Box(
+            modifier =
+                Modifier
+                    .matchParentSize()
+                    .then(if (showBorder) Modifier.padding(ThumbnailBorderWidth) else Modifier)
+                    .clip(shape),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (thumbnailUrl == null) {
+                Icon(
+                    modifier = Modifier.size(ThumbnailPlaceholderSize),
+                    painter = painterResource(R.drawable.ic_image),
+                    contentDescription = stringResource(R.string.story_thumbnail_placeholder),
+                    tint = ManyakTheme.colors.textSubtlest,
+                )
+            } else {
+                AsyncImage(
+                    modifier = Modifier.fillMaxSize(),
+                    model = thumbnailUrl,
+                    // 표지는 카드의 텍스트 줄이 이미 말하는 것을 되풀이하므로 낭독 대상이 아니다.
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                )
+            }
         }
         overlay()
         TurnCountBadge(
@@ -126,6 +152,8 @@ private val BadgeIconSize = 14.dp
 private val LargeBadgeIconSize = 16.dp
 
 private val ThumbnailPlaceholderSize = 32.dp
+
+private val ThumbnailBorderWidth = 1.dp
 
 /**
  * 표지 위 겹침 요소(턴 수 뱃지와 [overlay] 의 카드별 요소)가 함께 쓰는 반투명 필드.

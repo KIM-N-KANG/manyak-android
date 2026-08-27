@@ -66,7 +66,11 @@ internal fun MyStoryCard(
         modifier = modifier.clickable(role = Role.Button, onClick = onClick),
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
-        StoryThumbnail(thumbnailUrl = story.thumbnailUrl, turnCount = story.turnCount) {
+        StoryThumbnail(
+            thumbnailUrl = story.thumbnailUrl,
+            turnCount = story.turnCount,
+            showBorder = true,
+        ) {
             Box(
                 // 턴 수 뱃지가 아래·오른쪽에서 띄우는 만큼과 같은 간격으로 위·오른쪽에서 띄운다.
                 modifier = Modifier.align(Alignment.TopEnd).padding(ManyakTheme.spacing.compact),
