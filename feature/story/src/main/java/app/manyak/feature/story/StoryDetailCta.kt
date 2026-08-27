@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ManyakProgressIndicator
 import app.manyak.core.ui.component.ScrollEdgeFade
@@ -40,7 +41,11 @@ internal fun StartChatCta(
                     .fillMaxWidth()
                     .background(surface)
                     .padding(horizontal = ManyakTheme.spacing.gutter)
-                    .padding(bottom = ManyakTheme.spacing.gutter),
+                    // 위 여백은 실패 문구가 있을 때만 둔다 — 퍼널 푸터와 같은 규칙이다.
+                    .padding(
+                        top = if (failed) ManyakTheme.spacing.compact else 0.dp,
+                        bottom = ManyakTheme.spacing.gutter,
+                    ),
             verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
         ) {
             if (failed) {

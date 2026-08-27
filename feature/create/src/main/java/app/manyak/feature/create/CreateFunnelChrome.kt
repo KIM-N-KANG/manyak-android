@@ -124,13 +124,20 @@ internal fun CreateFunnelHeader(
         },
         // 어느 단계에서든 퍼널 전체를 닫는 동작임을 분명히 알 수 있게 오른쪽 끝에 닫기를 둔다.
         actions = {
-            DraftSaveButton(draftSave = draftSave, onClick = onSaveDraft)
-            IconButton(onClick = onClose) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_close),
-                    contentDescription = stringResource(R.string.create_close_funnel),
-                    tint = ManyakTheme.colors.text,
-                )
+            // actions 슬롯의 Row 는 간격을 주지 않으므로 직접 감싼다. 닫기 버튼은 자기 터치 영역
+            // 안에서 아이콘이 가운데 놓여 이미 안쪽 여백이 있고, 여기에 버튼 사이 간격만 더한다.
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
+            ) {
+                DraftSaveButton(draftSave = draftSave, onClick = onSaveDraft)
+                IconButton(onClick = onClose) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_close),
+                        contentDescription = stringResource(R.string.create_close_funnel),
+                        tint = ManyakTheme.colors.text,
+                    )
+                }
             }
         },
         // 화면 루트에서 적용한 safeDrawing 인셋이 중복되지 않게 한다.

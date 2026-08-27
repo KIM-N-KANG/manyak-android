@@ -50,7 +50,6 @@ internal fun CharacterForm(
     atSelectionCap: Boolean,
     onIntent: (CreateKeywordIntent) -> Unit,
     onOpenAddKeyword: (KeywordTarget) -> Unit,
-    basicInfoModifier: Modifier = Modifier,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -63,7 +62,6 @@ internal fun CharacterForm(
             namePlaceholder = namePlaceholder,
             isDuplicateName = isDuplicateName,
             onIntent = onIntent,
-            modifier = basicInfoModifier,
         )
         KeywordSectionLabel(
             modifier = Modifier.padding(top = ManyakTheme.spacing.gutter),
@@ -292,7 +290,10 @@ internal fun SupportingCharacterList(
                 atSelectionCap = state.isAtSelectionCap(KeywordTarget.Supporting(character.id)),
                 onIntent = onIntent,
                 onOpenAddKeyword = onOpenAddKeyword,
-                basicInfoModifier =
+                // 요청 대상은 기본 정보가 아니라 섹션 전체다 — 기본 정보만 겨누면 특징 칸이
+                // 화면 밖에 남는다. 섹션이 뷰포트보다 크면 컨테이너가 위 모서리를 맞춰 세우므로,
+                // 들어가는 만큼의 특징 칸이 기본 정보와 함께 보인다.
+                modifier =
                     if (index == state.supportingCharacters.lastIndex) {
                         Modifier.bringIntoViewRequester(addedCharacterRequester)
                     } else {
@@ -340,7 +341,6 @@ private fun SupportingCharacterSection(
     atSelectionCap: Boolean,
     onIntent: (CreateKeywordIntent) -> Unit,
     onOpenAddKeyword: (KeywordTarget) -> Unit,
-    basicInfoModifier: Modifier,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -367,7 +367,6 @@ private fun SupportingCharacterSection(
             atSelectionCap = atSelectionCap,
             onIntent = onIntent,
             onOpenAddKeyword = onOpenAddKeyword,
-            basicInfoModifier = basicInfoModifier,
         )
     }
 }

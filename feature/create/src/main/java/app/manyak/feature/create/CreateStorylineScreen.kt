@@ -333,7 +333,8 @@ private fun CreateStorylineFooter(
             modifier
                 .fillMaxWidth()
                 .padding(horizontal = ManyakTheme.spacing.gutter)
-                .padding(top = ManyakTheme.spacing.compact, bottom = ManyakTheme.spacing.gutter),
+                // 이 푸터에는 오류 문구가 없어 위를 띄우지 않는다 — 콘텐츠와의 경계는 페이드가 맡는다.
+                .padding(bottom = ManyakTheme.spacing.gutter),
         horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
         FunnelNeutralButton(

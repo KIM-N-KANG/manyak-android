@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -236,20 +237,26 @@ private fun CreateKeywordFooter(
     val isFirstCategory = state.activeCategory.previous == null
     val isLastCategory = state.activeCategory.next == null
 
+    val footerErrorRes =
+        when {
+            !state.isFooterEnabled -> null
+            state.validationErrorCategory == state.activeCategory -> R.string.create_error_select_keyword
+            state.showDuplicateNameFooterError -> R.string.create_error_duplicate_name_footer
+            else -> null
+        }
+
     Column(
         modifier =
             modifier
                 .fillMaxWidth()
                 .padding(horizontal = ManyakTheme.spacing.gutter)
-                .padding(top = ManyakTheme.spacing.compact, bottom = ManyakTheme.spacing.gutter),
+                // 위 여백은 오류 문구가 있을 때만 둔다 — 문구가 없으면 콘텐츠와 버튼 사이는
+                // 페이드가 맡으므로 빈 공간을 더할 이유가 없다.
+                .padding(
+                    top = if (footerErrorRes == null) 0.dp else ManyakTheme.spacing.compact,
+                    bottom = ManyakTheme.spacing.gutter,
+                ),
     ) {
-        val footerErrorRes =
-            when {
-                !state.isFooterEnabled -> null
-                state.validationErrorCategory == state.activeCategory -> R.string.create_error_select_keyword
-                state.showDuplicateNameFooterError -> R.string.create_error_duplicate_name_footer
-                else -> null
-            }
         if (footerErrorRes != null) {
             Text(
                 modifier = Modifier.padding(bottom = ManyakTheme.spacing.compact),
