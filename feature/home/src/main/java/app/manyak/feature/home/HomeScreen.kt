@@ -1,5 +1,6 @@
 package app.manyak.feature.home
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,15 +13,21 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.core.domain.story.StorySummary
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.LoadFailedContent
+import app.manyak.core.ui.component.ManyakPullToRefreshBox
 import app.manyak.core.ui.component.rememberDelayedProgressVisibility
 import app.manyak.core.ui.component.withScreenMargins
 import app.manyak.core.ui.theme.ManyakTheme
@@ -34,13 +41,29 @@ import app.manyak.core.ui.theme.ManyakTheme
 @Composable
 fun HomeScreen(
     contentPadding: PaddingValues,
+    onOpenStory: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val context = LocalContext.current
+
+    LaunchedEffect(viewModel, lifecycleOwner) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            viewModel.uiEffect.collect { effect ->
+                when (effect) {
+                    HomeEffect.ShowRefreshFailed ->
+                        Toast.makeText(context, R.string.story_refresh_failed, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
     HomeContent(
         state = state,
         contentPadding = contentPadding,
+        onOpenStory = onOpenStory,
         onIntent = viewModel::onIntent,
         modifier = modifier,
     )
@@ -50,6 +73,7 @@ fun HomeScreen(
 private fun HomeContent(
     state: HomeUiState,
     contentPadding: PaddingValues,
+    onOpenStory: (String) -> Unit,
     onIntent: (HomeIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -76,11 +100,17 @@ private fun HomeContent(
             )
 
         // 빈 목록은 섹션 자체를 그리지 않는다 — 제목만 남으면 없는 것을 있다고 말하는 셈이다.
+        // 공식 계정에 스토리가 없는 환경에서만 나오는 자리라 안내 문구도 두지 않는다.
+        state.stories.isEmpty() -> Box(modifier = modifier.fillMaxSize().padding(contentPadding))
+
         else ->
             OriginalStories(
                 modifier = modifier,
                 stories = state.stories,
+                isRefreshing = state.isRefreshing,
                 contentPadding = contentPadding,
+                onOpenStory = onOpenStory,
+                onRefresh = { onIntent(HomeIntent.Refresh) },
             )
     }
 }
@@ -88,23 +118,33 @@ private fun HomeContent(
 @Composable
 private fun OriginalStories(
     stories: List<StorySummary>,
+    isRefreshing: Boolean,
     contentPadding: PaddingValues,
+    onOpenStory: (String) -> Unit,
+    onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LazyVerticalGrid(
-        modifier = modifier.fillMaxSize(),
-        columns = GridCells.Fixed(GRID_COLUMNS),
-        contentPadding = contentPadding.withScreenMargins(),
-        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
-        // 제목도 그리드의 한 줄이라 이 값이 제목 아래 간격까지 겸한다. 둘을 다르게 두려면 제목
-        // 아이템에 padding 을 더한다.
-        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
+    ManyakPullToRefreshBox(
+        modifier = modifier,
+        isRefreshing = isRefreshing,
+        onRefresh = onRefresh,
+        contentPadding = contentPadding,
     ) {
-        item(key = SECTION_TITLE_KEY, span = { GridItemSpan(maxLineSpan) }) {
-            SectionTitle()
-        }
-        items(stories, key = { story -> story.id }) { story ->
-            StoryCard(story = story)
+        LazyVerticalGrid(
+            modifier = Modifier.fillMaxSize(),
+            columns = GridCells.Fixed(GRID_COLUMNS),
+            contentPadding = contentPadding.withScreenMargins(),
+            horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+            // 제목도 그리드의 한 줄이라 이 값이 제목 아래 간격까지 겸한다. 둘을 다르게 두려면 제목
+            // 아이템에 padding 을 더한다.
+            verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
+        ) {
+            item(key = SECTION_TITLE_KEY, span = { GridItemSpan(maxLineSpan) }) {
+                SectionTitle()
+            }
+            items(stories, key = { story -> story.id }) { story ->
+                StoryCard(story = story, onClick = { onOpenStory(story.id) })
+            }
         }
     }
 }
@@ -131,6 +171,7 @@ private fun HomeContentPreview() {
         HomeContent(
             state = HomeUiState(isLoading = false, stories = previewStories()),
             contentPadding = PaddingValues(),
+            onOpenStory = {},
             onIntent = {},
         )
     }
@@ -143,6 +184,7 @@ private fun HomeLoadFailedPreview() {
         HomeContent(
             state = HomeUiState(isLoading = false, loadFailed = true),
             contentPadding = PaddingValues(),
+            onOpenStory = {},
             onIntent = {},
         )
     }

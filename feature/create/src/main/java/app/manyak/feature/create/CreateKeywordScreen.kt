@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -37,6 +38,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.core.domain.story.StoryTagCategory
 import app.manyak.core.ui.R
+import app.manyak.core.ui.component.ScrollEdgeFade
 import app.manyak.core.ui.theme.ManyakTheme
 
 /**
@@ -116,12 +118,16 @@ private fun CreateKeywordContent(
                 currentStep = 0,
                 stepNameRes = R.string.create_step_keyword,
             )
-            KeywordStepBody(
-                modifier = Modifier.weight(1f),
-                state = state,
-                onIntent = onIntent,
-                onOpenAddKeyword = { target -> addKeywordTarget = target },
-            )
+            // 스크롤 본문이 푸터 경계에서 딱 잘리므로 바닥에 페이드를 겹친다.
+            Box(modifier = Modifier.weight(1f)) {
+                KeywordStepBody(
+                    modifier = Modifier.fillMaxSize(),
+                    state = state,
+                    onIntent = onIntent,
+                    onOpenAddKeyword = { target -> addKeywordTarget = target },
+                )
+                ScrollEdgeFade(modifier = Modifier.align(Alignment.BottomCenter))
+            }
             // IME가 열리면 CTA 영역을 콘텐츠에 돌려 입력 필드가 키보드 위로 스크롤되게 한다.
             if (!imeVisible) {
                 CreateKeywordFooter(state = state, onIntent = onIntent)
@@ -231,20 +237,26 @@ private fun CreateKeywordFooter(
     val isFirstCategory = state.activeCategory.previous == null
     val isLastCategory = state.activeCategory.next == null
 
+    val footerErrorRes =
+        when {
+            !state.isFooterEnabled -> null
+            state.validationErrorCategory == state.activeCategory -> R.string.create_error_select_keyword
+            state.showDuplicateNameFooterError -> R.string.create_error_duplicate_name_footer
+            else -> null
+        }
+
     Column(
         modifier =
             modifier
                 .fillMaxWidth()
                 .padding(horizontal = ManyakTheme.spacing.gutter)
-                .padding(top = ManyakTheme.spacing.compact, bottom = ManyakTheme.spacing.gutter),
+                // 위 여백은 오류 문구가 있을 때만 둔다 — 문구가 없으면 콘텐츠와 버튼 사이는
+                // 페이드가 맡으므로 빈 공간을 더할 이유가 없다.
+                .padding(
+                    top = if (footerErrorRes == null) 0.dp else ManyakTheme.spacing.compact,
+                    bottom = ManyakTheme.spacing.gutter,
+                ),
     ) {
-        val footerErrorRes =
-            when {
-                !state.isFooterEnabled -> null
-                state.validationErrorCategory == state.activeCategory -> R.string.create_error_select_keyword
-                state.showDuplicateNameFooterError -> R.string.create_error_duplicate_name_footer
-                else -> null
-            }
         if (footerErrorRes != null) {
             Text(
                 modifier = Modifier.padding(bottom = ManyakTheme.spacing.compact),

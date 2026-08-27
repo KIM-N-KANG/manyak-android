@@ -1,6 +1,8 @@
 package app.manyak.feature.studio
 
+import app.manyak.core.domain.error.DomainError
 import app.manyak.core.domain.error.DomainResult
+import app.manyak.core.domain.story.StoryDetail
 import app.manyak.core.domain.story.StoryRepository
 import app.manyak.core.domain.story.StorySummary
 import kotlinx.coroutines.yield
@@ -33,6 +35,9 @@ internal class FakeStoryRepository : StoryRepository {
     val queuedResults = ArrayDeque<DomainResult<List<StorySummary>>>()
 
     override suspend fun originalStories(): DomainResult<List<StorySummary>> = DomainResult.Success(emptyList())
+
+    override suspend fun storyDetail(storyId: String): DomainResult<StoryDetail> =
+        DomainResult.Failure(DomainError.Unknown)
 
     override suspend fun myStories(): DomainResult<List<StorySummary>> {
         // 실제 네트워크 호출처럼 반드시 한 번 양보한다.

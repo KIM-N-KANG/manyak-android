@@ -135,6 +135,7 @@ dependencies {
     implementation(projects.feature.studio)
     implementation(projects.feature.my)
     implementation(projects.feature.create)
+    implementation(projects.feature.story)
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)

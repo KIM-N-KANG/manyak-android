@@ -38,6 +38,18 @@ data object StudioRoute : NavKey
 @Serializable
 data object MyRoute : NavKey
 
+/**
+ * 스토리 상세. 셸 없이 [MainTabsRoute] 위에 쌓이는 전체 화면이고, 홈·제작 목록의 카드 탭이 진입점이다.
+ *
+ * 규칙대로 식별자만 싣는다 — 목록 카드가 이미 그린 값을 함께 넘기지 않는다. 카드는 축소 썸네일과
+ * 요약 필드만 들고 있어 히어로 원본·주요 내용·시작 설정은 어차피 조회해야 하고, 두 경로로 그린
+ * 화면이 잠깐 어긋나 보인다.
+ */
+@Serializable
+data class StoryDetailRoute(
+    val storyId: String,
+) : NavKey
+
 /** 퍼널 단계는 각각 목적지이며, 이 화면은 셸 없이 [MainTabsRoute] 위에 쌓인다. */
 @Serializable
 data object CreateKeywordRoute : NavKey

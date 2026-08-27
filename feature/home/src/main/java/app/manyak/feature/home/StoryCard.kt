@@ -1,6 +1,7 @@
 package app.manyak.feature.home
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
@@ -11,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.manyak.core.domain.story.StorySummary
@@ -28,13 +30,20 @@ import app.manyak.core.ui.theme.ManyakTheme
 @Composable
 internal fun StoryCard(
     story: StorySummary,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier,
+        // 카드 전체가 상세로 가는 링크다. 카드를 둥글게 클립하지 않는다 — 맨 아래 줄인 제작자
+        // 이름이 아래 모서리 라운드에 깎인다. 눌림 표시가 사각형으로 도는 편을 받아들인다.
+        modifier = modifier.clickable(role = Role.Button, onClick = onClick),
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
-        StoryThumbnail(thumbnailUrl = story.thumbnailUrl, turnCount = story.turnCount) {
+        StoryThumbnail(
+            thumbnailUrl = story.thumbnailUrl,
+            turnCount = story.turnCount,
+            showBorder = true,
+        ) {
             // 스크롤로 섹션 제목이 밀려 나가도 공식 스토리임이 카드 자체로 드러나게 하는 표시다.
             Image(
                 modifier =

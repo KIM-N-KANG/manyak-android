@@ -5,6 +5,7 @@ import app.manyak.core.data.api.ChatApi
 import app.manyak.core.data.api.CreationRequestApi
 import app.manyak.core.data.api.SimpleStoryApi
 import app.manyak.core.data.api.StoryApi
+import app.manyak.core.data.api.StoryDetailApi
 import app.manyak.core.data.api.StoryGenerationApi
 import app.manyak.core.data.api.StoryRatingApi
 import app.manyak.core.data.api.UserApi
@@ -100,6 +101,18 @@ object NetworkModule {
         config: DataLayerConfig,
         json: Json,
     ): StoryApi = retrofit(client, config, json).create(StoryApi::class.java)
+
+    /**
+     * 상세는 목록과 달리 인증 클라이언트를 쓴다 — 비공개 스토리 읽기와 본 엔딩 집계가 토큰에 걸려
+     * 있다. AI 동기 호출이 없는 조회라 기본 타임아웃 그대로다.
+     */
+    @Provides
+    @Singleton
+    fun provideStoryDetailApi(
+        @AuthenticatedClient client: OkHttpClient,
+        config: DataLayerConfig,
+        json: Json,
+    ): StoryDetailApi = retrofit(client, config, json).create(StoryDetailApi::class.java)
 
     @Provides
     @Singleton

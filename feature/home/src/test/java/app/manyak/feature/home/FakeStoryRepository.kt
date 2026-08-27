@@ -1,6 +1,8 @@
 package app.manyak.feature.home
 
+import app.manyak.core.domain.error.DomainError
 import app.manyak.core.domain.error.DomainResult
+import app.manyak.core.domain.story.StoryDetail
 import app.manyak.core.domain.story.StoryRepository
 import app.manyak.core.domain.story.StorySummary
 import kotlinx.coroutines.CompletableDeferred
@@ -45,6 +47,9 @@ internal class FakeStoryRepository : StoryRepository {
     }
 
     override suspend fun myStories(): DomainResult<List<StorySummary>> = DomainResult.Success(emptyList())
+
+    override suspend fun storyDetail(storyId: String): DomainResult<StoryDetail> =
+        DomainResult.Failure(DomainError.Unknown)
 
     override suspend fun deleteStory(storyId: String): DomainResult<Unit> = DomainResult.Success(Unit)
 }

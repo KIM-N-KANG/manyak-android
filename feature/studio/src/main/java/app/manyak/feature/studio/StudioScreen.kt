@@ -33,6 +33,7 @@ import app.manyak.core.domain.story.CreationResumePoint
 import app.manyak.core.domain.story.StorySummary
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.LoadFailedContent
+import app.manyak.core.ui.component.ManyakPullToRefreshBox
 import app.manyak.core.ui.component.rememberDelayedProgressVisibility
 import app.manyak.core.ui.component.withScreenMargins
 import app.manyak.core.ui.theme.ManyakTheme
@@ -52,6 +53,7 @@ import app.manyak.core.ui.theme.ManyakTheme
 @Composable
 fun StudioScreen(
     contentPadding: PaddingValues,
+    onOpenStory: (String) -> Unit,
     onCreateStory: () -> Unit,
     onResumeCreation: (CreationResumePoint) -> Unit,
     modifier: Modifier = Modifier,
@@ -75,6 +77,9 @@ fun StudioScreen(
 
                     StudioEffect.ShowStoryDeleteFailed ->
                         Toast.makeText(context, R.string.studio_story_delete_failed, Toast.LENGTH_SHORT).show()
+
+                    StudioEffect.ShowRefreshFailed ->
+                        Toast.makeText(context, R.string.story_refresh_failed, Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -86,6 +91,7 @@ fun StudioScreen(
     StudioContent(
         state = state,
         contentPadding = contentPadding,
+        onOpenStory = onOpenStory,
         onIntent = viewModel::onIntent,
         modifier = modifier,
     )
@@ -95,6 +101,7 @@ fun StudioScreen(
 private fun StudioContent(
     state: StudioUiState,
     contentPadding: PaddingValues,
+    onOpenStory: (String) -> Unit,
     onIntent: (StudioIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -130,7 +137,9 @@ private fun StudioContent(
                 MyStories(
                     stories = state.stories,
                     banner = state.pendingBanner,
+                    isRefreshing = state.isRefreshing,
                     contentPadding = contentPadding,
+                    onOpenStory = onOpenStory,
                     onIntent = onIntent,
                 )
         }
@@ -189,38 +198,49 @@ private fun StoriesStatus(
 }
 
 @Composable
+@Suppress("LongParameterList")
 private fun MyStories(
     stories: List<StorySummary>,
     banner: PendingCreationBanner?,
+    isRefreshing: Boolean,
     contentPadding: PaddingValues,
+    onOpenStory: (String) -> Unit,
     onIntent: (StudioIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LazyVerticalGrid(
-        modifier = modifier.fillMaxSize(),
-        columns = GridCells.Fixed(GRID_COLUMNS),
-        contentPadding = contentPadding.withScreenMargins(),
-        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
-        // 배너·제목도 그리드의 한 줄이라 이 값이 그 아래 간격까지 겸한다.
-        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
+    ManyakPullToRefreshBox(
+        modifier = modifier,
+        isRefreshing = isRefreshing,
+        onRefresh = { onIntent(StudioIntent.Refresh) },
+        contentPadding = contentPadding,
     ) {
-        // 배너도 목록과 함께 스크롤된다 — 맨 위로 돌아오면 다시 보이므로 진입을 잃지 않는다.
-        banner?.let {
-            item(key = PENDING_BANNER_KEY, span = { GridItemSpan(maxLineSpan) }) {
-                PendingCreationBannerRow(
-                    banner = it,
-                    onResume = { onIntent(StudioIntent.ResumeCreation) },
+        LazyVerticalGrid(
+            modifier = Modifier.fillMaxSize(),
+            columns = GridCells.Fixed(GRID_COLUMNS),
+            contentPadding = contentPadding.withScreenMargins(),
+            horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+            // 배너·제목도 그리드의 한 줄이라 이 값이 그 아래 간격까지 겸한다.
+            verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
+        ) {
+            // 배너도 목록과 함께 스크롤된다 — 맨 위로 돌아오면 다시 보이므로 진입을 잃지 않는다.
+            banner?.let {
+                item(key = PENDING_BANNER_KEY, span = { GridItemSpan(maxLineSpan) }) {
+                    PendingCreationBannerRow(
+                        banner = it,
+                        onResume = { onIntent(StudioIntent.ResumeCreation) },
+                    )
+                }
+            }
+            item(key = SECTION_TITLE_KEY, span = { GridItemSpan(maxLineSpan) }) {
+                SectionTitle()
+            }
+            items(stories, key = { story -> story.id }) { story ->
+                MyStoryCard(
+                    story = story,
+                    onClick = { onOpenStory(story.id) },
+                    onDeleteClick = { onIntent(StudioIntent.RequestDeleteStory(story)) },
                 )
             }
-        }
-        item(key = SECTION_TITLE_KEY, span = { GridItemSpan(maxLineSpan) }) {
-            SectionTitle()
-        }
-        items(stories, key = { story -> story.id }) { story ->
-            MyStoryCard(
-                story = story,
-                onDeleteClick = { onIntent(StudioIntent.RequestDeleteStory(story)) },
-            )
         }
     }
 }
@@ -260,6 +280,7 @@ private fun StudioScreenPreview() {
         StudioContent(
             state = StudioUiState(isLoading = false, stories = previewStories()),
             contentPadding = PaddingValues(0.dp),
+            onOpenStory = {},
             onIntent = {},
         )
     }
@@ -272,6 +293,7 @@ private fun StudioScreenEmptyPreview() {
         StudioContent(
             state = StudioUiState(isLoading = false),
             contentPadding = PaddingValues(0.dp),
+            onOpenStory = {},
             onIntent = {},
         )
     }
@@ -293,6 +315,7 @@ private fun StudioScreenPendingBannerPreview() {
                         ),
                 ),
             contentPadding = PaddingValues(0.dp),
+            onOpenStory = {},
             onIntent = {},
         )
     }

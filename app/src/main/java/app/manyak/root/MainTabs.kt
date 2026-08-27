@@ -77,6 +77,7 @@ private enum class MainTab(
  */
 @Composable
 fun MainTabsScreen(
+    onOpenStory: (String) -> Unit,
     onCreateStory: () -> Unit,
     onResumeCreation: (CreationResumePoint) -> Unit,
     modifier: Modifier = Modifier,
@@ -110,6 +111,7 @@ fun MainTabsScreen(
             backStacks = backStacks,
             contentPadding = innerPadding,
             onLeaveTab = { selectedTab = MainTab.HOME },
+            onOpenStory = onOpenStory,
             onCreateStory = onCreateStory,
             onResumeCreation = onResumeCreation,
         )
@@ -140,11 +142,13 @@ private fun MainTabsBar(
  * 홈으로 한 번에 돌아오는 것이 여기서 나오고, 홈 탭에서는 밑에 아무것도 없어 앱을 벗어난다.
  */
 @Composable
+@Suppress("LongParameterList")
 private fun MainTabsContent(
     selectedTab: MainTab,
     backStacks: Map<MainTab, NavBackStack<NavKey>>,
     contentPadding: PaddingValues,
     onLeaveTab: () -> Unit,
+    onOpenStory: (String) -> Unit,
     onCreateStory: () -> Unit,
     onResumeCreation: (CreationResumePoint) -> Unit,
 ) {
@@ -155,7 +159,7 @@ private fun MainTabsContent(
 
     val homeEntries =
         rememberTabEntries(backStacks.getValue(MainTab.HOME)) {
-            entry<HomeRoute> { HomeScreen(contentPadding = padding.value) }
+            entry<HomeRoute> { HomeScreen(contentPadding = padding.value, onOpenStory = onOpenStory) }
         }
     val chatEntries =
         rememberTabEntries(backStacks.getValue(MainTab.CHAT)) {
@@ -166,6 +170,7 @@ private fun MainTabsContent(
             entry<StudioRoute> {
                 StudioScreen(
                     contentPadding = padding.value,
+                    onOpenStory = onOpenStory,
                     onCreateStory = onCreateStory,
                     onResumeCreation = onResumeCreation,
                 )

@@ -36,6 +36,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.core.ui.R
+import app.manyak.core.ui.component.ScrollEdgeFade
 import app.manyak.core.ui.theme.ManyakTheme
 
 /**
@@ -153,12 +154,16 @@ private fun CreateAdditionalInfoContent(
                 state.isCompletingStory -> StoryCompletingContent(modifier = Modifier.weight(1f))
 
                 else -> {
-                    AdditionalInfoList(
-                        modifier = Modifier.weight(1f),
-                        storylineIndex = storylineIndex,
-                        state = state,
-                        onIntent = onIntent,
-                    )
+                    // 스크롤 본문이 푸터 경계에서 딱 잘리므로 바닥에 페이드를 겹친다.
+                    Box(modifier = Modifier.weight(1f)) {
+                        AdditionalInfoList(
+                            modifier = Modifier.fillMaxSize(),
+                            storylineIndex = storylineIndex,
+                            state = state,
+                            onIntent = onIntent,
+                        )
+                        ScrollEdgeFade(modifier = Modifier.align(Alignment.BottomCenter))
+                    }
                     // IME가 열리면 CTA 영역을 콘텐츠에 돌려 입력 필드가 키보드 위로 스크롤되게 한다.
                     if (!imeVisible) {
                         CreateAdditionalInfoFooter(
@@ -285,7 +290,8 @@ private fun CreateAdditionalInfoFooter(
             modifier
                 .fillMaxWidth()
                 .padding(horizontal = ManyakTheme.spacing.gutter)
-                .padding(top = ManyakTheme.spacing.compact, bottom = ManyakTheme.spacing.gutter),
+                // 이 푸터에는 오류 문구가 없어 위를 띄우지 않는다 — 콘텐츠와의 경계는 페이드가 맡는다.
+                .padding(bottom = ManyakTheme.spacing.gutter),
         horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
         FunnelNeutralButton(

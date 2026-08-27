@@ -191,6 +191,46 @@ class StudioViewModelTest {
         }
 
     @Test
+    fun `당겨서 새로고침은 골격 없이 목록을 다시 읽는다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryRepository()
+            val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository)
+            viewModel.onIntent(StudioIntent.ScreenShown)
+            advanceUntilIdle()
+
+            viewModel.onIntent(StudioIntent.Refresh)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertEquals(2, repository.myStoriesCallCount)
+            assertFalse(state.isRefreshing)
+            assertFalse(state.isLoading)
+            assertEquals(sampleStories(), state.stories)
+        }
+
+    @Test
+    fun `새로고침 실패는 목록을 그대로 두고 실패 안내를 보낸다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryRepository()
+            val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository)
+            viewModel.onIntent(StudioIntent.ScreenShown)
+            advanceUntilIdle()
+
+            repository.queuedResults.add(DomainResult.Failure(DomainError.Network))
+            viewModel.onIntent(StudioIntent.Refresh)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertFalse(state.isRefreshing)
+            assertFalse(state.loadFailed)
+            assertEquals(sampleStories(), state.stories)
+            assertEquals(
+                StudioEffect.ShowRefreshFailed,
+                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
+            )
+        }
+
+    @Test
     fun `삭제는 확인을 거쳐 목록에서 대상만 제거하고 완료 안내를 보낸다`() =
         runTest(dispatcher) {
             val repository = FakeStoryRepository()

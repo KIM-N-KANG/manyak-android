@@ -5,11 +5,13 @@ import app.manyak.core.domain.error.DomainResult
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -96,5 +98,51 @@ class HomeViewModelTest {
             gate.complete(Unit)
             advanceUntilIdle()
             assertEquals(sampleStories(), viewModel.uiState.value.stories)
+        }
+
+    @Test
+    fun `당겨서 새로고침은 골격 없이 목록을 다시 읽는다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryRepository()
+            val viewModel = HomeViewModel(storyRepository = repository)
+            advanceUntilIdle()
+
+            val gate = CompletableDeferred<Unit>()
+            repository.inFlightGate = gate
+            viewModel.onIntent(HomeIntent.Refresh)
+            advanceUntilIdle()
+
+            // 새로고침 중에도 목록이 남아 있어야 골격이 다시 깔리지 않는다.
+            val refreshing = viewModel.uiState.value
+            assertTrue(refreshing.isRefreshing)
+            assertFalse(refreshing.isLoading)
+            assertEquals(sampleStories(), refreshing.stories)
+
+            gate.complete(Unit)
+            advanceUntilIdle()
+
+            assertEquals(2, repository.originalStoriesCallCount)
+            assertFalse(viewModel.uiState.value.isRefreshing)
+        }
+
+    @Test
+    fun `새로고침 실패는 목록을 그대로 두고 실패 안내를 보낸다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryRepository()
+            val viewModel = HomeViewModel(storyRepository = repository)
+            advanceUntilIdle()
+
+            repository.queuedResults += DomainResult.Failure(DomainError.Network)
+            viewModel.onIntent(HomeIntent.Refresh)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertFalse(state.isRefreshing)
+            assertFalse(state.loadFailed)
+            assertEquals(sampleStories(), state.stories)
+            assertEquals(
+                HomeEffect.ShowRefreshFailed,
+                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
+            )
         }
 }

@@ -1,20 +1,16 @@
 package app.manyak.feature.studio
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.constrainHeight
 import androidx.compose.ui.unit.constrainWidth
 import app.manyak.core.ui.R
+import app.manyak.core.ui.component.StoryGenreBadge
 import app.manyak.core.ui.theme.ManyakTheme
 
 /**
@@ -40,7 +36,7 @@ internal fun StoryGenreBadges(
         val badgeConstraints = constraints.copy(minWidth = 0, minHeight = 0)
         val badges =
             subcompose(GenreBadgeSlot.Genres) {
-                genres.forEach { genre -> GenreBadge(text = genre) }
+                genres.forEach { genre -> StoryGenreBadge(text = genre) }
             }.map { measurable -> measurable.measure(badgeConstraints) }
 
         val totalWidth = badges.sumOf { badge -> badge.width } + gap * (badges.size - 1)
@@ -103,33 +99,11 @@ internal fun visibleBadgeCount(
 }
 
 @Composable
-private fun GenreBadge(
-    text: String,
-    modifier: Modifier = Modifier,
-) {
-    Text(
-        modifier =
-            modifier
-                .clip(ManyakTheme.shapes.pill)
-                .background(ManyakTheme.colors.backgroundNeutral)
-                .padding(
-                    horizontal = ManyakTheme.spacing.compact,
-                    vertical = ManyakTheme.spacing.hairline,
-                ),
-        text = text,
-        style = ManyakTheme.typography.labelSmall,
-        color = ManyakTheme.colors.textSubtle,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-    )
-}
-
-@Composable
 private fun OverflowBadge(
     hiddenCount: Int,
     modifier: Modifier = Modifier,
 ) {
-    GenreBadge(text = stringResource(R.string.studio_genre_overflow, hiddenCount), modifier = modifier)
+    StoryGenreBadge(text = stringResource(R.string.studio_genre_overflow, hiddenCount), modifier = modifier)
 }
 
 private enum class GenreBadgeSlot { Genres, OverflowProbe, Overflow }
