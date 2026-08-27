@@ -15,13 +15,8 @@ import app.manyak.core.domain.story.StoryTagCategory
 import app.manyak.core.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.text.Normalizer
 import javax.inject.Inject
@@ -78,8 +73,15 @@ data class CreateKeywordUiState(
      * 빈 입력 화면이 스쳐 간 뒤 값이 채워지면 재개 진입에서 화면이 번쩍인다.
      */
     val isRestoring: Boolean = true,
-    /** 현재 편집 스냅숏의 임시 저장 상태. */
-    val draftSaveStatus: DraftSaveStatus = DraftSaveStatus.HIDDEN,
+    /** 임시 저장 버튼이 그리는 상태. */
+    val draftSaveStatus: DraftSaveStatus = DraftSaveStatus.IDLE,
+    /**
+     * 디스크에 마지막으로 반영된 스냅숏. 복원이 끝나면 그때의 화면 스냅숏으로 채워지므로,
+     * 이 값과 현재 스냅숏이 갈리는 것이 곧 "임시 저장하지 않은 변경"이다.
+     */
+    val savedSnapshot: KeywordDraftSnapshot? = null,
+    /** 이탈을 막고 띄운 경고. */
+    val exitWarning: FunnelExitWarning? = null,
     val activeCategory: StoryTagCategory = StoryTagCategory.GENRE,
     /** "다음"을 눌러 검증에 실패한 카테고리. 그 카테고리가 활성일 때만 푸터에 오류를 표시한다. */
     val validationErrorCategory: StoryTagCategory? = null,
@@ -150,6 +152,26 @@ data class CreateKeywordUiState(
     val isFooterEnabled: Boolean
         get() = providedTags !is ProvidedTags.Failed
 
+    /** 복원 전에는 무엇이 저장돼 있는지 몰라 변경 여부를 판정하지 않는다. */
+    val hasUnsavedChanges: Boolean
+        get() = savedSnapshot != null && toKeywordSnapshot() != savedSnapshot
+
+    val draftSave: DraftSaveUiState
+        get() {
+            val unsaved = hasUnsavedChanges
+            return DraftSaveUiState(
+                status =
+                    if (draftSaveStatus == DraftSaveStatus.SAVED && unsaved) {
+                        DraftSaveStatus.IDLE
+                    } else {
+                        draftSaveStatus
+                    },
+                // 입력을 모두 지운 변경도 저장 대상이다 — 그래야 남아 있는 저장본이 함께 사라진다.
+                canSave = !isRestoring && unsaved,
+                hasUnsavedChanges = unsaved,
+            )
+        }
+
     companion object {
         const val PROTAGONIST_ID: Long = 0
         const val FIRST_SUPPORTING_ID: Long = 1
@@ -183,8 +205,18 @@ sealed interface CreateKeywordIntent {
 
     data object RetryTags : CreateKeywordIntent
 
-    /** 시스템·헤더 뒤로가기 — 퍼널 이탈. 남은 내용의 임시 저장 처리 뒤 나간다. */
-    data object LeaveFunnel : CreateKeywordIntent
+    /** 헤더의 임시 저장 버튼과 백그라운드 전환. */
+    data object SaveDraft : CreateKeywordIntent
+
+    sealed interface ExitNavigation : CreateKeywordIntent
+
+    /** 시스템 뒤로가기·헤더 닫기 — 퍼널 이탈. 저장하지 않은 입력이 있으면 먼저 경고한다. */
+    data object LeaveFunnel : ExitNavigation
+
+    /** 이탈 경고의 "나가기" — 저장하지 않은 입력을 버리고 나간다. */
+    data object ConfirmLeaveFunnel : ExitNavigation
+
+    data object DismissExitWarning : ExitNavigation
 
     data class ToggleProvidedTag(
         val target: KeywordTarget,
@@ -227,11 +259,18 @@ sealed interface CreateKeywordEvent {
     /** 되살릴 저장본이 없었다. 복원 대기만 끝낸다. */
     data object RestoreFinished : CreateKeywordEvent
 
-    data object DraftSavePending : CreateKeywordEvent
+    data object DraftSaveStarted : CreateKeywordEvent
 
     data class DraftSaveFinished(
         val snapshot: KeywordDraftSnapshot,
         val saved: Boolean,
+    ) : CreateKeywordEvent
+
+    /** 저장 성공 표시 시간이 지났다. */
+    data object DraftSavedDisplayExpired : CreateKeywordEvent
+
+    data class ExitWarningChanged(
+        val warning: FunnelExitWarning?,
     ) : CreateKeywordEvent
 
     data class TagsLoaded(
@@ -290,10 +329,8 @@ sealed interface CreateKeywordEffect {
     /** 검증을 통과한 "스토리라인 만들기" — 스토리라인 선택 단계로 넘어간다. */
     data object NavigateToStoryline : CreateKeywordEffect
 
-    /** 퍼널 이탈 확정. 내용이 남았으면 "임시 저장되었어요" 토스트를 함께 띄운다. */
-    data class ExitFunnel(
-        val contentPreserved: Boolean,
-    ) : CreateKeywordEffect
+    /** 퍼널 이탈 확정. */
+    data object ExitFunnel : CreateKeywordEffect
 }
 
 @HiltViewModel
@@ -307,34 +344,27 @@ class CreateKeywordViewModel
             CreateKeywordUiState(),
         ) {
         private var tagsLoadJob: Job? = null
-        private var autosaveJob: Job? = null
+        private var draftSaveJob: Job? = null
+        private var savedDisplayJob: Job? = null
+
+        /**
+         * 디스크에 마지막으로 써 넣은 스냅숏. 연타로 같은 내용을 다시 쓰지 않기 위한 장부다.
+         * UiState 의 `savedSnapshot` 은 이벤트 채널을 거쳐 한 박자 늦어 판정 기준으로 쓸 수 없다.
+         */
+        private var persistedSnapshot: KeywordDraftSnapshot? = null
 
         init {
             startTagsLoad()
-            autosaveJob =
-                viewModelScope.launch {
-                    // 레코드가 남아 있는 진입은 곧 재개다. 재개 의도를 따로 저장하지 않는다.
-                    val record = pendingCreationStore.read()
-                    if (record is PendingStoryCreation.KeywordDraft) {
-                        dispatchEvent(CreateKeywordEvent.SnapshotRestored(record.snapshot))
-                    } else {
-                        dispatchEvent(CreateKeywordEvent.RestoreFinished)
-                    }
-
-                    // 복원 직후의 현재값은 이미 저장된 상태이므로 건너뛰고, 이후 편집 스냅숏만
-                    // 마지막 변경 300ms 뒤 저장한다. collectLatest 취소가 디바운스 타이머가 된다.
-                    uiState.first { !it.isRestoring }
-                    uiState
-                        .map(CreateKeywordUiState::toKeywordSnapshot)
-                        .distinctUntilChanged()
-                        .drop(1)
-                        .collectLatest { snapshot ->
-                            dispatchEvent(CreateKeywordEvent.DraftSavePending)
-                            delay(StorylineGenerationStore.DRAFT_AUTOSAVE_DEBOUNCE_MS)
-                            val saved = pendingCreationStore.persistKeywordSnapshot(snapshot)
-                            dispatchEvent(CreateKeywordEvent.DraftSaveFinished(snapshot, saved))
-                        }
+            viewModelScope.launch {
+                // 레코드가 남아 있는 진입은 곧 재개다. 재개 의도를 따로 저장하지 않는다.
+                val record = pendingCreationStore.read()
+                if (record is PendingStoryCreation.KeywordDraft) {
+                    persistedSnapshot = record.snapshot
+                    dispatchEvent(CreateKeywordEvent.SnapshotRestored(record.snapshot))
+                } else {
+                    dispatchEvent(CreateKeywordEvent.RestoreFinished)
                 }
+            }
         }
 
         private fun startTagsLoad(showLoading: Boolean = false) {
@@ -364,7 +394,8 @@ class CreateKeywordViewModel
 
                 CreateKeywordIntent.GoNext -> goNext(state)
                 CreateKeywordIntent.GenerateStorylines -> generateStorylines(state)
-                CreateKeywordIntent.LeaveFunnel -> leaveFunnel()
+                CreateKeywordIntent.SaveDraft -> saveDraft()
+                is CreateKeywordIntent.ExitNavigation -> handleExitNavigation(intent, state)
 
                 CreateKeywordIntent.RetryTags ->
                     if (state.providedTags is ProvidedTags.Failed) {
@@ -375,14 +406,41 @@ class CreateKeywordViewModel
             }
         }
 
+        private suspend fun handleExitNavigation(
+            intent: CreateKeywordIntent.ExitNavigation,
+            state: CreateKeywordUiState,
+        ) {
+            when (intent) {
+                CreateKeywordIntent.LeaveFunnel ->
+                    if (state.hasUnsavedChanges) {
+                        dispatchEvent(CreateKeywordEvent.ExitWarningChanged(FunnelExitWarning.UNSAVED_CHANGES))
+                    } else {
+                        leaveFunnel()
+                    }
+
+                CreateKeywordIntent.ConfirmLeaveFunnel -> {
+                    dispatchEvent(CreateKeywordEvent.ExitWarningChanged(null))
+                    leaveFunnel()
+                }
+
+                CreateKeywordIntent.DismissExitWarning ->
+                    dispatchEvent(CreateKeywordEvent.ExitWarningChanged(null))
+            }
+        }
+
         private suspend fun handleKeywordInput(
             state: CreateKeywordUiState,
             intent: CreateKeywordIntent,
         ) {
             when (intent) {
-                is CreateKeywordIntent.ToggleProvidedTag -> toggleProvidedTag(state, intent)
-                is CreateKeywordIntent.ToggleCustomTag -> toggleCustomTag(state, intent)
-                is CreateKeywordIntent.AddCustomTag -> addCustomTag(state, intent)
+                is CreateKeywordIntent.ToggleProvidedTag ->
+                    state.providedTagToggleEvent(intent)?.let { dispatchEvent(it) }
+
+                is CreateKeywordIntent.ToggleCustomTag ->
+                    state.customTagToggleEvent(intent)?.let { dispatchEvent(it) }
+
+                is CreateKeywordIntent.AddCustomTag ->
+                    state.customTagAddEvent(intent)?.let { dispatchEvent(it) }
 
                 is CreateKeywordIntent.ChangeCharacterName ->
                     dispatchEvent(
@@ -416,26 +474,55 @@ class CreateKeywordViewModel
         }
 
         /**
-         * 키워드 단계 이탈. 생성 전이라 소실 경고는 없고, 입력이 남아 있으면 조용히 저장한다.
+         * 지금 입력을 진행 레코드로 내보낸다. 임시 저장 버튼과 백그라운드 전환이 부르는 유일한
+         * 저장 경로다. 쓰기를 인텐트 처리 안에서 기다리면 그동안 다음 입력이 막히므로 따로 띄운다.
          *
-         * 복원이 화면에 반영될 때까지 기다린다 — 헤더는 복원 중에도 눌리므로, 기다리지 않으면
-         * 아직 비어 있는 상태를 스냅숏해 방금 소비한 저장분을 잃는다.
+         * 복원이 화면에 반영될 때까지 기다린다 — 버튼은 복원 중에도 눌리므로, 기다리지 않으면
+         * 아직 비어 있는 상태를 스냅숏해 저장해 둔 입력을 지운다.
+         */
+        private fun saveDraft() {
+            // 쓰기가 도는 동안의 추가 요청은 버린다 — 같은 내용을 두 번 쓸 뿐이다.
+            if (draftSaveJob?.isActive == true) return
+            draftSaveJob =
+                viewModelScope.launch {
+                    val state = uiState.first { !it.isRestoring }
+                    if (state.isGeneratingStorylines) return@launch
+                    val snapshot = state.toKeywordSnapshot()
+                    // 이미 같은 스냅숏이 디스크에 있으면 확인 표시만 다시 보여 준다. 연타로
+                    // 눌러도 디스크는 건드리지 않고, 버튼이 죽은 것처럼 보이지도 않는다.
+                    if (snapshot != persistedSnapshot) {
+                        dispatchEvent(CreateKeywordEvent.DraftSaveStarted)
+                        if (!pendingCreationStore.persistKeywordSnapshot(snapshot)) {
+                            dispatchEvent(CreateKeywordEvent.DraftSaveFinished(snapshot, saved = false))
+                            return@launch
+                        }
+                        persistedSnapshot = snapshot
+                    }
+                    dispatchEvent(CreateKeywordEvent.DraftSaveFinished(snapshot, saved = true))
+                    scheduleSavedDisplayReset()
+                }
+        }
+
+        private fun scheduleSavedDisplayReset() {
+            savedDisplayJob?.cancel()
+            savedDisplayJob =
+                viewModelScope.launch {
+                    delay(DRAFT_SAVED_DISPLAY_MS)
+                    dispatchEvent(CreateKeywordEvent.DraftSavedDisplayExpired)
+                }
+        }
+
+        /**
+         * 키워드 단계 이탈. 저장하지 않은 입력은 사용자가 버리기로 한 것이라 여기서 저장하지 않는다.
          *
-         * 뒤 단계의 진행 중 레코드가 슬롯에 있으면 덮지 않는다 — 서버에서 실제로 돌고 있는
-         * 복구 대상이 편집 스냅숏보다 우선한다. 뒤 단계에서 시작한 생성 결과의 임시 저장도
-         * 스토어가 이미 처리하므로 여기서는 판정만 승계한다.
+         * 뒤 단계의 진행 중 레코드가 슬롯에 있으면 건드리지 않는다 — 서버에서 실제로 돌고 있는
+         * 복구 대상이 우선한다. 그 판정과 정리는 스토어가 소유하므로 여기서는 넘기기만 한다.
          */
         private suspend fun leaveFunnel() {
-            val restored = uiState.first { !it.isRestoring }
-            stopAutosave()
-            val storePreserved = storylineGenerationStore.leaveFunnel()
-            if (storePreserved) {
-                dispatchEffect(CreateKeywordEffect.ExitFunnel(contentPreserved = true))
-                return
-            }
-            val snapshot = restored.toKeywordSnapshot()
-            val saved = pendingCreationStore.persistKeywordSnapshot(snapshot)
-            dispatchEffect(CreateKeywordEffect.ExitFunnel(contentPreserved = saved))
+            // 저장은 취소하지 않고 끝날 때까지 기다린다 — 쓰기를 끊으면 무엇이 남았는지 알 수 없다.
+            draftSaveJob?.join()
+            storylineGenerationStore.leaveFunnel()
+            dispatchEffect(CreateKeywordEffect.ExitFunnel)
         }
 
         /**
@@ -447,53 +534,11 @@ class CreateKeywordViewModel
             dispatchEvent(CreateKeywordEvent.GenerateAttempted)
             if (!state.canGenerateStorylines) return
             if (state.isGeneratingStorylines) return
-            // 대기 중 KeywordDraft 쓰기가 요청 직전 Generating 레코드를 늦게 덮지 않게 먼저 합류한다.
-            stopAutosave()
+            // 진행 중 KeywordDraft 쓰기가 요청 직전 Generating 레코드를 늦게 덮지 않게 먼저 합류한다.
+            draftSaveJob?.join()
             dispatchEvent(CreateKeywordEvent.StorylineGenerationStarted)
             storylineGenerationStore.generate(state.toGenerationInput())
             dispatchEffect(CreateKeywordEffect.NavigateToStoryline)
-        }
-
-        private suspend fun stopAutosave() {
-            autosaveJob?.cancelAndJoin()
-            autosaveJob = null
-        }
-
-        private suspend fun toggleProvidedTag(
-            state: CreateKeywordUiState,
-            intent: CreateKeywordIntent.ToggleProvidedTag,
-        ) {
-            val selecting =
-                when (intent.target) {
-                    KeywordTarget.Genre -> intent.tagId !in state.selectedGenreTagIds
-                    else -> state.character(intent.target)?.let { intent.tagId !in it.selectedTagIds } ?: return
-                }
-            if (selecting && state.isAtSelectionCap(intent.target)) return
-            dispatchEvent(CreateKeywordEvent.ProvidedTagToggled(intent.target, intent.tagId))
-        }
-
-        private suspend fun toggleCustomTag(
-            state: CreateKeywordUiState,
-            intent: CreateKeywordIntent.ToggleCustomTag,
-        ) {
-            val customTags =
-                when (intent.target) {
-                    KeywordTarget.Genre -> state.customGenreTags
-                    else -> state.character(intent.target)?.customTags ?: return
-                }
-            val tag = customTags.getOrNull(intent.index) ?: return
-            if (!tag.selected && state.isAtSelectionCap(intent.target)) return
-            dispatchEvent(CreateKeywordEvent.CustomTagToggled(intent.target, intent.index))
-        }
-
-        private suspend fun addCustomTag(
-            state: CreateKeywordUiState,
-            intent: CreateKeywordIntent.AddCustomTag,
-        ) {
-            val name = intent.name.trim().take(CreateKeywordUiState.CUSTOM_TAG_MAX_LENGTH)
-            if (name.isEmpty()) return
-            if (state.isAtSelectionCap(intent.target)) return
-            dispatchEvent(CreateKeywordEvent.CustomTagAdded(intent.target, name))
         }
 
         override fun reduce(
@@ -502,13 +547,46 @@ class CreateKeywordViewModel
         ): CreateKeywordUiState = reduceKeywordState(state, event)
     }
 
+/** 선택 상한에 걸리면 이벤트를 내지 않는다. 판정 재료가 모두 상태라 상태 옆에 둔다. */
+private fun CreateKeywordUiState.providedTagToggleEvent(
+    intent: CreateKeywordIntent.ToggleProvidedTag,
+): CreateKeywordEvent? {
+    val selecting =
+        when (intent.target) {
+            KeywordTarget.Genre -> intent.tagId !in selectedGenreTagIds
+            else -> character(intent.target)?.let { intent.tagId !in it.selectedTagIds } ?: return null
+        }
+    if (selecting && isAtSelectionCap(intent.target)) return null
+    return CreateKeywordEvent.ProvidedTagToggled(intent.target, intent.tagId)
+}
+
+private fun CreateKeywordUiState.customTagToggleEvent(
+    intent: CreateKeywordIntent.ToggleCustomTag,
+): CreateKeywordEvent? {
+    val customTags =
+        when (intent.target) {
+            KeywordTarget.Genre -> customGenreTags
+            else -> character(intent.target)?.customTags ?: return null
+        }
+    val tag = customTags.getOrNull(intent.index) ?: return null
+    if (!tag.selected && isAtSelectionCap(intent.target)) return null
+    return CreateKeywordEvent.CustomTagToggled(intent.target, intent.index)
+}
+
+private fun CreateKeywordUiState.customTagAddEvent(intent: CreateKeywordIntent.AddCustomTag): CreateKeywordEvent? {
+    val name = intent.name.trim().take(CreateKeywordUiState.CUSTOM_TAG_MAX_LENGTH)
+    if (name.isEmpty()) return null
+    if (isAtSelectionCap(intent.target)) return null
+    return CreateKeywordEvent.CustomTagAdded(intent.target, name)
+}
+
 /** 뒤 단계의 생성·완성·결과 레코드는 키워드 편집본보다 우선한다. */
 private suspend fun PendingStoryCreationStore.persistKeywordSnapshot(snapshot: KeywordDraftSnapshot): Boolean {
     val current = read()
     if (current != null && current !is PendingStoryCreation.KeywordDraft) return false
+    // 입력을 모두 지운 상태를 저장하면 남아 있던 저장본도 함께 사라져야 한다.
     if (!snapshot.hasInput) {
-        if (current is PendingStoryCreation.KeywordDraft) clear()
-        return false
+        return if (current is PendingStoryCreation.KeywordDraft) clear() else true
     }
     return write(PendingStoryCreation.KeywordDraft(snapshot))
 }
@@ -548,7 +626,6 @@ internal fun KeywordDraftSnapshot.toKeywordUiState(base: CreateKeywordUiState): 
         }
     return base.copy(
         isRestoring = false,
-        draftSaveStatus = DraftSaveStatus.SAVED,
         selectedGenreTagIds = selectedGenreTagIds.toSet(),
         customGenreTags = customGenreTags.map { CustomTag(it.name, it.selected) },
         protagonist =

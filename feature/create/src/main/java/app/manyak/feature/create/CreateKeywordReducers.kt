@@ -7,18 +7,31 @@ internal fun reduceKeywordState(
     event: CreateKeywordEvent,
 ): CreateKeywordUiState =
     when (event) {
-        is CreateKeywordEvent.SnapshotRestored -> event.snapshot.toKeywordUiState(state)
-        CreateKeywordEvent.RestoreFinished -> state.copy(isRestoring = false)
-        CreateKeywordEvent.DraftSavePending -> state.copy(draftSaveStatus = DraftSaveStatus.SAVING)
+        // 복원한 화면은 디스크와 같은 상태다. 되살린 결과에서 다시 뽑아 기준선으로 삼는다 —
+        // 저장본에 없던 빈 인물 섹션처럼 복원이 채워 넣은 것까지 변경으로 세지 않기 위해서다.
+        is CreateKeywordEvent.SnapshotRestored ->
+            event.snapshot.toKeywordUiState(state).let { it.copy(savedSnapshot = it.toKeywordSnapshot()) }
+
+        CreateKeywordEvent.RestoreFinished ->
+            state.copy(isRestoring = false, savedSnapshot = state.toKeywordSnapshot())
+
+        CreateKeywordEvent.DraftSaveStarted -> state.copy(draftSaveStatus = DraftSaveStatus.SAVING)
+
         is CreateKeywordEvent.DraftSaveFinished ->
-            if (state.toKeywordSnapshot() == event.snapshot) {
-                state.copy(
-                    draftSaveStatus =
-                        if (event.saved) DraftSaveStatus.SAVED else DraftSaveStatus.HIDDEN,
-                )
+            if (event.saved) {
+                state.copy(draftSaveStatus = DraftSaveStatus.SAVED, savedSnapshot = event.snapshot)
+            } else {
+                state.copy(draftSaveStatus = DraftSaveStatus.IDLE)
+            }
+
+        CreateKeywordEvent.DraftSavedDisplayExpired ->
+            if (state.draftSaveStatus == DraftSaveStatus.SAVED) {
+                state.copy(draftSaveStatus = DraftSaveStatus.IDLE)
             } else {
                 state
             }
+
+        is CreateKeywordEvent.ExitWarningChanged -> state.copy(exitWarning = event.warning)
 
         else -> reduceKeywordContent(state, event)
     }
@@ -35,10 +48,7 @@ private fun reduceKeywordContent(
         is CreateKeywordEvent.ValidationFailed -> state.copy(validationErrorCategory = event.category)
         CreateKeywordEvent.GenerateAttempted -> state.copy(hasAttemptedGenerate = true)
         CreateKeywordEvent.StorylineGenerationStarted -> state.copy(isGeneratingStorylines = true)
-        else ->
-            reduceKeywordInput(state, event).let { updated ->
-                if (updated == state) updated else updated.copy(draftSaveStatus = DraftSaveStatus.SAVING)
-            }
+        else -> reduceKeywordInput(state, event)
     }
 
 private fun reduceKeywordInput(

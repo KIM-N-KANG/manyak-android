@@ -13,10 +13,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withTimeoutOrNull
@@ -217,7 +215,6 @@ class CreateAdditionalInfoViewModelTest {
 
             assertEquals(CompletionFailure.CREDIT, viewModel.uiState.value.completionFailure)
             assertTrue(fixture.pendingStore.current is PendingStoryCreation.Draft)
-            assertEquals(DraftSaveStatus.SAVED, fixture.store.draftSaveStatus.value)
         }
 
     @Test
@@ -238,7 +235,7 @@ class CreateAdditionalInfoViewModelTest {
         }
 
     @Test
-    fun `추가 정보 입력은 마지막 변경 300ms 뒤 임시 저장된다`() =
+    fun `추가 정보 입력은 모아 두었다가 임시 저장에서 한 번에 나간다`() =
         runTest(dispatcher) {
             val fixture = loadedViewModel(selectedStorylineIndex = 0)
             advanceUntilIdle()
@@ -248,19 +245,45 @@ class CreateAdditionalInfoViewModelTest {
                     .id
 
             fixture.viewModel.onIntent(CreateAdditionalInfoIntent.ChangeInput(inputId, "배경은 서울"))
-            runCurrent()
+            advanceUntilIdle()
 
-            assertEquals(DraftSaveStatus.SAVING, fixture.store.draftSaveStatus.value)
-            advanceTimeBy(299)
-            runCurrent()
-            assertEquals(DraftSaveStatus.SAVING, fixture.store.draftSaveStatus.value)
+            assertTrue(fixture.store.draftSave.value.hasUnsavedChanges)
+            assertTrue(
+                (fixture.pendingStore.current as PendingStoryCreation.Draft)
+                    .progress.additionalInfoInputs
+                    .none { it == "배경은 서울" },
+            )
 
-            advanceTimeBy(1)
-            runCurrent()
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.SaveDraft)
+            advanceUntilIdle()
 
             val draft = fixture.pendingStore.current as PendingStoryCreation.Draft
             assertEquals("배경은 서울", draft.progress.additionalInfoInputs.first())
-            assertEquals(DraftSaveStatus.SAVED, fixture.store.draftSaveStatus.value)
+            assertFalse(fixture.store.draftSave.value.hasUnsavedChanges)
+        }
+
+    @Test
+    fun `저장하지 않은 추가 정보가 있으면 이탈 전에 경고한다`() =
+        runTest(dispatcher) {
+            val fixture = loadedViewModel(selectedStorylineIndex = 0)
+            advanceUntilIdle()
+            val inputId =
+                fixture.viewModel.uiState.value.additionalInfos
+                    .first()
+                    .id
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.ChangeInput(inputId, "배경은 서울"))
+            advanceUntilIdle()
+
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.LeaveFunnel)
+            advanceUntilIdle()
+
+            assertEquals(FunnelExitWarning.UNSAVED_CHANGES, fixture.viewModel.uiState.value.exitWarning)
+
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.ConfirmLeaveFunnel)
+            advanceUntilIdle()
+
+            val draft = fixture.pendingStore.current as PendingStoryCreation.Draft
+            assertTrue(draft.progress.additionalInfoInputs.none { it == "배경은 서울" })
         }
 
     @Test
@@ -481,13 +504,13 @@ class CreateAdditionalInfoViewModelTest {
         }
 
     @Test
-    fun `이탈하면 선택 순번과 입력이 담긴 임시 저장본이 남는다`() =
+    fun `임시 저장하면 선택 순번과 입력이 담긴 저장본이 남는다`() =
         runTest(dispatcher) {
             val fixture = loadedViewModel(selectedStorylineIndex = 1)
             fixture.viewModel.onIntent(CreateAdditionalInfoIntent.ChangeInput(inputId = 0, value = "배경은 서울"))
             advanceUntilIdle()
 
-            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.LeaveFunnel)
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.SaveDraft)
             advanceUntilIdle()
 
             val record = fixture.pendingStore.read() as PendingStoryCreation.Draft
@@ -496,15 +519,18 @@ class CreateAdditionalInfoViewModelTest {
         }
 
     @Test
-    fun `이탈은 임시 저장 여부와 함께 이탈 효과를 낸다`() =
+    fun `저장한 뒤 이탈하면 경고 없이 이탈 효과를 낸다`() =
         runTest(dispatcher) {
             val fixture = loadedViewModel(selectedStorylineIndex = 0)
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.SaveDraft)
+            advanceUntilIdle()
 
             fixture.viewModel.onIntent(CreateAdditionalInfoIntent.LeaveFunnel)
             advanceUntilIdle()
 
+            assertNull(fixture.viewModel.uiState.value.exitWarning)
             assertEquals(
-                CreateAdditionalInfoEffect.ExitFunnel(contentPreserved = true),
+                CreateAdditionalInfoEffect.ExitFunnel,
                 fixture.viewModel.uiEffect.first(),
             )
         }

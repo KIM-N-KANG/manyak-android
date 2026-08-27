@@ -132,6 +132,7 @@ rounded:
 sizes:
   input: 40dp
   control: 48dp
+  icon-small: 16dp
   icon: 20dp
   tab-icon: 24dp
   logo: 24dp

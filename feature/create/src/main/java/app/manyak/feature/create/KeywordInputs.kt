@@ -129,7 +129,7 @@ internal fun AddTrigger(
         horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
     ) {
         Icon(
-            modifier = Modifier.size(16.dp),
+            modifier = Modifier.size(ManyakTheme.sizes.iconSmall),
             painter = painterResource(R.drawable.ic_add),
             contentDescription = null,
             tint = contentColor,
