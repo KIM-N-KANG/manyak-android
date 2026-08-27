@@ -23,6 +23,16 @@ internal fun previewStory(
 
 internal fun previewStartSettings(): List<StoryStartSetting> =
     listOf(
-        StoryStartSetting(id = "a", name = "폐허가 된 시계탑 앞", startSituation = "문은 안에서 잠겨 있다."),
-        StoryStartSetting(id = "b", name = "시계공의 작업실", startSituation = "책상 위에 낯선 열쇠가 놓여 있다."),
+        StoryStartSetting(
+            id = "a",
+            name = "폐허가 된 시계탑 앞",
+            startSituation = "문은 안에서 잠겨 있다.",
+            endings = listOf("시계탑의 아침", "멈춘 채로 남은 도시", "두 번째 시계공"),
+        ),
+        StoryStartSetting(
+            id = "b",
+            name = "시계공의 작업실",
+            startSituation = "책상 위에 낯선 열쇠가 놓여 있다.",
+            endings = listOf("열쇠의 주인", "태엽을 되감다"),
+        ),
     )

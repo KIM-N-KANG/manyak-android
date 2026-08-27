@@ -267,7 +267,7 @@ private fun StoryDetailLoaded(
             storyDetailBody(
                 story = story,
                 selectedStartSettingId = state.selectedStartSettingId,
-                selectedStartSituation = state.selectedStartSetting?.startSituation,
+                selectedStartSetting = state.selectedStartSetting,
                 onThumbnailClick = { onIntent(StoryDetailIntent.OpenImageViewer) },
                 onSelectStartSetting = { id -> onIntent(StoryDetailIntent.SelectStartSetting(id)) },
                 onTitleBottomChanged = onTitleBottomChanged,

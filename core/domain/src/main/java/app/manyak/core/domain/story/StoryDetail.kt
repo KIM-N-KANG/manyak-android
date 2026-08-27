@@ -30,10 +30,16 @@ data class StoryDetail(
     val reachedEndings: List<String>,
 )
 
-/** 채팅을 시작할 상황 하나. 프롤로그는 상세가 그리지 않고 채팅 화면이 노출한다. */
+/** 채팅을 시작할 상황 하나. 프롤로그와 추천 입력은 상세가 그리지 않고 채팅 화면이 노출한다. */
 data class StoryStartSetting(
     /** `POST /chats` 의 `startSettingId` 로 그대로 쓰는 공개 식별자. */
     val id: String,
     val name: String,
     val startSituation: String,
+    /**
+     * 이 갈래에서 닿을 수 있는 엔딩 이름. 엔딩은 스토리가 아니라 시작 설정에 딸리며, 이름의
+     * 유니크는 한 시작 설정 안에서만 보장된다. 달성 조건과 에필로그는 미리 읽히면 플레이할 것이
+     * 남지 않아 받지 않는다. 비어 있을 수 있다.
+     */
+    val endings: List<String>,
 )

@@ -34,8 +34,18 @@ internal fun sampleStoryDetail(
 
 internal fun sampleStartSettings(): List<StoryStartSetting> =
     listOf(
-        StoryStartSetting(id = "setting-a", name = "폐허가 된 시계탑 앞", startSituation = "문은 안에서 잠겨 있다."),
-        StoryStartSetting(id = "setting-b", name = "시계공의 작업실", startSituation = "낯선 열쇠가 놓여 있다."),
+        StoryStartSetting(
+            id = "setting-a",
+            name = "폐허가 된 시계탑 앞",
+            startSituation = "문은 안에서 잠겨 있다.",
+            endings = listOf("시계탑의 아침"),
+        ),
+        StoryStartSetting(
+            id = "setting-b",
+            name = "시계공의 작업실",
+            startSituation = "낯선 열쇠가 놓여 있다.",
+            endings = emptyList(),
+        ),
     )
 
 /** 조회 결과는 큐에서 꺼내고 비면 성공 샘플을 돌려준다. */

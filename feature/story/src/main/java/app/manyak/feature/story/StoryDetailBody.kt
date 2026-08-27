@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.HorizontalDivider
@@ -16,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
@@ -41,7 +43,7 @@ import app.manyak.core.ui.theme.ManyakTheme
 internal fun LazyListScope.storyDetailBody(
     story: StoryDetail,
     selectedStartSettingId: String?,
-    selectedStartSituation: String?,
+    selectedStartSetting: StoryStartSetting?,
     onThumbnailClick: () -> Unit,
     onSelectStartSetting: (String) -> Unit,
     onTitleBottomChanged: (Float) -> Unit,
@@ -67,7 +69,7 @@ internal fun LazyListScope.storyDetailBody(
             }
         }
     }
-    if (selectedStartSituation != null) {
+    if (selectedStartSetting != null) {
         item(key = START_SETTING_KEY) {
             LabeledSection(
                 labelRes = R.string.story_detail_start_settings,
@@ -76,7 +78,7 @@ internal fun LazyListScope.storyDetailBody(
                 StartSettingSection(
                     startSettings = story.startSettings,
                     selectedId = selectedStartSettingId,
-                    situation = selectedStartSituation,
+                    selected = selectedStartSetting,
                     onSelect = onSelectStartSetting,
                 )
             }
@@ -238,14 +240,14 @@ private fun CreatedDateRow(
 }
 
 /**
- * 시작 상황은 이름과 설명 두 갈래다. 이름은 고를 수 있는 값이고 설명은 그 값에 딸린 글이라,
+ * 시작 상황은 이름·설명·엔딩 세 갈래다. 이름은 고를 수 있는 값이고 나머지 둘은 그 값에 딸리므로,
  * 한 덩어리로 두면 무엇을 바꿀 수 있는지 드러나지 않는다.
  */
 @Composable
 private fun StartSettingSection(
     startSettings: List<StoryStartSetting>,
     selectedId: String?,
-    situation: String,
+    selected: StoryStartSetting,
     onSelect: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -265,30 +267,101 @@ private fun StartSettingSection(
         }
         SubLabeledBlock(labelRes = R.string.story_detail_start_setting_situation) {
             Text(
-                text = situation,
+                text = selected.startSituation,
                 style = ManyakTheme.typography.bodyLarge,
                 color = ManyakTheme.colors.text,
             )
         }
+        if (selected.endings.isNotEmpty()) {
+            SubLabeledBlock(
+                labelRes = R.string.story_detail_start_setting_endings,
+                labelTrailing = { EndingInfoButton() },
+            ) {
+                EndingList(endings = selected.endings)
+            }
+        }
     }
 }
 
-/** 섹션 안의 작은 갈래. 섹션 라벨보다 한 단계 작은 굵은 제목을 얹는다. */
+/**
+ * 고른 갈래에서 닿을 수 있는 엔딩들. 이름만 늘어놓고 도달 여부는 구분하지 않는다 — 도달한 엔딩은
+ * 제목 아래 뱃지가 이미 알리고, 같은 사실을 한 화면에서 두 가지로 말하면 어느 쪽이 정본인지
+ * 흐려진다.
+ */
+@Composable
+private fun EndingList(
+    endings: List<String>,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+    ) {
+        endings.forEach { ending -> EndingRow(name = ending) }
+    }
+}
+
+/**
+ * 엔딩 한 줄. 바로 위 셀렉트 앵커와 같은 높이·모서리·좌우 여백이라 두 갈래가 한 묶음으로 읽히고,
+ * 테두리 대신 회색 바탕만 깔아 누를 수 없는 자리임을 드러낸다.
+ *
+ * 높이는 고정하지 않고 최소치로 둔다 — 이름이 100자까지 허용되는데 셀렉트와 달리 펼쳐서 전문을
+ * 볼 수단이 없어 잘라내면 무슨 엔딩인지 읽히지 않는다.
+ */
+@Composable
+private fun EndingRow(
+    name: String,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .heightIn(min = ManyakTheme.sizes.input)
+                .clip(ManyakTheme.shapes.control)
+                .background(ManyakTheme.colors.backgroundNeutral)
+                .padding(
+                    horizontal = ManyakTheme.spacing.controlHorizontal,
+                    vertical = ManyakTheme.spacing.compact,
+                ),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = name,
+            style = ManyakTheme.typography.bodyMedium,
+            color = ManyakTheme.colors.text,
+        )
+    }
+}
+
+/**
+ * 섹션 안의 작은 갈래. 섹션 라벨보다 한 단계 작은 굵은 제목을 얹는다.
+ *
+ * [labelTrailing] 은 제목 오른쪽에 붙는 자리다 — 갈래 하나에만 딸리는 안내를 내용 위에 문장으로
+ * 깔면 무엇이 라벨이고 무엇이 내용인지 흐려진다.
+ */
 @Composable
 private fun SubLabeledBlock(
     @StringRes labelRes: Int,
     modifier: Modifier = Modifier,
+    labelTrailing: (@Composable () -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
     ) {
-        Text(
-            text = stringResource(labelRes),
-            style = ManyakTheme.typography.bodyLargeStrong,
-            color = ManyakTheme.colors.text,
-        )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.hairline),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(labelRes),
+                style = ManyakTheme.typography.bodyLargeStrong,
+                color = ManyakTheme.colors.text,
+            )
+            labelTrailing?.invoke()
+        }
         content()
     }
 }

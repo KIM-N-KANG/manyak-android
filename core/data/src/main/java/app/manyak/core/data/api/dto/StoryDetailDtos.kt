@@ -26,12 +26,23 @@ data class StoryDetailResponseDto(
     val reachedEndings: List<String> = emptyList(),
 )
 
-/** 프롤로그·추천 입력·엔딩은 상세가 그리지 않아 역직렬화하지 않는다. */
+/** 프롤로그·추천 입력은 상세가 그리지 않아 역직렬화하지 않는다. */
 @Serializable
 data class StoryStartSettingDto(
     val id: String,
     val name: String = "",
     val startSituation: String = "",
+    val endings: List<StoryEndingDto> = emptyList(),
+)
+
+/**
+ * 엔딩 하나. 엔딩은 유형 없이 이름으로 식별한다.
+ *
+ * 달성 조건(`requirement`)과 에필로그는 결말에 닿는 방법과 결말 자체를 담고 있어 받지 않는다.
+ */
+@Serializable
+data class StoryEndingDto(
+    val name: String = "",
 )
 
 fun StoryDetailResponseDto.toDomain(): StoryDetail =
@@ -46,7 +57,12 @@ fun StoryDetailResponseDto.toDomain(): StoryDetail =
         createdDate = createdAt?.toDisplayDate(),
         startSettings =
             startSettings.map { setting ->
-                StoryStartSetting(id = setting.id, name = setting.name, startSituation = setting.startSituation)
+                StoryStartSetting(
+                    id = setting.id,
+                    name = setting.name,
+                    startSituation = setting.startSituation,
+                    endings = setting.endings.map { ending -> ending.name }.filter { name -> name.isNotBlank() },
+                )
             },
         reachedEndings = reachedEndings.filter { ending -> ending.isNotBlank() },
     )

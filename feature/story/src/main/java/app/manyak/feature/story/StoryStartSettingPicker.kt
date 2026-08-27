@@ -45,8 +45,8 @@ private fun StartSettingSelectPreview() {
         StartSettingSelect(
             startSettings =
                 listOf(
-                    StoryStartSetting(id = "a", name = "첫 표행의 아침", startSituation = ""),
-                    StoryStartSetting(id = "b", name = "시계공의 작업실", startSituation = ""),
+                    StoryStartSetting(id = "a", name = "첫 표행의 아침", startSituation = "", endings = emptyList()),
+                    StoryStartSetting(id = "b", name = "시계공의 작업실", startSituation = "", endings = emptyList()),
                 ),
             selectedId = "a",
             onSelect = {},
