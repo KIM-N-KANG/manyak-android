@@ -8,17 +8,22 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import app.manyak.core.ui.theme.ManyakTheme
 import kotlinx.coroutines.delay
 
 /**
- * 앱의 모든 로딩 스피너. 색을 호출부마다 지정하면 화면끼리 어긋난다.
+ * 앱의 모든 로딩 스피너. 색을 호출부마다 자유롭게 지정하면 화면끼리 어긋나므로 기본 토큰을 쓰되,
+ * 색 있는 표면 위(예: danger 버튼)에서는 그 표면의 콘텐츠 색 **토큰**을 [color] 로 지정한다.
  *
  * 크기와 정렬은 놓이는 자리마다 다르므로 [modifier] 로 받는다.
  */
 @Composable
-fun ManyakProgressIndicator(modifier: Modifier = Modifier) {
-    CircularProgressIndicator(modifier = modifier, color = ManyakTheme.colors.progressIndicator)
+fun ManyakProgressIndicator(
+    modifier: Modifier = Modifier,
+    color: Color = ManyakTheme.colors.progressIndicator,
+) {
+    CircularProgressIndicator(modifier = modifier, color = color)
 }
 
 /**

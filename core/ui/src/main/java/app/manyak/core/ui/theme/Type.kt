@@ -29,8 +29,11 @@ val GowunBatang =
  *
  * 행간은 배수가 아니라 sp 절대값이다. 배수로 두면 플랫폼마다 반올림이 갈린다.
  *
- * 굵기는 Regular·Medium·Bold만 쓴다. 토큰의 제목 롤은 SemiBold(600)지만 앱은 Medium(500)으로
- * 내린다 — 번들에 없는 굵기를 요구하면 Bold로 대체 렌더되어 의도보다 두꺼워지기 때문이다.
+ * 굵기는 Regular·Medium·Bold만 쓴다. SemiBold(600)를 쓰지 않는 이유는 번들에 없는 굵기를 요구하면
+ * Bold로 대체 렌더되어 의도보다 두꺼워지기 때문이다.
+ *
+ * [titleMediumStrong] 만 크기가 아니라 굵기로 갈리는 롤이다. 이름을 `titleSmall` 같은 크기 이름으로
+ * 두지 않은 것은, 크기 이름이 굵기 차이를 뜻하게 되면 스케일이 거짓말을 하기 때문이다.
  */
 @Immutable
 data class ManyakTypography(
@@ -41,6 +44,7 @@ data class ManyakTypography(
     val bodyLarge: TextStyle,
     val bodyReading: TextStyle,
     val titleMedium: TextStyle,
+    val titleMediumStrong: TextStyle,
     val titleLarge: TextStyle,
     val headlineSmall: TextStyle,
 )
@@ -101,6 +105,14 @@ internal val ManyakDefaultTypography =
             TextStyle(
                 fontFamily = Pretendard,
                 fontWeight = FontWeight.Medium,
+                fontSize = 18.sp,
+                lineHeight = 26.sp,
+            ),
+        // 목록 섹션 제목. titleMedium 과 크기·행간이 같고 굵기로만 갈린다
+        titleMediumStrong =
+            TextStyle(
+                fontFamily = Pretendard,
+                fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
                 lineHeight = 26.sp,
             ),

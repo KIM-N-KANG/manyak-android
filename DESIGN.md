@@ -78,8 +78,13 @@ typography:
   title-large:
     fontFamily: "Pretendard"
     fontSize: 20sp
-    fontWeight: 500
+    fontWeight: 700
     lineHeight: 27sp
+  title-medium-strong:
+    fontFamily: "Pretendard"
+    fontSize: 18sp
+    fontWeight: 700
+    lineHeight: 26sp
   title-medium:
     fontFamily: "Pretendard"
     fontSize: 18sp
@@ -112,9 +117,9 @@ typography:
     lineHeight: 16sp
   label-small:
     fontFamily: "Pretendard"
-    fontSize: 11sp
-    fontWeight: 400
-    lineHeight: 15sp
+    fontSize: 12sp
+    fontWeight: 500
+    lineHeight: 16sp
 
 rounded:
   menu-item: 10dp
@@ -417,14 +422,15 @@ components:
 | 토큰 | 크기 | 굵기 | 행간 | 용도 |
 | --- | --- | --- | --- | --- |
 | `{typography.headline-small}` | 24sp | 700 | 30sp | 온보딩·랜딩 헤드라인 |
-| `{typography.title-large}` | 20sp | 500 | 27sp | 화면 제목 |
+| `{typography.title-large}` | 20sp | 700 | 27sp | 화면 제목 · 탭 헤더 |
+| `{typography.title-medium-strong}` | 18sp | 700 | 26sp | 목록 섹션 제목 |
 | `{typography.title-medium}` | 18sp | 500 | 26sp | 섹션·카드 제목 |
 | `{typography.body-large}` | 16sp | 400 | 24sp | 강조 본문·입력 필드 |
 | `{typography.body-reading}` | 16sp | 400 | 28sp | 스토리 본문 (GowunBatang · 자간 −2%) |
 | `{typography.body-medium}` | 14sp | 400 | 20sp | 본문 기본 |
 | `{typography.label-large}` | 14sp | 500 | 20sp | 버튼·탭 라벨 |
 | `{typography.body-small}` | 12sp | 400 | 16sp | 메타 정보·보조 설명 |
-| `{typography.label-small}` | 11sp | 400 | 15sp | 타임스탬프·최소 보조 문구 |
+| `{typography.label-small}` | 12sp | 500 | 16sp | 타임스탬프·최소 보조 문구 · 표지 위 뱃지 |
 
 ### 원칙
 
@@ -432,7 +438,8 @@ components:
 - **UI 롤의 행간은 1.25~1.5입니다.** `{typography.body-reading}`만 1.75로 벌립니다 — 스토리 본문은 한 화면을 채우는 장문이라 UI 기준 그대로는 답답합니다.
 - **자간은 `{typography.body-reading}`만 −2%로 좁힙니다.** GowunBatang의 기본 자간이 장문에서 벌어져 보여 본문 롤에만 보정하고, UI 롤은 기본 자간을 유지합니다.
 - **GowunBatang은 `{typography.body-reading}` 전용입니다.** 버튼·라벨·제목에 쓰지 않습니다.
-- **굵기 사다리는 400 / 500 / 700입니다.** 토큰의 제목 롤은 SemiBold(600)지만 앱은 Medium(500)으로 내립니다 — 번들에 없는 굵기를 요구하면 Bold로 대체 렌더되어 의도보다 두꺼워지기 때문입니다.
+- **굵기 사다리는 400 / 500 / 700입니다.** SemiBold(600)를 쓰지 않는 이유는 번들에 없는 굵기를 요구하면 Bold로 대체 렌더되어 의도보다 두꺼워지기 때문입니다.
+- **`{typography.title-medium-strong}`은 크기가 아니라 굵기로 갈리는 롤입니다.** `{typography.title-medium}`과 크기·행간이 같고 굵기만 700입니다. 이름에 `strong`을 붙인 것은 small/medium 같은 크기 이름이 굵기 차이를 뜻하게 되면 스케일이 거짓말을 하기 때문입니다. 스크롤되는 목록 위에 붙박이로 남는 섹션 제목처럼, 같은 크기에서 무게로만 위계를 세워야 하는 자리에 씁니다.
 - 화면 기본 텍스트 스타일은 `{typography.body-medium}`이고 기본 색은 `{colors.text}`입니다. `ManyakTheme`이 `LocalTextStyle`·`LocalContentColor`로 내립니다.
 
 ## 레이아웃

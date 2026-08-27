@@ -1,29 +1,18 @@
 package app.manyak.feature.home
 
-import app.manyak.core.domain.story.CreationProgress
-import app.manyak.core.domain.story.CreationResumePoint
-import app.manyak.core.domain.story.PendingStoryCreation
-import app.manyak.core.domain.story.PendingStoryCreationStore
-import app.manyak.core.domain.story.StoryCharacterInput
-import app.manyak.core.domain.story.StoryCompletionCommand
-import app.manyak.core.domain.story.Storyline
-import app.manyak.core.domain.story.StorylineGeneration
-import app.manyak.core.domain.story.StorylineGenerationCommand
+import app.manyak.core.domain.error.DomainError
+import app.manyak.core.domain.error.DomainResult
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -43,129 +32,69 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `진행 레코드가 없으면 배너 없이 바로 새 생성으로 진입한다`() =
+    fun `진입 시 오리지널 목록을 조회해 서버 순서 그대로 상태에 담는다`() =
         runTest(dispatcher) {
-            val viewModel = HomeViewModel(FakePendingStoryCreationStore())
+            val repository = FakeStoryRepository()
+            val viewModel = HomeViewModel(storyRepository = repository)
             advanceUntilIdle()
 
-            assertNull(viewModel.uiState.value.pendingBanner)
-
-            viewModel.onIntent(HomeIntent.CreateStory)
-            advanceUntilIdle()
-
-            assertEquals(
-                HomeEffect.NavigateToCreate,
-                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
-            )
+            assertEquals(1, repository.originalStoriesCallCount)
+            val state = viewModel.uiState.value
+            assertFalse(state.isLoading)
+            assertFalse(state.loadFailed)
+            assertEquals(sampleStories(), state.stories)
         }
 
     @Test
-    fun `완성 진행 레코드는 완성 중 배너와 추가 정보 재개 지점이 된다`() =
+    fun `빈 목록도 실패가 아니다`() =
         runTest(dispatcher) {
-            val store = FakePendingStoryCreationStore(initial = completingRecord(selectedIndex = 2))
-            val viewModel = HomeViewModel(store)
+            val repository = FakeStoryRepository()
+            repository.queuedResults += DomainResult.Success(emptyList())
+            val viewModel = HomeViewModel(storyRepository = repository)
             advanceUntilIdle()
 
-            val banner = viewModel.uiState.value.pendingBanner
-            assertTrue(banner?.isCompleting == true)
-            assertEquals(CreationResumePoint.AdditionalInfoStep(storylineIndex = 2), banner?.resumePoint)
+            val state = viewModel.uiState.value
+            assertFalse(state.isLoading)
+            assertFalse(state.loadFailed)
+            assertTrue(state.stories.isEmpty())
         }
 
     @Test
-    fun `레코드가 있는 FAB 진입은 다이얼로그로 묻고 새로 만들기는 폐기 후 진입한다`() =
+    fun `조회 실패는 실패 상태가 되고 재시도로 다시 조회한다`() =
         runTest(dispatcher) {
-            val store = FakePendingStoryCreationStore(initial = generatingRecord())
-            val viewModel = HomeViewModel(store)
+            val repository = FakeStoryRepository()
+            repository.queuedResults += DomainResult.Failure(DomainError.Network)
+            val viewModel = HomeViewModel(storyRepository = repository)
             advanceUntilIdle()
 
-            viewModel.onIntent(HomeIntent.CreateStory)
-            advanceUntilIdle()
-            assertTrue(viewModel.uiState.value.showResumeChoiceDialog)
+            assertTrue(viewModel.uiState.value.loadFailed)
+            assertFalse(viewModel.uiState.value.isLoading)
 
-            viewModel.onIntent(HomeIntent.StartNewCreation)
+            viewModel.onIntent(HomeIntent.Retry)
             advanceUntilIdle()
 
-            assertNull(store.current)
-            assertFalse(viewModel.uiState.value.showResumeChoiceDialog)
-            assertEquals(
-                HomeEffect.NavigateToCreate,
-                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
-            )
+            assertEquals(2, repository.originalStoriesCallCount)
+            val state = viewModel.uiState.value
+            assertFalse(state.loadFailed)
+            assertEquals(sampleStories(), state.stories)
         }
 
     @Test
-    fun `이어서 만들기는 레코드 단계의 재개 지점으로 진입한다`() =
+    fun `조회가 진행 중이면 재시도가 중복 호출하지 않는다`() =
         runTest(dispatcher) {
-            val store = FakePendingStoryCreationStore(initial = generatingRecord())
-            val viewModel = HomeViewModel(store)
+            val repository = FakeStoryRepository()
+            val gate = CompletableDeferred<Unit>()
+            repository.inFlightGate = gate
+            val viewModel = HomeViewModel(storyRepository = repository)
             advanceUntilIdle()
 
-            viewModel.onIntent(HomeIntent.ResumeCreation)
+            // 진입 조회가 아직 응답을 기다리는 동안 재시도를 눌렀을 때다.
+            viewModel.onIntent(HomeIntent.Retry)
             advanceUntilIdle()
+            assertEquals(1, repository.originalStoriesCallCount)
 
-            assertEquals(
-                HomeEffect.NavigateToResume(CreationResumePoint.StorylineStep),
-                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
-            )
+            gate.complete(Unit)
+            advanceUntilIdle()
+            assertEquals(sampleStories(), viewModel.uiState.value.stories)
         }
 }
-
-private class FakePendingStoryCreationStore(
-    initial: PendingStoryCreation? = null,
-) : PendingStoryCreationStore {
-    private val state = MutableStateFlow(initial)
-
-    override val record: Flow<PendingStoryCreation?> = state
-
-    val current: PendingStoryCreation? get() = state.value
-
-    override suspend fun read(): PendingStoryCreation? = state.value
-
-    override suspend fun write(record: PendingStoryCreation): Boolean {
-        state.value = record
-        return true
-    }
-
-    override suspend fun clear(): Boolean {
-        state.value = null
-        return true
-    }
-}
-
-private fun generatingRecord(): PendingStoryCreation =
-    PendingStoryCreation.GeneratingStorylines(
-        command =
-            StorylineGenerationCommand(
-                requestId = "request-1",
-                genreTagIds = listOf(1),
-                customGenreTags = emptyList(),
-                protagonist =
-                    StoryCharacterInput(
-                        name = null,
-                        gender = null,
-                        featureTagIds = emptyList(),
-                        customTags = emptyList(),
-                    ),
-                supportingCharacters = emptyList(),
-                parentCreationId = null,
-                isRegenerated = false,
-            ),
-    )
-
-private fun completingRecord(selectedIndex: Int): PendingStoryCreation =
-    PendingStoryCreation.CompletingStory(
-        generationCommand = null,
-        generation =
-            StorylineGeneration(
-                simpleCreationId = 10,
-                storylines = listOf(Storyline(id = 1, storyline = "스토리라인", recommendedInfos = emptyList())),
-            ),
-        command =
-            StoryCompletionCommand(
-                requestId = "request-2",
-                simpleCreationId = 10,
-                storylineId = 1,
-                additionalInfos = emptyList(),
-            ),
-        progress = CreationProgress(selectedStorylineIndex = selectedIndex),
-    )

@@ -1,0 +1,231 @@
+package app.manyak.feature.studio
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.window.PopupProperties
+import app.manyak.core.domain.story.StorySummary
+import app.manyak.core.ui.R
+import app.manyak.core.ui.component.StoryOverlayScrim
+import app.manyak.core.ui.component.StoryThumbnail
+import app.manyak.core.ui.theme.ManyakTheme
+
+/**
+ * 내가 만든 스토리 카드. 홈 카드와 표지·턴 수 뱃지는 같고, 텍스트 영역이 제작자 대신
+ * 한 줄 소개와 장르 뱃지를 그린다. ORIGINAL 태그는 공식 스토리 표시라 붙이지 않는다.
+ *
+ * 제목·한 줄 소개·장르 뱃지가 모두 **1줄 고정**인 것이 이 카드의 규칙이다. 그래서 텍스트 길이와
+ * 무관하게 카드 높이가 같다. 텍스트 영역에 고정 높이를 두면 시스템 글자 크기를 키웠을 때
+ * 잘리므로 높이를 지정하지 않는다.
+ */
+@Composable
+internal fun MyStoryCard(
+    story: StorySummary,
+    onDeleteClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    // 메뉴 펼침은 이 카드 밖에서 알 필요가 없는 표현 상태라 로컬에 둔다.
+    var menuExpanded by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+    ) {
+        StoryThumbnail(thumbnailUrl = story.thumbnailUrl, turnCount = story.turnCount) {
+            Box(
+                // 턴 수 뱃지가 아래·오른쪽에서 띄우는 만큼과 같은 간격으로 위·오른쪽에서 띄운다.
+                modifier = Modifier.align(Alignment.TopEnd).padding(ManyakTheme.spacing.compact),
+            ) {
+                MoreMenuButton(onClick = { menuExpanded = true })
+                if (menuExpanded) {
+                    StoryCardMenu(
+                        onDismiss = { menuExpanded = false },
+                        onDelete = {
+                            menuExpanded = false
+                            onDeleteClick()
+                        },
+                    )
+                }
+            }
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.hairline)) {
+            Text(
+                text = story.title,
+                style = ManyakTheme.typography.bodyLarge,
+                color = ManyakTheme.colors.text,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            // 서버가 없는 소개를 빈 문자열로 주므로, 비면 줄 자체를 그리지 않는다.
+            if (story.oneLineIntro.isNotBlank()) {
+                Text(
+                    text = story.oneLineIntro,
+                    style = ManyakTheme.typography.bodyMedium,
+                    color = ManyakTheme.colors.textSubtle,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            if (story.genres.isNotEmpty()) {
+                StoryGenreBadges(
+                    genres = story.genres,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            // 텍스트 줄 간격(hairline)보다 뱃지는 조금 더 띄워야 다른 성질의 줄로 읽힌다.
+                            .padding(top = ManyakTheme.spacing.inline),
+                )
+            }
+        }
+    }
+}
+
+/** 카드별 드랍다운 메뉴를 여는 트리거. 표지 위에 놓이므로 턴 수 뱃지와 같은 반투명 필드를 깐다. */
+@Composable
+private fun MoreMenuButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier =
+            modifier
+                .size(MoreButtonSize)
+                .clip(ManyakTheme.shapes.pill)
+                .background(StoryOverlayScrim)
+                .clickable(role = Role.Button, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            modifier = Modifier.size(MoreIconSize),
+            painter = painterResource(R.drawable.ic_more),
+            contentDescription = stringResource(R.string.studio_story_more),
+            tint = Color.White,
+        )
+    }
+}
+
+/**
+ * 카드 더보기 메뉴. 트리거 오른쪽 끝에 맞춰 아래로 연다 — 트리거가 표지 우상단에 있어
+ * 왼쪽 정렬로 열면 카드 밖으로 나간다.
+ *
+ * M3 `DropdownMenu` 대신 GenderSelect 와 같은 Popup 직접 구성을 쓴다. 항목이 하나뿐인 메뉴가
+ * 공간에 따라 위로 뒤집히면 트리거를 가리기 때문이다.
+ */
+@Composable
+private fun StoryCardMenu(
+    onDismiss: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    val density = LocalDensity.current
+    val gapPx = with(density) { ManyakTheme.spacing.inline.roundToPx() }
+    val positionProvider =
+        remember(gapPx) {
+            object : PopupPositionProvider {
+                override fun calculatePosition(
+                    anchorBounds: IntRect,
+                    windowSize: IntSize,
+                    layoutDirection: LayoutDirection,
+                    popupContentSize: IntSize,
+                ): IntOffset =
+                    IntOffset(
+                        x = (anchorBounds.right - popupContentSize.width).coerceAtLeast(0),
+                        y = anchorBounds.bottom + gapPx,
+                    )
+            }
+        }
+
+    Popup(
+        popupPositionProvider = positionProvider,
+        onDismissRequest = onDismiss,
+        properties = PopupProperties(focusable = true),
+    ) {
+        Column(
+            modifier =
+                Modifier
+                    // 사진 배경 위에서도 경계가 보이도록 성별 선택 메뉴와 같은 깊이를 쓴다.
+                    .shadow(elevation = MenuShadowElevation, shape = ManyakTheme.shapes.control)
+                    .background(ManyakTheme.colors.surfaceRaised, ManyakTheme.shapes.control)
+                    .border(1.dp, ManyakTheme.colors.border, ManyakTheme.shapes.control)
+                    .clip(ManyakTheme.shapes.control)
+                    .padding(ManyakTheme.spacing.compact),
+        ) {
+            DeleteMenuItem(onClick = onDelete)
+        }
+    }
+}
+
+/** 파괴적 항목이라 아이콘·텍스트를 danger 색으로 둔다. 확인은 다이얼로그가 한 번 더 묻는다. */
+@Composable
+private fun DeleteMenuItem(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier =
+            modifier
+                // 한 단어 항목이라 내용 폭만으로는 누를 자리가 좁다.
+                .widthIn(min = MenuItemMinWidth)
+                .clip(ManyakTheme.shapes.menuItem)
+                .clickable(role = Role.Button, onClick = onClick)
+                .padding(
+                    horizontal = ManyakTheme.spacing.controlHorizontal,
+                    vertical = ManyakTheme.spacing.controlVertical,
+                ),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+    ) {
+        Icon(
+            modifier = Modifier.size(MenuItemIconSize),
+            painter = painterResource(R.drawable.ic_delete),
+            contentDescription = null,
+            tint = ManyakTheme.colors.textDanger,
+        )
+        Text(
+            text = stringResource(R.string.studio_story_delete),
+            style = ManyakTheme.typography.bodyMedium,
+            color = ManyakTheme.colors.textDanger,
+        )
+    }
+}
+
+private val MoreButtonSize = 28.dp
+
+private val MoreIconSize = 14.dp
+
+private val MenuItemMinWidth = 120.dp
+
+private val MenuItemIconSize = 16.dp
+
+private val MenuShadowElevation = 4.dp

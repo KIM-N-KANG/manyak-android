@@ -1,73 +1,43 @@
 package app.manyak.feature.home
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FloatingActionButtonDefaults
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.repeatOnLifecycle
-import app.manyak.core.domain.story.CreationResumePoint
+import app.manyak.core.domain.story.StorySummary
 import app.manyak.core.ui.R
+import app.manyak.core.ui.component.LoadFailedContent
+import app.manyak.core.ui.component.rememberDelayedProgressVisibility
+import app.manyak.core.ui.component.withScreenMargins
 import app.manyak.core.ui.theme.ManyakTheme
 
 /**
- * 홈 탭(스토리 목록). 헤더와 하단 탭은 셸이 그리므로 여기서는 콘텐츠만 둔다.
+ * 홈 탭(오리지널 스토리 목록). 헤더와 하단 탭은 셸이 그리므로 여기서는 콘텐츠만 둔다.
  *
- * 아직 목록이 없어 콘텐츠는 비어 있다. [contentPadding] 은 셸의 chrome 이 차지한 만큼이므로, 스크롤
- * 목록을 넣을 때는 `Modifier.padding` 이 아니라 목록의 `contentPadding` 으로 넘겨야 콘텐츠가 헤더
- * 아래로 흘러 들어간다.
- *
- * 제작 퍼널 진입 FAB 과 이어서 만들기 배너는 셸이 아니라 이 화면이 소유한다. 진행 레코드가 있으면
- * 상단에 배너를 표시하고, FAB 등 배너가 아닌 경로의 진입은 이어서/새로 만들기 다이얼로그로 묻는다.
+ * [contentPadding] 은 셸의 chrome 이 차지한 만큼이므로 `Modifier.padding` 이 아니라 목록의
+ * `contentPadding` 으로 넘긴다 — 그래야 콘텐츠가 헤더 아래로 흘러 들어간다.
  */
 @Composable
 fun HomeScreen(
     contentPadding: PaddingValues,
-    onCreateStory: () -> Unit,
-    onResumeCreation: (CreationResumePoint) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val currentOnCreateStory by rememberUpdatedState(onCreateStory)
-    val currentOnResumeCreation by rememberUpdatedState(onResumeCreation)
-    val lifecycleOwner = LocalLifecycleOwner.current
-
-    LaunchedEffect(viewModel, lifecycleOwner) {
-        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            viewModel.uiEffect.collect { effect ->
-                when (effect) {
-                    HomeEffect.NavigateToCreate -> currentOnCreateStory()
-                    is HomeEffect.NavigateToResume -> currentOnResumeCreation(effect.resumePoint)
-                }
-            }
-        }
-    }
-
     HomeContent(
         state = state,
         contentPadding = contentPadding,
@@ -83,184 +53,120 @@ private fun HomeContent(
     onIntent: (HomeIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .padding(contentPadding),
-    ) {
-        state.pendingBanner?.let { banner ->
-            PendingCreationBannerRow(
-                banner = banner,
-                onResume = { onIntent(HomeIntent.ResumeCreation) },
+    val showSkeleton = rememberDelayedProgressVisibility(state.isLoading)
+
+    when {
+        state.isLoading ->
+            if (showSkeleton) {
+                OriginalStoriesSkeleton(contentPadding = contentPadding.withScreenMargins(), modifier = modifier)
+            } else {
+                // 금방 끝나는 조회에서 자리만 잡았다 사라지는 깜빡임을 만들지 않는다.
+                Box(modifier = modifier.fillMaxSize().padding(contentPadding))
+            }
+
+        state.loadFailed ->
+            LoadFailedContent(
+                message = stringResource(R.string.story_load_failed),
+                onRetry = { onIntent(HomeIntent.Retry) },
                 modifier =
-                    Modifier
-                        .align(Alignment.TopCenter)
+                    modifier
+                        .fillMaxSize()
+                        .padding(contentPadding)
                         .padding(horizontal = ManyakTheme.spacing.gutter),
             )
-        }
-        CreateStoryFab(
-            onClick = { onIntent(HomeIntent.CreateStory) },
-            modifier =
-                Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(ManyakTheme.spacing.gutter),
-        )
-    }
 
-    if (state.showResumeChoiceDialog) {
-        ResumeChoiceDialog(
-            onResume = { onIntent(HomeIntent.ResumeCreation) },
-            onStartNew = { onIntent(HomeIntent.StartNewCreation) },
-            onDismiss = { onIntent(HomeIntent.DismissResumeChoiceDialog) },
-        )
+        // 빈 목록은 섹션 자체를 그리지 않는다 — 제목만 남으면 없는 것을 있다고 말하는 셈이다.
+        else ->
+            OriginalStories(
+                modifier = modifier,
+                stories = state.stories,
+                contentPadding = contentPadding,
+            )
     }
 }
 
 @Composable
-private fun PendingCreationBannerRow(
-    banner: PendingCreationBanner,
-    onResume: () -> Unit,
+private fun OriginalStories(
+    stories: List<StorySummary>,
+    contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
 ) {
-    Row(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .background(color = ManyakTheme.colors.backgroundNeutral, shape = ManyakTheme.shapes.card)
-                .padding(start = ManyakTheme.spacing.gutter, end = ManyakTheme.spacing.inline)
-                .padding(vertical = ManyakTheme.spacing.dense),
-        verticalAlignment = Alignment.CenterVertically,
+    LazyVerticalGrid(
+        modifier = modifier.fillMaxSize(),
+        columns = GridCells.Fixed(GRID_COLUMNS),
+        contentPadding = contentPadding.withScreenMargins(),
+        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+        // 제목도 그리드의 한 줄이라 이 값이 제목 아래 간격까지 겸한다. 둘을 다르게 두려면 제목
+        // 아이템에 padding 을 더한다.
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
     ) {
-        Text(
-            modifier = Modifier.weight(1f),
-            text =
-                stringResource(
-                    if (banner.isCompleting) {
-                        R.string.home_pending_banner_completing
-                    } else {
-                        R.string.home_pending_banner_making
-                    },
-                ),
-            style = ManyakTheme.typography.bodyMedium,
-            color = ManyakTheme.colors.text,
-        )
-        TextButton(onClick = onResume) {
-            Text(
-                text = stringResource(R.string.home_pending_banner_resume),
-                style = ManyakTheme.typography.labelLarge,
-                color = ManyakTheme.colors.brand,
-            )
+        item(key = SECTION_TITLE_KEY, span = { GridItemSpan(maxLineSpan) }) {
+            SectionTitle()
+        }
+        items(stories, key = { story -> story.id }) { story ->
+            StoryCard(story = story)
         }
     }
 }
 
-/** 배너가 아닌 경로로 진입할 때 임시 저장본을 이어갈지 새로 시작할지 묻는다(3-1 제작 임시 저장). */
+/** 셸 헤더의 탭 이름과 달리 목록 안에서 스크롤과 함께 밀려 올라가는 제목이다. */
 @Composable
-private fun ResumeChoiceDialog(
-    onResume: () -> Unit,
-    onStartNew: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = ManyakTheme.colors.surfaceRaised,
-        shape = ManyakTheme.shapes.overlay,
-        title = {
-            Text(
-                text = stringResource(R.string.home_pending_dialog_title),
-                style = ManyakTheme.typography.titleMedium,
-                color = ManyakTheme.colors.text,
-            )
-        },
-        text = {
-            Text(
-                text = stringResource(R.string.home_pending_dialog_description),
-                style = ManyakTheme.typography.bodyMedium,
-                color = ManyakTheme.colors.textSubtle,
-            )
-        },
-        confirmButton = {
-            Button(
-                onClick = onResume,
-                shape = ManyakTheme.shapes.control,
-                colors =
-                    ButtonDefaults.buttonColors(
-                        containerColor = ManyakTheme.colors.brand,
-                        contentColor = ManyakTheme.colors.textInverse,
-                    ),
-            ) {
-                Text(
-                    text = stringResource(R.string.home_pending_banner_resume),
-                    style = ManyakTheme.typography.labelLarge,
-                )
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onStartNew) {
-                Text(
-                    text = stringResource(R.string.home_pending_dialog_start_new),
-                    style = ManyakTheme.typography.labelLarge,
-                    color = ManyakTheme.colors.textSubtle,
-                )
-            }
-        },
+private fun SectionTitle(modifier: Modifier = Modifier) {
+    Text(
+        modifier = modifier.fillMaxWidth(),
+        text = stringResource(R.string.home_original_stories),
+        style = ManyakTheme.typography.titleMediumStrong,
+        color = ManyakTheme.colors.text,
     )
 }
 
-@Composable
-private fun CreateStoryFab(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    FloatingActionButton(
-        modifier = modifier,
-        onClick = onClick,
-        shape = ManyakTheme.shapes.pill,
-        containerColor = ManyakTheme.colors.brand,
-        contentColor = ManyakTheme.colors.textInverse,
-        elevation =
-            FloatingActionButtonDefaults.elevation(
-                defaultElevation = 0.dp,
-                pressedElevation = 0.dp,
-                focusedElevation = 0.dp,
-                hoveredElevation = 0.dp,
-            ),
-    ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_add),
-            contentDescription = stringResource(R.string.home_create_story),
-        )
-    }
-}
+internal const val GRID_COLUMNS = 2
 
-@Preview(showBackground = true, name = "홈 · 라이트")
+private const val SECTION_TITLE_KEY = "section-title"
+
+@Preview(showBackground = true, name = "홈 · 목록")
 @Composable
-private fun HomeScreenPreview() {
+private fun HomeContentPreview() {
     ManyakTheme(darkTheme = false) {
         HomeContent(
-            state = HomeUiState(),
-            contentPadding = PaddingValues(0.dp),
+            state = HomeUiState(isLoading = false, stories = previewStories()),
+            contentPadding = PaddingValues(),
             onIntent = {},
         )
     }
 }
 
-@Preview(showBackground = true, name = "홈 · 이어서 만들기 배너")
+@Preview(showBackground = true, name = "홈 · 조회 실패")
 @Composable
-private fun HomeScreenPendingBannerPreview() {
+private fun HomeLoadFailedPreview() {
     ManyakTheme(darkTheme = false) {
         HomeContent(
-            state =
-                HomeUiState(
-                    pendingBanner =
-                        PendingCreationBanner(
-                            isCompleting = false,
-                            resumePoint = CreationResumePoint.StorylineStep,
-                        ),
-                ),
-            contentPadding = PaddingValues(0.dp),
+            state = HomeUiState(isLoading = false, loadFailed = true),
+            contentPadding = PaddingValues(),
             onIntent = {},
         )
     }
 }
+
+private fun previewStories(): List<StorySummary> =
+    listOf(
+        previewStory(id = "1", title = "두 번째 시계공", turnCount = 1_284),
+        previewStory(id = "2", title = "달빛 아래의 계약", turnCount = 312),
+        previewStory(id = "3", title = "아주 긴 제목은 한 줄에서 잘려 카드 높이를 흔들지 않는다", turnCount = 7),
+        previewStory(id = "4", title = "잊힌 등대", turnCount = 0),
+    )
+
+private fun previewStory(
+    id: String,
+    title: String,
+    turnCount: Long,
+): StorySummary =
+    StorySummary(
+        id = id,
+        title = title,
+        authorNickname = "마냑",
+        thumbnailUrl = null,
+        oneLineIntro = "",
+        genres = emptyList(),
+        turnCount = turnCount,
+    )

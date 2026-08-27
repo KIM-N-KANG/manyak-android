@@ -17,7 +17,6 @@ import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -218,13 +217,13 @@ internal fun TagsLoadFailure(
         ) {
             Text(
                 text = stringResource(R.string.create_tags_load_failed),
-                style = MaterialTheme.typography.titleMedium,
+                style = ManyakTheme.typography.titleMedium,
                 color = ManyakTheme.colors.textDanger,
                 textAlign = TextAlign.Center,
             )
             Text(
                 text = stringResource(R.string.create_tags_reload_description),
-                style = MaterialTheme.typography.bodyLarge,
+                style = ManyakTheme.typography.bodyLarge,
                 color = ManyakTheme.colors.text,
                 textAlign = TextAlign.Center,
             )

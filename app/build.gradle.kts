@@ -132,6 +132,7 @@ dependencies {
     implementation(projects.feature.legal)
     implementation(projects.feature.home)
     implementation(projects.feature.chat)
+    implementation(projects.feature.studio)
     implementation(projects.feature.my)
     implementation(projects.feature.create)
 

@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt)
 
     alias(libs.plugins.ktlint)
     alias(libs.plugins.detekt)
@@ -27,7 +29,7 @@ tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
 }
 
 android {
-    namespace = "app.manyak.core.ui"
+    namespace = "app.manyak.feature.studio"
     compileSdk {
         version = release(37)
     }
@@ -47,21 +49,16 @@ android {
 }
 
 dependencies {
-    // 화면 모듈이 그대로 쓰는 것들은 api 로 노출한다. feature 마다 같은 줄을 복제하지 않기 위해서다.
-    api(platform(libs.androidx.compose.bom))
-    api(libs.androidx.compose.material3)
-    api(libs.androidx.compose.ui)
-    api(libs.androidx.compose.ui.graphics)
-    api(libs.androidx.compose.ui.tooling.preview)
-    api(libs.androidx.lifecycle.runtime.compose)
-    api(libs.androidx.lifecycle.viewmodel.compose)
-    api(projects.core.domain)
+    // 구현이 있는 :core:data 는 의존하지 않는다. ViewModel 은 Repository 인터페이스만 안다.
+    implementation(projects.core.domain)
+    implementation(projects.core.ui)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.coroutines.core)
 
-    // 네트워크 fetcher(coil-network-okhttp)는 런타임 배선이라 composition root 인 :app 이 갖는다.
-    implementation(libs.coil.compose)
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
 

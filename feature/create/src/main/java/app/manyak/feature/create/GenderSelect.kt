@@ -112,7 +112,7 @@ private fun GenderSelectMenu(
             modifier =
                 Modifier
                     .width(with(density) { anchorWidthPx.toDp() })
-                    .shadow(elevation = 1.dp, shape = ManyakTheme.shapes.control)
+                    .shadow(elevation = MenuShadowElevation, shape = ManyakTheme.shapes.control)
                     .background(ManyakTheme.colors.surfaceRaised, ManyakTheme.shapes.control)
                     .border(1.dp, ManyakTheme.colors.border, ManyakTheme.shapes.control)
                     .clip(ManyakTheme.shapes.control)
@@ -204,3 +204,5 @@ private fun GenderSelectAnchor(
         )
     }
 }
+
+private val MenuShadowElevation = 4.dp
