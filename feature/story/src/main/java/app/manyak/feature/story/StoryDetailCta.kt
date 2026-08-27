@@ -4,10 +4,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
@@ -40,7 +45,10 @@ internal fun StartChatCta(
                 Modifier
                     .fillMaxWidth()
                     .background(surface)
-                    .padding(horizontal = ManyakTheme.spacing.gutter)
+                    // 배경은 화면 끝까지 깔고 내용만 시스템 바를 피한다 — 본문이 바 뒤로 비치지 않게.
+                    .windowInsetsPadding(
+                        WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom),
+                    ).padding(horizontal = ManyakTheme.spacing.gutter)
                     // 위 여백은 실패 문구가 있을 때만 둔다 — 퍼널 푸터와 같은 규칙이다.
                     .padding(
                         top = if (failed) ManyakTheme.spacing.compact else 0.dp,

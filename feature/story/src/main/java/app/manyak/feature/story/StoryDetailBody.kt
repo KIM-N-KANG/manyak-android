@@ -1,6 +1,7 @@
 package app.manyak.feature.story
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -8,14 +9,19 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.dp
 import app.manyak.core.domain.story.StoryDetail
 import app.manyak.core.domain.story.StoryStartSetting
 import app.manyak.core.ui.R
@@ -28,6 +34,8 @@ import app.manyak.core.ui.theme.ManyakTheme
  * 상세 본문. 순서는 히어로 → 제목 → 한 줄 소개 → 장르 → 본 엔딩 → 주요 내용 → 시작 상황 → 생성일이다.
  *
  * 값이 없는 항목은 자리를 비우지 않고 아예 그리지 않는다 — 이유 없는 공백이 생기지 않게 한다.
+ *
+ * 표지만 화면 폭을 꽉 채우므로 좌우 여백은 목록이 한 번에 두지 않고 항목마다 각자 건다.
  */
 @Suppress("LongParameterList")
 internal fun LazyListScope.storyDetailBody(
@@ -36,13 +44,21 @@ internal fun LazyListScope.storyDetailBody(
     selectedStartSituation: String?,
     onThumbnailClick: () -> Unit,
     onSelectStartSetting: (String) -> Unit,
+    onTitleBottomChanged: (Float) -> Unit,
 ) {
     item(key = OVERVIEW_KEY) {
-        Overview(story = story, onThumbnailClick = onThumbnailClick)
+        Overview(
+            story = story,
+            onThumbnailClick = onThumbnailClick,
+            onTitleBottomChanged = onTitleBottomChanged,
+        )
     }
     story.description?.let { description ->
         item(key = DESCRIPTION_KEY) {
-            LabeledSection(labelRes = R.string.story_detail_description) {
+            LabeledSection(
+                labelRes = R.string.story_detail_description,
+                modifier = Modifier.padding(horizontal = ManyakTheme.spacing.gutter),
+            ) {
                 Text(
                     text = description,
                     style = ManyakTheme.typography.bodyLarge,
@@ -53,7 +69,10 @@ internal fun LazyListScope.storyDetailBody(
     }
     if (selectedStartSituation != null) {
         item(key = START_SETTING_KEY) {
-            LabeledSection(labelRes = R.string.story_detail_start_settings) {
+            LabeledSection(
+                labelRes = R.string.story_detail_start_settings,
+                modifier = Modifier.padding(horizontal = ManyakTheme.spacing.gutter),
+            ) {
                 StartSettingSection(
                     startSettings = story.startSettings,
                     selectedId = selectedStartSettingId,
@@ -77,6 +96,7 @@ internal fun LazyListScope.storyDetailBody(
 private fun Overview(
     story: StoryDetail,
     onThumbnailClick: () -> Unit,
+    onTitleBottomChanged: (Float) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -84,13 +104,18 @@ private fun Overview(
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
     ) {
         StoryHero(story = story, onClick = onThumbnailClick)
-        Headline(story = story)
+        Headline(
+            story = story,
+            onTitleBottomChanged = onTitleBottomChanged,
+            modifier = Modifier.padding(horizontal = ManyakTheme.spacing.gutter),
+        )
     }
 }
 
 /**
  * 히어로는 목록 카드와 같은 표지 컴포넌트를 쓰되 축소본이 아니라 원본을 받고, 뱃지도 한 단계 크다.
- * 이미지가 있을 때만 누를 수 있고, 눌림 표시가 모서리를 넘지 않도록 클립을 먼저 건다.
+ * 화면 폭을 그대로 채우고 모서리를 각지게 두는 대신, 아래로 이어지는 본문과 붙어 보이지 않게
+ * 옅은 경계선 한 줄을 깐다. 이미지가 있을 때만 누를 수 있다.
  */
 @Composable
 private fun StoryHero(
@@ -99,30 +124,34 @@ private fun StoryHero(
     modifier: Modifier = Modifier,
 ) {
     val openLabel = stringResource(R.string.story_detail_thumbnail_open)
-    StoryThumbnail(
-        modifier =
-            modifier.then(
+    Column(modifier = modifier.fillMaxWidth()) {
+        StoryThumbnail(
+            modifier =
                 if (story.thumbnailUrl == null) {
                     Modifier
                 } else {
-                    Modifier
-                        .clip(ManyakTheme.shapes.thumbnail)
-                        .clickable(role = Role.Button, onClickLabel = openLabel, onClick = onClick)
+                    Modifier.clickable(role = Role.Button, onClickLabel = openLabel, onClick = onClick)
                 },
-            ),
-        thumbnailUrl = story.thumbnailUrl,
-        turnCount = story.turnCount,
-        badgeScale = StoryBadgeScale.Large,
-    )
+            thumbnailUrl = story.thumbnailUrl,
+            turnCount = story.turnCount,
+            badgeScale = StoryBadgeScale.Large,
+            shape = RectangleShape,
+        )
+        HorizontalDivider(thickness = StoryHeroBorderWidth, color = ManyakTheme.colors.border)
+    }
 }
 
 /**
  * 제목·한 줄 소개·장르 뱃지는 한 덩어리다. 셋을 따로 항목으로 두면 구획 사이 간격이 이 안에도
  * 들어와 무엇이 한 묶음인지 드러나지 않는다.
+ *
+ * 제목은 앱바가 이어받을 자리라 제 아래 끝을 [onTitleBottomChanged] 로 올린다. 글자 크기나
+ * 줄 수에 따라 달라지는 값이라 계산으로 맞히지 않고 실제 배치를 잰다.
  */
 @Composable
 private fun Headline(
     story: StoryDetail,
+    onTitleBottomChanged: (Float) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -131,6 +160,10 @@ private fun Headline(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact)) {
             Text(
+                modifier =
+                    Modifier.onGloballyPositioned { coordinates ->
+                        onTitleBottomChanged(coordinates.positionInRoot().y + coordinates.size.height)
+                    },
                 text = story.title,
                 style = ManyakTheme.typography.headlineSmall,
                 color = ManyakTheme.colors.text,
@@ -168,14 +201,26 @@ private fun GenreBadges(
     }
 }
 
-/** 이름과 값을 양 끝으로 벌린 한 줄. 값이 하나뿐이라 표를 만들지 않고 줄 하나로 둔다. */
+/**
+ * 이름과 값을 양 끝으로 벌린 한 줄. 값이 하나뿐이라 표를 만들지 않고 줄 하나로 둔다.
+ *
+ * 본문 마지막에 딸린 메타 정보라 다른 섹션과 달리 화면 폭을 그대로 채우는 옅은 바탕을 깔아
+ * 읽을 글과 구분한다. 좌우 여백은 바탕 밖이 아니라 안에 둔다.
+ */
 @Composable
 private fun CreatedDateRow(
     date: String,
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .background(ManyakTheme.colors.backgroundNeutral)
+                .padding(
+                    horizontal = ManyakTheme.spacing.gutter,
+                    vertical = ManyakTheme.spacing.component,
+                ),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -266,6 +311,9 @@ private fun LabeledSection(
         content()
     }
 }
+
+/** 표지 아래 경계선. 골격도 같은 선을 그려야 본문이 도착할 때 구조가 어긋나지 않는다. */
+internal val StoryHeroBorderWidth = 1.dp
 
 private const val OVERVIEW_KEY = "overview"
 private const val DESCRIPTION_KEY = "description"

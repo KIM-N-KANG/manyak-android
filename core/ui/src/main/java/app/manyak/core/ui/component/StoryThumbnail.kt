@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -32,6 +33,9 @@ import java.text.NumberFormat
 /**
  * 목록 카드의 3:4 표지. 원본이 없으면 placeholder 아이콘을 그리고, 우하단에 누적 턴 수 뱃지를
  * 얹는다. 카드 종류별 표시(예: 홈의 ORIGINAL 태그)는 [overlay] 로 표지 위에 더한다.
+ *
+ * 화면 폭을 꽉 채우는 자리에서는 [shape] 를 각지게 바꾼다 — 가장자리에 닿은 둥근 모서리는
+ * 화면이 잘린 것처럼 보인다.
  */
 @Composable
 fun StoryThumbnail(
@@ -39,6 +43,7 @@ fun StoryThumbnail(
     turnCount: Long,
     modifier: Modifier = Modifier,
     badgeScale: StoryBadgeScale = StoryBadgeScale.Compact,
+    shape: Shape = ManyakTheme.shapes.thumbnail,
     overlay: @Composable BoxScope.() -> Unit = {},
 ) {
     Box(
@@ -46,7 +51,7 @@ fun StoryThumbnail(
             modifier
                 .fillMaxWidth()
                 .aspectRatio(STORY_THUMBNAIL_ASPECT_RATIO)
-                .clip(ManyakTheme.shapes.thumbnail)
+                .clip(shape)
                 .background(ManyakTheme.colors.backgroundNeutral),
     ) {
         if (thumbnailUrl == null) {
