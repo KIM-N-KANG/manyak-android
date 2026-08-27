@@ -100,6 +100,9 @@ private fun HomeContent(
             )
 
         // 빈 목록은 섹션 자체를 그리지 않는다 — 제목만 남으면 없는 것을 있다고 말하는 셈이다.
+        // 공식 계정에 스토리가 없는 환경에서만 나오는 자리라 안내 문구도 두지 않는다.
+        state.stories.isEmpty() -> Box(modifier = modifier.fillMaxSize().padding(contentPadding))
+
         else ->
             OriginalStories(
                 modifier = modifier,
