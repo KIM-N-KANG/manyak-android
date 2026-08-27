@@ -38,6 +38,7 @@ fun StoryThumbnail(
     thumbnailUrl: String?,
     turnCount: Long,
     modifier: Modifier = Modifier,
+    badgeScale: StoryBadgeScale = StoryBadgeScale.Compact,
     overlay: @Composable BoxScope.() -> Unit = {},
 ) {
     Box(
@@ -68,6 +69,7 @@ fun StoryThumbnail(
         TurnCountBadge(
             modifier = Modifier.align(Alignment.BottomEnd).padding(ManyakTheme.spacing.compact),
             turnCount = turnCount,
+            scale = badgeScale,
         )
     }
 }
@@ -76,6 +78,7 @@ fun StoryThumbnail(
 @Composable
 private fun TurnCountBadge(
     turnCount: Long,
+    scale: StoryBadgeScale,
     modifier: Modifier = Modifier,
 ) {
     val formatted = remember(turnCount) { NumberFormat.getIntegerInstance().format(turnCount) }
@@ -87,8 +90,8 @@ private fun TurnCountBadge(
                 .clip(ManyakTheme.shapes.pill)
                 .background(StoryOverlayScrim)
                 .padding(
-                    horizontal = ManyakTheme.spacing.compact,
-                    vertical = ManyakTheme.spacing.hairline,
+                    horizontal = scale.horizontalPadding,
+                    vertical = scale.verticalPadding,
                 )
                 // 숫자만 읽히면 무엇의 수인지 알 수 없어 배지 전체를 한 문장으로 읽힌다.
                 .clearAndSetSemantics { contentDescription = description },
@@ -96,14 +99,14 @@ private fun TurnCountBadge(
         horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
     ) {
         Icon(
-            modifier = Modifier.size(BadgeIconSize),
+            modifier = Modifier.size(if (scale == StoryBadgeScale.Compact) BadgeIconSize else LargeBadgeIconSize),
             painter = painterResource(R.drawable.ic_dialog),
             contentDescription = null,
             tint = Color.White,
         )
         Text(
             text = formatted,
-            style = ManyakTheme.typography.labelSmall,
+            style = scale.textStyle,
             color = Color.White,
         )
     }
@@ -113,6 +116,9 @@ private fun TurnCountBadge(
 const val STORY_THUMBNAIL_ASPECT_RATIO = 3f / 4f
 
 private val BadgeIconSize = 14.dp
+
+/** 상세 히어로의 뱃지. 글자가 한 단계 커진 만큼 아이콘도 함께 키운다. */
+private val LargeBadgeIconSize = 16.dp
 
 private val ThumbnailPlaceholderSize = 32.dp
 

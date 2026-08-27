@@ -36,6 +36,7 @@ import app.manyak.core.navigation.CreateStorylineRoute
 import app.manyak.core.navigation.LegalRoute
 import app.manyak.core.navigation.LoginRoute
 import app.manyak.core.navigation.MainTabsRoute
+import app.manyak.core.navigation.StoryDetailRoute
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ManyakProgressIndicator
 import app.manyak.core.ui.component.rememberDelayedProgressVisibility
@@ -47,6 +48,7 @@ import app.manyak.feature.create.CreateKeywordScreen
 import app.manyak.feature.create.CreateStorylineScreen
 import app.manyak.feature.legal.LegalDocumentScreen
 import app.manyak.feature.login.LoginScreen
+import app.manyak.feature.story.StoryDetailScreen
 
 /**
  * 세션 상태가 어느 그래프를 띄울지 결정한다. 그래프 안에서 가드로 막지 않는다 —
@@ -182,51 +184,24 @@ private fun MainNavDisplay() {
             entryProvider<NavKey> {
                 entry<MainTabsRoute> {
                     MainTabsScreen(
+                        // 상세는 셸 위에 쌓여 헤더도 하단 탭도 없는 전체 화면이 되고, 뒤로가기는
+                        // 셸이 든 선택 탭으로 그대로 돌아온다.
+                        onOpenStory = { storyId -> backStack.add(StoryDetailRoute(storyId)) },
                         onCreateStory = { backStack.add(CreateKeywordRoute) },
                         // 재개·복구 진입 — 레코드가 가리키는 단계까지 체인을 쌓는다.
                         onResumeCreation = { resumePoint -> backStack.addCreationResumeChain(resumePoint) },
                     )
                 }
-                entry<CreateKeywordRoute> {
-                    CreateKeywordScreen(
-                        onLeaveFunnel = { backStack.removeLastOrNull() },
-                        // 스토리라인 단계는 키워드 목적지를 대체한다 — 그 화면의 뒤로가기가
-                        // 홈 복귀(퍼널 이탈)가 되도록 한다(§3-3-3 결정 기록 수정).
-                        onOpenStorylineStep = {
-                            backStack.removeLastOrNull()
-                            backStack.add(CreateStorylineRoute)
-                        },
+                entry<StoryDetailRoute> { route ->
+                    StoryDetailScreen(
+                        storyId = route.storyId,
+                        onBack = { backStack.removeLastOrNull() },
+                        // 상세를 걷어내지 않고 그 위에 쌓는다 — 채팅방 뒤로가기가 방금 보던
+                        // 스토리로 돌아온다(웹 `replace` 와 갈리는 앱 전용 차이).
+                        onEnterChat = { chatId -> backStack.add(ChatRoomRoute(chatId)) },
                     )
                 }
-                entry<CreateStorylineRoute> {
-                    CreateStorylineScreen(
-                        onLeaveFunnel = { backStack.removeLastOrNull() },
-                        onOpenAdditionalInfoStep = { storylineIndex ->
-                            backStack.add(CreateAdditionalInfoRoute(storylineIndex))
-                        },
-                    )
-                }
-                entry<CreateAdditionalInfoRoute> { route ->
-                    CreateAdditionalInfoScreen(
-                        storylineIndex = route.storylineIndex,
-                        // 이탈은 퍼널 단계를 전부 걷어내고 홈으로 돌아간다. 스토리라인 단계만
-                        // pop 하면 홈으로 나가려던 조작이 한 단계 뒤로 가기로 보인다.
-                        onLeaveFunnel = {
-                            while (backStack.size > 1 && backStack.lastOrNull() != MainTabsRoute) {
-                                backStack.removeLastOrNull()
-                            }
-                        },
-                        onBackToStoryline = { backStack.removeLastOrNull() },
-                        // 완성 성공 — 퍼널 단계를 모두 걷어내고 생성된 채팅방을 쌓는다(웹의 채팅 화면
-                        // `replace` 대응). 채팅방에서 뒤로가기는 홈 복귀다.
-                        onEnterChat = { chatId ->
-                            while (backStack.size > 1 && backStack.lastOrNull() != MainTabsRoute) {
-                                backStack.removeLastOrNull()
-                            }
-                            backStack.add(ChatRoomRoute(chatId))
-                        },
-                    )
-                }
+                creationFunnelEntries(backStack)
                 entry<ChatRoomRoute> { route ->
                     ChatRoomScreen(
                         chatId = route.chatId,
@@ -247,6 +222,51 @@ private fun MutableList<NavKey>.addCreationResumeChain(resumePoint: CreationResu
             add(CreateAdditionalInfoRoute(resumePoint.storylineIndex))
         }
     }
+}
+
+/**
+ * 간편 제작 퍼널 세 단계. 셸을 두르지 않는 전체 화면이며 백스택 구조가 단계 관계를 그대로 드러낸다.
+ */
+private fun EntryProviderScope<NavKey>.creationFunnelEntries(backStack: MutableList<NavKey>) {
+    entry<CreateKeywordRoute> {
+        CreateKeywordScreen(
+            onLeaveFunnel = { backStack.removeLastOrNull() },
+            // 스토리라인 단계는 키워드 목적지를 대체한다 — 그 화면의 뒤로가기가
+            // 홈 복귀(퍼널 이탈)가 되도록 한다.
+            onOpenStorylineStep = {
+                backStack.removeLastOrNull()
+                backStack.add(CreateStorylineRoute)
+            },
+        )
+    }
+    entry<CreateStorylineRoute> {
+        CreateStorylineScreen(
+            onLeaveFunnel = { backStack.removeLastOrNull() },
+            onOpenAdditionalInfoStep = { storylineIndex ->
+                backStack.add(CreateAdditionalInfoRoute(storylineIndex))
+            },
+        )
+    }
+    entry<CreateAdditionalInfoRoute> { route ->
+        CreateAdditionalInfoScreen(
+            storylineIndex = route.storylineIndex,
+            // 이탈은 퍼널 단계를 전부 걷어내고 홈으로 돌아간다. 스토리라인 단계만 pop 하면
+            // 홈으로 나가려던 조작이 한 단계 뒤로 가기로 보인다.
+            onLeaveFunnel = { backStack.popToMainTabs() },
+            onBackToStoryline = { backStack.removeLastOrNull() },
+            // 완성 성공 — 퍼널 단계를 모두 걷어내고 생성된 채팅방을 쌓는다(웹의 채팅 화면
+            // `replace` 대응). 상세에서 시작한 채팅과 달리 돌아갈 단계가 남지 않는다.
+            onEnterChat = { chatId ->
+                backStack.popToMainTabs()
+                backStack.add(ChatRoomRoute(chatId))
+            },
+        )
+    }
+}
+
+/** 한 번 쓰고 끝나는 퍼널 단계를 모두 걷어내 셸만 남긴다. */
+private fun MutableList<NavKey>.popToMainTabs() {
+    while (size > 1 && lastOrNull() != MainTabsRoute) removeLastOrNull()
 }
 
 /**

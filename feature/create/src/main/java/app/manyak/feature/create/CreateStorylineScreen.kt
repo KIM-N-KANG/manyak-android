@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -41,6 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.core.domain.story.StorylineRating
 import app.manyak.core.ui.R
+import app.manyak.core.ui.component.ScrollEdgeFade
 import app.manyak.core.ui.text.storyAnnotatedString
 import app.manyak.core.ui.theme.ManyakTheme
 
@@ -139,11 +141,15 @@ private fun CreateStorylineContent(
             StorylineContent.Generating -> StorylineGeneratingContent(modifier = Modifier.weight(1f))
 
             is StorylineContent.Loaded -> {
-                StorylineResultContent(
-                    modifier = Modifier.weight(1f),
-                    state = state,
-                    onIntent = onIntent,
-                )
+                // 스크롤 본문이 푸터 경계에서 딱 잘리므로 바닥에 페이드를 겹친다.
+                Box(modifier = Modifier.weight(1f)) {
+                    StorylineResultContent(
+                        modifier = Modifier.fillMaxSize(),
+                        state = state,
+                        onIntent = onIntent,
+                    )
+                    ScrollEdgeFade(modifier = Modifier.align(Alignment.BottomCenter))
+                }
                 CreateStorylineFooter(hasStoryline = state.activeStoryline != null, onIntent = onIntent)
             }
         }

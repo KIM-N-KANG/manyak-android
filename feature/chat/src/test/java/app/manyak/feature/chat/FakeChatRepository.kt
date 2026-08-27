@@ -25,7 +25,10 @@ internal class FakeChatRepository : ChatRepository {
     val chatDetailIds = mutableListOf<String>()
     val queuedChatDetailResults = ArrayDeque<DomainResult<ChatDetail>>()
 
-    override suspend fun createChat(storyId: String): DomainResult<CreatedChat> {
+    override suspend fun createChat(
+        storyId: String,
+        startSettingId: String?,
+    ): DomainResult<CreatedChat> {
         yield()
         return DomainResult.Success(CreatedChat(id = "chat-1"))
     }

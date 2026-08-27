@@ -52,6 +52,7 @@ import app.manyak.core.ui.theme.ManyakTheme
 @Composable
 fun StudioScreen(
     contentPadding: PaddingValues,
+    onOpenStory: (String) -> Unit,
     onCreateStory: () -> Unit,
     onResumeCreation: (CreationResumePoint) -> Unit,
     modifier: Modifier = Modifier,
@@ -86,6 +87,7 @@ fun StudioScreen(
     StudioContent(
         state = state,
         contentPadding = contentPadding,
+        onOpenStory = onOpenStory,
         onIntent = viewModel::onIntent,
         modifier = modifier,
     )
@@ -95,6 +97,7 @@ fun StudioScreen(
 private fun StudioContent(
     state: StudioUiState,
     contentPadding: PaddingValues,
+    onOpenStory: (String) -> Unit,
     onIntent: (StudioIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -131,6 +134,7 @@ private fun StudioContent(
                     stories = state.stories,
                     banner = state.pendingBanner,
                     contentPadding = contentPadding,
+                    onOpenStory = onOpenStory,
                     onIntent = onIntent,
                 )
         }
@@ -193,6 +197,7 @@ private fun MyStories(
     stories: List<StorySummary>,
     banner: PendingCreationBanner?,
     contentPadding: PaddingValues,
+    onOpenStory: (String) -> Unit,
     onIntent: (StudioIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -219,6 +224,7 @@ private fun MyStories(
         items(stories, key = { story -> story.id }) { story ->
             MyStoryCard(
                 story = story,
+                onClick = { onOpenStory(story.id) },
                 onDeleteClick = { onIntent(StudioIntent.RequestDeleteStory(story)) },
             )
         }
@@ -260,6 +266,7 @@ private fun StudioScreenPreview() {
         StudioContent(
             state = StudioUiState(isLoading = false, stories = previewStories()),
             contentPadding = PaddingValues(0.dp),
+            onOpenStory = {},
             onIntent = {},
         )
     }
@@ -272,6 +279,7 @@ private fun StudioScreenEmptyPreview() {
         StudioContent(
             state = StudioUiState(isLoading = false),
             contentPadding = PaddingValues(0.dp),
+            onOpenStory = {},
             onIntent = {},
         )
     }
@@ -293,6 +301,7 @@ private fun StudioScreenPendingBannerPreview() {
                         ),
                 ),
             contentPadding = PaddingValues(0.dp),
+            onOpenStory = {},
             onIntent = {},
         )
     }

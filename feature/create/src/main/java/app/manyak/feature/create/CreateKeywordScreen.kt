@@ -37,6 +37,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.core.domain.story.StoryTagCategory
 import app.manyak.core.ui.R
+import app.manyak.core.ui.component.ScrollEdgeFade
 import app.manyak.core.ui.theme.ManyakTheme
 
 /**
@@ -116,12 +117,16 @@ private fun CreateKeywordContent(
                 currentStep = 0,
                 stepNameRes = R.string.create_step_keyword,
             )
-            KeywordStepBody(
-                modifier = Modifier.weight(1f),
-                state = state,
-                onIntent = onIntent,
-                onOpenAddKeyword = { target -> addKeywordTarget = target },
-            )
+            // 스크롤 본문이 푸터 경계에서 딱 잘리므로 바닥에 페이드를 겹친다.
+            Box(modifier = Modifier.weight(1f)) {
+                KeywordStepBody(
+                    modifier = Modifier.fillMaxSize(),
+                    state = state,
+                    onIntent = onIntent,
+                    onOpenAddKeyword = { target -> addKeywordTarget = target },
+                )
+                ScrollEdgeFade(modifier = Modifier.align(Alignment.BottomCenter))
+            }
             // IME가 열리면 CTA 영역을 콘텐츠에 돌려 입력 필드가 키보드 위로 스크롤되게 한다.
             if (!imeVisible) {
                 CreateKeywordFooter(state = state, onIntent = onIntent)

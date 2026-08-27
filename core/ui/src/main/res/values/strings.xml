@@ -213,6 +213,21 @@
     <string name="session_ended_token_persistence_failed">로그인 정보를 저장하지 못해 다시 로그인해야 해요</string>
     <string name="session_cleanup_failed">이전 로그인 정보를 정리하지 못했어요. 다시 시도해주세요</string>
 
+    <!-- 스토리 상세 -->
+    <string name="story_detail_not_found">스토리를 찾을 수 없어요</string>
+    <string name="story_detail_thumbnail_open">썸네일 크게 보기</string>
+    <string name="story_detail_thumbnail_close">닫기</string>
+    <string name="story_detail_genres">장르</string>
+    <string name="story_detail_description">주요 내용</string>
+    <string name="story_detail_start_settings">채팅 시작 상황</string>
+    <string name="story_detail_start_setting_name">상황 이름</string>
+    <string name="story_detail_start_setting_situation">상황 설명</string>
+    <!-- 시작 설정이 둘 이상일 때만 나오는 선택 트리거와 그 바텀 시트. -->
+    <string name="story_detail_start_setting_select">시작 상황 선택</string>
+    <string name="story_detail_created_at">생성일</string>
+    <string name="story_detail_start_chat">채팅 시작하기</string>
+    <string name="story_detail_start_chat_failed">채팅을 시작하지 못했어요</string>
+
     <!-- 채팅방 -->
     <string name="chat_room_load_error">채팅을 불러오지 못했어요</string>
 

@@ -53,6 +53,7 @@ import app.manyak.core.ui.theme.ManyakTheme
 @Composable
 internal fun MyStoryCard(
     story: StorySummary,
+    onClick: () -> Unit,
     onDeleteClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -60,7 +61,9 @@ internal fun MyStoryCard(
     var menuExpanded by remember { mutableStateOf(false) }
 
     Column(
-        modifier = modifier,
+        // 카드 전체가 상세로 가는 링크다. 표지 위 더보기 버튼은 자기 클릭을 먹어 상세로 가지 않는다.
+        // 홈 카드와 같은 이유로 둥글게 클립하지 않는다 — 맨 아래 줄인 장르 뱃지가 모서리에 깎인다.
+        modifier = modifier.clickable(role = Role.Button, onClick = onClick),
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
         StoryThumbnail(thumbnailUrl = story.thumbnailUrl, turnCount = story.turnCount) {

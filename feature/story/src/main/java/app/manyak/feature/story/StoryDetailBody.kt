@@ -1,0 +1,273 @@
+package app.manyak.feature.story
+
+import androidx.annotation.StringRes
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import app.manyak.core.domain.story.StoryDetail
+import app.manyak.core.domain.story.StoryStartSetting
+import app.manyak.core.ui.R
+import app.manyak.core.ui.component.StoryBadgeScale
+import app.manyak.core.ui.component.StoryGenreBadge
+import app.manyak.core.ui.component.StoryThumbnail
+import app.manyak.core.ui.theme.ManyakTheme
+
+/**
+ * 상세 본문. 순서는 히어로 → 제목 → 한 줄 소개 → 장르 → 본 엔딩 → 주요 내용 → 시작 상황 → 생성일이다.
+ *
+ * 값이 없는 항목은 자리를 비우지 않고 아예 그리지 않는다 — 이유 없는 공백이 생기지 않게 한다.
+ */
+@Suppress("LongParameterList")
+internal fun LazyListScope.storyDetailBody(
+    story: StoryDetail,
+    selectedStartSettingId: String?,
+    selectedStartSituation: String?,
+    onThumbnailClick: () -> Unit,
+    onSelectStartSetting: (String) -> Unit,
+) {
+    item(key = OVERVIEW_KEY) {
+        Overview(story = story, onThumbnailClick = onThumbnailClick)
+    }
+    story.description?.let { description ->
+        item(key = DESCRIPTION_KEY) {
+            LabeledSection(labelRes = R.string.story_detail_description) {
+                Text(
+                    text = description,
+                    style = ManyakTheme.typography.bodyLarge,
+                    color = ManyakTheme.colors.text,
+                )
+            }
+        }
+    }
+    if (selectedStartSituation != null) {
+        item(key = START_SETTING_KEY) {
+            LabeledSection(labelRes = R.string.story_detail_start_settings) {
+                StartSettingSection(
+                    startSettings = story.startSettings,
+                    selectedId = selectedStartSettingId,
+                    situation = selectedStartSituation,
+                    onSelect = onSelectStartSetting,
+                )
+            }
+        }
+    }
+    story.createdDate?.let { date ->
+        item(key = CREATED_AT_KEY) {
+            CreatedDateRow(date = date)
+        }
+    }
+}
+
+/**
+ * 표지와 제목 묶음. 둘은 다른 구획이 아니라 한 화면의 머리라, 구획 사이보다 좁게 붙인다.
+ */
+@Composable
+private fun Overview(
+    story: StoryDetail,
+    onThumbnailClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
+    ) {
+        StoryHero(story = story, onClick = onThumbnailClick)
+        Headline(story = story)
+    }
+}
+
+/**
+ * 히어로는 목록 카드와 같은 표지 컴포넌트를 쓰되 축소본이 아니라 원본을 받고, 뱃지도 한 단계 크다.
+ * 이미지가 있을 때만 누를 수 있고, 눌림 표시가 모서리를 넘지 않도록 클립을 먼저 건다.
+ */
+@Composable
+private fun StoryHero(
+    story: StoryDetail,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val openLabel = stringResource(R.string.story_detail_thumbnail_open)
+    StoryThumbnail(
+        modifier =
+            modifier.then(
+                if (story.thumbnailUrl == null) {
+                    Modifier
+                } else {
+                    Modifier
+                        .clip(ManyakTheme.shapes.thumbnail)
+                        .clickable(role = Role.Button, onClickLabel = openLabel, onClick = onClick)
+                },
+            ),
+        thumbnailUrl = story.thumbnailUrl,
+        turnCount = story.turnCount,
+        badgeScale = StoryBadgeScale.Large,
+    )
+}
+
+/**
+ * 제목·한 줄 소개·장르 뱃지는 한 덩어리다. 셋을 따로 항목으로 두면 구획 사이 간격이 이 안에도
+ * 들어와 무엇이 한 묶음인지 드러나지 않는다.
+ */
+@Composable
+private fun Headline(
+    story: StoryDetail,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.component),
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact)) {
+            Text(
+                text = story.title,
+                style = ManyakTheme.typography.headlineSmall,
+                color = ManyakTheme.colors.text,
+            )
+            if (story.oneLineIntro.isNotBlank()) {
+                Text(
+                    text = story.oneLineIntro,
+                    style = ManyakTheme.typography.bodyLarge,
+                    color = ManyakTheme.colors.textSubtle,
+                )
+            }
+        }
+        if (story.genres.isNotEmpty()) {
+            GenreBadges(genres = story.genres)
+        }
+        if (story.reachedEndings.isNotEmpty()) {
+            GenreBadges(genres = story.reachedEndings)
+        }
+    }
+}
+
+/** 상세는 카드와 달리 폭에 맞춰 접지 않고 줄바꿈으로 모두 보인다 — 가릴 만큼 좁은 자리가 아니다. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun GenreBadges(
+    genres: List<String>,
+    modifier: Modifier = Modifier,
+) {
+    FlowRow(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
+    ) {
+        genres.forEach { genre -> StoryGenreBadge(text = genre, scale = StoryBadgeScale.Large) }
+    }
+}
+
+/** 이름과 값을 양 끝으로 벌린 한 줄. 값이 하나뿐이라 표를 만들지 않고 줄 하나로 둔다. */
+@Composable
+private fun CreatedDateRow(
+    date: String,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = stringResource(R.string.story_detail_created_at),
+            style = ManyakTheme.typography.labelLarge,
+            color = ManyakTheme.colors.textSubtle,
+        )
+        Text(
+            text = date,
+            style = ManyakTheme.typography.bodyMedium,
+            color = ManyakTheme.colors.textSubtle,
+        )
+    }
+}
+
+/**
+ * 시작 상황은 이름과 설명 두 갈래다. 이름은 고를 수 있는 값이고 설명은 그 값에 딸린 글이라,
+ * 한 덩어리로 두면 무엇을 바꿀 수 있는지 드러나지 않는다.
+ */
+@Composable
+private fun StartSettingSection(
+    startSettings: List<StoryStartSetting>,
+    selectedId: String?,
+    situation: String,
+    onSelect: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        // 갈래 사이는 갈래 안(라벨↔내용)보다 넓다 — 같으면 무엇이 한 묶음인지 드러나지 않는다.
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.section),
+    ) {
+        if (startSettings.isNotEmpty()) {
+            SubLabeledBlock(labelRes = R.string.story_detail_start_setting_name) {
+                StartSettingSelect(
+                    startSettings = startSettings,
+                    selectedId = selectedId,
+                    onSelect = onSelect,
+                )
+            }
+        }
+        SubLabeledBlock(labelRes = R.string.story_detail_start_setting_situation) {
+            Text(
+                text = situation,
+                style = ManyakTheme.typography.bodyLarge,
+                color = ManyakTheme.colors.text,
+            )
+        }
+    }
+}
+
+/** 섹션 안의 작은 갈래. 섹션 라벨보다 한 단계 작은 굵은 제목을 얹는다. */
+@Composable
+private fun SubLabeledBlock(
+    @StringRes labelRes: Int,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
+    ) {
+        Text(
+            text = stringResource(labelRes),
+            style = ManyakTheme.typography.bodyLargeStrong,
+            color = ManyakTheme.colors.text,
+        )
+        content()
+    }
+}
+
+@Composable
+private fun LabeledSection(
+    @StringRes labelRes: Int,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
+    ) {
+        Text(
+            text = stringResource(labelRes),
+            style = ManyakTheme.typography.titleMediumStrong,
+            color = ManyakTheme.colors.text,
+        )
+        content()
+    }
+}
+
+private const val OVERVIEW_KEY = "overview"
+private const val DESCRIPTION_KEY = "description"
+private const val START_SETTING_KEY = "start-setting"
+private const val CREATED_AT_KEY = "created-at"

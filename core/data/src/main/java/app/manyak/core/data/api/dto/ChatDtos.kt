@@ -5,10 +5,11 @@ import app.manyak.core.domain.chat.ChatTurn
 import app.manyak.core.domain.chat.CreatedChat
 import kotlinx.serialization.Serializable
 
-/** 시작 설정은 지정하지 않는다 — 서버가 스토리의 첫 시작 설정으로 폴백한다. */
+/** [startSettingId] 가 null 이면 직렬화에서 빠지고 서버가 첫 시작 설정으로 폴백한다. */
 @Serializable
 data class ChatCreateRequestDto(
     val storyId: String,
+    val startSettingId: String? = null,
 )
 
 /** 응답의 프롤로그·추천 입력은 채팅방 진입 시 상세 조회로 다시 얻으므로 식별자만 역직렬화한다. */

@@ -18,8 +18,13 @@ class ChatRepositoryImpl
     constructor(
         private val chatApi: ChatApi,
     ) : ChatRepository {
-        override suspend fun createChat(storyId: String): DomainResult<CreatedChat> =
-            apiCall { chatApi.createChat(ChatCreateRequestDto(storyId = storyId)) }.map { it.toDomain() }
+        override suspend fun createChat(
+            storyId: String,
+            startSettingId: String?,
+        ): DomainResult<CreatedChat> =
+            apiCall {
+                chatApi.createChat(ChatCreateRequestDto(storyId = storyId, startSettingId = startSettingId))
+            }.map { it.toDomain() }
 
         override suspend fun chatDetail(chatId: String): DomainResult<ChatDetail> =
             apiCall { chatApi.chatDetail(chatId) }.map { it.toDomain() }

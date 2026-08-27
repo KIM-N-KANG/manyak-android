@@ -1,0 +1,64 @@
+package app.manyak.core.data.api.dto
+
+import app.manyak.core.domain.story.StoryDetail
+import app.manyak.core.domain.story.StoryStartSetting
+import kotlinx.serialization.Serializable
+
+/**
+ * 상세 응답. 상세 화면이 그리지 않는 등록 상태·공개 범위·로어북·주요 사건·해시태그·좋아요 수는
+ * 역직렬화하지 않는다.
+ *
+ * 식별자 밖의 필드에 기본값을 두는 이유는 목록 DTO 와 같다 — 서버가 필드를 하나 빼도 화면 전체가
+ * 실패로 떨어지지 않게 한다.
+ */
+@Serializable
+data class StoryDetailResponseDto(
+    val id: String,
+    val title: String = "",
+    val oneLineIntro: String = "",
+    val description: String? = null,
+    val genres: List<String> = emptyList(),
+    /** 히어로용 원본. 목록·카드가 쓰는 축소본(`thumbnailUrlSm`)과 다른 URL 이다. */
+    val thumbnailUrl: String? = null,
+    val turnCount: Long = 0,
+    val createdAt: String? = null,
+    val startSettings: List<StoryStartSettingDto> = emptyList(),
+    val reachedEndings: List<String> = emptyList(),
+)
+
+/** 프롤로그·추천 입력·엔딩은 상세가 그리지 않아 역직렬화하지 않는다. */
+@Serializable
+data class StoryStartSettingDto(
+    val id: String,
+    val name: String = "",
+    val startSituation: String = "",
+)
+
+fun StoryDetailResponseDto.toDomain(): StoryDetail =
+    StoryDetail(
+        id = id,
+        title = title,
+        oneLineIntro = oneLineIntro,
+        description = description?.takeIf { text -> text.isNotBlank() },
+        genres = genres.filter { genre -> genre.isNotBlank() },
+        thumbnailUrl = thumbnailUrl?.takeIf { url -> url.isNotBlank() },
+        turnCount = turnCount,
+        createdDate = createdAt?.toDisplayDate(),
+        startSettings =
+            startSettings.map { setting ->
+                StoryStartSetting(id = setting.id, name = setting.name, startSituation = setting.startSituation)
+            },
+        reachedEndings = reachedEndings.filter { ending -> ending.isNotBlank() },
+    )
+
+/**
+ * ISO-8601 시각의 날짜 부분만 취한다. 화면이 필요로 하는 것이 `YYYY-MM-DD` 하나뿐이라
+ * `java.time` 을 쓰려고 코어 라이브러리 디슈가링을 켜지 않는다(minSdk 24).
+ *
+ * 형식이 예상과 다르면 null 을 돌려준다 — 화면이 그 줄 자체를 그리지 않는다.
+ */
+private fun String.toDisplayDate(): String? = take(DATE_LENGTH).takeIf { date -> date.matches(DatePattern) }
+
+private const val DATE_LENGTH = 10
+
+private val DatePattern = Regex("""\d{4}-\d{2}-\d{2}""")

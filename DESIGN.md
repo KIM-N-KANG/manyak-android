@@ -90,6 +90,11 @@ typography:
     fontSize: 18sp
     fontWeight: 500
     lineHeight: 26sp
+  body-large-strong:
+    fontFamily: "Pretendard"
+    fontSize: 16sp
+    fontWeight: 500
+    lineHeight: 24sp
   body-large:
     fontFamily: "Pretendard"
     fontSize: 16sp

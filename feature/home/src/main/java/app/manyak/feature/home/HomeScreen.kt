@@ -34,6 +34,7 @@ import app.manyak.core.ui.theme.ManyakTheme
 @Composable
 fun HomeScreen(
     contentPadding: PaddingValues,
+    onOpenStory: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
@@ -41,6 +42,7 @@ fun HomeScreen(
     HomeContent(
         state = state,
         contentPadding = contentPadding,
+        onOpenStory = onOpenStory,
         onIntent = viewModel::onIntent,
         modifier = modifier,
     )
@@ -50,6 +52,7 @@ fun HomeScreen(
 private fun HomeContent(
     state: HomeUiState,
     contentPadding: PaddingValues,
+    onOpenStory: (String) -> Unit,
     onIntent: (HomeIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -81,6 +84,7 @@ private fun HomeContent(
                 modifier = modifier,
                 stories = state.stories,
                 contentPadding = contentPadding,
+                onOpenStory = onOpenStory,
             )
     }
 }
@@ -89,6 +93,7 @@ private fun HomeContent(
 private fun OriginalStories(
     stories: List<StorySummary>,
     contentPadding: PaddingValues,
+    onOpenStory: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyVerticalGrid(
@@ -104,7 +109,7 @@ private fun OriginalStories(
             SectionTitle()
         }
         items(stories, key = { story -> story.id }) { story ->
-            StoryCard(story = story)
+            StoryCard(story = story, onClick = { onOpenStory(story.id) })
         }
     }
 }
@@ -131,6 +136,7 @@ private fun HomeContentPreview() {
         HomeContent(
             state = HomeUiState(isLoading = false, stories = previewStories()),
             contentPadding = PaddingValues(),
+            onOpenStory = {},
             onIntent = {},
         )
     }
@@ -143,6 +149,7 @@ private fun HomeLoadFailedPreview() {
         HomeContent(
             state = HomeUiState(isLoading = false, loadFailed = true),
             contentPadding = PaddingValues(),
+            onOpenStory = {},
             onIntent = {},
         )
     }

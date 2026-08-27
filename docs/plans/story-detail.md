@@ -1,0 +1,80 @@
+# 스토리 상세 — 플레이 시작
+
+- 작성일: 2026-08-27
+- 근거 정본: 하네스 `3-3-android-app.md §3-3-3 스토리 상세`, `3-1-client.md §3-1-3 FE-SCREEN-003`, `4-backend.md §4-3-1 GET /stories/{storyId}`
+
+## 목표와 제외 범위
+
+목록 카드 탭으로 스토리 상세에 들어가 설정을 확인하고 채팅을 시작하는 경로를 연다(FE-SCREEN-003 ·
+FLOW-003). 홈·제작 두 목록의 카드가 지금까지 표시 전용이었던 것을 진입점으로 바꾼다.
+
+**이번 범위** — `:feature:story` 모듈과 상세 목적지, `GET /stories/{storyId}` 배선, 히어로·본문·시작 설정
+선택·하단 CTA, 썸네일 이미지 뷰어, `POST /chats {storyId, startSettingId}` 채팅 시작, 홈·제작 카드 탭 배선,
+하네스 매트릭스 갱신.
+
+**제외** — 상세 헤더 옵션 메뉴(삭제·수정)와 히어로의 오리지널 태그. 둘 다 상세 응답의 `author`가 항상
+`null`인 placeholder라 소유 여부·오리지널 여부를 판정할 수 없어 보류했다. 서버가 그 필드를 채우면 함께
+풀린다. 채팅 플레이(입력 컴포저·SSE)는 FE-SCREEN-005 잔여 그대로다. 목록 페이징·당겨서 새로고침도 이번
+범위가 아니다.
+
+## 새로 내린 결정
+
+1. **상세 조회는 인증 클라이언트로 부른다 — `StoryDetailApi` 신설.** 기존 `StoryApi`(오리지널 목록)는
+   토큰 없는 클라이언트를 쓰는데, 상세는 두 가지 이유로 토큰이 필요하다 — 내가 만든 스토리는 기본
+   `PRIVATE`이라 익명 요청에 404가 오고, 본 엔딩(`reachedEndings`)은 회원 집계라 토큰이 없으면 빈 배열이다.
+   `UserApi`에 얹지 않고 인터페이스를 따로 둔 이유는 상세가 "본인 소유 자원"이 아니어서다 — 그 이름 아래
+   두면 `GET /stories/{id}`가 왜 거기 있는지 다음 사람이 알 수 없다.
+2. **`StoryDetail` 도메인 모델은 화면이 그리는 것만 담는다.** `status`·`visibility`·`lorebooks`·`mainEvents`·
+   `hashtags`·`likeCount`는 이 화면이 쓰지 않아 역직렬화도 하지 않는다(`StorySummary`와 같은 원칙).
+   `startSettings[].endings`·`suggestedInputs`도 상세가 그리지 않으므로 뺀다 — 채팅 화면이 쓸 때 그 화면과
+   함께 넓힌다.
+3. **`createdAt`은 데이터 계층에서 `YYYY-MM-DD`로 자른다.** 서버가 주는 ISO-8601 문자열의 날짜 부분만
+   쓰므로 파싱 없이 앞 10자를 형식 검사 후 취한다. `minSdk` 24에서 `java.time`을 쓰려면 코어 라이브러리
+   디슈가링이 필요한데, 화면이 필요로 하는 것이 날짜 문자열 하나뿐이라 빌드 구성을 늘릴 이유가 없다.
+   형식이 예상과 다르면 `null`로 두고 화면이 줄 자체를 그리지 않는다.
+4. **`ChatRepository.createChat`에 `startSettingId`를 더한다.** 기존 호출부(퍼널 완성 직후 진입)는 `null`을
+   넘겨 서버 폴백을 그대로 쓴다 — 간편 제작 결과는 시작 설정이 항상 1개다.
+5. **뷰어 열림 상태는 ViewModel 이 든다.** 화면 로컬 `remember`는 회전에서 닫히고,
+   `rememberSaveable`은 하네스가 "프로세스 재시작에서 복원하지 않는다"고 정한 것과 어긋난다. UiState 에
+   두면 회전에는 살아남고 프로세스 사망에는 사라져 두 요구가 모두 맞는다. **반대로 시작 상황 셀렉트의
+   펼침은 그 컨트롤이 직접 든다** — 화면 밖에서 알 필요가 없는 표현 상태다(제작 카드 더보기 메뉴와 같다).
+6. **404는 `NOT_FOUND` 오류 종류로 구분한다.** 재시도 버튼 유무가 갈리므로 화면이 `DomainError.Server`의
+   상태 코드를 직접 보지 않도록 ViewModel 이 종류로 바꿔 내린다.
+7. **장르 뱃지 원자만 `:core:ui`로 올린다.** 제작 카드는 폭에 맞춰 `+N`으로 접고 상세는 줄바꿈으로 모두
+   보이므로 배치는 서로 다르다. 두 배치가 공유하는 것은 알약 모양 뱃지 하나뿐이라 그것만 올리고,
+   접기 로직은 제작 모듈에 남긴다(두 번째 사용처가 생긴 것은 뱃지이지 접기가 아니다). 목록 카드와 상세는
+   뱃지 크기가 다르므로 `StoryBadgeScale`(`Compact`·`Large`)로 고른다 — 값을 그냥 키우면 카드의 1줄 고정
+   높이와 `+N` 접기 측정이 함께 흔들린다.
+
+8. **`ScreenShown`(ON_START)이 조회와 잠금 해제를 함께 맡는다.** 채팅방에서 돌아오는 자리라 턴 수·본
+   엔딩을 다시 읽어야 하고, 같은 시점에 채팅 시작 버튼의 잠금도 푼다. 성공 직후에 풀면 화면이 사라지는
+   중에 버튼이 되살아나 깜빡인다.
+
+9. **시작 상황 셀렉트는 제작 퍼널의 성별 셀렉트와 같은 컨트롤을 쓴다.** 처음에는 바텀 시트로 만들었으나,
+   같은 일을 하는 컨트롤이 화면마다 다르게 생기는 쪽이 더 나쁘다고 보고 바꿨다. `:feature:*`끼리 참조할 수
+   없으므로 앵커·메뉴를 `:core:ui`의 `ManyakSelectField`로 올리고 성별 셀렉트도 거기에 위임한다 — 두 번째
+   사용처가 생겼을 때 올린다는 규칙 그대로다. 글자 크기 인자는 두지 않는다: 두 호출부가 같은 값을 쓰므로
+   설정 구멍을 남기면 나중에 갈라지는 통로가 된다.
+
+10. **하단 CTA 위 페이드를 `:core:ui`의 `ScrollEdgeFade`로 올리고 제작 퍼널에도 적용한다.** 스크롤 본문이
+    푸터 경계에서 딱 잘리는 문제는 퍼널 세 단계도 같았다(칩·본문이 반토막으로 잘림). 하단 탭 바의
+    경계선과는 푸는 문제가 달라 둘을 합치지 않고, 판정 기준을 하네스에 적었다 — 늘 떠 있는 chrome은
+    경계선, 스크롤 콘텐츠가 잘리는 경계는 페이드.
+
+11. **`bodyLargeStrong`(16sp Medium)을 새 타이포 롤로 둔다.** 섹션 라벨(18sp)보다 한 단계 작은 굵은 제목이
+    필요한데 토큰에 그 자리가 없다. `titleMediumStrong`과 같은 성격의 Kotlin 전용 롤이며 `DESIGN.md`에도
+    함께 적는다. 토큰 생성기가 작업 환경에 없어 `design/design-tokens.json`에는 반영하지 못했다 —
+    생성기에 접근되면 두 롤을 함께 올려야 웹과 갈라지지 않는다.
+
+## 구현 순서
+
+1. `:core:domain` — `StoryDetail`·`StoryStartSetting`, `StoryRepository.storyDetail`, `ChatRepository.createChat`
+   시그니처 확장
+2. `:core:data` — `StoryDetailApi`·DTO·매핑, `StoryRepositoryImpl`·`ChatRepositoryImpl` 구현, `NetworkModule` 배선
+3. `:core:navigation` — `StoryDetailRoute(storyId)`
+4. `:core:ui` — `StoryGenreBadge`·`StoryBadgeScale`·`ManyakSelectField` 승격, `bodyLargeStrong` 롤, 문자열 리소스
+5. `:feature:story` — 모듈 생성, ViewModel·화면·시작 설정 셀렉트·이미지 뷰어·골격
+6. `:feature:home`·`:feature:studio` — 카드 탭 콜백
+7. `:app` — 상세 목적지 등록, 셸에서 카드 탭 연결, 채팅방 push
+8. 단위 테스트 — ViewModel 조회·갱신·선택·채팅 시작·404 분기
+9. 하네스 매트릭스 현재 상태 갱신
