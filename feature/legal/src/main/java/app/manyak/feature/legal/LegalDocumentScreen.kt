@@ -2,6 +2,7 @@ package app.manyak.feature.legal
 
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
+import android.os.Bundle
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -16,6 +17,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -109,6 +112,8 @@ private fun LegalWebView(
     onPageFinished: () -> Unit,
     onPageFailed: () -> Unit,
 ) {
+    val pageState = rememberSaveable(saver = LegalPageStateSaver) { LegalPageState() }
+
     AndroidView(
         modifier = Modifier.fillMaxSize(),
         factory = { context ->
@@ -170,13 +175,39 @@ private fun LegalWebView(
             }
         },
         update = { webView ->
+            pageState.webView = webView
             if (webView.tag != reloadToken) {
                 webView.tag = reloadToken
-                webView.loadUrl(url)
+                // 저장해 둔 히스토리가 있으면 그것으로 되살린다. 복원은 읽던 위치까지 돌려주지만
+                // 재시도로 토큰이 오른 경우에는 저장분이 이미 비어 있어 새로 읽는다.
+                val restored = pageState.restored
+                pageState.restored = null
+                if (restored == null || webView.restoreState(restored) == null) {
+                    webView.loadUrl(url)
+                }
             }
         },
+        onRelease = { pageState.webView = null },
     )
 }
+
+/**
+ * 구성 변경에서 [WebView] 는 새로 만들어진다. 히스토리를 넘겨주지 않으면 문서를 처음부터 다시 읽고
+ * 읽던 위치가 사라진다.
+ *
+ * 저장을 [Saver] 에 맡기는 이유는 시점 때문이다 — 저장은 컴포지션이 걷히기 전에 일어나야 하는데,
+ * `onRelease` 는 이미 걷힌 뒤라 그때 뜨면 늦는다.
+ */
+private class LegalPageState {
+    var webView: WebView? = null
+    var restored: Bundle? = null
+}
+
+private val LegalPageStateSaver: Saver<LegalPageState, Bundle> =
+    Saver(
+        save = { state -> state.webView?.let { webView -> Bundle().also(webView::saveState) } ?: state.restored },
+        restore = { bundle -> LegalPageState().apply { restored = bundle } },
+    )
 
 /** 화면 제목. 라우트 인자만으로 결정되므로 호스트가 직접 읽는다. */
 fun LegalDocument.titleRes(): Int =

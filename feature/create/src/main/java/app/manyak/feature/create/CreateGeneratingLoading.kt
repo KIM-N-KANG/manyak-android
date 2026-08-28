@@ -3,6 +3,7 @@
 
 package app.manyak.feature.create
 
+import android.os.SystemClock
 import androidx.annotation.ArrayRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
@@ -15,6 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringArrayResource
@@ -147,13 +149,17 @@ private fun GenerationHints(
     hints: List<GenerationHint>,
     modifier: Modifier = Modifier,
 ) {
-    var revealedCount by remember { mutableIntStateOf(0) }
+    // 경과를 화면이 아니라 시작 시각으로 센다. 이 효과는 컴포지션에 들어올 때마다 실행되므로,
+    // 화면 안에서 세면 구성 변경 때마다 이미 나온 안내가 사라지고 처음부터 다시 기다리게 된다 —
+    // 생성이 길어져 사용자가 가장 불안한 구간에서 안내만 없어진다.
+    // 단조 시계를 쓰는 이유는 사용자가 기기 시간을 바꿔도 경과가 뒤틀리지 않게 하기 위해서다.
+    val startedAtMillis = rememberSaveable { SystemClock.elapsedRealtime() }
+    var revealedCount by rememberSaveable { mutableIntStateOf(0) }
 
-    LaunchedEffect(hints) {
-        var elapsedMs = 0L
+    LaunchedEffect(hints, startedAtMillis) {
         hints.forEachIndexed { index, hint ->
-            delay(hint.delayMs - elapsedMs)
-            elapsedMs = hint.delayMs
+            val remainingMs = hint.delayMs - (SystemClock.elapsedRealtime() - startedAtMillis)
+            if (remainingMs > 0) delay(remainingMs)
             revealedCount = index + 1
         }
     }

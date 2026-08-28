@@ -78,7 +78,7 @@ sealed interface StoryDetailEvent {
 
     data object ChatStartFailed : StoryDetailEvent
 
-    /** 채팅방에서 돌아왔거나 화면이 처음 보였다. 남아 있던 시작 잠금과 실패 문구를 걷는다. */
+    /** 채팅방에서 돌아왔다. 성공 뒤 남겨 둔 시작 잠금을 걷는다. */
     data object ChatStartReset : StoryDetailEvent
 }
 
@@ -126,8 +126,10 @@ class StoryDetailViewModel
             val state = uiState.value
             when (intent) {
                 StoryDetailIntent.ScreenShown -> {
-                    // 성공 직후에 풀면 화면이 사라지는 중에 버튼이 되살아나 깜빡인다.
-                    dispatchEvent(StoryDetailEvent.ChatStartReset)
+                    // 성공 직후에 풀면 화면이 사라지는 중에 버튼이 되살아나 깜빡인다. 그래서 복귀 시점에 푼다.
+                    // 요청이 아직 살아 있으면 풀지 않는다 — 구성 변경으로 화면만 다시 만들어졌을 때
+                    // 잠금과 스피너가 사라지면 진행 중인 생성이 없는 것처럼 보이고, 다시 눌러도 반응이 없다.
+                    if (startChatJob?.isActive != true) dispatchEvent(StoryDetailEvent.ChatStartReset)
                     load(showProgress = state.story == null)
                 }
 
@@ -219,7 +221,9 @@ class StoryDetailViewModel
 
                 StoryDetailEvent.ChatStartFailed -> state.copy(isStartingChat = false, startChatFailed = true)
 
-                StoryDetailEvent.ChatStartReset -> state.copy(isStartingChat = false, startChatFailed = false)
+                // 실패 문구는 남긴다 — 화면이 다시 만들어졌다고 해서 사용자가 읽지 않은 실패가 없던 일이 되지는 않는다.
+                // 다시 누르면 ChatStartRequested 가 지운다.
+                StoryDetailEvent.ChatStartReset -> state.copy(isStartingChat = false)
             }
     }
 

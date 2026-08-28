@@ -225,12 +225,18 @@ private fun DraftSaveButton(
  *
  * 목적지가 아니라 Activity 수명을 본다 — 목적지 수명은 퍼널을 떠나는 이동에서도 멈추므로,
  * 저장하지 않고 나가기로 한 조작까지 저장해 버린다.
+ *
+ * 회전·다크 모드·글자 크기 변경도 Activity 를 멈춘다. 그 `ON_STOP` 은 백그라운드 진입이 아니므로
+ * 걸러 낸다 — 걸러 내지 않으면 저장하지 않고 나가려던 편집이 화면을 한 번 돌린 것만으로 디스크에 남는다.
  */
 @Composable
 internal fun SaveDraftWhenBackgrounded(onSave: () -> Unit) {
-    val activityLifecycleOwner = LocalActivity.current as? LifecycleOwner
-    if (activityLifecycleOwner != null) {
-        LifecycleEventEffect(Lifecycle.Event.ON_STOP, activityLifecycleOwner, onSave)
+    val activity = LocalActivity.current
+    val activityLifecycleOwner = activity as? LifecycleOwner
+    if (activity != null && activityLifecycleOwner != null) {
+        LifecycleEventEffect(Lifecycle.Event.ON_STOP, activityLifecycleOwner) {
+            if (!activity.isChangingConfigurations) onSave()
+        }
     }
 }
 
