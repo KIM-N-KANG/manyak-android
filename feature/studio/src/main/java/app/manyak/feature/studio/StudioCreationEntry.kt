@@ -60,10 +60,14 @@ internal fun PendingCreationBannerRow(
     }
 }
 
-/** 배너가 아닌 경로로 진입할 때 임시 저장본을 이어갈지 새로 시작할지 묻는다(3-1 제작 임시 저장). */
+/**
+ * 배너가 아닌 경로로 진입할 때, 임시 저장본을 버리고 새로 시작할지 묻는다.
+ *
+ * 이어가는 길은 이 다이얼로그가 아니라 목록 위 배너가 맡는다 — 여기서는 임시 저장본을 버리는
+ * 것만 확인받고, 닫으면 아무 일도 일어나지 않는다.
+ */
 @Composable
 internal fun ResumeChoiceDialog(
-    onResume: () -> Unit,
     onStartNew: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -87,24 +91,25 @@ internal fun ResumeChoiceDialog(
         },
         confirmButton = {
             Button(
-                onClick = onResume,
+                onClick = onStartNew,
                 shape = ManyakTheme.shapes.control,
+                // 임시 저장본을 버리는 쪽이라 다른 경고 다이얼로그와 같은 위험 색을 쓴다.
                 colors =
                     ButtonDefaults.buttonColors(
-                        containerColor = ManyakTheme.colors.brand,
-                        contentColor = ManyakTheme.colors.textInverse,
+                        containerColor = ManyakTheme.colors.backgroundDangerSubtle,
+                        contentColor = ManyakTheme.colors.textDanger,
                     ),
             ) {
                 Text(
-                    text = stringResource(R.string.studio_pending_banner_resume),
+                    text = stringResource(R.string.studio_pending_dialog_start_new),
                     style = ManyakTheme.typography.labelLarge,
                 )
             }
         },
         dismissButton = {
-            TextButton(onClick = onStartNew) {
+            TextButton(onClick = onDismiss) {
                 Text(
-                    text = stringResource(R.string.studio_pending_dialog_start_new),
+                    text = stringResource(R.string.studio_pending_dialog_close),
                     style = ManyakTheme.typography.labelLarge,
                     color = ManyakTheme.colors.textSubtle,
                 )

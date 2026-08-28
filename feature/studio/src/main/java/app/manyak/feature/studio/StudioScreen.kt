@@ -154,7 +154,6 @@ private fun StudioContent(
 
     if (state.showResumeChoiceDialog) {
         ResumeChoiceDialog(
-            onResume = { onIntent(StudioIntent.ResumeCreation) },
             onStartNew = { onIntent(StudioIntent.StartNewCreation) },
             onDismiss = { onIntent(StudioIntent.DismissResumeChoiceDialog) },
         )
