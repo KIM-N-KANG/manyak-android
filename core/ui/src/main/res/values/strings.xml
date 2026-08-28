@@ -234,6 +234,28 @@
     <string name="story_detail_start_chat">채팅 시작하기</string>
     <string name="story_detail_start_chat_failed">채팅을 시작하지 못했어요</string>
 
+    <!-- 채팅 목록 -->
+    <string name="chat_list_loading">채팅 불러오는 중</string>
+    <string name="chat_list_empty_title">아직 진행중인 채팅이 없어요</string>
+    <string name="chat_list_empty_description">스토리를 만든 후 채팅으로 이야기를 이어가보세요</string>
+    <!-- 웹은 스토리 보유 여부로 안내를 가르지만, 앱에서는 제작 탭이 그 갈래를 이미 안에 담고 있다. -->
+    <string name="chat_list_empty_action">제작 탭으로 가기</string>
+    <!-- 완료된 턴이 없는 채팅(생성 직후)의 미리보기 자리. -->
+    <string name="chat_list_preview_empty">채팅을 시작하고 이야기를 이어가 보세요</string>
+    <!-- 카드 하나가 링크 하나다. 제목·미리보기·메타는 카드 안에서 이미 읽히므로 동작 이름만 붙인다. -->
+    <string name="chat_list_card_action">채팅 보기</string>
+    <!-- 메타 값은 숫자만 보이므로 낭독기에는 무엇의 수·시각인지 함께 읽힌다. -->
+    <string name="chat_list_turn_count_description">턴 %1$s회</string>
+    <string name="chat_list_updated_at_description">마지막 진행 %1$s</string>
+
+    <!-- 상대 시간. 웹과 같은 경계에서 바뀌어야 같은 채팅이 두 클라이언트에서 같은 시각으로 읽힌다. -->
+    <string name="relative_time_just_now">방금 전</string>
+    <string name="relative_time_minutes">%1$d분 전</string>
+    <string name="relative_time_hours">%1$d시간 전</string>
+    <string name="relative_time_today">오늘</string>
+    <string name="relative_time_yesterday">어제</string>
+    <string name="relative_time_days">%1$d일 전</string>
+
     <!-- 채팅방 -->
     <string name="chat_room_load_error">채팅을 불러오지 못했어요</string>
 

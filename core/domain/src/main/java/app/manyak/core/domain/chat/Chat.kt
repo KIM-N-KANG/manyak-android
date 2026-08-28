@@ -8,6 +8,23 @@ data class CreatedChat(
     val id: String,
 )
 
+/**
+ * 채팅 목록 카드 한 건. 카드가 그리지 않는 참조 스토리 ID·도달 엔딩은 담지 않는다.
+ *
+ * [updatedAtEpochMillis] 가 문자열이 아니라 시각인 이유는 카드가 상대 시간("3일 전")으로 그리기
+ * 때문이다. 와이어 형식을 아는 곳은 데이터 계층이고, 형식이 예상과 다르면 `null` 로 와서 카드가
+ * 시각 자리를 그리지 않는다.
+ */
+data class ChatSummary(
+    val id: String,
+    val storyTitle: String,
+    val thumbnailUrl: String?,
+    /** 마지막 AI 출력 전문. 완료 턴이 없는 채팅은 빈 문자열이며 카드가 안내 문구로 대신한다. */
+    val lastStoryPreview: String,
+    val turnCount: Long,
+    val updatedAtEpochMillis: Long?,
+)
+
 /** 채팅 상세. 렌더 순서는 프롤로그 → 각 턴(사용자 입력 → AI 출력)이다. */
 data class ChatDetail(
     val id: String,

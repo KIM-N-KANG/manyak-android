@@ -14,6 +14,14 @@ interface ChatRepository {
         startSettingId: String? = null,
     ): DomainResult<CreatedChat>
 
+    /**
+     * 내 채팅 목록 — 최근 활동순. 서버가 준 순서를 그대로 돌려주고 여기서 다시 정렬하지 않는다.
+     *
+     * 앱은 로그인 필수라 서재의 정본이 언제나 서버다. 웹처럼 로컬에 채팅 ID 를 모아 두었다가
+     * 배치로 조회하는 경로는 두지 않는다.
+     */
+    suspend fun myChats(): DomainResult<List<ChatSummary>>
+
     /** 채팅 상세 — 스토리 제목·프롤로그·턴 이력·추천 입력. */
     suspend fun chatDetail(chatId: String): DomainResult<ChatDetail>
 }

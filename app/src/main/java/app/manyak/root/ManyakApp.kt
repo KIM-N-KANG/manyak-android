@@ -187,6 +187,9 @@ private fun MainNavDisplay() {
                         // 상세는 셸 위에 쌓여 헤더도 하단 탭도 없는 전체 화면이 되고, 뒤로가기는
                         // 셸이 든 선택 탭으로 그대로 돌아온다.
                         onOpenStory = { storyId -> backStack.add(StoryDetailRoute(storyId)) },
+                        // 채팅 목록에서 이어가기 — 상세에서 시작한 채팅과 같은 목적지를 쌓고,
+                        // 뒤로가기는 채팅 탭으로 돌아온다.
+                        onOpenChat = { chatId -> backStack.add(ChatRoomRoute(chatId)) },
                         onCreateStory = { backStack.add(CreateKeywordRoute) },
                         // 재개·복구 진입 — 레코드가 가리키는 단계까지 체인을 쌓는다.
                         onResumeCreation = { resumePoint -> backStack.addCreationResumeChain(resumePoint) },

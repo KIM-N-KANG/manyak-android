@@ -78,6 +78,7 @@ private enum class MainTab(
 @Composable
 fun MainTabsScreen(
     onOpenStory: (String) -> Unit,
+    onOpenChat: (String) -> Unit,
     onCreateStory: () -> Unit,
     onResumeCreation: (CreationResumePoint) -> Unit,
     modifier: Modifier = Modifier,
@@ -112,6 +113,10 @@ fun MainTabsScreen(
             contentPadding = innerPadding,
             onLeaveTab = { selectedTab = MainTab.HOME },
             onOpenStory = onOpenStory,
+            onOpenChat = onOpenChat,
+            // 빈 채팅 목록의 안내가 제작으로 보내는 자리. 목적지를 쌓지 않고 탭을 바꾸는 것이 핵심이다 —
+            // push 하면 뒤로가기가 채팅 탭으로 되돌아와, 탭 전환이 이력에 쌓이지 않는다는 규칙이 깨진다.
+            onGoToStudio = { selectedTab = MainTab.STUDIO },
             onCreateStory = onCreateStory,
             onResumeCreation = onResumeCreation,
         )
@@ -149,6 +154,8 @@ private fun MainTabsContent(
     contentPadding: PaddingValues,
     onLeaveTab: () -> Unit,
     onOpenStory: (String) -> Unit,
+    onOpenChat: (String) -> Unit,
+    onGoToStudio: () -> Unit,
     onCreateStory: () -> Unit,
     onResumeCreation: (CreationResumePoint) -> Unit,
 ) {
@@ -163,7 +170,13 @@ private fun MainTabsContent(
         }
     val chatEntries =
         rememberTabEntries(backStacks.getValue(MainTab.CHAT)) {
-            entry<ChatListRoute> { ChatListScreen(contentPadding = padding.value) }
+            entry<ChatListRoute> {
+                ChatListScreen(
+                    contentPadding = padding.value,
+                    onOpenChat = onOpenChat,
+                    onGoToStudio = onGoToStudio,
+                )
+            }
         }
     val studioEntries =
         rememberTabEntries(backStacks.getValue(MainTab.STUDIO)) {

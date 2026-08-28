@@ -32,8 +32,40 @@ import coil3.compose.AsyncImage
 import java.text.NumberFormat
 
 /**
- * 목록 카드의 3:4 표지. 원본이 없으면 placeholder 아이콘을 그리고, 우하단에 누적 턴 수 뱃지를
- * 얹는다. 카드 종류별 표시(예: 홈의 ORIGINAL 태그)는 [overlay] 로 표지 위에 더한다.
+ * 목록 카드의 3:4 표지에 누적 턴 수 뱃지를 얹은 것. 카드 종류별 표시(예: 홈의 ORIGINAL 태그)는
+ * [overlay] 로 표지 위에 더한다.
+ *
+ * 뱃지를 얹을 수 없는 자리 — 채팅 목록 카드처럼 표지가 작거나, 턴 수를 카드의 다른 자리가 이미
+ * 말하는 곳 — 는 [StoryCover] 를 직접 쓴다.
+ */
+@Composable
+fun StoryThumbnail(
+    thumbnailUrl: String?,
+    turnCount: Long,
+    modifier: Modifier = Modifier,
+    badgeScale: StoryBadgeScale = StoryBadgeScale.Compact,
+    shape: Shape = ManyakTheme.shapes.thumbnail,
+    showBorder: Boolean = false,
+    overlay: @Composable BoxScope.() -> Unit = {},
+) {
+    StoryCover(
+        thumbnailUrl = thumbnailUrl,
+        modifier = modifier,
+        shape = shape,
+        showBorder = showBorder,
+    ) {
+        overlay()
+        TurnCountBadge(
+            modifier = Modifier.align(Alignment.BottomEnd).padding(ManyakTheme.spacing.compact),
+            turnCount = turnCount,
+            scale = badgeScale,
+        )
+    }
+}
+
+/**
+ * 3:4 표지 본체. 원본이 없으면 placeholder 아이콘을 그린다. 표지 위에 얹는 것은 전부 [overlay] 가
+ * 맡으므로 이 컴포넌트 자체는 무엇이 위에 오는지 알지 않는다.
  *
  * 화면 폭을 꽉 채우는 자리에서는 [shape] 를 각지게 바꾼다 — 가장자리에 닿은 둥근 모서리는
  * 화면이 잘린 것처럼 보인다.
@@ -42,11 +74,9 @@ import java.text.NumberFormat
  * 가장자리가 배경에 묻히지 않게 한다.
  */
 @Composable
-fun StoryThumbnail(
+fun StoryCover(
     thumbnailUrl: String?,
-    turnCount: Long,
     modifier: Modifier = Modifier,
-    badgeScale: StoryBadgeScale = StoryBadgeScale.Compact,
     shape: Shape = ManyakTheme.shapes.thumbnail,
     showBorder: Boolean = false,
     overlay: @Composable BoxScope.() -> Unit = {},
@@ -97,11 +127,6 @@ fun StoryThumbnail(
             }
         }
         overlay()
-        TurnCountBadge(
-            modifier = Modifier.align(Alignment.BottomEnd).padding(ManyakTheme.spacing.compact),
-            turnCount = turnCount,
-            scale = badgeScale,
-        )
     }
 }
 
