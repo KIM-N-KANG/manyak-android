@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 /**
  * 목록 응답 한 건. 오리지널·내 스토리 목록이 같은 모양을 쓴다. 카드가 쓰지 않는
- * 좋아요 수·등록 상태·생성 시각은 역직렬화하지 않는다.
+ * 좋아요 수·등록 상태는 역직렬화하지 않는다.
  *
  * 식별자 밖의 필드에 기본값을 두는 이유는 서버가 필드를 하나 빼도 목록 전체가 실패로
  * 떨어지지 않게 하기 위해서다.
@@ -19,6 +19,7 @@ data class StorySummaryDto(
     val oneLineIntro: String = "",
     val genres: List<String> = emptyList(),
     val turnCount: Long = 0,
+    val createdAt: String? = null,
 )
 
 @Serializable
@@ -35,4 +36,5 @@ fun StorySummaryDto.toDomain(): StorySummary =
         oneLineIntro = oneLineIntro,
         genres = genres.filter { genre -> genre.isNotBlank() },
         turnCount = turnCount,
+        createdDate = createdAt?.toDisplayDate(),
     )

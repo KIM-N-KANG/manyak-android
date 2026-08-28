@@ -53,10 +53,10 @@ internal fun DeleteStoryDialog(
                 shape = ManyakTheme.shapes.control,
                 colors =
                     ButtonDefaults.buttonColors(
-                        containerColor = ManyakTheme.colors.backgroundDangerBold,
-                        contentColor = ManyakTheme.colors.textInverse,
-                        disabledContainerColor = ManyakTheme.colors.backgroundDangerBold,
-                        disabledContentColor = ManyakTheme.colors.textInverse,
+                        containerColor = ManyakTheme.colors.backgroundDangerSubtle,
+                        contentColor = ManyakTheme.colors.textDanger,
+                        disabledContainerColor = ManyakTheme.colors.backgroundDangerSubtle,
+                        disabledContentColor = ManyakTheme.colors.textDanger,
                     ),
             ) {
                 Box(contentAlignment = Alignment.Center) {
@@ -69,7 +69,7 @@ internal fun DeleteStoryDialog(
                     if (isDeleting) {
                         ManyakProgressIndicator(
                             modifier = Modifier.size(ManyakTheme.sizes.icon),
-                            color = ManyakTheme.colors.textInverse,
+                            color = ManyakTheme.colors.textDanger,
                         )
                     }
                 }

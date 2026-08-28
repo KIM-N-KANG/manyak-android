@@ -8,10 +8,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -156,7 +154,6 @@ private fun StudioContent(
 
     if (state.showResumeChoiceDialog) {
         ResumeChoiceDialog(
-            onResume = { onIntent(StudioIntent.ResumeCreation) },
             onStartNew = { onIntent(StudioIntent.StartNewCreation) },
             onDismiss = { onIntent(StudioIntent.DismissResumeChoiceDialog) },
         )
@@ -214,25 +211,20 @@ private fun MyStories(
         onRefresh = { onIntent(StudioIntent.Refresh) },
         contentPadding = contentPadding,
     ) {
-        LazyVerticalGrid(
+        LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            columns = GridCells.Fixed(GRID_COLUMNS),
             contentPadding = contentPadding.withScreenMargins(),
-            horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
-            // 배너·제목도 그리드의 한 줄이라 이 값이 그 아래 간격까지 겸한다.
+            // 배너도 목록의 한 줄이라 이 값이 배너와 첫 카드 사이 간격까지 겸한다.
             verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
         ) {
             // 배너도 목록과 함께 스크롤된다 — 맨 위로 돌아오면 다시 보이므로 진입을 잃지 않는다.
             banner?.let {
-                item(key = PENDING_BANNER_KEY, span = { GridItemSpan(maxLineSpan) }) {
+                item(key = PENDING_BANNER_KEY) {
                     PendingCreationBannerRow(
                         banner = it,
                         onResume = { onIntent(StudioIntent.ResumeCreation) },
                     )
                 }
-            }
-            item(key = SECTION_TITLE_KEY, span = { GridItemSpan(maxLineSpan) }) {
-                SectionTitle()
             }
             items(stories, key = { story -> story.id }) { story ->
                 MyStoryCard(
@@ -245,18 +237,7 @@ private fun MyStories(
     }
 }
 
-/** 셸 헤더의 탭 이름과 달리 목록 안에서 스크롤과 함께 밀려 올라가는 제목이다. */
-@Composable
-private fun SectionTitle(modifier: Modifier = Modifier) {
-    Text(
-        modifier = modifier.fillMaxWidth(),
-        text = stringResource(R.string.studio_my_stories),
-        style = ManyakTheme.typography.titleMediumStrong,
-        color = ManyakTheme.colors.text,
-    )
-}
-
-/** 빈 목록은 섹션 제목 없이 안내 문구만 둔다 — 만들기 진입은 FAB 이 맡는다. */
+/** 빈 목록은 안내 문구만 둔다 — 만들기 진입은 FAB 이 맡는다. */
 @Composable
 private fun EmptyStories(modifier: Modifier = Modifier) {
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
@@ -268,10 +249,7 @@ private fun EmptyStories(modifier: Modifier = Modifier) {
     }
 }
 
-internal const val GRID_COLUMNS = 2
-
 private const val PENDING_BANNER_KEY = "pending-banner"
-private const val SECTION_TITLE_KEY = "section-title"
 
 @Preview(showBackground = true, name = "제작 · 목록")
 @Composable
@@ -329,6 +307,7 @@ private fun previewStories(): List<StorySummary> =
             oneLineIntro = "멈춘 시계탑을 고치는 견습공의 하루",
             genres = listOf("판타지", "미스터리"),
             turnCount = 1_284,
+            createdDate = "2026-08-03",
         ),
         previewStory(
             id = "2",
@@ -336,6 +315,7 @@ private fun previewStories(): List<StorySummary> =
             oneLineIntro = "보름달이 뜨는 밤에만 열리는 상점",
             genres = listOf("로맨스", "판타지", "미스터리", "스릴러", "코미디"),
             turnCount = 312,
+            createdDate = "2026-07-21",
         ),
         previewStory(
             id = "3",
@@ -343,16 +323,26 @@ private fun previewStories(): List<StorySummary> =
             oneLineIntro = "아주 긴 한 줄 소개도 마찬가지로 한 줄에서 잘려 카드 높이를 흔들지 않는다",
             genres = listOf("일상"),
             turnCount = 7,
+            createdDate = "2026-06-30",
         ),
-        previewStory(id = "4", title = "잊힌 등대", oneLineIntro = "", genres = emptyList(), turnCount = 0),
+        previewStory(
+            id = "4",
+            title = "잊힌 등대",
+            oneLineIntro = "",
+            genres = emptyList(),
+            turnCount = 0,
+            createdDate = null,
+        ),
     )
 
+@Suppress("LongParameterList")
 private fun previewStory(
     id: String,
     title: String,
     oneLineIntro: String,
     genres: List<String>,
     turnCount: Long,
+    createdDate: String?,
 ): StorySummary =
     StorySummary(
         id = id,
@@ -362,4 +352,5 @@ private fun previewStory(
         oneLineIntro = oneLineIntro,
         genres = genres,
         turnCount = turnCount,
+        createdDate = createdDate,
     )

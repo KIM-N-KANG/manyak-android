@@ -17,6 +17,7 @@ internal fun sampleStories(): List<StorySummary> =
             oneLineIntro = "멈춘 시계탑을 고치는 견습공의 하루",
             genres = listOf("판타지", "미스터리"),
             turnCount = 128,
+            createdDate = "2026-08-03",
         ),
         StorySummary(
             id = "story-2",
@@ -26,6 +27,7 @@ internal fun sampleStories(): List<StorySummary> =
             oneLineIntro = "",
             genres = emptyList(),
             turnCount = 0,
+            createdDate = null,
         ),
     )
 

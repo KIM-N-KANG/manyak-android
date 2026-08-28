@@ -211,4 +211,5 @@ private fun previewStory(
         oneLineIntro = "",
         genres = emptyList(),
         turnCount = turnCount,
+        createdDate = null,
     )

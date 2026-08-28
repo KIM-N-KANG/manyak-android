@@ -1,30 +1,26 @@
 package app.manyak.feature.chat
 
-import androidx.annotation.DrawableRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.manyak.core.domain.chat.ChatSummary
 import app.manyak.core.ui.R
+import app.manyak.core.ui.component.MetaChip
 import app.manyak.core.ui.component.StoryCover
 import app.manyak.core.ui.theme.ManyakTheme
 import java.text.NumberFormat
@@ -123,7 +119,7 @@ private fun ChatMeta(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         MetaChip(
-            iconRes = R.drawable.ic_dialog,
+            iconRes = R.drawable.ic_comment_dots,
             text = formattedTurnCount,
             description = stringResource(R.string.chat_list_turn_count_description, formattedTurnCount),
         )
@@ -138,35 +134,5 @@ private fun ChatMeta(
     }
 }
 
-/** 아이콘에는 이름을 붙이지 않고, 숫자·시각만 읽히면 무엇인지 알 수 없으므로 칩 전체를 한 문장으로 읽힌다. */
-@Composable
-private fun MetaChip(
-    @DrawableRes iconRes: Int,
-    text: String,
-    description: String,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier.clearAndSetSemantics { contentDescription = description },
-        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(
-            modifier = Modifier.size(MetaIconSize),
-            painter = painterResource(iconRes),
-            contentDescription = null,
-            tint = ManyakTheme.colors.textSubtle,
-        )
-        Text(
-            text = text,
-            style = ManyakTheme.typography.bodyMedium,
-            color = ManyakTheme.colors.textSubtle,
-        )
-    }
-}
-
 /** 카드에서 표지가 차지하는 폭. 3:4 라 높이는 약 69dp 가 된다. */
 internal val CoverWidth: Dp = 52.dp
-
-/** 메타 글줄 옆에 붙는 아이콘이라 토큰의 가장 작은 아이콘보다도 작다. 웹도 같은 14px 다. */
-private val MetaIconSize = 14.dp
