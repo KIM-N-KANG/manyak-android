@@ -36,8 +36,8 @@ import java.text.NumberFormat
  *
  * 카드 전체가 채팅방 진입이고 옵션 메뉴는 두지 않는다. 삭제 진입점은 채팅방 옵션 메뉴 하나다.
  *
- * 제목·미리보기가 **1줄 고정**이라 텍스트 길이와 무관하게 카드 높이가 같다. 표지가 3:4 라 폭 48dp 면
- * 높이가 64dp 이고, 세로 여백까지 더해 터치 타깃 48dp 는 자연히 넘는다.
+ * 제목·미리보기가 **1줄 고정**이라 텍스트 길이와 무관하게 카드 높이가 같다. 표지가 3:4 라 폭을
+ * 정하면 높이가 따라오고, 세로 여백까지 더해 터치 타깃 48dp 는 자연히 넘는다.
  */
 @Composable
 internal fun ChatCard(
@@ -165,8 +165,8 @@ private fun MetaChip(
     }
 }
 
-/** 카드에서 표지가 차지하는 폭. 3:4 라 높이는 64dp 가 된다. */
-internal val CoverWidth: Dp = 48.dp
+/** 카드에서 표지가 차지하는 폭. 3:4 라 높이는 약 69dp 가 된다. */
+internal val CoverWidth: Dp = 52.dp
 
 /** 메타 글줄 옆에 붙는 아이콘이라 토큰의 가장 작은 아이콘보다도 작다. 웹도 같은 14px 다. */
 private val MetaIconSize = 14.dp
