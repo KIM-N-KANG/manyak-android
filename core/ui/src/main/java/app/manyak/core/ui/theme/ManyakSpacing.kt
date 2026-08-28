@@ -26,6 +26,8 @@ data class ManyakSpacing(
     val controlHorizontal: Dp,
     /** 16dp — 화면 좌우 여백 */
     val gutter: Dp,
+    /** 20dp — 읽는 본문 블록의 세로 여백과 블록 안 조각 사이 */
+    val passage: Dp,
     /** 24dp — 섹션 사이 */
     val section: Dp,
     /** 32dp — 큰 구획 사이 */
@@ -46,6 +48,7 @@ internal val ManyakDefaultSpacing =
         component = 12.dp,
         controlHorizontal = 14.dp,
         gutter = 16.dp,
+        passage = 20.dp,
         section = 24.dp,
         block = 32.dp,
         screenTop = 64.dp,

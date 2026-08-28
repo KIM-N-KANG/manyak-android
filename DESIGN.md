@@ -465,6 +465,7 @@ components:
 | `{spacing.component}` | 12dp | 컴포넌트 내부 기본 |
 | `{spacing.control-horizontal}` | 14dp | 입력·칩·메뉴 항목의 가로 패딩 |
 | `{spacing.gutter}` | 16dp | 화면 좌우 여백 |
+| `{spacing.passage}` | 20dp | 읽는 본문 블록의 세로 여백과 블록 안 조각 사이 |
 | `{spacing.section}` | 24dp | 섹션 사이 |
 | `{spacing.block}` | 32dp | 큰 구획 사이 |
 | `{spacing.screen-bottom}` | 40dp | 스크롤 영역 하단 여유 |

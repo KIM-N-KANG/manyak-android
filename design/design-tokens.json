@@ -416,6 +416,10 @@
       "$type": "dimension",
       "$value": "16px"
     },
+    "250": {
+      "$type": "dimension",
+      "$value": "20px"
+    },
     "300": {
       "$type": "dimension",
       "$value": "24px"
@@ -962,6 +966,11 @@
         "$type": "dimension",
         "$value": "{space.200}",
         "$description": "화면 좌우 여백"
+      },
+      "passage": {
+        "$type": "dimension",
+        "$value": "{space.250}",
+        "$description": "읽는 본문 블록의 세로 여백과 블록 안 조각 사이"
       },
       "section": {
         "$type": "dimension",
