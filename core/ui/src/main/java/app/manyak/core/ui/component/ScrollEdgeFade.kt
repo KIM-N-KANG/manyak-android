@@ -34,4 +34,4 @@ fun ScrollEdgeFade(modifier: Modifier = Modifier) {
 }
 
 /** 페이드 띠의 높이. 겹치는 쪽이 아래 여백을 맞춰야 할 때 읽는다. */
-val ScrollEdgeFadeHeight: Dp = 24.dp
+val ScrollEdgeFadeHeight: Dp = 16.dp

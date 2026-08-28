@@ -178,7 +178,7 @@ private fun KeywordStepBody(
                         onOpenAddKeyword = onOpenAddKeyword,
                     )
                 }
-                item { Spacer(modifier = Modifier.height(ManyakTheme.spacing.screenBottom)) }
+                item { Spacer(modifier = Modifier.height(ManyakTheme.spacing.gutter)) }
             }
     }
 }

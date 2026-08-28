@@ -62,6 +62,7 @@ import app.manyak.core.domain.story.StoryDetail
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.LoadFailedContent
 import app.manyak.core.ui.component.STORY_THUMBNAIL_ASPECT_RATIO
+import app.manyak.core.ui.component.ScrollEdgeFadeHeight
 import app.manyak.core.ui.component.StoryOverlayScrim
 import app.manyak.core.ui.component.rememberDelayedProgressVisibility
 import app.manyak.core.ui.theme.ManyakTheme
@@ -261,7 +262,10 @@ private fun StoryDetailLoaded(
             modifier = Modifier.fillMaxSize(),
             state = listState,
             // 표지가 앱바 뒤까지 올라가야 해서 위쪽 여백은 두지 않고, 좌우 여백은 본문 항목이 각자 건다.
-            contentPadding = PaddingValues(bottom = ctaHeight),
+            // 아래는 CTA 의 불투명한 부분만큼만 비운다 — 그 위 페이드 띠는 콘텐츠를 덮는 자리라
+            // 여백까지 잡으면 마지막 줄 아래가 그만큼 비어 보인다.
+            contentPadding =
+                PaddingValues(bottom = (ctaHeight - ScrollEdgeFadeHeight).coerceAtLeast(0.dp)),
             verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.block),
         ) {
             storyDetailBody(

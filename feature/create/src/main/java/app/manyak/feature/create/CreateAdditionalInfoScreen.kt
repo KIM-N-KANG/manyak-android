@@ -229,7 +229,7 @@ private fun AdditionalInfoList(
         state.completionFailure?.let { failure ->
             item { CompletionFailureNotice(failure = failure) }
         }
-        item { Spacer(modifier = Modifier.height(ManyakTheme.spacing.screenBottom)) }
+        item { Spacer(modifier = Modifier.height(ManyakTheme.spacing.gutter)) }
     }
 }
 

@@ -214,7 +214,7 @@ private fun StorylineResultContent(
             state.storylines.isEmpty() ->
                 item { StorylineNotice(text = stringResource(R.string.create_storyline_empty), isError = false) }
         }
-        item { Spacer(modifier = Modifier.height(ManyakTheme.spacing.screenBottom)) }
+        item { Spacer(modifier = Modifier.height(ManyakTheme.spacing.gutter)) }
     }
 }
 
