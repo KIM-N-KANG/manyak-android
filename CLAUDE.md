@@ -37,6 +37,7 @@
 - 사용자에게 보이는 문자열은 전부 `core/ui/src/main/res/values/strings.xml`에 둡니다. 화면 코드에 문구를 직접 쓰지 않습니다.
 - 코드 주석에 `하네스 §3-3-3`·`공통 계약`·`FE-SCREEN-008`·`검수 #4` 같은 스펙 참조를 넣지 않습니다. 코드만 보고는 알 수 없는 이유만 남기고, 결정 근거는 `docs/plans/*.md`가 소유합니다.
 - 화면 ViewModel은 `:core:ui`의 `MviViewModel`을 상속합니다(Intent → 부수효과 → Event → `reduce` → State, 일회성 출력은 Effect). `reduce`는 순수 함수입니다.
+- 화면 부수효과는 구성 변경(회전·다크 모드·글자 크기)에서 다시 실행되고 `remember` 값은 사라집니다. 되돌리기·초기화·저장을 하는 효과는 `configuration-changes` 스킬 기준으로 점검합니다.
 - 라우트는 `:core:navigation`의 `Routes.kt` 한 곳에만 등록하고 **복원 가능한 식별자만** 싣습니다. `:feature:*` 끼리 직접 참조하지 않습니다.
 - 오류는 `:core:domain`의 `DomainError`로 올리고 문구는 `:core:ui`의 `DomainErrorMessages`가 붙입니다.
 - 두 번째 사용처가 생기기 전에는 공용 컴포넌트를 `:core:ui`로 올리지 않습니다.
@@ -72,3 +73,5 @@
 
 - CI(`.github/workflows/android-ci.yml`)가 PR에서 `check`와 `assembleDebug`를 돌립니다. **같은 전체 작업을 로컬에서 자동으로 반복하지 않습니다.**
 - 로컬에서는 변경 모듈의 컴파일과 직접 관련된 테스트를 먼저 돌립니다. 전체 게이트는 사용자가 요청했거나 공통 빌드 로직을 바꿨을 때만 실행합니다.
+- 로컬 검증에 변경 모듈의 `ktlintCheck`·`detekt`도 포함합니다. 몇 초면 끝나고, CI까지 끌고 갈 종류가 아닙니다.
+- UI 동작에 대한 주장은 `installDebug` 후 에뮬레이터에서 `adb exec-out screencap`으로 전후를 비교해 확인합니다. 확인하지 못했으면 코드로만 판단했다고 밝힙니다.
