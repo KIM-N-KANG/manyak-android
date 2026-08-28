@@ -152,7 +152,8 @@ private fun Chats(
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            // 좌우 여백은 카드가 스스로 갖는다 — 카드 전체가 눌리는 자리라 눌림 효과가 화면 폭을 채워야 한다.
+            // 좌우 여백은 카드가 스스로 갖는다 — 카드 전체가 눌리는 자리라 눌림 효과가 화면 폭을
+            // 채워야 한다. 그래서 셸이 넘긴 여백에 하단 여유만 더한다.
             contentPadding = contentPadding.withListBottomMargin(),
         ) {
             items(chats, key = { chat -> chat.id }) { chat ->
@@ -210,8 +211,12 @@ private fun EmptyChats(
 }
 
 /**
- * 셸이 넘긴 여백에 스크롤 하단 여유만 더한다. 좌우에는 화면 여백을 더하지 않는다 — 그 여백은
- * 카드 안쪽에 있어야 눌림 효과가 화면 폭을 채운다.
+ * 셸이 넘긴 여백에 하단 여유만 더한다. 좌우에는 화면 여백을 더하지 않는다 — 그 여백은 카드 안쪽에
+ * 있어야 눌림 효과가 화면 폭을 채운다.
+ *
+ * 하단 여유가 홈·제작 그리드(`gutter`)보다 작은 `compact` 인 이유는 이 목록의 리듬이 다르기
+ * 때문이다 — 카드가 스스로 위아래 `compact` 를 갖고 붙어 있으므로, 마지막 카드 아래도 같은 값이어야
+ * 카드 사이와 끝이 같은 간격으로 읽힌다.
  */
 @Composable
 private fun PaddingValues.withListBottomMargin(): PaddingValues {
@@ -220,7 +225,7 @@ private fun PaddingValues.withListBottomMargin(): PaddingValues {
         start = calculateStartPadding(layoutDirection),
         top = calculateTopPadding(),
         end = calculateEndPadding(layoutDirection),
-        bottom = calculateBottomPadding() + ManyakTheme.spacing.screenBottom,
+        bottom = calculateBottomPadding() + ManyakTheme.spacing.compact,
     )
 }
 

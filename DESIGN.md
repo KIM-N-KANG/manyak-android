@@ -474,6 +474,7 @@ components:
 ### 화면 구성
 
 - 화면 좌우는 `{spacing.gutter}`, 스크롤 영역 하단은 `{spacing.screen-bottom}`.
+- **하단 탭 셸을 두르는 목록은 `{spacing.screen-bottom}` 대신 그 목록의 리듬에 맞춥니다.** 홈·제작 그리드는 행 사이 간격과 같은 `{spacing.gutter}`, 채팅 목록은 카드가 스스로 갖는 세로 여백과 같은 `{spacing.compact}`입니다. 아래에 늘 떠 있는 탭 바가 이미 끝을 알리므로 전체 화면만큼의 여유가 필요하지 않습니다. 셸이 없는 전체 화면(채팅방·제작 퍼널)에는 `{spacing.screen-bottom}`을 그대로 적용합니다.
 - 섹션 사이는 `{spacing.section}`, 성격이 다른 큰 구획 사이는 `{spacing.block}`.
 - 시스템 인셋은 `enableEdgeToEdge()`와 `Scaffold`의 `innerPadding`으로 처리하고, 화면 여백은 그 안쪽에 얹습니다.
 
