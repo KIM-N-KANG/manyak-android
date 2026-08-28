@@ -18,6 +18,14 @@
         "$type": "color",
         "$value": "#EEEEEE"
       },
+      "200": {
+        "$type": "color",
+        "$value": "#D3D3D3"
+      },
+      "250": {
+        "$type": "color",
+        "$value": "#B9B9B9"
+      },
       "300": {
         "$type": "color",
         "$value": "#9F9F9F"
@@ -29,6 +37,10 @@
       "400": {
         "$type": "color",
         "$value": "#8D8D8D"
+      },
+      "450": {
+        "$type": "color",
+        "$value": "#858585"
       },
       "500": {
         "$type": "color",
@@ -49,6 +61,14 @@
       "750": {
         "$type": "color",
         "$value": "#575757"
+      },
+      "800": {
+        "$type": "color",
+        "$value": "#3A3A3A"
+      },
+      "850": {
+        "$type": "color",
+        "$value": "#2C2C2C"
       },
       "900": {
         "$type": "color",
@@ -1365,6 +1385,20 @@
           "hex": "#EEEEEE",
           "source": "anchor"
         },
+        "200": {
+          "hex": "#D3D3D3",
+          "source": "derived",
+          "note": "150-300 사이 명도 3등분의 첫 단계",
+          "target": 84.56,
+          "got": 84.56
+        },
+        "250": {
+          "hex": "#B9B9B9",
+          "source": "derived",
+          "note": "150-300 사이 명도 3등분의 둘째 단계",
+          "target": 75.03,
+          "got": 75.15
+        },
         "300": {
           "hex": "#9F9F9F",
           "source": "derived",
@@ -1382,6 +1416,13 @@
           "note": "라이트 color.border.input (채움색 위 3:1 확보)",
           "target": 3.25,
           "got": 3.24
+        },
+        "450": {
+          "hex": "#858585",
+          "source": "derived",
+          "note": "400-500 사이 명도 중간값",
+          "target": 55.72,
+          "got": 55.54
         },
         "500": {
           "hex": "#7E7E7E",
@@ -1411,6 +1452,20 @@
         "750": {
           "hex": "#575757",
           "source": "anchor"
+        },
+        "800": {
+          "hex": "#3A3A3A",
+          "source": "derived",
+          "note": "750-900 사이 명도 중간값 (L* 36.99 / 11.76 의 중점)",
+          "target": 24.37,
+          "got": 24.42
+        },
+        "850": {
+          "hex": "#2C2C2C",
+          "source": "derived",
+          "note": "800-900 사이 명도 중간값 (L* 24.42 / 11.76 의 중점)",
+          "target": 18.09,
+          "got": 18.00
         },
         "900": {
           "hex": "#1F1F1F",

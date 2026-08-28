@@ -27,7 +27,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -166,8 +169,16 @@ private fun StorylineResultContent(
     val listState = rememberLazyListState()
 
     // 다른 스토리라인으로 전환하면 본문을 처음부터 읽도록 스크롤을 되돌린다.
+    //
+    // 직전 값과 비교하는 이유는 이 효과가 **컴포지션에 들어올 때마다** 실행되기 때문이다. 구성 변경으로
+    // 화면이 다시 만들어지면 탭은 그대로인데도 효과가 다시 돌아 `listState` 가 방금 복원한 위치를
+    // 0 으로 덮어쓴다. 재생성 직후에는 직전 값이 현재 값으로 초기화되어 되돌리기가 일어나지 않는다.
+    var previousIndex by remember { mutableIntStateOf(state.activeIndex) }
+
     LaunchedEffect(state.activeIndex) {
-        listState.scrollToItem(0)
+        val switched = state.activeIndex != previousIndex
+        previousIndex = state.activeIndex
+        if (switched) listState.scrollToItem(0)
     }
 
     LazyColumn(modifier = modifier, state = listState) {

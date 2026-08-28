@@ -22,8 +22,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -97,7 +98,7 @@ private fun CreateKeywordContent(
     onIntent: (CreateKeywordIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var addKeywordTarget by remember { mutableStateOf<KeywordTarget?>(null) }
+    var addKeywordTarget by rememberSaveable(stateSaver = KeywordTargetSaver) { mutableStateOf<KeywordTarget?>(null) }
     val imeVisible = WindowInsets.isImeVisible
     val focusManager = LocalFocusManager.current
 
@@ -311,6 +312,41 @@ private fun FooterButtons(
         )
     }
 }
+
+/**
+ * 어느 대상에 키워드를 더하던 중인지를 재생성 너머로 남긴다. 남기지 않으면 입력하던 시트가
+ * 회전 한 번에 닫히고, 시트 안의 입력값도 함께 버려진다.
+ *
+ * 값이 셋뿐이라 [KeywordTarget] 에 직렬화를 붙이는 대신 여기서 좁게 변환한다.
+ */
+private val KeywordTargetSaver: Saver<KeywordTarget?, String> =
+    Saver(
+        save = { target ->
+            when (target) {
+                null -> null
+                KeywordTarget.Genre -> SAVED_TARGET_GENRE
+                KeywordTarget.Protagonist -> SAVED_TARGET_PROTAGONIST
+                is KeywordTarget.Supporting -> SAVED_TARGET_SUPPORTING_PREFIX + target.characterId
+            }
+        },
+        restore = { saved ->
+            when {
+                saved == SAVED_TARGET_GENRE -> KeywordTarget.Genre
+                saved == SAVED_TARGET_PROTAGONIST -> KeywordTarget.Protagonist
+                saved.startsWith(SAVED_TARGET_SUPPORTING_PREFIX) ->
+                    saved
+                        .removePrefix(SAVED_TARGET_SUPPORTING_PREFIX)
+                        .toLongOrNull()
+                        ?.let(KeywordTarget::Supporting)
+
+                else -> null
+            }
+        },
+    )
+
+private const val SAVED_TARGET_GENRE = "genre"
+private const val SAVED_TARGET_PROTAGONIST = "protagonist"
+private const val SAVED_TARGET_SUPPORTING_PREFIX = "supporting:"
 
 @Preview(showBackground = true, name = "키워드 선택 · 라이트")
 @Composable
