@@ -10,6 +10,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.constrainHeight
 import androidx.compose.ui.unit.constrainWidth
 import app.manyak.core.ui.R
+import app.manyak.core.ui.component.StoryBadgeScale
 import app.manyak.core.ui.component.StoryGenreBadge
 import app.manyak.core.ui.theme.ManyakTheme
 
@@ -36,7 +37,7 @@ internal fun StoryGenreBadges(
         val badgeConstraints = constraints.copy(minWidth = 0, minHeight = 0)
         val badges =
             subcompose(GenreBadgeSlot.Genres) {
-                genres.forEach { genre -> StoryGenreBadge(text = genre) }
+                genres.forEach { genre -> StoryGenreBadge(text = genre, scale = BadgeScale) }
             }.map { measurable -> measurable.measure(badgeConstraints) }
 
         val totalWidth = badges.sumOf { badge -> badge.width } + gap * (badges.size - 1)
@@ -103,7 +104,14 @@ private fun OverflowBadge(
     hiddenCount: Int,
     modifier: Modifier = Modifier,
 ) {
-    StoryGenreBadge(text = stringResource(R.string.studio_genre_overflow, hiddenCount), modifier = modifier)
+    StoryGenreBadge(
+        text = stringResource(R.string.studio_genre_overflow, hiddenCount),
+        modifier = modifier,
+        scale = BadgeScale,
+    )
 }
+
+/** 카드 뱃지도 상세와 같은 크기를 쓴다 — 표지가 커지며 카드가 좁은 자리가 아니게 됐다. */
+private val BadgeScale = StoryBadgeScale.Large
 
 private enum class GenreBadgeSlot { Genres, OverflowProbe, Overflow }

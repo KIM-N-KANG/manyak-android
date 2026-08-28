@@ -8,10 +8,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -214,25 +212,20 @@ private fun MyStories(
         onRefresh = { onIntent(StudioIntent.Refresh) },
         contentPadding = contentPadding,
     ) {
-        LazyVerticalGrid(
+        LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            columns = GridCells.Fixed(GRID_COLUMNS),
             contentPadding = contentPadding.withScreenMargins(),
-            horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
-            // 배너·제목도 그리드의 한 줄이라 이 값이 그 아래 간격까지 겸한다.
+            // 배너도 목록의 한 줄이라 이 값이 배너와 첫 카드 사이 간격까지 겸한다.
             verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
         ) {
             // 배너도 목록과 함께 스크롤된다 — 맨 위로 돌아오면 다시 보이므로 진입을 잃지 않는다.
             banner?.let {
-                item(key = PENDING_BANNER_KEY, span = { GridItemSpan(maxLineSpan) }) {
+                item(key = PENDING_BANNER_KEY) {
                     PendingCreationBannerRow(
                         banner = it,
                         onResume = { onIntent(StudioIntent.ResumeCreation) },
                     )
                 }
-            }
-            item(key = SECTION_TITLE_KEY, span = { GridItemSpan(maxLineSpan) }) {
-                SectionTitle()
             }
             items(stories, key = { story -> story.id }) { story ->
                 MyStoryCard(
@@ -245,18 +238,7 @@ private fun MyStories(
     }
 }
 
-/** 셸 헤더의 탭 이름과 달리 목록 안에서 스크롤과 함께 밀려 올라가는 제목이다. */
-@Composable
-private fun SectionTitle(modifier: Modifier = Modifier) {
-    Text(
-        modifier = modifier.fillMaxWidth(),
-        text = stringResource(R.string.studio_my_stories),
-        style = ManyakTheme.typography.titleMediumStrong,
-        color = ManyakTheme.colors.text,
-    )
-}
-
-/** 빈 목록은 섹션 제목 없이 안내 문구만 둔다 — 만들기 진입은 FAB 이 맡는다. */
+/** 빈 목록은 안내 문구만 둔다 — 만들기 진입은 FAB 이 맡는다. */
 @Composable
 private fun EmptyStories(modifier: Modifier = Modifier) {
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
@@ -268,10 +250,7 @@ private fun EmptyStories(modifier: Modifier = Modifier) {
     }
 }
 
-internal const val GRID_COLUMNS = 2
-
 private const val PENDING_BANNER_KEY = "pending-banner"
-private const val SECTION_TITLE_KEY = "section-title"
 
 @Preview(showBackground = true, name = "제작 · 목록")
 @Composable
