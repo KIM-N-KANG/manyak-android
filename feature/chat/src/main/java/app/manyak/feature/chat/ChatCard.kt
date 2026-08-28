@@ -119,7 +119,7 @@ private fun ChatMeta(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         MetaChip(
-            iconRes = R.drawable.ic_dialog,
+            iconRes = R.drawable.ic_comment_dots,
             text = formattedTurnCount,
             description = stringResource(R.string.chat_list_turn_count_description, formattedTurnCount),
         )
