@@ -151,9 +151,10 @@ spacing:
   component: 12dp
   control-horizontal: 14dp
   gutter: 16dp
+  passage: 20dp
   section: 24dp
   block: 32dp
-  screen-bottom: 40dp
+  screen-bottom: 32dp
 
 components:
   screen:
@@ -468,7 +469,7 @@ components:
 | `{spacing.passage}` | 20dp | 읽는 본문 블록의 세로 여백과 블록 안 조각 사이 |
 | `{spacing.section}` | 24dp | 섹션 사이 |
 | `{spacing.block}` | 32dp | 큰 구획 사이 |
-| `{spacing.screen-bottom}` | 40dp | 스크롤 영역 하단 여유 |
+| `{spacing.screen-bottom}` | 32dp | 스크롤 영역 하단 여유 |
 
 2dp 격자이며, **시맨틱 이름이 붙은 단계만 둡니다.** 안 쓰는 중간 단계가 있으면 언젠가 이름 없이 쓰이고, 그러면 시맨틱 층이 무의미해집니다.
 

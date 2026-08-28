@@ -34,7 +34,7 @@ data class ManyakSpacing(
     val block: Dp,
     /** 64dp — 화면 상단 첫 요소 위 여유 */
     val screenTop: Dp,
-    /** 40dp — 스크롤 영역 하단 여유 */
+    /** 32dp — 스크롤 영역 하단 여유 */
     val screenBottom: Dp,
 )
 

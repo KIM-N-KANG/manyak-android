@@ -984,7 +984,7 @@
       },
       "screen-bottom": {
         "$type": "dimension",
-        "$value": "{space.500}",
+        "$value": "{space.400}",
         "$description": "스크롤 영역 하단 여유"
       }
     },
@@ -1745,9 +1745,9 @@
         "px": 32
       },
       "space.screen-bottom": {
-        "ref": "500",
+        "ref": "400",
         "use": "스크롤 영역 하단 여유",
-        "px": 40
+        "px": 32
       }
     },
     "app.manyak.typography": {
@@ -1906,6 +1906,10 @@
       [
         "200",
         16
+      ],
+      [
+        "250",
+        20
       ],
       [
         "300",
