@@ -1,28 +1,289 @@
 package app.manyak.feature.chat
 
+import android.widget.Toast
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
+import app.manyak.core.domain.chat.ChatSummary
+import app.manyak.core.ui.R
+import app.manyak.core.ui.component.LoadFailedContent
+import app.manyak.core.ui.component.ManyakPullToRefreshBox
+import app.manyak.core.ui.component.rememberDelayedProgressVisibility
+import app.manyak.core.ui.theme.ManyakTheme
 
 /**
- * 채팅 탭. 헤더와 하단 탭은 셸이 그리므로 여기서는 콘텐츠만 둔다.
+ * 채팅 탭(진행 중인 채팅 목록). 헤더와 하단 탭은 셸이 그리므로 여기서는 콘텐츠만 둔다.
  *
- * 아직 목록이 없어 비어 있다. [contentPadding] 은 셸의 chrome 이 차지한 만큼이므로, 스크롤 목록을
- * 넣을 때는 `Modifier.padding` 이 아니라 목록의 `contentPadding` 으로 넘겨야 콘텐츠가 헤더 아래로
- * 흘러 들어간다.
+ * [contentPadding] 은 셸의 chrome 이 차지한 만큼이므로 목록에는 `Modifier.padding` 이 아니라
+ * 목록의 `contentPadding` 으로 넘긴다 — 그래야 콘텐츠가 헤더 아래로 흘러 들어간다.
+ *
+ * 목록 조회는 화면이 보일 때 시작한다. 채팅방은 이 화면 위가 아니라 셸 위에 쌓여 돌아와도
+ * ViewModel 이 그대로 살아 있으므로, 조회 시점을 화면 수명에 맞춰야 떠난 사이의 변화가 반영된다.
  */
 @Composable
 fun ChatListScreen(
     contentPadding: PaddingValues,
+    onOpenChat: (String) -> Unit,
+    onGoToStudio: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: ChatListViewModel = hiltViewModel(),
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val context = LocalContext.current
+
+    LaunchedEffect(viewModel, lifecycleOwner) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            viewModel.uiEffect.collect { effect ->
+                when (effect) {
+                    ChatListEffect.ShowRefreshFailed ->
+                        Toast.makeText(context, R.string.story_refresh_failed, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    // 채팅방에서 턴을 진행하고 돌아온 자리라, 미리보기·턴 수·순서가 모두 바뀌어 있다.
+    LifecycleEventEffect(Lifecycle.Event.ON_START) { viewModel.onIntent(ChatListIntent.ScreenShown) }
+
+    ChatListContent(
+        state = state,
+        contentPadding = contentPadding,
+        onOpenChat = onOpenChat,
+        onGoToStudio = onGoToStudio,
+        onIntent = viewModel::onIntent,
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun ChatListContent(
+    state: ChatListUiState,
+    contentPadding: PaddingValues,
+    onOpenChat: (String) -> Unit,
+    onGoToStudio: () -> Unit,
+    onIntent: (ChatListIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .padding(contentPadding),
+    val showSkeleton = rememberDelayedProgressVisibility(state.isLoading)
+
+    Box(modifier = modifier.fillMaxSize()) {
+        when {
+            state.isLoading ->
+                // 금방 끝나는 조회에서 자리만 잡았다 사라지는 깜빡임을 만들지 않는다.
+                if (showSkeleton) ChatListSkeleton(contentPadding = contentPadding)
+
+            state.loadFailed ->
+                LoadFailedContent(
+                    message = stringResource(R.string.chat_room_load_error),
+                    onRetry = { onIntent(ChatListIntent.Retry) },
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(contentPadding)
+                            .padding(horizontal = ManyakTheme.spacing.gutter),
+                )
+
+            state.chats.isEmpty() ->
+                EmptyChats(
+                    onGoToStudio = onGoToStudio,
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(contentPadding)
+                            .padding(horizontal = ManyakTheme.spacing.gutter),
+                )
+
+            else ->
+                Chats(
+                    chats = state.chats,
+                    isRefreshing = state.isRefreshing,
+                    contentPadding = contentPadding,
+                    onOpenChat = onOpenChat,
+                    onIntent = onIntent,
+                )
+        }
+    }
+}
+
+@Composable
+private fun Chats(
+    chats: List<ChatSummary>,
+    isRefreshing: Boolean,
+    contentPadding: PaddingValues,
+    onOpenChat: (String) -> Unit,
+    onIntent: (ChatListIntent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    ManyakPullToRefreshBox(
+        modifier = modifier,
+        isRefreshing = isRefreshing,
+        onRefresh = { onIntent(ChatListIntent.Refresh) },
+        contentPadding = contentPadding,
+    ) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            // 좌우 여백은 카드가 스스로 갖는다 — 카드 전체가 눌리는 자리라 눌림 효과가 화면 폭을
+            // 채워야 한다. 그래서 셸이 넘긴 여백에 하단 여유만 더한다.
+            contentPadding = contentPadding.withListBottomMargin(),
+        ) {
+            items(chats, key = { chat -> chat.id }) { chat ->
+                ChatCard(chat = chat, onClick = { onOpenChat(chat.id) })
+            }
+        }
+    }
+}
+
+/**
+ * 빈 목록. 웹은 저장한 스토리 유무로 안내를 가르지만, 앱에서 두 갈래의 종착지는 제작 탭 하나다 —
+ * 스토리가 없으면 그 탭이 이미 빈 안내와 FAB 으로 만들기를 유도한다. 버튼은 목적지를 쌓지 않고
+ * 탭을 바꾼다.
+ */
+@Composable
+private fun EmptyChats(
+    onGoToStudio: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact, Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            modifier = Modifier.fillMaxWidth(),
+            text = stringResource(R.string.chat_list_empty_title),
+            style = ManyakTheme.typography.bodyLargeStrong,
+            color = ManyakTheme.colors.text,
+            textAlign = TextAlign.Center,
+        )
+        Text(
+            modifier = Modifier.fillMaxWidth().padding(bottom = ManyakTheme.spacing.inline),
+            text = stringResource(R.string.chat_list_empty_description),
+            style = ManyakTheme.typography.bodyMedium,
+            color = ManyakTheme.colors.textSubtle,
+            textAlign = TextAlign.Center,
+        )
+        Button(
+            modifier = Modifier.heightIn(min = ManyakTheme.sizes.control),
+            onClick = onGoToStudio,
+            shape = ManyakTheme.shapes.control,
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor = ManyakTheme.colors.brand,
+                    contentColor = ManyakTheme.colors.textInverse,
+                ),
+        ) {
+            Text(
+                text = stringResource(R.string.chat_list_empty_action),
+                style = ManyakTheme.typography.labelLarge,
+            )
+        }
+    }
+}
+
+/**
+ * 셸이 넘긴 여백에 하단 여유만 더한다. 좌우에는 화면 여백을 더하지 않는다 — 그 여백은 카드 안쪽에
+ * 있어야 눌림 효과가 화면 폭을 채운다.
+ *
+ * 하단 여유가 홈·제작 그리드(`gutter`)보다 작은 `compact` 인 이유는 이 목록의 리듬이 다르기
+ * 때문이다 — 카드가 스스로 위아래 `compact` 를 갖고 붙어 있으므로, 마지막 카드 아래도 같은 값이어야
+ * 카드 사이와 끝이 같은 간격으로 읽힌다.
+ */
+@Composable
+private fun PaddingValues.withListBottomMargin(): PaddingValues {
+    val layoutDirection = LocalLayoutDirection.current
+    return PaddingValues(
+        start = calculateStartPadding(layoutDirection),
+        top = calculateTopPadding(),
+        end = calculateEndPadding(layoutDirection),
+        bottom = calculateBottomPadding() + ManyakTheme.spacing.compact,
+    )
+}
+
+@Preview(showBackground = true, name = "채팅 · 목록")
+@Composable
+private fun ChatListScreenPreview() {
+    ManyakTheme(darkTheme = false) {
+        ChatListContent(
+            state = ChatListUiState(isLoading = false, chats = previewChats()),
+            contentPadding = PaddingValues(0.dp),
+            onOpenChat = {},
+            onGoToStudio = {},
+            onIntent = {},
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "채팅 · 빈 목록")
+@Composable
+private fun ChatListScreenEmptyPreview() {
+    ManyakTheme(darkTheme = false) {
+        ChatListContent(
+            state = ChatListUiState(isLoading = false),
+            contentPadding = PaddingValues(0.dp),
+            onOpenChat = {},
+            onGoToStudio = {},
+            onIntent = {},
+        )
+    }
+}
+
+private fun previewChats(): List<ChatSummary> {
+    // 미리보기는 고정된 시각이어야 캡처가 매번 달라지지 않는다.
+    val anchor = 1_756_000_000_000L
+    return listOf(
+        ChatSummary(
+            id = "1",
+            storyTitle = "두 번째 시계공",
+            thumbnailUrl = null,
+            lastStoryPreview = "낡은 문이 열리자 태엽 소리가 쏟아진다. 당신은 한 발 물러섰다.",
+            turnCount = 21,
+            updatedAtEpochMillis = anchor - 90_000L,
+        ),
+        ChatSummary(
+            id = "2",
+            storyTitle = "아주 긴 제목은 한 줄에서 잘려 카드 높이를 흔들지 않는다",
+            thumbnailUrl = null,
+            lastStoryPreview = "아주 긴 미리보기도 마찬가지로 한 줄에서 잘려 카드 높이를 흔들지 않는다",
+            turnCount = 1_284,
+            updatedAtEpochMillis = anchor - 30_000_000L,
+        ),
+        ChatSummary(
+            id = "3",
+            storyTitle = "달빛 아래의 계약",
+            thumbnailUrl = null,
+            lastStoryPreview = "",
+            turnCount = 0,
+            updatedAtEpochMillis = anchor - 900_000_000L,
+        ),
     )
 }

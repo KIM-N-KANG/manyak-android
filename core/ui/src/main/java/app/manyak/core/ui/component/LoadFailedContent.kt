@@ -30,7 +30,7 @@ fun LoadFailedContent(
         Text(
             modifier = Modifier.fillMaxWidth(),
             text = message,
-            style = ManyakTheme.typography.bodyMedium,
+            style = ManyakTheme.typography.bodyLargeStrong,
             color = ManyakTheme.colors.text,
             textAlign = TextAlign.Center,
         )

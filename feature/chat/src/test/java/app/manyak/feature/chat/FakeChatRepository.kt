@@ -2,9 +2,11 @@ package app.manyak.feature.chat
 
 import app.manyak.core.domain.chat.ChatDetail
 import app.manyak.core.domain.chat.ChatRepository
+import app.manyak.core.domain.chat.ChatSummary
 import app.manyak.core.domain.chat.ChatTurn
 import app.manyak.core.domain.chat.CreatedChat
 import app.manyak.core.domain.error.DomainResult
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.yield
 
 internal fun sampleChatDetail(chatId: String = "chat-1"): ChatDetail =
@@ -20,10 +22,45 @@ internal fun sampleChatDetail(chatId: String = "chat-1"): ChatDetail =
         suggestedInputs = emptyList(),
     )
 
+/** 서버가 최근 활동순으로 준 목록. 순서를 그대로 지키는지 보려고 제목을 시각 순서와 어긋나게 둔다. */
+internal fun sampleChats(): List<ChatSummary> =
+    listOf(
+        ChatSummary(
+            id = "chat-1",
+            storyTitle = "두 번째 시계공",
+            thumbnailUrl = null,
+            lastStoryPreview = "문이 열리자 태엽 소리가 쏟아진다.",
+            turnCount = 21,
+            updatedAtEpochMillis = 1_756_000_000_000L,
+        ),
+        ChatSummary(
+            id = "chat-2",
+            storyTitle = "달빛 아래의 계약",
+            thumbnailUrl = null,
+            lastStoryPreview = "",
+            turnCount = 0,
+            updatedAtEpochMillis = 1_755_000_000_000L,
+        ),
+    )
+
 /** 조회 결과는 큐에서 꺼내고 비면 성공 샘플을 돌려준다. */
 internal class FakeChatRepository : ChatRepository {
     val chatDetailIds = mutableListOf<String>()
     val queuedChatDetailResults = ArrayDeque<DomainResult<ChatDetail>>()
+    val queuedMyChatsResults = ArrayDeque<DomainResult<List<ChatSummary>>>()
+
+    var myChatsCallCount = 0
+        private set
+
+    /** 조회가 응답 전에 멈춰 있어야 하는 테스트가 채운다 — 취소되면 여기서 던진다. */
+    var myChatsGate: CompletableDeferred<Unit>? = null
+
+    override suspend fun myChats(): DomainResult<List<ChatSummary>> {
+        yield()
+        myChatsCallCount++
+        myChatsGate?.await()
+        return queuedMyChatsResults.removeFirstOrNull() ?: DomainResult.Success(sampleChats())
+    }
 
     override suspend fun createChat(
         storyId: String,

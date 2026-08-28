@@ -2,6 +2,7 @@ package app.manyak.feature.create
 
 import app.manyak.core.domain.chat.ChatDetail
 import app.manyak.core.domain.chat.ChatRepository
+import app.manyak.core.domain.chat.ChatSummary
 import app.manyak.core.domain.chat.CreatedChat
 import app.manyak.core.domain.error.DomainResult
 import kotlinx.coroutines.yield
@@ -20,6 +21,9 @@ internal class FakeChatRepository : ChatRepository {
         createChatStoryIds += storyId
         return queuedCreateChatResults.removeFirstOrNull() ?: DomainResult.Success(CreatedChat(id = "chat-1"))
     }
+
+    /** 퍼널은 채팅 목록을 조회하지 않는다 — 계약을 채우기만 한다. */
+    override suspend fun myChats(): DomainResult<List<ChatSummary>> = DomainResult.Success(emptyList())
 
     override suspend fun chatDetail(chatId: String): DomainResult<ChatDetail> {
         yield()
