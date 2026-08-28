@@ -5,7 +5,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -54,8 +53,8 @@ import kotlin.math.roundToInt
  * 내가 만든 스토리 카드. 채팅 목록 카드와 같은 가로 행이지만 표지가 훨씬 크다 — 내가 만든 표지가
  * 스토리를 가려내는 첫 단서라 목록에서 그림이 먼저 읽혀야 한다.
  *
- * 표지 폭은 카드 폭의 [COVER_WIDTH_FRACTION] 이고 3:4 라 높이가 따라온다. 카드 높이는 이 표지가
- * 정하므로 텍스트 길이와 무관하게 같다. 텍스트 영역에 고정 높이를 두면 시스템 글자 크기를 키웠을 때
+ * 표지 폭은 [CoverWidth] 로 고정이고 3:4 라 높이가 따라온다. 카드 높이는 이 표지가 정하므로
+ * 텍스트 길이와도, 창 크기와도 무관하게 같다. 텍스트 영역에 고정 높이를 두면 시스템 글자 크기를 키웠을 때
  * 잘리므로 높이를 지정하지 않는다.
  *
  * 제목은 두 줄, 한 줄 소개도 두 줄까지 쓰고 넘치면 자른다. 누적 턴 수는 표지 위 뱃지가 아니라
@@ -69,36 +68,29 @@ internal fun MyStoryCard(
     onDeleteClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // 표지 폭이 카드 폭에서 나오므로 표지 높이도 여기서만 알 수 있다. 글 영역이 그 높이를 최소치로
-    // 삼아야 메타 줄이 표지 아랫변에 맞는다.
-    BoxWithConstraints(
+    Row(
         // 카드 전체가 상세로 가는 링크다. 표지 위 더보기 버튼은 자기 클릭을 먹어 상세로 가지 않는다.
         modifier = modifier.fillMaxWidth().clickable(role = Role.Button, onClick = onClick),
+        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
+        // 텍스트는 표지보다 짧아 가운데 정렬하면 제목이 표지 한가운데에서 시작한다.
+        verticalAlignment = Alignment.Top,
     ) {
-        val coverWidth = maxWidth * COVER_WIDTH_FRACTION
-        val coverHeight = coverWidth / STORY_THUMBNAIL_ASPECT_RATIO
-
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
-            // 텍스트는 표지보다 짧아 가운데 정렬하면 제목이 표지 한가운데에서 시작한다.
-            verticalAlignment = Alignment.Top,
-        ) {
-            StoryCover(
-                thumbnailUrl = story.thumbnailUrl,
-                modifier = Modifier.width(coverWidth),
-                showBorder = true,
-            )
-            StoryInfo(
-                story = story,
-                onDeleteClick = onDeleteClick,
-                modifier =
-                    Modifier
-                        .weight(1f)
-                        .heightIn(min = coverHeight)
-                        // 글줄 상자가 글자에 바짝 붙어 있어, 표지 윗변·아랫변과 같은 줄에서 시작하면 눌려 보인다.
-                        .padding(vertical = ManyakTheme.spacing.hairline),
-            )
-        }
+        StoryCover(
+            thumbnailUrl = story.thumbnailUrl,
+            modifier = Modifier.width(CoverWidth),
+            showBorder = true,
+        )
+        StoryInfo(
+            story = story,
+            onDeleteClick = onDeleteClick,
+            modifier =
+                Modifier
+                    .weight(1f)
+                    // 글 영역이 표지 높이를 최소치로 삼아야 메타 줄이 표지 아랫변에 맞는다.
+                    .heightIn(min = CoverHeight)
+                    // 글줄 상자가 글자에 바짝 붙어 있어, 표지 윗변·아랫변과 같은 줄에서 시작하면 눌려 보인다.
+                    .padding(vertical = ManyakTheme.spacing.hairline),
+        )
     }
 }
 
@@ -349,10 +341,15 @@ private fun DeleteMenuItem(
 }
 
 /**
- * 카드 폭에서 표지가 차지하는 비율. 화면 좌우 여백을 뺀 카드 폭 기준이라 화면 폭의 3분의 1 언저리가
- * 된다. 골격도 같은 값을 써야 목록이 도착할 때 표지 자리가 튀지 않는다.
+ * 표지 폭. 카드 폭의 비율이 아니라 고정 값이다 — 비율은 열 수가 창 폭을 따라가는 그리드의 셈이고,
+ * 행 카드에 쓰면 가로 화면에서 표지 하나가 화면을 다 먹는다(채팅 카드도 같은 이유로 고정 폭이다).
+ *
+ * 골격도 같은 값을 써야 목록이 도착할 때 표지 자리가 튀지 않는다.
  */
-internal const val COVER_WIDTH_FRACTION = 1f / 3f
+internal val CoverWidth = 128.dp
+
+/** 표지 높이. 3:4 라 폭에서 따라온다. 글 영역이 이 높이를 최소치로 삼는다. */
+internal val CoverHeight = CoverWidth / STORY_THUMBNAIL_ASPECT_RATIO
 
 /**
  * 제목·한 줄 소개의 줄바꿈. 한글은 기본값이 글자 단위로 끊어 "선행만 한 / 다" 처럼 어절 가운데가

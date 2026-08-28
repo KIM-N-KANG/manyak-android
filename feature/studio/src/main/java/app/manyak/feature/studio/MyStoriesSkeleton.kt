@@ -1,7 +1,6 @@
 package app.manyak.feature.studio
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -21,14 +20,13 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.STORY_THUMBNAIL_ASPECT_RATIO
 import app.manyak.core.ui.component.SkeletonPlaceholder
 import app.manyak.core.ui.component.rememberSkeletonPulseAlpha
 import app.manyak.core.ui.theme.ManyakTheme
 
 /**
  * 조회 중 자리를 잡아 두는 골격. 카드와 **같은 행 구조**(3:4 표지 + 제목 줄 + 소개 두 줄 + 뱃지 줄 + 메타 줄)라
- * 목록이 도착할 때 요소가 튀지 않는다. 표지 폭도 카드와 같은 [COVER_WIDTH_FRACTION] 을 쓴다.
+ * 목록이 도착할 때 요소가 튀지 않는다. 표지도 카드와 같은 [CoverWidth] 를 쓴다.
  *
  * 표시 여부는 호출부가 지연 판정으로 정한다 — 금방 끝나는 조회에서는 아예 그리지 않는다.
  */
@@ -58,33 +56,29 @@ private fun CardPlaceholder(
     alpha: Float,
     modifier: Modifier = Modifier,
 ) {
-    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
-        val coverWidth = maxWidth * COVER_WIDTH_FRACTION
-        val coverHeight = coverWidth / STORY_THUMBNAIL_ASPECT_RATIO
-
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
-            verticalAlignment = Alignment.Top,
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
+        verticalAlignment = Alignment.Top,
+    ) {
+        SkeletonPlaceholder(
+            modifier = Modifier.width(CoverWidth).height(CoverHeight),
+            alpha = alpha,
+            shape = ManyakTheme.shapes.thumbnail,
+        )
+        Column(
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .heightIn(min = CoverHeight)
+                    .padding(vertical = ManyakTheme.spacing.hairline),
+            verticalArrangement = Arrangement.SpaceBetween,
         ) {
-            SkeletonPlaceholder(
-                modifier = Modifier.width(coverWidth).height(coverHeight),
+            TextLinesPlaceholder(alpha = alpha)
+            MetaLinePlaceholder(
                 alpha = alpha,
-                shape = ManyakTheme.shapes.thumbnail,
+                modifier = Modifier.padding(top = ManyakTheme.spacing.inline),
             )
-            Column(
-                modifier =
-                    Modifier
-                        .weight(1f)
-                        .heightIn(min = coverHeight)
-                        .padding(vertical = ManyakTheme.spacing.hairline),
-                verticalArrangement = Arrangement.SpaceBetween,
-            ) {
-                TextLinesPlaceholder(alpha = alpha)
-                MetaLinePlaceholder(
-                    alpha = alpha,
-                    modifier = Modifier.padding(top = ManyakTheme.spacing.inline),
-                )
-            }
         }
     }
 }
