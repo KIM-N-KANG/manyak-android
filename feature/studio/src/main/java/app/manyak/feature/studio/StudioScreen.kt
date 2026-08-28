@@ -329,6 +329,7 @@ private fun previewStories(): List<StorySummary> =
             oneLineIntro = "멈춘 시계탑을 고치는 견습공의 하루",
             genres = listOf("판타지", "미스터리"),
             turnCount = 1_284,
+            createdDate = "2026-08-03",
         ),
         previewStory(
             id = "2",
@@ -336,6 +337,7 @@ private fun previewStories(): List<StorySummary> =
             oneLineIntro = "보름달이 뜨는 밤에만 열리는 상점",
             genres = listOf("로맨스", "판타지", "미스터리", "스릴러", "코미디"),
             turnCount = 312,
+            createdDate = "2026-07-21",
         ),
         previewStory(
             id = "3",
@@ -343,16 +345,26 @@ private fun previewStories(): List<StorySummary> =
             oneLineIntro = "아주 긴 한 줄 소개도 마찬가지로 한 줄에서 잘려 카드 높이를 흔들지 않는다",
             genres = listOf("일상"),
             turnCount = 7,
+            createdDate = "2026-06-30",
         ),
-        previewStory(id = "4", title = "잊힌 등대", oneLineIntro = "", genres = emptyList(), turnCount = 0),
+        previewStory(
+            id = "4",
+            title = "잊힌 등대",
+            oneLineIntro = "",
+            genres = emptyList(),
+            turnCount = 0,
+            createdDate = null,
+        ),
     )
 
+@Suppress("LongParameterList")
 private fun previewStory(
     id: String,
     title: String,
     oneLineIntro: String,
     genres: List<String>,
     turnCount: Long,
+    createdDate: String?,
 ): StorySummary =
     StorySummary(
         id = id,
@@ -362,4 +374,5 @@ private fun previewStory(
         oneLineIntro = oneLineIntro,
         genres = genres,
         turnCount = turnCount,
+        createdDate = createdDate,
     )

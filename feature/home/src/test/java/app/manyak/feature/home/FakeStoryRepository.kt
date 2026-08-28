@@ -18,6 +18,7 @@ internal fun sampleStories(): List<StorySummary> =
             oneLineIntro = "",
             genres = emptyList(),
             turnCount = 128,
+            createdDate = "2026-08-03",
         ),
         StorySummary(
             id = "story-2",
@@ -27,6 +28,7 @@ internal fun sampleStories(): List<StorySummary> =
             oneLineIntro = "",
             genres = emptyList(),
             turnCount = 0,
+            createdDate = null,
         ),
     )
 
