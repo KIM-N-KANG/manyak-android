@@ -2,6 +2,7 @@ package app.manyak.feature.story
 
 import app.manyak.core.domain.chat.ChatDetail
 import app.manyak.core.domain.chat.ChatRepository
+import app.manyak.core.domain.chat.ChatSummary
 import app.manyak.core.domain.chat.CreatedChat
 import app.manyak.core.domain.error.DomainError
 import app.manyak.core.domain.error.DomainResult
@@ -84,6 +85,9 @@ internal class FakeChatRepository : ChatRepository {
         createChatStartSettingIds += startSettingId
         return queuedCreateChatResults.removeFirstOrNull() ?: DomainResult.Success(CreatedChat(id = "chat-1"))
     }
+
+    /** 상세는 채팅 목록을 조회하지 않는다 — 계약을 채우기만 한다. */
+    override suspend fun myChats(): DomainResult<List<ChatSummary>> = DomainResult.Success(emptyList())
 
     override suspend fun chatDetail(chatId: String): DomainResult<ChatDetail> =
         DomainResult.Failure(DomainError.Unknown)
