@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    전송. 뒤로가기와 같은 화살표를 시계 방향으로 90° 돌려 위를 향하게 한다 — 같은 획을 써야
+    두 아이콘의 굵기가 갈리지 않는다. 색은 사용처에서 tint 하므로 자산 자체는 단색으로 둔다.
+    원본: arrow-left-outline.svg (24×24).
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <group
+        android:rotation="90"
+        android:pivotX="12"
+        android:pivotY="12">
+
+        <path
+            android:pathData="M10.5303,5.4697C10.8232,5.7626,10.8232,6.2374,10.5303,6.5303L5.8107,11.25H20C20.4142,11.25,20.75,11.5858,20.75,12C20.75,12.4142,20.4142,12.75,20,12.75H5.8107L10.5303,17.4697C10.8232,17.7626,10.8232,18.2374,10.5303,18.5303C10.2374,18.8232,9.7626,18.8232,9.4697,18.5303L3.4697,12.5303C3.1768,12.2374,3.1768,11.7626,3.4697,11.4697L9.4697,5.4697C9.7626,5.1768,10.2374,5.1768,10.5303,5.4697Z"
+            android:fillColor="#FF000000"
+            android:fillType="evenOdd" />
+    </group>
+</vector>
