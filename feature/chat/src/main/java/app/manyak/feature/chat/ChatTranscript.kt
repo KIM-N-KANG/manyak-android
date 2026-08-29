@@ -1,5 +1,13 @@
 package app.manyak.feature.chat
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -107,9 +115,21 @@ internal fun ChatTranscript(
         // 목록이 컴포저 위 경계에서 잘리는 것을 부드럽게 만든다. 컴포저가 커지면 이 상자가 줄어들어
         // 페이드도 함께 따라 올라간다.
         ScrollEdgeFade(modifier = Modifier.align(Alignment.BottomCenter))
-        if (listState.canScrollForward) {
+        // 버튼이 가리키는 방향으로 드나든다 — 아래에서 올라와 나타나고, 아래로 내려가며 사라진다.
+        // 들어올 땐 감속해 자리를 잡고, 나갈 땐 가속해 비켜난다.
+        val enterMillis = ManyakTheme.motion.elementEnterMillis
+        val exitMillis = ManyakTheme.motion.elementExitMillis
+        AnimatedVisibility(
+            modifier = Modifier.align(Alignment.BottomCenter).padding(ManyakTheme.spacing.gutter),
+            visible = listState.canScrollForward,
+            enter =
+                slideInVertically(tween(enterMillis, easing = FastOutSlowInEasing)) { height -> height } +
+                    fadeIn(tween(enterMillis)),
+            exit =
+                slideOutVertically(tween(exitMillis, easing = FastOutLinearInEasing)) { height -> height } +
+                    fadeOut(tween(exitMillis)),
+        ) {
             ScrollToBottomButton(
-                modifier = Modifier.align(Alignment.BottomCenter).padding(ManyakTheme.spacing.gutter),
                 onClick = { scope.launch { listState.animateScrollToItem(itemCount - 1) } },
             )
         }
