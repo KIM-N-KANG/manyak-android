@@ -118,7 +118,7 @@ private fun StoryInfo(
                     modifier = Modifier.padding(top = ManyakTheme.spacing.inline),
                     text = story.oneLineIntro,
                     style =
-                        ManyakTheme.typography.bodyLarge.copy(
+                        ManyakTheme.typography.bodyMedium.copy(
                             lineBreak = PhraseLineBreak,
                             localeList = KoreanLocale,
                         ),
@@ -191,7 +191,7 @@ private fun TitleRow(
     var menuExpanded by remember { mutableStateOf(false) }
 
     val titleStyle =
-        ManyakTheme.typography.titleMedium.copy(
+        ManyakTheme.typography.bodyLargeStrong.copy(
             lineBreak = PhraseLineBreak,
             localeList = KoreanLocale,
         )
@@ -385,7 +385,7 @@ private val MoreButtonSize = 24.dp
  */
 private const val HANGUL_GLYPH_HEIGHT_RATIO = 0.73f
 
-private val MoreIconSize = 18.dp
+private val MoreIconSize = 16.dp
 
 private val MenuItemMinWidth = 120.dp
 

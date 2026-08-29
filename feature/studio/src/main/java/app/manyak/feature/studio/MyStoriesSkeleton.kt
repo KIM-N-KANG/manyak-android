@@ -92,8 +92,8 @@ private fun TextLinesPlaceholder(
     // 글줄 높이를 dp 로 박아 두면 시스템 글자 크기를 키웠을 때 골격만 제자리에 남는다.
     val density = LocalDensity.current
     val typography = ManyakTheme.typography
-    val titleHeight = with(density) { typography.titleMedium.fontSize.toDp() }
-    val introHeight = with(density) { typography.bodyLarge.fontSize.toDp() }
+    val titleHeight = with(density) { typography.bodyLargeStrong.fontSize.toDp() }
+    val introHeight = with(density) { typography.bodyMedium.fontSize.toDp() }
     // 뱃지 높이는 상세와 같은 크기(`StoryBadgeScale.Large`)의 글줄과 위아래 여백에서 나온다.
     val badgeHeight =
         with(density) { typography.labelLarge.lineHeight.toDp() } + ManyakTheme.spacing.inline * 2
