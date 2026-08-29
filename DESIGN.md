@@ -8,6 +8,7 @@ colors:
   text: "#131313"
   text-subtle: "#575757"
   text-subtlest: "#747474"
+  text-narration: "#747474"
   text-disabled: "#969696"
   step-indicator-active: "#9F9F9F"
   text-inverse: "#FFFFFF"
@@ -41,6 +42,7 @@ colors-dark:
   text: "#FCFCFC"
   text-subtle: "#9F9F9F"
   text-subtlest: "#8D8D8D"
+  text-narration: "#B9B9B9"
   text-disabled: "#7E7E7E"
   step-indicator-active: "#666666"
   text-inverse: "#FFFFFF"
@@ -397,11 +399,14 @@ components:
 | `{colors.text}` | #131313 | #FCFCFC | 본문·제목 기본 |
 | `{colors.text-subtle}` | #575757 | #9F9F9F | 보조 설명·메타 정보 |
 | `{colors.text-subtlest}` | #747474 | #8D8D8D | 약한 보조. `{colors.surface}` 위에서만 본문 크기로 |
+| `{colors.text-narration}` | #747474 | #B9B9B9 | 서사의 상황 묘사(`*…*`)와 상황 블럭 입력 |
 | `{colors.text-disabled}` | #969696 | #7E7E7E | 비활성·장식 전용. 읽어야 하는 텍스트에 쓰지 않음 |
 | `{colors.text-inverse}` | #FFFFFF | #FFFFFF | bold 배경 위 텍스트 |
 | `{colors.text-danger}` | #C1191C | #FF7669 | 오류 메시지 |
 | `{colors.text-warning}` | #9A5700 | #E09E32 | 경고 메시지 |
 | `{colors.text-information}` | #186AB7 | #6BB1FD | 안내 메시지 |
+
+`{colors.text-narration}`은 라이트에서 `{colors.text-subtlest}`와 같은 값이지만 **따로 둡니다** — 상황 묘사는 대사와 나란히 읽는 본문이라 약한 보조 텍스트보다 밝아야 하고, 다크에서 그 차이가 드러납니다. `{colors.background-neutral}` 위 대비는 라이트에서 `{colors.text-subtlest}`와 같은 4.29라 아래 제약을 함께 받습니다.
 
 ### 경계
 
@@ -636,7 +641,7 @@ components:
 
 카테고리 탭은 M3 `SecondaryTabRow` 기본을 쓴다(`TabRow`는 deprecated) — 컨테이너 `{colors.surface}`, 선택 라벨 `{colors.text}`, 비선택 `{colors.text-subtle}`, 잠금 `{colors.text-disabled}`, 필수 표시 `*`는 `{colors.text-danger}`. 선택 표시선은 탭 폭에 맞는 `{colors.text}` 1.5dp 선이다 — 선택 표시는 상태이지 다음 동작이 아니라서 초록을 쓰지 않고, 선택 라벨과 같은 색으로 묶는다. **눌림 리플은 끈다** — 탭을 누르면 라벨 색과 표시선이 곧바로 바뀌므로 그 변화 자체가 반응이고, 하단 내비게이션과 같은 이유다. 스크롤 시 탭만 상단에 고정하고 각 카테고리 콘텐츠는 탭 아래에서 시작한다.
 
-**스토리라인 단계** — 순번 탭(첫·두·세 번째)은 카테고리 탭과 같은 스타일을 그대로 쓰되 잠금과 필수 표시가 없다. 본문은 `story-body`(`{typography.body-reading}`)로 그린다 — 스토리라인은 스토리 본문의 미리보기라서 서사 서체의 자리다. 본문 마크업은 웹과 같은 규칙으로 파싱한다 — `**…**`는 볼드, 단일 `*…*`(내레이션·속마음)는 `{colors.text-subtle}`. 평가 버튼(좋아요·별로예요)은 `{sizes.input}` 정사각 아이콘 칩으로, 아이콘은 기본 크기(`{sizes.icon}`) 대신 16dp 로 한 단계 줄여 본문 옆 보조 동작으로 물러나게 하고, 키워드 칩과 같은 선택 문법을 쓴다 — 기본은 `{component.chip}`(흰 배경 + `{colors.border}` 1dp 경계 + `{colors.text}` 아이콘), 활성 시 좋아요는 `{component.chip-selected}`(브랜드 subtle 채움 + 브랜드 경계 + 브랜드 아이콘), 별로예요는 같은 문법의 danger 변형(`{colors.background-danger-subtle}` + `{colors.border-danger}` + `{colors.text-danger}`)이다. 아이콘은 `ic_thumb_up`·`ic_thumb_down`. 하단 CTA 쌍(다시 만들기·선택하기)은 퍼널 CTA 규칙 그대로다. 웹의 선택 키워드 드로어 트리거는 앱에서는 두지 않는다.
+**스토리라인 단계** — 순번 탭(첫·두·세 번째)은 카테고리 탭과 같은 스타일을 그대로 쓰되 잠금과 필수 표시가 없다. 본문은 `story-body`(`{typography.body-reading}`)로 그린다 — 스토리라인은 스토리 본문의 미리보기라서 서사 서체의 자리다. 본문 마크업은 웹과 같은 규칙으로 파싱한다 — `**…**`는 볼드, 단일 `*…*`(내레이션·속마음)는 `{colors.text-narration}`. 평가 버튼(좋아요·별로예요)은 `{sizes.input}` 정사각 아이콘 칩으로, 아이콘은 기본 크기(`{sizes.icon}`) 대신 16dp 로 한 단계 줄여 본문 옆 보조 동작으로 물러나게 하고, 키워드 칩과 같은 선택 문법을 쓴다 — 기본은 `{component.chip}`(흰 배경 + `{colors.border}` 1dp 경계 + `{colors.text}` 아이콘), 활성 시 좋아요는 `{component.chip-selected}`(브랜드 subtle 채움 + 브랜드 경계 + 브랜드 아이콘), 별로예요는 같은 문법의 danger 변형(`{colors.background-danger-subtle}` + `{colors.border-danger}` + `{colors.text-danger}`)이다. 아이콘은 `ic_thumb_up`·`ic_thumb_down`. 하단 CTA 쌍(다시 만들기·선택하기)은 퍼널 CTA 규칙 그대로다. 웹의 선택 키워드 드로어 트리거는 앱에서는 두지 않는다.
 
 **추가 정보 단계** — 선택한 스토리라인 본문은 `{colors.background-neutral}` 상자에 `{typography.body-reading}`으로 놓고, 기본은 한 줄로 접어 말줄임으로 끝낸 뒤 가운데의 더보기·접기(`{colors.text-subtle}` + 16dp 셰브론)로 펼친다 — 웹의 그라디언트 페이드 대신 말줄임을 쓴다. 추천 추가 정보는 키워드 칩과 같은 선택 문법의 칩을 폭을 채워 왼쪽 정렬로 세로 나열한다 — 문장 전체가 들어가는 다중행 칩이다. 자유 입력은 텍스트 필드 문법(`{component.text-field}`) 그대로 여러 줄을 허용하고 오른쪽 아래에 글자 수 카운터를 둔다. 행 오른쪽의 삭제(X)는 `{colors.text-subtle}` 고스트 아이콘 버튼이고, "정보 추가" 트리거는 인물 추가와 같은 모양으로 가운데에 놓인다. 하단 CTA 쌍(다시 선택하기·스토리 완성하기)은 퍼널 CTA 규칙 그대로다.
 

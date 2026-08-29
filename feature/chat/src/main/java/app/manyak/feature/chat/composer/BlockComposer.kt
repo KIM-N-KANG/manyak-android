@@ -171,7 +171,7 @@ private fun BlockInputRow(
 ) {
     val isSituation = block.type == InputBlockType.SITUATION
     // 라벨과 입력 글자를 같은 색으로 둔다 — 쓰는 중에도 상황이 강조로 나갈 것임이 보여야 한다.
-    val contentColor = if (isSituation) ManyakTheme.colors.textSubtlest else ManyakTheme.colors.text
+    val contentColor = if (isSituation) ManyakTheme.colors.textNarration else ManyakTheme.colors.text
     // 라벨에 종류별 순번을 붙인다 — 칸이 여럿일 때 방금 늘어난 자리가 어디인지 라벨만 보고 안다.
     val label =
         stringResource(

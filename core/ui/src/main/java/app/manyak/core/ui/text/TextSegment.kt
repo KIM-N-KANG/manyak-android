@@ -12,7 +12,7 @@ import app.manyak.core.ui.theme.ManyakTheme
 /** 텍스트를 스타일별로 나눈 조각. */
 data class TextSegment(
     val text: String,
-    /** 단일 *...* — 내레이션·속마음(보조 색상). */
+    /** 단일 *...* — 내레이션·속마음(서사 색상). */
     val emphasis: Boolean = false,
     /** 이중 **...** — 볼드. */
     val bold: Boolean = false,
@@ -49,9 +49,9 @@ fun parseTextSegments(line: String): List<TextSegment> {
     return segments
 }
 
-/** 파싱한 세그먼트를 스타일 있는 문자열로 조립한다. 강조는 보조 색으로, 볼드는 굵기로만 구분한다. */
+/** 파싱한 세그먼트를 스타일 있는 문자열로 조립한다. 강조는 서사 색으로, 볼드는 굵기로만 구분한다. */
 @Composable
-fun storyAnnotatedString(text: String): AnnotatedString = storyAnnotatedString(text, ManyakTheme.colors.textSubtlest)
+fun storyAnnotatedString(text: String): AnnotatedString = storyAnnotatedString(text, ManyakTheme.colors.textNarration)
 
 /**
  * 색을 직접 받는 변형.

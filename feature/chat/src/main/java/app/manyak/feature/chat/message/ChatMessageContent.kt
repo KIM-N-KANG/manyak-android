@@ -153,7 +153,7 @@ private fun ChatPassage(
     modifier: Modifier = Modifier,
     vertical: Boolean = true,
 ) {
-    val emphasisColor = ManyakTheme.colors.textSubtlest
+    val emphasisColor = ManyakTheme.colors.textNarration
     val annotated = remember(text, emphasisColor) { storyAnnotatedString(text, emphasisColor) }
     Text(
         modifier =

@@ -57,6 +57,9 @@ private val Blue950 = Color(0xFF003364)
  * 조합 제약은 토큰 빌드가 명도 대비로 검증했다. 특히 다음 두 조합은 쓰지 않는다.
  * - [textSubtlest]를 [backgroundNeutral] 계열 위에 — 4.5:1 미만이다. [textSubtle]을 쓴다.
  * - [textDisabled]를 읽어야 하는 텍스트에 — 배경색 위에서도 3:1 미만이다.
+ *
+ * [textNarration]은 [textSubtlest]와 라이트에서 같은 값이지만 **따로 둔다** — 서사의 상황 묘사는
+ * 본문과 함께 읽는 글이라 약한 보조 텍스트보다 밝아야 하고, 다크에서 그 차이가 드러난다.
  */
 @Immutable
 data class ManyakColors(
@@ -64,6 +67,7 @@ data class ManyakColors(
     val text: Color,
     val textSubtle: Color,
     val textSubtlest: Color,
+    val textNarration: Color,
     val textDisabled: Color,
     val textInverse: Color,
     val textBrand: Color,
@@ -100,6 +104,7 @@ internal val ManyakLightColors =
         text = Gray950,
         textSubtle = Gray750,
         textSubtlest = Gray550,
+        textNarration = Gray550,
         textDisabled = Gray350,
         textInverse = Gray0,
         textBrand = Green800,
@@ -136,6 +141,7 @@ internal val ManyakDarkColors =
         text = Gray50,
         textSubtle = Gray250,
         textSubtlest = Gray400,
+        textNarration = Gray250,
         textDisabled = Gray500,
         textInverse = Gray0,
         textBrand = Green400,
