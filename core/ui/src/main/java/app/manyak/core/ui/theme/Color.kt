@@ -3,7 +3,7 @@ package app.manyak.core.ui.theme
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 
-// Primitive — 팔레트. 시맨틱이 가리키는 단계만 둔다(전체 사다리는 design/design-tokens.json).
+// Primitive — 팔레트. 시맨틱이 가리키는 단계만 둔다.
 // private 이므로 화면 코드에서 직접 참조할 수 없다. 화면은 아래 시맨틱 이름만 쓴다.
 private val Gray0 = Color(0xFFFFFFFF)
 private val Gray50 = Color(0xFFFCFCFC)
