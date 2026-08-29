@@ -22,6 +22,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import app.manyak.core.domain.chat.ChatInputMode
@@ -52,6 +54,13 @@ internal fun ChatComposer(
         )
     val onSend: () -> Unit = { if (state.hasInput) actions.onSend() else actions.onSendRandomSuggestion() }
 
+    // 커서 위치는 화면 표현이라 상태에 올리지 않는다. 다만 "상황 추가"가 고른 구간을 감싸야 해서
+    // 입력창이 아니라 컴포저가 편집 값을 든다.
+    var plainValue by remember { mutableStateOf(state.plainText.asTextFieldValue()) }
+    LaunchedEffect(state.plainText) {
+        if (plainValue.text != state.plainText) plainValue = state.plainText.asTextFieldValue()
+    }
+
     Column(
         modifier = modifier.fillMaxWidth().padding(ManyakTheme.spacing.gutter),
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
@@ -67,9 +76,12 @@ internal fun ChatComposer(
 
             ChatInputMode.PLAIN ->
                 PlainInput(
-                    text = state.plainText,
+                    value = plainValue,
                     enabled = !isStreaming,
-                    onTextChange = actions.onPlainTextChange,
+                    onValueChange = { next ->
+                        plainValue = next
+                        if (next.text != state.plainText) actions.onPlainTextChange(next.text)
+                    },
                 )
         }
         ComposerToolbar(
@@ -78,6 +90,20 @@ internal fun ChatComposer(
             enabled = !isStreaming,
             sendState = sendState,
             actions = actions,
+            onInsertEmphasis = {
+                val inserted =
+                    insertEmphasisMarkers(
+                        text = plainValue.text,
+                        selectionStart = plainValue.selection.start,
+                        selectionEnd = plainValue.selection.end,
+                    )
+                plainValue =
+                    TextFieldValue(
+                        text = inserted.text,
+                        selection = TextRange(inserted.selectionStart, inserted.selectionEnd),
+                    )
+                actions.onPlainTextChange(inserted.text)
+            },
             onSend = onSend,
         )
     }
@@ -190,16 +216,16 @@ private fun BlockInputRow(
 
 @Composable
 private fun PlainInput(
-    text: String,
+    value: TextFieldValue,
     enabled: Boolean,
-    onTextChange: (String) -> Unit,
+    onValueChange: (TextFieldValue) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val maxHeight = LocalConfiguration.current.screenHeightDp.dp * PLAIN_INPUT_HEIGHT_FRACTION
-    SyncedTextField(
+    ComposerTextField(
         modifier = modifier.fillMaxWidth().heightIn(max = maxHeight),
-        text = text,
-        onTextChange = onTextChange,
+        value = value,
+        onValueChange = onValueChange,
         placeholder = stringResource(R.string.chat_composer_plain_placeholder),
         enabled = enabled,
     )
@@ -257,7 +283,6 @@ private fun previewActions(): ChatComposerActions =
         onBlockValueChange = { _, _ -> },
         onAddBlock = {},
         onRemoveBlock = {},
-        onInsertEmphasis = {},
         onModeChange = {},
         onChoicesEnabledChange = {},
         onSend = {},

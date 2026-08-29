@@ -8,7 +8,6 @@ internal data class ChatComposerActions(
     val onBlockValueChange: (Long, String) -> Unit,
     val onAddBlock: (InputBlockType) -> Unit,
     val onRemoveBlock: (Long) -> Unit,
-    val onInsertEmphasis: () -> Unit,
     val onModeChange: (ChatInputMode) -> Unit,
     val onChoicesEnabledChange: (Boolean) -> Unit,
     val onSend: () -> Unit,

@@ -23,6 +23,7 @@ internal fun ComposerToolbar(
     enabled: Boolean,
     sendState: SendButtonState,
     actions: ChatComposerActions,
+    onInsertEmphasis: () -> Unit,
     onSend: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -39,7 +40,7 @@ internal fun ComposerToolbar(
                 if (mode == ChatInputMode.BLOCK) {
                     actions.onAddBlock(InputBlockType.SITUATION)
                 } else {
-                    actions.onInsertEmphasis()
+                    onInsertEmphasis()
                 }
             },
         )

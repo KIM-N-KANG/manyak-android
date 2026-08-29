@@ -1,6 +1,8 @@
 package app.manyak.feature.chat
 
 import app.manyak.core.domain.chat.ChatDetail
+import app.manyak.core.domain.chat.ChatInputMode
+import app.manyak.core.domain.chat.ChatPreferencesRepository
 import app.manyak.core.domain.chat.ChatRepository
 import app.manyak.core.domain.chat.ChatStreamEvent
 import app.manyak.core.domain.chat.ChatSummary
@@ -9,8 +11,10 @@ import app.manyak.core.domain.chat.CreatedChat
 import app.manyak.core.domain.chat.UserSource
 import app.manyak.core.domain.error.DomainResult
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.yield
 
 internal fun sampleChatDetail(chatId: String = "chat-1"): ChatDetail =
@@ -81,7 +85,9 @@ internal class FakeChatRepository : ChatRepository {
         return queuedChatDetailResults.removeFirstOrNull() ?: DomainResult.Success(sampleChatDetail(chatId))
     }
 
-    // 아래 넷은 턴 진행·선택지·삭제가 화면에 붙을 때 채운다. 지금 화면은 부르지 않는다.
+    /** 테스트가 사건을 하나씩 밀어 넣는 통로. 비어 있으면 스트림을 열지 않은 것과 같다. */
+    val streamEvents = Channel<ChatStreamEvent>(Channel.UNLIMITED)
+    val streamedInputs = mutableListOf<String>()
 
     override fun streamTurn(
         chatId: String,
@@ -89,7 +95,10 @@ internal class FakeChatRepository : ChatRepository {
         userSource: UserSource,
         sourceTurnId: Long?,
         choiceOrder: Int?,
-    ): Flow<ChatStreamEvent> = emptyFlow()
+    ): Flow<ChatStreamEvent> {
+        streamedInputs += userInput
+        return streamEvents.receiveAsFlow()
+    }
 
     override fun regenerateTurn(
         chatId: String,
@@ -108,4 +117,31 @@ internal class FakeChatRepository : ChatRepository {
         yield()
         return DomainResult.Success(Unit)
     }
+}
+
+/** 기기 설정 가짜. 기본값은 저장소 구현과 같다. */
+internal class FakeChatPreferencesRepository(
+    private var mode: ChatInputMode = ChatInputMode.BLOCK,
+    private var choices: Boolean = true,
+) : ChatPreferencesRepository {
+    val savedModes = mutableListOf<ChatInputMode>()
+    val savedChoices = mutableListOf<Boolean>()
+
+    override suspend fun inputMode(): ChatInputMode = mode
+
+    override suspend fun setInputMode(mode: ChatInputMode) {
+        this.mode = mode
+        savedModes += mode
+    }
+
+    override suspend fun choicesEnabled(): Boolean = choices
+
+    override suspend fun setChoicesEnabled(enabled: Boolean) {
+        choices = enabled
+        savedChoices += enabled
+    }
+
+    override suspend fun isChoicesHintSeen(): Boolean = true
+
+    override suspend fun markChoicesHintSeen() = Unit
 }

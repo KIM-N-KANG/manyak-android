@@ -34,7 +34,12 @@ class ChatRoomViewModelTest {
     fun `진입 시 상세를 조회해 제목·프롤로그·턴을 상태로 만든다`() =
         runTest(dispatcher) {
             val repository = FakeChatRepository()
-            val viewModel = ChatRoomViewModel(chatId = "chat-1", chatRepository = repository)
+            val viewModel =
+                ChatRoomViewModel(
+                    chatId = "chat-1",
+                    chatRepository = repository,
+                    preferences = FakeChatPreferencesRepository(),
+                )
             advanceUntilIdle()
 
             assertEquals(listOf("chat-1"), repository.chatDetailIds)
@@ -53,7 +58,12 @@ class ChatRoomViewModelTest {
         runTest(dispatcher) {
             val repository = FakeChatRepository()
             repository.queuedChatDetailResults += DomainResult.Failure(DomainError.Network)
-            val viewModel = ChatRoomViewModel(chatId = "chat-1", chatRepository = repository)
+            val viewModel =
+                ChatRoomViewModel(
+                    chatId = "chat-1",
+                    chatRepository = repository,
+                    preferences = FakeChatPreferencesRepository(),
+                )
             advanceUntilIdle()
 
             assertTrue(viewModel.uiState.value.loadFailed)
