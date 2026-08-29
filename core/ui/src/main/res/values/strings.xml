@@ -262,6 +262,8 @@
     <string name="chat_room_load_error">채팅을 불러오지 못했어요</string>
     <string name="chat_room_scroll_to_bottom">맨 아래로 이동</string>
     <string name="chat_room_writing">작성 중</string>
+    <!-- "작성 중" 대기 문구를 스크린 리더가 읽을 때의 설명. -->
+    <string name="chat_room_writing_status">답변을 작성하고 있어요</string>
     <string name="chat_room_stream_error">응답 생성에 실패했어요</string>
     <string name="chat_room_suggestion_fill">입력창에 넣어 수정</string>
     <string name="chat_room_suggestion_hint_title">AI가 추천하는 입력이에요</string>

@@ -47,7 +47,12 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ScrollEdgeFade
@@ -259,17 +264,21 @@ private fun KeepReadingPosition(
     }
 }
 
-/** 첫 표시 가능 사건이 오기 전의 자리. 빈 화면으로 두면 보냈는지 알 수 없다. */
+/** 첫 표시 가능 사건이 오기 전의 자리. 빈 화면으로 두면 보냈는지 알 수 없어, 옅은 띠를 흘려 진행 중임을 말한다. */
 @Composable
 private fun WritingPlaceholder(modifier: Modifier = Modifier) {
+    val statusLabel = stringResource(R.string.chat_room_writing_status)
     Text(
         modifier =
             modifier
                 .fillMaxWidth()
-                .padding(horizontal = ManyakTheme.spacing.gutter, vertical = ManyakTheme.spacing.passage),
+                .padding(horizontal = ManyakTheme.spacing.gutter, vertical = ManyakTheme.spacing.passage)
+                .semantics {
+                    liveRegion = LiveRegionMode.Polite
+                    contentDescription = statusLabel
+                },
         text = stringResource(R.string.chat_room_writing),
-        style = ManyakTheme.typography.bodyReading,
-        color = ManyakTheme.colors.textSubtlest,
+        style = ManyakTheme.typography.bodyReading.merge(TextStyle(brush = rememberWritingShimmerBrush())),
     )
 }
 
