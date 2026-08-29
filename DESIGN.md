@@ -40,8 +40,8 @@ colors-dark:
   brand: "#05A66B"
   text: "#FCFCFC"
   text-subtle: "#9F9F9F"
-  text-subtlest: "#7E7E7E"
-  text-disabled: "#5E5E5E"
+  text-subtlest: "#8D8D8D"
+  text-disabled: "#7E7E7E"
   step-indicator-active: "#666666"
   text-inverse: "#FFFFFF"
   text-brand: "#58C58F"
@@ -396,8 +396,8 @@ components:
 | --- | --- | --- | --- |
 | `{colors.text}` | #131313 | #FCFCFC | 본문·제목 기본 |
 | `{colors.text-subtle}` | #575757 | #9F9F9F | 보조 설명·메타 정보 |
-| `{colors.text-subtlest}` | #747474 | #7E7E7E | 약한 보조. `{colors.surface}` 위에서만 본문 크기로 |
-| `{colors.text-disabled}` | #969696 | #5E5E5E | 비활성·장식 전용. 읽어야 하는 텍스트에 쓰지 않음 |
+| `{colors.text-subtlest}` | #747474 | #8D8D8D | 약한 보조. `{colors.surface}` 위에서만 본문 크기로 |
+| `{colors.text-disabled}` | #969696 | #7E7E7E | 비활성·장식 전용. 읽어야 하는 텍스트에 쓰지 않음 |
 | `{colors.text-inverse}` | #FFFFFF | #FFFFFF | bold 배경 위 텍스트 |
 | `{colors.text-danger}` | #C1191C | #FF7669 | 오류 메시지 |
 | `{colors.text-warning}` | #9A5700 | #E09E32 | 경고 메시지 |

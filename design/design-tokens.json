@@ -768,12 +768,12 @@
           },
           "subtlest": {
             "$type": "color",
-            "$value": "{color.gray.500}",
+            "$value": "{color.gray.400}",
             "$description": "약한 보조 폰트색. elevation.surface 위에서만 본문 크기로 쓴다"
           },
           "disabled": {
             "$type": "color",
-            "$value": "{color.gray.700}",
+            "$value": "{color.gray.500}",
             "$description": "가장 약한 보조 폰트색. 비활성·장식 전용"
           },
           "inverse": {
@@ -1520,16 +1520,16 @@
       },
       "color.text.subtlest": {
         "light": "gray.550",
-        "dark": "gray.500",
+        "dark": "gray.400",
         "lightHex": "#747474",
-        "darkHex": "#7E7E7E",
+        "darkHex": "#8D8D8D",
         "use": "약한 보조 폰트색. elevation.surface 위에서만 본문 크기로 쓴다"
       },
       "color.text.disabled": {
         "light": "gray.350",
-        "dark": "gray.700",
+        "dark": "gray.500",
         "lightHex": "#969696",
-        "darkHex": "#5E5E5E",
+        "darkHex": "#7E7E7E",
         "use": "가장 약한 보조 폰트색. 비활성·장식 전용"
       },
       "color.text.inverse": {
