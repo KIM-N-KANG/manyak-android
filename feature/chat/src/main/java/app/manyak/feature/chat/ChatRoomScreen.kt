@@ -11,14 +11,12 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -216,24 +214,13 @@ private fun ReplaceDraftDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(text = stringResource(R.string.chat_room_fill_confirm_title)) },
-        text = { Text(text = stringResource(R.string.chat_room_fill_confirm_description)) },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(text = stringResource(R.string.chat_room_fill_confirm_confirm))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(text = stringResource(R.string.chat_room_fill_confirm_cancel))
-            }
-        },
-        containerColor = ManyakTheme.colors.surfaceRaised,
-        titleContentColor = ManyakTheme.colors.text,
-        textContentColor = ManyakTheme.colors.textSubtle,
-        shape = ManyakTheme.shapes.card,
+    ManyakDestructiveDialog(
+        title = stringResource(R.string.chat_room_fill_confirm_title),
+        description = stringResource(R.string.chat_room_fill_confirm_description),
+        confirmLabel = stringResource(R.string.chat_room_fill_confirm_confirm),
+        cancelLabel = stringResource(R.string.chat_room_fill_confirm_cancel),
+        onConfirm = onConfirm,
+        onDismiss = onDismiss,
     )
 }
 

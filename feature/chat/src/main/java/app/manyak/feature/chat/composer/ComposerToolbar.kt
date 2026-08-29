@@ -4,15 +4,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import app.manyak.core.domain.chat.ChatInputMode
 import app.manyak.core.ui.R
+import app.manyak.core.ui.component.ManyakDestructiveDialog
 import app.manyak.core.ui.theme.ManyakTheme
 
 /** 컴포저 아래 줄. 왼쪽부터 추가 버튼·설정 메뉴이고 전송만 오른쪽 끝이다. */
@@ -111,23 +109,12 @@ internal fun RemoveBlockDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(text = stringResource(R.string.chat_composer_remove_block_title)) },
-        text = { Text(text = stringResource(R.string.chat_composer_remove_block_description)) },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(text = stringResource(R.string.chat_composer_remove_block_confirm))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(text = stringResource(R.string.chat_composer_remove_block_cancel))
-            }
-        },
-        containerColor = ManyakTheme.colors.surfaceRaised,
-        titleContentColor = ManyakTheme.colors.text,
-        textContentColor = ManyakTheme.colors.textSubtle,
-        shape = ManyakTheme.shapes.card,
+    ManyakDestructiveDialog(
+        title = stringResource(R.string.chat_composer_remove_block_title),
+        description = stringResource(R.string.chat_composer_remove_block_description),
+        confirmLabel = stringResource(R.string.chat_composer_remove_block_confirm),
+        cancelLabel = stringResource(R.string.chat_composer_remove_block_cancel),
+        onConfirm = onConfirm,
+        onDismiss = onDismiss,
     )
 }

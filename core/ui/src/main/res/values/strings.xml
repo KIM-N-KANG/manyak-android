@@ -283,7 +283,7 @@
     <string name="chat_room_fill_confirm_title">작성 중인 내용을 바꿀까요?</string>
     <string name="chat_room_fill_confirm_description">지금 작성 중인 내용은 사라져요</string>
     <string name="chat_room_fill_confirm_confirm">바꾸기</string>
-    <string name="chat_room_fill_confirm_cancel">그대로 두기</string>
+    <string name="chat_room_fill_confirm_cancel">닫기</string>
 
     <!-- 채팅방 컴포저 -->
     <string name="chat_composer_plain_placeholder">이야기를 어떻게 이어갈까요?</string>
@@ -297,7 +297,7 @@
     <string name="chat_composer_remove_block_title">작성한 내용을 삭제할까요?</string>
     <string name="chat_composer_remove_block_description">삭제하면 작성한 내용이 사라져요</string>
     <string name="chat_composer_remove_block_confirm">삭제하기</string>
-    <string name="chat_composer_remove_block_cancel">그대로 두기</string>
+    <string name="chat_composer_remove_block_cancel">닫기</string>
     <string name="chat_composer_send">전송</string>
     <string name="chat_composer_send_random">추천 입력 랜덤 전송</string>
     <string name="chat_composer_streaming">응답을 받는 중</string>
