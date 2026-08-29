@@ -17,8 +17,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
@@ -34,9 +32,6 @@ import app.manyak.core.ui.theme.ManyakTheme
  *
  * [hasSuggestions] 를 목록이 아니라 **불리언으로 받는다** — 추천 문구를 그리는 곳은 메시지 영역이고,
  * 컴포저는 "무작위로 보낼 것이 있는가"만 알면 된다.
- *
- * [fillSignal] 은 추천을 채운 횟수다. 값이 바뀌면 지금 모드의 입력창으로 포커스를 옮긴다 — 채우기는
- * 고쳐 쓰라고 넣는 것이라 바로 이어 쓸 수 있어야 한다.
  */
 @Composable
 internal fun ChatComposer(
@@ -46,7 +41,6 @@ internal fun ChatComposer(
     isStreaming: Boolean,
     actions: ChatComposerActions,
     modifier: Modifier = Modifier,
-    fillSignal: Int = 0,
 ) {
     val sendState =
         sendButtonState(
@@ -87,7 +81,6 @@ internal fun ChatComposer(
                 modifier = modifier,
                 blocks = state.blocks,
                 enabled = !isStreaming,
-                fillSignal = fillSignal,
                 actions = actions,
                 toolbar = toolbar,
             )
@@ -97,7 +90,6 @@ internal fun ChatComposer(
                 modifier = modifier,
                 value = plainValue,
                 enabled = !isStreaming,
-                fillSignal = fillSignal,
                 onValueChange = { next ->
                     plainValue = next
                     if (next.text != state.plainText) actions.onPlainTextChange(next.text)
@@ -112,7 +104,6 @@ internal fun ChatComposer(
 private fun PlainComposer(
     value: TextFieldValue,
     enabled: Boolean,
-    fillSignal: Int,
     onValueChange: (TextFieldValue) -> Unit,
     toolbar: @Composable (Modifier) -> Unit,
     modifier: Modifier = Modifier,
@@ -144,7 +135,6 @@ private fun PlainComposer(
             PlainInput(
                 value = value,
                 enabled = enabled,
-                fillSignal = fillSignal,
                 onValueChange = onValueChange,
                 interactionSource = interactionSource,
             )
@@ -158,20 +148,14 @@ private fun PlainComposer(
 private fun PlainInput(
     value: TextFieldValue,
     enabled: Boolean,
-    fillSignal: Int,
     onValueChange: (TextFieldValue) -> Unit,
     interactionSource: MutableInteractionSource,
     modifier: Modifier = Modifier,
 ) {
     val maxHeight = LocalConfiguration.current.screenHeightDp.dp * PLAIN_INPUT_HEIGHT_FRACTION
-    val focusRequester = remember { FocusRequester() }
-
-    LaunchedEffect(fillSignal) {
-        if (fillSignal > 0) focusRequester.requestFocus()
-    }
 
     ComposerTextField(
-        modifier = modifier.fillMaxWidth().heightIn(max = maxHeight).focusRequester(focusRequester),
+        modifier = modifier.fillMaxWidth().heightIn(max = maxHeight),
         value = value,
         onValueChange = onValueChange,
         placeholder = stringResource(R.string.chat_composer_plain_placeholder),

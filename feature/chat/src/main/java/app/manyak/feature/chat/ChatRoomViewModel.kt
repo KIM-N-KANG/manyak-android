@@ -213,9 +213,6 @@ sealed interface ChatRoomEffect {
         val message: String?,
     ) : ChatRoomEffect
 
-    /** 추천을 입력창에 채웠다. 화면이 그 입력창으로 포커스를 옮긴다. */
-    data object ComposerFilled : ChatRoomEffect
-
     /** 크레딧이 모자라 턴을 열지 못했다. 앱은 로그인 필수라 402 의 사유가 이것 하나뿐이다. */
     data object ShowCreditRequired : ChatRoomEffect
 
@@ -425,7 +422,6 @@ class ChatRoomViewModel
                             sourceTurnId = current.sourceTurnId,
                         )
                     updateComposer(composer.filledWith(text))
-                    dispatchEffect(ChatRoomEffect.ComposerFilled)
                 }
 
                 ChatRoomIntent.RandomSuggestionSent ->

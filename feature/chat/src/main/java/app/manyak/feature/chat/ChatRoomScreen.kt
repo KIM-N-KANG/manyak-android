@@ -22,9 +22,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -69,8 +67,6 @@ fun ChatRoomScreen(
     val context = LocalContext.current
     val defaultFailure = stringResource(R.string.chat_room_stream_error)
     val currentOnDeleted by rememberUpdatedState(onDeleted)
-    // 채우기가 일어난 횟수. 회전에서 다시 세지 않아 되돌아온 화면이 키보드를 다시 올리지 않는다.
-    var fillSignal by remember { mutableIntStateOf(0) }
     // 확인 다이얼로그 노출 여부. 구성 변경에서 되돌아가면 안 되는 진행 상태다.
     var confirmingDelete by rememberSaveable { mutableStateOf(false) }
 
@@ -80,8 +76,6 @@ fun ChatRoomScreen(
                 when (effect) {
                     is ChatRoomEffect.ShowStreamFailure ->
                         Toast.makeText(context, effect.message ?: defaultFailure, Toast.LENGTH_SHORT).show()
-
-                    ChatRoomEffect.ComposerFilled -> fillSignal++
 
                     ChatRoomEffect.ShowCreditRequired ->
                         Toast
@@ -110,7 +104,6 @@ fun ChatRoomScreen(
         onBack = onBack,
         onIntent = viewModel::onIntent,
         onDeleteClick = { confirmingDelete = true },
-        fillSignal = fillSignal,
         modifier = modifier,
     )
 
@@ -134,7 +127,6 @@ private fun ChatRoomContent(
     onIntent: (ChatRoomIntent) -> Unit,
     onDeleteClick: () -> Unit,
     modifier: Modifier = Modifier,
-    fillSignal: Int = 0,
 ) {
     val showProgress = rememberDelayedProgressVisibility(state.isLoading)
     // 덮어쓰기 확인 대상. 구성 변경에서 되돌아가면 안 되는 진행 상태다.
@@ -178,7 +170,6 @@ private fun ChatRoomContent(
                     hasSuggestions = state.suggestions.hasCandidate,
                     isStreaming = state.isStreaming,
                     actions = composerActions(onIntent),
-                    fillSignal = fillSignal,
                 )
             }
         }

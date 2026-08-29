@@ -10,17 +10,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -32,7 +28,6 @@ import app.manyak.core.ui.theme.ManyakTheme
 internal fun BlockComposer(
     blocks: List<InputBlock>,
     enabled: Boolean,
-    fillSignal: Int,
     actions: ChatComposerActions,
     toolbar: @Composable (Modifier) -> Unit,
     modifier: Modifier = Modifier,
@@ -42,7 +37,6 @@ internal fun BlockComposer(
             BlockInputList(
                 blocks = blocks,
                 enabled = enabled,
-                fillSignal = fillSignal,
                 onValueChange = actions.onBlockValueChange,
                 onRemoveBlock = actions.onRemoveBlock,
             )
@@ -66,7 +60,6 @@ internal fun BlockComposer(
 private fun BlockInputList(
     blocks: List<InputBlock>,
     enabled: Boolean,
-    fillSignal: Int,
     onValueChange: (Long, String) -> Unit,
     onRemoveBlock: (Long) -> Unit,
     modifier: Modifier = Modifier,
@@ -74,13 +67,6 @@ private fun BlockInputList(
     // 내용이 있는 블럭을 지울 때만 묻는다. 확인 대상은 회전에서 사라지면 안 되므로 saveable 이다.
     var pendingRemoveId by rememberSaveable { mutableStateOf<Long?>(null) }
     val maxHeight = LocalConfiguration.current.screenHeightDp.dp * BLOCK_LIST_HEIGHT_FRACTION
-    val firstBlockFocus = remember { FocusRequester() }
-
-    // 채운 문장은 첫 칸부터 고치게 된다. 칸이 하나도 없으면 붙잡을 곳이 없어 건너뛴다.
-    LaunchedEffect(fillSignal) {
-        if (fillSignal > 0 && blocks.isNotEmpty()) firstBlockFocus.requestFocus()
-    }
-
     Column(
         modifier =
             modifier
@@ -93,11 +79,10 @@ private fun BlockInputList(
                 .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
-        blocks.forEachIndexed { index, block ->
+        blocks.forEach { block ->
             BlockInputRow(
                 block = block,
                 enabled = enabled,
-                fieldModifier = if (index == 0) Modifier.focusRequester(firstBlockFocus) else Modifier,
                 onValueChange = { value -> onValueChange(block.id, value) },
                 onRemove = {
                     if (block.value.isBlank()) onRemoveBlock(block.id) else pendingRemoveId = block.id
@@ -122,7 +107,6 @@ private fun BlockInputList(
 private fun BlockInputRow(
     block: InputBlock,
     enabled: Boolean,
-    fieldModifier: Modifier,
     onValueChange: (String) -> Unit,
     onRemove: () -> Unit,
 ) {
@@ -152,7 +136,7 @@ private fun BlockInputRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         SyncedTextField(
-            modifier = Modifier.weight(1f).then(fieldModifier),
+            modifier = Modifier.weight(1f),
             text = block.value,
             onTextChange = onValueChange,
             placeholder = placeholder,
