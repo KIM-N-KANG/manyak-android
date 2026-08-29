@@ -140,6 +140,8 @@
         <item>이야기의 뼈대 잡는 중...</item>
         <item>장면 순서 엮는 중...</item>
     </string-array>
+    <!-- 생성이 길어질 때 힌트 위에 뜨는 경과 구분선 문구. -->
+    <string name="create_loading_hint_elapsed">%1$d초 지남</string>
     <string name="create_storyline_loading_hint_delayed">스토리라인을 잡는 데 시간이 조금 더 걸리고 있어요</string>
     <string name="create_storyline_loading_hint_long">장면 흐름을 다시 맞춰보고 있어요</string>
     <string name="create_storyline_error_generate">스토리라인을 만들지 못했어요</string>

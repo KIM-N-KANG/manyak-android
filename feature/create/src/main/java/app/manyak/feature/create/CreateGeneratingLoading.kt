@@ -6,8 +6,18 @@ package app.manyak.feature.create
 import android.os.SystemClock
 import androidx.annotation.ArrayRes
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,15 +28,21 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.R
 import app.manyak.core.ui.theme.ManyakTheme
 import kotlinx.coroutines.delay
+import kotlin.random.Random
 
 /** 생성이 길어지면 [delayMs] 시점에 드러내는 힌트. */
 internal data class GenerationHint(
@@ -103,7 +119,6 @@ private fun GeneratingLoadingContent(
                 Modifier
                     .padding(horizontal = ManyakTheme.spacing.gutter)
                     .padding(top = ManyakTheme.spacing.block),
-            verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
         ) {
             TypewriterPhrases(phrases = stringArrayResource(phrasesRes).toList())
             GenerationHints(hints = hints)
@@ -111,7 +126,7 @@ private fun GeneratingLoadingContent(
     }
 }
 
-/** 문구를 한 글자씩 드러내고, 다 쓰면 잠시 머문 뒤 다음 문구로 순환한다. */
+/** 문구를 한 글자씩 쓰고, 잠시 머문 뒤 한 글자씩 지우고 다음 문구로 순환한다. */
 @Composable
 private fun TypewriterPhrases(
     phrases: List<String>,
@@ -129,8 +144,11 @@ private fun TypewriterPhrases(
                 delay(TYPEWRITER_CHAR_DELAY_MS)
             }
             delay(TYPEWRITER_PHRASE_HOLD_MS)
+            for (length in phrase.length - 1 downTo 0) {
+                text = phrase.take(length)
+                delay(TYPEWRITER_DELETE_DELAY_MS)
+            }
             index = (index + 1) % phrases.size
-            text = ""
         }
     }
 
@@ -138,12 +156,17 @@ private fun TypewriterPhrases(
     Text(
         modifier = modifier,
         text = text.ifEmpty { " " },
-        style = ManyakTheme.typography.bodyLarge,
-        color = ManyakTheme.colors.text,
+        style = ManyakTheme.typography.bodyMedium,
+        color = ManyakTheme.colors.textSubtle,
     )
 }
 
-/** 생성이 길어지면 각 힌트 시점에 하나씩 쌓아 보여 준다. */
+/**
+ * 생성이 길어지면 각 힌트 시점에 "N초 지남" 구분선을 먼저 드러내고, 잠시 뒤 힌트 문구를 잇는다.
+ *
+ * 구분선과 문구를 시차를 두고 떨어뜨리는 이유는, 한 번에 나오면 안내가 아니라 오류 통보처럼 읽히기
+ * 때문이다 — 시간이 먼저 보이고 설명이 따라오면 기다림이 진행 중인 일로 느껴진다.
+ */
 @Composable
 private fun GenerationHints(
     hints: List<GenerationHint>,
@@ -154,32 +177,116 @@ private fun GenerationHints(
     // 생성이 길어져 사용자가 가장 불안한 구간에서 안내만 없어진다.
     // 단조 시계를 쓰는 이유는 사용자가 기기 시간을 바꿔도 경과가 뒤틀리지 않게 하기 위해서다.
     val startedAtMillis = rememberSaveable { SystemClock.elapsedRealtime() }
-    var revealedCount by rememberSaveable { mutableIntStateOf(0) }
+    var separatorsRevealed by rememberSaveable { mutableIntStateOf(0) }
+    var textsRevealed by rememberSaveable { mutableIntStateOf(0) }
 
     LaunchedEffect(hints, startedAtMillis) {
         hints.forEachIndexed { index, hint ->
             val remainingMs = hint.delayMs - (SystemClock.elapsedRealtime() - startedAtMillis)
             if (remainingMs > 0) delay(remainingMs)
-            revealedCount = index + 1
+            separatorsRevealed = maxOf(separatorsRevealed, index + 1)
+            if (textsRevealed <= index) {
+                delay(Random.nextLong(TEXT_REVEAL_MIN_OFFSET_MS, TEXT_REVEAL_MAX_OFFSET_MS + 1))
+                textsRevealed = index + 1
+            }
         }
     }
 
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
-    ) {
-        hints.take(revealedCount).forEach { hint ->
-            Text(
-                text = stringResource(hint.textRes),
-                style = ManyakTheme.typography.bodyMedium,
-                color = ManyakTheme.colors.textSubtle,
+    Column(modifier = modifier.semantics { liveRegion = LiveRegionMode.Polite }) {
+        hints.forEachIndexed { index, hint ->
+            GenerationHintBlock(
+                hint = hint,
+                showsSeparator = index < separatorsRevealed,
+                showsText = index < textsRevealed,
             )
         }
     }
 }
 
-private const val TYPEWRITER_CHAR_DELAY_MS = 60L
-private const val TYPEWRITER_PHRASE_HOLD_MS = 1_400L
+/**
+ * 힌트 하나 — 경과 구분선과 문구. 간격을 요소 안 위쪽 패딩으로 갖는 이유는, 드러나기 전에는
+ * 자리도 차지하지 않아야 하기 때문이다.
+ */
+@Composable
+private fun GenerationHintBlock(
+    hint: GenerationHint,
+    showsSeparator: Boolean,
+    showsText: Boolean,
+) {
+    HintReveal(visible = showsSeparator) {
+        ElapsedSeparator(
+            seconds = (hint.delayMs / MILLIS_PER_SECOND).toInt(),
+            modifier = Modifier.padding(top = ManyakTheme.spacing.gutter),
+        )
+    }
+    HintReveal(visible = showsText) {
+        Text(
+            modifier = Modifier.padding(top = ManyakTheme.spacing.gutter),
+            text = stringResource(hint.textRes),
+            style = ManyakTheme.typography.bodyMedium,
+            color = ManyakTheme.colors.textSubtlest,
+        )
+    }
+}
+
+/** 아래에서 살짝 떠오르며 나타난다. 처음부터 드러난 채 복원되면 애니메이션 없이 그대로 보인다. */
+@Composable
+private fun HintReveal(
+    visible: Boolean,
+    content: @Composable () -> Unit,
+) {
+    val slidePx = with(LocalDensity.current) { HintSlideDistance.roundToPx() }
+    AnimatedVisibility(
+        visible = visible,
+        enter =
+            fadeIn(tween(HINT_ENTER_MILLIS, easing = LinearOutSlowInEasing)) +
+                slideInVertically(tween(HINT_ENTER_MILLIS, easing = LinearOutSlowInEasing)) { slidePx },
+    ) {
+        content()
+    }
+}
+
+/** "N초 지남"을 가운데 두고 양쪽으로 선을 채운 구분선. */
+@Composable
+private fun ElapsedSeparator(
+    seconds: Int,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.component),
+    ) {
+        SeparatorLine(modifier = Modifier.weight(1f))
+        Text(
+            text = stringResource(R.string.create_loading_hint_elapsed, seconds),
+            style = ManyakTheme.typography.bodyMedium,
+            color = ManyakTheme.colors.textSubtlest,
+        )
+        SeparatorLine(modifier = Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun SeparatorLine(modifier: Modifier = Modifier) {
+    Box(
+        modifier =
+            modifier
+                .height(SeparatorLineWidth)
+                .background(ManyakTheme.colors.border),
+    )
+}
+
+private const val TYPEWRITER_CHAR_DELAY_MS = 90L
+private const val TYPEWRITER_DELETE_DELAY_MS = 50L
+private const val TYPEWRITER_PHRASE_HOLD_MS = 1_200L
+private const val TEXT_REVEAL_MIN_OFFSET_MS = 1_000L
+private const val TEXT_REVEAL_MAX_OFFSET_MS = 2_000L
+private const val MILLIS_PER_SECOND = 1_000L
+private const val HINT_ENTER_MILLIS = 500
+
+private val HintSlideDistance = 8.dp
+private val SeparatorLineWidth = 1.dp
 
 @Preview(showBackground = true, name = "스토리라인 선택 · 생성 중")
 @Composable
