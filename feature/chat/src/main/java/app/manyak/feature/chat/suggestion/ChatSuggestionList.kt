@@ -197,7 +197,7 @@ private fun SuggestionButton(
     ) {
         Text(
             text = annotated,
-            style = ManyakTheme.typography.bodyReading,
+            style = ManyakTheme.typography.bodyReadingSmall,
             color = ManyakTheme.colors.text,
         )
     }

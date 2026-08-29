@@ -5,6 +5,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import app.manyak.core.ui.R
@@ -17,11 +18,16 @@ val Pretendard =
         Font(R.font.pretendard_bold, FontWeight.Bold),
     )
 
-/** 서사 서체. 스토리 본문([ManyakTypography.bodyReading]) 전용이며 UI 요소에 쓰지 않는다. */
-val GowunBatang =
+/**
+ * 서사 서체. 스토리 본문([ManyakTypography.bodyReading]) 전용이며 UI 요소에 쓰지 않는다.
+ *
+ * **TTF 가 아니라 OTF 를 쓴다** — 배포된 TTF 에는 TrueType 힌팅(`fpgm`·`prep`·`cvt`)이 들어 있어
+ * 작은 크기에서 획이 픽셀 격자에 맞춰지며 글자마다 굵기가 들쭉날쭉해진다.
+ */
+val MaruBuri =
     FontFamily(
-        Font(R.font.gowun_batang_regular, FontWeight.Normal),
-        Font(R.font.gowun_batang_bold, FontWeight.Bold),
+        Font(R.font.maru_buri_regular, FontWeight.Normal),
+        Font(R.font.maru_buri_bold, FontWeight.Bold),
     )
 
 /**
@@ -45,11 +51,27 @@ data class ManyakTypography(
     val bodyLarge: TextStyle,
     val bodyLargeStrong: TextStyle,
     val bodyReading: TextStyle,
+    val bodyReadingSmall: TextStyle,
     val titleMedium: TextStyle,
     val titleMediumStrong: TextStyle,
     val titleLarge: TextStyle,
     val headlineSmall: TextStyle,
 )
+
+/**
+ * 읽기용 롤의 줄 상자. CSS `line-height` 와 같은 규칙으로 맞춘 값이다.
+ *
+ * `Trim.None` — 행간이 만든 여유를 첫 줄 위·마지막 줄 아래에서도 남긴다. Compose 기본값
+ * `Trim.Both` 는 잘라내지만 CSS 는 남긴다.
+ *
+ * `Alignment.Center` — 그 여유를 위아래로 **똑같이** 나눈다. `Proportional` 은 ascent:descent
+ * 비율로 나누는데, 마루부리는 그 비율이 4:1 이라 위만 크게 벌어진다.
+ */
+private val ReadingLineHeight =
+    LineHeightStyle(
+        alignment = LineHeightStyle.Alignment.Center,
+        trim = LineHeightStyle.Trim.None,
+    )
 
 internal val ManyakDefaultTypography =
     ManyakTypography(
@@ -104,11 +126,23 @@ internal val ManyakDefaultTypography =
         // 스토리 본문. 장문 전용이라 행간을 1.75로 벌리고 자간을 2% 좁힌다
         bodyReading =
             TextStyle(
-                fontFamily = GowunBatang,
+                fontFamily = MaruBuri,
                 fontWeight = FontWeight.Normal,
                 fontSize = 16.sp,
                 lineHeight = 28.sp,
                 letterSpacing = (-0.02).em,
+                lineHeightStyle = ReadingLineHeight,
+            ),
+        // 짧은 서사 문장. 추천 입력처럼 읽는 글이지만 장문이 아닌 자리다.
+        // 행간은 [bodyReading] 과 같은 1.75 배로 두어 두 롤이 같은 결로 읽힌다
+        bodyReadingSmall =
+            TextStyle(
+                fontFamily = MaruBuri,
+                fontWeight = FontWeight.Normal,
+                fontSize = 14.sp,
+                lineHeight = 24.5.sp,
+                letterSpacing = (-0.02).em,
+                lineHeightStyle = ReadingLineHeight,
             ),
         // 섹션·카드 제목
         titleMedium =

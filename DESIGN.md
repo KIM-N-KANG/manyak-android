@@ -1,7 +1,7 @@
 ---
 version: alpha
 name: manyak-android-design
-description: 초록 하나로 모든 상호작용을 말하는 무채색 인터페이스. 표면은 거의 흰색(#FCFCFC)과 거의 검정(#131313) 두 축뿐이고, 그림자 없이 표면 색 차이로만 층을 나눈다. UI는 Pretendard가, 스토리 본문은 GowunBatang이 맡아 "읽는 화면"과 "조작하는 화면"이 서체로 갈린다. 모든 색 조합은 토큰 빌드가 명도 대비를 재서 통과시킨 것만 남았다.
+description: 초록 하나로 모든 상호작용을 말하는 무채색 인터페이스. 표면은 거의 흰색(#FCFCFC)과 거의 검정(#131313) 두 축뿐이고, 그림자 없이 표면 색 차이로만 층을 나눈다. UI는 Pretendard가, 스토리 본문은 MaruBuri가 맡아 "읽는 화면"과 "조작하는 화면"이 서체로 갈린다. 모든 색 조합은 토큰 빌드가 명도 대비를 재서 통과시킨 것만 남았다.
 
 colors:
   brand: "#05A66B"
@@ -101,10 +101,15 @@ typography:
     fontWeight: 400
     lineHeight: 24sp
   body-reading:
-    fontFamily: "GowunBatang"
+    fontFamily: "MaruBuri"
     fontSize: 16sp
     fontWeight: 400
     lineHeight: 28sp
+  body-reading-small:
+    fontFamily: "MaruBuri"
+    fontSize: 14sp
+    fontWeight: 400
+    lineHeight: 24.5sp
   body-medium:
     fontFamily: "Pretendard"
     fontSize: 14sp
@@ -328,7 +333,7 @@ components:
 
 색·크기·여백·모서리는 전부 **디자인 토큰**에서 나옵니다. 화면 코드는 토큰 이름만 쓰고 값을 직접 적지 않습니다. 토큰은 Primitive(팔레트) → Semantic(의도) 두 층이며, 화면이 만질 수 있는 것은 Semantic뿐입니다 — 팔레트는 Kotlin에서 `private`이라 참조 자체가 불가능합니다.
 
-서체가 두 벌인 것이 이 시스템의 성격을 가장 잘 드러냅니다. 조작하는 화면은 Pretendard가, 읽는 화면(스토리 본문)은 GowunBatang이 맡습니다. 같은 16sp라도 `{typography.body-large}`는 행간 24sp로 촘촘하고 `{typography.body-reading}`은 28sp로 벌어져 있습니다 — UI는 스캔하는 것이고 스토리는 읽는 것이기 때문입니다.
+서체가 두 벌인 것이 이 시스템의 성격을 가장 잘 드러냅니다. 조작하는 화면은 Pretendard가, 읽는 화면(스토리 본문)은 MaruBuri가 맡습니다. 같은 16sp라도 `{typography.body-large}`는 행간 24sp로 촘촘하고 `{typography.body-reading}`은 28sp로 벌어져 있습니다 — UI는 스캔하는 것이고 스토리는 읽는 것이기 때문입니다.
 
 **핵심 특징**
 
@@ -347,7 +352,7 @@ components:
 | 파일 | 내용 |
 | --- | --- |
 | `Color.kt` | 팔레트(private)와 시맨틱 색 30종, 라이트·다크 인스턴스 |
-| `Type.kt` | `Pretendard`·`GowunBatang` FontFamily와 타이포 롤 9종 |
+| `Type.kt` | `Pretendard`·`MaruBuri` FontFamily와 타이포 롤 12종 |
 | `ManyakSpacing.kt` | 시맨틱 여백 |
 | `ManyakShapes.kt` | 시맨틱 모서리 |
 | `ManyakSizes.kt` | 크기 5종 |
@@ -423,7 +428,7 @@ components:
 ### 서체
 
 - **Pretendard** — UI 전반. Regular·Medium·Bold 세 웨이트를 정적 TTF로 번들합니다(`res/font/pretendard_*.ttf`).
-- **GowunBatang** — 스토리 본문 전용. Regular·Bold를 번들합니다(`res/font/gowun_batang_*.ttf`).
+- **MaruBuri** — 스토리 본문 전용. Regular·Bold를 **OTF로** 번들합니다(`res/font/maru_buri_*.otf`). 배포된 TTF에는 TrueType 힌팅이 들어 있어 작은 크기에서 획이 픽셀 격자에 스냅되며 글자마다 굵기가 갈립니다.
 - 둘 다 SIL OFL 1.1이며 원문은 `assets/licenses/`에 있습니다.
 
 ### 위계
@@ -435,7 +440,8 @@ components:
 | `{typography.title-medium-strong}` | 18sp | 700 | 26sp | 목록 섹션 제목 |
 | `{typography.title-medium}` | 18sp | 500 | 26sp | 섹션·카드 제목 |
 | `{typography.body-large}` | 16sp | 400 | 24sp | 강조 본문·입력 필드 |
-| `{typography.body-reading}` | 16sp | 400 | 28sp | 스토리 본문 (GowunBatang · 자간 −2%) |
+| `{typography.body-reading}` | 16sp | 400 | 28sp | 스토리 본문 (MaruBuri · 자간 −2%) |
+| `{typography.body-reading-small}` | 14sp | 400 | 24.5sp | 짧은 서사 문장 — 추천 입력 (MaruBuri · 자간 −2%) |
 | `{typography.body-medium}` | 14sp | 400 | 20sp | 본문 기본 |
 | `{typography.label-large}` | 14sp | 500 | 20sp | 버튼·탭 라벨 |
 | `{typography.body-small}` | 12sp | 400 | 16sp | 메타 정보·보조 설명 |
@@ -445,8 +451,8 @@ components:
 
 - **행간은 배수가 아니라 sp 절대값입니다.** Compose `TextStyle`이 절대값만 받으므로, 배수로 두면 플랫폼마다 반올림이 갈립니다.
 - **UI 롤의 행간은 1.25~1.5입니다.** `{typography.body-reading}`만 1.75로 벌립니다 — 스토리 본문은 한 화면을 채우는 장문이라 UI 기준 그대로는 답답합니다.
-- **자간은 `{typography.body-reading}`만 −2%로 좁힙니다.** GowunBatang의 기본 자간이 장문에서 벌어져 보여 본문 롤에만 보정하고, UI 롤은 기본 자간을 유지합니다.
-- **GowunBatang은 `{typography.body-reading}` 전용입니다.** 버튼·라벨·제목에 쓰지 않습니다.
+- **자간은 `{typography.body-reading}`만 −2%로 좁힙니다.** 바탕 계열의 기본 자간이 장문에서 벌어져 보여 본문 롤에만 보정하고, UI 롤은 기본 자간을 유지합니다.
+- **MaruBuri는 `{typography.body-reading}`·`{typography.body-reading-small}` 전용입니다.** 버튼·라벨·제목에 쓰지 않습니다.
 - **굵기 사다리는 400 / 500 / 700입니다.** SemiBold(600)를 쓰지 않는 이유는 번들에 없는 굵기를 요구하면 Bold로 대체 렌더되어 의도보다 두꺼워지기 때문입니다.
 - **`{typography.title-medium-strong}`은 크기가 아니라 굵기로 갈리는 롤입니다.** `{typography.title-medium}`과 크기·행간이 같고 굵기만 700입니다. 이름에 `strong`을 붙인 것은 small/medium 같은 크기 이름이 굵기 차이를 뜻하게 되면 스케일이 거짓말을 하기 때문입니다. 스크롤되는 목록 위에 붙박이로 남는 섹션 제목처럼, 같은 크기에서 무게로만 위계를 세워야 하는 자리에 씁니다.
 - 화면 기본 텍스트 스타일은 `{typography.body-medium}`이고 기본 색은 `{colors.text}`입니다. `ManyakTheme`이 `LocalTextStyle`·`LocalContentColor`로 내립니다.
@@ -579,7 +585,7 @@ components:
 
 ### 스토리
 
-**`story-body`** — 배경 `{colors.surface}`, 텍스트 `{colors.text}` + `{typography.body-reading}`, 좌우 여백 `{spacing.gutter}`. 이 시스템에서 GowunBatang이 나타나는 자리는 스토리 본문과 퍼널의 스토리라인 미리보기(아래 퍼널 절)뿐입니다.
+**`story-body`** — 배경 `{colors.surface}`, 텍스트 `{colors.text}` + `{typography.body-reading}`, 좌우 여백 `{spacing.gutter}`. 이 시스템에서 MaruBuri가 나타나는 자리는 스토리 본문과 퍼널의 스토리라인 미리보기(아래 퍼널 절)뿐입니다.
 
 ### 셸
 

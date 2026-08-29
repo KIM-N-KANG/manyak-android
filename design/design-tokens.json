@@ -1091,7 +1091,7 @@
             "fontWeight": "{font.weight.regular}",
             "lineHeight": "28px"
           },
-          "$description": "스토리 본문(GowunBatang). 장문 전용 롤",
+          "$description": "스토리 본문(MaruBuri). 장문 전용 롤",
           "$extensions": {
             "app.manyak.ratio": 1.75,
             "app.manyak.family": "serif"
@@ -1828,7 +1828,7 @@
         "weight": "regular",
         "lineHeight": 28,
         "family": "serif",
-        "use": "스토리 본문(GowunBatang). 장문 전용 롤",
+        "use": "스토리 본문(MaruBuri). 장문 전용 롤",
         "px": 16,
         "weightValue": 400,
         "ratio": 1.75

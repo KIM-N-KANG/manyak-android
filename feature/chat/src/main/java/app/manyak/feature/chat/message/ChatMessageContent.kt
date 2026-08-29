@@ -105,7 +105,9 @@ private fun SegmentColumn(
                     ChatCharacterImage(
                         modifier =
                             Modifier
-                                .padding(top = if (index > 0) ManyakTheme.spacing.passage else 0.dp)
+                                // 본문 마지막 줄 아래에는 폰트 descent 와 행간 여유(6sp)가 이미 남는다.
+                                // 그만큼 빼야 눈에 보이는 간격이 조각 간격 두 번(40)과 같아진다.
+                                .padding(top = if (index > 0) ManyakTheme.spacing.compact else 0.dp)
                                 .padding(horizontal = ManyakTheme.spacing.gutter),
                         name = segment.name,
                         imageUrl = segment.imageUrl,
