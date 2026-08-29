@@ -17,17 +17,21 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.yield
 
-internal fun sampleChatDetail(chatId: String = "chat-1"): ChatDetail =
+internal fun sampleChatDetail(
+    chatId: String = "chat-1",
+    turns: List<ChatTurn> =
+        listOf(
+            ChatTurn(id = 1, userInput = "문을 연다.", aiOutput = "문이 열리자 태엽 소리가 쏟아진다."),
+        ),
+    suggestedInputs: List<String> = emptyList(),
+): ChatDetail =
     ChatDetail(
         id = chatId,
         storyId = "story-1",
         storyTitle = "두 번째 시계공",
         prologue = "*낡은 시계탑 아래.* 당신은 문 앞에 선다.",
-        turns =
-            listOf(
-                ChatTurn(id = 1, userInput = "문을 연다.", aiOutput = "문이 열리자 태엽 소리가 쏟아진다."),
-            ),
-        suggestedInputs = emptyList(),
+        turns = turns,
+        suggestedInputs = suggestedInputs,
     )
 
 /** 서버가 최근 활동순으로 준 목록. 순서를 그대로 지키는지 보려고 제목을 시각 순서와 어긋나게 둔다. */
@@ -78,16 +82,28 @@ internal class FakeChatRepository : ChatRepository {
         return DomainResult.Success(CreatedChat(id = "chat-1"))
     }
 
+    private var lastChatDetail: ChatDetail? = null
+
+    /**
+     * 큐가 비면 **마지막으로 돌려준 값**을 다시 준다. 실제 서버처럼 조회를 거듭해도 같은 값이 나와야
+     * 한 번의 진행에 여러 번 조회하는 경로(확정 → 선택지 생성 → 재조회)를 테스트가 그대로 볼 수 있다.
+     */
     override suspend fun chatDetail(chatId: String): DomainResult<ChatDetail> {
         // 실제 네트워크 호출처럼 반드시 한 번 양보한다.
         yield()
         chatDetailIds += chatId
-        return queuedChatDetailResults.removeFirstOrNull() ?: DomainResult.Success(sampleChatDetail(chatId))
+        val result =
+            queuedChatDetailResults.removeFirstOrNull()
+                ?: lastChatDetail?.let { detail -> DomainResult.Success(detail) }
+                ?: DomainResult.Success(sampleChatDetail(chatId))
+        (result as? DomainResult.Success)?.let { success -> lastChatDetail = success.value }
+        return result
     }
 
     /** 테스트가 사건을 하나씩 밀어 넣는 통로. 비어 있으면 스트림을 열지 않은 것과 같다. */
     val streamEvents = Channel<ChatStreamEvent>(Channel.UNLIMITED)
     val streamedInputs = mutableListOf<String>()
+    val streamedOrigins = mutableListOf<Triple<UserSource, Long?, Int?>>()
 
     override fun streamTurn(
         chatId: String,
@@ -97,6 +113,7 @@ internal class FakeChatRepository : ChatRepository {
         choiceOrder: Int?,
     ): Flow<ChatStreamEvent> {
         streamedInputs += userInput
+        streamedOrigins += Triple(userSource, sourceTurnId, choiceOrder)
         return streamEvents.receiveAsFlow()
     }
 
@@ -105,12 +122,20 @@ internal class FakeChatRepository : ChatRepository {
         turnId: Long,
     ): Flow<ChatStreamEvent> = emptyFlow()
 
+    val generatedChoiceTurnIds = mutableListOf<Long>()
+    val queuedChoicesResults = ArrayDeque<DomainResult<Unit>>()
+
+    /** 생성이 응답 전에 멈춰 있어야 하는 테스트가 채운다. */
+    var choicesGate: CompletableDeferred<Unit>? = null
+
     override suspend fun generateChoices(
         chatId: String,
         turnId: Long,
     ): DomainResult<Unit> {
         yield()
-        return DomainResult.Success(Unit)
+        generatedChoiceTurnIds += turnId
+        choicesGate?.await()
+        return queuedChoicesResults.removeFirstOrNull() ?: DomainResult.Success(Unit)
     }
 
     override suspend fun deleteChat(chatId: String): DomainResult<Unit> {
@@ -123,6 +148,7 @@ internal class FakeChatRepository : ChatRepository {
 internal class FakeChatPreferencesRepository(
     private var mode: ChatInputMode = ChatInputMode.BLOCK,
     private var choices: Boolean = true,
+    private var hintSeen: Boolean = true,
 ) : ChatPreferencesRepository {
     val savedModes = mutableListOf<ChatInputMode>()
     val savedChoices = mutableListOf<Boolean>()
@@ -141,7 +167,13 @@ internal class FakeChatPreferencesRepository(
         savedChoices += enabled
     }
 
-    override suspend fun isChoicesHintSeen(): Boolean = true
+    var hintSeenMarkCount = 0
+        private set
 
-    override suspend fun markChoicesHintSeen() = Unit
+    override suspend fun isChoicesHintSeen(): Boolean = hintSeen
+
+    override suspend fun markChoicesHintSeen() {
+        hintSeen = true
+        hintSeenMarkCount++
+    }
 }

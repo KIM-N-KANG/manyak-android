@@ -41,6 +41,11 @@ data class ChatTurn(
     val id: Long,
     val userInput: String,
     val aiOutput: String,
+    /**
+     * 다음 행동 선택지. 별도 요청으로 생성해 저장하는 값이라 생성 전에는 비어 있고, 화면은
+     * 마지막 턴의 것만 그린다.
+     */
+    val choices: List<String> = emptyList(),
 )
 
 /**

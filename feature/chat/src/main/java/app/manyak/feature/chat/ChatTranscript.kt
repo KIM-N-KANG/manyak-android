@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -34,6 +35,9 @@ import app.manyak.core.ui.R
 import app.manyak.core.ui.theme.ManyakTheme
 import app.manyak.feature.chat.message.ChatAiOutput
 import app.manyak.feature.chat.message.ChatUserBand
+import app.manyak.feature.chat.suggestion.ChatSuggestionArea
+import app.manyak.feature.chat.suggestion.ChatSuggestions
+import app.manyak.feature.chat.suggestion.hasSuggestionArea
 import kotlinx.coroutines.launch
 
 /**
@@ -45,13 +49,22 @@ import kotlinx.coroutines.launch
 @Composable
 internal fun ChatTranscript(
     state: ChatRoomUiState,
+    onIntent: (ChatRoomIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
     val hasPrologue = state.prologue.isNotBlank()
-    // 프롤로그 + 턴 + 진행 블록 + 하단 여백 자리.
-    val itemCount = (if (hasPrologue) 1 else 0) + state.turns.size + (if (state.streaming != null) 1 else 0) + 1
+    val suggestions = state.suggestions
+    val lastTurnId = state.turns.lastOrNull()?.id
+    // 진행 중에는 추천을 그리지 않는다 — 이미 보낸 뒤라 고를 것이 아니다.
+    val showsSuggestions =
+        state.streaming == null &&
+            hasSuggestionArea(suggestions, state.choicesProgress, lastTurnId, state.choicesEnabled)
+    // 프롤로그 + 턴 + 진행 블록 + 추천 + 하단 여백 자리.
+    val itemCount =
+        (if (hasPrologue) 1 else 0) + state.turns.size + (if (state.streaming != null) 1 else 0) +
+            (if (showsSuggestions) 1 else 0) + 1
 
     EnterAtLastMessage(listState = listState, itemCount = itemCount, hasTurns = state.turns.isNotEmpty())
 
@@ -83,6 +96,7 @@ internal fun ChatTranscript(
                     }
                 }
             }
+            if (showsSuggestions) suggestionItem(state, suggestions, lastTurnId, onIntent)
             item(key = "bottom") { Spacer(modifier = Modifier.height(ManyakTheme.spacing.screenBottom)) }
         }
         if (listState.canScrollForward) {
@@ -91,6 +105,26 @@ internal fun ChatTranscript(
                 onClick = { scope.launch { listState.animateScrollToItem(itemCount - 1) } },
             )
         }
+    }
+}
+
+private fun LazyListScope.suggestionItem(
+    state: ChatRoomUiState,
+    suggestions: ChatSuggestions,
+    lastTurnId: Long?,
+    onIntent: (ChatRoomIntent) -> Unit,
+) {
+    item(key = "suggestions") {
+        ChatSuggestionArea(
+            suggestions = suggestions,
+            progress = state.choicesProgress,
+            lastTurnId = lastTurnId,
+            choicesEnabled = state.choicesEnabled,
+            showsHint = state.choicesHintUnseen && state.turns.isEmpty(),
+            onSend = { position -> onIntent(ChatRoomIntent.SuggestionSent(position)) },
+            onFill = { position -> onIntent(ChatRoomIntent.SuggestionFilled(position)) },
+            onRetry = { onIntent(ChatRoomIntent.ChoicesRetried) },
+        )
     }
 }
 

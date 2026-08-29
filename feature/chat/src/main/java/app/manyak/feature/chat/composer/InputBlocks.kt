@@ -20,6 +20,14 @@ data class InputBlock(
     val value: String = "",
 )
 
+/**
+ * 서버로 보낼 때 블럭을 잇는 구분자. 모드 전환에는 공백 한 칸을 쓴다.
+ *
+ * 추천 문장을 즉시 전송할 때도 같은 구분자로 정규화한다 — 그래야 추천을 눌렀을 때와 같은 문장을
+ * 직접 입력했을 때의 저장 본문이 갈리지 않는다.
+ */
+const val BLOCK_SEND_SEPARATOR = "\n\n"
+
 /** 시작 상태는 상황 하나와 대사 하나다. */
 fun createDefaultInputBlocks(): List<InputBlock> =
     listOf(

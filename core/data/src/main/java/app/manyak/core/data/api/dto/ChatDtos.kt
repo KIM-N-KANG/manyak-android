@@ -143,12 +143,13 @@ data class ChatDetailResponseDto(
     val suggestedInputs: List<String> = emptyList(),
 )
 
-/** 턴의 선택지·엔딩 도달은 컴포저·선택지 표시가 붙기 전까지 쓰지 않아 역직렬화하지 않는다. */
+/** 턴의 엔딩 도달은 재생성 버튼 표시가 붙기 전까지 쓰지 않아 역직렬화하지 않는다. */
 @Serializable
 data class ChatTurnDto(
     val id: Long,
     val userInput: String = "",
     val aiOutput: String = "",
+    val choices: List<String> = emptyList(),
 )
 
 fun ChatDetailResponseDto.toDomain(): ChatDetail =
@@ -157,6 +158,14 @@ fun ChatDetailResponseDto.toDomain(): ChatDetail =
         storyId = storyId,
         storyTitle = storyTitle,
         prologue = prologue,
-        turns = turns.map { turn -> ChatTurn(id = turn.id, userInput = turn.userInput, aiOutput = turn.aiOutput) },
+        turns =
+            turns.map { turn ->
+                ChatTurn(
+                    id = turn.id,
+                    userInput = turn.userInput,
+                    aiOutput = turn.aiOutput,
+                    choices = turn.choices,
+                )
+            },
         suggestedInputs = suggestedInputs,
     )

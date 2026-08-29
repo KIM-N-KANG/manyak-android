@@ -263,6 +263,16 @@
     <string name="chat_room_scroll_to_bottom">맨 아래로 이동</string>
     <string name="chat_room_writing">작성 중</string>
     <string name="chat_room_stream_error">응답 생성에 실패했어요</string>
+    <string name="chat_room_suggestion_fill">입력창에 넣어 수정</string>
+    <string name="chat_room_suggestion_hint_title">AI가 추천하는 입력이에요</string>
+    <!-- %1$s 자리에 채우기 버튼 아이콘이 들어간다. -->
+    <string name="chat_room_suggestion_hint_action">탭하면 바로 전송되고, %1$s 버튼으로 고쳐서 보낼 수 있어요</string>
+    <string name="chat_room_choices_loading">선택지를 만드는 중</string>
+    <string name="chat_room_choices_error">선택지를 만들지 못했어요</string>
+    <string name="chat_room_fill_confirm_title">작성 중인 내용을 바꿀까요?</string>
+    <string name="chat_room_fill_confirm_description">지금 작성 중인 내용은 사라져요</string>
+    <string name="chat_room_fill_confirm_confirm">바꾸기</string>
+    <string name="chat_room_fill_confirm_cancel">그대로 두기</string>
 
     <!-- 채팅방 컴포저 -->
     <string name="chat_composer_plain_placeholder">이야기를 어떻게 이어갈까요?</string>

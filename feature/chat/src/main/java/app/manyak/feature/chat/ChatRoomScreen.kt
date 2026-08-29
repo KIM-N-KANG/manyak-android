@@ -11,17 +11,23 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,8 +50,8 @@ import app.manyak.feature.chat.composer.ChatComposer
 import app.manyak.feature.chat.composer.ChatComposerActions
 
 /**
- * 채팅방. 셸 없는 전체 화면이며 상세 조회 렌더와 턴 진행을 담는다.
- * 추천 입력·선택지와 재생성·삭제는 다음 단계에서 붙는다.
+ * 채팅방. 셸 없는 전체 화면이며 상세 조회 렌더와 턴 진행, 추천 입력·선택지를 담는다.
+ * 재생성·삭제는 다음 단계에서 붙는다.
  */
 @Composable
 fun ChatRoomScreen(
@@ -61,6 +67,8 @@ fun ChatRoomScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
     val defaultFailure = stringResource(R.string.chat_room_stream_error)
+    // 채우기가 일어난 횟수. 회전에서 다시 세지 않아 되돌아온 화면이 키보드를 다시 올리지 않는다.
+    var fillSignal by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(viewModel, lifecycleOwner) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -68,6 +76,8 @@ fun ChatRoomScreen(
                 when (effect) {
                     is ChatRoomEffect.ShowStreamFailure ->
                         Toast.makeText(context, effect.message ?: defaultFailure, Toast.LENGTH_SHORT).show()
+
+                    ChatRoomEffect.ComposerFilled -> fillSignal++
                 }
             }
         }
@@ -77,6 +87,7 @@ fun ChatRoomScreen(
         state = state,
         onBack = onBack,
         onIntent = viewModel::onIntent,
+        fillSignal = fillSignal,
         modifier = modifier,
     )
 }
@@ -87,8 +98,11 @@ private fun ChatRoomContent(
     onBack: () -> Unit,
     onIntent: (ChatRoomIntent) -> Unit,
     modifier: Modifier = Modifier,
+    fillSignal: Int = 0,
 ) {
     val showProgress = rememberDelayedProgressVisibility(state.isLoading)
+    // 덮어쓰기 확인 대상. 구성 변경에서 되돌아가면 안 되는 진행 상태다.
+    var pendingFill by rememberSaveable { mutableStateOf<Int?>(null) }
 
     Column(
         modifier =
@@ -110,17 +124,39 @@ private fun ChatRoomContent(
                 )
 
             else -> {
-                ChatTranscript(modifier = Modifier.weight(1f), state = state)
+                ChatTranscript(
+                    modifier = Modifier.weight(1f),
+                    state = state,
+                    // 초안이 있으면 채우기 전에 확인을 받는다. 즉시 전송에는 이 확인이 없다.
+                    onIntent = { intent ->
+                        if (intent is ChatRoomIntent.SuggestionFilled && state.composer.hasInput) {
+                            pendingFill = intent.position
+                        } else {
+                            onIntent(intent)
+                        }
+                    },
+                )
                 ChatComposer(
                     state = state.composer,
                     choicesEnabled = state.choicesEnabled,
-                    // 추천 입력은 다음 단계에서 붙는다. 지금은 보낼 후보가 없다.
-                    hasSuggestions = false,
+                    hasSuggestions = state.suggestions.hasCandidate,
                     isStreaming = state.isStreaming,
                     actions = composerActions(onIntent),
+                    fillSignal = fillSignal,
                 )
             }
         }
+    }
+
+    val fillPosition = pendingFill
+    if (fillPosition != null) {
+        ReplaceDraftDialog(
+            onDismiss = { pendingFill = null },
+            onConfirm = {
+                pendingFill = null
+                onIntent(ChatRoomIntent.SuggestionFilled(fillPosition))
+            },
+        )
     }
 }
 
@@ -133,8 +169,35 @@ private fun composerActions(onIntent: (ChatRoomIntent) -> Unit): ChatComposerAct
         onModeChange = { mode -> onIntent(ChatRoomIntent.InputModeChanged(mode)) },
         onChoicesEnabledChange = { enabled -> onIntent(ChatRoomIntent.ChoicesEnabledChanged(enabled)) },
         onSend = { onIntent(ChatRoomIntent.Sent) },
-        onSendRandomSuggestion = {},
+        onSendRandomSuggestion = { onIntent(ChatRoomIntent.RandomSuggestionSent) },
     )
+
+/** 채우기가 쓰던 초안을 덮어쓰기 전에 묻는다. */
+@Composable
+private fun ReplaceDraftDialog(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = stringResource(R.string.chat_room_fill_confirm_title)) },
+        text = { Text(text = stringResource(R.string.chat_room_fill_confirm_description)) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(text = stringResource(R.string.chat_room_fill_confirm_confirm))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = stringResource(R.string.chat_room_fill_confirm_cancel))
+            }
+        },
+        containerColor = ManyakTheme.colors.surfaceRaised,
+        titleContentColor = ManyakTheme.colors.text,
+        textContentColor = ManyakTheme.colors.textSubtle,
+        shape = ManyakTheme.shapes.card,
+    )
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -219,6 +282,7 @@ private fun previewChatRoomState(): ChatRoomUiState =
                     id = 1,
                     userInput = "문을 천천히 연다.",
                     aiOutput = "문이 열리자 **태엽 감기는 소리**가 쏟아진다. *심장이 빨라진다.*",
+                    choices = listOf("*문이 삐걱인다* 누구세요?", "조용히 뒤로 물러난다"),
                 ),
             ),
     )

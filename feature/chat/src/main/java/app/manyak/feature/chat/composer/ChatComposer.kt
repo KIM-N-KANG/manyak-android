@@ -19,7 +19,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
@@ -35,6 +37,9 @@ import app.manyak.core.ui.theme.ManyakTheme
  *
  * [hasSuggestions] 를 목록이 아니라 **불리언으로 받는다** — 추천 문구를 그리는 곳은 메시지 영역이고,
  * 컴포저는 "무작위로 보낼 것이 있는가"만 알면 된다.
+ *
+ * [fillSignal] 은 추천을 채운 횟수다. 값이 바뀌면 지금 모드의 입력창으로 포커스를 옮긴다 — 채우기는
+ * 고쳐 쓰라고 넣는 것이라 바로 이어 쓸 수 있어야 한다.
  */
 @Composable
 internal fun ChatComposer(
@@ -44,6 +49,7 @@ internal fun ChatComposer(
     isStreaming: Boolean,
     actions: ChatComposerActions,
     modifier: Modifier = Modifier,
+    fillSignal: Int = 0,
 ) {
     val sendState =
         sendButtonState(
@@ -70,6 +76,7 @@ internal fun ChatComposer(
                 BlockInputList(
                     blocks = state.blocks,
                     enabled = !isStreaming,
+                    fillSignal = fillSignal,
                     onValueChange = actions.onBlockValueChange,
                     onRemoveBlock = actions.onRemoveBlock,
                 )
@@ -78,6 +85,7 @@ internal fun ChatComposer(
                 PlainInput(
                     value = plainValue,
                     enabled = !isStreaming,
+                    fillSignal = fillSignal,
                     onValueChange = { next ->
                         plainValue = next
                         if (next.text != state.plainText) actions.onPlainTextChange(next.text)
@@ -91,18 +99,9 @@ internal fun ChatComposer(
             sendState = sendState,
             actions = actions,
             onInsertEmphasis = {
-                val inserted =
-                    insertEmphasisMarkers(
-                        text = plainValue.text,
-                        selectionStart = plainValue.selection.start,
-                        selectionEnd = plainValue.selection.end,
-                    )
-                plainValue =
-                    TextFieldValue(
-                        text = inserted.text,
-                        selection = TextRange(inserted.selectionStart, inserted.selectionEnd),
-                    )
-                actions.onPlainTextChange(inserted.text)
+                val next = plainValue.withEmphasisMarkers()
+                plainValue = next
+                actions.onPlainTextChange(next.text)
             },
             onSend = onSend,
         )
@@ -118,6 +117,7 @@ internal fun ChatComposer(
 private fun BlockInputList(
     blocks: List<InputBlock>,
     enabled: Boolean,
+    fillSignal: Int,
     onValueChange: (Long, String) -> Unit,
     onRemoveBlock: (Long) -> Unit,
     modifier: Modifier = Modifier,
@@ -125,15 +125,22 @@ private fun BlockInputList(
     // 내용이 있는 블럭을 지울 때만 묻는다. 확인 대상은 회전에서 사라지면 안 되므로 saveable 이다.
     var pendingRemoveId by rememberSaveable { mutableStateOf<Long?>(null) }
     val maxHeight = LocalConfiguration.current.screenHeightDp.dp * BLOCK_LIST_HEIGHT_FRACTION
+    val firstBlockFocus = remember { FocusRequester() }
+
+    // 채운 문장은 첫 칸부터 고치게 된다. 칸이 하나도 없으면 붙잡을 곳이 없어 건너뛴다.
+    LaunchedEffect(fillSignal) {
+        if (fillSignal > 0 && blocks.isNotEmpty()) firstBlockFocus.requestFocus()
+    }
 
     Column(
         modifier = modifier.fillMaxWidth().heightIn(max = maxHeight).verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
-        blocks.forEach { block ->
+        blocks.forEachIndexed { index, block ->
             BlockInputRow(
                 block = block,
                 enabled = enabled,
+                fieldModifier = if (index == 0) Modifier.focusRequester(firstBlockFocus) else Modifier,
                 onValueChange = { value -> onValueChange(block.id, value) },
                 onRemove = {
                     if (block.value.isBlank()) onRemoveBlock(block.id) else pendingRemoveId = block.id
@@ -158,6 +165,7 @@ private fun BlockInputList(
 private fun BlockInputRow(
     block: InputBlock,
     enabled: Boolean,
+    fieldModifier: Modifier,
     onValueChange: (String) -> Unit,
     onRemove: () -> Unit,
 ) {
@@ -187,7 +195,7 @@ private fun BlockInputRow(
         verticalAlignment = Alignment.Top,
     ) {
         SyncedTextField(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).then(fieldModifier),
             text = block.value,
             onTextChange = onValueChange,
             placeholder = placeholder,
@@ -218,12 +226,19 @@ private fun BlockInputRow(
 private fun PlainInput(
     value: TextFieldValue,
     enabled: Boolean,
+    fillSignal: Int,
     onValueChange: (TextFieldValue) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val maxHeight = LocalConfiguration.current.screenHeightDp.dp * PLAIN_INPUT_HEIGHT_FRACTION
+    val focusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(fillSignal) {
+        if (fillSignal > 0) focusRequester.requestFocus()
+    }
+
     ComposerTextField(
-        modifier = modifier.fillMaxWidth().heightIn(max = maxHeight),
+        modifier = modifier.fillMaxWidth().heightIn(max = maxHeight).focusRequester(focusRequester),
         value = value,
         onValueChange = onValueChange,
         placeholder = stringResource(R.string.chat_composer_plain_placeholder),
@@ -264,6 +279,15 @@ private fun SyncedTextField(
         maxLines = maxLines,
         textColor = textColor,
         leading = leading,
+    )
+}
+
+/** 고른 구간을 강조 마커로 감싼다. 커서를 되돌려 놓아야 감싼 뒤에도 이어 쓸 수 있다. */
+private fun TextFieldValue.withEmphasisMarkers(): TextFieldValue {
+    val inserted = insertEmphasisMarkers(text = text, selectionStart = selection.start, selectionEnd = selection.end)
+    return TextFieldValue(
+        text = inserted.text,
+        selection = TextRange(inserted.selectionStart, inserted.selectionEnd),
     )
 }
 

@@ -49,13 +49,21 @@ data class ChatComposerState(
         }
     }
 
+    /**
+     * 추천 문장을 입력창에 채운다.
+     *
+     * 블럭 모드는 쓰던 칸을 **통째로 갈아 끼운다** — 뒤에 이어 붙이면 채우기가 추가 입력처럼 보이고,
+     * 채운 원문과 전송문을 대조하는 출처 판정도 어긋난다.
+     */
+    fun filledWith(text: String): ChatComposerState =
+        if (mode == ChatInputMode.BLOCK) {
+            copy(blocks = parseInputBlocks(text).ifEmpty { createDefaultInputBlocks() })
+        } else {
+            copy(plainText = text)
+        }
+
     /** 전송에 성공한 뒤의 빈 상태. 모드는 그대로 둔다. */
     fun cleared(): ChatComposerState = copy(plainText = "", blocks = createDefaultInputBlocks())
-
-    private companion object {
-        /** 서버로 보낼 때만 쓰는 구분자. 모드 전환에는 공백을 쓴다. */
-        const val BLOCK_SEND_SEPARATOR = "\n\n"
-    }
 }
 
 /** 전송 버튼이 지금 무엇을 하는지. 한 버튼이 세 상태를 공유하므로 아이콘이 그것을 말해야 한다. */
