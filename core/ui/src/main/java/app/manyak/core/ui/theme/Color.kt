@@ -20,7 +20,7 @@ private val Gray700 = Color(0xFF5E5E5E)
 private val Gray750 = Color(0xFF575757)
 private val Gray800 = Color(0xFF3A3A3A)
 private val Gray850 = Color(0xFF2C2C2C)
-private val Gray900 = Color(0xFF1D1D1D)
+private val Gray900 = Color(0xFF1F1F1F)
 private val Gray950 = Color(0xFF131313)
 
 private val Green50 = Color(0xFFE8F8EE)
