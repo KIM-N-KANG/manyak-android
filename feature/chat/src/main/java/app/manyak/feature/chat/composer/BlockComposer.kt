@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
@@ -162,7 +161,9 @@ private fun BlockInputRow(
             textColor = contentColor,
             leading = {
                 Text(
-                    modifier = Modifier.width(BlockLabelWidth),
+                    // 라벨 뒤 간격을 필드 안쪽 여백과 같게 둔다 — 고정 폭으로 잡으면 글자 폭에 따라
+                    // 남는 자리가 달라져 좌우가 어긋난다.
+                    modifier = Modifier.padding(end = ManyakTheme.spacing.controlHorizontal),
                     text = label,
                     style = ManyakTheme.typography.labelSmall,
                     color = contentColor,
@@ -187,5 +188,3 @@ private fun BlockInputRow(
 private const val BLOCK_LIST_HEIGHT_FRACTION = 0.2f
 
 private const val BLOCK_MAX_LINES = 4
-
-private val BlockLabelWidth = 28.dp

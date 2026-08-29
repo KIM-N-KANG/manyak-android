@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -113,7 +113,7 @@ private fun <T> ComposerMenuContent(
         Column(
             modifier =
                 Modifier
-                    .widthIn(min = MenuMinWidth)
+                    .width(MenuWidth)
                     .shadow(MenuShadowElevation, ManyakTheme.shapes.control)
                     .background(ManyakTheme.colors.surfaceRaised, ManyakTheme.shapes.control)
                     .border(BorderWidth, ManyakTheme.colors.border, ManyakTheme.shapes.control)
@@ -173,6 +173,7 @@ private fun <T> ComposerMenuItem(
     }
 }
 
-private val MenuMinWidth = 192.dp
+/** 메뉴 폭. 최소가 아니라 고정이다 — 열어 두면 가장 긴 설명이 한 줄로 펴져 화면을 다 먹는다. */
+private val MenuWidth = 192.dp
 private val MenuShadowElevation = 8.dp
 private val BorderWidth = 1.dp

@@ -80,7 +80,8 @@ internal fun ComposerChipButton(
                 .clip(ManyakTheme.shapes.menuItem)
                 .background(
                     if (enabled) ManyakTheme.colors.backgroundNeutral else ManyakTheme.colors.backgroundDisabled,
-                ).clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+                ).border(ComposerBorderWidth, ManyakTheme.colors.border, ManyakTheme.shapes.menuItem)
+                .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
                 .padding(horizontal = ManyakTheme.spacing.component),
         contentAlignment = Alignment.Center,
     ) {
