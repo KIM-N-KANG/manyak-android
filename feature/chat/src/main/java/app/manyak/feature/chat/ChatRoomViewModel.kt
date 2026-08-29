@@ -5,6 +5,7 @@ import app.manyak.core.domain.chat.ChatInputMode
 import app.manyak.core.domain.chat.ChatPreferencesRepository
 import app.manyak.core.domain.chat.ChatRepository
 import app.manyak.core.domain.chat.ChatStreamEvent
+import app.manyak.core.domain.error.DomainError
 import app.manyak.core.domain.error.DomainResult
 import app.manyak.core.ui.mvi.MviViewModel
 import app.manyak.feature.chat.composer.ChatComposerState
@@ -30,6 +31,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlin.random.Random
 
@@ -40,6 +42,8 @@ data class ChatRoomTurn(
     val aiOutput: String,
     /** 다음 행동 선택지. 화면은 마지막 턴의 것만 그린다. */
     val choices: List<String> = emptyList(),
+    /** 이 턴에서 도달한 엔딩의 이름. */
+    val reachedEnding: String? = null,
 )
 
 /** 진행 중인 턴. 확정되면 확정 턴 목록과 **한 번에** 교체된다. */
@@ -66,6 +70,8 @@ data class ChatRoomUiState(
     val streaming: StreamingTurn? = null,
     /** 전송 잠금. [streaming] 과 따로 두는 이유는 둘의 수명이 갈리는 경우가 있기 때문이다. */
     val isStreaming: Boolean = false,
+    /** 재생성 중인 턴. 그 턴은 목록에서 자리를 지킨 채 [streaming] 으로 바뀐다. */
+    val regeneratingTurnId: Long? = null,
 ) {
     /** 컴포저와 메시지 목록이 함께 쓰는 추천 목록. */
     val suggestions: ChatSuggestions
@@ -115,6 +121,11 @@ sealed interface ChatRoomIntent {
     data object RandomSuggestionSent : ChatRoomIntent
 
     data object ChoicesRetried : ChatRoomIntent
+
+    /** 마지막 턴의 AI 출력을 다시 만든다. */
+    data class RegenerateRequested(
+        val turnId: Long,
+    ) : ChatRoomIntent
 }
 
 sealed interface ChatRoomEvent {
@@ -146,6 +157,12 @@ sealed interface ChatRoomEvent {
     data class SendStarted(
         val userInput: String,
         val composer: ChatComposerState,
+    ) : ChatRoomEvent
+
+    /** 대상 턴을 진행 블록으로 **대체한다**. 사용자 입력은 그 턴의 것을 그대로 쓴다. */
+    data class RegenerateStarted(
+        val turnId: Long,
+        val userInput: String,
     ) : ChatRoomEvent
 
     data class TokensAppended(
@@ -231,6 +248,9 @@ class ChatRoomViewModel
         /** 채우기로 입력창에 넣어 둔 추천 원문. 전송에 성공하면 비운다. */
         private var filled: FilledSuggestion? = null
 
+        /** 재생성 중인 턴. 실패 복구가 이어쓰기와 갈리는 지점을 이 값이 가른다. */
+        private var regeneratingTurnId: Long? = null
+
         private val random = Random.Default
 
         private val suggestions: ChatSuggestions
@@ -284,6 +304,14 @@ class ChatRoomViewModel
 
                 ChatRoomIntent.Sent -> send()
 
+                is ChatRoomIntent.RegenerateRequested -> {
+                    // 화면이 본 마지막 턴과 지금 마지막 턴이 다르면 낡은 클릭이다.
+                    val turn = turns.lastOrNull()?.takeIf { last -> last.id == intent.turnId } ?: return
+                    startTurn(userInput = turn.userInput, regeneratedTurnId = turn.id) {
+                        chatRepository.regenerateTurn(chatId, turn.id)
+                    }
+                }
+
                 else -> handleSuggestion(intent)
             }
         }
@@ -323,24 +351,24 @@ class ChatRoomViewModel
 
         private fun send() {
             val userInput = composer.toUserInput()
-            startTurn(userInput, composerOrigin(userInput, filled))
-        }
-
-        /** 추천 문장을 입력창을 거치지 않고 바로 보낸다. */
-        private fun sendSuggestion(position: Int) {
-            val current = suggestions
-            val text =
-                current.items
-                    .getOrNull(position)
-                    ?.trim()
-                    .orEmpty()
-            if (text.isEmpty()) return
-            startTurn(normalizeSuggestion(text), choiceOrigin(position, current.sourceTurnId))
+            startTurn(userInput) { chatRepository.turnStream(chatId, userInput, composerOrigin(userInput, filled)) }
         }
 
         private suspend fun handleSuggestion(intent: ChatRoomIntent) {
             when (intent) {
-                is ChatRoomIntent.SuggestionSent -> sendSuggestion(intent.position)
+                // 추천 문장은 입력창을 거치지 않고 바로 보낸다.
+                is ChatRoomIntent.SuggestionSent -> {
+                    val current = suggestions
+                    val text =
+                        current.items
+                            .getOrNull(intent.position)
+                            ?.trim()
+                            .orEmpty()
+                    if (text.isEmpty()) return
+                    val userInput = normalizeSuggestion(text)
+                    val origin = choiceOrigin(intent.position, current.sourceTurnId)
+                    startTurn(userInput) { chatRepository.turnStream(chatId, userInput, origin) }
+                }
 
                 is ChatRoomIntent.SuggestionFilled -> {
                     val current = suggestions
@@ -356,7 +384,9 @@ class ChatRoomViewModel
                 }
 
                 ChatRoomIntent.RandomSuggestionSent ->
-                    randomSuggestionPosition(suggestions.items, random)?.let { position -> sendSuggestion(position) }
+                    randomSuggestionPosition(suggestions.items, random)?.let { position ->
+                        handleSuggestion(ChatRoomIntent.SuggestionSent(position))
+                    }
 
                 ChatRoomIntent.ChoicesRetried -> generateChoices()
 
@@ -372,27 +402,34 @@ class ChatRoomViewModel
          */
         private fun startTurn(
             userInput: String,
-            origin: SuggestionOrigin,
+            regeneratedTurnId: Long? = null,
+            stream: () -> Flow<ChatStreamEvent>,
         ) {
+            // 스트림을 만들기 전에 막는다 — 진행 중에 또 만들면 버린 요청이 서버 기록에 남는다.
             if (streamJob?.isActive == true) return
             if (userInput.isBlank()) return
 
-            // 다음 턴의 입력이 앞 턴에서 채운 문장과 대조되면 안 된다.
-            filled = null
-            composer = composer.cleared()
+            // 상태를 바꾸기 전에 만든다 — 출처 판정이 아직 비우지 않은 채우기 기억을 봐야 한다.
+            val events = stream()
+            if (regeneratedTurnId == null) {
+                // 이어쓰기만 컴포저를 비운다 — 재생성은 쓰던 초안을 건드리지 않는다.
+                // 다음 턴의 입력이 앞 턴에서 채운 문장과 대조되면 안 된다.
+                filled = null
+                composer = composer.cleared()
+            }
+            regeneratingTurnId = regeneratedTurnId
             choicesJob?.cancel()
             isStreaming = true
             streamJob =
                 viewModelScope.launch {
-                    dispatchEvent(ChatRoomEvent.SendStarted(userInput = userInput, composer = composer))
-                    chatRepository
-                        .streamTurn(
-                            chatId = chatId,
-                            userInput = userInput,
-                            userSource = origin.userSource,
-                            sourceTurnId = origin.sourceTurnId,
-                            choiceOrder = origin.choiceOrder,
-                        ).collectBatched { event -> handleStreamEvent(event) }
+                    dispatchEvent(
+                        if (regeneratedTurnId == null) {
+                            ChatRoomEvent.SendStarted(userInput = userInput, composer = composer)
+                        } else {
+                            ChatRoomEvent.RegenerateStarted(turnId = regeneratedTurnId, userInput = userInput)
+                        },
+                    )
+                    events.collectBatched { event -> handleStreamEvent(event) }
                 }
         }
 
@@ -408,22 +445,39 @@ class ChatRoomViewModel
                 ChatStreamEvent.Completed -> {
                     isStreaming = false
                     refreshTurns(confirmed = true)
+                    regeneratingTurnId = null
                 }
 
-                is ChatStreamEvent.Failed -> {
-                    isStreaming = false
-                    dispatchEvent(ChatRoomEvent.StreamCleared)
-                    dispatchEffect(ChatRoomEffect.ShowStreamFailure(event.message))
-                }
+                is ChatStreamEvent.Failed -> handleStreamFailure(event)
 
                 ChatStreamEvent.Interrupted -> {
                     isStreaming = false
                     dispatchEvent(ChatRoomEvent.StreamCleared)
                     dispatchEffect(ChatRoomEffect.ShowStreamFailure(null))
-                    // 서버 저장 여부가 불명이라 임의로 복원하지 않고 확정 상태를 다시 읽는다.
+                    // 서버 저장·교체 여부가 불명이라 임의로 복원하지 않고 확정 상태를 다시 읽는다.
                     refreshTurns(confirmed = false)
+                    regeneratingTurnId = null
                 }
             }
+        }
+
+        /**
+         * `error` 사건의 복구.
+         *
+         * **블록을 걷는 것이 곧 복원이다** — 이어쓰기면 낙관적으로 붙였던 밴드가 사라지고, 재생성이면
+         * 자리를 지키고 있던 대상 턴이 그대로 다시 보인다. 서버가 교체하지 않았음이 보장되는 실패라
+         * 다시 읽지 않는다.
+         *
+         * 다만 **409 는 이미 새 턴이 붙은 낡은 화면**이라 되살릴 기존 본문이 정본이 아니다. 그때만
+         * 확정 상태를 다시 읽는다.
+         */
+        private suspend fun handleStreamFailure(event: ChatStreamEvent.Failed) {
+            isStreaming = false
+            dispatchEvent(ChatRoomEvent.StreamCleared)
+            dispatchEffect(ChatRoomEffect.ShowStreamFailure(event.message))
+            val staleTurn = (event.error as? DomainError.Server)?.status == HTTP_CONFLICT
+            if (regeneratingTurnId != null && staleTurn) refreshTurns(confirmed = false)
+            regeneratingTurnId = null
         }
 
         /**
@@ -446,7 +500,15 @@ class ChatRoomViewModel
 
                 is DomainResult.Failure ->
                     if (confirmed) {
-                        dispatchEvent(ChatRoomEvent.StreamSettled)
+                        // 재생성은 대상 턴이 목록에 그대로 있어 블록만 걷으면 기존 본문이 돌아온다.
+                        // 이어쓰기는 새 턴이 목록에 없으므로 블록을 남기고 잠금만 푼다.
+                        dispatchEvent(
+                            if (regeneratingTurnId != null) {
+                                ChatRoomEvent.StreamCleared
+                            } else {
+                                ChatRoomEvent.StreamSettled
+                            },
+                        )
                         dispatchEffect(ChatRoomEffect.ShowStreamFailure(null))
                     }
             }
@@ -488,6 +550,11 @@ class ChatRoomViewModel
         @AssistedFactory
         interface Factory {
             fun create(chatId: String): ChatRoomViewModel
+        }
+
+        private companion object {
+            /** 서버가 보는 마지막 턴과 재생성 대상이 다를 때의 응답. */
+            const val HTTP_CONFLICT = 409
         }
     }
 
@@ -537,6 +604,14 @@ private fun reduceTurn(
                 choicesProgress = null,
             )
 
+        is ChatRoomEvent.RegenerateStarted ->
+            state.copy(
+                streaming = StreamingTurn(userInput = event.userInput),
+                isStreaming = true,
+                regeneratingTurnId = event.turnId,
+                choicesProgress = null,
+            )
+
         is ChatRoomEvent.TokensAppended ->
             state.copy(
                 streaming = state.streaming?.let { it.copy(segments = it.segments.appendText(event.text)) },
@@ -551,11 +626,17 @@ private fun reduceTurn(
             )
 
         is ChatRoomEvent.TurnConfirmed ->
-            state.copy(turns = event.turns, streaming = null, isStreaming = false)
+            state.copy(
+                turns = event.turns,
+                streaming = null,
+                isStreaming = false,
+                regeneratingTurnId = null,
+            )
 
         is ChatRoomEvent.TurnsRefreshed -> state.copy(turns = event.turns, choicesProgress = null)
 
-        ChatRoomEvent.StreamCleared -> state.copy(streaming = null, isStreaming = false)
+        ChatRoomEvent.StreamCleared ->
+            state.copy(streaming = null, isStreaming = false, regeneratingTurnId = null)
 
         ChatRoomEvent.StreamSettled -> state.copy(isStreaming = false)
 
@@ -575,5 +656,25 @@ private fun reduceChoices(
         else -> state
     }
 
+/** 이어쓰기 스트림. 출처는 서버가 선택 결과를 기록하는 데만 쓰인다. */
+private fun ChatRepository.turnStream(
+    chatId: String,
+    userInput: String,
+    origin: SuggestionOrigin,
+): Flow<ChatStreamEvent> =
+    streamTurn(
+        chatId = chatId,
+        userInput = userInput,
+        userSource = origin.userSource,
+        sourceTurnId = origin.sourceTurnId,
+        choiceOrder = origin.choiceOrder,
+    )
+
 private fun app.manyak.core.domain.chat.ChatTurn.toUi(): ChatRoomTurn =
-    ChatRoomTurn(id = id, userInput = userInput, aiOutput = aiOutput, choices = choices)
+    ChatRoomTurn(
+        id = id,
+        userInput = userInput,
+        aiOutput = aiOutput,
+        choices = choices,
+        reachedEnding = reachedEnding,
+    )

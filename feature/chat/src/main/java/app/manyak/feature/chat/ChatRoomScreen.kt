@@ -280,6 +280,12 @@ private fun previewChatRoomState(): ChatRoomUiState =
             listOf(
                 ChatRoomTurn(
                     id = 1,
+                    userInput = "태엽을 되감는다.",
+                    aiOutput = "시계탑이 멈추고 도시가 숨을 고른다.",
+                    reachedEnding = "멈춘 도시",
+                ),
+                ChatRoomTurn(
+                    id = 2,
                     userInput = "문을 천천히 연다.",
                     aiOutput = "문이 열리자 **태엽 감기는 소리**가 쏟아진다. *심장이 빨라진다.*",
                     choices = listOf("*문이 삐걱인다* 누구세요?", "조용히 뒤로 물러난다"),

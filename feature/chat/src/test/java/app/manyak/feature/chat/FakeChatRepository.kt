@@ -13,7 +13,6 @@ import app.manyak.core.domain.error.DomainResult
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.yield
 
@@ -117,10 +116,17 @@ internal class FakeChatRepository : ChatRepository {
         return streamEvents.receiveAsFlow()
     }
 
+    /** 재생성은 이어쓰기와 다른 통로를 쓴다 — 한 테스트에서 둘을 섞어 보내는 경우가 있다. */
+    val regenerateEvents = Channel<ChatStreamEvent>(Channel.UNLIMITED)
+    val regeneratedTurnIds = mutableListOf<Long>()
+
     override fun regenerateTurn(
         chatId: String,
         turnId: Long,
-    ): Flow<ChatStreamEvent> = emptyFlow()
+    ): Flow<ChatStreamEvent> {
+        regeneratedTurnIds += turnId
+        return regenerateEvents.receiveAsFlow()
+    }
 
     val generatedChoiceTurnIds = mutableListOf<Long>()
     val queuedChoicesResults = ArrayDeque<DomainResult<Unit>>()

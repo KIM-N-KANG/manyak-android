@@ -46,6 +46,8 @@ data class ChatTurn(
      * 마지막 턴의 것만 그린다.
      */
     val choices: List<String> = emptyList(),
+    /** 이 턴에서 도달한 엔딩의 이름. 도달하지 않았으면 `null` 이다. */
+    val reachedEnding: String? = null,
 )
 
 /**

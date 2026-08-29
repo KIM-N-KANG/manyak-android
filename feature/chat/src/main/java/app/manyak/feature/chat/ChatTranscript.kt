@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -54,49 +54,39 @@ internal fun ChatTranscript(
 ) {
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
-    val hasPrologue = state.prologue.isNotBlank()
-    val suggestions = state.suggestions
-    val lastTurnId = state.turns.lastOrNull()?.id
+    val prologueCount = if (state.prologue.isNotBlank()) 1 else 0
+    val streaming = state.streaming
+    // 재생성은 대상 턴 자리에서 진행하므로 목록 끝에 블록을 더하지 않는다.
+    val appendsStreaming = streaming != null && state.regeneratingTurnId == null
     // 진행 중에는 추천을 그리지 않는다 — 이미 보낸 뒤라 고를 것이 아니다.
-    val showsSuggestions =
-        state.streaming == null &&
-            hasSuggestionArea(suggestions, state.choicesProgress, lastTurnId, state.choicesEnabled)
-    // 프롤로그 + 턴 + 진행 블록 + 추천 + 하단 여백 자리.
+    val showsSuggestions = streaming == null && hasSuggestionArea(state)
     val itemCount =
-        (if (hasPrologue) 1 else 0) + state.turns.size + (if (state.streaming != null) 1 else 0) +
+        prologueCount + state.turns.size + (if (appendsStreaming) 1 else 0) +
             (if (showsSuggestions) 1 else 0) + 1
 
     EnterAtLastMessage(listState = listState, itemCount = itemCount, hasTurns = state.turns.isNotEmpty())
-
-    // 보낸 턴을 뷰포트 맨 위에 붙인다 — 조각이 늘어도 읽던 자리가 끌려 내려가지 않는다.
-    LaunchedEffect(state.isStreaming) {
-        if (state.isStreaming) listState.scrollToItem((itemCount - 2).coerceAtLeast(0))
-    }
+    AnchorStreamingTurn(listState = listState, state = state, itemCount = itemCount, prologueCount = prologueCount)
 
     Box(modifier = modifier.fillMaxWidth()) {
         LazyColumn(modifier = Modifier.fillMaxWidth(), state = listState) {
-            if (hasPrologue) {
+            if (prologueCount > 0) {
                 item(key = "prologue") { ChatAiOutput(content = state.prologue) }
             }
-            items(state.turns, key = { turn -> turn.id }) { turn ->
-                Column {
-                    if (turn.userInput.isNotBlank()) ChatUserBand(text = turn.userInput)
-                    if (turn.aiOutput.isNotBlank()) ChatAiOutput(content = turn.aiOutput)
+            itemsIndexed(state.turns, key = { _, turn -> turn.id }) { index, turn ->
+                if (streaming != null && turn.id == state.regeneratingTurnId) {
+                    StreamingBlock(streaming = streaming)
+                } else {
+                    TurnBlock(
+                        turn = turn,
+                        isLast = streaming == null && index == state.turns.lastIndex,
+                        onRegenerate = { onIntent(ChatRoomIntent.RegenerateRequested(turn.id)) },
+                    )
                 }
             }
-            state.streaming?.let { streaming ->
-                item(key = "streaming") {
-                    Column {
-                        ChatUserBand(text = streaming.userInput)
-                        if (streaming.segments.isEmpty()) {
-                            WritingPlaceholder()
-                        } else {
-                            ChatAiOutput(segments = streaming.segments)
-                        }
-                    }
-                }
+            if (appendsStreaming && streaming != null) {
+                item(key = "streaming") { StreamingBlock(streaming = streaming) }
             }
-            if (showsSuggestions) suggestionItem(state, suggestions, lastTurnId, onIntent)
+            if (showsSuggestions) suggestionItem(state, state.suggestions, state.turns.lastOrNull()?.id, onIntent)
             item(key = "bottom") { Spacer(modifier = Modifier.height(ManyakTheme.spacing.screenBottom)) }
         }
         if (listState.canScrollForward) {
@@ -104,6 +94,35 @@ internal fun ChatTranscript(
                 modifier = Modifier.align(Alignment.BottomCenter).padding(ManyakTheme.spacing.gutter),
                 onClick = { scope.launch { listState.animateScrollToItem(itemCount - 1) } },
             )
+        }
+    }
+}
+
+/** 확정 턴 하나. 재생성 버튼은 **마지막 턴에만** 붙는다 — 앞선 턴을 바꾸면 뒤 이야기와 어긋난다. */
+@Composable
+private fun TurnBlock(
+    turn: ChatRoomTurn,
+    isLast: Boolean,
+    onRegenerate: () -> Unit,
+) {
+    Column {
+        if (turn.userInput.isNotBlank()) ChatUserBand(text = turn.userInput)
+        if (turn.aiOutput.isNotBlank()) {
+            ChatAiOutput(content = turn.aiOutput, endingName = turn.reachedEnding)
+        }
+        if (isLast && canRegenerate(turn)) RegenerateButton(onClick = onRegenerate)
+    }
+}
+
+/** 진행 중인 턴. 이어쓰기면 목록 끝에, 재생성이면 대상 턴 자리에 놓인다. */
+@Composable
+private fun StreamingBlock(streaming: StreamingTurn) {
+    Column {
+        ChatUserBand(text = streaming.userInput)
+        if (streaming.segments.isEmpty()) {
+            WritingPlaceholder()
+        } else {
+            ChatAiOutput(segments = streaming.segments)
         }
     }
 }
@@ -125,6 +144,40 @@ private fun LazyListScope.suggestionItem(
             onFill = { position -> onIntent(ChatRoomIntent.SuggestionFilled(position)) },
             onRetry = { onIntent(ChatRoomIntent.ChoicesRetried) },
         )
+    }
+}
+
+private fun hasSuggestionArea(state: ChatRoomUiState): Boolean =
+    hasSuggestionArea(
+        suggestions = state.suggestions,
+        progress = state.choicesProgress,
+        lastTurnId = state.turns.lastOrNull()?.id,
+        choicesEnabled = state.choicesEnabled,
+    )
+
+/**
+ * 진행 중인 턴을 뷰포트 맨 위에 붙인다 — 조각이 늘어도 읽던 자리가 끌려 내려가지 않는다.
+ *
+ * 재생성은 목록 끝이 아니라 **대상 턴 자리**를 맞춘다. 바뀌는 곳이 화면 밖이면 무엇이 다시 만들어지는지
+ * 보이지 않는다.
+ */
+@Composable
+private fun AnchorStreamingTurn(
+    listState: LazyListState,
+    state: ChatRoomUiState,
+    itemCount: Int,
+    prologueCount: Int,
+) {
+    LaunchedEffect(state.isStreaming) {
+        if (!state.isStreaming) return@LaunchedEffect
+        val regenerating = state.regeneratingTurnId
+        val index =
+            if (regenerating == null) {
+                itemCount - 2
+            } else {
+                prologueCount + state.turns.indexOfFirst { turn -> turn.id == regenerating }
+            }
+        listState.scrollToItem(index.coerceAtLeast(0))
     }
 }
 

@@ -17,7 +17,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import app.manyak.core.ui.R
 import app.manyak.core.ui.text.storyAnnotatedString
 import app.manyak.core.ui.theme.ManyakTheme
 import app.manyak.core.ui.theme.insetForBorder
@@ -45,8 +50,13 @@ internal fun ChatUserBand(
 internal fun ChatAiOutput(
     content: String,
     modifier: Modifier = Modifier,
+    endingName: String? = null,
 ) {
-    ChatAiOutput(segments = remember(content) { parseChatMessageSegments(content) }, modifier = modifier)
+    ChatAiOutput(
+        segments = remember(content) { parseChatMessageSegments(content) },
+        modifier = modifier,
+        endingName = endingName,
+    )
 }
 
 /**
@@ -60,9 +70,31 @@ internal fun ChatAiOutput(
 internal fun ChatAiOutput(
     segments: List<ChatMessageSegment>,
     modifier: Modifier = Modifier,
+    endingName: String? = null,
+) {
+    Column(modifier = modifier.fillMaxWidth().padding(vertical = ManyakTheme.spacing.passage)) {
+        if (!endingName.isNullOrBlank()) {
+            // 배지와 첫 조각 사이만 좁다 — 배지는 본문의 머리표지지 또 하나의 문단이 아니다.
+            EndingBadge(
+                modifier =
+                    Modifier
+                        .padding(horizontal = ManyakTheme.spacing.gutter)
+                        .padding(bottom = ManyakTheme.spacing.controlVertical),
+                name = endingName,
+            )
+        }
+        SegmentColumn(segments = segments)
+    }
+}
+
+/** AI 출력의 조각들. 조각 사이 간격만 맡는다. */
+@Composable
+private fun SegmentColumn(
+    segments: List<ChatMessageSegment>,
+    modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier.fillMaxWidth().padding(vertical = ManyakTheme.spacing.passage),
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.passage),
     ) {
         segments.forEachIndexed { index, segment ->
@@ -81,6 +113,30 @@ internal fun ChatAiOutput(
             }
         }
     }
+}
+
+/**
+ * 이 턴에서 도달한 엔딩. 값이 있을 때만 그리고, 도달 사실을 보조기술에도 알린다 —
+ * 스트리밍이 끝난 뒤 화면 가운데에서 조용히 나타나는 정보다.
+ */
+@Composable
+private fun EndingBadge(
+    name: String,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        modifier =
+            modifier
+                .clip(ManyakTheme.shapes.pill)
+                .background(ManyakTheme.colors.backgroundBrandSubtle)
+                .padding(
+                    horizontal = ManyakTheme.spacing.controlVertical,
+                    vertical = ManyakTheme.spacing.inline,
+                ).semantics { liveRegion = LiveRegionMode.Polite },
+        text = stringResource(R.string.chat_room_ending_badge, name),
+        style = ManyakTheme.typography.labelLarge,
+        color = ManyakTheme.colors.textBrand,
+    )
 }
 
 /**

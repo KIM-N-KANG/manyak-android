@@ -143,13 +143,13 @@ data class ChatDetailResponseDto(
     val suggestedInputs: List<String> = emptyList(),
 )
 
-/** 턴의 엔딩 도달은 재생성 버튼 표시가 붙기 전까지 쓰지 않아 역직렬화하지 않는다. */
 @Serializable
 data class ChatTurnDto(
     val id: Long,
     val userInput: String = "",
     val aiOutput: String = "",
     val choices: List<String> = emptyList(),
+    val reachedEnding: String? = null,
 )
 
 fun ChatDetailResponseDto.toDomain(): ChatDetail =
@@ -165,6 +165,7 @@ fun ChatDetailResponseDto.toDomain(): ChatDetail =
                     userInput = turn.userInput,
                     aiOutput = turn.aiOutput,
                     choices = turn.choices,
+                    reachedEnding = turn.reachedEnding?.takeIf { name -> name.isNotBlank() },
                 )
             },
         suggestedInputs = suggestedInputs,
