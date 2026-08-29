@@ -126,7 +126,7 @@ private fun ChatCharacterImage(
     var failed by rememberSaveable(imageUrl) { mutableStateOf(false) }
     if (failed || !isAllowedChatCharacterImageUrl(imageUrl)) return
 
-    AsyncImage(
+    Box(
         modifier =
             modifier
                 .fillMaxWidth()
@@ -134,11 +134,21 @@ private fun ChatCharacterImage(
                 .border(ImageBorderWidth, ManyakTheme.colors.border, ManyakTheme.shapes.overlay)
                 .clip(ManyakTheme.shapes.overlay)
                 .background(ManyakTheme.colors.backgroundNeutral),
-        model = imageUrl,
-        contentDescription = name,
-        contentScale = ContentScale.Fit,
-        onError = { failed = true },
-    )
+    ) {
+        // 이미지는 선 두께만큼 안으로 들인다. 이미지와 선의 경계가 같은 픽셀에 겹치면 두
+        // 안티에일리어싱이 합성돼 곡률에서만 진한 띠가 생기고, 그 띠가 직선부의 선보다 도드라진다.
+        AsyncImage(
+            modifier =
+                Modifier
+                    .matchParentSize()
+                    .padding(ImageBorderWidth)
+                    .clip(ManyakTheme.shapes.overlay),
+            model = imageUrl,
+            contentDescription = name,
+            contentScale = ContentScale.Fit,
+            onError = { failed = true },
+        )
+    }
 }
 
 /** 인물 이미지의 가로세로 비율. */
