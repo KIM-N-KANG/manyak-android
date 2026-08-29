@@ -1,18 +1,19 @@
 package app.manyak.feature.chat
 
 import android.widget.Toast
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -31,7 +32,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -138,39 +138,43 @@ private fun ChatRoomContent(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.safeDrawing),
     ) {
-        ChatRoomHeader(title = state.storyTitle, onBack = onBack, onDeleteClick = onDeleteClick)
-        when {
-            state.isLoading ->
-                Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    if (showProgress) ManyakProgressIndicator()
-                }
-
-            state.loadFailed ->
-                ChatRoomLoadFailed(
-                    modifier = Modifier.weight(1f),
-                    onRetry = { onIntent(ChatRoomIntent.Retry) },
-                )
-
-            else -> {
-                ChatTranscript(
-                    modifier = Modifier.weight(1f),
-                    state = state,
-                    // 초안이 있으면 채우기 전에 확인을 받는다. 즉시 전송에는 이 확인이 없다.
-                    onIntent = { intent ->
-                        if (intent is ChatRoomIntent.SuggestionFilled && state.composer.hasInput) {
-                            pendingFill = intent.position
-                        } else {
-                            onIntent(intent)
+        val phase = chatRoomPhase(state)
+        // 헤더는 어느 상태에서나 남는다 — 실패 화면에서도 뒤로 나갈 곳이 있어야 한다. 다만 방을 아직
+        // 열지 못한 상태에서는 삭제를 권하지 않는다.
+        ChatRoomHeader(
+            title = state.storyTitle,
+            showsOptions = phase == ChatRoomPhase.CONTENT,
+            onBack = onBack,
+            onDeleteClick = onDeleteClick,
+        )
+        val millis = ManyakTheme.motion.screenTransitionMillis
+        AnimatedContent(
+            modifier = Modifier.weight(1f),
+            targetState = phase,
+            // 앞 화면이 다 빠진 뒤에 다음 화면이 든다 — 둘이 겹쳐 보이면 어느 쪽이 지금인지 흐려진다.
+            transitionSpec = { fadeIn(tween(millis, delayMillis = millis)) togetherWith fadeOut(tween(millis)) },
+            label = "chat-room-phase",
+        ) { phase ->
+            Column(modifier = Modifier.fillMaxSize()) {
+                when (phase) {
+                    ChatRoomPhase.LOADING ->
+                        Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                            if (showProgress) ManyakProgressIndicator()
                         }
-                    },
-                )
-                ChatComposer(
-                    state = state.composer,
-                    choicesEnabled = state.choicesEnabled,
-                    hasSuggestions = state.suggestions.hasCandidate,
-                    isStreaming = state.isStreaming,
-                    actions = composerActions(onIntent),
-                )
+
+                    ChatRoomPhase.FAILED ->
+                        ChatRoomLoadFailed(
+                            modifier = Modifier.weight(1f),
+                            onRetry = { onIntent(ChatRoomIntent.Retry) },
+                        )
+
+                    ChatRoomPhase.CONTENT ->
+                        ChatRoomLoaded(
+                            state = state,
+                            onIntent = onIntent,
+                            onFillRequested = { position -> pendingFill = position },
+                        )
+                }
             }
         }
     }
@@ -185,6 +189,48 @@ private fun ChatRoomContent(
             },
         )
     }
+}
+
+/** 헤더 아래에 그릴 화면. 페이드로 교체하므로 상태 조합이 아니라 하나의 값으로 좁힌다. */
+private enum class ChatRoomPhase {
+    LOADING,
+    FAILED,
+    CONTENT,
+}
+
+private fun chatRoomPhase(state: ChatRoomUiState): ChatRoomPhase =
+    when {
+        state.isLoading -> ChatRoomPhase.LOADING
+        state.loadFailed -> ChatRoomPhase.FAILED
+        else -> ChatRoomPhase.CONTENT
+    }
+
+/** 조회에 성공한 방. 목록이 남는 자리를 다 쓰고 컴포저가 그 아래에 선다. */
+@Composable
+private fun ColumnScope.ChatRoomLoaded(
+    state: ChatRoomUiState,
+    onIntent: (ChatRoomIntent) -> Unit,
+    onFillRequested: (Int) -> Unit,
+) {
+    ChatTranscript(
+        modifier = Modifier.weight(1f),
+        state = state,
+        // 초안이 있으면 채우기 전에 확인을 받는다. 즉시 전송에는 이 확인이 없다.
+        onIntent = { intent ->
+            if (intent is ChatRoomIntent.SuggestionFilled && state.composer.hasInput) {
+                onFillRequested(intent.position)
+            } else {
+                onIntent(intent)
+            }
+        },
+    )
+    ChatComposer(
+        state = state.composer,
+        choicesEnabled = state.choicesEnabled,
+        hasSuggestions = state.suggestions.hasCandidate,
+        isStreaming = state.isStreaming,
+        actions = composerActions(onIntent),
+    )
 }
 
 private fun composerActions(onIntent: (ChatRoomIntent) -> Unit): ChatComposerActions =
@@ -219,6 +265,7 @@ private fun ReplaceDraftDialog(
 @Composable
 private fun ChatRoomHeader(
     title: String,
+    showsOptions: Boolean,
     onBack: () -> Unit,
     onDeleteClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -244,7 +291,7 @@ private fun ChatRoomHeader(
             }
         },
         // 오른쪽에는 옵션 메뉴 하나만 둔다 — 웹 헤더의 공유 버튼은 앱 범위 밖이다.
-        actions = { ChatRoomOptionsMenu(onDelete = onDeleteClick) },
+        actions = { if (showsOptions) ChatRoomOptionsMenu(onDelete = onDeleteClick) },
         // 화면 루트에서 적용한 safeDrawing 인셋이 중복되지 않게 한다.
         windowInsets = WindowInsets(0, 0, 0, 0),
         colors =
@@ -253,41 +300,6 @@ private fun ChatRoomHeader(
                 titleContentColor = ManyakTheme.colors.text,
             ),
     )
-}
-
-@Composable
-private fun ChatRoomLoadFailed(
-    onRetry: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .padding(horizontal = ManyakTheme.spacing.gutter),
-        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.component, Alignment.CenterVertically),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            modifier = Modifier.fillMaxWidth(),
-            text = stringResource(R.string.chat_room_load_error),
-            style = ManyakTheme.typography.bodyMedium,
-            color = ManyakTheme.colors.text,
-            textAlign = TextAlign.Center,
-        )
-        Button(
-            modifier = Modifier.heightIn(min = ManyakTheme.sizes.control),
-            onClick = onRetry,
-            shape = ManyakTheme.shapes.control,
-            colors =
-                ButtonDefaults.buttonColors(
-                    containerColor = ManyakTheme.colors.brand,
-                    contentColor = ManyakTheme.colors.textInverse,
-                ),
-        ) {
-            Text(text = stringResource(R.string.common_retry), style = ManyakTheme.typography.labelLarge)
-        }
-    }
 }
 
 private fun previewChatRoomState(): ChatRoomUiState =
@@ -325,18 +337,5 @@ private fun ChatRoomScreenPreview() {
 private fun ChatRoomScreenDarkPreview() {
     ManyakTheme(darkTheme = true) {
         ChatRoomContent(state = previewChatRoomState(), onBack = {}, onIntent = {}, onDeleteClick = {})
-    }
-}
-
-@Preview(showBackground = true, name = "채팅방 · 로드 실패")
-@Composable
-private fun ChatRoomScreenLoadFailedPreview() {
-    ManyakTheme(darkTheme = false) {
-        ChatRoomContent(
-            state = ChatRoomUiState(isLoading = false, loadFailed = true),
-            onBack = {},
-            onIntent = {},
-            onDeleteClick = {},
-        )
     }
 }
