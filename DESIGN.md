@@ -11,6 +11,7 @@ colors:
   text-narration: "#747474"
   text-disabled: "#969696"
   step-indicator-active: "#9F9F9F"
+  progress-indicator: "#8D8D8D"
   text-inverse: "#FFFFFF"
   text-brand: "#00804B"
   text-danger: "#C1191C"
@@ -40,20 +41,21 @@ colors:
 colors-dark:
   brand: "#05A66B"
   text: "#FCFCFC"
-  text-subtle: "#9F9F9F"
+  text-subtle: "#B9B9B9"
   text-subtlest: "#8D8D8D"
   text-narration: "#B9B9B9"
   text-disabled: "#7E7E7E"
   step-indicator-active: "#666666"
+  progress-indicator: "#8D8D8D"
   text-inverse: "#FFFFFF"
   text-brand: "#58C58F"
   text-danger: "#FF7669"
   text-warning: "#E09E32"
   text-information: "#6BB1FD"
   surface: "#131313"
-  surface-raised: "#1F1F1F"
-  background-neutral: "#191919"
-  background-neutral-pressed: "#1F1F1F"
+  surface-raised: "#1D1D1D"
+  background-neutral: "#1D1D1D"
+  background-neutral-pressed: "#575757"
   background-brand-bold: "#00804B"
   background-brand-bold-pressed: "#006034"
   background-brand-subtle: "#00411F"
@@ -62,8 +64,8 @@ colors-dark:
   background-danger-subtle: "#6A0000"
   background-warning-subtle: "#512600"
   background-information-subtle: "#003364"
-  background-disabled: "#1F1F1F"
-  border: "#1F1F1F"
+  background-disabled: "#3A3A3A"
+  border: "#2C2C2C"
   border-input: "#666666"
   border-brand: "#58C58F"
   border-danger: "#FF7669"
@@ -397,7 +399,7 @@ components:
 | 토큰 | 라이트 | 다크 | 용도 |
 | --- | --- | --- | --- |
 | `{colors.text}` | #131313 | #FCFCFC | 본문·제목 기본 |
-| `{colors.text-subtle}` | #575757 | #9F9F9F | 보조 설명·메타 정보 |
+| `{colors.text-subtle}` | #575757 | #B9B9B9 | 보조 설명·메타 정보 |
 | `{colors.text-subtlest}` | #747474 | #8D8D8D | 약한 보조. `{colors.surface}` 위에서만 본문 크기로 |
 | `{colors.text-narration}` | #747474 | #B9B9B9 | 서사의 상황 묘사(`*…*`)와 상황 블럭 입력 |
 | `{colors.text-disabled}` | #969696 | #7E7E7E | 비활성·장식 전용. 읽어야 하는 텍스트에 쓰지 않음 |
