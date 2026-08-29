@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
  */
 @Immutable
 data class ManyakShapes(
-    /** 10dp — 셀렉트 메뉴 항목 */
+    /** 10dp — 셀렉트 메뉴 항목·라벨 없는 아이콘 버튼 */
     val menuItem: CornerBasedShape,
     /** 12dp — 썸네일·작은 아이콘 컨테이너 */
     val thumbnail: CornerBasedShape,

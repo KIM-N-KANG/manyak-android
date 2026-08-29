@@ -33,16 +33,16 @@ internal fun RegenerateButton(
     Box(
         modifier =
             modifier
-                // 48dp 타깃 안에서 20dp 글리프는 14dp 안쪽에 놓인다. 2dp 만 밀면 본문 좌측 여백(16)과 맞고,
-                // 아래 6dp 는 글리프 아래 여백까지 더해 다음 덩이와의 간격을 본문 간격(20)으로 맞춘다.
-                .padding(start = ManyakTheme.spacing.hairline, bottom = ManyakTheme.spacing.dense)
-                .size(ManyakTheme.sizes.control)
-                .clip(ManyakTheme.shapes.pill)
+                // 좌측 12dp 는 본문 여백(16)보다 안쪽이다 — 글리프가 아니라 눌리는 사각형을 본문 옆에 둔다.
+                // 아래 20dp 는 뒤따르는 추천 영역의 위 여백 12dp 와 합쳐 32dp 를 만든다.
+                .padding(start = ManyakTheme.spacing.component, bottom = ManyakTheme.spacing.passage)
+                .size(ManyakTheme.sizes.controlSmall)
+                .clip(ManyakTheme.shapes.menuItem)
                 .clickable(role = Role.Button, onClickLabel = label, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            modifier = Modifier.size(ManyakTheme.sizes.icon),
+            modifier = Modifier.size(ManyakTheme.sizes.iconSmall),
             painter = painterResource(R.drawable.ic_refresh),
             contentDescription = label,
             tint = ManyakTheme.colors.textSubtle,

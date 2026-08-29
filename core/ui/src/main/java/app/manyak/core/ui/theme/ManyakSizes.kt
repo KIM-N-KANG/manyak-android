@@ -16,6 +16,8 @@ data class ManyakSizes(
     val control: Dp,
     /** 40dp — 입력창·칩·셀렉트 앵커·앱 바 액션 버튼처럼 밀도 높은 컨트롤의 최소 높이 */
     val input: Dp,
+    /** 32dp — 라벨 없이 아이콘만 있는 보조 버튼. 본문 옆에 붙어 눈에 덜 띄어야 하는 자리다 */
+    val controlSmall: Dp,
     /** 16dp — 밀도 높은 컨트롤 안에서 라벨 옆에 붙는 작은 아이콘 */
     val iconSmall: Dp,
     /** 20dp — 라벨 옆에 붙는 아이콘·제공자 로고 */
@@ -30,6 +32,7 @@ internal val ManyakDefaultSizes =
     ManyakSizes(
         control = 48.dp,
         input = 40.dp,
+        controlSmall = 32.dp,
         iconSmall = 16.dp,
         icon = 20.dp,
         tabIcon = 24.dp,

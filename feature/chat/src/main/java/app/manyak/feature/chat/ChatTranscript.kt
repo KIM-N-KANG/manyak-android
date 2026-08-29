@@ -32,6 +32,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.R
+import app.manyak.core.ui.component.ScrollEdgeFade
 import app.manyak.core.ui.theme.ManyakTheme
 import app.manyak.feature.chat.message.ChatAiOutput
 import app.manyak.feature.chat.message.ChatUserBand
@@ -89,6 +90,9 @@ internal fun ChatTranscript(
             if (showsSuggestions) suggestionItem(state, state.suggestions, state.turns.lastOrNull()?.id, onIntent)
             item(key = "bottom") { Spacer(modifier = Modifier.height(ManyakTheme.spacing.screenBottom)) }
         }
+        // 목록이 컴포저 위 경계에서 잘리는 것을 부드럽게 만든다. 컴포저가 커지면 이 상자가 줄어들어
+        // 페이드도 함께 따라 올라간다.
+        ScrollEdgeFade(modifier = Modifier.align(Alignment.BottomCenter))
         if (listState.canScrollForward) {
             ScrollToBottomButton(
                 modifier = Modifier.align(Alignment.BottomCenter).padding(ManyakTheme.spacing.gutter),
@@ -224,15 +228,15 @@ private fun ScrollToBottomButton(
     Box(
         modifier =
             modifier
-                .size(ManyakTheme.sizes.control)
-                .border(ButtonBorderWidth, ManyakTheme.colors.border, ManyakTheme.shapes.pill)
-                .clip(ManyakTheme.shapes.pill)
-                .background(ManyakTheme.colors.surfaceRaised)
+                .size(ManyakTheme.sizes.controlSmall)
+                .border(ButtonBorderWidth, ManyakTheme.colors.border, ManyakTheme.shapes.menuItem)
+                .clip(ManyakTheme.shapes.menuItem)
+                .background(ManyakTheme.colors.surface)
                 .clickable(role = Role.Button, onClickLabel = label, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            modifier = Modifier.size(ManyakTheme.sizes.icon),
+            modifier = Modifier.size(ManyakTheme.sizes.iconSmall),
             painter = painterResource(R.drawable.ic_angle_down),
             contentDescription = label,
             tint = ManyakTheme.colors.text,

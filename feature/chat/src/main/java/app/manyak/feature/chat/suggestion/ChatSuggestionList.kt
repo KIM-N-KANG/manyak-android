@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material3.Icon
@@ -25,6 +27,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.buildAnnotatedString
@@ -74,10 +78,16 @@ internal fun ChatSuggestionArea(
                 }
             }
 
-        showsChoicesProgress(progress, lastTurnId, choicesEnabled) ->
-            SuggestionColumn(modifier = modifier) {
-                if (progress?.failed == true) ChoicesFailure(onRetry = onRetry) else ChoicesSkeleton()
+        progress?.failed == true && showsChoicesProgress(progress, lastTurnId, choicesEnabled) ->
+            SuggestionColumn(modifier = modifier) { ChoicesFailure(onRetry = onRetry) }
+
+        showsChoicesProgress(progress, lastTurnId, choicesEnabled) -> {
+            // 진행 상태를 글자로 두지 않으므로 영역 설명으로만 읽힌다.
+            val loadingLabel = stringResource(R.string.chat_room_choices_loading)
+            SuggestionColumn(modifier = modifier.semantics { contentDescription = loadingLabel }) {
+                ChoicesSkeleton()
             }
+        }
 
         else -> Unit
     }
@@ -114,8 +124,8 @@ private fun SuggestionColumn(
                 .padding(
                     start = ManyakTheme.spacing.gutter,
                     end = ManyakTheme.spacing.gutter,
-                    top = ManyakTheme.spacing.component,
-                    bottom = ManyakTheme.spacing.section,
+                    top = ManyakTheme.spacing.passage,
+                    bottom = ManyakTheme.spacing.passage,
                 ),
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
         horizontalAlignment = Alignment.End,
@@ -135,27 +145,31 @@ private fun SuggestionRow(
     modifier: Modifier = Modifier,
 ) {
     val fillLabel = stringResource(R.string.chat_room_suggestion_fill)
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            modifier =
-                Modifier
-                    .size(ManyakTheme.sizes.control)
-                    .clip(ManyakTheme.shapes.pill)
-                    .clickable(role = Role.Button, onClickLabel = fillLabel, onClick = onFill),
-            contentAlignment = Alignment.Center,
+    // 본문 폭은 채우기 버튼을 뺀 나머지가 아니라 **줄 전체 폭**의 비율이다. Row 안에서 fillMaxWidth 로
+    // 잡으면 앞서 측정한 버튼과 간격이 빠진 뒤 계산돼 좁아진다.
+    BoxWithConstraints(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
+        val suggestionWidth = maxWidth * SUGGESTION_WIDTH_FRACTION
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(
-                modifier = Modifier.size(ManyakTheme.sizes.icon),
-                painter = painterResource(R.drawable.ic_pen_circle),
-                contentDescription = fillLabel,
-                tint = ManyakTheme.colors.textSubtle,
-            )
+            Box(
+                modifier =
+                    Modifier
+                        .size(ManyakTheme.sizes.controlSmall)
+                        .clip(ManyakTheme.shapes.menuItem)
+                        .clickable(role = Role.Button, onClickLabel = fillLabel, onClick = onFill),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    modifier = Modifier.size(ManyakTheme.sizes.iconSmall),
+                    painter = painterResource(R.drawable.ic_pen_circle),
+                    contentDescription = fillLabel,
+                    tint = ManyakTheme.colors.textSubtle,
+                )
+            }
+            SuggestionButton(text = text, onClick = onSend, modifier = Modifier.width(suggestionWidth))
         }
-        SuggestionButton(text = text, onClick = onSend)
     }
 }
 
@@ -171,7 +185,6 @@ private fun SuggestionButton(
     Box(
         modifier =
             modifier
-                .fillMaxWidth(SUGGESTION_WIDTH_FRACTION)
                 .heightIn(min = ManyakTheme.sizes.input)
                 .clip(ManyakTheme.shapes.control)
                 .background(ManyakTheme.colors.backgroundNeutral)
@@ -253,7 +266,6 @@ private fun SuggestionHint(modifier: Modifier = Modifier) {
 @Composable
 private fun ColumnScope.ChoicesSkeleton() {
     val alpha = rememberSkeletonPulseAlpha()
-    val label = stringResource(R.string.chat_room_choices_loading)
     repeat(SKELETON_COUNT) {
         SkeletonPlaceholder(
             modifier =
@@ -264,11 +276,6 @@ private fun ColumnScope.ChoicesSkeleton() {
             shape = ManyakTheme.shapes.control,
         )
     }
-    Text(
-        text = label,
-        style = ManyakTheme.typography.labelSmall,
-        color = ManyakTheme.colors.textSubtlest,
-    )
 }
 
 /** 턴은 이미 진행됐고 선택지만 없는 상태라 안내와 재시도만 둔다. */
@@ -294,7 +301,7 @@ private fun ColumnScope.ChoicesFailure(onRetry: () -> Unit) {
     }
 }
 
-/** 선택지 버튼이 차지하는 폭. 왼쪽에 채우기 버튼이 들어갈 자리를 남긴다. */
+/** 선택지 버튼이 차지하는 폭. 채우기 버튼을 포함한 줄 전체 폭 기준이다. */
 private const val SUGGESTION_WIDTH_FRACTION = 0.8f
 
 private const val SKELETON_COUNT = 3

@@ -1,26 +1,23 @@
 package app.manyak.feature.chat.composer
 
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
@@ -67,32 +64,9 @@ internal fun ChatComposer(
         if (plainValue.text != state.plainText) plainValue = state.plainText.asTextFieldValue()
     }
 
-    Column(
-        modifier = modifier.fillMaxWidth().padding(ManyakTheme.spacing.gutter),
-        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
-    ) {
-        when (state.mode) {
-            ChatInputMode.BLOCK ->
-                BlockInputList(
-                    blocks = state.blocks,
-                    enabled = !isStreaming,
-                    fillSignal = fillSignal,
-                    onValueChange = actions.onBlockValueChange,
-                    onRemoveBlock = actions.onRemoveBlock,
-                )
-
-            ChatInputMode.PLAIN ->
-                PlainInput(
-                    value = plainValue,
-                    enabled = !isStreaming,
-                    fillSignal = fillSignal,
-                    onValueChange = { next ->
-                        plainValue = next
-                        if (next.text != state.plainText) actions.onPlainTextChange(next.text)
-                    },
-                )
-        }
+    val toolbar: @Composable (Modifier) -> Unit = { toolbarModifier ->
         ComposerToolbar(
+            modifier = toolbarModifier,
             mode = state.mode,
             choicesEnabled = choicesEnabled,
             enabled = !isStreaming,
@@ -106,119 +80,77 @@ internal fun ChatComposer(
             onSend = onSend,
         )
     }
+
+    when (state.mode) {
+        ChatInputMode.BLOCK ->
+            BlockComposer(
+                modifier = modifier,
+                blocks = state.blocks,
+                enabled = !isStreaming,
+                fillSignal = fillSignal,
+                actions = actions,
+                toolbar = toolbar,
+            )
+
+        ChatInputMode.PLAIN ->
+            PlainComposer(
+                modifier = modifier,
+                value = plainValue,
+                enabled = !isStreaming,
+                fillSignal = fillSignal,
+                onValueChange = { next ->
+                    plainValue = next
+                    if (next.text != state.plainText) actions.onPlainTextChange(next.text)
+                },
+                toolbar = toolbar,
+            )
+    }
 }
 
-/**
- * 블럭 목록. 창 높이의 [BLOCK_LIST_HEIGHT_FRACTION] 을 넘으면 그 안에서 스크롤한다 — 키보드가 올라온
- * 상태에서 목록이 화면을 다 먹지 않게 하는 상한이고, 시스템 글자 크기를 키우면 줄 수보다 이 상한이
- * 먼저 걸린다.
- */
+/** 일반 모드. 입력창과 툴바를 하나의 테두리가 함께 감싼다. */
 @Composable
-private fun BlockInputList(
-    blocks: List<InputBlock>,
+private fun PlainComposer(
+    value: TextFieldValue,
     enabled: Boolean,
     fillSignal: Int,
-    onValueChange: (Long, String) -> Unit,
-    onRemoveBlock: (Long) -> Unit,
+    onValueChange: (TextFieldValue) -> Unit,
+    toolbar: @Composable (Modifier) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // 내용이 있는 블럭을 지울 때만 묻는다. 확인 대상은 회전에서 사라지면 안 되므로 saveable 이다.
-    var pendingRemoveId by rememberSaveable { mutableStateOf<Long?>(null) }
-    val maxHeight = LocalConfiguration.current.screenHeightDp.dp * BLOCK_LIST_HEIGHT_FRACTION
-    val firstBlockFocus = remember { FocusRequester() }
-
-    // 채운 문장은 첫 칸부터 고치게 된다. 칸이 하나도 없으면 붙잡을 곳이 없어 건너뛴다.
-    LaunchedEffect(fillSignal) {
-        if (fillSignal > 0 && blocks.isNotEmpty()) firstBlockFocus.requestFocus()
-    }
-
+    val shape = ManyakTheme.shapes.card
+    val interactionSource = remember { MutableInteractionSource() }
+    val focused by interactionSource.collectIsFocusedAsState()
+    // 포커스가 들어오면 테두리를 진하게 올린다 — 스토리 제작 입력과 같은 규칙이다.
+    val borderColor = if (focused) ManyakTheme.colors.borderInput else ManyakTheme.colors.border
     Column(
-        modifier = modifier.fillMaxWidth().heightIn(max = maxHeight).verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(
+                    start = ManyakTheme.spacing.gutter,
+                    end = ManyakTheme.spacing.gutter,
+                    top = ManyakTheme.spacing.compact,
+                    bottom = ManyakTheme.spacing.gutter,
+                ),
     ) {
-        blocks.forEachIndexed { index, block ->
-            BlockInputRow(
-                block = block,
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clip(shape)
+                    .background(ManyakTheme.colors.surfaceRaised)
+                    .border(ComposerBorderWidth, borderColor, shape),
+        ) {
+            PlainInput(
+                value = value,
                 enabled = enabled,
-                fieldModifier = if (index == 0) Modifier.focusRequester(firstBlockFocus) else Modifier,
-                onValueChange = { value -> onValueChange(block.id, value) },
-                onRemove = {
-                    if (block.value.isBlank()) onRemoveBlock(block.id) else pendingRemoveId = block.id
-                },
+                fillSignal = fillSignal,
+                onValueChange = onValueChange,
+                interactionSource = interactionSource,
             )
+            // 상자 안쪽 여백은 입력 글자(14)보다 좁아 툴바가 테두리에 더 가깝다.
+            toolbar(Modifier.padding(ManyakTheme.spacing.controlVertical))
         }
-    }
-
-    val removeId = pendingRemoveId
-    if (removeId != null) {
-        RemoveBlockDialog(
-            onDismiss = { pendingRemoveId = null },
-            onConfirm = {
-                pendingRemoveId = null
-                onRemoveBlock(removeId)
-            },
-        )
-    }
-}
-
-@Composable
-private fun BlockInputRow(
-    block: InputBlock,
-    enabled: Boolean,
-    fieldModifier: Modifier,
-    onValueChange: (String) -> Unit,
-    onRemove: () -> Unit,
-) {
-    val isSituation = block.type == InputBlockType.SITUATION
-    // 라벨과 입력 글자를 같은 색으로 둔다 — 쓰는 중에도 상황이 강조로 나갈 것임이 보여야 한다.
-    val contentColor = if (isSituation) ManyakTheme.colors.textSubtle else ManyakTheme.colors.text
-    val label =
-        stringResource(
-            if (isSituation) {
-                R.string.chat_composer_situation_label
-            } else {
-                R.string.chat_composer_dialogue_label
-            },
-        )
-    val placeholder =
-        stringResource(
-            if (isSituation) {
-                R.string.chat_composer_situation_placeholder
-            } else {
-                R.string.chat_composer_dialogue_placeholder
-            },
-        )
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
-        verticalAlignment = Alignment.Top,
-    ) {
-        SyncedTextField(
-            modifier = Modifier.weight(1f).then(fieldModifier),
-            text = block.value,
-            onTextChange = onValueChange,
-            placeholder = placeholder,
-            enabled = enabled,
-            maxLines = BLOCK_MAX_LINES,
-            textColor = contentColor,
-            leading = {
-                Text(
-                    modifier = Modifier.width(BlockLabelWidth),
-                    text = label,
-                    style = ManyakTheme.typography.labelSmall,
-                    color = contentColor,
-                )
-            },
-        )
-        ComposerIconButton(
-            // 포커스 순서에서 빼 블럭 사이를 키보드로 바로 오가게 한다.
-            modifier = Modifier.focusProperties { canFocus = false },
-            iconRes = R.drawable.ic_close,
-            contentDescription = stringResource(R.string.chat_composer_remove_block),
-            enabled = enabled,
-            onClick = onRemove,
-        )
     }
 }
 
@@ -228,6 +160,7 @@ private fun PlainInput(
     enabled: Boolean,
     fillSignal: Int,
     onValueChange: (TextFieldValue) -> Unit,
+    interactionSource: MutableInteractionSource,
     modifier: Modifier = Modifier,
 ) {
     val maxHeight = LocalConfiguration.current.screenHeightDp.dp * PLAIN_INPUT_HEIGHT_FRACTION
@@ -243,6 +176,16 @@ private fun PlainInput(
         onValueChange = onValueChange,
         placeholder = stringResource(R.string.chat_composer_plain_placeholder),
         enabled = enabled,
+        // 상자는 툴바까지 감싸는 바깥 Column 이 그린다.
+        containerShape = null,
+        interactionSource = interactionSource,
+        // 아래 여백은 이어 붙는 툴바가 갖는다 — 입력 글자와 툴바 사이가 두 번 벌어지지 않게 한다.
+        contentPadding =
+            PaddingValues(
+                start = ManyakTheme.spacing.controlHorizontal,
+                end = ManyakTheme.spacing.controlHorizontal,
+                top = ManyakTheme.spacing.controlVertical,
+            ),
     )
 }
 
@@ -253,7 +196,7 @@ private fun PlainInput(
  * 채우기·전송 후 비우기)가 있어, 값이 갈리면 커서를 끝에 둔 새 값으로 맞춘다.
  */
 @Composable
-private fun SyncedTextField(
+internal fun SyncedTextField(
     text: String,
     onTextChange: (String) -> Unit,
     placeholder: String,
@@ -291,15 +234,8 @@ private fun TextFieldValue.withEmphasisMarkers(): TextFieldValue {
     )
 }
 
-/** 블럭 목록이 창에서 차지할 수 있는 최대 비율. */
-private const val BLOCK_LIST_HEIGHT_FRACTION = 0.3f
-
 /** 일반 입력창이 창에서 차지할 수 있는 최대 비율. */
 private const val PLAIN_INPUT_HEIGHT_FRACTION = 0.2f
-
-private const val BLOCK_MAX_LINES = 4
-
-private val BlockLabelWidth = 28.dp
 
 private fun previewActions(): ChatComposerActions =
     ChatComposerActions(

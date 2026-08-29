@@ -136,6 +136,7 @@ rounded:
 
 sizes:
   input: 40dp
+  control-small: 32dp
   control: 48dp
   icon-small: 16dp
   icon: 20dp
@@ -495,8 +496,10 @@ components:
 
 | 토큰 | 값 | 용도 |
 | --- | --- | --- |
+| `{sizes.control-small}` | 32dp | 라벨 없이 아이콘만 있는 보조 버튼 |
 | `{sizes.input}` | 40dp | 입력창·칩·셀렉트 앵커의 최소 높이 |
 | `{sizes.control}` | 48dp | 버튼·탭처럼 탭 가능한 일반 컨트롤의 높이 |
+| `{sizes.icon-small}` | 16dp | 밀도 높은 컨트롤 안의 작은 아이콘 |
 | `{sizes.icon}` | 20dp | 라벨 옆 아이콘·제공자 로고 |
 | `{sizes.tab-icon}` | 24dp | 하단 탭 아이콘 |
 | `{sizes.logo}` | 24dp | 마냑 로고 락업의 높이. 폭은 원본 비율(89:32)로 따라간다 |
@@ -507,7 +510,9 @@ components:
 
 `{sizes.control}`은 안드로이드 최소 터치 타깃과 같은 값이다. 버튼·탭은 보이는 크기와 눌리는 크기를
 48dp 로 맞추고, 여러 개가 밀집하는 입력창·칩·셀렉트 앵커는 `{sizes.input}` 40dp 로 구분한다.
-토큰 정본에는 높이가 없어 두 값은 이 레포가 소유한다.
+`{sizes.control-small}` 은 라벨 없이 아이콘만 있고 본문 옆에서 눈에 덜 띄어야 하는 보조 버튼용이라
+최소 터치 타깃보다 작다 — 주된 동작에는 쓰지 않는다. 토큰 정본에는 높이가 없어 이 값들은 이
+레포가 소유한다.
 
 ## 모션
 
@@ -529,7 +534,7 @@ components:
 
 | 토큰 | 값 | 용도 |
 | --- | --- | --- |
-| `{rounded.menu-item}` | 10dp | 셀렉트 메뉴 항목 |
+| `{rounded.menu-item}` | 10dp | 셀렉트 메뉴 항목 · 라벨 없는 아이콘 버튼 |
 | `{rounded.thumbnail}` | 12dp | 썸네일·작은 아이콘 컨테이너 |
 | `{rounded.control}` | 14dp | 버튼·입력창·탭 |
 | `{rounded.card}` | 16dp | 카드·리스트 항목 |

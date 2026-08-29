@@ -250,7 +250,7 @@ private fun ChatRoomHeader(
         title = {
             Text(
                 text = title,
-                style = ManyakTheme.typography.titleMedium,
+                style = ManyakTheme.typography.bodyLargeStrong,
                 color = ManyakTheme.colors.text,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
