@@ -31,6 +31,7 @@ import app.manyak.core.domain.story.CreationResumePoint
 import app.manyak.core.domain.story.StorySummary
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.LoadFailedContent
+import app.manyak.core.ui.component.ManyakDestructiveDialog
 import app.manyak.core.ui.component.ManyakPullToRefreshBox
 import app.manyak.core.ui.component.rememberDelayedProgressVisibility
 import app.manyak.core.ui.component.withScreenMargins
@@ -152,6 +153,15 @@ private fun StudioContent(
         )
     }
 
+    StudioDialogs(state = state, onIntent = onIntent)
+}
+
+/** 제작 탭이 띄우는 확인 다이얼로그 둘. 본문 배치와 섞이지 않게 따로 둔다. */
+@Composable
+private fun StudioDialogs(
+    state: StudioUiState,
+    onIntent: (StudioIntent) -> Unit,
+) {
     if (state.showResumeChoiceDialog) {
         ResumeChoiceDialog(
             onStartNew = { onIntent(StudioIntent.StartNewCreation) },
@@ -160,10 +170,14 @@ private fun StudioContent(
     }
 
     if (state.deleteTarget != null) {
-        DeleteStoryDialog(
-            isDeleting = state.isDeleting,
+        ManyakDestructiveDialog(
+            title = stringResource(R.string.studio_delete_dialog_title),
+            description = stringResource(R.string.studio_delete_dialog_description),
+            confirmLabel = stringResource(R.string.studio_story_delete),
+            cancelLabel = stringResource(R.string.studio_delete_dialog_cancel),
             onConfirm = { onIntent(StudioIntent.ConfirmDeleteStory) },
             onDismiss = { onIntent(StudioIntent.DismissDeleteDialog) },
+            inProgress = state.isDeleting,
         )
     }
 }

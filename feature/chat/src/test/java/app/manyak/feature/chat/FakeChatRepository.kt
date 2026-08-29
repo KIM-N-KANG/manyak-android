@@ -144,9 +144,13 @@ internal class FakeChatRepository : ChatRepository {
         return queuedChoicesResults.removeFirstOrNull() ?: DomainResult.Success(Unit)
     }
 
+    val deletedChatIds = mutableListOf<String>()
+    val queuedDeleteResults = ArrayDeque<DomainResult<Unit>>()
+
     override suspend fun deleteChat(chatId: String): DomainResult<Unit> {
         yield()
-        return DomainResult.Success(Unit)
+        deletedChatIds += chatId
+        return queuedDeleteResults.removeFirstOrNull() ?: DomainResult.Success(Unit)
     }
 }
 

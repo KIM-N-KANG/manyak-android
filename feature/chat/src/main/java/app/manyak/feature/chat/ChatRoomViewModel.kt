@@ -72,6 +72,8 @@ data class ChatRoomUiState(
     val isStreaming: Boolean = false,
     /** 재생성 중인 턴. 그 턴은 목록에서 자리를 지킨 채 [streaming] 으로 바뀐다. */
     val regeneratingTurnId: Long? = null,
+    /** 삭제 요청 중. 확인 다이얼로그의 버튼을 잠근다. */
+    val isDeleting: Boolean = false,
 ) {
     /** 컴포저와 메시지 목록이 함께 쓰는 추천 목록. */
     val suggestions: ChatSuggestions
@@ -126,6 +128,9 @@ sealed interface ChatRoomIntent {
     data class RegenerateRequested(
         val turnId: Long,
     ) : ChatRoomIntent
+
+    /** 확인 다이얼로그에서 삭제를 확정했다. */
+    data object DeleteConfirmed : ChatRoomIntent
 }
 
 sealed interface ChatRoomEvent {
@@ -196,6 +201,10 @@ sealed interface ChatRoomEvent {
     data class ChoicesFailed(
         val turnId: Long,
     ) : ChatRoomEvent
+
+    data object DeleteStarted : ChatRoomEvent
+
+    data object DeleteFailed : ChatRoomEvent
 }
 
 sealed interface ChatRoomEffect {
@@ -206,6 +215,14 @@ sealed interface ChatRoomEffect {
 
     /** 추천을 입력창에 채웠다. 화면이 그 입력창으로 포커스를 옮긴다. */
     data object ComposerFilled : ChatRoomEffect
+
+    /** 크레딧이 모자라 턴을 열지 못했다. 앱은 로그인 필수라 402 의 사유가 이것 하나뿐이다. */
+    data object ShowCreditRequired : ChatRoomEffect
+
+    /** 삭제가 끝났다. 화면이 안내하고 채팅 탭으로 돌아간다. */
+    data object ChatDeleted : ChatRoomEffect
+
+    data object ShowDeleteFailed : ChatRoomEffect
 }
 
 /**
@@ -225,6 +242,7 @@ class ChatRoomViewModel
         private var loadJob: Job? = null
         private var streamJob: Job? = null
         private var choicesJob: Job? = null
+        private var deleteJob: Job? = null
 
         /**
          * 의도 처리기가 읽는 정본.
@@ -302,7 +320,13 @@ class ChatRoomViewModel
                     generateChoices()
                 }
 
-                ChatRoomIntent.Sent -> send()
+                ChatRoomIntent.Sent -> {
+                    val userInput = composer.toUserInput()
+                    val origin = composerOrigin(userInput, filled)
+                    startTurn(userInput) { chatRepository.turnStream(chatId, userInput, origin) }
+                }
+
+                ChatRoomIntent.DeleteConfirmed -> delete()
 
                 is ChatRoomIntent.RegenerateRequested -> {
                     // 화면이 본 마지막 턴과 지금 마지막 턴이 다르면 낡은 클릭이다.
@@ -349,9 +373,30 @@ class ChatRoomViewModel
                 }
         }
 
-        private fun send() {
-            val userInput = composer.toUserInput()
-            startTurn(userInput) { chatRepository.turnStream(chatId, userInput, composerOrigin(userInput, filled)) }
+        /**
+         * 채팅을 지운다.
+         *
+         * **확정하기 전에 진행 중인 스트림을 끊는다** — 지운 채팅에 턴을 계속 붙이면 서버가 거절하고,
+         * 그 실패 안내가 삭제 안내와 겹쳐 뜬다.
+         *
+         * 없는 채팅(404)은 데이터 계층이 이미 성공으로 접어 준다.
+         */
+        private fun delete() {
+            if (deleteJob?.isActive == true) return
+            deleteJob =
+                viewModelScope.launch {
+                    dispatchEvent(ChatRoomEvent.DeleteStarted)
+                    streamJob?.cancel()
+                    choicesJob?.cancel()
+                    when (chatRepository.deleteChat(chatId)) {
+                        is DomainResult.Success -> dispatchEffect(ChatRoomEffect.ChatDeleted)
+
+                        is DomainResult.Failure -> {
+                            dispatchEvent(ChatRoomEvent.DeleteFailed)
+                            dispatchEffect(ChatRoomEffect.ShowDeleteFailed)
+                        }
+                    }
+                }
         }
 
         private suspend fun handleSuggestion(intent: ChatRoomIntent) {
@@ -474,9 +519,13 @@ class ChatRoomViewModel
         private suspend fun handleStreamFailure(event: ChatStreamEvent.Failed) {
             isStreaming = false
             dispatchEvent(ChatRoomEvent.StreamCleared)
-            dispatchEffect(ChatRoomEffect.ShowStreamFailure(event.message))
-            val staleTurn = (event.error as? DomainError.Server)?.status == HTTP_CONFLICT
-            if (regeneratingTurnId != null && staleTurn) refreshTurns(confirmed = false)
+            val status = (event.error as? DomainError.Server)?.status
+            if (status == HTTP_PAYMENT_REQUIRED) {
+                dispatchEffect(ChatRoomEffect.ShowCreditRequired)
+            } else {
+                dispatchEffect(ChatRoomEffect.ShowStreamFailure(event.message))
+            }
+            if (regeneratingTurnId != null && status == HTTP_CONFLICT) refreshTurns(confirmed = false)
             regeneratingTurnId = null
         }
 
@@ -553,6 +602,9 @@ class ChatRoomViewModel
         }
 
         private companion object {
+            /** 크레딧이 모자랄 때의 응답. */
+            const val HTTP_PAYMENT_REQUIRED = 402
+
             /** 서버가 보는 마지막 턴과 재생성 대상이 다를 때의 응답. */
             const val HTTP_CONFLICT = 409
         }
@@ -586,6 +638,10 @@ private fun reduceChatRoom(
         is ChatRoomEvent.ComposerChanged -> state.copy(composer = event.composer)
 
         is ChatRoomEvent.ChoicesEnabledChanged -> state.copy(choicesEnabled = event.enabled)
+
+        ChatRoomEvent.DeleteStarted -> state.copy(isDeleting = true)
+
+        ChatRoomEvent.DeleteFailed -> state.copy(isDeleting = false)
 
         else -> reduceTurn(state, event)
     }
