@@ -63,29 +63,34 @@ internal fun ChatSuggestionArea(
     modifier: Modifier = Modifier,
 ) {
     val items = suggestions.items
+    val animated = revealsOnce(revealKeyOf(suggestions, progress, lastTurnId, choicesEnabled))
     when {
         suggestions.hasCandidate ->
             SuggestionColumn(modifier = modifier) {
-                if (showsHint) SuggestionHint()
-                items.forEachIndexed { position, text ->
-                    if (text.isNotBlank()) {
-                        SuggestionRow(
-                            text = text,
-                            onSend = { onSend(position) },
-                            onFill = { onFill(position) },
-                        )
-                    }
+                // 힌트도 목록의 한 항목처럼 차례에 낀다 — 웹과 같은 순서다.
+                val hintCount = if (showsHint) 1 else 0
+                if (showsHint) SuggestionHint(modifier = Modifier.revealed(0, animated))
+                val candidates = remember(items) { items.withIndex().filter { it.value.isNotBlank() } }
+                candidates.forEachIndexed { order, (position, text) ->
+                    SuggestionRow(
+                        modifier = Modifier.revealed(hintCount + order, animated),
+                        text = text,
+                        onSend = { onSend(position) },
+                        onFill = { onFill(position) },
+                    )
                 }
             }
 
         progress?.failed == true && showsChoicesProgress(progress, lastTurnId, choicesEnabled) ->
-            SuggestionColumn(modifier = modifier) { ChoicesFailure(onRetry = onRetry) }
+            SuggestionColumn(modifier = modifier) {
+                ChoicesFailure(onRetry = onRetry, modifier = Modifier.revealed(0, animated))
+            }
 
         showsChoicesProgress(progress, lastTurnId, choicesEnabled) -> {
             // 진행 상태를 글자로 두지 않으므로 영역 설명으로만 읽힌다.
             val loadingLabel = stringResource(R.string.chat_room_choices_loading)
             SuggestionColumn(modifier = modifier.semantics { contentDescription = loadingLabel }) {
-                ChoicesSkeleton()
+                ChoicesSkeleton(animated = animated)
             }
         }
 
@@ -105,7 +110,7 @@ internal fun hasSuggestionArea(
 ): Boolean = suggestions.hasCandidate || showsChoicesProgress(progress, lastTurnId, choicesEnabled)
 
 /** 진행 상태는 대상 턴이 마지막 턴일 때만 쓴다. 끈 상태에서는 만들지도 그리지도 않는다. */
-private fun showsChoicesProgress(
+internal fun showsChoicesProgress(
     progress: ChoicesProgress?,
     lastTurnId: Long?,
     choicesEnabled: Boolean,
@@ -264,12 +269,13 @@ private fun SuggestionHint(modifier: Modifier = Modifier) {
 
 /** 만드는 중. 선택지와 같은 폭·높이로 둬 결과가 도착해도 자리가 움직이지 않는다. */
 @Composable
-private fun ColumnScope.ChoicesSkeleton() {
+private fun ColumnScope.ChoicesSkeleton(animated: Boolean) {
     val alpha = rememberSkeletonPulseAlpha()
-    repeat(SKELETON_COUNT) {
+    repeat(SKELETON_COUNT) { index ->
         SkeletonPlaceholder(
             modifier =
                 Modifier
+                    .revealed(index, animated)
                     .fillMaxWidth(SUGGESTION_WIDTH_FRACTION)
                     .height(ManyakTheme.sizes.input),
             alpha = alpha,
@@ -278,26 +284,35 @@ private fun ColumnScope.ChoicesSkeleton() {
     }
 }
 
-/** 턴은 이미 진행됐고 선택지만 없는 상태라 안내와 재시도만 둔다. */
+/** 턴은 이미 진행됐고 선택지만 없는 상태라 안내와 재시도만 둔다. 안내와 버튼은 함께 나타난다. */
 @Composable
-private fun ColumnScope.ChoicesFailure(onRetry: () -> Unit) {
+private fun ChoicesFailure(
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val label = stringResource(R.string.common_retry)
-    Text(
-        text = stringResource(R.string.chat_room_choices_error),
-        style = ManyakTheme.typography.bodySmall,
-        color = ManyakTheme.colors.textSubtle,
-    )
-    Box(
-        modifier =
-            Modifier
-                .heightIn(min = ManyakTheme.sizes.input)
-                .clip(ManyakTheme.shapes.control)
-                .background(ManyakTheme.colors.backgroundNeutral)
-                .clickable(role = Role.Button, onClickLabel = label, onClick = onRetry)
-                .padding(horizontal = ManyakTheme.spacing.controlHorizontal),
-        contentAlignment = Alignment.Center,
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+        horizontalAlignment = Alignment.End,
     ) {
-        Text(text = label, style = ManyakTheme.typography.labelLarge, color = ManyakTheme.colors.text)
+        Text(
+            text = stringResource(R.string.chat_room_choices_error),
+            style = ManyakTheme.typography.bodySmall,
+            color = ManyakTheme.colors.textSubtle,
+        )
+        Box(
+            modifier =
+                Modifier
+                    .heightIn(min = ManyakTheme.sizes.input)
+                    .clip(ManyakTheme.shapes.control)
+                    .background(ManyakTheme.colors.backgroundNeutral)
+                    .clickable(role = Role.Button, onClickLabel = label, onClick = onRetry)
+                    .padding(horizontal = ManyakTheme.spacing.controlHorizontal),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(text = label, style = ManyakTheme.typography.labelLarge, color = ManyakTheme.colors.text)
+        }
     }
 }
 
