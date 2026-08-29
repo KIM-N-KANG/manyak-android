@@ -84,6 +84,31 @@ class InputBlocksTest {
     }
 
     @Test
+    fun `블럭은 상황 대사를 합쳐 상한까지만 늘어난다`() {
+        var blocks = createDefaultInputBlocks()
+        repeat(MAX_INPUT_BLOCKS) { index ->
+            blocks = blocks.addBlock(if (index % 2 == 0) InputBlockType.SITUATION else InputBlockType.DIALOGUE)
+        }
+
+        assertEquals(MAX_INPUT_BLOCKS, blocks.size)
+        assertFalse(blocks.canAddBlock())
+        assertTrue(blocks.removeBlock(1).canAddBlock())
+    }
+
+    @Test
+    fun `순번은 같은 종류끼리 센다`() {
+        val blocks =
+            createDefaultInputBlocks()
+                .addBlock(InputBlockType.SITUATION)
+                .addBlock(InputBlockType.DIALOGUE)
+
+        assertEquals(mapOf(1L to 1, 2L to 1, 3L to 2, 4L to 2), blocks.typeOrdinals())
+
+        // 앞선 상황을 지우면 뒤 상황이 1 번으로 당겨진다.
+        assertEquals(mapOf(2L to 1, 3L to 1, 4L to 2), blocks.removeBlock(1).typeOrdinals())
+    }
+
+    @Test
     fun `공백만 있는 블럭은 입력으로 보지 않는다`() {
         assertFalse(createDefaultInputBlocks().hasInput())
         assertTrue(createDefaultInputBlocks().updateBlock(1, " 문 ").hasInput())

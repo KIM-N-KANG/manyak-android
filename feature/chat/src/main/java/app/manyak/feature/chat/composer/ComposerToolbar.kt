@@ -18,6 +18,7 @@ import app.manyak.core.ui.theme.ManyakTheme
 internal fun ComposerToolbar(
     mode: ChatInputMode,
     choicesEnabled: Boolean,
+    canAddBlock: Boolean,
     enabled: Boolean,
     sendState: SendButtonState,
     actions: ChatComposerActions,
@@ -30,9 +31,11 @@ internal fun ComposerToolbar(
         horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        val blockMode = mode == ChatInputMode.BLOCK
         ComposerChipButton(
             text = stringResource(R.string.chat_composer_add_situation),
-            enabled = enabled,
+            // 일반 모드에서는 칸이 늘지 않으므로 개수 상한과 무관하다.
+            enabled = enabled && (!blockMode || canAddBlock),
             // 블럭 모드는 칸을 하나 늘리고, 일반 모드는 고른 구간을 강조 마커로 감싼다.
             onClick = {
                 if (mode == ChatInputMode.BLOCK) {
@@ -42,10 +45,10 @@ internal fun ComposerToolbar(
                 }
             },
         )
-        if (mode == ChatInputMode.BLOCK) {
+        if (blockMode) {
             ComposerChipButton(
                 text = stringResource(R.string.chat_composer_add_dialogue),
-                enabled = enabled,
+                enabled = enabled && canAddBlock,
                 onClick = { actions.onAddBlock(InputBlockType.DIALOGUE) },
             )
         }

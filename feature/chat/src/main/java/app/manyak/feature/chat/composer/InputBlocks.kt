@@ -35,7 +35,33 @@ fun createDefaultInputBlocks(): List<InputBlock> =
         InputBlock(id = 2, type = InputBlockType.DIALOGUE),
     )
 
-fun List<InputBlock>.addBlock(type: InputBlockType): List<InputBlock> = this + InputBlock(id = nextId(), type = type)
+/**
+ * 상황·대사를 합친 블럭 개수 상한.
+ *
+ * 파싱(모드 전환·추천 채우기)에는 걸지 않는다 — 문장을 잘라 버리는 대신 넘친 상태를 허용하고 추가만
+ * 막는다.
+ */
+const val MAX_INPUT_BLOCKS = 50
+
+fun List<InputBlock>.canAddBlock(): Boolean = size < MAX_INPUT_BLOCKS
+
+fun List<InputBlock>.addBlock(type: InputBlockType): List<InputBlock> =
+    if (canAddBlock()) this + InputBlock(id = nextId(), type = type) else this
+
+/**
+ * 블럭 id 마다 같은 종류끼리 1 부터 센 순번. 라벨에만 쓰고 전송 본문에는 싣지 않는다.
+ *
+ * 위치가 아니라 id 로 돌려준다 — 가운데 칸을 지우면 뒤 칸의 순번이 당겨져야 하고, 그때 목록 위치는
+ * 이미 바뀌어 있다.
+ */
+fun List<InputBlock>.typeOrdinals(): Map<Long, Int> {
+    val counts = mutableMapOf<InputBlockType, Int>()
+    return associate { block ->
+        val ordinal = (counts[block.type] ?: 0) + 1
+        counts[block.type] = ordinal
+        block.id to ordinal
+    }
+}
 
 fun List<InputBlock>.removeBlock(id: Long): List<InputBlock> = filterNot { block -> block.id == id }
 

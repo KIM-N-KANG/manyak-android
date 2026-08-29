@@ -63,6 +63,7 @@ internal fun ChatComposer(
             modifier = toolbarModifier,
             mode = state.mode,
             choicesEnabled = choicesEnabled,
+            canAddBlock = state.blocks.canAddBlock(),
             enabled = !isStreaming,
             sendState = sendState,
             actions = actions,
