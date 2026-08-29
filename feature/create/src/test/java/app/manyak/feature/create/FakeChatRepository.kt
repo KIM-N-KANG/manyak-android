@@ -2,9 +2,13 @@ package app.manyak.feature.create
 
 import app.manyak.core.domain.chat.ChatDetail
 import app.manyak.core.domain.chat.ChatRepository
+import app.manyak.core.domain.chat.ChatStreamEvent
 import app.manyak.core.domain.chat.ChatSummary
 import app.manyak.core.domain.chat.CreatedChat
+import app.manyak.core.domain.chat.UserSource
 import app.manyak.core.domain.error.DomainResult
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.yield
 
 /** 생성 결과는 큐에서 꺼내고 비면 성공 샘플을 돌려준다. */
@@ -38,4 +42,25 @@ internal class FakeChatRepository : ChatRepository {
             ),
         )
     }
+
+    /** 퍼널은 턴을 진행하지 않는다 — 계약을 채우기만 한다. */
+    override fun streamTurn(
+        chatId: String,
+        userInput: String,
+        userSource: UserSource,
+        sourceTurnId: Long?,
+        choiceOrder: Int?,
+    ): Flow<ChatStreamEvent> = emptyFlow()
+
+    override fun regenerateTurn(
+        chatId: String,
+        turnId: Long,
+    ): Flow<ChatStreamEvent> = emptyFlow()
+
+    override suspend fun generateChoices(
+        chatId: String,
+        turnId: Long,
+    ): DomainResult<Unit> = DomainResult.Success(Unit)
+
+    override suspend fun deleteChat(chatId: String): DomainResult<Unit> = DomainResult.Success(Unit)
 }
