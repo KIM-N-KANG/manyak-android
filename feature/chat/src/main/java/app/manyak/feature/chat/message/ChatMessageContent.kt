@@ -1,7 +1,6 @@
 package app.manyak.feature.chat.message
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +20,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.text.storyAnnotatedString
 import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.core.ui.theme.insetForBorder
 import coil3.compose.AsyncImage
 
 /**
@@ -131,18 +131,17 @@ private fun ChatCharacterImage(
             modifier
                 .fillMaxWidth()
                 .aspectRatio(CHARACTER_IMAGE_ASPECT_RATIO)
-                .border(ImageBorderWidth, ManyakTheme.colors.border, ManyakTheme.shapes.overlay)
                 .clip(ManyakTheme.shapes.overlay)
-                .background(ManyakTheme.colors.backgroundNeutral),
+                // 테두리는 선을 얹지 않고 바탕으로 그린다 — 표지 썸네일과 같은 이유다.
+                .background(ManyakTheme.colors.border),
     ) {
-        // 이미지는 선 두께만큼 안으로 들인다. 이미지와 선의 경계가 같은 픽셀에 겹치면 두
-        // 안티에일리어싱이 합성돼 곡률에서만 진한 띠가 생기고, 그 띠가 직선부의 선보다 도드라진다.
         AsyncImage(
             modifier =
                 Modifier
                     .matchParentSize()
                     .padding(ImageBorderWidth)
-                    .clip(ManyakTheme.shapes.overlay),
+                    .clip(ManyakTheme.shapes.overlay.insetForBorder(ImageBorderWidth))
+                    .background(ManyakTheme.colors.backgroundNeutral),
             model = imageUrl,
             contentDescription = name,
             contentScale = ContentScale.Fit,
