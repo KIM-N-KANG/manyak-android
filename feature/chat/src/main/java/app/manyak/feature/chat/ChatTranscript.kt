@@ -3,6 +3,9 @@ package app.manyak.feature.chat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -27,6 +30,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -68,7 +75,14 @@ internal fun ChatTranscript(
     EnterAtLastMessage(listState = listState, itemCount = itemCount, hasTurns = state.turns.isNotEmpty())
     AnchorStreamingTurn(listState = listState, state = state, itemCount = itemCount, prologueCount = prologueCount)
 
-    Box(modifier = modifier.fillMaxWidth()) {
+    val focusManager = LocalFocusManager.current
+
+    Box(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clearFocusOnTap(focusManager),
+    ) {
         LazyColumn(modifier = Modifier.fillMaxWidth(), state = listState) {
             if (prologueCount > 0) {
                 item(key = "prologue") { ChatAiOutput(content = state.prologue) }
@@ -88,7 +102,7 @@ internal fun ChatTranscript(
                 item(key = "streaming") { StreamingBlock(streaming = streaming) }
             }
             if (showsSuggestions) suggestionItem(state, state.suggestions, state.turns.lastOrNull()?.id, onIntent)
-            item(key = "bottom") { Spacer(modifier = Modifier.height(ManyakTheme.spacing.screenBottom)) }
+            item(key = "bottom") { Spacer(modifier = Modifier.height(ManyakTheme.spacing.passage)) }
         }
         // 목록이 컴포저 위 경계에서 잘리는 것을 부드럽게 만든다. 컴포저가 커지면 이 상자가 줄어들어
         // 페이드도 함께 따라 올라간다.
@@ -101,6 +115,20 @@ internal fun ChatTranscript(
         }
     }
 }
+
+/**
+ * 탭하면 입력 포커스를 놓아 키보드를 내린다.
+ *
+ * **Initial 패스에서 보기만 하고 소비하지 않는다** — 스크롤과 항목 클릭이 그대로 동작하고, 드래그로
+ * 끝난 제스처는 누군가 소비해 탭으로 치지 않는다.
+ */
+private fun Modifier.clearFocusOnTap(focusManager: FocusManager): Modifier =
+    pointerInput(Unit) {
+        awaitEachGesture {
+            awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+            if (waitForUpOrCancellation(PointerEventPass.Initial) != null) focusManager.clearFocus()
+        }
+    }
 
 /** 확정 턴 하나. 재생성 버튼은 **마지막 턴에만** 붙는다 — 앞선 턴을 바꾸면 뒤 이야기와 어긋난다. */
 @Composable
@@ -231,7 +259,7 @@ private fun ScrollToBottomButton(
                 .size(ManyakTheme.sizes.controlSmall)
                 .border(ButtonBorderWidth, ManyakTheme.colors.border, ManyakTheme.shapes.menuItem)
                 .clip(ManyakTheme.shapes.menuItem)
-                .background(ManyakTheme.colors.surface)
+                .background(ManyakTheme.colors.surfaceRaised)
                 .clickable(role = Role.Button, onClickLabel = label, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {

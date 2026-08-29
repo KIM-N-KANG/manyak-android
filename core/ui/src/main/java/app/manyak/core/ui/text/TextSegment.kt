@@ -51,7 +51,7 @@ fun parseTextSegments(line: String): List<TextSegment> {
 
 /** 파싱한 세그먼트를 스타일 있는 문자열로 조립한다. 강조는 보조 색으로, 볼드는 굵기로만 구분한다. */
 @Composable
-fun storyAnnotatedString(text: String): AnnotatedString = storyAnnotatedString(text, ManyakTheme.colors.textSubtle)
+fun storyAnnotatedString(text: String): AnnotatedString = storyAnnotatedString(text, ManyakTheme.colors.textSubtlest)
 
 /**
  * 색을 직접 받는 변형.

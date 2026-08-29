@@ -188,12 +188,14 @@ internal fun ComposerTextField(
         decorationBox = { innerTextField ->
             Row(
                 modifier = Modifier.composerFieldBox(containerShape, focused).padding(contentPadding),
-                verticalAlignment = Alignment.Top,
+                // 라벨은 여러 줄이 되어도 글자 덩이의 가운데에 선다.
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (leading != null) {
                     leading()
                 }
-                Box(modifier = Modifier.weight(1f)) {
+                // 비어 있을 때 placeholder 가 커서 높이보다 낮아 위로 붙는 것을 막는다.
+                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
                     if (value.text.isEmpty()) {
                         Text(
                             text = placeholder,

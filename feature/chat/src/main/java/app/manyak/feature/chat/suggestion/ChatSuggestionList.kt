@@ -180,7 +180,7 @@ private fun SuggestionButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val emphasisColor = ManyakTheme.colors.textSubtle
+    val emphasisColor = ManyakTheme.colors.textSubtlest
     val annotated = remember(text, emphasisColor) { storyAnnotatedString(text, emphasisColor) }
     Box(
         modifier =

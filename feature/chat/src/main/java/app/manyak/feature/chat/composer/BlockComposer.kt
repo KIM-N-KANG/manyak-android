@@ -129,7 +129,7 @@ private fun BlockInputRow(
 ) {
     val isSituation = block.type == InputBlockType.SITUATION
     // 라벨과 입력 글자를 같은 색으로 둔다 — 쓰는 중에도 상황이 강조로 나갈 것임이 보여야 한다.
-    val contentColor = if (isSituation) ManyakTheme.colors.textSubtle else ManyakTheme.colors.text
+    val contentColor = if (isSituation) ManyakTheme.colors.textSubtlest else ManyakTheme.colors.text
     val label =
         stringResource(
             if (isSituation) {
@@ -180,8 +180,11 @@ private fun BlockInputRow(
     }
 }
 
-/** 블럭 목록이 창에서 차지할 수 있는 최대 비율. */
-private const val BLOCK_LIST_HEIGHT_FRACTION = 0.3f
+/**
+ * 블럭 목록이 창에서 차지할 수 있는 최대 비율. 창 높이는 키보드가 올라와도 줄지 않으므로, 키보드가
+ * 뜬 상태에서 남는 자리를 기준으로 잡아야 목록이 화면을 다 먹지 않는다.
+ */
+private const val BLOCK_LIST_HEIGHT_FRACTION = 0.2f
 
 private const val BLOCK_MAX_LINES = 4
 
