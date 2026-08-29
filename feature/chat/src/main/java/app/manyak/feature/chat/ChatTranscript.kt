@@ -13,6 +13,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,6 +36,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -82,6 +84,7 @@ internal fun ChatTranscript(
 
     EnterAtLastMessage(listState = listState, itemCount = itemCount, hasTurns = state.turns.isNotEmpty())
     AnchorStreamingTurn(listState = listState, state = state, itemCount = itemCount, prologueCount = prologueCount)
+    KeepReadingPosition(listState = listState)
 
     val focusManager = LocalFocusManager.current
 
@@ -250,6 +253,26 @@ private fun EnterAtLastMessage(
         if (settled) return@LaunchedEffect
         if (hasTurns) listState.scrollToItem(itemCount - 1)
         settled = true
+    }
+}
+
+/**
+ * 목록이 짧아지면 그만큼 본문도 따라 올라간다.
+ *
+ * 키보드가 올라오면 목록이 차지할 높이가 줄어드는데 스크롤 위치는 위를 기준으로 잡혀 있어, 읽던 자리가
+ * 아래로 잘려 나간다. 줄어든 만큼 스크롤을 밀어 **보고 있던 줄이 그대로 보이게** 한다 — 키보드가
+ * 내려가거나 컴포저가 다시 짧아지면 같은 값만큼 되돌아간다.
+ */
+@Composable
+private fun KeepReadingPosition(listState: LazyListState) {
+    LaunchedEffect(listState) {
+        var previous: Int? = null
+        snapshotFlow { listState.layoutInfo.viewportSize.height }.collect { height ->
+            val last = previous
+            previous = height
+            // 첫 값은 기준만 잡는다. 구성 변경으로 다시 시작해도 새 크기가 기준이 돼 화면이 튀지 않는다.
+            if (height > 0 && last != null && last != height) listState.scrollBy((last - height).toFloat())
+        }
     }
 }
 
