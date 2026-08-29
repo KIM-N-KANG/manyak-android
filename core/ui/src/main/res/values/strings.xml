@@ -261,6 +261,33 @@
     <!-- 채팅방 -->
     <string name="chat_room_load_error">채팅을 불러오지 못했어요</string>
 
+    <!-- 채팅방 컴포저 -->
+    <string name="chat_composer_plain_placeholder">이야기를 어떻게 이어갈까요?</string>
+    <string name="chat_composer_situation_label">상황</string>
+    <string name="chat_composer_situation_placeholder">어떤 상황을 묘사할까요?</string>
+    <string name="chat_composer_dialogue_label">대사</string>
+    <string name="chat_composer_dialogue_placeholder">어떤 대사를 건넬까요?</string>
+    <string name="chat_composer_add_situation">상황 추가</string>
+    <string name="chat_composer_add_dialogue">대사 추가</string>
+    <string name="chat_composer_remove_block">입력 삭제</string>
+    <string name="chat_composer_remove_block_title">작성한 내용을 삭제할까요?</string>
+    <string name="chat_composer_remove_block_description">삭제하면 작성한 내용이 사라져요</string>
+    <string name="chat_composer_remove_block_confirm">삭제하기</string>
+    <string name="chat_composer_remove_block_cancel">그대로 두기</string>
+    <string name="chat_composer_send">전송</string>
+    <string name="chat_composer_send_random">추천 입력 랜덤 전송</string>
+    <string name="chat_composer_streaming">응답을 받는 중</string>
+    <string name="chat_composer_choices_menu">추천 입력 설정</string>
+    <string name="chat_composer_choices_on">추천 입력 켬</string>
+    <string name="chat_composer_choices_on_description">AI가 다음 전개를 추천해줘요</string>
+    <string name="chat_composer_choices_off">추천 입력 끔</string>
+    <string name="chat_composer_choices_off_description">추천 없이 직접 입력해요</string>
+    <string name="chat_composer_input_mode_menu">입력 모드 변경</string>
+    <string name="chat_composer_input_mode_block">블럭 입력</string>
+    <string name="chat_composer_input_mode_block_description">상황과 대사를 나눠서 입력해요</string>
+    <string name="chat_composer_input_mode_plain">일반 입력</string>
+    <string name="chat_composer_input_mode_plain_description">한 입력창에 자유롭게 입력해요</string>
+
     <!-- 오류 -->
     <string name="error_network">네트워크 연결을 확인해주세요</string>
     <string name="error_server">잠시 후 다시 시도해주세요</string>
