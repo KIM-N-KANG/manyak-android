@@ -148,6 +148,7 @@ private fun <T> ComposerMenuItem(
                     horizontal = ManyakTheme.spacing.controlHorizontal,
                     vertical = ManyakTheme.spacing.controlVertical,
                 ),
+        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(
@@ -161,19 +162,21 @@ private fun <T> ComposerMenuItem(
                 color = ManyakTheme.colors.textSubtle,
             )
         }
-        if (selected) {
-            Icon(
-                modifier = Modifier.size(ManyakTheme.sizes.iconSmall),
-                painter = painterResource(R.drawable.ic_check),
-                // 선택 여부는 항목의 시맨틱이 이미 알린다.
-                contentDescription = null,
-                tint = ManyakTheme.colors.text,
-            )
+        // 고르지 않은 항목도 같은 자리를 비워 둔다 — 선택이 옮겨 다녀도 글자 폭이 흔들리지 않는다.
+        Box(modifier = Modifier.size(ManyakTheme.sizes.iconSmall)) {
+            if (selected) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_check),
+                    // 선택 여부는 항목의 시맨틱이 이미 알린다.
+                    contentDescription = null,
+                    tint = ManyakTheme.colors.text,
+                )
+            }
         }
     }
 }
 
 /** 메뉴 폭. 최소가 아니라 고정이다 — 열어 두면 가장 긴 설명이 한 줄로 펴져 화면을 다 먹는다. */
-private val MenuWidth = 192.dp
+private val MenuWidth = 208.dp
 private val MenuShadowElevation = 8.dp
 private val BorderWidth = 1.dp
