@@ -2,11 +2,15 @@ package app.manyak.feature.chat
 
 import app.manyak.core.domain.chat.ChatDetail
 import app.manyak.core.domain.chat.ChatRepository
+import app.manyak.core.domain.chat.ChatStreamEvent
 import app.manyak.core.domain.chat.ChatSummary
 import app.manyak.core.domain.chat.ChatTurn
 import app.manyak.core.domain.chat.CreatedChat
+import app.manyak.core.domain.chat.UserSource
 import app.manyak.core.domain.error.DomainResult
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.yield
 
 internal fun sampleChatDetail(chatId: String = "chat-1"): ChatDetail =
@@ -75,5 +79,33 @@ internal class FakeChatRepository : ChatRepository {
         yield()
         chatDetailIds += chatId
         return queuedChatDetailResults.removeFirstOrNull() ?: DomainResult.Success(sampleChatDetail(chatId))
+    }
+
+    // 아래 넷은 턴 진행·선택지·삭제가 화면에 붙을 때 채운다. 지금 화면은 부르지 않는다.
+
+    override fun streamTurn(
+        chatId: String,
+        userInput: String,
+        userSource: UserSource,
+        sourceTurnId: Long?,
+        choiceOrder: Int?,
+    ): Flow<ChatStreamEvent> = emptyFlow()
+
+    override fun regenerateTurn(
+        chatId: String,
+        turnId: Long,
+    ): Flow<ChatStreamEvent> = emptyFlow()
+
+    override suspend fun generateChoices(
+        chatId: String,
+        turnId: Long,
+    ): DomainResult<Unit> {
+        yield()
+        return DomainResult.Success(Unit)
+    }
+
+    override suspend fun deleteChat(chatId: String): DomainResult<Unit> {
+        yield()
+        return DomainResult.Success(Unit)
     }
 }

@@ -42,3 +42,20 @@ data class ChatTurn(
     val userInput: String,
     val aiOutput: String,
 )
+
+/**
+ * 전송한 문장의 출처. 서버는 문자열만으로 "추천과 같은 문장을 사용자가 직접 썼다"를 가릴 수 없어
+ * 입력 방식을 아는 클라이언트가 정한다. [wireValue] 는 서버 계약의 표기다.
+ */
+enum class UserSource(
+    val wireValue: String,
+) {
+    /** 직접 입력했다. */
+    TYPED("typed"),
+
+    /** 추천·선택지를 그대로 보냈다. */
+    CHOICE("choice"),
+
+    /** 추천·선택지를 채운 뒤 고쳐서 보냈다. */
+    EDITED_CHOICE("edited_choice"),
+}
