@@ -126,7 +126,7 @@ private fun MyContent(
                 iconRes = R.drawable.ic_people,
                 labelRes = R.string.my_invite,
                 onClick = onOpenInvite,
-                trailing = { MenuTrailingIcon(iconRes = R.drawable.ic_angle_right) },
+                trailing = { MenuTrailingIcon(iconRes = R.drawable.ic_chevron_right) },
             )
         }
         MySection(labelRes = R.string.my_section_display) {
@@ -143,7 +143,7 @@ private fun MyContent(
                 iconRes = R.drawable.ic_mailbox,
                 labelRes = R.string.my_feedback,
                 onClick = onOpenFeedback,
-                trailing = { MenuTrailingIcon(iconRes = R.drawable.ic_angle_right) },
+                trailing = { MenuTrailingIcon(iconRes = R.drawable.ic_chevron_right) },
             )
         }
         AccountSection(state = state, onIntent = onIntent, onOpenWithdrawal = onOpenWithdrawal)
