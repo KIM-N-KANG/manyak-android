@@ -38,7 +38,7 @@ val MaruBuri =
  * 굵기는 Regular·Medium·Bold만 쓴다. SemiBold(600)를 쓰지 않는 이유는 번들에 없는 굵기를 요구하면
  * Bold로 대체 렌더되어 의도보다 두꺼워지기 때문이다.
  *
- * [titleMediumStrong]·[bodyLargeStrong] 만 크기가 아니라 굵기로 갈리는 롤이다. 이름을 `titleSmall`
+ * [titleMediumStrong]·[bodyLargeStrong]·[bodyMediumStrong] 만 크기가 아니라 굵기로 갈리는 롤이다. 이름을 `titleSmall`
  * 같은 크기 이름으로 두지 않은 것은, 크기 이름이 굵기 차이를 뜻하게 되면 스케일이 거짓말을 하기
  * 때문이다.
  */
@@ -48,6 +48,7 @@ data class ManyakTypography(
     val labelLarge: TextStyle,
     val bodySmall: TextStyle,
     val bodyMedium: TextStyle,
+    val bodyMediumStrong: TextStyle,
     val bodyLarge: TextStyle,
     val bodyLargeStrong: TextStyle,
     val bodyReading: TextStyle,
@@ -104,6 +105,14 @@ internal val ManyakDefaultTypography =
             TextStyle(
                 fontFamily = Pretendard,
                 fontWeight = FontWeight.Normal,
+                fontSize = 14.sp,
+                lineHeight = 20.sp,
+            ),
+        // 본문 옆에서 값 하나를 세우는 자리. bodyMedium 과 크기·행간이 같고 굵기로만 갈린다
+        bodyMediumStrong =
+            TextStyle(
+                fontFamily = Pretendard,
+                fontWeight = FontWeight.Bold,
                 fontSize = 14.sp,
                 lineHeight = 20.sp,
             ),

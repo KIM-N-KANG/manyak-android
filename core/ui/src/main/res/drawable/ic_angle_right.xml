@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    오른쪽 방향 화살표(목록 항목 이동). 색은 사용처에서 tint 하므로 자산 자체는 단색으로 둔다.
+    원본: angle-down-outline.svg 를 시계 반대 방향으로 눕힌 형태(24×24).
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <path
+        android:pathData="M9.4697,6.4697C9.1768,6.7626 9.1768,7.2374 9.4697,7.5303L13.9393,12L9.4697,16.4697C9.1768,16.7626 9.1768,17.2374 9.4697,17.5303C9.7626,17.8232 10.2374,17.8232 10.5303,17.5303L15.5303,12.5303C15.8232,12.2374 15.8232,11.7626 15.5303,11.4697L10.5303,6.4697C10.2374,6.1768 9.7626,6.1768 9.4697,6.4697Z"
+        android:fillColor="#FF000000" />
+</vector>

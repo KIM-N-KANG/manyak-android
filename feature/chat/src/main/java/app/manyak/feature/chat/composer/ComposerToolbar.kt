@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -13,7 +14,7 @@ import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ManyakDestructiveDialog
 import app.manyak.core.ui.theme.ManyakTheme
 
-/** 컴포저 아래 줄. 왼쪽부터 추가 버튼·설정 메뉴이고 전송만 오른쪽 끝이다. */
+/** 컴포저 아래 줄. 왼쪽부터 추가 버튼·설정 메뉴이고 턴 비용과 전송만 오른쪽 끝이다. */
 @Composable
 internal fun ComposerToolbar(
     mode: ChatInputMode,
@@ -70,9 +71,20 @@ internal fun ComposerToolbar(
             onSelect = actions.onModeChange,
             enabled = enabled,
         )
-        // 남은 자리를 밀어내 전송만 오른쪽 끝에 세운다.
+        // 남은 자리를 밀어내 비용과 전송만 오른쪽 끝에 세운다.
         Spacer(modifier = Modifier.weight(1f))
-        ComposerSendButton(state = sendState, onClick = onSend)
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // 전송 버튼 상태(전송·랜덤·대기)가 바뀌어도 자리가 그대로다.
+            Text(
+                text = stringResource(R.string.chat_composer_turn_credit_cost),
+                style = ManyakTheme.typography.bodySmall,
+                color = ManyakTheme.colors.textSubtle,
+            )
+            ComposerSendButton(state = sendState, onClick = onSend)
+        }
     }
 }
 

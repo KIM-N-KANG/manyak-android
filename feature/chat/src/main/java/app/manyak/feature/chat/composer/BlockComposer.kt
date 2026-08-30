@@ -1,14 +1,5 @@
 package app.manyak.feature.chat.composer
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.FastOutLinearInEasing
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.MutableTransitionState
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -40,6 +31,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.R
+import app.manyak.core.ui.component.RowRevealTransition
 import app.manyak.core.ui.theme.ManyakTheme
 import kotlinx.coroutines.withTimeoutOrNull
 
@@ -111,7 +103,7 @@ private fun BlockInputList(
         blocks.forEach { block ->
             val exiting = block.id in exitingIds
             key(block.id) {
-                BlockRowTransition(
+                RowRevealTransition(
                     entering = block.id !in initialIds,
                     exiting = exiting,
                     onExited = {
@@ -235,46 +227,6 @@ private fun BlockInputRow(
             onClick = onRemove,
         )
     }
-}
-
-/**
- * 칸 하나의 등장·퇴장. 새로 더한 칸은 아래에서 자라 오르고, 지운 칸은 같은 변을 붙잡은 채 접힌다.
- *
- * 퇴장이 등장보다 짧다 — 지우기는 이미 결정한 동작이라 사라지는 것을 붙잡아 두면 다음 칸으로 넘어가는
- * 손을 기다리게 한다. 접힘이 끝나면 [onExited] 로 목록에서 뺀다.
- *
- * 모드 전환·추천 채우기·전송 뒤 초기화처럼 목록 전체가 갈리는 경로는 이 표시를 거치지 않으므로 칸이
- * 한꺼번에 교체된다 — 한 칸씩 접히면 우수수 무너지는 것처럼 보인다.
- */
-@Composable
-private fun BlockRowTransition(
-    entering: Boolean,
-    exiting: Boolean,
-    onExited: () -> Unit,
-    content: @Composable () -> Unit,
-) {
-    val enterMillis = ManyakTheme.motion.elementEnterMillis
-    val exitMillis = ManyakTheme.motion.elementExitMillis
-    val visibleState = remember { MutableTransitionState(!entering).apply { targetState = true } }
-    LaunchedEffect(exiting) { visibleState.targetState = !exiting }
-    LaunchedEffect(visibleState.isIdle, visibleState.currentState) {
-        if (visibleState.isIdle && !visibleState.currentState) onExited()
-    }
-    AnimatedVisibility(
-        visibleState = visibleState,
-        // 아래 변을 붙잡고 높이를 키우고 줄인다. 위를 붙잡으면 위 칸들이 밀렸다 당겨진다.
-        enter =
-            expandVertically(
-                animationSpec = tween(enterMillis, easing = FastOutSlowInEasing),
-                expandFrom = Alignment.Bottom,
-            ) + fadeIn(animationSpec = tween(enterMillis)),
-        exit =
-            shrinkVertically(
-                animationSpec = tween(exitMillis, easing = FastOutLinearInEasing),
-                shrinkTowards = Alignment.Bottom,
-            ) + fadeOut(animationSpec = tween(exitMillis)),
-        content = { content() },
-    )
 }
 
 /**

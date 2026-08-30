@@ -141,6 +141,7 @@ rounded:
   control: 14dp
   card: 16dp
   overlay: 20dp
+  sheet: 20dp (위쪽 두 모서리)
   pill: CircleShape
 
 sizes:
@@ -356,7 +357,7 @@ components:
 | 파일 | 내용 |
 | --- | --- |
 | `Color.kt` | 팔레트(private)와 시맨틱 색 30종, 라이트·다크 인스턴스 |
-| `Type.kt` | `Pretendard`·`MaruBuri` FontFamily와 타이포 롤 12종 |
+| `Type.kt` | `Pretendard`·`MaruBuri` FontFamily와 타이포 롤 13종 |
 | `ManyakSpacing.kt` | 시맨틱 여백 |
 | `ManyakShapes.kt` | 시맨틱 모서리 |
 | `ManyakSizes.kt` | 크기 5종 |
@@ -453,6 +454,7 @@ components:
 | `{typography.body-large}` | 16sp | 400 | 24sp | 강조 본문·입력 필드 |
 | `{typography.body-reading}` | 16sp | 400 | 28sp | 스토리 본문 (MaruBuri · 자간 −2%) |
 | `{typography.body-reading-small}` | 14sp | 400 | 24.5sp | 짧은 서사 문장 — 추천 입력 (MaruBuri · 자간 −2%) |
+| `{typography.body-medium-strong}` | 14sp | 700 | 20sp | 라벨 옆에 세우는 값 — 비용 행의 크레딧 수치 |
 | `{typography.body-medium}` | 14sp | 400 | 20sp | 본문 기본 |
 | `{typography.label-large}` | 14sp | 500 | 20sp | 버튼·탭 라벨 |
 | `{typography.body-small}` | 12sp | 400 | 16sp | 메타 정보·보조 설명 |
@@ -465,7 +467,7 @@ components:
 - **자간은 `{typography.body-reading}`만 −2%로 좁힙니다.** 바탕 계열의 기본 자간이 장문에서 벌어져 보여 본문 롤에만 보정하고, UI 롤은 기본 자간을 유지합니다.
 - **MaruBuri는 `{typography.body-reading}`·`{typography.body-reading-small}` 전용입니다.** 버튼·라벨·제목에 쓰지 않습니다.
 - **굵기 사다리는 400 / 500 / 700입니다.** SemiBold(600)를 쓰지 않는 이유는 번들에 없는 굵기를 요구하면 Bold로 대체 렌더되어 의도보다 두꺼워지기 때문입니다.
-- **`{typography.title-medium-strong}`은 크기가 아니라 굵기로 갈리는 롤입니다.** `{typography.title-medium}`과 크기·행간이 같고 굵기만 700입니다. 이름에 `strong`을 붙인 것은 small/medium 같은 크기 이름이 굵기 차이를 뜻하게 되면 스케일이 거짓말을 하기 때문입니다. 스크롤되는 목록 위에 붙박이로 남는 섹션 제목처럼, 같은 크기에서 무게로만 위계를 세워야 하는 자리에 씁니다.
+- **`{typography.title-medium-strong}`·`{typography.body-medium-strong}`은 크기가 아니라 굵기로 갈리는 롤입니다.** 각각 `{typography.title-medium}`·`{typography.body-medium}`과 크기·행간이 같고 굵기만 700입니다. 이름에 `strong`을 붙인 것은 small/medium 같은 크기 이름이 굵기 차이를 뜻하게 되면 스케일이 거짓말을 하기 때문입니다. 스크롤되는 목록 위에 붙박이로 남는 섹션 제목처럼, 같은 크기에서 무게로만 위계를 세워야 하는 자리에 씁니다.
 - 화면 기본 텍스트 스타일은 `{typography.body-medium}`이고 기본 색은 `{colors.text}`입니다. `ManyakTheme`이 `LocalTextStyle`·`LocalContentColor`로 내립니다.
 
 ## 레이아웃
@@ -553,6 +555,10 @@ components:
 끝나 남아 있으면 기다리게 만든다. 방향도 함께 쓴다 — 목록 끝으로 보내는 버튼은 아래에서 올라오고
 아래로 내려가 사라져, 움직임 자체가 버튼이 무엇을 하는지 말한다.
 
+**사용자가 늘리고 줄이는 목록의 칸은 아래 변을 붙잡고 자라고 접힌다.** 채팅 입력 칸과 추가 정보 입력
+칸이 같은 규칙을 쓴다(`RowRevealTransition`) — 위를 붙잡으면 손대지 않은 위쪽 칸들이 함께 밀렸다
+당겨져 어느 칸이 늘고 줄었는지 읽히지 않는다. 지운 칸은 접힘이 끝난 뒤에 목록에서 뺀다.
+
 **차례로 드러나는 목록은 항목 하나가 더 길다.** 단일 요소보다 느린 300ms 는 뒤 항목이 80ms 씩 늦게
 출발해도 앞 항목이 아직 움직이고 있어 목록 전체가 하나의 흐름으로 읽히게 한다. 값은 웹과 같다 —
 추천 입력처럼 두 플랫폼에 같은 목록이 있는 자리에서 리듬이 갈리면 안 된다.
@@ -567,7 +573,8 @@ components:
 | `{rounded.thumbnail}` | 12dp | 썸네일·작은 아이콘 컨테이너 |
 | `{rounded.control}` | 14dp | 버튼·입력창·탭 |
 | `{rounded.card}` | 16dp | 카드·리스트 항목 |
-| `{rounded.overlay}` | 20dp | 바텀시트·다이얼로그 |
+| `{rounded.overlay}` | 20dp | 다이얼로그 |
+| `{rounded.sheet}` | 20dp (위쪽 두 모서리) | 바텀시트 |
 | `{rounded.pill}` | `CircleShape` | 배지·칩·아바타 |
 
 `{rounded.pill}`은 **큰 dp가 아니라 `CircleShape`입니다.** 값으로 두면 큰 요소에서 모서리가 잘못 그려집니다. 그래서 `ManyakShapes`는 dp가 아니라 `Shape`를 내립니다.
@@ -600,7 +607,9 @@ components:
 
 **`card`** — 배경 `{colors.surface}`, 경계 `{colors.border}` 1dp, 모서리 `{rounded.card}`, 내부 여백 `{spacing.component}`. 제목 `{typography.title-medium}`, 본문 `{typography.body-medium}`, 메타 `{typography.body-small}` + `{colors.text-subtle}`.
 
-**`overlay`** — 바텀시트·다이얼로그. 배경 `{colors.surface-raised}`, 모서리 `{rounded.overlay}`, 내부 여백 `{spacing.gutter}`.
+**`overlay`** — 다이얼로그. 배경 `{colors.surface-raised}`, 모서리 `{rounded.overlay}`, 내부 여백 `{spacing.gutter}`.
+
+**`sheet`** — 바텀시트. 배경 `{colors.surface-raised}`, 모서리는 `{rounded.sheet}`로 위쪽 두 곳만 깎습니다 — 아래쪽은 화면 끝에 붙어 있어 깎으면 그 틈으로 스크림이 비칩니다. 내부 여백은 좌·우·아래 `{spacing.gutter}`이고 **위쪽은 두지 않습니다** — 드래그 핸들이 자체 여백을 갖고 있어 겹칩니다. 하단 안전 영역과 키보드 높이는 그 아래로 시트가 직접 낍니다.
 
 **`badge`** — 배경 `{colors.background-brand-subtle}`, 텍스트 `{colors.text-brand}` + `{typography.body-small}`, 모서리 `{rounded.pill}`, 여백 세로 `{spacing.hairline}` · 가로 `{spacing.compact}`.
 

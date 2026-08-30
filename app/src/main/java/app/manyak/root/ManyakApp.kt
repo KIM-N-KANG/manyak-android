@@ -1,5 +1,6 @@
 package app.manyak.root
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,14 +16,17 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.core.view.ViewCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
@@ -31,15 +35,20 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import app.manyak.core.domain.session.SessionState
+import app.manyak.core.domain.settings.ThemeMode
 import app.manyak.core.domain.story.CreationResumePoint
 import app.manyak.core.navigation.ChatRoomRoute
 import app.manyak.core.navigation.CreateAdditionalInfoRoute
 import app.manyak.core.navigation.CreateKeywordRoute
 import app.manyak.core.navigation.CreateStorylineRoute
+import app.manyak.core.navigation.LegalDocument
 import app.manyak.core.navigation.LegalRoute
 import app.manyak.core.navigation.LoginRoute
 import app.manyak.core.navigation.MainTabsRoute
+import app.manyak.core.navigation.MyFeedbackRoute
+import app.manyak.core.navigation.MyInviteRoute
 import app.manyak.core.navigation.StoryDetailRoute
+import app.manyak.core.navigation.WithdrawalRoute
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ManyakProgressIndicator
 import app.manyak.core.ui.component.rememberDelayedProgressVisibility
@@ -51,6 +60,8 @@ import app.manyak.feature.create.CreateKeywordScreen
 import app.manyak.feature.create.CreateStorylineScreen
 import app.manyak.feature.legal.LegalDocumentScreen
 import app.manyak.feature.login.LoginScreen
+import app.manyak.feature.my.InviteOnboardingSheet
+import app.manyak.feature.my.MyPlaceholderScreen
 import app.manyak.feature.story.StoryDetailScreen
 
 /**
@@ -66,16 +77,45 @@ fun ManyakApp(
     viewModel: RootViewModel = hiltViewModel(),
 ) {
     val sessionState by viewModel.sessionState.collectAsStateWithLifecycle()
+    val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val showSessionProgress = rememberDelayedProgressVisibility(sessionState == SessionState.Undetermined)
-
-    Surface(modifier = modifier.fillMaxSize(), color = ManyakTheme.colors.surface) {
-        when (val state = sessionState) {
-            SessionState.Undetermined -> if (showSessionProgress) SessionProgress()
-            is SessionState.SignedOut -> AuthNavDisplay()
-            SessionState.Member -> MainNavDisplay()
-            // 이전 사용자의 데이터가 남아 있다. 정리가 끝날 때까지 어느 그래프도 열지 않는다.
-            is SessionState.CleanupFailed -> CleanupFailed(state, onRetry = viewModel::onRetryCleanup)
+    val darkTheme =
+        when (themeMode) {
+            ThemeMode.SYSTEM -> isSystemInDarkTheme()
+            ThemeMode.LIGHT -> false
+            ThemeMode.DARK -> true
         }
+
+    ManyakTheme(darkTheme = darkTheme) {
+        SystemBarIconAppearance(darkTheme = darkTheme)
+        Surface(modifier = modifier.fillMaxSize(), color = ManyakTheme.colors.surface) {
+            when (val state = sessionState) {
+                SessionState.Undetermined -> if (showSessionProgress) SessionProgress()
+                is SessionState.SignedOut -> AuthNavDisplay()
+                SessionState.Member -> {
+                    MainNavDisplay()
+                    // 신규 가입 안내는 어느 탭에 있든 회원 그래프 위에 뜬다. 로그인 화면에 두면
+                    // 로그인 성공과 동시에 인증 백스택이 사라져 안내도 함께 걷힌다.
+                    InviteOnboardingSheet()
+                }
+                // 이전 사용자의 데이터가 남아 있다. 정리가 끝날 때까지 어느 그래프도 열지 않는다.
+                is SessionState.CleanupFailed -> CleanupFailed(state, onRetry = viewModel::onRetryCleanup)
+            }
+        }
+    }
+}
+
+/**
+ * 시스템 바 아이콘 밝기를 앱 테마에 맞춘다. edge-to-edge 기본값은 **시스템** 다크 모드를 따르므로,
+ * 앱에서 테마를 강제하면 상태 바 시계·배터리가 배경과 같은 밝기가 되어 읽히지 않는다.
+ */
+@Composable
+private fun SystemBarIconAppearance(darkTheme: Boolean) {
+    val view = LocalView.current
+    LaunchedEffect(view, darkTheme) {
+        val controller = ViewCompat.getWindowInsetsController(view) ?: return@LaunchedEffect
+        controller.isAppearanceLightStatusBars = !darkTheme
+        controller.isAppearanceLightNavigationBars = !darkTheme
     }
 }
 
@@ -165,7 +205,7 @@ private fun AuthNavDisplay() {
                 entry<LoginRoute> {
                     LoginScreen(onOpenLegalDocument = { document -> backStack.add(LegalRoute(document)) })
                 }
-                legalEntry(onLeaveDocument = { backStack.removeLastOrNull() })
+                legalEntry()
             },
     )
 }
@@ -200,8 +240,14 @@ private fun MainNavDisplay() {
                         onCreateStory = { backStack.add(CreateKeywordRoute) },
                         // 재개·복구 진입 — 레코드가 가리키는 단계까지 체인을 쌓는다.
                         onResumeCreation = { resumePoint -> backStack.addCreationResumeChain(resumePoint) },
+                        // 마이 하위 목적지들 — 셸 위에 쌓이는 전체 화면이고 뒤로가기는 마이 탭으로 돌아온다.
+                        onOpenInvite = { backStack.add(MyInviteRoute) },
+                        onOpenServiceInfo = { backStack.add(LegalRoute(LegalDocument.ABOUT)) },
+                        onOpenFeedback = { backStack.add(MyFeedbackRoute) },
+                        onOpenWithdrawal = { backStack.add(WithdrawalRoute) },
                     )
                 }
+                myDestinationEntries(backStack)
                 entry<StoryDetailRoute> { route ->
                     StoryDetailScreen(
                         storyId = route.storyId,
@@ -224,9 +270,24 @@ private fun MainNavDisplay() {
                         },
                     )
                 }
-                legalEntry(onLeaveDocument = { backStack.removeLastOrNull() })
+                legalEntry()
             },
     )
+}
+
+/**
+ * 마이 탭의 하위 목적지들. 아직 자리 화면이고, 본 기능이 구현되면 각 화면으로 대체한다.
+ */
+private fun EntryProviderScope<NavKey>.myDestinationEntries(backStack: MutableList<NavKey>) {
+    entry<MyInviteRoute> {
+        MyPlaceholderScreen(titleRes = R.string.my_invite, onBack = { backStack.removeLastOrNull() })
+    }
+    entry<MyFeedbackRoute> {
+        MyPlaceholderScreen(titleRes = R.string.my_feedback, onBack = { backStack.removeLastOrNull() })
+    }
+    entry<WithdrawalRoute> {
+        MyPlaceholderScreen(titleRes = R.string.my_withdrawal, onBack = { backStack.removeLastOrNull() })
+    }
 }
 
 private fun MutableList<NavKey>.addCreationResumeChain(resumePoint: CreationResumePoint) {
@@ -286,11 +347,11 @@ private fun MutableList<NavKey>.popToMainTabs() {
 }
 
 /**
- * 공용 법적 문서. 제품 백스택 양쪽에 등록해 뒤로가기가 진입한 화면으로 돌아간다.
+ * 웹이 정본인 공용 문서. 제품 백스택 양쪽에 등록해 뒤로가기가 진입한 화면으로 돌아간다.
  * 여기서 임의의 메인 목적지로 이동하는 경로는 두지 않는다.
  */
-private fun EntryProviderScope<NavKey>.legalEntry(onLeaveDocument: () -> Unit) {
+private fun EntryProviderScope<NavKey>.legalEntry() {
     entry<LegalRoute> { route ->
-        LegalDocumentScreen(document = route.document, onLeaveDocument = onLeaveDocument)
+        LegalDocumentScreen(document = route.document)
     }
 }

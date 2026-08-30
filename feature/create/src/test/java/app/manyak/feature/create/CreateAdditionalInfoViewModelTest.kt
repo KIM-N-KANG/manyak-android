@@ -140,7 +140,10 @@ class CreateAdditionalInfoViewModelTest {
             advanceUntilIdle()
 
             assertFalse(viewModel.uiState.value.isCompletingStory)
-            assertEquals(CompletionFailure.GENERAL, viewModel.uiState.value.completionFailure)
+            assertEquals(
+                CreateAdditionalInfoEffect.ShowCompletionFailure(CompletionFailure.GENERAL),
+                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
+            )
 
             viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
             advanceUntilIdle()
@@ -163,9 +166,12 @@ class CreateAdditionalInfoViewModelTest {
             viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
             advanceUntilIdle()
 
-            // 채팅 생성 실패는 완성 실패와 같은 인라인 오류로 안내한다.
+            // 채팅 생성 실패는 완성 실패와 같은 토스트로 안내한다.
             assertFalse(viewModel.uiState.value.isCompletingStory)
-            assertEquals(CompletionFailure.GENERAL, viewModel.uiState.value.completionFailure)
+            assertEquals(
+                CreateAdditionalInfoEffect.ShowCompletionFailure(CompletionFailure.GENERAL),
+                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
+            )
 
             viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
             advanceUntilIdle()
@@ -213,8 +219,37 @@ class CreateAdditionalInfoViewModelTest {
             viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
             advanceUntilIdle()
 
-            assertEquals(CompletionFailure.CREDIT, viewModel.uiState.value.completionFailure)
+            assertEquals(
+                CreateAdditionalInfoEffect.ShowCompletionFailure(CompletionFailure.CREDIT),
+                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
+            )
             assertTrue(fixture.pendingStore.current is PendingStoryCreation.Draft)
+        }
+
+    @Test
+    fun `응답을 못 받은 완성 실패 뒤에도 임시 저장이 완성 레코드를 갱신한다`() =
+        runTest(dispatcher) {
+            // 레코드를 초안으로 덮으면 복구 조회에 쓸 requestId 를 잃는다. 진행만 갈아 끼운다.
+            val fixture = loadedViewModel()
+            fixture.repository.queuedCompletionResults += DomainResult.Failure(DomainError.Network)
+
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
+            advanceUntilIdle()
+
+            assertTrue(fixture.store.draftSave.value.canSave)
+
+            val inputId =
+                fixture.viewModel.uiState.value.additionalInfos
+                    .first()
+                    .id
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.ChangeInput(inputId, "배경은 서울"))
+            advanceUntilIdle()
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.SaveDraft)
+            advanceUntilIdle()
+
+            val record = fixture.pendingStore.current as PendingStoryCreation.CompletingStory
+            assertEquals("배경은 서울", record.progress.additionalInfoInputs.first())
+            assertFalse(fixture.store.draftSave.value.hasUnsavedChanges)
         }
 
     @Test

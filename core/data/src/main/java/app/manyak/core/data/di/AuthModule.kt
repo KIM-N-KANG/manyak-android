@@ -1,6 +1,7 @@
 package app.manyak.core.data.di
 
 import app.manyak.core.data.database.PendingStoryCreationRoomStore
+import app.manyak.core.data.datastore.InviteOnboardingStore
 import app.manyak.core.data.datastore.ProfileCacheStore
 import app.manyak.core.data.provider.GoogleIdTokenProvider
 import app.manyak.core.data.provider.KakaoIdTokenProvider
@@ -10,6 +11,7 @@ import app.manyak.core.data.repository.UserProfileRepositoryImpl
 import app.manyak.core.data.session.SessionBootstrap
 import app.manyak.core.data.session.UserScopedStore
 import app.manyak.core.domain.auth.AuthProvider
+import app.manyak.core.domain.invite.InviteOnboardingRepository
 import app.manyak.core.domain.session.SessionRepository
 import app.manyak.core.domain.user.UserProfileRepository
 import dagger.Binds
@@ -67,4 +69,13 @@ abstract class AuthModule {
     @Binds
     @IntoSet
     abstract fun bindPendingCreationAsUserScoped(impl: PendingStoryCreationRoomStore): UserScopedStore
+
+    @Binds
+    @Singleton
+    abstract fun bindInviteOnboardingRepository(impl: InviteOnboardingStore): InviteOnboardingRepository
+
+    /** 신규 가입 안내 표시 — 남으면 공용 기기의 다음 사용자에게 이전 회원의 안내가 뜬다. */
+    @Binds
+    @IntoSet
+    abstract fun bindInviteOnboardingAsUserScoped(impl: InviteOnboardingStore): UserScopedStore
 }

@@ -21,6 +21,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -30,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -37,6 +39,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.R
+import app.manyak.core.ui.component.RowRevealTransition
 import app.manyak.core.ui.text.storyAnnotatedString
 import app.manyak.core.ui.theme.ManyakTheme
 
@@ -189,8 +192,55 @@ internal fun AdditionalInfoHeader(modifier: Modifier = Modifier) {
     }
 }
 
+/**
+ * 추가 정보 입력 칸 목록. 새 칸은 아래에서 자라 오르고, 지운 칸은 접힘이 끝난 뒤에야 [onRemove] 로
+ * 빠진다 — 먼저 빼면 접히는 모습이 나오지 않는다.
+ *
+ * 목록 전체가 스크롤 항목 하나다. 칸마다 항목을 나누면 화면 밖으로 밀린 칸이 버려져, 다시 들어올 때
+ * 등장 애니메이션을 처음부터 되풀이한다.
+ *
+ * 칸 사이 간격은 [Arrangement] 가 아니라 칸 안쪽 아래 여백이다. 배치 간격으로 두면 접힌 칸이
+ * 차지하는 자리가 0 이 된 뒤에도 간격만 남아 빈 틈이 보인다.
+ */
 @Composable
-internal fun AdditionalInfoRow(
+internal fun AdditionalInfoRows(
+    inputs: List<AdditionalInfoInput>,
+    onValueChange: (Long, String) -> Unit,
+    onRemove: (Long) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val placeholders = stringArrayResource(R.array.create_additional_placeholders)
+    // 지우는 중인 칸. 구성 변경으로 이 표시를 잃으면 칸은 그대로 남는다(지워지지 않는 쪽이 안전하다).
+    var exitingIds by remember { mutableStateOf(emptySet<Long>()) }
+    // 들어올 때 이미 있던 칸은 그대로 그린다 — 화면에 닿자마자 칸들이 자라 오르면 안 된다.
+    val initialIds = remember { inputs.map(AdditionalInfoInput::id).toSet() }
+    Column(modifier = modifier.fillMaxWidth()) {
+        inputs.forEachIndexed { index, input ->
+            key(input.id) {
+                RowRevealTransition(
+                    entering = input.id !in initialIds,
+                    exiting = input.id in exitingIds,
+                    onExited = {
+                        exitingIds = exitingIds - input.id
+                        onRemove(input.id)
+                    },
+                ) {
+                    AdditionalInfoRow(
+                        modifier = Modifier.padding(bottom = ManyakTheme.spacing.compact),
+                        index = index,
+                        input = input,
+                        placeholder = placeholders[index % placeholders.size],
+                        onValueChange = { value -> onValueChange(input.id, value) },
+                        onRemove = { exitingIds = exitingIds + input.id },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AdditionalInfoRow(
     index: Int,
     input: AdditionalInfoInput,
     placeholder: String,

@@ -373,8 +373,11 @@ class CreateKeywordViewModel
                 viewModelScope.launch {
                     if (showLoading) dispatchEvent(CreateKeywordEvent.TagsReloadStarted)
                     when (val result = storyCreationRepository.tags()) {
-                        is DomainResult.Success ->
+                        is DomainResult.Success -> {
+                            // 스토리라인 단계의 "선택한 키워드 보기"가 태그 ID 를 이름으로 풀 때 쓴다.
+                            storylineGenerationStore.cacheTags(result.value)
                             dispatchEvent(CreateKeywordEvent.TagsLoaded(result.value.groupBy(StoryTag::category)))
+                        }
 
                         is DomainResult.Failure -> dispatchEvent(CreateKeywordEvent.TagsLoadFailed)
                     }

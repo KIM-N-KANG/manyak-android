@@ -23,7 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.manyak.core.navigation.LegalDocument
@@ -33,14 +32,13 @@ import app.manyak.core.ui.component.rememberDelayedProgressVisibility
 import app.manyak.core.ui.theme.ManyakTheme
 
 /**
- * 약관·개인정보처리방침을 웹 페이지 그대로 보여 준다.
+ * 약관·개인정보처리방침·서비스 안내를 웹 페이지 그대로 보여 준다.
  *
- * 같은 호스트 밖으로는 이동하지 않는다 — 법적 문서 화면에서 임의의 목적지로 새는 경로를 만들지 않는다
+ * 같은 호스트 밖으로는 이동하지 않는다 — 문서 화면에서 임의의 목적지로 새는 경로를 만들지 않는다
  */
 @Composable
 fun LegalDocumentScreen(
     document: LegalDocument,
-    onLeaveDocument: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: LegalViewModel =
         hiltViewModel<LegalViewModel, LegalViewModel.Factory>(
@@ -58,8 +56,6 @@ fun LegalDocumentScreen(
             LegalWebView(
                 url = state.url,
                 allowedHost = state.allowedHost,
-                documentPath = state.documentPath,
-                onLeaveDocument = onLeaveDocument,
                 reloadToken = state.reloadToken,
                 onPageStarted = { },
                 onPageFinished = { viewModel.onIntent(LegalIntent.PageFinished) },
@@ -105,8 +101,6 @@ private fun LegalLoadFailure(
 private fun LegalWebView(
     url: String,
     allowedHost: String?,
-    documentPath: String?,
-    onLeaveDocument: () -> Unit,
     reloadToken: Int,
     onPageStarted: () -> Unit,
     onPageFinished: () -> Unit,
@@ -149,28 +143,11 @@ private fun LegalWebView(
                             if (request?.isForMainFrame == true) onPageFailed()
                         }
 
-                        // 우리 도메인 밖으로는 이동하지 않는다. 법적 문서 화면이 임의의 목적지로 새면 안 된다.
+                        // 우리 도메인 밖으로는 이동하지 않는다. 문서 화면이 임의의 목적지로 새면 안 된다.
                         override fun shouldOverrideUrlLoading(
                             view: WebView?,
                             request: WebResourceRequest?,
                         ): Boolean = request?.url?.host != allowedHost
-
-                        /**
-                         * 웹 페이지 자체의 헤더 뒤로가기는 SPA 라우팅이라 페이지 로드가 일어나지 않는다.
-                         * 그래서 [shouldOverrideUrlLoading] 으로는 막을 수 없고, 이 콜백으로 이탈을 감지해
-                         * 화면을 닫는다 — 법적 문서에서 다른 제품 화면이 열리면 안 된다.
-                         */
-                        override fun doUpdateVisitedHistory(
-                            view: WebView?,
-                            url: String?,
-                            isReload: Boolean,
-                        ) {
-                            if (isReload || url == null) return
-                            val visited = url.toUri()
-                            if (visited.host != allowedHost || visited.path != documentPath) {
-                                onLeaveDocument()
-                            }
-                        }
                     }
             }
         },
@@ -214,4 +191,5 @@ fun LegalDocument.titleRes(): Int =
     when (this) {
         LegalDocument.TERMS -> R.string.legal_terms_title
         LegalDocument.PRIVACY -> R.string.legal_privacy_title
+        LegalDocument.ABOUT -> R.string.my_service_info
     }

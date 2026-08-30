@@ -85,6 +85,27 @@ class ChatRoomRegenerateTest {
         }
 
     @Test
+    fun `재생성 실패는 앞서 보낸 문장을 되돌리지 않는다`() =
+        runTest(dispatcher) {
+            // 되돌릴 입력은 방금 열지 못한 턴의 것뿐이다 — 이미 보낸 문장이 되살아나면 안 된다.
+            val repository = FakeChatRepository()
+            val viewModel = loaded(repository)
+            viewModel.type("문을 연다")
+            advanceUntilIdle()
+            viewModel.onIntent(ChatRoomIntent.Sent)
+            advanceUntilIdle()
+            repository.streamEvents.send(ChatStreamEvent.Completed)
+            advanceUntilIdle()
+
+            viewModel.onIntent(ChatRoomIntent.RegenerateRequested(turnId = 1))
+            advanceUntilIdle()
+            repository.regenerateEvents.send(ChatStreamEvent.Failed(DomainError.Unknown, null))
+            advanceUntilIdle()
+
+            assertFalse(viewModel.uiState.value.composer.hasInput)
+        }
+
+    @Test
     fun `409 면 복원하지 않고 확정 상태를 다시 읽는다`() =
         runTest(dispatcher) {
             // 이미 새 턴이 붙은 낡은 화면이라 되살릴 기존 본문이 정본이 아니다.
