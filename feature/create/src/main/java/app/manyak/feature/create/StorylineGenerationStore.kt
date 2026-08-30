@@ -134,6 +134,12 @@ class StorylineGenerationStore
         /** 초안을 저장해도 되는 구간인지. 진행 중 요청 레코드가 슬롯을 쥐고 있으면 false 다. */
         private var draftSaveEnabled = false
 
+        /**
+         * 슬롯을 쥐고 있는 완성 레코드의 명령. 이 동안의 저장은 초안이 아니라 이 레코드의 진행만
+         * 갈아 끼운다 — 초안으로 덮으면 복구 조회에 쓸 requestId 를 잃는다.
+         */
+        private var slotCompletionCommand: StoryCompletionCommand? = null
+
         private var runJob: Job? = null
 
         /** 스토리라인 단계 복구 폴링 대상. 스토리라인 화면이 STARTED 동안 [runStorylineRecovery] 로 소비한다. */
@@ -272,6 +278,7 @@ class StorylineGenerationStore
                         lastCommand = record.generationCommand
                         lastResult = record.generation
                         lastCompletionCommand = record.command
+                        slotCompletionCommand = record.command
                         restoreProgress(record.progress)
                         mutableState.value = StorylineGenerationState.Generated(record.generation)
                         mutableCompletionRecoveryTarget.value = record.command
@@ -371,8 +378,19 @@ class StorylineGenerationStore
         /** 서버가 완성을 확정적으로 거절했으면 생성 결과·입력을 다시 Draft 단계로 보존한다. */
         suspend fun restoreDraftAfterCompletionFailure() {
             mutableCompletionRecoveryTarget.value = null
+            slotCompletionCommand = null
             enableDraftSave()
             persistDraft()
+        }
+
+        /**
+         * 완성 레코드를 쥔 채로 임시 저장을 다시 연다. 응답을 못 받은 실패는 레코드를 보존해야
+         * 복구 조회가 결과를 되찾는데, 저장까지 잠가 두면 실패 뒤의 편집이 디스크에 닿지 못한다.
+         * 이 구간의 저장은 레코드를 바꾸지 않고 진행만 갈아 끼운다.
+         */
+        fun keepCompletionRecordEditable() {
+            if (slotCompletionCommand == null) return
+            enableDraftSave()
         }
 
         /** 완성 재시도가 409 로 거절됐다 — 서버가 진행 중이므로 복구 폴링으로 전환한다. */
@@ -526,18 +544,19 @@ class StorylineGenerationStore
         }
 
         private suspend fun persistDraft(): Boolean {
-            val draft = currentDraft() ?: return false
+            val record = currentRecord() ?: return false
+            val recordProgress = progress
             savedDisplayJob?.cancel()
             refreshDraftSave(DraftSaveStatus.SAVING)
             val saved =
                 persistenceMutex.withLock {
                     // 대기하는 사이 요청 단계가 슬롯을 가져갔으면 오래된 초안으로 덮지 않는다.
-                    if (draftSaveEnabled) pendingCreationStore.write(draft) else false
+                    if (draftSaveEnabled) pendingCreationStore.write(record) else false
                 }
             if (saved) {
-                savedProgress = draft.progress
+                savedProgress = recordProgress
                 // 쓰는 사이에 진행이 바뀌었으면 디스크는 이미 한 박자 뒤처져 있다.
-                draftPersisted = draft.progress == progress
+                draftPersisted = recordProgress == progress
                 refreshDraftSave(DraftSaveStatus.SAVED)
                 scheduleSavedDisplayReset()
             } else {
@@ -560,6 +579,7 @@ class StorylineGenerationStore
             val saved = persistenceMutex.withLock { pendingCreationStore.write(record) }
             // 완성 레코드에는 현재 진행이 그대로 실려 나가 저장하지 않은 변경이 남지 않는다.
             if (saved && record is PendingStoryCreation.CompletingStory) savedProgress = record.progress
+            slotCompletionCommand = (record as? PendingStoryCreation.CompletingStory)?.command?.takeIf { saved }
             draftPersisted = false
             refreshDraftSave()
             return saved
@@ -567,18 +587,30 @@ class StorylineGenerationStore
 
         private suspend fun clearPendingRecord(): Boolean {
             disableDraftSave()
+            slotCompletionCommand = null
             draftPersisted = false
             return persistenceMutex.withLock { pendingCreationStore.clear() }
         }
 
-        private fun currentDraft(): PendingStoryCreation.Draft? {
+        /** 지금 저장하면 슬롯에 들어갈 레코드. 완성 레코드가 슬롯을 쥐고 있으면 진행만 갈아 끼운다. */
+        private fun currentRecord(): PendingStoryCreation? {
             val result = lastResult ?: return null
-            return PendingStoryCreation.Draft(
-                generationCommand = lastCommand,
-                generation = result,
-                progress = progress,
-                lastCompletionCommand = lastCompletionCommand,
-            )
+            val completion = slotCompletionCommand
+            return if (completion == null) {
+                PendingStoryCreation.Draft(
+                    generationCommand = lastCommand,
+                    generation = result,
+                    progress = progress,
+                    lastCompletionCommand = lastCompletionCommand,
+                )
+            } else {
+                PendingStoryCreation.CompletingStory(
+                    generationCommand = lastCommand,
+                    generation = result,
+                    command = completion,
+                    progress = progress,
+                )
+            }
         }
 
         private fun resetInMemory() {
@@ -588,6 +620,7 @@ class StorylineGenerationStore
             lastCommand = null
             lastResult = null
             lastCompletionCommand = null
+            slotCompletionCommand = null
             progress = CreationProgress()
             savedProgress = CreationProgress()
             draftPersisted = false

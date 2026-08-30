@@ -448,8 +448,11 @@ class CreateAdditionalInfoViewModel
                 error.isConflict() -> storylineGenerationStore.requestCompletionRecovery(command)
 
                 // 상태 코드로 응답한 실패는 복구 대상이 아니라 레코드를 지운다. 응답을 못 받은
-                // 네트워크 오류만 보존한다(3-1 정리 규칙).
-                error is DomainError.Network -> failCompletion(error.toCompletionFailure())
+                // 네트워크 오류만 보존한다(3-1 정리 규칙). 레코드는 쥔 채로 임시 저장만 다시 연다.
+                error is DomainError.Network -> {
+                    storylineGenerationStore.keepCompletionRecordEditable()
+                    failCompletion(error.toCompletionFailure())
+                }
 
                 else -> failCompletion(error.toCompletionFailure(), restoreDraft = true)
             }

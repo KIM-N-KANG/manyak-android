@@ -227,6 +227,32 @@ class CreateAdditionalInfoViewModelTest {
         }
 
     @Test
+    fun `응답을 못 받은 완성 실패 뒤에도 임시 저장이 완성 레코드를 갱신한다`() =
+        runTest(dispatcher) {
+            // 레코드를 초안으로 덮으면 복구 조회에 쓸 requestId 를 잃는다. 진행만 갈아 끼운다.
+            val fixture = loadedViewModel()
+            fixture.repository.queuedCompletionResults += DomainResult.Failure(DomainError.Network)
+
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
+            advanceUntilIdle()
+
+            assertTrue(fixture.store.draftSave.value.canSave)
+
+            val inputId =
+                fixture.viewModel.uiState.value.additionalInfos
+                    .first()
+                    .id
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.ChangeInput(inputId, "배경은 서울"))
+            advanceUntilIdle()
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.SaveDraft)
+            advanceUntilIdle()
+
+            val record = fixture.pendingStore.current as PendingStoryCreation.CompletingStory
+            assertEquals("배경은 서울", record.progress.additionalInfoInputs.first())
+            assertFalse(fixture.store.draftSave.value.hasUnsavedChanges)
+        }
+
+    @Test
     fun `추천 추가 정보는 다시 누르면 해제된다`() =
         runTest(dispatcher) {
             val viewModel = viewModel()
