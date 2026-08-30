@@ -58,6 +58,9 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.coil.compose)
 
+    // 오픈소스 고지 데이터. UI 는 이 모듈이 직접 그리므로 로더·모델만 쓴다.
+    implementation(libs.aboutlibraries.compose.core)
+
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)

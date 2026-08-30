@@ -51,6 +51,7 @@ fun MyScreen(
     onOpenInvite: () -> Unit,
     onOpenServiceInfo: () -> Unit,
     onOpenFeedback: () -> Unit,
+    onOpenOpenSourceLicense: () -> Unit,
     onOpenWithdrawal: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MyViewModel = hiltViewModel(),
@@ -91,6 +92,7 @@ fun MyScreen(
         onOpenInvite = onOpenInvite,
         onOpenServiceInfo = onOpenServiceInfo,
         onOpenFeedback = onOpenFeedback,
+        onOpenOpenSourceLicense = onOpenOpenSourceLicense,
         onOpenWithdrawal = onOpenWithdrawal,
         contentPadding = contentPadding,
         modifier = modifier,
@@ -105,6 +107,7 @@ private fun MyContent(
     onOpenInvite: () -> Unit,
     onOpenServiceInfo: () -> Unit,
     onOpenFeedback: () -> Unit,
+    onOpenOpenSourceLicense: () -> Unit,
     onOpenWithdrawal: () -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
@@ -145,6 +148,12 @@ private fun MyContent(
                 labelRes = R.string.my_service_info,
                 onClick = onOpenServiceInfo,
                 trailing = { MenuTrailingIcon(iconRes = R.drawable.ic_external_link) },
+            )
+            MyMenuItem(
+                iconRes = R.drawable.ic_book_open,
+                labelRes = R.string.my_open_source_license,
+                onClick = onOpenOpenSourceLicense,
+                trailing = { MenuTrailingIcon(iconRes = R.drawable.ic_chevron_right) },
             )
             AppVersionMenuItem()
         }
@@ -342,6 +351,7 @@ private fun MyScreenPreview() {
             onOpenInvite = {},
             onOpenServiceInfo = {},
             onOpenFeedback = {},
+            onOpenOpenSourceLicense = {},
             onOpenWithdrawal = {},
             contentPadding = PaddingValues(0.dp),
         )

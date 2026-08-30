@@ -47,6 +47,7 @@ import app.manyak.core.navigation.LoginRoute
 import app.manyak.core.navigation.MainTabsRoute
 import app.manyak.core.navigation.MyFeedbackRoute
 import app.manyak.core.navigation.MyInviteRoute
+import app.manyak.core.navigation.MyOpenSourceLicenseRoute
 import app.manyak.core.navigation.StoryDetailRoute
 import app.manyak.core.navigation.WithdrawalRoute
 import app.manyak.core.ui.R
@@ -62,6 +63,7 @@ import app.manyak.feature.legal.LegalDocumentScreen
 import app.manyak.feature.login.LoginScreen
 import app.manyak.feature.my.InviteOnboardingSheet
 import app.manyak.feature.my.MyPlaceholderScreen
+import app.manyak.feature.my.OpenSourceLicenseScreen
 import app.manyak.feature.story.StoryDetailScreen
 
 /**
@@ -244,6 +246,7 @@ private fun MainNavDisplay() {
                         onOpenInvite = { backStack.add(MyInviteRoute) },
                         onOpenServiceInfo = { backStack.add(LegalRoute(LegalDocument.ABOUT)) },
                         onOpenFeedback = { backStack.add(MyFeedbackRoute) },
+                        onOpenOpenSourceLicense = { backStack.add(MyOpenSourceLicenseRoute) },
                         onOpenWithdrawal = { backStack.add(WithdrawalRoute) },
                     )
                 }
@@ -276,7 +279,7 @@ private fun MainNavDisplay() {
 }
 
 /**
- * 마이 탭의 하위 목적지들. 아직 자리 화면이고, 본 기능이 구현되면 각 화면으로 대체한다.
+ * 마이 탭의 하위 목적지들. 아직 구현하지 않은 것은 자리 화면이고, 본 기능이 구현되면 각 화면으로 대체한다.
  */
 private fun EntryProviderScope<NavKey>.myDestinationEntries(backStack: MutableList<NavKey>) {
     entry<MyInviteRoute> {
@@ -284,6 +287,13 @@ private fun EntryProviderScope<NavKey>.myDestinationEntries(backStack: MutableLi
     }
     entry<MyFeedbackRoute> {
         MyPlaceholderScreen(titleRes = R.string.my_feedback, onBack = { backStack.removeLastOrNull() })
+    }
+    entry<MyOpenSourceLicenseRoute> {
+        OpenSourceLicenseScreen(
+            // 이 파일의 R 은 :core:ui 의 것이다. 빌드가 만든 목록은 :app 자기 리소스라 온전한 이름으로 가리킨다.
+            librariesRes = app.manyak.R.raw.aboutlibraries,
+            onBack = { backStack.removeLastOrNull() },
+        )
     }
     entry<WithdrawalRoute> {
         MyPlaceholderScreen(titleRes = R.string.my_withdrawal, onBack = { backStack.removeLastOrNull() })

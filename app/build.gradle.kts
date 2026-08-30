@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.aboutlibraries)
 
     alias(libs.plugins.ktlint)
     alias(libs.plugins.detekt)
@@ -35,6 +36,18 @@ tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
         checkstyle.required = true
         sarif.required = false
         markdown.required = false
+    }
+}
+
+// 오픈소스 고지는 손으로 적지 않는다. 실제 의존성 그래프에서 모아야 라이선스가 실물과 어긋나지 않는다.
+aboutLibraries {
+    collect {
+        // Gradle 의존성이 아닌 것(번들 폰트)은 여기 둔 JSON 으로 합친다.
+        configPath = file("aboutlibraries")
+    }
+    export {
+        // 화면이 쓰지 않는 필드는 실어 보내지 않는다.
+        excludeFields.addAll("developers", "funding", "organization", "scm", "description")
     }
 }
 
