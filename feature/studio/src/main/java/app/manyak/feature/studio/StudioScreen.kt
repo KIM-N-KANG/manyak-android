@@ -185,6 +185,9 @@ private fun StudioDialogs(
 /**
  * 목록이 없는 상태(조회 중·실패·빈 목록)의 자리. 스크롤할 것이 없으므로 chrome 여백을 화면에
  * 씌우고, 배너를 상단에 고정한 뒤 나머지를 [content] 에 준다.
+ *
+ * 배너와 [content] 사이는 목록이 배너와 첫 카드 사이에 두는 것과 같은 간격이다 — 골격이 도착한
+ * 목록으로 바뀔 때 첫 줄이 위아래로 튀지 않는다.
  */
 @Composable
 private fun StoriesStatus(
@@ -194,7 +197,10 @@ private fun StoriesStatus(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
-    Column(modifier = modifier.fillMaxSize().padding(contentPadding)) {
+    Column(
+        modifier = modifier.fillMaxSize().padding(contentPadding),
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
+    ) {
         state.pendingBanner?.let { banner ->
             PendingCreationBannerRow(
                 banner = banner,
