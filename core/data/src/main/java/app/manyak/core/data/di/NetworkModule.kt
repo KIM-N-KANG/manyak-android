@@ -3,6 +3,7 @@ package app.manyak.core.data.di
 import app.manyak.core.data.api.AuthApi
 import app.manyak.core.data.api.ChatApi
 import app.manyak.core.data.api.CreationRequestApi
+import app.manyak.core.data.api.FeedbackApi
 import app.manyak.core.data.api.SimpleStoryApi
 import app.manyak.core.data.api.StoryApi
 import app.manyak.core.data.api.StoryDetailApi
@@ -200,6 +201,14 @@ object NetworkModule {
         config: DataLayerConfig,
         json: Json,
     ): StoryRatingApi = retrofit(client, config, json).create(StoryRatingApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideFeedbackApi(
+        @AuthenticatedClient client: OkHttpClient,
+        config: DataLayerConfig,
+        json: Json,
+    ): FeedbackApi = retrofit(client, config, json).create(FeedbackApi::class.java)
 
     @Provides
     @Singleton

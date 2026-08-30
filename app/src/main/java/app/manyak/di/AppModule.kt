@@ -22,7 +22,11 @@ object AppConfigModule {
     @Provides
     @Singleton
     fun provideDataLayerConfig(): DataLayerConfig =
-        DataLayerConfig(apiBaseUrl = BuildConfig.BASE_URL, isDebugBuild = BuildConfig.DEBUG)
+        DataLayerConfig(
+            apiBaseUrl = BuildConfig.BASE_URL,
+            isDebugBuild = BuildConfig.DEBUG,
+            appVersion = BuildConfig.VERSION_NAME,
+        )
 
     /** 초대 공유가 싣는 웹 주소. 아직 스토어 링크가 없어 웹 홈으로 보낸다. */
     @Provides

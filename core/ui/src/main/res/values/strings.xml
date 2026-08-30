@@ -277,6 +277,21 @@
         <item>본 이벤트는 사전 고지 없이 변경되거나 종료될 수 있어요.</item>
     </string-array>
 
+    <!-- 피드백 -->
+    <string name="feedback_title">써보면서 아쉬웠던 점이 있나요?\n불편한 점이나 바라는 기능을 알려주세요</string>
+    <string name="feedback_description">보내주신 피드백은 다음 개선에 꼼꼼히 참고할게요</string>
+    <string name="feedback_body_label">피드백 내용</string>
+    <string name="feedback_body_placeholder">예: 이런 점이 불편했어요, 이런 기능이 있으면 좋겠어요</string>
+    <!-- %1$d 는 현재 글자 수, %2$d 는 상한. -->
+    <string name="feedback_body_counter">%1$d / %2$d</string>
+    <string name="feedback_email_label">답변 받을 이메일</string>
+    <string name="feedback_email_placeholder">예: contact@manyak.app</string>
+    <string name="feedback_email_description">답변이 필요하시면 이메일을 남겨주세요</string>
+    <string name="feedback_submit">피드백 보내기</string>
+    <string name="feedback_submitting">피드백 전송 중</string>
+    <string name="feedback_error_empty">피드백 내용을 입력해주세요</string>
+    <string name="feedback_submitted">소중한 피드백을 보내주셔서 감사해요</string>
+    <string name="feedback_submit_failed">피드백 전송에 실패했어요</string>
     <string name="my_theme">테마 변경</string>
     <string name="my_theme_system">시스템 설정</string>
     <string name="my_theme_light">라이트 모드</string>

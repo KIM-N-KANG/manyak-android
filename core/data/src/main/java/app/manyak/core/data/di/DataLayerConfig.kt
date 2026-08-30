@@ -7,6 +7,8 @@ package app.manyak.core.data.di
 data class DataLayerConfig(
     val apiBaseUrl: String,
     val isDebugBuild: Boolean,
+    /** 서버에 함께 보내는 앱 버전. 피드백이 어느 버전에서 왔는지 화면 입력 없이 붙인다. */
+    val appVersion: String,
 )
 
 /**
