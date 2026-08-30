@@ -145,8 +145,9 @@ internal fun sanitizeInviteCode(value: String): String =
         .uppercase()
         .take(INVITE_CODE_MAX_LENGTH)
 
+/** 등록 실패 사유별 문구. 안내 시트와 친구 초대 화면이 같은 계약을 읽는다. */
 @StringRes
-private fun DomainError.inviteCodeMessageRes(): Int {
+internal fun DomainError.inviteCodeMessageRes(): Int {
     if (this !is DomainError.Server) return R.string.invite_code_error_failed
     return when {
         status == HTTP_BAD_REQUEST || status == HTTP_NOT_FOUND -> R.string.invite_code_error_not_found

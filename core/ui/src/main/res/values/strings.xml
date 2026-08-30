@@ -245,6 +245,38 @@
     <string name="invite_code_error_self">내 코드는 입력할 수 없어요</string>
     <string name="invite_code_error_already_redeemed">이미 초대 코드를 입력했어요</string>
     <string name="invite_code_error_failed">초대 코드 입력에 실패했어요</string>
+
+    <!-- 마이 하위 화면의 폼 공통 -->
+    <string name="form_required_mark">*</string>
+
+    <!-- 친구 초대 -->
+    <string name="invite_title">친구를 초대하고\n함께 크레딧을 받아보세요</string>
+    <string name="invite_description">친구가 내 초대 코드를 등록하면 모두 2,000 크레딧을 받아요</string>
+    <string name="invite_my_code">내 초대 코드</string>
+    <string name="invite_code_load_failed">초대 코드를 불러오지 못했어요</string>
+    <string name="invite_retry">다시 시도하기</string>
+    <string name="invite_retrying">다시 시도 중...</string>
+    <!-- %1$d 는 이번 달 받은 보상 횟수, %2$d 는 월 상한. 상한은 정책 값이라 서버 응답이 싣는다. -->
+    <string name="invite_monthly_reward">이번 달 받은 보상 %1$d/%2$d회</string>
+    <string name="invite_copy_code">코드 복사하기</string>
+    <string name="invite_share">공유하기</string>
+    <string name="invite_code_copied">초대 코드를 복사했어요</string>
+    <string name="invite_code_copy_failed">초대 코드 복사에 실패했어요</string>
+    <string name="invite_share_failed">공유를 열지 못했어요</string>
+    <string name="invite_share_subject">초대 코드 등록하고 2,000 크레딧 받기 🎁</string>
+    <!-- %1$s 는 내 초대 코드, %2$s 는 웹 주소. 공유 시트에 실리는 본문이다. -->
+    <string name="invite_share_message">초대 코드 등록하고 2,000 크레딧 받기 🎁\n초대 코드: %1$s\n%2$s</string>
+    <string name="invite_redeem_title">받은 초대 코드가 있나요?</string>
+    <string name="invite_redeem_submit">등록</string>
+    <string name="invite_redeem_submitting">초대 코드 등록 중</string>
+    <string name="invite_guide_title">이용 안내</string>
+    <string-array name="invite_guide_lines">
+        <item>초대 보상은 매월 최대 10회까지 받을 수 있으며, 매월 1일 초기화돼요. (한국 시간 기준)</item>
+        <item>초대 코드는 계정당 한 번 입력할 수 있어요.</item>
+        <item>보상으로 받은 크레딧은 적립일부터 30일 동안 사용할 수 있어요.</item>
+        <item>본 이벤트는 사전 고지 없이 변경되거나 종료될 수 있어요.</item>
+    </string-array>
+
     <string name="my_theme">테마 변경</string>
     <string name="my_theme_system">시스템 설정</string>
     <string name="my_theme_light">라이트 모드</string>
