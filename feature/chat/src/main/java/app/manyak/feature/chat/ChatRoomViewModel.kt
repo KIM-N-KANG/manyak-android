@@ -263,6 +263,9 @@ class ChatRoomViewModel
         /** 채우기로 입력창에 넣어 둔 추천 원문. 전송에 성공하면 비운다. */
         private var filled: FilledSuggestion? = null
 
+        /** 전송하며 비운 입력. 턴이 열리지 못하면 그대로 되돌린다. */
+        private var sent: SentInput? = null
+
         /** 재생성 중인 턴. 실패 복구가 이어쓰기와 갈리는 지점을 이 값이 가른다. */
         private var regeneratingTurnId: Long? = null
 
@@ -455,8 +458,11 @@ class ChatRoomViewModel
             if (regeneratedTurnId == null) {
                 // 이어쓰기만 컴포저를 비운다 — 재생성은 쓰던 초안을 건드리지 않는다.
                 // 다음 턴의 입력이 앞 턴에서 채운 문장과 대조되면 안 된다.
+                sent = SentInput(composer = composer, filled = filled)
                 filled = null
                 composer = composer.cleared()
+            } else {
+                sent = null
             }
             regeneratingTurnId = regeneratedTurnId
             choicesJob?.cancel()
@@ -515,6 +521,13 @@ class ChatRoomViewModel
         private suspend fun handleStreamFailure(event: ChatStreamEvent.Failed) {
             isStreaming = false
             dispatchEvent(ChatRoomEvent.StreamCleared)
+            // 열지 못한 턴의 입력은 컴포저로 되돌린다 — 크레딧이 모자라거나 요청이 닿지 못한 실패에
+            // 사용자가 쓴 문장을 없앨 이유가 없다. 받는 동안 컴포저는 잠겨 있어 새 초안을 덮지 않는다.
+            sent?.let { restored ->
+                sent = null
+                filled = restored.filled
+                updateComposer(restored.composer)
+            }
             val status = (event.error as? DomainError.Server)?.status
             if (status == HTTP_PAYMENT_REQUIRED) {
                 dispatchEffect(ChatRoomEffect.ShowCreditRequired)
@@ -641,6 +654,12 @@ private fun reduceChatRoom(
 
         else -> reduceTurn(state, event)
     }
+
+/** 전송하며 비운 컴포저와 채우기 기억. 되돌릴 때 둘이 함께 돌아가야 출처 판정이 어긋나지 않는다. */
+private data class SentInput(
+    val composer: ChatComposerState,
+    val filled: FilledSuggestion?,
+)
 
 /** 턴 진행 사건. 한 `when` 에 모으면 분기가 읽기 어려울 만큼 늘어난다. */
 private fun reduceTurn(

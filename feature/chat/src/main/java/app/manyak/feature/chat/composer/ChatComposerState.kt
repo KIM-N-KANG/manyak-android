@@ -62,7 +62,7 @@ data class ChatComposerState(
             copy(plainText = text)
         }
 
-    /** 전송에 성공한 뒤의 빈 상태. 모드는 그대로 둔다. */
+    /** 전송하며 비우는 상태. 모드는 그대로 둔다. */
     fun cleared(): ChatComposerState = copy(plainText = "", blocks = createDefaultInputBlocks())
 }
 

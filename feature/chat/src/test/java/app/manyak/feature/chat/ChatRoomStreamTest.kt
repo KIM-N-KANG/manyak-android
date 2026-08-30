@@ -132,6 +132,25 @@ class ChatRoomStreamTest {
         }
 
     @Test
+    fun `실패하면 전송하며 비운 입력을 되돌린다`() =
+        runTest(dispatcher) {
+            // 턴이 열리지 못한 실패라 사용자가 쓴 문장을 없앨 이유가 없다.
+            val repository = FakeChatRepository()
+            val viewModel = startStreaming(repository)
+
+            repository.streamEvents.send(
+                ChatStreamEvent.Failed(app.manyak.core.domain.error.DomainError.Network, null),
+            )
+            advanceUntilIdle()
+
+            assertEquals(
+                "문을 연다",
+                viewModel.uiState.value.composer
+                    .toUserInput(),
+            )
+        }
+
+    @Test
     fun `종단 사건 없이 끊기면 블록을 걷고 확정 상태를 다시 읽는다`() =
         runTest(dispatcher) {
             val repository = FakeChatRepository()
@@ -144,8 +163,10 @@ class ChatRoomStreamTest {
             val state = viewModel.uiState.value
             assertNull(state.streaming)
             assertFalse(state.isStreaming)
-            // 서버 저장 여부가 불명이라 임의 복원 대신 다시 읽은 결과를 쓴다.
+            // 서버 저장 여부가 불명이라 임의 복원 대신 다시 읽은 결과를 쓴다. 보낸 문장도
+            // 이미 붙었을 수 있어 컴포저로 되돌리지 않는다.
             assertEquals(2, state.turns.size)
+            assertFalse(state.composer.hasInput)
         }
 
     @Test
