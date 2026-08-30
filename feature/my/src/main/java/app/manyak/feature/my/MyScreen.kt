@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -134,17 +135,18 @@ private fun MyContent(
         }
         MySection(labelRes = R.string.my_section_etc) {
             MyMenuItem(
-                iconRes = R.drawable.ic_info,
-                labelRes = R.string.my_service_info,
-                onClick = onOpenServiceInfo,
-                trailing = { MenuTrailingIcon(iconRes = R.drawable.ic_external_link) },
-            )
-            MyMenuItem(
                 iconRes = R.drawable.ic_mailbox,
                 labelRes = R.string.my_feedback,
                 onClick = onOpenFeedback,
                 trailing = { MenuTrailingIcon(iconRes = R.drawable.ic_chevron_right) },
             )
+            MyMenuItem(
+                iconRes = R.drawable.ic_info,
+                labelRes = R.string.my_service_info,
+                onClick = onOpenServiceInfo,
+                trailing = { MenuTrailingIcon(iconRes = R.drawable.ic_external_link) },
+            )
+            AppVersionMenuItem()
         }
         AccountSection(state = state, onIntent = onIntent, onOpenWithdrawal = onOpenWithdrawal)
     }
@@ -205,6 +207,35 @@ private fun MySection(
 }
 
 @Composable
+private fun AppVersionMenuItem(modifier: Modifier = Modifier) {
+    MyMenuItem(
+        iconRes = R.drawable.ic_programming,
+        labelRes = R.string.my_app_version,
+        onClick = null,
+        modifier = modifier,
+        trailing = {
+            Text(
+                text = rememberAppVersionName(),
+                style = ManyakTheme.typography.bodyMedium,
+                color = ManyakTheme.colors.textSubtle,
+            )
+        },
+    )
+}
+
+/** 라이브러리 모듈의 `BuildConfig` 에는 버전이 없어 설치된 패키지 정보에서 읽는다. */
+@Composable
+private fun rememberAppVersionName(): String {
+    val context = LocalContext.current
+    val unknown = stringResource(R.string.my_app_version_unknown)
+    return remember(context, unknown) {
+        runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }
+            .getOrNull()
+            ?: unknown
+    }
+}
+
+@Composable
 private fun ThemeMenuItem(
     themeMode: ThemeMode,
     onClick: () -> Unit,
@@ -231,23 +262,26 @@ private fun ThemeMenuItem(
     )
 }
 
+/** [onClick] 이 없으면 값만 보여 주는 행이다 — 버전처럼 열 곳이 없는 항목이 여기 해당한다. */
 @Composable
 @Suppress("LongParameterList")
 private fun MyMenuItem(
     @DrawableRes iconRes: Int,
     @StringRes labelRes: Int,
-    onClick: () -> Unit,
+    onClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     contentColor: Color = ManyakTheme.colors.text,
     trailing: (@Composable () -> Unit)? = null,
 ) {
+    val clickable =
+        if (onClick == null) Modifier else Modifier.clickable(enabled = enabled, onClick = onClick)
     Row(
         modifier =
             modifier
                 .fillMaxWidth()
                 .heightIn(min = ManyakTheme.sizes.control)
-                .clickable(enabled = enabled, onClick = onClick)
+                .then(clickable)
                 .padding(horizontal = ManyakTheme.spacing.gutter),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
