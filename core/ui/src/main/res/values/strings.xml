@@ -345,6 +345,8 @@
     <string name="chat_composer_remove_block_description">삭제하면 작성한 내용이 사라져요</string>
     <string name="chat_composer_remove_block_confirm">삭제하기</string>
     <string name="chat_composer_remove_block_cancel">닫기</string>
+    <!-- 전송 버튼 왼쪽 턴 비용. 값은 웹과 같은 채팅 턴 비용 정책을 따른다. -->
+    <string name="chat_composer_turn_credit_cost">20 크레딧</string>
     <string name="chat_composer_send">전송</string>
     <string name="chat_composer_send_random">추천 입력 랜덤 전송</string>
     <string name="chat_composer_streaming">응답을 받는 중</string>
