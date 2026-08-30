@@ -141,6 +141,7 @@ rounded:
   control: 14dp
   card: 16dp
   overlay: 20dp
+  sheet: 20dp (위쪽 두 모서리)
   pill: CircleShape
 
 sizes:
@@ -567,7 +568,8 @@ components:
 | `{rounded.thumbnail}` | 12dp | 썸네일·작은 아이콘 컨테이너 |
 | `{rounded.control}` | 14dp | 버튼·입력창·탭 |
 | `{rounded.card}` | 16dp | 카드·리스트 항목 |
-| `{rounded.overlay}` | 20dp | 바텀시트·다이얼로그 |
+| `{rounded.overlay}` | 20dp | 다이얼로그 |
+| `{rounded.sheet}` | 20dp (위쪽 두 모서리) | 바텀시트 |
 | `{rounded.pill}` | `CircleShape` | 배지·칩·아바타 |
 
 `{rounded.pill}`은 **큰 dp가 아니라 `CircleShape`입니다.** 값으로 두면 큰 요소에서 모서리가 잘못 그려집니다. 그래서 `ManyakShapes`는 dp가 아니라 `Shape`를 내립니다.
@@ -600,7 +602,9 @@ components:
 
 **`card`** — 배경 `{colors.surface}`, 경계 `{colors.border}` 1dp, 모서리 `{rounded.card}`, 내부 여백 `{spacing.component}`. 제목 `{typography.title-medium}`, 본문 `{typography.body-medium}`, 메타 `{typography.body-small}` + `{colors.text-subtle}`.
 
-**`overlay`** — 바텀시트·다이얼로그. 배경 `{colors.surface-raised}`, 모서리 `{rounded.overlay}`, 내부 여백 `{spacing.gutter}`.
+**`overlay`** — 다이얼로그. 배경 `{colors.surface-raised}`, 모서리 `{rounded.overlay}`, 내부 여백 `{spacing.gutter}`.
+
+**`sheet`** — 바텀시트. 배경 `{colors.surface-raised}`, 모서리는 `{rounded.sheet}`로 위쪽 두 곳만 깎습니다 — 아래쪽은 화면 끝에 붙어 있어 깎으면 그 틈으로 스크림이 비칩니다. 내부 여백은 좌·우·아래 `{spacing.gutter}`이고 **위쪽은 두지 않습니다** — 드래그 핸들이 자체 여백을 갖고 있어 겹칩니다. 하단 안전 영역과 키보드 높이는 그 아래로 시트가 직접 낍니다.
 
 **`badge`** — 배경 `{colors.background-brand-subtle}`, 텍스트 `{colors.text-brand}` + `{typography.body-small}`, 모서리 `{rounded.pill}`, 여백 세로 `{spacing.hairline}` · 가로 `{spacing.compact}`.
 

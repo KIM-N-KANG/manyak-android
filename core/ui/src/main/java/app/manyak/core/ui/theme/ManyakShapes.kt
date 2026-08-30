@@ -25,8 +25,10 @@ data class ManyakShapes(
     val control: CornerBasedShape,
     /** 16dp — 카드·리스트 항목 */
     val card: CornerBasedShape,
-    /** 20dp — 바텀시트·다이얼로그 */
+    /** 20dp — 다이얼로그 */
     val overlay: CornerBasedShape,
+    /** 20dp — 바텀시트. 아래쪽은 화면 끝에 붙으므로 위쪽 두 모서리만 깎는다 */
+    val sheet: CornerBasedShape,
     /** CircleShape — 배지·칩·아바타 */
     val pill: CornerBasedShape,
 )
@@ -38,6 +40,7 @@ internal val ManyakDefaultShapes =
         control = RoundedCornerShape(14.dp),
         card = RoundedCornerShape(16.dp),
         overlay = RoundedCornerShape(20.dp),
+        sheet = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
         pill = CircleShape,
     )
 

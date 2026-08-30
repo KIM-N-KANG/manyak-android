@@ -3,8 +3,10 @@ package app.manyak.core.data.api
 import app.manyak.core.data.api.dto.AttendanceRewardResponseDto
 import app.manyak.core.data.api.dto.ChatSummaryDto
 import app.manyak.core.data.api.dto.MeResponseDto
+import app.manyak.core.data.api.dto.RedeemInviteCodeRequestDto
 import app.manyak.core.data.api.dto.StorySummaryDto
 import retrofit2.Response
+import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
@@ -29,6 +31,12 @@ interface UserApi {
     /** 출석 보상 지급. KST 자정 기준 1일 1회이며 오늘 이미 받았으면 rewarded=false 로 200 이다(멱등). */
     @POST("users/me/credits/attendance")
     suspend fun claimAttendance(): Response<AttendanceRewardResponseDto>
+
+    /** 받은 초대 코드 등록. 계정당 1회이며 재시도·본인 코드는 409 로 구분된다. */
+    @POST("users/me/invite/redeem")
+    suspend fun redeemInviteCode(
+        @Body request: RedeemInviteCodeRequestDto,
+    ): Response<Unit>
 
     /** 내 스토리 소프트 삭제. 성공은 본문 없는 204 다. */
     @DELETE("stories/{storyId}")

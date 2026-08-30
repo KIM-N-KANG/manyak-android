@@ -60,6 +60,7 @@ import app.manyak.feature.create.CreateKeywordScreen
 import app.manyak.feature.create.CreateStorylineScreen
 import app.manyak.feature.legal.LegalDocumentScreen
 import app.manyak.feature.login.LoginScreen
+import app.manyak.feature.my.InviteOnboardingSheet
 import app.manyak.feature.my.MyPlaceholderScreen
 import app.manyak.feature.story.StoryDetailScreen
 
@@ -91,7 +92,12 @@ fun ManyakApp(
             when (val state = sessionState) {
                 SessionState.Undetermined -> if (showSessionProgress) SessionProgress()
                 is SessionState.SignedOut -> AuthNavDisplay()
-                SessionState.Member -> MainNavDisplay()
+                SessionState.Member -> {
+                    MainNavDisplay()
+                    // 신규 가입 안내는 어느 탭에 있든 회원 그래프 위에 뜬다. 로그인 화면에 두면
+                    // 로그인 성공과 동시에 인증 백스택이 사라져 안내도 함께 걷힌다.
+                    InviteOnboardingSheet()
+                }
                 // 이전 사용자의 데이터가 남아 있다. 정리가 끝날 때까지 어느 그래프도 열지 않는다.
                 is SessionState.CleanupFailed -> CleanupFailed(state, onRetry = viewModel::onRetryCleanup)
             }

@@ -4,6 +4,7 @@ import app.manyak.core.data.api.AuthApi
 import app.manyak.core.data.api.apiCall
 import app.manyak.core.data.api.dto.SocialLoginRequestDto
 import app.manyak.core.data.api.dto.TokenResponseDto
+import app.manyak.core.data.datastore.InviteOnboardingStore
 import app.manyak.core.data.di.ApplicationScope
 import app.manyak.core.data.provider.SocialIdTokenProvider
 import app.manyak.core.data.session.AuthWork
@@ -54,6 +55,7 @@ class SessionRepositoryImpl
         private val gate: SessionGate,
         private val sessionEndSignal: Lazy<SessionEndSignal>,
         private val profileRepository: UserProfileRepository,
+        private val inviteOnboarding: InviteOnboardingStore,
         @param:ApplicationScope private val applicationScope: CoroutineScope,
     ) : SessionRepository,
         SessionBootstrap {
@@ -163,6 +165,9 @@ class SessionRepositoryImpl
             gate.commit(work) { stateHolder.publishMember() }
                 ?: return DomainResult.Failure(DomainError.Unauthorized)
             applicationScope.launch { refreshProfile() }
+            // 신규 가입 안내는 로그인 화면이 아니라 회원 그래프에서 뜬다 — 로그인 성공과 동시에 인증
+            // 백스택이 사라지므로, 여기서 표시를 남겨 두고 안내를 본 뒤에 지운다.
+            if (issued.isNewUser) inviteOnboarding.markPending()
             return DomainResult.Success(SignInOutcome(isNewUser = issued.isNewUser))
         }
 
