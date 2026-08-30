@@ -357,7 +357,7 @@ components:
 | 파일 | 내용 |
 | --- | --- |
 | `Color.kt` | 팔레트(private)와 시맨틱 색 30종, 라이트·다크 인스턴스 |
-| `Type.kt` | `Pretendard`·`MaruBuri` FontFamily와 타이포 롤 12종 |
+| `Type.kt` | `Pretendard`·`MaruBuri` FontFamily와 타이포 롤 13종 |
 | `ManyakSpacing.kt` | 시맨틱 여백 |
 | `ManyakShapes.kt` | 시맨틱 모서리 |
 | `ManyakSizes.kt` | 크기 5종 |
@@ -454,6 +454,7 @@ components:
 | `{typography.body-large}` | 16sp | 400 | 24sp | 강조 본문·입력 필드 |
 | `{typography.body-reading}` | 16sp | 400 | 28sp | 스토리 본문 (MaruBuri · 자간 −2%) |
 | `{typography.body-reading-small}` | 14sp | 400 | 24.5sp | 짧은 서사 문장 — 추천 입력 (MaruBuri · 자간 −2%) |
+| `{typography.body-medium-strong}` | 14sp | 700 | 20sp | 라벨 옆에 세우는 값 — 비용 행의 크레딧 수치 |
 | `{typography.body-medium}` | 14sp | 400 | 20sp | 본문 기본 |
 | `{typography.label-large}` | 14sp | 500 | 20sp | 버튼·탭 라벨 |
 | `{typography.body-small}` | 12sp | 400 | 16sp | 메타 정보·보조 설명 |
@@ -466,7 +467,7 @@ components:
 - **자간은 `{typography.body-reading}`만 −2%로 좁힙니다.** 바탕 계열의 기본 자간이 장문에서 벌어져 보여 본문 롤에만 보정하고, UI 롤은 기본 자간을 유지합니다.
 - **MaruBuri는 `{typography.body-reading}`·`{typography.body-reading-small}` 전용입니다.** 버튼·라벨·제목에 쓰지 않습니다.
 - **굵기 사다리는 400 / 500 / 700입니다.** SemiBold(600)를 쓰지 않는 이유는 번들에 없는 굵기를 요구하면 Bold로 대체 렌더되어 의도보다 두꺼워지기 때문입니다.
-- **`{typography.title-medium-strong}`은 크기가 아니라 굵기로 갈리는 롤입니다.** `{typography.title-medium}`과 크기·행간이 같고 굵기만 700입니다. 이름에 `strong`을 붙인 것은 small/medium 같은 크기 이름이 굵기 차이를 뜻하게 되면 스케일이 거짓말을 하기 때문입니다. 스크롤되는 목록 위에 붙박이로 남는 섹션 제목처럼, 같은 크기에서 무게로만 위계를 세워야 하는 자리에 씁니다.
+- **`{typography.title-medium-strong}`·`{typography.body-medium-strong}`은 크기가 아니라 굵기로 갈리는 롤입니다.** 각각 `{typography.title-medium}`·`{typography.body-medium}`과 크기·행간이 같고 굵기만 700입니다. 이름에 `strong`을 붙인 것은 small/medium 같은 크기 이름이 굵기 차이를 뜻하게 되면 스케일이 거짓말을 하기 때문입니다. 스크롤되는 목록 위에 붙박이로 남는 섹션 제목처럼, 같은 크기에서 무게로만 위계를 세워야 하는 자리에 씁니다.
 - 화면 기본 텍스트 스타일은 `{typography.body-medium}`이고 기본 색은 `{colors.text}`입니다. `ManyakTheme`이 `LocalTextStyle`·`LocalContentColor`로 내립니다.
 
 ## 레이아웃

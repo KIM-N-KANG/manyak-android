@@ -2,6 +2,7 @@ package app.manyak.feature.create
 
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -325,26 +326,57 @@ private fun CreateAdditionalInfoFooter(
     onIntent: (CreateAdditionalInfoIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    Column(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                // 이 푸터에는 오류 문구가 없어 위를 띄우지 않는다 — 콘텐츠와의 경계는 페이드가 맡는다.
+                .padding(bottom = ManyakTheme.spacing.gutter),
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+    ) {
+        StoryCompletionCostRow()
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = ManyakTheme.spacing.gutter),
+            horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+        ) {
+            FunnelNeutralButton(
+                modifier = Modifier.weight(1f),
+                label = stringResource(R.string.create_cta_reselect_storyline),
+                enabled = true,
+                onClick = { onIntent(CreateAdditionalInfoIntent.ReselectStoryline) },
+            )
+            FunnelPrimaryButton(
+                modifier = Modifier.weight(1f),
+                label = stringResource(R.string.create_cta_complete_story),
+                enabled = true,
+                onClick = { onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex)) },
+            )
+        }
+    }
+}
+
+/** 완성 비용 안내. 좌우 여백 없이 화면 폭을 채워 CTA 행과 다른 층으로 읽힌다. */
+@Composable
+private fun StoryCompletionCostRow(modifier: Modifier = Modifier) {
     Row(
         modifier =
             modifier
                 .fillMaxWidth()
-                .padding(horizontal = ManyakTheme.spacing.gutter)
-                // 이 푸터에는 오류 문구가 없어 위를 띄우지 않는다 — 콘텐츠와의 경계는 페이드가 맡는다.
-                .padding(bottom = ManyakTheme.spacing.gutter),
-        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+                .height(ManyakTheme.sizes.input)
+                .background(ManyakTheme.colors.backgroundNeutral)
+                .padding(horizontal = ManyakTheme.spacing.gutter),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        FunnelNeutralButton(
-            modifier = Modifier.weight(1f),
-            label = stringResource(R.string.create_cta_reselect_storyline),
-            enabled = true,
-            onClick = { onIntent(CreateAdditionalInfoIntent.ReselectStoryline) },
+        Text(
+            text = stringResource(R.string.create_completion_credit_cost_label),
+            style = ManyakTheme.typography.bodyMedium,
+            color = ManyakTheme.colors.textSubtle,
         )
-        FunnelPrimaryButton(
-            modifier = Modifier.weight(1f),
-            label = stringResource(R.string.create_cta_complete_story),
-            enabled = true,
-            onClick = { onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex)) },
+        Text(
+            text = stringResource(R.string.create_completion_credit_cost_amount),
+            style = ManyakTheme.typography.bodyMediumStrong,
+            color = ManyakTheme.colors.text,
         )
     }
 }
