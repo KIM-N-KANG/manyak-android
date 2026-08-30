@@ -12,9 +12,21 @@ import androidx.compose.runtime.Immutable
 data class ManyakMotion(
     /** 화면·탭이 바뀔 때의 교차 페이드 길이(밀리초) */
     val screenTransitionMillis: Int,
+    /** 화면 안의 작은 요소가 나타날 때의 길이(밀리초) */
+    val elementEnterMillis: Int,
+    /** 화면 안의 작은 요소가 사라질 때의 길이(밀리초) */
+    val elementExitMillis: Int,
+    /** 목록 항목이 차례로 나타날 때 항목 하나의 길이(밀리초) */
+    val listItemEnterMillis: Int,
+    /** 목록 항목 사이의 시작 간격(밀리초) */
+    val listItemStaggerMillis: Int,
 )
 
 internal val ManyakDefaultMotion =
     ManyakMotion(
         screenTransitionMillis = 150,
+        elementEnterMillis = 200,
+        elementExitMillis = 150,
+        listItemEnterMillis = 300,
+        listItemStaggerMillis = 80,
     )

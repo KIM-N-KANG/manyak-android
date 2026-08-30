@@ -1,15 +1,17 @@
 ---
 version: alpha
 name: manyak-android-design
-description: 초록 하나로 모든 상호작용을 말하는 무채색 인터페이스. 표면은 거의 흰색(#FCFCFC)과 거의 검정(#131313) 두 축뿐이고, 그림자 없이 표면 색 차이로만 층을 나눈다. UI는 Pretendard가, 스토리 본문은 GowunBatang이 맡아 "읽는 화면"과 "조작하는 화면"이 서체로 갈린다. 모든 색 조합은 토큰 빌드가 명도 대비를 재서 통과시킨 것만 남았다.
+description: 초록 하나로 모든 상호작용을 말하는 무채색 인터페이스. 표면은 거의 흰색(#FCFCFC)과 거의 검정(#131313) 두 축뿐이고, 그림자 없이 표면 색 차이로만 층을 나눈다. UI는 Pretendard가, 스토리 본문은 MaruBuri가 맡아 "읽는 화면"과 "조작하는 화면"이 서체로 갈린다. 모든 색 조합은 토큰 빌드가 명도 대비를 재서 통과시킨 것만 남았다.
 
 colors:
   brand: "#05A66B"
   text: "#131313"
   text-subtle: "#575757"
   text-subtlest: "#747474"
+  text-narration: "#747474"
   text-disabled: "#969696"
   step-indicator-active: "#9F9F9F"
+  progress-indicator: "#8D8D8D"
   text-inverse: "#FFFFFF"
   text-brand: "#00804B"
   text-danger: "#C1191C"
@@ -39,10 +41,12 @@ colors:
 colors-dark:
   brand: "#05A66B"
   text: "#FCFCFC"
-  text-subtle: "#9F9F9F"
-  text-subtlest: "#7E7E7E"
-  text-disabled: "#5E5E5E"
+  text-subtle: "#B9B9B9"
+  text-subtlest: "#8D8D8D"
+  text-narration: "#B9B9B9"
+  text-disabled: "#7E7E7E"
   step-indicator-active: "#666666"
+  progress-indicator: "#8D8D8D"
   text-inverse: "#FFFFFF"
   text-brand: "#58C58F"
   text-danger: "#FF7669"
@@ -50,8 +54,8 @@ colors-dark:
   text-information: "#6BB1FD"
   surface: "#131313"
   surface-raised: "#1F1F1F"
-  background-neutral: "#191919"
-  background-neutral-pressed: "#1F1F1F"
+  background-neutral: "#1F1F1F"
+  background-neutral-pressed: "#575757"
   background-brand-bold: "#00804B"
   background-brand-bold-pressed: "#006034"
   background-brand-subtle: "#00411F"
@@ -60,8 +64,8 @@ colors-dark:
   background-danger-subtle: "#6A0000"
   background-warning-subtle: "#512600"
   background-information-subtle: "#003364"
-  background-disabled: "#1F1F1F"
-  border: "#1F1F1F"
+  background-disabled: "#3A3A3A"
+  border: "#2C2C2C"
   border-input: "#666666"
   border-brand: "#58C58F"
   border-danger: "#FF7669"
@@ -101,10 +105,15 @@ typography:
     fontWeight: 400
     lineHeight: 24sp
   body-reading:
-    fontFamily: "GowunBatang"
+    fontFamily: "MaruBuri"
     fontSize: 16sp
     fontWeight: 400
     lineHeight: 28sp
+  body-reading-small:
+    fontFamily: "MaruBuri"
+    fontSize: 14sp
+    fontWeight: 400
+    lineHeight: 24.5sp
   body-medium:
     fontFamily: "Pretendard"
     fontSize: 14sp
@@ -136,6 +145,7 @@ rounded:
 
 sizes:
   input: 40dp
+  control-small: 32dp
   control: 48dp
   icon-small: 16dp
   icon: 20dp
@@ -151,9 +161,10 @@ spacing:
   component: 12dp
   control-horizontal: 14dp
   gutter: 16dp
+  passage: 20dp
   section: 24dp
   block: 32dp
-  screen-bottom: 40dp
+  screen-bottom: 32dp
 
 components:
   screen:
@@ -326,7 +337,7 @@ components:
 
 색·크기·여백·모서리는 전부 **디자인 토큰**에서 나옵니다. 화면 코드는 토큰 이름만 쓰고 값을 직접 적지 않습니다. 토큰은 Primitive(팔레트) → Semantic(의도) 두 층이며, 화면이 만질 수 있는 것은 Semantic뿐입니다 — 팔레트는 Kotlin에서 `private`이라 참조 자체가 불가능합니다.
 
-서체가 두 벌인 것이 이 시스템의 성격을 가장 잘 드러냅니다. 조작하는 화면은 Pretendard가, 읽는 화면(스토리 본문)은 GowunBatang이 맡습니다. 같은 16sp라도 `{typography.body-large}`는 행간 24sp로 촘촘하고 `{typography.body-reading}`은 28sp로 벌어져 있습니다 — UI는 스캔하는 것이고 스토리는 읽는 것이기 때문입니다.
+서체가 두 벌인 것이 이 시스템의 성격을 가장 잘 드러냅니다. 조작하는 화면은 Pretendard가, 읽는 화면(스토리 본문)은 MaruBuri가 맡습니다. 같은 16sp라도 `{typography.body-large}`는 행간 24sp로 촘촘하고 `{typography.body-reading}`은 28sp로 벌어져 있습니다 — UI는 스캔하는 것이고 스토리는 읽는 것이기 때문입니다.
 
 **핵심 특징**
 
@@ -335,7 +346,7 @@ components:
 - 성공 상태에 별도 초록을 두지 않고 브랜드 초록을 재사용합니다. 브랜드 자체가 초록이라 둘을 나누면 구분되지 않습니다.
 - 라이트·다크가 같은 이름으로 대응합니다. 화면 코드에는 분기가 없습니다.
 - 굵기는 Regular(400)·Medium(500)·Bold(700) 셋뿐입니다.
-- 모든 텍스트·경계 조합은 토큰 빌드의 명도 대비 검증(30건)을 통과한 것만 남았습니다.
+- 텍스트·경계 조합은 토큰을 만들 때 명도 대비 검증(30건)을 통과한 것만 남았습니다. **이 레포에서 값을 고치면 그 검증이 다시 돌지 않으므로** 바꾼 조합의 대비는 직접 재서 아래 "쓰면 안 되는 조합"을 갱신합니다.
 - 기기 배경화면에서 색을 가져오는 dynamic color를 쓰지 않습니다.
 
 ## 코드 대응
@@ -345,7 +356,7 @@ components:
 | 파일 | 내용 |
 | --- | --- |
 | `Color.kt` | 팔레트(private)와 시맨틱 색 30종, 라이트·다크 인스턴스 |
-| `Type.kt` | `Pretendard`·`GowunBatang` FontFamily와 타이포 롤 9종 |
+| `Type.kt` | `Pretendard`·`MaruBuri` FontFamily와 타이포 롤 12종 |
 | `ManyakSpacing.kt` | 시맨틱 여백 |
 | `ManyakShapes.kt` | 시맨틱 모서리 |
 | `ManyakSizes.kt` | 크기 5종 |
@@ -368,7 +379,7 @@ components:
 
 ## 색
 
-> **정본:** `design/design-tokens.json`(생성물의 사본). 값을 바꾸려면 `~/Desktop/2026-08-06-manyak-design-tokens/build-tokens.mjs`에서 고쳐 다시 생성하고, JSON을 복사한 뒤 `Color.kt`를 함께 갱신합니다. 이 레포에서 값만 고치면 웹과 갈라집니다.
+> **정본:** 아래 표와 `Color.kt`입니다. 값 자체는 웹과 공유하는 디자인 토큰에서 왔지만 **생성기가 이 레포 밖에 있어 여기서는 재생성할 수 없습니다** — 예전에 두었던 `design/design-tokens.json` 사본은 아무도 읽지 않고 손으로만 맞추다 어긋나서 지웠습니다(2026-08-29). 값을 바꿀 때는 `Color.kt`와 이 표를 같은 커밋에서 고치고, 웹과 공유하는 값이면 웹에도 같은 변경이 필요하다는 것을 PR에 적습니다.
 
 ### 브랜드
 
@@ -388,13 +399,16 @@ components:
 | 토큰 | 라이트 | 다크 | 용도 |
 | --- | --- | --- | --- |
 | `{colors.text}` | #131313 | #FCFCFC | 본문·제목 기본 |
-| `{colors.text-subtle}` | #575757 | #9F9F9F | 보조 설명·메타 정보 |
-| `{colors.text-subtlest}` | #747474 | #7E7E7E | 약한 보조. `{colors.surface}` 위에서만 본문 크기로 |
-| `{colors.text-disabled}` | #969696 | #5E5E5E | 비활성·장식 전용. 읽어야 하는 텍스트에 쓰지 않음 |
+| `{colors.text-subtle}` | #575757 | #B9B9B9 | 보조 설명·메타 정보 |
+| `{colors.text-subtlest}` | #747474 | #8D8D8D | 약한 보조. `{colors.surface}` 위에서만 본문 크기로 |
+| `{colors.text-narration}` | #747474 | #B9B9B9 | 서사의 상황 묘사(`*…*`)와 상황 블럭 입력 |
+| `{colors.text-disabled}` | #969696 | #7E7E7E | 비활성·장식 전용. 읽어야 하는 텍스트에 쓰지 않음 |
 | `{colors.text-inverse}` | #FFFFFF | #FFFFFF | bold 배경 위 텍스트 |
 | `{colors.text-danger}` | #C1191C | #FF7669 | 오류 메시지 |
 | `{colors.text-warning}` | #9A5700 | #E09E32 | 경고 메시지 |
 | `{colors.text-information}` | #186AB7 | #6BB1FD | 안내 메시지 |
+
+`{colors.text-narration}`은 라이트에서 `{colors.text-subtlest}`와 같은 값이지만 **따로 둡니다** — 상황 묘사는 대사와 나란히 읽는 본문이라 약한 보조 텍스트보다 밝아야 하고, 다크에서 그 차이가 드러납니다. `{colors.background-neutral}` 위 대비는 라이트에서 `{colors.text-subtlest}`와 같은 4.29라 아래 제약을 함께 받습니다.
 
 ### 경계
 
@@ -409,8 +423,12 @@ components:
 
 | 조합 | 대비 | 대신 |
 | --- | --- | --- |
-| `{colors.text-subtlest}` + `{colors.background-neutral}`(및 pressed) | 4.03–4.33 | `{colors.text-subtle}` |
-| `{colors.text-disabled}` + 읽어야 하는 텍스트 | 2.87–2.88 | `{colors.text-subtle}` |
+| `{colors.text-subtlest}` + `{colors.background-neutral}`(및 pressed) | 라이트 4.03–4.29 | `{colors.text-subtle}` |
+| `{colors.text-disabled}` + 읽어야 하는 텍스트 | 라이트 2.71–2.88 | `{colors.text-subtle}` |
+
+다크는 2026-08-29에 `{colors.text-subtlest}`를 #8D8D8D, `{colors.text-disabled}`를 #7E7E7E로 한 단계
+올려 위 두 조합이 모두 4.5를 넘습니다(각각 4.97–5.60, 4.33–4.58). **그래도 같은 규칙을 지킵니다** —
+라이트에서 미달인 조합이고, 비활성 색은 읽어야 하는 텍스트의 자리가 아닙니다.
 
 ### 그라디언트
 
@@ -421,7 +439,7 @@ components:
 ### 서체
 
 - **Pretendard** — UI 전반. Regular·Medium·Bold 세 웨이트를 정적 TTF로 번들합니다(`res/font/pretendard_*.ttf`).
-- **GowunBatang** — 스토리 본문 전용. Regular·Bold를 번들합니다(`res/font/gowun_batang_*.ttf`).
+- **MaruBuri** — 스토리 본문 전용. Regular·Bold를 **OTF로** 번들합니다(`res/font/maru_buri_*.otf`). 배포된 TTF에는 TrueType 힌팅이 들어 있어 작은 크기에서 획이 픽셀 격자에 스냅되며 글자마다 굵기가 갈립니다.
 - 둘 다 SIL OFL 1.1이며 원문은 `assets/licenses/`에 있습니다.
 
 ### 위계
@@ -433,7 +451,8 @@ components:
 | `{typography.title-medium-strong}` | 18sp | 700 | 26sp | 목록 섹션 제목 |
 | `{typography.title-medium}` | 18sp | 500 | 26sp | 섹션·카드 제목 |
 | `{typography.body-large}` | 16sp | 400 | 24sp | 강조 본문·입력 필드 |
-| `{typography.body-reading}` | 16sp | 400 | 28sp | 스토리 본문 (GowunBatang · 자간 −2%) |
+| `{typography.body-reading}` | 16sp | 400 | 28sp | 스토리 본문 (MaruBuri · 자간 −2%) |
+| `{typography.body-reading-small}` | 14sp | 400 | 24.5sp | 짧은 서사 문장 — 추천 입력 (MaruBuri · 자간 −2%) |
 | `{typography.body-medium}` | 14sp | 400 | 20sp | 본문 기본 |
 | `{typography.label-large}` | 14sp | 500 | 20sp | 버튼·탭 라벨 |
 | `{typography.body-small}` | 12sp | 400 | 16sp | 메타 정보·보조 설명 |
@@ -443,8 +462,8 @@ components:
 
 - **행간은 배수가 아니라 sp 절대값입니다.** Compose `TextStyle`이 절대값만 받으므로, 배수로 두면 플랫폼마다 반올림이 갈립니다.
 - **UI 롤의 행간은 1.25~1.5입니다.** `{typography.body-reading}`만 1.75로 벌립니다 — 스토리 본문은 한 화면을 채우는 장문이라 UI 기준 그대로는 답답합니다.
-- **자간은 `{typography.body-reading}`만 −2%로 좁힙니다.** GowunBatang의 기본 자간이 장문에서 벌어져 보여 본문 롤에만 보정하고, UI 롤은 기본 자간을 유지합니다.
-- **GowunBatang은 `{typography.body-reading}` 전용입니다.** 버튼·라벨·제목에 쓰지 않습니다.
+- **자간은 `{typography.body-reading}`만 −2%로 좁힙니다.** 바탕 계열의 기본 자간이 장문에서 벌어져 보여 본문 롤에만 보정하고, UI 롤은 기본 자간을 유지합니다.
+- **MaruBuri는 `{typography.body-reading}`·`{typography.body-reading-small}` 전용입니다.** 버튼·라벨·제목에 쓰지 않습니다.
 - **굵기 사다리는 400 / 500 / 700입니다.** SemiBold(600)를 쓰지 않는 이유는 번들에 없는 굵기를 요구하면 Bold로 대체 렌더되어 의도보다 두꺼워지기 때문입니다.
 - **`{typography.title-medium-strong}`은 크기가 아니라 굵기로 갈리는 롤입니다.** `{typography.title-medium}`과 크기·행간이 같고 굵기만 700입니다. 이름에 `strong`을 붙인 것은 small/medium 같은 크기 이름이 굵기 차이를 뜻하게 되면 스케일이 거짓말을 하기 때문입니다. 스크롤되는 목록 위에 붙박이로 남는 섹션 제목처럼, 같은 크기에서 무게로만 위계를 세워야 하는 자리에 씁니다.
 - 화면 기본 텍스트 스타일은 `{typography.body-medium}`이고 기본 색은 `{colors.text}`입니다. `ManyakTheme`이 `LocalTextStyle`·`LocalContentColor`로 내립니다.
@@ -465,9 +484,10 @@ components:
 | `{spacing.component}` | 12dp | 컴포넌트 내부 기본 |
 | `{spacing.control-horizontal}` | 14dp | 입력·칩·메뉴 항목의 가로 패딩 |
 | `{spacing.gutter}` | 16dp | 화면 좌우 여백 |
+| `{spacing.passage}` | 20dp | 읽는 본문 블록의 세로 여백과 블록 안 조각 사이 |
 | `{spacing.section}` | 24dp | 섹션 사이 |
 | `{spacing.block}` | 32dp | 큰 구획 사이 |
-| `{spacing.screen-bottom}` | 40dp | 스크롤 영역 하단 여유 |
+| `{spacing.screen-bottom}` | 32dp | 스크롤 영역 하단 여유 |
 
 2dp 격자이며, **시맨틱 이름이 붙은 단계만 둡니다.** 안 쓰는 중간 단계가 있으면 언젠가 이름 없이 쓰이고, 그러면 시맨틱 층이 무의미해집니다.
 
@@ -493,8 +513,10 @@ components:
 
 | 토큰 | 값 | 용도 |
 | --- | --- | --- |
+| `{sizes.control-small}` | 32dp | 라벨 없이 아이콘만 있는 보조 버튼 |
 | `{sizes.input}` | 40dp | 입력창·칩·셀렉트 앵커의 최소 높이 |
 | `{sizes.control}` | 48dp | 버튼·탭처럼 탭 가능한 일반 컨트롤의 높이 |
+| `{sizes.icon-small}` | 16dp | 밀도 높은 컨트롤 안의 작은 아이콘 |
 | `{sizes.icon}` | 20dp | 라벨 옆 아이콘·제공자 로고 |
 | `{sizes.tab-icon}` | 24dp | 하단 탭 아이콘 |
 | `{sizes.logo}` | 24dp | 마냑 로고 락업의 높이. 폭은 원본 비율(89:32)로 따라간다 |
@@ -505,13 +527,19 @@ components:
 
 `{sizes.control}`은 안드로이드 최소 터치 타깃과 같은 값이다. 버튼·탭은 보이는 크기와 눌리는 크기를
 48dp 로 맞추고, 여러 개가 밀집하는 입력창·칩·셀렉트 앵커는 `{sizes.input}` 40dp 로 구분한다.
-토큰 정본에는 높이가 없어 두 값은 이 레포가 소유한다.
+`{sizes.control-small}` 은 라벨 없이 아이콘만 있고 본문 옆에서 눈에 덜 띄어야 하는 보조 버튼용이라
+최소 터치 타깃보다 작다 — 주된 동작에는 쓰지 않는다. 토큰 정본에는 높이가 없어 이 값들은 이
+레포가 소유한다.
 
 ## 모션
 
 | 토큰 | 값 | 쓰임 |
 | --- | --- | --- |
 | `{motion.screen-transition}` | 150ms | 화면·탭이 바뀔 때의 교차 페이드 |
+| `{motion.element-enter}` | 200ms | 화면 안의 작은 요소가 나타날 때 |
+| `{motion.element-exit}` | 150ms | 화면 안의 작은 요소가 사라질 때 |
+| `{motion.list-item-enter}` | 300ms | 차례로 드러나는 목록에서 항목 하나 |
+| `{motion.list-item-stagger}` | 80ms | 그 항목들이 시작하는 간격 |
 
 토큰 정본에 모션이 없어 이 값도 이 레포가 소유한다. 시간만 정하고 무엇을 움직일지는 쓰는 쪽이 정한다.
 
@@ -521,13 +549,21 @@ components:
 **예측형 뒤로가기(predictive back)는 예외로 두고 라이브러리 기본값을 쓴다.** 이쪽 애니메이션은 장식이
 아니라 손가락을 따라오는 제스처 피드백 그 자체라, 짧게 만들면 제스처가 반응하지 않는 것처럼 보인다.
 
+**등장은 퇴장보다 길다.** 나타나는 요소는 눈이 따라갈 시간이 필요하지만, 사라지는 요소는 이미 볼 일이
+끝나 남아 있으면 기다리게 만든다. 방향도 함께 쓴다 — 목록 끝으로 보내는 버튼은 아래에서 올라오고
+아래로 내려가 사라져, 움직임 자체가 버튼이 무엇을 하는지 말한다.
+
+**차례로 드러나는 목록은 항목 하나가 더 길다.** 단일 요소보다 느린 300ms 는 뒤 항목이 80ms 씩 늦게
+출발해도 앞 항목이 아직 움직이고 있어 목록 전체가 하나의 흐름으로 읽히게 한다. 값은 웹과 같다 —
+추천 입력처럼 두 플랫폼에 같은 목록이 있는 자리에서 리듬이 갈리면 안 된다.
+
 **눌림 상태에는 애니메이션을 쓰지 않는다.** 색 변화로만 말한다. **눌림 리플은 앱 전역에서 끈다**(2026-08-24) — `ManyakTheme`이 리플 설정을 비워 내리므로 컴포넌트마다 따로 끄지 않아도 되고, 개별 컴포넌트에서 다시 켜지 않는다.
 
 ## 모양
 
 | 토큰 | 값 | 용도 |
 | --- | --- | --- |
-| `{rounded.menu-item}` | 10dp | 셀렉트 메뉴 항목 |
+| `{rounded.menu-item}` | 10dp | 셀렉트 메뉴 항목 · 라벨 없는 아이콘 버튼 |
 | `{rounded.thumbnail}` | 12dp | 썸네일·작은 아이콘 컨테이너 |
 | `{rounded.control}` | 14dp | 버튼·입력창·탭 |
 | `{rounded.card}` | 16dp | 카드·리스트 항목 |
@@ -572,7 +608,7 @@ components:
 
 ### 스토리
 
-**`story-body`** — 배경 `{colors.surface}`, 텍스트 `{colors.text}` + `{typography.body-reading}`, 좌우 여백 `{spacing.gutter}`. 이 시스템에서 GowunBatang이 나타나는 자리는 스토리 본문과 퍼널의 스토리라인 미리보기(아래 퍼널 절)뿐입니다.
+**`story-body`** — 배경 `{colors.surface}`, 텍스트 `{colors.text}` + `{typography.body-reading}`, 좌우 여백 `{spacing.gutter}`. 이 시스템에서 MaruBuri가 나타나는 자리는 스토리 본문과 퍼널의 스토리라인 미리보기(아래 퍼널 절)뿐입니다.
 
 ### 셸
 
@@ -607,7 +643,7 @@ components:
 
 카테고리 탭은 M3 `SecondaryTabRow` 기본을 쓴다(`TabRow`는 deprecated) — 컨테이너 `{colors.surface}`, 선택 라벨 `{colors.text}`, 비선택 `{colors.text-subtle}`, 잠금 `{colors.text-disabled}`, 필수 표시 `*`는 `{colors.text-danger}`. 선택 표시선은 탭 폭에 맞는 `{colors.text}` 1.5dp 선이다 — 선택 표시는 상태이지 다음 동작이 아니라서 초록을 쓰지 않고, 선택 라벨과 같은 색으로 묶는다. **눌림 리플은 끈다** — 탭을 누르면 라벨 색과 표시선이 곧바로 바뀌므로 그 변화 자체가 반응이고, 하단 내비게이션과 같은 이유다. 스크롤 시 탭만 상단에 고정하고 각 카테고리 콘텐츠는 탭 아래에서 시작한다.
 
-**스토리라인 단계** — 순번 탭(첫·두·세 번째)은 카테고리 탭과 같은 스타일을 그대로 쓰되 잠금과 필수 표시가 없다. 본문은 `story-body`(`{typography.body-reading}`)로 그린다 — 스토리라인은 스토리 본문의 미리보기라서 서사 서체의 자리다. 본문 마크업은 웹과 같은 규칙으로 파싱한다 — `**…**`는 볼드, 단일 `*…*`(내레이션·속마음)는 `{colors.text-subtle}`. 평가 버튼(좋아요·별로예요)은 `{sizes.input}` 정사각 아이콘 칩으로, 아이콘은 기본 크기(`{sizes.icon}`) 대신 16dp 로 한 단계 줄여 본문 옆 보조 동작으로 물러나게 하고, 키워드 칩과 같은 선택 문법을 쓴다 — 기본은 `{component.chip}`(흰 배경 + `{colors.border}` 1dp 경계 + `{colors.text}` 아이콘), 활성 시 좋아요는 `{component.chip-selected}`(브랜드 subtle 채움 + 브랜드 경계 + 브랜드 아이콘), 별로예요는 같은 문법의 danger 변형(`{colors.background-danger-subtle}` + `{colors.border-danger}` + `{colors.text-danger}`)이다. 아이콘은 `ic_thumb_up`·`ic_thumb_down`. 하단 CTA 쌍(다시 만들기·선택하기)은 퍼널 CTA 규칙 그대로다. 웹의 선택 키워드 드로어 트리거는 앱에서는 두지 않는다.
+**스토리라인 단계** — 순번 탭(첫·두·세 번째)은 카테고리 탭과 같은 스타일을 그대로 쓰되 잠금과 필수 표시가 없다. 본문은 `story-body`(`{typography.body-reading}`)로 그린다 — 스토리라인은 스토리 본문의 미리보기라서 서사 서체의 자리다. 본문 마크업은 웹과 같은 규칙으로 파싱한다 — `**…**`는 볼드, 단일 `*…*`(내레이션·속마음)는 `{colors.text-narration}`. 평가 버튼(좋아요·별로예요)은 `{sizes.input}` 정사각 아이콘 칩으로, 아이콘은 기본 크기(`{sizes.icon}`) 대신 16dp 로 한 단계 줄여 본문 옆 보조 동작으로 물러나게 하고, 키워드 칩과 같은 선택 문법을 쓴다 — 기본은 `{component.chip}`(흰 배경 + `{colors.border}` 1dp 경계 + `{colors.text}` 아이콘), 활성 시 좋아요는 `{component.chip-selected}`(브랜드 subtle 채움 + 브랜드 경계 + 브랜드 아이콘), 별로예요는 같은 문법의 danger 변형(`{colors.background-danger-subtle}` + `{colors.border-danger}` + `{colors.text-danger}`)이다. 아이콘은 `ic_thumb_up`·`ic_thumb_down`. 하단 CTA 쌍(다시 만들기·선택하기)은 퍼널 CTA 규칙 그대로다. 웹의 선택 키워드 드로어 트리거는 앱에서는 두지 않는다.
 
 **추가 정보 단계** — 선택한 스토리라인 본문은 `{colors.background-neutral}` 상자에 `{typography.body-reading}`으로 놓고, 기본은 한 줄로 접어 말줄임으로 끝낸 뒤 가운데의 더보기·접기(`{colors.text-subtle}` + 16dp 셰브론)로 펼친다 — 웹의 그라디언트 페이드 대신 말줄임을 쓴다. 추천 추가 정보는 키워드 칩과 같은 선택 문법의 칩을 폭을 채워 왼쪽 정렬로 세로 나열한다 — 문장 전체가 들어가는 다중행 칩이다. 자유 입력은 텍스트 필드 문법(`{component.text-field}`) 그대로 여러 줄을 허용하고 오른쪽 아래에 글자 수 카운터를 둔다. 행 오른쪽의 삭제(X)는 `{colors.text-subtle}` 고스트 아이콘 버튼이고, "정보 추가" 트리거는 인물 추가와 같은 모양으로 가운데에 놓인다. 하단 CTA 쌍(다시 선택하기·스토리 완성하기)은 퍼널 CTA 규칙 그대로다.
 
@@ -647,11 +683,11 @@ components:
 
 ## 갱신 지침
 
-1. 값을 바꿀 때는 토큰 생성기 → `design/design-tokens.json` → Kotlin 순서로 옮깁니다. 반대 방향으로 고치지 않습니다.
+1. 값을 바꿀 때는 Kotlin 토큰 파일과 이 문서의 표를 같은 커밋에서 함께 고칩니다. 한쪽만 고치면 다음에 어느 쪽이 맞는지 알 수 없습니다.
 2. Kotlin 파일은 사람이 옮겨 적습니다. Style Dictionary 같은 생성기는 두지 않습니다 — 토큰 변경 빈도가 낮은데 안드로이드 빌드에 Node 의존을 얹는 비용이 더 큽니다.
 3. 새 컴포넌트는 `components:`에 항목을 추가하고 값은 반드시 `{token.ref}`로 적습니다. 헥사·dp를 직접 쓰지 않습니다.
 4. 상태 변형(`-pressed`, `-focused`, `-error`)은 별도 항목으로 둡니다. hover는 문서화하지 않습니다.
-5. 토큰에 없는 값이 필요하면 화면에서 임시로 만들지 말고 토큰 생성기에 단계를 추가합니다.
+5. 토큰에 없는 값이 필요하면 화면에서 임시로 만들지 말고 토큰에 단계를 추가합니다(Kotlin + 이 문서). 웹과 공유하는 층이면 디자인 토큰 쪽에도 같은 단계가 필요합니다.
 6. 두 번째 사용처가 생기기 전에는 공용 컴포넌트로 올리지 않습니다.
 
 ## 알려진 공백
@@ -661,5 +697,6 @@ components:
 - **M3 확장 슬롯**(`*Fixed` 색, `*Emphasized` 타이포 등)은 파생 대상이 아닙니다. 해당 슬롯을 읽는 컴포넌트를 쓰게 되면 파생을 넓힙니다.
 - **폰트가 APK에서 약 5.3MB**를 차지합니다(원본 14MB, 압축 후). 줄여야 하면 Pretendard 공식 subset 빌드로 교체합니다.
 - **태블릿·폴더블·가로 모드 정책이 없습니다.**
-- **컨트롤 높이(`sizes.*`)는 토큰 정본이 아니라 이 레포가 정한 값입니다.** 웹과 맞추려면 토큰 생성기 쪽에 크기 층을 추가해야 합니다.
-- **모션 토큰이 화면 전환 하나뿐입니다.** 눌림 상태는 여전히 색 변화로만 정의되어 있고, 등장·퇴장·스켈레톤 같은 나머지 모션은 정의되지 않았습니다. 필요해지는 시점에 `{motion.*}`에 단계를 추가합니다.
+- **컨트롤 높이(`sizes.*`)는 토큰 정본이 아니라 이 레포가 정한 값입니다.** 웹과 맞추려면 디자인 토큰 쪽에 크기 층을 추가해야 합니다.
+- **토큰 값이 웹과 같은지 자동으로 확인할 방법이 없습니다.** 생성기가 레포 밖에 있고 웹은 자체 CSS 변수를 쓰므로, 두 클라이언트의 값이 갈리는지는 사람이 봐야 합니다. 다크 보조 텍스트 두 단계는 지금 앱이 웹보다 밝습니다(2026-08-29).
+- **모션 토큰이 화면 전환·요소 등장·퇴장·목록 등장 다섯 단계뿐입니다.** 눌림 상태는 여전히 색 변화로만 정의되어 있고, 스켈레톤 같은 나머지 모션은 정의되지 않았습니다. 필요해지는 시점에 `{motion.*}`에 단계를 추가합니다.

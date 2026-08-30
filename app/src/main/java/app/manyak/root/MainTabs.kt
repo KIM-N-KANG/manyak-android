@@ -1,15 +1,11 @@
 package app.manyak.root
 
-import androidx.annotation.DrawableRes
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.EntryProviderScope
@@ -25,7 +21,6 @@ import app.manyak.core.navigation.ChatListRoute
 import app.manyak.core.navigation.HomeRoute
 import app.manyak.core.navigation.MyRoute
 import app.manyak.core.navigation.StudioRoute
-import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ManyakBrandHeader
 import app.manyak.core.ui.component.ManyakNavigationBar
 import app.manyak.core.ui.component.ManyakNavigationItem
@@ -37,38 +32,6 @@ import app.manyak.feature.my.MyScreen
 import app.manyak.feature.studio.StudioScreen
 
 /**
- * 목적지와 탭의 대응을 맺는 유일한 자리.
- *
- * `:core:ui` 는 라우트를 알 수 없고 `:feature:*` 끼리도 서로 모르므로, 둘을 다 아는 `:app` 이 맺는다.
- */
-private enum class MainTab(
-    @param:DrawableRes val selectedIconRes: Int,
-    @param:DrawableRes val unselectedIconRes: Int,
-    @param:StringRes val nameRes: Int,
-) {
-    HOME(
-        selectedIconRes = R.drawable.ic_nav_home_filled,
-        unselectedIconRes = R.drawable.ic_nav_home_outline,
-        nameRes = R.string.main_tab_home,
-    ),
-    CHAT(
-        selectedIconRes = R.drawable.ic_nav_chat_filled,
-        unselectedIconRes = R.drawable.ic_nav_chat_outline,
-        nameRes = R.string.main_tab_chat,
-    ),
-    STUDIO(
-        selectedIconRes = R.drawable.ic_nav_studio_filled,
-        unselectedIconRes = R.drawable.ic_nav_studio_outline,
-        nameRes = R.string.main_tab_studio,
-    ),
-    MY(
-        selectedIconRes = R.drawable.ic_nav_my_filled,
-        unselectedIconRes = R.drawable.ic_nav_my_outline,
-        nameRes = R.string.main_tab_my,
-    ),
-}
-
-/**
  * 하단 탭 넷을 두르는 셸. 헤더와 하단 바를 여기서만 그리고, 탭 화면에는 chrome 이 차지한 여백만 넘긴다.
  *
  * **탭마다 백스택을 따로 소유한다.** 탭을 옮겨도 떠난 탭의 백스택과 그에 묶인 상태가 남아 있어,
@@ -76,14 +39,15 @@ private enum class MainTab(
  * 이력에 쌓이지 않는다.
  */
 @Composable
-fun MainTabsScreen(
+internal fun MainTabsScreen(
+    selectedTab: MainTab,
+    onSelectTab: (MainTab) -> Unit,
     onOpenStory: (String) -> Unit,
     onOpenChat: (String) -> Unit,
     onCreateStory: () -> Unit,
     onResumeCreation: (CreationResumePoint) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var selectedTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
     val backStacks = rememberTabBackStacks()
 
     Scaffold(
@@ -102,7 +66,7 @@ fun MainTabsScreen(
                 selectedTab = selectedTab,
                 // 이미 선택된 탭을 다시 누르면 그 탭의 시작 목적지로 되돌린다.
                 onSelectTab = { tab ->
-                    if (tab == selectedTab) backStacks.getValue(tab).popToStart() else selectedTab = tab
+                    if (tab == selectedTab) backStacks.getValue(tab).popToStart() else onSelectTab(tab)
                 },
             )
         },
@@ -111,12 +75,12 @@ fun MainTabsScreen(
             selectedTab = selectedTab,
             backStacks = backStacks,
             contentPadding = innerPadding,
-            onLeaveTab = { selectedTab = MainTab.HOME },
+            onLeaveTab = { onSelectTab(MainTab.HOME) },
             onOpenStory = onOpenStory,
             onOpenChat = onOpenChat,
             // 빈 채팅 목록의 안내가 제작으로 보내는 자리. 목적지를 쌓지 않고 탭을 바꾸는 것이 핵심이다 —
             // push 하면 뒤로가기가 채팅 탭으로 되돌아와, 탭 전환이 이력에 쌓이지 않는다는 규칙이 깨진다.
-            onGoToStudio = { selectedTab = MainTab.STUDIO },
+            onGoToStudio = { onSelectTab(MainTab.STUDIO) },
             onCreateStory = onCreateStory,
             onResumeCreation = onResumeCreation,
         )

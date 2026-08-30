@@ -1,7 +1,6 @@
 package app.manyak.core.ui.component
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -28,6 +27,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.R
 import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.core.ui.theme.insetForBorder
 import coil3.compose.AsyncImage
 import java.text.NumberFormat
 
@@ -81,13 +81,15 @@ fun StoryCover(
     showBorder: Boolean = false,
     overlay: @Composable BoxScope.() -> Unit = {},
 ) {
-    // border 는 자기 안쪽을 먼저 그린 뒤 선을 얹으므로 표지 위로 올라온다. clip 보다 앞에 둬야
-    // 선의 바깥쪽이 잘리지 않는다.
-    val borderModifier =
+    // 표지는 선 두께만큼 안으로 들이고 **반지름도 그만큼 줄여** 테두리와 동심원으로 맞춘다.
+    // 반지름을 그대로 두면 곡률에서만 표지가 선 쪽으로 파고들어 그 부분이 진해 보인다.
+    val coverModifier =
         if (showBorder) {
-            Modifier.border(ThumbnailBorderWidth, ManyakTheme.colors.border, shape)
-        } else {
             Modifier
+                .padding(ThumbnailBorderWidth)
+                .clip(shape.insetForBorder(ThumbnailBorderWidth))
+        } else {
+            Modifier.clip(shape)
         }
 
     Box(
@@ -95,18 +97,19 @@ fun StoryCover(
             modifier
                 .fillMaxWidth()
                 .aspectRatio(STORY_THUMBNAIL_ASPECT_RATIO)
-                .then(borderModifier)
                 .clip(shape)
-                .background(ManyakTheme.colors.backgroundNeutral),
+                .background(
+                    // 테두리는 선을 얹지 않고 **바탕으로 그린다**. 선을 얹으면 선의 안티에일리어싱과
+                    // 표지의 안티에일리어싱이 같은 픽셀에서 합성돼 곡률만 진해진다.
+                    if (showBorder) ManyakTheme.colors.border else ManyakTheme.colors.backgroundNeutral,
+                ),
     ) {
-        // 표지는 선 두께만큼 안으로 들인다. 표지와 선의 경계가 같은 픽셀에 겹치면 두 안티에일리어싱이
-        // 합성돼 곡률에서만 진한 띠가 생기고, 그 띠가 직선부의 선보다 도드라진다.
         Box(
             modifier =
                 Modifier
                     .matchParentSize()
-                    .then(if (showBorder) Modifier.padding(ThumbnailBorderWidth) else Modifier)
-                    .clip(shape),
+                    .then(coverModifier)
+                    .background(ManyakTheme.colors.backgroundNeutral),
             contentAlignment = Alignment.Center,
         ) {
             if (thumbnailUrl == null) {
@@ -125,8 +128,9 @@ fun StoryCover(
                     contentScale = ContentScale.Crop,
                 )
             }
+            // 겹침 요소도 테두리 안쪽에 둔다 — 바깥에 두면 표지 위에 얹히면서 테두리까지 덮는다.
+            overlay()
         }
-        overlay()
     }
 }
 

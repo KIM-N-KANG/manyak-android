@@ -140,6 +140,8 @@
         <item>이야기의 뼈대 잡는 중...</item>
         <item>장면 순서 엮는 중...</item>
     </string-array>
+    <!-- 생성이 길어질 때 힌트 위에 뜨는 경과 구분선 문구. -->
+    <string name="create_loading_hint_elapsed">%1$d초 지남</string>
     <string name="create_storyline_loading_hint_delayed">스토리라인을 잡는 데 시간이 조금 더 걸리고 있어요</string>
     <string name="create_storyline_loading_hint_long">장면 흐름을 다시 맞춰보고 있어요</string>
     <string name="create_storyline_error_generate">스토리라인을 만들지 못했어요</string>
@@ -260,6 +262,59 @@
 
     <!-- 채팅방 -->
     <string name="chat_room_load_error">채팅을 불러오지 못했어요</string>
+    <string name="chat_room_scroll_to_bottom">맨 아래로 이동</string>
+    <string name="chat_room_writing">작성 중</string>
+    <!-- "작성 중" 대기 문구를 스크린 리더가 읽을 때의 설명. -->
+    <string name="chat_room_writing_status">답변을 작성하고 있어요</string>
+    <string name="chat_room_stream_error">응답 생성에 실패했어요</string>
+    <string name="chat_room_suggestion_fill">입력창에 넣어 수정</string>
+    <string name="chat_room_suggestion_hint_title">AI가 추천하는 입력이에요</string>
+    <!-- %1$s 자리에 채우기 버튼 아이콘이 들어간다. -->
+    <string name="chat_room_suggestion_hint_action">탭하면 바로 전송되고, %1$s 버튼으로 고쳐서 보낼 수 있어요</string>
+    <string name="chat_room_choices_loading">선택지를 만드는 중</string>
+    <string name="chat_room_choices_error">선택지를 만들지 못했어요</string>
+    <!-- %1$s 는 도달한 엔딩 이름. -->
+    <string name="chat_room_ending_badge">엔딩 · %1$s</string>
+    <string name="chat_room_regenerate">다시 생성</string>
+    <string name="chat_room_credit_required">크레딧이 부족해요</string>
+    <string name="chat_room_options">채팅 옵션</string>
+    <string name="chat_room_delete">삭제하기</string>
+    <string name="chat_room_delete_dialog_title">채팅을 삭제할까요?</string>
+    <string name="chat_room_delete_dialog_description">삭제하면 나눈 이야기가 모두 사라지며 되돌릴 수 없어요</string>
+    <string name="chat_room_delete_dialog_cancel">닫기</string>
+    <string name="chat_room_deleted">채팅이 삭제되었어요</string>
+    <string name="chat_room_delete_failed">채팅 삭제에 실패했어요</string>
+    <string name="chat_room_fill_confirm_title">작성 중인 내용을 바꿀까요?</string>
+    <string name="chat_room_fill_confirm_description">지금 작성 중인 내용은 사라져요</string>
+    <string name="chat_room_fill_confirm_confirm">바꾸기</string>
+    <string name="chat_room_fill_confirm_cancel">닫기</string>
+
+    <!-- 채팅방 컴포저 -->
+    <string name="chat_composer_plain_placeholder">이야기를 어떻게 이어갈까요?</string>
+    <string name="chat_composer_situation_label">상황</string>
+    <string name="chat_composer_situation_placeholder">어떤 상황을 묘사할까요?</string>
+    <string name="chat_composer_dialogue_label">대사</string>
+    <string name="chat_composer_dialogue_placeholder">어떤 대사를 건넬까요?</string>
+    <string name="chat_composer_add_situation">상황 추가</string>
+    <string name="chat_composer_add_dialogue">대사 추가</string>
+    <string name="chat_composer_remove_block">입력 삭제</string>
+    <string name="chat_composer_remove_block_title">작성한 내용을 삭제할까요?</string>
+    <string name="chat_composer_remove_block_description">삭제하면 작성한 내용이 사라져요</string>
+    <string name="chat_composer_remove_block_confirm">삭제하기</string>
+    <string name="chat_composer_remove_block_cancel">닫기</string>
+    <string name="chat_composer_send">전송</string>
+    <string name="chat_composer_send_random">추천 입력 랜덤 전송</string>
+    <string name="chat_composer_streaming">응답을 받는 중</string>
+    <string name="chat_composer_choices_menu">추천 입력 설정</string>
+    <string name="chat_composer_choices_on">추천 입력 켬</string>
+    <string name="chat_composer_choices_on_description">AI가 다음 전개를 추천해줘요</string>
+    <string name="chat_composer_choices_off">추천 입력 끔</string>
+    <string name="chat_composer_choices_off_description">추천 없이 직접 입력해요</string>
+    <string name="chat_composer_input_mode_menu">입력 모드 변경</string>
+    <string name="chat_composer_input_mode_block">블럭 입력</string>
+    <string name="chat_composer_input_mode_block_description">상황과 대사를 나눠서 입력해요</string>
+    <string name="chat_composer_input_mode_plain">일반 입력</string>
+    <string name="chat_composer_input_mode_plain_description">한 입력창에 자유롭게 입력해요</string>
 
     <!-- 오류 -->
     <string name="error_network">네트워크 연결을 확인해주세요</string>

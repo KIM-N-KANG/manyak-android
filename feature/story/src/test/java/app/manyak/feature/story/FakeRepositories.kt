@@ -2,8 +2,10 @@ package app.manyak.feature.story
 
 import app.manyak.core.domain.chat.ChatDetail
 import app.manyak.core.domain.chat.ChatRepository
+import app.manyak.core.domain.chat.ChatStreamEvent
 import app.manyak.core.domain.chat.ChatSummary
 import app.manyak.core.domain.chat.CreatedChat
+import app.manyak.core.domain.chat.UserSource
 import app.manyak.core.domain.error.DomainError
 import app.manyak.core.domain.error.DomainResult
 import app.manyak.core.domain.story.StoryDetail
@@ -11,6 +13,8 @@ import app.manyak.core.domain.story.StoryRepository
 import app.manyak.core.domain.story.StoryStartSetting
 import app.manyak.core.domain.story.StorySummary
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.yield
 
 internal const val STORY_ID = "story-1"
@@ -91,4 +95,25 @@ internal class FakeChatRepository : ChatRepository {
 
     override suspend fun chatDetail(chatId: String): DomainResult<ChatDetail> =
         DomainResult.Failure(DomainError.Unknown)
+
+    /** 상세는 턴을 진행하지 않는다 — 계약을 채우기만 한다. */
+    override fun streamTurn(
+        chatId: String,
+        userInput: String,
+        userSource: UserSource,
+        sourceTurnId: Long?,
+        choiceOrder: Int?,
+    ): Flow<ChatStreamEvent> = emptyFlow()
+
+    override fun regenerateTurn(
+        chatId: String,
+        turnId: Long,
+    ): Flow<ChatStreamEvent> = emptyFlow()
+
+    override suspend fun generateChoices(
+        chatId: String,
+        turnId: Long,
+    ): DomainResult<Unit> = DomainResult.Success(Unit)
+
+    override suspend fun deleteChat(chatId: String): DomainResult<Unit> = DomainResult.Success(Unit)
 }

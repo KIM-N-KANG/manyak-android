@@ -66,6 +66,7 @@ dependencies {
     implementation(libs.retrofit.converter.kotlinx.serialization)
     implementation(platform(libs.okhttp.bom))
     implementation(libs.okhttp.logging.interceptor)
+    implementation(libs.okhttp.sse)
 
     implementation(libs.androidx.credentials)
     implementation(libs.androidx.credentials.play.services.auth)

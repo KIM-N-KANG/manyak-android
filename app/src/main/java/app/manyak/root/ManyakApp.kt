@@ -16,6 +16,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -174,6 +177,8 @@ private fun AuthNavDisplay() {
 @Composable
 private fun MainNavDisplay() {
     val backStack = rememberNavBackStack(MainTabsRoute)
+    // 셸 밖에서도 탭을 바꿀 수 있어야 한다 — 채팅을 지우면 방을 걷어내고 채팅 탭을 편다.
+    var selectedTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
     val screenTransition = rememberScreenTransition()
     NavDisplay(
         backStack = backStack,
@@ -184,6 +189,8 @@ private fun MainNavDisplay() {
             entryProvider<NavKey> {
                 entry<MainTabsRoute> {
                     MainTabsScreen(
+                        selectedTab = selectedTab,
+                        onSelectTab = { tab -> selectedTab = tab },
                         // 상세는 셸 위에 쌓여 헤더도 하단 탭도 없는 전체 화면이 되고, 뒤로가기는
                         // 셸이 든 선택 탭으로 그대로 돌아온다.
                         onOpenStory = { storyId -> backStack.add(StoryDetailRoute(storyId)) },
@@ -209,6 +216,12 @@ private fun MainNavDisplay() {
                     ChatRoomScreen(
                         chatId = route.chatId,
                         onBack = { backStack.removeLastOrNull() },
+                        // 지운 방이 뒤로가기로 되살아나면 안 되므로 셸까지 걷어내고 채팅 탭을 편다.
+                        // 상세에서 시작한 채팅이면 상세도 함께 걷힌다.
+                        onDeleted = {
+                            backStack.popToMainTabs()
+                            selectedTab = MainTab.CHAT
+                        },
                     )
                 }
                 legalEntry(onLeaveDocument = { backStack.removeLastOrNull() })

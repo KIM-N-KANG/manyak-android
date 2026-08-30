@@ -3,7 +3,7 @@ package app.manyak.core.ui.theme
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 
-// Primitive — 팔레트. 시맨틱이 가리키는 단계만 둔다(전체 사다리는 design/design-tokens.json).
+// Primitive — 팔레트. 시맨틱이 가리키는 단계만 둔다.
 // private 이므로 화면 코드에서 직접 참조할 수 없다. 화면은 아래 시맨틱 이름만 쓴다.
 private val Gray0 = Color(0xFFFFFFFF)
 private val Gray50 = Color(0xFFFCFCFC)
@@ -57,6 +57,9 @@ private val Blue950 = Color(0xFF003364)
  * 조합 제약은 토큰 빌드가 명도 대비로 검증했다. 특히 다음 두 조합은 쓰지 않는다.
  * - [textSubtlest]를 [backgroundNeutral] 계열 위에 — 4.5:1 미만이다. [textSubtle]을 쓴다.
  * - [textDisabled]를 읽어야 하는 텍스트에 — 배경색 위에서도 3:1 미만이다.
+ *
+ * [textNarration]은 [textSubtlest]와 라이트에서 같은 값이지만 **따로 둔다** — 서사의 상황 묘사는
+ * 본문과 함께 읽는 글이라 약한 보조 텍스트보다 밝아야 하고, 다크에서 그 차이가 드러난다.
  */
 @Immutable
 data class ManyakColors(
@@ -64,6 +67,7 @@ data class ManyakColors(
     val text: Color,
     val textSubtle: Color,
     val textSubtlest: Color,
+    val textNarration: Color,
     val textDisabled: Color,
     val textInverse: Color,
     val textBrand: Color,
@@ -100,6 +104,7 @@ internal val ManyakLightColors =
         text = Gray950,
         textSubtle = Gray750,
         textSubtlest = Gray550,
+        textNarration = Gray550,
         textDisabled = Gray350,
         textInverse = Gray0,
         textBrand = Green800,
@@ -135,8 +140,9 @@ internal val ManyakDarkColors =
         brand = Green600,
         text = Gray50,
         textSubtle = Gray250,
-        textSubtlest = Gray500,
-        textDisabled = Gray700,
+        textSubtlest = Gray400,
+        textNarration = Gray250,
+        textDisabled = Gray500,
         textInverse = Gray0,
         textBrand = Green400,
         textDanger = Red400,
@@ -144,7 +150,7 @@ internal val ManyakDarkColors =
         textInformation = Blue400,
         surface = Gray950,
         surfaceRaised = Gray900,
-        backgroundNeutral = Gray850,
+        backgroundNeutral = Gray900,
         backgroundNeutralPressed = Gray750,
         backgroundBrandBold = Green800,
         backgroundBrandBoldPressed = Green900,

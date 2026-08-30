@@ -16,6 +16,35 @@ data class ChatCreateRequestDto(
     val startSettingId: String? = null,
 )
 
+/**
+ * 턴 진행 요청. `null` 필드는 직렬화에서 빠진다(`explicitNulls = false`).
+ *
+ * [sourceTurnId]·[choiceOrder] 는 고른 선택지를 서버가 기록하는 데만 쓰이고, 값이 낡았거나 범위를
+ * 벗어나도 서버가 거절하지 않고 기록만 생략한다.
+ */
+@Serializable
+data class ChatTurnStreamRequestDto(
+    val userInput: String,
+    val userSource: String? = null,
+    val sourceTurnId: Long? = null,
+    val choiceOrder: Int? = null,
+)
+
+/** 재생성 요청. 서버가 보는 마지막 턴과 다르면 409 다. */
+@Serializable
+data class ChatRegenerateRequestDto(
+    val turnId: Long,
+)
+
+/**
+ * 선택지 생성 응답. **렌더 소스가 아니다** — 화면은 상세 재조회의 `turns[].choices` 로 그린다.
+ * 본문을 무시하지 않고 받아 두는 이유는 성공 응답에 본문이 없으면 역직렬화 실패로 판정되기 때문이다.
+ */
+@Serializable
+data class ChatChoicesResponseDto(
+    val choices: List<String> = emptyList(),
+)
+
 /** 응답의 프롤로그·추천 입력은 채팅방 진입 시 상세 조회로 다시 얻으므로 식별자만 역직렬화한다. */
 @Serializable
 data class ChatCreateResponseDto(
@@ -114,12 +143,13 @@ data class ChatDetailResponseDto(
     val suggestedInputs: List<String> = emptyList(),
 )
 
-/** 턴의 선택지·엔딩 도달은 컴포저·선택지 표시가 붙기 전까지 쓰지 않아 역직렬화하지 않는다. */
 @Serializable
 data class ChatTurnDto(
     val id: Long,
     val userInput: String = "",
     val aiOutput: String = "",
+    val choices: List<String> = emptyList(),
+    val reachedEnding: String? = null,
 )
 
 fun ChatDetailResponseDto.toDomain(): ChatDetail =
@@ -128,6 +158,15 @@ fun ChatDetailResponseDto.toDomain(): ChatDetail =
         storyId = storyId,
         storyTitle = storyTitle,
         prologue = prologue,
-        turns = turns.map { turn -> ChatTurn(id = turn.id, userInput = turn.userInput, aiOutput = turn.aiOutput) },
+        turns =
+            turns.map { turn ->
+                ChatTurn(
+                    id = turn.id,
+                    userInput = turn.userInput,
+                    aiOutput = turn.aiOutput,
+                    choices = turn.choices,
+                    reachedEnding = turn.reachedEnding?.takeIf { name -> name.isNotBlank() },
+                )
+            },
         suggestedInputs = suggestedInputs,
     )
