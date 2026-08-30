@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,8 +28,6 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ManyakProgressIndicator
@@ -148,17 +148,16 @@ internal fun ComposerSendButton(
 /**
  * 컴포저의 입력창. 여러 줄을 허용하되 [maxLines] 를 넘으면 그 안에서 스크롤한다.
  *
- * `TextFieldValue` 를 받는 이유는 강조 마커 삽입이 **커서 위치를 되돌려 놓아야** 하기 때문이다.
- * 문자열만 주고받으면 마커를 넣은 뒤 커서가 끝으로 튄다.
+ * 편집 상태를 [TextFieldState] 로 받는다 — 강조 마커 삽입이 **커서 위치를 되돌려 놓아야** 하고,
+ * 밖에서 값을 비울 때 IME 의 조합 중인 글자까지 함께 지워져야 한다.
  *
- * 테두리·배경은 **decorationBox 안**에 둔다. 포커스가 들어올 때 스크롤 컨테이너가 끌어올리는 범위가
- * decorationBox 전체라, 밖에 두면 커서 줄만 올라오고 나머지는 키보드에 가린다. [containerShape] 가
+ * 테두리·배경은 **decorator 안**에 둔다. 포커스가 들어올 때 스크롤 컨테이너가 끌어올리는 범위가
+ * decorator 전체라, 밖에 두면 커서 줄만 올라오고 나머지는 키보드에 가린다. [containerShape] 가
  * null 이면 그리지 않는다 — 일반 모드는 툴바까지 한 상자라 상자를 쓰는 쪽이 갖는다.
  */
 @Composable
 internal fun ComposerTextField(
-    value: TextFieldValue,
-    onValueChange: (TextFieldValue) -> Unit,
+    state: TextFieldState,
     placeholder: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -176,17 +175,16 @@ internal fun ComposerTextField(
     val focused by interactionSource.collectIsFocusedAsState()
     BasicTextField(
         modifier = modifier,
-        value = value,
-        onValueChange = onValueChange,
+        state = state,
         enabled = enabled,
-        maxLines = maxLines,
+        lineLimits = TextFieldLineLimits.MultiLine(maxHeightInLines = maxLines),
         textStyle =
             ManyakTheme.typography.bodyMedium.copy(
                 color = if (enabled) textColor else ManyakTheme.colors.textDisabled,
             ),
         cursorBrush = SolidColor(textColor),
         interactionSource = interactionSource,
-        decorationBox = { innerTextField ->
+        decorator = { innerTextField ->
             Row(
                 modifier = Modifier.composerFieldBox(containerShape, focused).padding(contentPadding),
                 // 라벨은 여러 줄이 되어도 글자 덩이의 가운데에 선다.
@@ -197,7 +195,7 @@ internal fun ComposerTextField(
                 }
                 // 비어 있을 때 placeholder 가 커서 높이보다 낮아 위로 붙는 것을 막는다.
                 Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
-                    if (value.text.isEmpty()) {
+                    if (state.text.isEmpty()) {
                         Text(
                             text = placeholder,
                             style = ManyakTheme.typography.bodyMedium,
@@ -226,9 +224,6 @@ private fun Modifier.composerFieldBox(
         .background(ManyakTheme.colors.surfaceRaised)
         .border(ComposerBorderWidth, borderColor, shape)
 }
-
-/** 문자열만 들고 있는 상태를 커서 끝에 둔 편집 값으로 바꾼다. */
-internal fun String.asTextFieldValue(): TextFieldValue = TextFieldValue(text = this, selection = TextRange(length))
 
 /** 입력 상자의 테두리 두께. 상자를 그리는 쪽이 쓴다. */
 internal val ComposerBorderWidth = 1.dp
