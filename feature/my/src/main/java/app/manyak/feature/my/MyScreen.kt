@@ -57,6 +57,10 @@ fun MyScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
+    // 문구는 구성에 묶인 값이라 컴포지션에서 읽는다. 보상 금액은 효과가 도착할 때 정해져 서식만 나중에 채운다.
+    val attendanceClaimed = stringResource(R.string.my_attendance_claimed)
+    val attendanceAlready = stringResource(R.string.my_attendance_already)
+    val attendanceFailed = stringResource(R.string.my_attendance_failed)
 
     // 잔액·출석 여부는 채팅·제작에서 바뀌므로 화면이 다시 보일 때마다 새로 읽는다. ViewModel 은 탭을
     // 옮겨도 살아 있어(탭별 백스택이 목적지를 계속 들고 있다) 생성 시점 한 번으로는 낡은 값이 남는다.
@@ -71,11 +75,9 @@ fun MyScreen(
             viewModel.uiEffect.collect { effect ->
                 val message =
                     when (effect) {
-                        is MyEffect.AttendanceRewarded ->
-                            context.getString(R.string.my_attendance_claimed, effect.amount)
-
-                        MyEffect.AttendanceAlreadyDone -> context.getString(R.string.my_attendance_already)
-                        MyEffect.AttendanceFailed -> context.getString(R.string.my_attendance_failed)
+                        is MyEffect.AttendanceRewarded -> attendanceClaimed.format(effect.amount)
+                        MyEffect.AttendanceAlreadyDone -> attendanceAlready
+                        MyEffect.AttendanceFailed -> attendanceFailed
                     }
                 Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
             }
