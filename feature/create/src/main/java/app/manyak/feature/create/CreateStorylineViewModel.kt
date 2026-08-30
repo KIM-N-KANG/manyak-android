@@ -3,7 +3,10 @@ package app.manyak.feature.create
 import androidx.lifecycle.viewModelScope
 import app.manyak.core.domain.error.DomainResult
 import app.manyak.core.domain.story.StoryCreationRepository
+import app.manyak.core.domain.story.StoryTag
+import app.manyak.core.domain.story.StoryTagCategory
 import app.manyak.core.domain.story.Storyline
+import app.manyak.core.domain.story.StorylineGenerationCommand
 import app.manyak.core.domain.story.StorylineRating
 import app.manyak.core.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,6 +30,29 @@ sealed interface StorylineContent {
     ) : StorylineContent
 }
 
+/**
+ * "선택한 키워드 보기" 시트가 그리는 묶음 하나. 라벨 문구는 리소스라 화면이 붙인다.
+ */
+data class SelectedKeywordGroup(
+    val category: StoryTagCategory,
+    /** 주변 인물이 둘 이상일 때의 순번. 하나뿐이면 null 이고 라벨에 번호를 붙이지 않는다. */
+    val ordinal: Int? = null,
+    val keywords: List<String>,
+)
+
+/** "선택한 키워드 보기" 시트. 이름표를 얻으려면 제공 태그 목록이 있어야 해 조회 상태를 함께 든다. */
+sealed interface SelectedKeywords {
+    data object Hidden : SelectedKeywords
+
+    data object Loading : SelectedKeywords
+
+    data class Loaded(
+        val groups: List<SelectedKeywordGroup>,
+    ) : SelectedKeywords
+
+    data object Failed : SelectedKeywords
+}
+
 data class CreateStorylineUiState(
     val content: StorylineContent = StorylineContent.Restoring,
     /** 생성·재생성 실패. 직전 결과가 남아 있으면 그대로 보여 주며 인라인 오류만 덧붙인다. */
@@ -36,6 +62,9 @@ data class CreateStorylineUiState(
     val activeIndex: Int = 0,
     /** 스토리라인 ID별 평가. 같은 평가를 다시 누르면 해제된다. */
     val ratings: Map<Long, StorylineRating> = emptyMap(),
+    /** 생성에 실린 키워드가 남아 있는지. 없으면 "선택한 키워드 보기"를 그리지 않는다. */
+    val hasKeywords: Boolean = false,
+    val selectedKeywords: SelectedKeywords = SelectedKeywords.Hidden,
 ) {
     val storylines: List<Storyline> get() = (content as? StorylineContent.Loaded)?.storylines.orEmpty()
 
@@ -56,6 +85,11 @@ sealed interface CreateStorylineIntent {
     data object Regenerate : CreateStorylineIntent
 
     data object ConfirmSelection : CreateStorylineIntent
+
+    /** 푸터의 "선택한 키워드 보기". 조회 실패 뒤 다시 누르는 것이 재시도다. */
+    data object ShowSelectedKeywords : CreateStorylineIntent
+
+    data object DismissSelectedKeywords : CreateStorylineIntent
 
     /** 헤더의 임시 저장 버튼과 백그라운드 전환. */
     data object SaveDraft : CreateStorylineIntent
@@ -85,6 +119,11 @@ sealed interface CreateStorylineEvent {
         val generation: StorylineGenerationState,
         /** 복원된 결과의 활성 탭. 새 생성은 미러가 초기화되어 0 이다. */
         val restoredActiveIndex: Int = 0,
+        val hasKeywords: Boolean = false,
+    ) : CreateStorylineEvent
+
+    data class SelectedKeywordsChanged(
+        val keywords: SelectedKeywords,
     ) : CreateStorylineEvent
 
     data class ExitWarningChanged(
@@ -129,6 +168,8 @@ class CreateStorylineViewModel
          */
         private var isLeaving = false
 
+        private var selectedKeywordsJob: Job? = null
+
         val draftSave = storylineGenerationStore.draftSave
 
         init {
@@ -142,6 +183,7 @@ class CreateStorylineViewModel
                         CreateStorylineEvent.GenerationStateChanged(
                             generation = generation,
                             restoredActiveIndex = storylineGenerationStore.progress.activeStorylineIndex,
+                            hasKeywords = storylineGenerationStore.generationCommand != null,
                         ),
                     )
                 }
@@ -180,12 +222,40 @@ class CreateStorylineViewModel
                 CreateStorylineIntent.DismissExitWarning ->
                     dispatchEvent(CreateStorylineEvent.ExitWarningChanged(null))
 
+                CreateStorylineIntent.ShowSelectedKeywords -> loadSelectedKeywords()
+
+                CreateStorylineIntent.DismissSelectedKeywords -> {
+                    selectedKeywordsJob?.cancel()
+                    dispatchEvent(CreateStorylineEvent.SelectedKeywordsChanged(SelectedKeywords.Hidden))
+                }
+
                 CreateStorylineIntent.ConfirmSelection ->
                     if (state.activeStoryline != null) {
                         storylineGenerationStore.markStorylineSelected(state.activeIndex)
                         dispatchEffect(CreateStorylineEffect.NavigateToAdditionalInfo(state.activeIndex))
                     }
             }
+        }
+
+        /**
+         * 시트를 열면서 키워드 이름을 채운다. 조회는 자식 작업으로 돌린다 — 인텐트 큐에서 기다리면
+         * 응답이 올 때까지 닫기도 막힌다.
+         */
+        private suspend fun loadSelectedKeywords() {
+            val command = storylineGenerationStore.generationCommand ?: return
+            if (selectedKeywordsJob?.isActive == true) return
+            dispatchEvent(CreateStorylineEvent.SelectedKeywordsChanged(SelectedKeywords.Loading))
+            selectedKeywordsJob =
+                viewModelScope.launch {
+                    val keywords =
+                        when (val result = storylineGenerationStore.tagCatalog()) {
+                            is DomainResult.Success ->
+                                SelectedKeywords.Loaded(command.toKeywordGroups(result.value))
+
+                            is DomainResult.Failure -> SelectedKeywords.Failed
+                        }
+                    dispatchEvent(CreateStorylineEvent.SelectedKeywordsChanged(keywords))
+                }
         }
 
         /**
@@ -300,6 +370,10 @@ class CreateStorylineViewModel
 
                 is CreateStorylineEvent.GenerationStateChanged ->
                     reduceGeneration(state, event.generation, event.restoredActiveIndex)
+                        .copy(hasKeywords = event.hasKeywords)
+
+                is CreateStorylineEvent.SelectedKeywordsChanged ->
+                    state.copy(selectedKeywords = event.keywords)
 
                 is CreateStorylineEvent.ExitWarningChanged -> state.copy(exitWarning = event.warning)
             }
@@ -322,7 +396,48 @@ internal fun StorylineGenerationStore.toStorylineSnapshot(): CreateStorylineUiSt
         CreateStorylineUiState()
     } else {
         reduceGeneration(CreateStorylineUiState(), generation, progress.activeStorylineIndex)
+            .copy(hasKeywords = generationCommand != null)
     }
+}
+
+/**
+ * 생성에 실린 태그 ID 를 이름으로 풀어 시트가 그릴 묶음으로 만든다. 비어 있는 묶음은 내지 않는다 —
+ * 주변 인물은 아예 없을 수도 있고, 이름·성별만 넣고 키워드는 고르지 않은 인물도 있다.
+ */
+internal fun StorylineGenerationCommand.toKeywordGroups(tags: List<StoryTag>): List<SelectedKeywordGroup> {
+    val names = tags.associateBy(StoryTag::id)
+
+    fun keywords(
+        tagIds: List<Long>,
+        customTags: List<String>,
+    ): List<String> = tagIds.mapNotNull { id -> names[id]?.name } + customTags
+
+    val supporting =
+        supportingCharacters
+            .map { character -> keywords(character.featureTagIds, character.customTags) }
+            .filter(List<String>::isNotEmpty)
+    return buildList {
+        keywords(genreTagIds, customGenreTags).ifNotEmpty { group ->
+            add(SelectedKeywordGroup(category = StoryTagCategory.GENRE, keywords = group))
+        }
+        keywords(protagonist.featureTagIds, protagonist.customTags).ifNotEmpty { group ->
+            add(SelectedKeywordGroup(category = StoryTagCategory.PROTAGONIST, keywords = group))
+        }
+        supporting.forEachIndexed { index, group ->
+            add(
+                SelectedKeywordGroup(
+                    category = StoryTagCategory.SUPPORTING_CHARACTER,
+                    // 인물이 하나뿐이면 번호 없이 "주변 인물"로만 둔다.
+                    ordinal = (index + 1).takeIf { supporting.size > 1 },
+                    keywords = group,
+                ),
+            )
+        }
+    }
+}
+
+private inline fun List<String>.ifNotEmpty(action: (List<String>) -> Unit) {
+    if (isNotEmpty()) action(this)
 }
 
 private fun reduceGeneration(

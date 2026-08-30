@@ -9,6 +9,7 @@ import app.manyak.core.domain.story.PendingStoryCreationStore
 import app.manyak.core.domain.story.StoryCharacterInput
 import app.manyak.core.domain.story.StoryCompletionCommand
 import app.manyak.core.domain.story.StoryCreationRepository
+import app.manyak.core.domain.story.StoryTag
 import app.manyak.core.domain.story.StorylineGeneration
 import app.manyak.core.domain.story.StorylineGenerationCommand
 import dagger.hilt.android.scopes.ActivityRetainedScoped
@@ -92,6 +93,12 @@ class StorylineGenerationStore
 
         private var lastCommand: StorylineGenerationCommand? = null
         private var lastResult: StorylineGeneration? = null
+
+        /** 마지막 생성에 실린 키워드. 스토리라인 단계의 "선택한 키워드 보기"가 읽는다. */
+        val generationCommand: StorylineGenerationCommand? get() = lastCommand
+
+        private var cachedTags: List<StoryTag>? = null
+        private val tagsMutex = Mutex()
 
         /** 마지막 완성 명령. 같은 페이로드 재시도의 requestId 재사용과 임시 저장 승계에 쓴다. */
         var lastCompletionCommand: StoryCompletionCommand? = null
@@ -440,6 +447,27 @@ class StorylineGenerationStore
          * 소실 경고 다이얼로그(3-1)를 띄운 뒤에야 [leaveFunnel] 을 부른다.
          */
         suspend fun hasContentToPreserve(): Boolean = lastResult != null || pendingCreationStore.read().isInFlight()
+
+        /** 키워드 화면이 이미 받아 둔 목록. 스토리라인 단계가 같은 조회를 반복하지 않게 넘겨 둔다. */
+        fun cacheTags(tags: List<StoryTag>) {
+            cachedTags = tags
+        }
+
+        /**
+         * 태그 ID 를 이름으로 바꾸는 데 쓰는 제공 태그 목록. 퍼널 수명 동안 한 번만 받아 온다 —
+         * 재개 진입은 키워드 화면을 거치지 않아 넘겨받은 목록이 없다.
+         */
+        suspend fun tagCatalog(): DomainResult<List<StoryTag>> =
+            tagsMutex.withLock {
+                val cached = cachedTags
+                if (cached != null) {
+                    DomainResult.Success(cached)
+                } else {
+                    storyCreationRepository.tags().also { result ->
+                        if (result is DomainResult.Success) cachedTags = result.value
+                    }
+                }
+            }
 
         /** 완성 성공으로 퍼널이 닫혔다. 남은 결과가 다음 이탈에서 임시 저장으로 둔갑하지 않게 비운다. */
         fun resetAfterCompletion() {

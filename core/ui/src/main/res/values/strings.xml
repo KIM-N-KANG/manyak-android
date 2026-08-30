@@ -125,6 +125,9 @@
     <string name="create_error_select_keyword">키워드를 하나 이상 선택해주세요</string>
     <string name="create_storyline_title">마음에 드는\n스토리라인을 선택해주세요</string>
     <string name="create_storyline_description">선택한 스토리라인이 스토리의 기본 흐름이 돼요</string>
+    <string name="create_storyline_view_keywords">선택한 키워드 보기</string>
+    <string name="create_selected_keywords_title">선택한 키워드들이에요</string>
+    <string name="create_selected_keywords_description">이 키워드들을 이용해서 스토리라인 세 개를 만들었어요</string>
     <!-- 스토리라인 탭의 순번 라벨. 생성 결과 순서대로 대응한다. -->
     <string-array name="create_storyline_tab_labels">
         <item>첫 번째</item>

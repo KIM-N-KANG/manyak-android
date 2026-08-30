@@ -105,6 +105,34 @@ internal fun KeywordChip(
     }
 }
 
+/** 다시 고를 수 없는 자리에서 보여 주는 키워드. 선택 상태와 같은 모양이되 누를 수 없다. */
+@Composable
+internal fun SelectedKeywordChip(
+    name: String,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier =
+            modifier
+                .heightIn(min = ManyakTheme.sizes.input)
+                .clip(ManyakTheme.shapes.control)
+                .background(ManyakTheme.colors.backgroundBrandSubtle)
+                .border(1.dp, ManyakTheme.colors.borderBrand, ManyakTheme.shapes.control)
+                .padding(
+                    horizontal = ManyakTheme.spacing.controlHorizontal,
+                    vertical = ManyakTheme.spacing.controlVertical,
+                ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = name,
+            style = ManyakTheme.typography.bodyMedium,
+            color = ManyakTheme.colors.textBrand,
+            maxLines = 1,
+        )
+    }
+}
+
 @Composable
 internal fun AddTrigger(
     label: String,

@@ -153,10 +153,20 @@ private fun CreateStorylineContent(
                     )
                     ScrollEdgeFade(modifier = Modifier.align(Alignment.BottomCenter))
                 }
-                CreateStorylineFooter(hasStoryline = state.activeStoryline != null, onIntent = onIntent)
+                CreateStorylineFooter(
+                    hasStoryline = state.activeStoryline != null,
+                    showKeywordsTrigger = state.hasKeywords,
+                    onIntent = onIntent,
+                )
             }
         }
     }
+
+    SelectedKeywordsSheet(
+        keywords = state.selectedKeywords,
+        onDismiss = { onIntent(CreateStorylineIntent.DismissSelectedKeywords) },
+        onRetry = { onIntent(CreateStorylineIntent.ShowSelectedKeywords) },
+    )
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -336,30 +346,39 @@ private fun StorylineBody(
 @Composable
 private fun CreateStorylineFooter(
     hasStoryline: Boolean,
+    showKeywordsTrigger: Boolean,
     onIntent: (CreateStorylineIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .padding(horizontal = ManyakTheme.spacing.gutter)
-                // 이 푸터에는 오류 문구가 없어 위를 띄우지 않는다 — 콘텐츠와의 경계는 페이드가 맡는다.
-                .padding(bottom = ManyakTheme.spacing.gutter),
-        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
-        FunnelNeutralButton(
-            modifier = Modifier.weight(1f),
-            label = stringResource(R.string.create_cta_regenerate),
-            enabled = true,
-            onClick = { onIntent(CreateStorylineIntent.Regenerate) },
-        )
-        FunnelPrimaryButton(
-            modifier = Modifier.weight(1f),
-            label = stringResource(R.string.create_cta_select_storyline),
-            enabled = hasStoryline,
-            onClick = { onIntent(CreateStorylineIntent.ConfirmSelection) },
-        )
+        if (showKeywordsTrigger) {
+            SelectedKeywordsTrigger(onClick = { onIntent(CreateStorylineIntent.ShowSelectedKeywords) })
+        }
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = ManyakTheme.spacing.gutter)
+                    // 이 푸터에는 오류 문구가 없어 위를 띄우지 않는다 — 콘텐츠와의 경계는 페이드가 맡는다.
+                    .padding(bottom = ManyakTheme.spacing.gutter),
+            horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+        ) {
+            FunnelNeutralButton(
+                modifier = Modifier.weight(1f),
+                label = stringResource(R.string.create_cta_regenerate),
+                enabled = true,
+                onClick = { onIntent(CreateStorylineIntent.Regenerate) },
+            )
+            FunnelPrimaryButton(
+                modifier = Modifier.weight(1f),
+                label = stringResource(R.string.create_cta_select_storyline),
+                enabled = hasStoryline,
+                onClick = { onIntent(CreateStorylineIntent.ConfirmSelection) },
+            )
+        }
     }
 }
 
