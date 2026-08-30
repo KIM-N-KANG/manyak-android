@@ -39,6 +39,7 @@ import app.manyak.feature.studio.StudioScreen
  * 이력에 쌓이지 않는다.
  */
 @Composable
+@Suppress("LongParameterList")
 internal fun MainTabsScreen(
     selectedTab: MainTab,
     onSelectTab: (MainTab) -> Unit,
@@ -46,6 +47,10 @@ internal fun MainTabsScreen(
     onOpenChat: (String) -> Unit,
     onCreateStory: () -> Unit,
     onResumeCreation: (CreationResumePoint) -> Unit,
+    onOpenInvite: () -> Unit,
+    onOpenServiceInfo: () -> Unit,
+    onOpenFeedback: () -> Unit,
+    onOpenWithdrawal: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val backStacks = rememberTabBackStacks()
@@ -83,6 +88,10 @@ internal fun MainTabsScreen(
             onGoToStudio = { onSelectTab(MainTab.STUDIO) },
             onCreateStory = onCreateStory,
             onResumeCreation = onResumeCreation,
+            onOpenInvite = onOpenInvite,
+            onOpenServiceInfo = onOpenServiceInfo,
+            onOpenFeedback = onOpenFeedback,
+            onOpenWithdrawal = onOpenWithdrawal,
         )
     }
 }
@@ -122,6 +131,10 @@ private fun MainTabsContent(
     onGoToStudio: () -> Unit,
     onCreateStory: () -> Unit,
     onResumeCreation: (CreationResumePoint) -> Unit,
+    onOpenInvite: () -> Unit,
+    onOpenServiceInfo: () -> Unit,
+    onOpenFeedback: () -> Unit,
+    onOpenWithdrawal: () -> Unit,
 ) {
     // 목적지는 백스택이 바뀔 때만 다시 만들어지므로, 그 사이에 바뀌는 여백을 값으로 붙잡으면 오래된 값이
     // 화면에 남는다. 상태로 넘겨 화면이 그릴 때마다 현재 값을 읽게 한다.
@@ -155,7 +168,15 @@ private fun MainTabsContent(
         }
     val myEntries =
         rememberTabEntries(backStacks.getValue(MainTab.MY)) {
-            entry<MyRoute> { MyScreen(contentPadding = padding.value) }
+            entry<MyRoute> {
+                MyScreen(
+                    contentPadding = padding.value,
+                    onOpenInvite = onOpenInvite,
+                    onOpenServiceInfo = onOpenServiceInfo,
+                    onOpenFeedback = onOpenFeedback,
+                    onOpenWithdrawal = onOpenWithdrawal,
+                )
+            }
         }
 
     val entries =

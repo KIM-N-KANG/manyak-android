@@ -80,7 +80,20 @@ data class ChatRoomRoute(
 ) : NavKey
 
 /**
- * 공용 법적 문서. **제품 백스택 밖에 두고 양쪽 백스택 모두에 등록해** 인증 상태와 무관하게 연다.
+ * 마이 탭의 하위 목적지들. 셸 없이 [MainTabsRoute] 위에 쌓이는 전체 화면이고,
+ * 뒤로가기는 마이 탭으로 돌아온다.
+ */
+@Serializable
+data object MyInviteRoute : NavKey
+
+@Serializable
+data object MyFeedbackRoute : NavKey
+
+@Serializable
+data object WithdrawalRoute : NavKey
+
+/**
+ * 웹이 정본인 공용 문서. **제품 백스택 밖에 두고 양쪽 백스택 모두에 등록해** 인증 상태와 무관하게 연다.
  * 뒤로가기는 진입한 화면으로 돌아가고, 여기서 임의의 메인 목적지로 이동하는 경로는 두지 않는다.
  */
 @Serializable
@@ -91,4 +104,7 @@ data class LegalRoute(
 enum class LegalDocument {
     TERMS,
     PRIVACY,
+
+    /** 서비스 안내. 법적 문서는 아니지만 같은 웹 문서 화면으로 연다. */
+    ABOUT,
 }

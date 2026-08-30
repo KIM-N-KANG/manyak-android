@@ -210,6 +210,28 @@
     </string-array>
 
     <!-- 마이 -->
+    <string name="my_credit_label">내 크레딧</string>
+    <string name="my_attendance_check">출석 체크</string>
+    <string name="my_attendance_done">출석 완료</string>
+    <string name="my_attendance_in_progress">출석 체크 중</string>
+    <string name="my_attendance_claimed">출석 체크 보상으로 %1$d 크레딧을 받았어요</string>
+    <string name="my_attendance_already">오늘은 이미 출석 체크했어요</string>
+    <string name="my_attendance_failed">출석 체크에 실패했어요</string>
+    <string name="my_section_event">이벤트</string>
+    <string name="my_section_display">화면</string>
+    <string name="my_section_etc">기타</string>
+    <string name="my_section_account">계정</string>
+    <string name="my_invite">친구 초대</string>
+    <string name="my_provider_google">Google</string>
+    <string name="my_provider_kakao">카카오</string>
+    <string name="my_theme">테마 변경</string>
+    <string name="my_theme_system">시스템 설정</string>
+    <string name="my_theme_light">라이트 모드</string>
+    <string name="my_theme_dark">다크 모드</string>
+    <string name="my_service_info">서비스 안내</string>
+    <string name="my_feedback">피드백</string>
+    <string name="my_withdrawal">회원 탈퇴</string>
+    <string name="my_under_construction">아직 구현 중인 기능이에요</string>
     <string name="my_logout">로그아웃</string>
     <string name="my_logout_in_progress">로그아웃하는 중</string>
 

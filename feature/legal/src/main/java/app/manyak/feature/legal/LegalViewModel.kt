@@ -21,8 +21,6 @@ data class LegalUiState(
     val url: String,
     /** 이 호스트 밖으로는 이동하지 않는다. */
     val allowedHost: String?,
-    /** 이 경로를 벗어나면 문서를 떠난 것으로 보고 화면을 닫는다. */
-    val documentPath: String?,
     val isLoading: Boolean = true,
     val hasError: Boolean = false,
     /** 재시도할 때마다 올린다. WebView 는 이 값이 바뀌면 다시 읽는다. */
@@ -49,12 +47,10 @@ class LegalViewModel
     ) : MviViewModel<LegalIntent, LegalUiState, LegalEvent, Nothing>(
             initialState =
                 urlProvider.urlFor(document).let { url ->
-                    val parsed = Uri.parse(url)
                     LegalUiState(
                         document = document,
                         url = url,
-                        allowedHost = parsed.host,
-                        documentPath = parsed.path,
+                        allowedHost = Uri.parse(url).host,
                     )
                 },
         ) {

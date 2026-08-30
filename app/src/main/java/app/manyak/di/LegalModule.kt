@@ -24,6 +24,7 @@ object LegalModule {
                 when (document) {
                     LegalDocument.TERMS -> "${BuildConfig.WEB_BASE_URL}/terms"
                     LegalDocument.PRIVACY -> "${BuildConfig.WEB_BASE_URL}/privacy"
+                    LegalDocument.ABOUT -> "${BuildConfig.WEB_BASE_URL}/about"
                 }
         }
 }
