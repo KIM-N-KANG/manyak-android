@@ -32,7 +32,7 @@ data class AdditionalInfoStoryline(
 
 /**
  * 완성 실패 사유. 앱은 로그인 필수라 402 는 회원 크레딧 부족뿐이며, 크레딧 획득 UI 가
- * 생기기 전까지 문구만 구분해 안내한다.
+ * 생기기 전까지 토스트 문구만 구분해 안내한다.
  */
 enum class CompletionFailure {
     GENERAL,
@@ -57,7 +57,6 @@ data class CreateAdditionalInfoUiState(
     val nextInputId: Long = INITIAL_INPUT_COUNT.toLong(),
     /** 완성 요청 진행 중. 입력 화면 대신 완성 로딩을 그린다. */
     val isCompletingStory: Boolean = false,
-    val completionFailure: CompletionFailure? = null,
     /** 이탈을 막고 띄운 경고. */
     val exitWarning: FunnelExitWarning? = null,
     /** "다시 선택하기"가 추가 정보를 버린다고 알리는 중. */
@@ -136,9 +135,7 @@ sealed interface CreateAdditionalInfoEvent {
 
     data object CompletionStarted : CreateAdditionalInfoEvent
 
-    data class CompletionFailed(
-        val failure: CompletionFailure,
-    ) : CreateAdditionalInfoEvent
+    data object CompletionFailed : CreateAdditionalInfoEvent
 
     /** 프로세스 재시작·재개 진입 복원으로 생성 결과·입력 스냅숏이 늦게 도착했다. */
     data class SnapshotRestored(
@@ -158,6 +155,11 @@ sealed interface CreateAdditionalInfoEffect {
     /** 완성 성공 — 생성된 채팅방으로 진입하며 퍼널을 닫는다(웹의 채팅 화면 `replace` 대응). */
     data class EnterChatAfterCompletion(
         val chatId: String,
+    ) : CreateAdditionalInfoEffect
+
+    /** 완성 실패 안내. 사유에 따라 문구만 다르다. */
+    data class ShowCompletionFailure(
+        val failure: CompletionFailure,
     ) : CreateAdditionalInfoEffect
 
     /** 퍼널 이탈 확정. */
@@ -258,12 +260,12 @@ class CreateAdditionalInfoViewModel
                             }
 
                             is CreationRequestSnapshot.StorylinesReady -> {
-                                finishRecoveryAsFailure()
+                                failCompletion(CompletionFailure.GENERAL, restoreDraft = true)
                                 return
                             }
 
                             CreationRequestSnapshot.Failed -> {
-                                finishRecoveryAsFailure()
+                                failCompletion(CompletionFailure.GENERAL, restoreDraft = true)
                                 return
                             }
                         }
@@ -272,7 +274,7 @@ class CreateAdditionalInfoViewModel
                         // 폴링은 읽기라 네트워크 단절은 다음 주기로 넘기고, 404 를 포함한
                         // 서버 응답 실패는 기존 완성 실패 처리로 합류한다.
                         if (result.error !is DomainError.Network) {
-                            finishRecoveryAsFailure()
+                            failCompletion(CompletionFailure.GENERAL, restoreDraft = true)
                             return
                         }
                 }
@@ -280,9 +282,14 @@ class CreateAdditionalInfoViewModel
             }
         }
 
-        private suspend fun finishRecoveryAsFailure() {
-            storylineGenerationStore.restoreDraftAfterCompletionFailure()
-            dispatchEvent(CreateAdditionalInfoEvent.CompletionFailed(CompletionFailure.GENERAL))
+        /** 입력 화면으로 되돌리고 실패를 알린다. [restoreDraft] 는 재료를 임시 저장으로 되살린다. */
+        private suspend fun failCompletion(
+            failure: CompletionFailure,
+            restoreDraft: Boolean = false,
+        ) {
+            if (restoreDraft) storylineGenerationStore.restoreDraftAfterCompletionFailure()
+            dispatchEvent(CreateAdditionalInfoEvent.CompletionFailed)
+            dispatchEffect(CreateAdditionalInfoEffect.ShowCompletionFailure(failure))
         }
 
         override suspend fun handleIntent(intent: CreateAdditionalInfoIntent) {
@@ -442,19 +449,15 @@ class CreateAdditionalInfoViewModel
 
                 // 상태 코드로 응답한 실패는 복구 대상이 아니라 레코드를 지운다. 응답을 못 받은
                 // 네트워크 오류만 보존한다(3-1 정리 규칙).
-                error is DomainError.Network ->
-                    dispatchEvent(CreateAdditionalInfoEvent.CompletionFailed(error.toCompletionFailure()))
+                error is DomainError.Network -> failCompletion(error.toCompletionFailure())
 
-                else -> {
-                    storylineGenerationStore.restoreDraftAfterCompletionFailure()
-                    dispatchEvent(CreateAdditionalInfoEvent.CompletionFailed(error.toCompletionFailure()))
-                }
+                else -> failCompletion(error.toCompletionFailure(), restoreDraft = true)
             }
         }
 
         /**
-         * 완성 흐름의 마지막 단계 — 채팅을 만들어 바로 진입한다. 실패는 완성 실패와 같은 인라인
-         * 오류이며, 스토리가 이미 완성됐으므로 레코드는 남겨 재진입 복구가 채팅 생성으로 이어지게 한다.
+         * 완성 흐름의 마지막 단계 — 채팅을 만들어 바로 진입한다. 실패는 완성 실패와 같은 안내이며,
+         * 스토리가 이미 완성됐으므로 레코드는 남겨 재진입 복구가 채팅 생성으로 이어지게 한다.
          */
         private suspend fun startChat(storyId: String) {
             when (val result = chatRepository.createChat(storyId)) {
@@ -465,8 +468,7 @@ class CreateAdditionalInfoViewModel
                     dispatchEffect(CreateAdditionalInfoEffect.EnterChatAfterCompletion(result.value.id))
                 }
 
-                is DomainResult.Failure ->
-                    dispatchEvent(CreateAdditionalInfoEvent.CompletionFailed(CompletionFailure.GENERAL))
+                is DomainResult.Failure -> failCompletion(CompletionFailure.GENERAL)
             }
         }
 
@@ -502,11 +504,9 @@ class CreateAdditionalInfoViewModel
                             },
                     )
 
-                CreateAdditionalInfoEvent.CompletionStarted ->
-                    state.copy(isCompletingStory = true, completionFailure = null)
+                CreateAdditionalInfoEvent.CompletionStarted -> state.copy(isCompletingStory = true)
 
-                is CreateAdditionalInfoEvent.CompletionFailed ->
-                    state.copy(isCompletingStory = false, completionFailure = event.failure)
+                CreateAdditionalInfoEvent.CompletionFailed -> state.copy(isCompletingStory = false)
 
                 is CreateAdditionalInfoEvent.SnapshotRestored ->
                     // 복원 스냅숏이 늦게 도착하는 동안 화면 조작은 불가능했으므로 통째로 대체한다.
@@ -514,7 +514,6 @@ class CreateAdditionalInfoViewModel
                     event.snapshot.copy(
                         isRestoring = false,
                         isCompletingStory = state.isCompletingStory,
-                        completionFailure = state.completionFailure,
                         exitWarning = state.exitWarning,
                         showReselectWarningDialog = state.showReselectWarningDialog,
                     )

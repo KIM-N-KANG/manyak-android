@@ -2,6 +2,7 @@ package app.manyak.feature.create
 
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -91,6 +92,11 @@ fun CreateAdditionalInfoScreen(
                             .show()
                         currentOnEnterChat(effect.chatId)
                     }
+
+                    is CreateAdditionalInfoEffect.ShowCompletionFailure ->
+                        Toast
+                            .makeText(context, effect.failure.messageRes(), Toast.LENGTH_SHORT)
+                            .show()
 
                     is CreateAdditionalInfoEffect.ExitFunnel -> currentOnLeaveFunnel()
 
@@ -233,9 +239,6 @@ private fun AdditionalInfoList(
                 )
             }
         }
-        state.completionFailure?.let { failure ->
-            item { CompletionFailureNotice(failure = failure) }
-        }
         item { Spacer(modifier = Modifier.height(ManyakTheme.spacing.gutter)) }
     }
 }
@@ -274,29 +277,13 @@ private fun FollowNewInput(
     }
 }
 
-/** 완성 실패 인라인 오류. 재시도는 "스토리 완성하기"를 다시 누르는 것이다. */
-@Composable
-private fun CompletionFailureNotice(
-    failure: CompletionFailure,
-    modifier: Modifier = Modifier,
-) {
-    Text(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .padding(horizontal = ManyakTheme.spacing.gutter)
-                .padding(top = ManyakTheme.spacing.gutter),
-        text =
-            stringResource(
-                when (failure) {
-                    CompletionFailure.CREDIT -> R.string.create_completion_error_credit
-                    CompletionFailure.GENERAL -> R.string.create_completion_error
-                },
-            ),
-        style = ManyakTheme.typography.bodyMedium,
-        color = ManyakTheme.colors.textDanger,
-    )
-}
+/** 완성 실패 토스트 문구. 재시도는 "스토리 완성하기"를 다시 누르는 것이다. */
+@StringRes
+private fun CompletionFailure.messageRes(): Int =
+    when (this) {
+        CompletionFailure.CREDIT -> R.string.create_completion_error_credit
+        CompletionFailure.GENERAL -> R.string.create_completion_error
+    }
 
 @Composable
 private fun AdditionalInfoStepTitle(modifier: Modifier = Modifier) {

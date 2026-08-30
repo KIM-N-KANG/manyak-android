@@ -140,7 +140,10 @@ class CreateAdditionalInfoViewModelTest {
             advanceUntilIdle()
 
             assertFalse(viewModel.uiState.value.isCompletingStory)
-            assertEquals(CompletionFailure.GENERAL, viewModel.uiState.value.completionFailure)
+            assertEquals(
+                CreateAdditionalInfoEffect.ShowCompletionFailure(CompletionFailure.GENERAL),
+                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
+            )
 
             viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
             advanceUntilIdle()
@@ -163,9 +166,12 @@ class CreateAdditionalInfoViewModelTest {
             viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
             advanceUntilIdle()
 
-            // 채팅 생성 실패는 완성 실패와 같은 인라인 오류로 안내한다.
+            // 채팅 생성 실패는 완성 실패와 같은 토스트로 안내한다.
             assertFalse(viewModel.uiState.value.isCompletingStory)
-            assertEquals(CompletionFailure.GENERAL, viewModel.uiState.value.completionFailure)
+            assertEquals(
+                CreateAdditionalInfoEffect.ShowCompletionFailure(CompletionFailure.GENERAL),
+                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
+            )
 
             viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
             advanceUntilIdle()
@@ -213,7 +219,10 @@ class CreateAdditionalInfoViewModelTest {
             viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
             advanceUntilIdle()
 
-            assertEquals(CompletionFailure.CREDIT, viewModel.uiState.value.completionFailure)
+            assertEquals(
+                CreateAdditionalInfoEffect.ShowCompletionFailure(CompletionFailure.CREDIT),
+                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
+            )
             assertTrue(fixture.pendingStore.current is PendingStoryCreation.Draft)
         }
 
