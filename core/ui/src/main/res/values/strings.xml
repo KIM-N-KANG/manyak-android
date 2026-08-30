@@ -229,14 +229,14 @@
     <string name="my_provider_kakao">카카오</string>
 
     <!-- 신규 가입 초대 코드 안내 -->
-    <string name="invite_onboarding_title">초대 코드를 등록하면\n500 크레딧을 받을 수 있어요</string>
+    <string name="invite_onboarding_title">초대 코드를 등록하면\n2,000 크레딧을 받을 수 있어요</string>
     <string name="invite_onboarding_description">지금은 건너뛰고 나중에 등록해도 돼요</string>
     <string name="invite_code_label">초대 코드</string>
     <string name="invite_code_placeholder">예: ABCD1234</string>
     <string name="invite_onboarding_skip">닫기</string>
     <string name="invite_onboarding_submit">등록하기</string>
     <string name="invite_onboarding_submitting">등록 중</string>
-    <string name="invite_code_redeemed">친구 초대 보상으로 500 크레딧을 받았어요</string>
+    <string name="invite_code_redeemed">친구 초대 보상으로 2,000 크레딧을 받았어요</string>
     <string name="invite_code_error_empty">코드를 입력해주세요</string>
     <string name="invite_code_error_not_found">코드를 다시 확인해주세요</string>
     <string name="invite_code_error_self">내 코드는 입력할 수 없어요</string>
