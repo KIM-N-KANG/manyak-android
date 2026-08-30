@@ -12,6 +12,8 @@ import app.manyak.core.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeSource
 
 sealed interface MyIntent {
     data object LogOut : MyIntent
@@ -71,6 +73,9 @@ class MyViewModel
         private val creditRepository: CreditRepository,
         private val themePreferenceRepository: ThemePreferenceRepository,
     ) : MviViewModel<MyIntent, MyUiState, MyEvent, MyEffect>(MyUiState()) {
+        /** 마지막으로 프로필을 다시 읽은 시점. 없으면 아직 한 번도 읽지 않았다. */
+        private var lastRefreshMark: TimeSource.Monotonic.ValueTimeMark? = null
+
         init {
             viewModelScope.launch {
                 userProfileRepository.profile.collect { profile -> dispatchEvent(MyEvent.ProfileChanged(profile)) }
@@ -78,16 +83,12 @@ class MyViewModel
             viewModelScope.launch {
                 themePreferenceRepository.themeMode.collect { mode -> dispatchEvent(MyEvent.ThemeModeChanged(mode)) }
             }
-            // 잔액·출석 여부는 다른 화면에서 바뀔 수 있어 진입 시 한 번 새로 읽는다.
-            // 화면(LaunchedEffect)이 아니라 여기서 시작해 구성 변경마다 반복되지 않게 한다.
-            onIntent(MyIntent.Refresh)
         }
 
         override suspend fun handleIntent(intent: MyIntent) {
             when (intent) {
                 MyIntent.LogOut -> logOut()
-                // 실패는 캐시된 값을 그대로 두는 것으로 흡수한다. 세션 상태를 바꾸지 않는다.
-                MyIntent.Refresh -> userProfileRepository.refresh()
+                MyIntent.Refresh -> refreshProfileIfStale()
                 MyIntent.ClaimAttendance -> claimAttendance()
                 MyIntent.CycleTheme -> themePreferenceRepository.setThemeMode(uiState.value.themeMode.next())
             }
@@ -105,6 +106,26 @@ class MyViewModel
                 MyEvent.LogOutStarted -> state.copy(isLoggingOut = true)
             }
 
+        /**
+         * 화면이 다시 보일 때의 갱신.
+         *
+         * 잔액·출석 여부는 채팅·제작에서 바뀌므로 탭에 들어올 때마다 다시 읽어야 한다. ViewModel 은
+         * 탭을 옮겨도 살아 있어 생성 시점에 한 번 읽는 것으로는 낡은 값이 남는다.
+         *
+         * 다만 같은 요청이 구성 변경(회전·다크 모드)으로도 오므로 방금 읽었으면 건너뛴다.
+         */
+        private suspend fun refreshProfileIfStale() {
+            val lastRefresh = lastRefreshMark
+            if (lastRefresh != null && lastRefresh.elapsedNow() < REFRESH_MIN_INTERVAL) return
+            refreshProfile()
+        }
+
+        /** 실패는 캐시된 값을 그대로 두는 것으로 흡수한다. 세션 상태를 바꾸지 않는다. */
+        private suspend fun refreshProfile() {
+            lastRefreshMark = TimeSource.Monotonic.markNow()
+            userProfileRepository.refresh()
+        }
+
         private suspend fun claimAttendance() {
             if (uiState.value.isClaimingAttendance) return
             dispatchEvent(MyEvent.AttendanceStarted)
@@ -116,7 +137,8 @@ class MyViewModel
                         dispatchEffect(MyEffect.AttendanceAlreadyDone)
                     }
                     // 잔액·출석 여부는 프로필이 정본이라 지급 결과를 직접 더하지 않고 다시 읽는다.
-                    userProfileRepository.refresh()
+                    // 방금 읽었더라도 지급 결과는 반드시 반영해야 하므로 간격을 보지 않는다.
+                    refreshProfile()
                 }
 
                 is DomainResult.Failure -> dispatchEffect(MyEffect.AttendanceFailed)
@@ -128,5 +150,10 @@ class MyViewModel
             if (uiState.value.isLoggingOut) return
             dispatchEvent(MyEvent.LogOutStarted)
             sessionRepository.signOut()
+        }
+
+        private companion object {
+            /** 구성 변경이 만드는 재요청을 흡수하는 최소 간격. 사람이 화면을 오가는 간격보다 짧다. */
+            val REFRESH_MIN_INTERVAL = 5.seconds
         }
     }

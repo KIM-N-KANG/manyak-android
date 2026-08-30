@@ -58,6 +58,14 @@ fun MyScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
 
+    // 잔액·출석 여부는 채팅·제작에서 바뀌므로 화면이 다시 보일 때마다 새로 읽는다. ViewModel 은 탭을
+    // 옮겨도 살아 있어(탭별 백스택이 목적지를 계속 들고 있다) 생성 시점 한 번으로는 낡은 값이 남는다.
+    LaunchedEffect(viewModel, lifecycleOwner) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            viewModel.onIntent(MyIntent.Refresh)
+        }
+    }
+
     LaunchedEffect(viewModel, lifecycleOwner) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
             viewModel.uiEffect.collect { effect ->
