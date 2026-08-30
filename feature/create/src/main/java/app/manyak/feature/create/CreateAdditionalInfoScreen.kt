@@ -17,17 +17,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -38,6 +42,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ScrollEdgeFade
 import app.manyak.core.ui.theme.ManyakTheme
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * 추가 정보 단계. 앱 바 닫기와 디바이스 뒤로가기는 퍼널 이탈(홈 복귀)이고, 스토리라인
@@ -187,13 +193,11 @@ private fun AdditionalInfoList(
     val storyline = state.storylines.getOrNull(storylineIndex)
     val storylineText = storyline?.text.orEmpty()
     val recommendations = storyline?.recommendedInfos.orEmpty()
-    val placeholders = stringArrayResource(R.array.create_additional_placeholders)
-    val rowPadding =
-        Modifier
-            .padding(horizontal = ManyakTheme.spacing.gutter)
-            .padding(bottom = ManyakTheme.spacing.compact)
+    val horizontalPadding = Modifier.padding(horizontal = ManyakTheme.spacing.gutter)
+    val listState = rememberLazyListState()
+    FollowNewInput(count = state.additionalInfos.size, listState = listState)
 
-    LazyColumn(modifier = modifier) {
+    LazyColumn(modifier = modifier, state = listState) {
         item { AdditionalInfoStepTitle() }
         item { SelectedStorylineBox(text = storylineText) }
         item {
@@ -203,17 +207,19 @@ private fun AdditionalInfoList(
                 onToggle = { text -> onIntent(CreateAdditionalInfoIntent.ToggleRecommendation(text)) },
             )
         }
-        item { AdditionalInfoHeader(modifier = rowPadding) }
-        itemsIndexed(state.additionalInfos, key = { _, input -> input.id }) { index, input ->
-            AdditionalInfoRow(
-                modifier = rowPadding,
-                index = index,
-                input = input,
-                placeholder = placeholders[index % placeholders.size],
-                onValueChange = { value ->
-                    onIntent(CreateAdditionalInfoIntent.ChangeInput(input.id, value))
+        item {
+            AdditionalInfoHeader(
+                modifier = horizontalPadding.padding(bottom = ManyakTheme.spacing.compact),
+            )
+        }
+        item {
+            AdditionalInfoRows(
+                modifier = horizontalPadding,
+                inputs = state.additionalInfos,
+                onValueChange = { id, value ->
+                    onIntent(CreateAdditionalInfoIntent.ChangeInput(id, value))
                 },
-                onRemove = { onIntent(CreateAdditionalInfoIntent.RemoveInput(input.id)) },
+                onRemove = { id -> onIntent(CreateAdditionalInfoIntent.RemoveInput(id)) },
             )
         }
         item {
@@ -230,6 +236,40 @@ private fun AdditionalInfoList(
             item { CompletionFailureNotice(failure = failure) }
         }
         item { Spacer(modifier = Modifier.height(ManyakTheme.spacing.gutter)) }
+    }
+}
+
+/**
+ * 칸이 늘어나면 목록 끝을 따라간다. 새 칸은 목록 아래쪽에 생겨, 그대로 두면 "정보 추가" 버튼과 함께
+ * 푸터 밖으로 밀려 방금 무엇이 늘었는지 보이지 않는다.
+ *
+ * **자라는 프레임마다 곧바로 끝에 붙인다** — 스크롤을 따로 애니메이션하면 등장 애니메이션이 끝난
+ * 뒤에야 움직이기 시작해 누르고 한 박자 뒤에 반응하는 것처럼 보인다. 움직임은 칸이 자라는
+ * 애니메이션이 이미 만들고 있다.
+ *
+ * 등장이 끝날 때까지만 따라간다 — 그 뒤로도 붙잡으면 사용자가 위로 올린 스크롤을 되돌리게 된다.
+ * 구성 변경에서 다시 붙잡지 않도록 직전 개수는 saveable 로 든다.
+ */
+@Composable
+private fun FollowNewInput(
+    count: Int,
+    listState: LazyListState,
+) {
+    var lastCount by rememberSaveable { mutableIntStateOf(count) }
+    val millis = ManyakTheme.motion.elementEnterMillis
+    LaunchedEffect(count) {
+        val grew = count > lastCount
+        lastCount = count
+        if (!grew) return@LaunchedEffect
+        withTimeoutOrNull(millis * FOLLOW_TIMEOUT_FACTOR) {
+            while (isActive) {
+                withFrameNanos { }
+                // 마지막 항목을 향해 보내면 목록 끝에서 멈춰 바닥에 붙는다. 아직 측정 전이라 항목
+                // 수를 모르는 프레임은 건너뛴다 — 0 을 그대로 쓰면 목록이 맨 위로 튄다.
+                val lastIndex = listState.layoutInfo.totalItemsCount - 1
+                if (lastIndex >= 0) listState.scrollToItem(lastIndex)
+            }
+        }
     }
 }
 
@@ -359,3 +399,5 @@ private fun CreateAdditionalInfoScreenSelectedPreview() {
         )
     }
 }
+
+private const val FOLLOW_TIMEOUT_FACTOR = 2L
