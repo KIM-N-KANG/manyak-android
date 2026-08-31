@@ -297,6 +297,7 @@ private fun InviteRedeemSection(
                 MyPrimaryButton(
                     label = stringResource(R.string.invite_redeem_submit),
                     isLoading = state.isSubmitting,
+                    isCompact = true,
                     onClick = { onIntent(InviteIntent.Redeem) },
                 )
             }

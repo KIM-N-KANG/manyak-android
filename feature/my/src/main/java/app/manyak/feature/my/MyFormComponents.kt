@@ -26,9 +26,12 @@ import app.manyak.core.ui.component.ManyakProgressIndicator
 import app.manyak.core.ui.theme.ManyakTheme
 
 /**
- * 마이 하위 화면들의 폼 조각. 초대·피드백 두 화면이 같은 버튼과 입력창을 쓴다.
+ * 마이 하위 화면들의 폼 조각. 초대·피드백 두 화면이 같은 버튼을 쓴다.
  *
  * `:core:ui` 로 올리지 않는다 — 아직 이 모듈 밖에 쓰는 곳이 없다.
+ *
+ * @param isCompact 입력창 옆에 나란히 서는 버튼. 높이를 입력창과 같은 40dp 로 낮춘다 — 옆 칸보다
+ *   크면 한 줄로 읽히지 않는다. 최소 터치 타깃 48dp 에 못 미치는 것은 칩과 같은 예외로 수용한다.
  */
 @Composable
 @Suppress("LongParameterList")
@@ -38,10 +41,14 @@ internal fun MyPrimaryButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     isLoading: Boolean = false,
+    isCompact: Boolean = false,
     @DrawableRes iconRes: Int? = null,
 ) {
     Button(
-        modifier = modifier.heightIn(min = ManyakTheme.sizes.control),
+        modifier =
+            modifier.heightIn(
+                min = if (isCompact) ManyakTheme.sizes.input else ManyakTheme.sizes.control,
+            ),
         onClick = onClick,
         enabled = enabled && !isLoading,
         shape = ManyakTheme.shapes.control,
