@@ -488,7 +488,7 @@ components:
 | `{typography.body-large}` | 16sp | 400 | 24sp | 강조 본문·입력 필드 |
 | `{typography.body-reading}` | 16sp | 400 | 28sp | 스토리 본문 (MaruBuri · 자간 −2%) |
 | `{typography.body-reading-small}` | 14sp | 400 | 24.5sp | 짧은 서사 문장 — 추천 입력 (MaruBuri · 자간 −2%) |
-| `{typography.body-medium-strong}` | 14sp | 700 | 20sp | 라벨 옆에 세우는 값 — 비용 행의 크레딧 수치 |
+| `{typography.body-medium-strong}` | 14sp | 700 | 20sp | 라벨 옆에 세우는 값 — 비용 행의 이프 수치 |
 | `{typography.body-medium}` | 14sp | 400 | 20sp | 본문 기본 |
 | `{typography.label-large}` | 14sp | 500 | 20sp | 버튼·탭 라벨 |
 | `{typography.body-small}` | 12sp | 400 | 16sp | 메타 정보·보조 설명 |

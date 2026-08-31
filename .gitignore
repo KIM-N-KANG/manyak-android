@@ -1,6 +1,9 @@
 *.iml
 .gradle
 /local.properties
+# 업로드 키스토어
+*.jks
+*.keystore
 /.idea/caches
 /.idea/libraries
 /.idea/modules.xml

@@ -27,7 +27,7 @@ interface ChatApi {
     ): Response<ChatDetailResponseDto>
 
     /**
-     * 마지막 턴의 선택지를 생성해 저장한다. 이어쓰기와 달리 동기 JSON 이고 크레딧을 쓰지 않는다.
+     * 마지막 턴의 선택지를 생성해 저장한다. 이어쓰기와 달리 동기 JSON 이고 이프를 쓰지 않는다.
      * 이미 선택지가 있으면 AI 호출 없이 기존 값이 돌아온다.
      */
     @POST("chats/{chatId}/turns/{turnId}/choices")

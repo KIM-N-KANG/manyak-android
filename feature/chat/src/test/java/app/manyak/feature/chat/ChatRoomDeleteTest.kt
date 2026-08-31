@@ -93,9 +93,9 @@ class ChatRoomDeleteTest {
         }
 
     @Test
-    fun `402 는 낙관적 밴드를 걷고 크레딧 안내를 올린다`() =
+    fun `402 는 낙관적 밴드를 걷고 이프 안내를 올린다`() =
         runTest(dispatcher) {
-            // 앱은 로그인 필수라 402 의 사유가 크레딧 부족 하나뿐이다.
+            // 앱은 로그인 필수라 402 의 사유가 이프 부족 하나뿐이다.
             val repository = FakeChatRepository()
             val viewModel = streaming(repository)
 

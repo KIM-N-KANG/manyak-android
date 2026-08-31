@@ -5,6 +5,6 @@ package app.manyak.core.domain.credit
  */
 data class AttendanceResult(
     val rewarded: Boolean,
-    /** 지급된 크레딧. [rewarded] 가 false 면 null 이다. */
+    /** 지급된 이프. [rewarded] 가 false 면 null 이다. */
     val amount: Long?,
 )
