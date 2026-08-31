@@ -7,6 +7,9 @@ import org.junit.Test
 
 private const val IMAGE_URL = "https://cdn.manyak.app/characters/generated/watchmaker.png"
 
+private const val ORIGINAL_IMAGE_URL =
+    "https://dev-cdn.manyak.app/characters/originals/cca6358a-0ef3-4709-88d1-100b9faeeca8/오만수_561c77ff.webp"
+
 class ChatMessageSegmentsTest {
     @Test
     fun `마커가 없으면 본문 전체가 텍스트 한 조각이다`() {
@@ -75,9 +78,26 @@ class ChatMessageSegmentsTest {
     }
 
     @Test
-    fun `운영과 개발 CDN 의 생성 인물 경로만 허용한다`() {
+    fun `오리지널 스토리의 인물 이미지도 그대로 이미지가 된다`() {
+        // 오리지널 스토리는 originals 경로로 오고 파일 이름에 한글이 섞인다.
+        val content = "문이 열린다.\n[[$ORIGINAL_IMAGE_URL]]\n\n오만수: 규칙 둘, 창문에 비친 것."
+
+        assertEquals(
+            listOf(
+                ChatMessageSegment.Text("문이 열린다."),
+                ChatMessageSegment.CharacterImage(name = "오만수", imageUrl = ORIGINAL_IMAGE_URL),
+                ChatMessageSegment.Text("오만수: 규칙 둘, 창문에 비친 것."),
+            ),
+            parseChatMessageSegments(content),
+        )
+    }
+
+    @Test
+    fun `운영과 개발 CDN 의 생성 · 오리지널 인물 경로만 허용한다`() {
         assertTrue(isAllowedChatCharacterImageUrl(IMAGE_URL))
         assertTrue(isAllowedChatCharacterImageUrl("https://dev-cdn.manyak.app/characters/generated/a.png"))
+        assertTrue(isAllowedChatCharacterImageUrl(ORIGINAL_IMAGE_URL))
+        assertTrue(isAllowedChatCharacterImageUrl("https://cdn.manyak.app/characters/originals/a.png"))
 
         // 다른 호스트·평문·포트·자격 증명·다른 경로는 모두 막는다.
         assertFalse(isAllowedChatCharacterImageUrl("https://cdn.manyak.app.evil.example/characters/generated/a.png"))
@@ -86,6 +106,7 @@ class ChatMessageSegmentsTest {
         assertFalse(isAllowedChatCharacterImageUrl("https://user:pw@cdn.manyak.app/characters/generated/a.png"))
         assertFalse(isAllowedChatCharacterImageUrl("https://cdn.manyak.app/covers/a.png"))
         assertFalse(isAllowedChatCharacterImageUrl("https://cdn.manyak.app/characters/generated/"))
+        assertFalse(isAllowedChatCharacterImageUrl("https://cdn.manyak.app/characters/originals/"))
         assertFalse(isAllowedChatCharacterImageUrl("주소가 아님"))
     }
 
