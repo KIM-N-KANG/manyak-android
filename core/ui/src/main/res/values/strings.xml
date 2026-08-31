@@ -94,8 +94,6 @@
     <string name="create_add_keyword_placeholder_protagonist">예: 사랑에 서툰, 타인을 믿지 못하는</string>
     <string name="create_add_keyword_placeholder_supporting_character">예: 상냥해서 더 위험한, 어딘가 망가진</string>
     <string name="create_add_keyword_error_empty">키워드를 입력해주세요</string>
-    <!-- %1$d 는 현재 글자 수, %2$d 는 상한. 키워드·인물 이름 입력의 카운터에 함께 쓴다. -->
-    <string name="create_input_counter">%1$d / %2$d</string>
     <string name="create_dialog_close">닫기</string>
     <string name="create_dialog_add">추가하기</string>
     <string name="create_name_placeholder_protagonist">예: 서지우</string>
@@ -231,6 +229,25 @@
     <string name="my_provider_google">Google</string>
     <string name="my_provider_kakao">카카오</string>
 
+    <!-- 계정 연동 -->
+    <string name="my_link_section">연동된 계정</string>
+    <!-- %1$s 는 연동할 제공자 이름. -->
+    <string name="my_link_button">%1$s 연동하기</string>
+    <string name="my_link_confirm_title">%1$s 계정을 연동할까요?</string>
+    <!-- %1$s·%2$s 는 두 제공자 이름이며 카카오·Google 순서로 고정한다. -->
+    <string name="my_link_confirm_benefit">%1$s와 %2$s 중 어느 쪽으로 로그인해도 같은 마냑 계정을 이용할 수 있어요</string>
+    <!-- %1$s 는 다시 인증할 현재 제공자, %2$s 는 새로 연동할 제공자. -->
+    <string name="my_link_confirm_reauth">보안을 위해 %1$s 계정을 다시 인증한 뒤 %2$s 계정을 연동해요</string>
+    <string name="my_link_confirm_irreversible">한 번 연동하면 해제할 수 없어요</string>
+    <string name="my_link_confirm_cancel">닫기</string>
+    <string name="my_link_confirm_action">연동하기</string>
+    <string name="my_link_succeeded">%1$s 계정을 연동했어요</string>
+    <string name="my_link_already_linked">이미 연동된 계정이에요</string>
+    <string name="my_link_failed">계정 연동에 실패했어요</string>
+    <string name="my_link_other_user_title">이미 다른 마냑 계정에 연동된 계정이에요</string>
+    <string name="my_link_other_user_reason">방금 인증한 소셜 계정은 이미 다른 마냑 계정에 연동되어 있어 지금 계정에는 연동할 수 없어요</string>
+    <string name="my_link_other_user_action_guide">그 마냑 계정을 쓰려면 로그아웃한 뒤 해당 소셜 계정으로 다시 로그인해주세요</string>
+
     <!-- 신규 가입 초대 코드 안내 -->
     <string name="invite_onboarding_title">초대 코드를 등록하면\n2,000 크레딧을 받을 수 있어요</string>
     <string name="invite_onboarding_description">지금은 건너뛰고 나중에 등록해도 돼요</string>
@@ -245,16 +262,84 @@
     <string name="invite_code_error_self">내 코드는 입력할 수 없어요</string>
     <string name="invite_code_error_already_redeemed">이미 초대 코드를 입력했어요</string>
     <string name="invite_code_error_failed">초대 코드 입력에 실패했어요</string>
+
+    <!-- 마이 하위 화면의 폼 공통 -->
+    <string name="form_required_mark">*</string>
+
+    <!-- 친구 초대 -->
+    <string name="invite_title">친구를 초대하고\n함께 크레딧을 받아보세요</string>
+    <string name="invite_description">친구가 내 초대 코드를 등록하면 모두 2,000 크레딧을 받아요</string>
+    <string name="invite_my_code">내 초대 코드</string>
+    <string name="invite_code_load_failed">초대 코드를 불러오지 못했어요</string>
+    <string name="invite_retry">다시 시도하기</string>
+    <string name="invite_retrying">다시 시도 중...</string>
+    <!-- %1$d 는 이번 달 받은 보상 횟수, %2$d 는 월 상한. 상한은 정책 값이라 서버 응답이 싣는다. -->
+    <string name="invite_monthly_reward">이번 달 받은 보상 %1$d/%2$d회</string>
+    <string name="invite_copy_code">코드 복사하기</string>
+    <string name="invite_share">공유하기</string>
+    <string name="invite_code_copied">초대 코드를 복사했어요</string>
+    <string name="invite_code_copy_failed">초대 코드 복사에 실패했어요</string>
+    <string name="invite_share_failed">공유를 열지 못했어요</string>
+    <string name="invite_share_subject">초대 코드 등록하고 2,000 크레딧 받기 🎁</string>
+    <!-- %1$s 는 내 초대 코드, %2$s 는 웹 주소. 공유 시트에 실리는 본문이다. -->
+    <string name="invite_share_message">초대 코드 등록하고 2,000 크레딧 받기 🎁\n초대 코드: %1$s\n%2$s</string>
+    <string name="invite_redeem_title">받은 초대 코드가 있나요?</string>
+    <string name="invite_redeem_submit">등록</string>
+    <string name="invite_redeem_submitting">초대 코드 등록 중</string>
+    <string name="invite_guide_title">이용 안내</string>
+    <string-array name="invite_guide_lines">
+        <item>초대 보상은 매월 최대 10회까지 받을 수 있으며, 매월 1일 초기화돼요. (한국 시간 기준)</item>
+        <item>초대 코드는 계정당 한 번 입력할 수 있어요.</item>
+        <item>보상으로 받은 크레딧은 적립일부터 30일 동안 사용할 수 있어요.</item>
+        <item>본 이벤트는 사전 고지 없이 변경되거나 종료될 수 있어요.</item>
+    </string-array>
+
+    <!-- 회원 탈퇴 -->
+    <string name="withdrawal_title">탈퇴하기 전에\n아래 내용을 모두 확인해주세요</string>
+    <string name="withdrawal_description">모든 항목을 확인해야 탈퇴할 수 있어요</string>
+    <string name="withdrawal_confirm_credit">남은 크레딧을 더 이상 사용할 수 없음을 확인했어요.</string>
+    <string name="withdrawal_confirm_credit_description">탈퇴 후 잔여 크레딧은 환불되거나 새 계정으로 이전되지 않아요.</string>
+    <string name="withdrawal_confirm_library">기존 스토리와 채팅을 다시 이용할 수 없음을 확인했어요.</string>
+    <string name="withdrawal_confirm_library_description">탈퇴한 계정의 서재는 복구하거나 새 계정으로 옮길 수 없어요.</string>
+    <string name="withdrawal_confirm_published">공개한 콘텐츠가 탈퇴 후에도 남을 수 있음을 확인했어요.</string>
+    <string name="withdrawal_confirm_published_description">공개 스토리는 작성자가 ‘탈퇴한 사용자’로 표시되며, 공유한 채팅은 기존 링크로 계속 볼 수 있어요.</string>
+    <string name="withdrawal_confirm_social_login">같은 소셜 계정으로 다시 로그인해도 기존 계정이 복구되지 않음을 확인했어요.</string>
+    <string name="withdrawal_confirm_social_login_description">다시 로그인하면 새 계정이 만들어지며 기존 콘텐츠와 크레딧은 복구되지 않아요.</string>
+    <string name="withdrawal_submit">회원 탈퇴하기</string>
+    <string name="withdrawal_submitting">회원 탈퇴 중</string>
+    <string name="withdrawal_failed">회원 탈퇴에 실패했어요</string>
+
+    <!-- 피드백 -->
+    <string name="feedback_title">써보면서 아쉬웠던 점이 있나요?\n불편한 점이나 바라는 기능을 알려주세요</string>
+    <string name="feedback_description">보내주신 피드백은 다음 개선에 꼼꼼히 참고할게요</string>
+    <string name="feedback_body_label">피드백 내용</string>
+    <string name="feedback_body_placeholder">예: 이런 점이 불편했어요, 이런 기능이 있으면 좋겠어요</string>
+    <string name="feedback_email_label">답변 받을 이메일</string>
+    <string name="feedback_email_placeholder">예: contact@manyak.app</string>
+    <string name="feedback_email_description">답변이 필요하시면 이메일을 남겨주세요</string>
+    <string name="feedback_submit">피드백 보내기</string>
+    <string name="feedback_submitting">피드백 전송 중</string>
+    <string name="feedback_error_empty">피드백 내용을 입력해주세요</string>
+    <string name="feedback_error_email">이메일 형식을 확인해주세요</string>
+    <string name="feedback_submitted">소중한 피드백을 보내주셔서 감사해요</string>
+    <string name="feedback_submit_failed">피드백 전송에 실패했어요</string>
     <string name="my_theme">테마 변경</string>
     <string name="my_theme_system">시스템 설정</string>
     <string name="my_theme_light">라이트 모드</string>
     <string name="my_theme_dark">다크 모드</string>
     <string name="my_service_info">서비스 안내</string>
     <string name="my_feedback">피드백</string>
+    <string name="my_open_source_license">오픈소스 라이선스</string>
+    <string name="my_app_version">버전 정보</string>
+    <string name="my_app_version_unknown">알 수 없음</string>
     <string name="my_withdrawal">회원 탈퇴</string>
-    <string name="my_under_construction">아직 구현 중인 기능이에요</string>
     <string name="my_logout">로그아웃</string>
     <string name="my_logout_in_progress">로그아웃하는 중</string>
+
+    <!-- 오픈소스 라이선스 -->
+    <string name="open_source_description">마냑은 다음 오픈소스 소프트웨어를 사용합니다.</string>
+    <string name="open_source_license_expand">전문 보기</string>
+    <string name="open_source_license_collapse">전문 접기</string>
 
     <!-- 세션 종료 안내 -->
     <string name="session_ended_reauthentication_required">로그인이 만료되어 다시 로그인해야 해요</string>
@@ -371,6 +456,8 @@
     <string name="error_unknown">문제가 생겼어요. 다시 시도해주세요</string>
 
     <!-- 공통 -->
+    <!-- %1$d 는 현재 글자 수, %2$d 는 상한. 입력 상한이 있는 모든 입력창이 함께 쓴다. -->
+    <string name="input_counter">%1$d / %2$d</string>
     <string name="common_back">뒤로</string>
     <string name="common_retry">다시 시도</string>
     <string name="common_confirm">확인</string>

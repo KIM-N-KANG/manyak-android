@@ -90,6 +90,9 @@ data object MyInviteRoute : NavKey
 data object MyFeedbackRoute : NavKey
 
 @Serializable
+data object MyOpenSourceLicenseRoute : NavKey
+
+@Serializable
 data object WithdrawalRoute : NavKey
 
 /**

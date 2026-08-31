@@ -1,9 +1,11 @@
 package app.manyak.core.data.repository
 
 import app.manyak.core.data.api.AuthApi
+import app.manyak.core.data.api.UserApi
 import app.manyak.core.data.api.apiCall
 import app.manyak.core.data.api.dto.SocialLoginRequestDto
 import app.manyak.core.data.api.dto.TokenResponseDto
+import app.manyak.core.data.api.emptyBodyApiCall
 import app.manyak.core.data.datastore.InviteOnboardingStore
 import app.manyak.core.data.di.ApplicationScope
 import app.manyak.core.data.provider.SocialIdTokenProvider
@@ -48,6 +50,7 @@ class SessionRepositoryImpl
     @Inject
     constructor(
         private val authApi: AuthApi,
+        private val userApi: UserApi,
         private val tokenManager: SessionTokenManager,
         private val tokenStorage: TokenStorage,
         private val providers: Map<AuthProvider, @JvmSuppressWildcards SocialIdTokenProvider>,
@@ -83,6 +86,13 @@ class SessionRepositoryImpl
         override suspend fun signOut() {
             // 종료를 여기서 기다리지 않는다. 이 코루틴이 인증 작업이면 장벽이 자기 자신을 기다리게 된다.
             sessionEndSignal.get().onSessionInvalidated(SessionEndNotice.USER_REQUESTED, null)
+        }
+
+        override suspend fun withdraw(): DomainResult<Unit> {
+            val result = emptyBodyApiCall { userApi.withdraw() }
+            // 실패하면 세션을 그대로 둔다 — 계정이 남았는데 기기에서만 로그아웃되면 안 된다.
+            if (result is DomainResult.Success) signOut()
+            return result
         }
 
         override suspend fun acknowledgeSessionEndNotice() {

@@ -1,7 +1,10 @@
 package app.manyak.feature.my
 
 import androidx.lifecycle.viewModelScope
+import app.manyak.core.domain.auth.AccountLinkRepository
+import app.manyak.core.domain.auth.AuthProvider
 import app.manyak.core.domain.credit.CreditRepository
+import app.manyak.core.domain.error.DomainError
 import app.manyak.core.domain.error.DomainResult
 import app.manyak.core.domain.session.SessionRepository
 import app.manyak.core.domain.settings.ThemeMode
@@ -10,6 +13,7 @@ import app.manyak.core.domain.user.UserProfile
 import app.manyak.core.domain.user.UserProfileRepository
 import app.manyak.core.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
@@ -23,6 +27,17 @@ sealed interface MyIntent {
     data object ClaimAttendance : MyIntent
 
     data object CycleTheme : MyIntent
+
+    /** 연동 확인 다이얼로그를 연다. 누르자마자 제공자 창을 열지 않는다. */
+    data class RequestAccountLink(
+        val target: AuthProvider,
+    ) : MyIntent
+
+    data object ConfirmAccountLink : MyIntent
+
+    data object DismissAccountLink : MyIntent
+
+    data object DismissLinkedToOtherUserNotice : MyIntent
 }
 
 data class MyUiState(
@@ -30,6 +45,10 @@ data class MyUiState(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val isClaimingAttendance: Boolean = false,
     val isLoggingOut: Boolean = false,
+    /** 확인 다이얼로그가 떠 있는 대상 제공자. 없으면 다이얼로그가 닫혀 있다. */
+    val accountLinkTarget: AuthProvider? = null,
+    val isLinkingAccount: Boolean = false,
+    val showsLinkedToOtherUserNotice: Boolean = false,
 )
 
 sealed interface MyEvent {
@@ -46,6 +65,20 @@ sealed interface MyEvent {
     data object AttendanceFinished : MyEvent
 
     data object LogOutStarted : MyEvent
+
+    data class AccountLinkRequested(
+        val target: AuthProvider,
+    ) : MyEvent
+
+    data object AccountLinkDismissed : MyEvent
+
+    data object AccountLinkStarted : MyEvent
+
+    data object AccountLinkFinished : MyEvent
+
+    data object LinkedToOtherUserNoticed : MyEvent
+
+    data object LinkedToOtherUserDismissed : MyEvent
 }
 
 sealed interface MyEffect {
@@ -56,6 +89,14 @@ sealed interface MyEffect {
     data object AttendanceAlreadyDone : MyEffect
 
     data object AttendanceFailed : MyEffect
+
+    data class AccountLinked(
+        val provider: AuthProvider,
+    ) : MyEffect
+
+    data object AccountAlreadyLinked : MyEffect
+
+    data object AccountLinkFailed : MyEffect
 }
 
 /**
@@ -72,9 +113,16 @@ class MyViewModel
         private val userProfileRepository: UserProfileRepository,
         private val creditRepository: CreditRepository,
         private val themePreferenceRepository: ThemePreferenceRepository,
+        private val accountLinkRepository: AccountLinkRepository,
     ) : MviViewModel<MyIntent, MyUiState, MyEvent, MyEffect>(MyUiState()) {
         /** 마지막으로 프로필을 다시 읽은 시점. 없으면 아직 한 번도 읽지 않았다. */
         private var lastRefreshMark: TimeSource.Monotonic.ValueTimeMark? = null
+
+        /**
+         * 진행 중인 연동 작업. 상태 플래그는 리듀서를 한 번 거친 뒤에야 참이 되므로, 빠른 연속 확인이
+         * 제공자 창을 두 번 여는 것은 이 참조로 막는다.
+         */
+        private var accountLinkJob: Job? = null
 
         init {
             viewModelScope.launch {
@@ -91,6 +139,10 @@ class MyViewModel
                 MyIntent.Refresh -> refreshProfileIfStale()
                 MyIntent.ClaimAttendance -> claimAttendance()
                 MyIntent.CycleTheme -> themePreferenceRepository.setThemeMode(uiState.value.themeMode.next())
+                is MyIntent.RequestAccountLink -> dispatchEvent(MyEvent.AccountLinkRequested(intent.target))
+                MyIntent.ConfirmAccountLink -> startAccountLink()
+                MyIntent.DismissAccountLink -> dispatchEvent(MyEvent.AccountLinkDismissed)
+                MyIntent.DismissLinkedToOtherUserNotice -> dispatchEvent(MyEvent.LinkedToOtherUserDismissed)
             }
         }
 
@@ -104,6 +156,12 @@ class MyViewModel
                 MyEvent.AttendanceStarted -> state.copy(isClaimingAttendance = true)
                 MyEvent.AttendanceFinished -> state.copy(isClaimingAttendance = false)
                 MyEvent.LogOutStarted -> state.copy(isLoggingOut = true)
+                is MyEvent.AccountLinkRequested -> state.copy(accountLinkTarget = event.target)
+                MyEvent.AccountLinkDismissed -> state.copy(accountLinkTarget = null)
+                MyEvent.AccountLinkStarted -> state.copy(isLinkingAccount = true)
+                MyEvent.AccountLinkFinished -> state.copy(isLinkingAccount = false, accountLinkTarget = null)
+                MyEvent.LinkedToOtherUserNoticed -> state.copy(showsLinkedToOtherUserNotice = true)
+                MyEvent.LinkedToOtherUserDismissed -> state.copy(showsLinkedToOtherUserNotice = false)
             }
 
         /**
@@ -146,6 +204,45 @@ class MyViewModel
             dispatchEvent(MyEvent.AttendanceFinished)
         }
 
+        /**
+         * 재인증과 대상 인증으로 제공자 화면을 두 번 열어 오래 걸린다. 인텐트 루프에서 기다리면 그동안
+         * 탭 갱신·테마 변경 같은 다음 입력이 밀리므로 자식 작업으로 떼어 내고 중복은 진행 플래그로 막는다.
+         */
+        private suspend fun startAccountLink() {
+            if (accountLinkJob?.isActive == true) return
+            val snapshot = uiState.value
+            val target = snapshot.accountLinkTarget ?: return
+            // 재인증은 이미 연동된 제공자로 한다. 아직 프로필을 못 읽었으면 시작할 근거가 없다.
+            val current = snapshot.profile?.linkedProviders?.firstOrNull() ?: return
+            dispatchEvent(MyEvent.AccountLinkStarted)
+            accountLinkJob =
+                viewModelScope.launch {
+                    when (val result = accountLinkRepository.link(current, target)) {
+                        is DomainResult.Success -> {
+                            dispatchEffect(MyEffect.AccountLinked(target))
+                            // 연동 결과의 정본은 프로필이다. 칩을 낙관적으로 더하지 않고 다시 읽는다.
+                            refreshProfile()
+                        }
+
+                        is DomainResult.Failure -> noticeLinkFailure(result.error)
+                    }
+                    dispatchEvent(MyEvent.AccountLinkFinished)
+                }
+        }
+
+        private suspend fun noticeLinkFailure(error: DomainError) {
+            when (error.linkConflictCode()) {
+                CODE_LINKED_TO_OTHER_USER -> dispatchEvent(MyEvent.LinkedToOtherUserNoticed)
+                CODE_PROVIDER_ALREADY_LINKED -> {
+                    dispatchEffect(MyEffect.AccountAlreadyLinked)
+                    // 서버 상태가 화면과 다르다는 뜻이므로 표시를 맞춘다.
+                    refreshProfile()
+                }
+                // 사용자가 제공자 창을 스스로 닫았다. 실패 안내를 띄우지 않는다.
+                else -> if (error != DomainError.ProviderCancelled) dispatchEffect(MyEffect.AccountLinkFailed)
+            }
+        }
+
         private suspend fun logOut() {
             if (uiState.value.isLoggingOut) return
             dispatchEvent(MyEvent.LogOutStarted)
@@ -157,3 +254,11 @@ class MyViewModel
             val REFRESH_MIN_INTERVAL = 5.seconds
         }
     }
+
+/** 409 두 종류는 안내가 다르다. 그 밖의 실패는 코드로 갈리지 않는다. */
+private fun DomainError.linkConflictCode(): String? =
+    (this as? DomainError.Server)?.takeIf { it.status == HTTP_CONFLICT }?.code
+
+private const val CODE_LINKED_TO_OTHER_USER = "SOCIAL_ACCOUNT_LINKED_TO_OTHER_USER"
+private const val CODE_PROVIDER_ALREADY_LINKED = "PROVIDER_ALREADY_LINKED"
+private const val HTTP_CONFLICT = 409

@@ -319,7 +319,7 @@ private fun StoryDetailHeader(
                     // 제목이 나타났다 사라지는 자리라 자리 자체는 늘 잡아 둔다.
                     modifier = Modifier.alpha(titleAlpha),
                     text = title,
-                    style = ManyakTheme.typography.titleMedium,
+                    style = ManyakTheme.typography.bodyLargeStrong,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )

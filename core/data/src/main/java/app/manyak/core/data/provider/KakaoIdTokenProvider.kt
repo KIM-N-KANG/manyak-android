@@ -59,6 +59,12 @@ class KakaoIdTokenProvider
             }
         }
 
+        /**
+         * Kakao SDK 의 `login*` 은 저장된 토큰을 돌려주는 API 가 아니라 매번 인가를 다시 거쳐 토큰을
+         * 발급한다. 그래서 일반 경로와 같고, 캐시 우회를 위해 추가로 할 일이 없다.
+         */
+        override suspend fun requestFreshIdToken(): DomainResult<String> = requestIdToken()
+
         override suspend fun clearLocalState(): ProviderCleanupResult {
             // 초기화되지 않았다면 SDK 가 토큰을 들고 있을 수도 없다. 지울 상태가 없으므로 완료다.
             if (!initializer.initialize()) return ProviderCleanupResult.CLEARED

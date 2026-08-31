@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -50,6 +51,7 @@ fun MyScreen(
     onOpenInvite: () -> Unit,
     onOpenServiceInfo: () -> Unit,
     onOpenFeedback: () -> Unit,
+    onOpenOpenSourceLicense: () -> Unit,
     onOpenWithdrawal: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MyViewModel = hiltViewModel(),
@@ -61,6 +63,14 @@ fun MyScreen(
     val attendanceClaimed = stringResource(R.string.my_attendance_claimed)
     val attendanceAlready = stringResource(R.string.my_attendance_already)
     val attendanceFailed = stringResource(R.string.my_attendance_failed)
+    val linkSucceeded = stringResource(R.string.my_link_succeeded)
+    val linkAlreadyLinked = stringResource(R.string.my_link_already_linked)
+    val linkFailed = stringResource(R.string.my_link_failed)
+    val providerLabels =
+        mapOf(
+            AuthProvider.GOOGLE to stringResource(R.string.my_provider_google),
+            AuthProvider.KAKAO to stringResource(R.string.my_provider_kakao),
+        )
 
     // 잔액·출석 여부는 채팅·제작에서 바뀌므로 화면이 다시 보일 때마다 새로 읽는다. ViewModel 은 탭을
     // 옮겨도 살아 있어(탭별 백스택이 목적지를 계속 들고 있다) 생성 시점 한 번으로는 낡은 값이 남는다.
@@ -78,6 +88,10 @@ fun MyScreen(
                         is MyEffect.AttendanceRewarded -> attendanceClaimed.format(effect.amount)
                         MyEffect.AttendanceAlreadyDone -> attendanceAlready
                         MyEffect.AttendanceFailed -> attendanceFailed
+                        is MyEffect.AccountLinked ->
+                            linkSucceeded.format(providerLabels[effect.provider].orEmpty())
+                        MyEffect.AccountAlreadyLinked -> linkAlreadyLinked
+                        MyEffect.AccountLinkFailed -> linkFailed
                     }
                 Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
             }
@@ -90,10 +104,39 @@ fun MyScreen(
         onOpenInvite = onOpenInvite,
         onOpenServiceInfo = onOpenServiceInfo,
         onOpenFeedback = onOpenFeedback,
+        onOpenOpenSourceLicense = onOpenOpenSourceLicense,
         onOpenWithdrawal = onOpenWithdrawal,
         contentPadding = contentPadding,
         modifier = modifier,
     )
+
+    // 다이얼로그는 자체 창에 뜨므로 스크롤 본문 밖에서 연다.
+    AccountLinkDialogs(state = state, onIntent = viewModel::onIntent)
+}
+
+/**
+ * 확인 다이얼로그는 이미 연동된 제공자를 알아야 열 수 있다 — 재인증이 그 제공자로 진행된다는 예고가
+ * 문구의 핵심이라서다.
+ */
+@Composable
+private fun AccountLinkDialogs(
+    state: MyUiState,
+    onIntent: (MyIntent) -> Unit,
+) {
+    val current = state.profile?.linkedProviders?.firstOrNull()
+    val target = state.accountLinkTarget
+    if (current != null && target != null) {
+        AccountLinkConfirmDialog(
+            current = current,
+            target = target,
+            inProgress = state.isLinkingAccount,
+            onConfirm = { onIntent(MyIntent.ConfirmAccountLink) },
+            onDismiss = { onIntent(MyIntent.DismissAccountLink) },
+        )
+    }
+    if (state.showsLinkedToOtherUserNotice) {
+        LinkedToOtherUserDialog(onDismiss = { onIntent(MyIntent.DismissLinkedToOtherUserNotice) })
+    }
 }
 
 @Composable
@@ -104,6 +147,7 @@ private fun MyContent(
     onOpenInvite: () -> Unit,
     onOpenServiceInfo: () -> Unit,
     onOpenFeedback: () -> Unit,
+    onOpenOpenSourceLicense: () -> Unit,
     onOpenWithdrawal: () -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
@@ -115,7 +159,10 @@ private fun MyContent(
                 .padding(contentPadding)
                 .verticalScroll(rememberScrollState()),
     ) {
-        ProfileHeader(profile = state.profile)
+        ProfileHeader(
+            profile = state.profile,
+            onLinkAccount = { provider -> onIntent(MyIntent.RequestAccountLink(provider)) },
+        )
         CreditBalanceCard(
             profile = state.profile,
             isClaiming = state.isClaimingAttendance,
@@ -126,7 +173,7 @@ private fun MyContent(
                 iconRes = R.drawable.ic_people,
                 labelRes = R.string.my_invite,
                 onClick = onOpenInvite,
-                trailing = { MenuTrailingIcon(iconRes = R.drawable.ic_angle_right) },
+                trailing = { MenuTrailingIcon(iconRes = R.drawable.ic_chevron_right) },
             )
         }
         MySection(labelRes = R.string.my_section_display) {
@@ -134,17 +181,24 @@ private fun MyContent(
         }
         MySection(labelRes = R.string.my_section_etc) {
             MyMenuItem(
+                iconRes = R.drawable.ic_mailbox,
+                labelRes = R.string.my_feedback,
+                onClick = onOpenFeedback,
+                trailing = { MenuTrailingIcon(iconRes = R.drawable.ic_chevron_right) },
+            )
+            MyMenuItem(
                 iconRes = R.drawable.ic_info,
                 labelRes = R.string.my_service_info,
                 onClick = onOpenServiceInfo,
                 trailing = { MenuTrailingIcon(iconRes = R.drawable.ic_external_link) },
             )
             MyMenuItem(
-                iconRes = R.drawable.ic_mailbox,
-                labelRes = R.string.my_feedback,
-                onClick = onOpenFeedback,
-                trailing = { MenuTrailingIcon(iconRes = R.drawable.ic_angle_right) },
+                iconRes = R.drawable.ic_book_open,
+                labelRes = R.string.my_open_source_license,
+                onClick = onOpenOpenSourceLicense,
+                trailing = { MenuTrailingIcon(iconRes = R.drawable.ic_chevron_right) },
             )
+            AppVersionMenuItem()
         }
         AccountSection(state = state, onIntent = onIntent, onOpenWithdrawal = onOpenWithdrawal)
     }
@@ -205,6 +259,35 @@ private fun MySection(
 }
 
 @Composable
+private fun AppVersionMenuItem(modifier: Modifier = Modifier) {
+    MyMenuItem(
+        iconRes = R.drawable.ic_programming,
+        labelRes = R.string.my_app_version,
+        onClick = null,
+        modifier = modifier,
+        trailing = {
+            Text(
+                text = rememberAppVersionName(),
+                style = ManyakTheme.typography.bodyMedium,
+                color = ManyakTheme.colors.textSubtle,
+            )
+        },
+    )
+}
+
+/** 라이브러리 모듈의 `BuildConfig` 에는 버전이 없어 설치된 패키지 정보에서 읽는다. */
+@Composable
+private fun rememberAppVersionName(): String {
+    val context = LocalContext.current
+    val unknown = stringResource(R.string.my_app_version_unknown)
+    return remember(context, unknown) {
+        runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }
+            .getOrNull()
+            ?: unknown
+    }
+}
+
+@Composable
 private fun ThemeMenuItem(
     themeMode: ThemeMode,
     onClick: () -> Unit,
@@ -231,23 +314,26 @@ private fun ThemeMenuItem(
     )
 }
 
+/** [onClick] 이 없으면 값만 보여 주는 행이다 — 버전처럼 열 곳이 없는 항목이 여기 해당한다. */
 @Composable
 @Suppress("LongParameterList")
 private fun MyMenuItem(
     @DrawableRes iconRes: Int,
     @StringRes labelRes: Int,
-    onClick: () -> Unit,
+    onClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     contentColor: Color = ManyakTheme.colors.text,
     trailing: (@Composable () -> Unit)? = null,
 ) {
+    val clickable =
+        if (onClick == null) Modifier else Modifier.clickable(enabled = enabled, onClick = onClick)
     Row(
         modifier =
             modifier
                 .fillMaxWidth()
                 .heightIn(min = ManyakTheme.sizes.control)
-                .clickable(enabled = enabled, onClick = onClick)
+                .then(clickable)
                 .padding(horizontal = ManyakTheme.spacing.gutter),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
@@ -308,6 +394,7 @@ private fun MyScreenPreview() {
             onOpenInvite = {},
             onOpenServiceInfo = {},
             onOpenFeedback = {},
+            onOpenOpenSourceLicense = {},
             onOpenWithdrawal = {},
             contentPadding = PaddingValues(0.dp),
         )

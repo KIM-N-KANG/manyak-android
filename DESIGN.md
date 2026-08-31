@@ -31,6 +31,7 @@ colors:
   background-information-subtle: "#E9F5FF"
   background-disabled: "#EEEEEE"
   border: "#EEEEEE"
+  border-strong: "#B9B9B9"
   border-input: "#8D8D8D"
   border-brand: "#00995F"
   border-danger: "#E23531"
@@ -66,6 +67,7 @@ colors-dark:
   background-information-subtle: "#003364"
   background-disabled: "#3A3A3A"
   border: "#2C2C2C"
+  border-strong: "#3A3A3A"
   border-input: "#666666"
   border-brand: "#58C58F"
   border-danger: "#FF7669"
@@ -136,6 +138,7 @@ typography:
     lineHeight: 16sp
 
 rounded:
+  checkbox: 6dp
   menu-item: 10dp
   thumbnail: 12dp
   control: 14dp
@@ -184,6 +187,16 @@ components:
     backgroundColor: "{colors.background-brand-bold}"
     textColor: "{colors.text-inverse}"
     rounded: "{rounded.control}"
+  checkbox:
+    size: "{sizes.icon}"
+    backgroundColor: "{colors.surface}"
+    borderColor: "{colors.border}"
+    borderWidth: 1dp
+    rounded: "{rounded.checkbox}"
+  checkbox-checked:
+    backgroundColor: "{colors.brand}"
+    borderColor: "{colors.brand}"
+    iconColor: "{colors.text-inverse}"
   button-danger:
     backgroundColor: "{colors.background-danger-bold}"
     textColor: "{colors.text-inverse}"
@@ -272,7 +285,7 @@ components:
   section-header:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.text}"
-    typography: "{typography.title-medium}"
+    typography: "{typography.title-large}"
     minHeight: 64dp
     padding: "{spacing.gutter}"
   tab-bar:
@@ -298,7 +311,12 @@ components:
   funnel-header:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.text}"
-    typography: "{typography.title-medium}"
+    typography: "{typography.title-large}"
+    minHeight: 64dp
+  detail-header:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.text}"
+    typography: "{typography.body-large-strong}"
     minHeight: 64dp
   step-indicator:
     completedColor: "{colors.text-disabled}"
@@ -319,6 +337,20 @@ components:
     textColor: "{colors.text-brand}"
     borderColor: "{colors.border-brand}"
     rounded: "{rounded.control}"
+  provider-chip:
+    textColor: "{colors.text-subtle}"
+    kakaoLogoColor: "{colors.text}"
+    typography: "{typography.label-small}"
+    borderColor: "{colors.border}"
+    borderWidth: 1dp
+    rounded: "{rounded.pill}"
+    height: 24dp
+    logoSize: 12dp
+    gap: "{spacing.dense}"
+    padding: "0 {spacing.compact}"
+  provider-chip-link:
+    borderColor: "{colors.border-strong}"
+    borderStyle: "dashed 3dp/3dp"
   logo-manyak:
     asset: "res/drawable/ic_logo_manyak.xml"
     color: "{colors.brand}"
@@ -330,6 +362,7 @@ components:
     asset: "res/drawable/ic_logo_kakao.xml"
     backgroundColor: "#FEE500"
     size: 24dp
+    monoColor: "{colors.text}"
 ---
 
 ## 개요
@@ -414,6 +447,7 @@ components:
 ### 경계
 
 - **장식 경계** (`{colors.border}`): 구분선·카드 테두리. 대비 요구 대상이 아닙니다.
+- **점선 경계** (`{colors.border-strong}` — 라이트 #B9B9B9 / 다크 #3A3A3A): 점선은 잉크가 절반만 닿아 같은 색이어도 실선보다 한참 연하게 읽힙니다. 실선 이웃과 같은 무게로 보이게 하는 한 단계 진한 장식 경계이며, **점선에만** 씁니다 — 실선에 쓰면 그냥 진한 테두리가 됩니다.
 - **입력 경계** (`{colors.border-input}` — 라이트 #8D8D8D / 다크 #666666): 경계가 유일한 식별 수단일 때. **표면이 아니라 자기 채움색 기준으로** 역산한 값입니다 — 표면 기준으로 잡았더니 `{colors.background-neutral}` 위에서 2.85로 미달했기 때문입니다.
 - **포커스 링** (`{colors.border-focused}`): 선택된 테두리 `{colors.border-brand}`와 같은 값입니다.
 - 상태 경계 `{colors.border-danger}` · `{colors.border-warning}` · `{colors.border-information}`는 각 배너·입력창에 씁니다.
@@ -569,6 +603,7 @@ components:
 
 | 토큰 | 값 | 용도 |
 | --- | --- | --- |
+| `{rounded.checkbox}` | 6dp | 체크박스처럼 한 변이 20dp 남짓인 작은 네모 |
 | `{rounded.menu-item}` | 10dp | 셀렉트 메뉴 항목 · 라벨 없는 아이콘 버튼 |
 | `{rounded.thumbnail}` | 12dp | 썸네일·작은 아이콘 컨테이너 |
 | `{rounded.control}` | 14dp | 버튼·입력창·탭 |
@@ -588,6 +623,8 @@ components:
 **`button-primary`** — 주 동작. 배경은 **기본 프라이머리 `{colors.brand}`** 이고(버튼의 프라이머리는 반드시 이 색 — 위 브랜드 절), 텍스트 `{colors.text-inverse}`, `{typography.label-large}`, 모서리 `{rounded.control}`, 내부 여백 세로 `{spacing.compact}` · 가로 `{spacing.component}`. 눌림은 `{component.button-primary-pressed}`로 배경만 `{colors.background-brand-bold}`로 한 단계 어둡게 바꿉니다. M3 슬롯 파생(primary = `{colors.background-brand-bold}`)은 안전망일 뿐이므로, 기본 `Button` 색에 기대지 말고 이 색을 명시합니다.
 
 **`button-danger`** — 파괴적 동작(탈퇴·삭제). 같은 형태에 배경만 `{colors.background-danger-bold}`. 눌림은 `{component.button-danger-pressed}`.
+
+**`checkbox`** — 동의·확인 항목의 체크 표시. `{sizes.icon}` 정사각에 `{rounded.checkbox}` 모서리이고, 기본은 `{colors.surface}` 채움 + `{colors.border}` 1dp, 체크되면 `{colors.brand}` 채움에 같은 색 경계와 `{colors.text-inverse}` 체크 아이콘(16dp)이다. **체크박스 자체는 누르는 대상이 아니다** — 줄 전체가 토글을 맡아 문구를 눌러도 켜지고, 최소 터치 타깃도 그 줄이 확보한다. 체크박스에 따로 접근성 이름을 붙이지 않는다(줄이 이미 이름과 상태를 읽힌다).
 
 **`button-neutral`** — 보조 동작. 배경 `{colors.background-neutral}`, 텍스트 `{colors.text}`. 눌림은 `{component.button-neutral-pressed}`.
 
@@ -613,6 +650,8 @@ components:
 
 **`badge`** — 배경 `{colors.background-brand-subtle}`, 텍스트 `{colors.text-brand}` + `{typography.body-small}`, 모서리 `{rounded.pill}`, 여백 세로 `{spacing.hairline}` · 가로 `{spacing.compact}`.
 
+**`provider-chip` / `provider-chip-link`** — 마이 프로필 헤더의 연동 계정 표시. 웹 배지와 같은 치수를 씁니다(높이 24dp, 로고 12dp) — 같은 정보를 두 플랫폼에서 나란히 보게 되는 자리라 크기가 다르면 다른 것으로 읽힙니다. 로고와 이름 사이는 `{spacing.dense}`, 가로 여백은 `{spacing.compact}`이고 세로 여백은 두지 않습니다(높이가 고정). 로고는 이 시스템에서 가장 작게 쓰이므로 `{sizes.icon-small}`(16dp)보다 한 단계 아래인 12dp 를 이 컴포넌트 안에서만 씁니다. **연동된 제공자는 `{colors.border}` 실선, 아직 아닌 제공자는 같은 모양의 `{colors.border-strong}` 점선(3dp 대시·3dp 간격) 버튼**입니다 — 점선을 실선과 같은 색으로 두면 잉크가 절반만 닿아 나란히 놓인 칩보다 눈에 띄게 연해집니다 — 미연동을 색이 아니라 선의 모양으로 말하고, 누를 수 있다는 것은 같은 자리에 놓인 형태가 전달합니다. 둘 다 연동되면 점선 버튼이 사라져 칩만 남습니다.
+
 **`banner-danger` / `banner-warning` / `banner-information`** — 배경은 각 `subtle`, 텍스트는 같은 계열의 텍스트 색, 모서리 `{rounded.control}`, 내부 여백 `{spacing.component}`. 배너 자체가 상태를 말하므로 아이콘 없이도 성립하지만, 색만으로 구분되지 않도록 문구를 명시합니다.
 
 ### 스토리
@@ -623,7 +662,7 @@ components:
 
 > 셸의 두 컴포넌트는 **M3 컴포넌트 위에 색만 얹어** 만든다. 인셋·높이·최소 터치 타깃·시맨틱을 직접 계산하지 않기 위해서다. 이 시스템에 없는 요소만 골라 지운다.
 
-**`section-header`** — 메인 탭의 상단 헤더. `TopAppBar` 위에 배경 `{colors.surface}`와 제목 색 `{colors.text}`를 얹는다. 좌우 여백은 앱 바 기본값이 16dp 라 `{spacing.gutter}`와 같고, 로고와 섹션 이름(`{typography.title-medium}`) 사이도 `{spacing.gutter}`다. 높이는 최소 64dp 이고 제목이 커지면 함께 늘어난다. 구분선과 그림자를 두지 않는다. `TopAppBar`가 아직 실험 API 라 `@OptIn`이 필요하며, 사용처는 이 컴포넌트와 퍼널 헤더(`funnel-header`) 둘이다.
+**`section-header`** — 메인 탭의 상단 헤더. `TopAppBar` 위에 배경 `{colors.surface}`와 제목 색 `{colors.text}`를 얹는다. 좌우 여백은 앱 바 기본값이 16dp 라 `{spacing.gutter}`와 같고, 로고와 섹션 이름(`{typography.title-large}`) 사이도 `{spacing.gutter}`다. 높이는 최소 64dp 이고 제목이 커지면 함께 늘어난다. 구분선과 그림자를 두지 않는다. `TopAppBar`가 아직 실험 API 라 `@OptIn`이 필요하며, 사용처는 이 컴포넌트와 퍼널 헤더(`funnel-header`) 둘이다.
 
 **`tab-bar`** — 홈·채팅·마이 고정 3탭. 배경 `{colors.surface}`, 위쪽 경계 `{colors.border}` 1dp. 아이콘(`{sizes.tab-icon}`) 아래에 이름을 `{typography.label-small}`로 둔다. 선택은 filled 아이콘 + `{colors.text}`, 비선택은 outline 아이콘 + `{colors.text-subtle}`이고 아이콘과 라벨이 같은 색을 쓴다. 라벨이 이름을 맡으므로 **아이콘은 장식으로 두고 접근성 이름을 붙이지 않는다** — 둘 다 붙이면 탐색 서비스가 같은 이름을 두 번 읽는다. 선택을 색 하나로만 구분하지 않고 아이콘 모양을 함께 바꾼다.
 
@@ -642,7 +681,9 @@ components:
 
 **`fab`** — 홈 우측 하단의 제작 진입 버튼. **원형**(`{rounded.pill}`)이고 배경은 주 버튼(`{component.button-primary}`)과 같은 브랜드 원색 `{colors.brand}`, 아이콘 `{colors.text-inverse}`, 크기 56dp(M3 FAB 기본). **고도(그림자)를 0으로 없앤다** — 이 시스템은 층을 표면 색으로만 나눈다. 하단 바에 초록을 두지 않는 것과 어긋나지 않는다 — FAB 은 상시 chrome 이 아니라 화면의 주 동작 그 자체라서, 초록이 "지금 누를 것"을 가리킨다는 규칙 그대로다.
 
-**`funnel-header`** — 섹션 헤더처럼 M3 `TopAppBar` 위에 색만 얹고, 로고 대신 뒤로가기 아이콘 버튼과 화면 제목(`{typography.title-medium}`)을 둔다. 높이는 앱 바 기본 64dp 다. 구분선과 그림자를 두지 않는다.
+**`funnel-header`** — 섹션 헤더처럼 M3 `TopAppBar` 위에 색만 얹고, 로고 대신 화면 제목(`{typography.title-large}`)과 오른쪽의 임시 저장·닫기 버튼을 둔다. 높이는 앱 바 기본 64dp 다. 구분선과 그림자를 두지 않는다.
+
+**`detail-header`** — 셸을 두르지 않는 하위 화면(스토리 상세·채팅방·친구 초대·피드백)의 앱 바. 같은 `TopAppBar` 위에 뒤로가기 버튼과 제목(`{typography.body-large-strong}`)을 둔다. **섹션·퍼널 헤더보다 한 단 작은 것은 이 자리의 제목이 화면 이름이 아니라 지금 보고 있는 것의 이름이기 때문이다** — 스토리 제목처럼 길어질 수 있는 값이라 한 줄로 자르고, 고정된 화면 이름과 위계도 갈린다.
 
 **`step-indicator`** — 헤더 아래 얇은 막대 분절로 퍼널 진행을 표시한다. 높이 3dp, 양끝 `{rounded.pill}` 라운드, 분절 사이 `{spacing.component}`, 좌우 여백 `{spacing.gutter}`. 완료 단계는 `{colors.text-disabled}`, 현재 단계는 그보다 반 단계 연한 `{colors.step-indicator-active}`(라이트 #9F9F9F · 다크 #666666), 미도달 단계는 `{colors.border}`다. 단계 이름은 시각 라벨 없이 접근성 텍스트로만 제공하고, 막대들은 장식이라 시맨틱을 하나로 묶는다. 채움에 브랜드 초록을 쓰지 않는 이유는 진행 표시가 정보이지 눌러야 할 동작이 아니기 때문이고, 미도달을 `{colors.background-neutral}`이 아니라 `{colors.border}`로 두는 이유는 표면(`{colors.surface}`) 위에서 전자가 거의 보이지 않기 때문이다.
 
@@ -660,7 +701,7 @@ components:
 
 **`logo-google`** — `res/drawable/ic_logo_google.xml`. 공식 4색 G를 그대로 씁니다. **tint·변형·재색칠 금지.**
 
-**`logo-kakao`** — `res/drawable/ic_logo_kakao.xml`. 카카오 말풍선 심벌은 노란 컨테이너 `#FEE500` 위에만 올립니다. 이 노랑은 카카오가 정한 값이라 토큰 팔레트에 넣지 않았습니다.
+**`logo-kakao`** — `res/drawable/ic_logo_kakao.xml`. 카카오 말풍선 심벌은 노란 컨테이너 `#FEE500` 위에 검정으로 올립니다(로그인 버튼). 이 노랑은 카카오가 정한 값이라 토큰 팔레트에 넣지 않았습니다. **컨테이너 없이 놓을 때는 `{colors.text}` 단색으로 칠합니다**(`{component.provider-chip}`) — 검정 그대로 두면 다크 모드에서 배경에 묻힙니다. 구글 로고와 달리 카카오는 단색 사용을 허용하므로 이 자리에서만 재색칠합니다.
 
 ## 해야 할 것 / 하지 말아야 할 것
 

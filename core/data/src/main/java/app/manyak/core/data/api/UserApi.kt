@@ -2,6 +2,7 @@ package app.manyak.core.data.api
 
 import app.manyak.core.data.api.dto.AttendanceRewardResponseDto
 import app.manyak.core.data.api.dto.ChatSummaryDto
+import app.manyak.core.data.api.dto.InviteResponseDto
 import app.manyak.core.data.api.dto.MeResponseDto
 import app.manyak.core.data.api.dto.RedeemInviteCodeRequestDto
 import app.manyak.core.data.api.dto.StorySummaryDto
@@ -32,11 +33,19 @@ interface UserApi {
     @POST("users/me/credits/attendance")
     suspend fun claimAttendance(): Response<AttendanceRewardResponseDto>
 
+    /** 내 초대 코드와 이번 달 보상 진행. 월 상한은 정책 값이라 응답이 함께 싣는다. */
+    @GET("users/me/invite")
+    suspend fun myInvite(): Response<InviteResponseDto>
+
     /** 받은 초대 코드 등록. 계정당 1회이며 재시도·본인 코드는 409 로 구분된다. */
     @POST("users/me/invite/redeem")
     suspend fun redeemInviteCode(
         @Body request: RedeemInviteCodeRequestDto,
     ): Response<Unit>
+
+    /** 회원 탈퇴. 성공은 본문 없는 204 다. */
+    @DELETE("users/me")
+    suspend fun withdraw(): Response<Unit>
 
     /** 내 스토리 소프트 삭제. 성공은 본문 없는 204 다. */
     @DELETE("stories/{storyId}")

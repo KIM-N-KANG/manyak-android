@@ -5,6 +5,7 @@ import app.manyak.core.data.di.DataLayerConfig
 import app.manyak.core.data.di.SocialAuthConfig
 import app.manyak.core.data.provider.ActivityProvider
 import app.manyak.core.data.session.SessionEndSignal
+import app.manyak.feature.my.InviteShareLinkProvider
 import app.manyak.session.CurrentActivityProvider
 import app.manyak.session.SessionTerminationCoordinator
 import dagger.Binds
@@ -21,7 +22,19 @@ object AppConfigModule {
     @Provides
     @Singleton
     fun provideDataLayerConfig(): DataLayerConfig =
-        DataLayerConfig(apiBaseUrl = BuildConfig.BASE_URL, isDebugBuild = BuildConfig.DEBUG)
+        DataLayerConfig(
+            apiBaseUrl = BuildConfig.BASE_URL,
+            isDebugBuild = BuildConfig.DEBUG,
+            appVersion = BuildConfig.VERSION_NAME,
+        )
+
+    /** 초대 공유가 싣는 웹 주소. 아직 스토어 링크가 없어 웹 홈으로 보낸다. */
+    @Provides
+    @Singleton
+    fun provideInviteShareLinkProvider(): InviteShareLinkProvider =
+        object : InviteShareLinkProvider {
+            override fun shareUrl(): String = BuildConfig.WEB_BASE_URL
+        }
 
     @Provides
     @Singleton

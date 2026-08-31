@@ -21,6 +21,19 @@ data class TokenResponseDto(
     val isNewUser: Boolean = false,
 )
 
+/** 재인증은 로그인과 달리 어느 제공자로 증명하는지를 본문에 함께 싣는다. */
+@Serializable
+data class LinkReauthRequestDto(
+    val provider: String,
+    val idToken: String,
+)
+
+/** `expiresAt` 은 받되 쓰지 않는다 — 코드는 곧바로 다음 호출에 소비되고 만료 판정은 서버가 한다. */
+@Serializable
+data class LinkReauthResponseDto(
+    val linkCode: String,
+)
+
 @Serializable
 data class RefreshTokenRequestDto(
     val refreshToken: String,
