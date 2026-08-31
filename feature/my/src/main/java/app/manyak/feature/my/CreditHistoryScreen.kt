@@ -1,5 +1,6 @@
 package app.manyak.feature.my
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -27,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -35,12 +37,15 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.core.domain.credit.CreditTransaction
 import app.manyak.core.domain.credit.CreditTransactionReason
 import app.manyak.core.domain.credit.CreditTransactionType
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.LoadFailedContent
+import app.manyak.core.ui.component.ManyakPullToRefreshBox
 import app.manyak.core.ui.component.SkeletonPlaceholder
 import app.manyak.core.ui.component.rememberSkeletonPulseAlpha
 import app.manyak.core.ui.theme.ManyakTheme
@@ -59,6 +64,19 @@ fun CreditHistoryScreen(
     viewModel: CreditHistoryViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val context = LocalContext.current
+
+    LaunchedEffect(viewModel, lifecycleOwner) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            viewModel.uiEffect.collect { effect ->
+                when (effect) {
+                    CreditHistoryEffect.ShowRefreshFailed ->
+                        Toast.makeText(context, R.string.story_refresh_failed, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
 
     // 이프는 채팅·제작에서 줄어들고 마이에서 출석으로 늘어난다. 화면이 보일 때마다 잔액을 맞춘다.
     LifecycleEventEffect(Lifecycle.Event.ON_START) { viewModel.onIntent(CreditHistoryIntent.ScreenShown) }
@@ -87,6 +105,24 @@ private fun CreditHistoryContent(
     val listState = rememberLazyListState()
     LoadMoreWhenListEnds(listState = listState, state = state, onIntent = onIntent)
 
+    ManyakPullToRefreshBox(
+        modifier = modifier,
+        isRefreshing = state.isRefreshing,
+        onRefresh = { onIntent(CreditHistoryIntent.Refresh) },
+        // 헤더가 목록 위에 따로 있어 표시자를 내려 둘 chrome 이 없다.
+        contentPadding = PaddingValues(),
+    ) {
+        CreditHistoryList(state = state, listState = listState, onIntent = onIntent)
+    }
+}
+
+@Composable
+private fun CreditHistoryList(
+    state: CreditHistoryUiState,
+    listState: LazyListState,
+    onIntent: (CreditHistoryIntent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         state = listState,

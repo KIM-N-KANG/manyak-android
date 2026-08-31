@@ -19,6 +19,9 @@ sealed interface CreditHistoryIntent {
 
     data object Retry : CreditHistoryIntent
 
+    /** 당겨서 새로고침. 잔액과 첫 페이지를 다시 읽는다. */
+    data object Refresh : CreditHistoryIntent
+
     /** 목록 끝에 닿았다. 다음 커서가 없거나 이미 받고 있으면 아무 일도 하지 않는다. */
     data object LoadMore : CreditHistoryIntent
 }
@@ -32,6 +35,7 @@ data class CreditHistoryUiState(
     val nextCursor: String? = null,
     val isLoadingMore: Boolean = false,
     val loadMoreFailed: Boolean = false,
+    val isRefreshing: Boolean = false,
 ) {
     val hasMore: Boolean get() = nextCursor != null
 }
@@ -49,6 +53,10 @@ sealed interface CreditHistoryEvent {
 
     data object LoadFailed : CreditHistoryEvent
 
+    data object RefreshStarted : CreditHistoryEvent
+
+    data object RefreshFailed : CreditHistoryEvent
+
     data object LoadMoreStarted : CreditHistoryEvent
 
     data class MoreLoaded(
@@ -56,6 +64,11 @@ sealed interface CreditHistoryEvent {
     ) : CreditHistoryEvent
 
     data object LoadMoreFailed : CreditHistoryEvent
+}
+
+sealed interface CreditHistoryEffect {
+    /** 새로고침 실패. 보고 있던 목록은 그대로 두고 토스트로만 알린다. */
+    data object ShowRefreshFailed : CreditHistoryEffect
 }
 
 /**
@@ -71,7 +84,7 @@ class CreditHistoryViewModel
     constructor(
         private val creditRepository: CreditRepository,
         private val userProfileRepository: UserProfileRepository,
-    ) : MviViewModel<CreditHistoryIntent, CreditHistoryUiState, CreditHistoryEvent, Nothing>(
+    ) : MviViewModel<CreditHistoryIntent, CreditHistoryUiState, CreditHistoryEvent, CreditHistoryEffect>(
             CreditHistoryUiState(),
         ) {
         /** 마지막으로 프로필을 다시 읽은 시점. 없으면 아직 한 번도 읽지 않았다. */
@@ -93,6 +106,7 @@ class CreditHistoryViewModel
                 }
 
                 CreditHistoryIntent.Retry -> loadFirstPage()
+                CreditHistoryIntent.Refresh -> refresh()
                 CreditHistoryIntent.LoadMore -> loadNextPage()
             }
         }
@@ -111,9 +125,13 @@ class CreditHistoryViewModel
                         items = event.page.items,
                         nextCursor = event.page.nextCursor,
                         loadMoreFailed = false,
+                        isRefreshing = false,
                     )
 
                 CreditHistoryEvent.LoadFailed -> state.copy(isLoading = false, loadFailed = true)
+                CreditHistoryEvent.RefreshStarted -> state.copy(isRefreshing = true)
+                // 새로고침 실패는 보고 있던 목록을 건드리지 않는다 — 알림은 토스트가 맡는다.
+                CreditHistoryEvent.RefreshFailed -> state.copy(isRefreshing = false)
                 CreditHistoryEvent.LoadMoreStarted -> state.copy(isLoadingMore = true, loadMoreFailed = false)
                 is CreditHistoryEvent.MoreLoaded ->
                     state.copy(
@@ -124,6 +142,24 @@ class CreditHistoryViewModel
                 // 이미 그린 목록은 지우지 않는다. 실패한 것은 다음 페이지뿐이다.
                 CreditHistoryEvent.LoadMoreFailed -> state.copy(isLoadingMore = false, loadMoreFailed = true)
             }
+
+        /**
+         * 당겨서 새로고침. 골격을 다시 깔지 않고 보던 목록 위에서 갱신하며, 잔액도 간격을 보지 않고
+         * 다시 읽는다 — 사용자가 명시적으로 요청한 갱신이라 방금 읽었다는 이유로 건너뛰면 안 된다.
+         */
+        private suspend fun refresh() {
+            if (uiState.value.isRefreshing) return
+            dispatchEvent(CreditHistoryEvent.RefreshStarted)
+            lastRefreshMark = TimeSource.Monotonic.markNow()
+            userProfileRepository.refresh()
+            when (val result = creditRepository.getTransactions()) {
+                is DomainResult.Success -> dispatchEvent(CreditHistoryEvent.Loaded(result.value))
+                is DomainResult.Failure -> {
+                    dispatchEvent(CreditHistoryEvent.RefreshFailed)
+                    dispatchEffect(CreditHistoryEffect.ShowRefreshFailed)
+                }
+            }
+        }
 
         private suspend fun loadFirstPage() {
             dispatchEvent(CreditHistoryEvent.LoadStarted)
