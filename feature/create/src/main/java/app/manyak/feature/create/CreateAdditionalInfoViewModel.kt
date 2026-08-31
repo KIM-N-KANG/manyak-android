@@ -31,7 +31,7 @@ data class AdditionalInfoStoryline(
 )
 
 /**
- * 완성 실패 사유. 앱은 로그인 필수라 402 는 회원 크레딧 부족뿐이며, 크레딧 획득 UI 가
+ * 완성 실패 사유. 앱은 로그인 필수라 402 는 회원 이프 부족뿐이며, 이프 획득 UI 가
  * 생기기 전까지 토스트 문구만 구분해 안내한다.
  */
 enum class CompletionFailure {
@@ -608,7 +608,7 @@ internal fun StorylineGenerationStore.toAdditionalInfoSnapshot(): CreateAddition
     )
 }
 
-// 앱은 로그인 필수라 402 는 게스트 한도가 아니라 회원 크레딧 부족이다.
+// 앱은 로그인 필수라 402 는 게스트 한도가 아니라 회원 이프 부족이다.
 private fun DomainError.toCompletionFailure(): CompletionFailure =
     if (this is DomainError.Server && status == HTTP_PAYMENT_REQUIRED) {
         CompletionFailure.CREDIT

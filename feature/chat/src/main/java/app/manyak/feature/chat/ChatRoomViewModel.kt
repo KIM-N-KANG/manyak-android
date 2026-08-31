@@ -213,7 +213,7 @@ sealed interface ChatRoomEffect {
         val message: String?,
     ) : ChatRoomEffect
 
-    /** 크레딧이 모자라 턴을 열지 못했다. 앱은 로그인 필수라 402 의 사유가 이것 하나뿐이다. */
+    /** 이프가 모자라 턴을 열지 못했다. 앱은 로그인 필수라 402 의 사유가 이것 하나뿐이다. */
     data object ShowCreditRequired : ChatRoomEffect
 
     /** 삭제가 끝났다. 화면이 안내하고 채팅 탭으로 돌아간다. */
@@ -521,7 +521,7 @@ class ChatRoomViewModel
         private suspend fun handleStreamFailure(event: ChatStreamEvent.Failed) {
             isStreaming = false
             dispatchEvent(ChatRoomEvent.StreamCleared)
-            // 열지 못한 턴의 입력은 컴포저로 되돌린다 — 크레딧이 모자라거나 요청이 닿지 못한 실패에
+            // 열지 못한 턴의 입력은 컴포저로 되돌린다 — 이프가 모자라거나 요청이 닿지 못한 실패에
             // 사용자가 쓴 문장을 없앨 이유가 없다. 받는 동안 컴포저는 잠겨 있어 새 초안을 덮지 않는다.
             sent?.let { restored ->
                 sent = null
@@ -611,7 +611,7 @@ class ChatRoomViewModel
         }
 
         private companion object {
-            /** 크레딧이 모자랄 때의 응답. */
+            /** 이프가 모자랄 때의 응답. */
             const val HTTP_PAYMENT_REQUIRED = 402
 
             /** 서버가 보는 마지막 턴과 재생성 대상이 다를 때의 응답. */

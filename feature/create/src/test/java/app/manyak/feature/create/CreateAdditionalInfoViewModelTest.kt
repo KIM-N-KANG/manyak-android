@@ -208,7 +208,7 @@ class CreateAdditionalInfoViewModelTest {
         }
 
     @Test
-    fun `크레딧 부족 402 는 실패 사유를 구분한다`() =
+    fun `이프 부족 402 는 실패 사유를 구분한다`() =
         runTest(dispatcher) {
             val fixture = loadedViewModel()
             val repository = fixture.repository
