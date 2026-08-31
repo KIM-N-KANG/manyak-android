@@ -53,9 +53,8 @@ fun MyScreen(
     onOpenFeedback: () -> Unit,
     onOpenOpenSourceLicense: () -> Unit,
     onOpenWithdrawal: () -> Unit,
+    onOpenCreditHistory: () -> Unit,
     modifier: Modifier = Modifier,
-    // 내역 화면이 아직 없어 기본값을 둔다. 화면이 생기면 앱 내비게이션이 넘긴다.
-    onOpenCreditHistory: () -> Unit = {},
     viewModel: MyViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()

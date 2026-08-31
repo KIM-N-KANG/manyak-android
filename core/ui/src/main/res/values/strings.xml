@@ -218,6 +218,25 @@
     <!-- 마이 -->
     <string name="my_credit_label">내 이프</string>
     <string name="my_credit_history">내역</string>
+    <string name="my_credit_history_title">이프 내역</string>
+    <string name="my_credit_history_loading">이프 내역을 불러오는 중</string>
+    <string name="my_credit_history_empty">아직 이프 내역이 없어요</string>
+    <string name="my_credit_history_load_failed">이프 내역을 불러오지 못했어요</string>
+    <string name="my_credit_history_deleted_story">삭제된 스토리</string>
+    <!-- %1$s 는 YYYY-MM-DD 만료일. 획득은 만료 예정일, 소멸은 회수된 로트의 실제 만료일이다. -->
+    <string name="my_credit_history_expires">%1$s 만료</string>
+    <!-- %1$s 는 천 단위 콤마를 넣은 절대값. 부호는 획득·소모 분류가 정한다. -->
+    <string name="my_credit_history_amount_earned">+%1$s</string>
+    <string name="my_credit_history_amount_spent">-%1$s</string>
+    <string name="my_credit_reason_signup">가입 보상</string>
+    <string name="my_credit_reason_attendance">출석 체크 보상</string>
+    <string name="my_credit_reason_invite">친구 초대 보상</string>
+    <string name="my_credit_reason_refund">사용 취소</string>
+    <string name="my_credit_reason_story_creation">스토리 완성</string>
+    <string name="my_credit_reason_chat_turn">채팅 전송</string>
+    <string name="my_credit_reason_expire">기간 만료</string>
+    <!-- 서버가 사유를 늘렸을 때의 폴백. 금액과 날짜만으로도 줄이 읽히게 한다. -->
+    <string name="my_credit_reason_unknown">이프 변동</string>
     <string name="my_attendance_check">출석 체크</string>
     <string name="my_attendance_done">출석 완료</string>
     <string name="my_attendance_in_progress">출석 체크 중</string>
