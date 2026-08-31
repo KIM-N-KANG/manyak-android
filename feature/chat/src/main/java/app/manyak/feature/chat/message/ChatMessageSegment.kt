@@ -101,8 +101,7 @@ fun isAllowedChatCharacterImageUrl(imageUrl: String): Boolean =
             uri.port == -1 &&
             uri.host in AllowedImageHosts &&
             uri.path != null &&
-            uri.path.startsWith(IMAGE_PATH_PREFIX) &&
-            uri.path.length > IMAGE_PATH_PREFIX.length
+            AllowedImagePathPrefixes.any { uri.path.startsWith(it) && uri.path.length > it.length }
     } catch (_: URISyntaxException) {
         false
     }
@@ -160,7 +159,8 @@ private val SpeakerLabel = Regex("""^(.+?)[ \t]*:(?=[ \t]|$)""")
 
 private val AllowedImageHosts = setOf("cdn.manyak.app", "dev-cdn.manyak.app")
 
-private const val IMAGE_PATH_PREFIX = "/characters/generated/"
+/** 사용자가 만든 스토리는 `generated`, 오리지널 스토리는 `originals` 아래에 인물 이미지가 올라간다. */
+private val AllowedImagePathPrefixes = listOf("/characters/generated/", "/characters/originals/")
 
 /** 마커 줄과 대사 줄 사이의 빈 줄(`\n\n`) 길이. */
 private const val BLANK_LINE_LENGTH = 2
