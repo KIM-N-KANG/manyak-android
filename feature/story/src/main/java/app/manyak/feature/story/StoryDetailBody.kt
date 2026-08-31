@@ -33,7 +33,8 @@ import app.manyak.core.ui.component.StoryThumbnail
 import app.manyak.core.ui.theme.ManyakTheme
 
 /**
- * 상세 본문. 순서는 히어로 → 제목 → 한 줄 소개 → 장르 → 본 엔딩 → 주요 내용 → 시작 상황 → 생성일이다.
+ * 상세 본문. 순서는 히어로 → 제목 → 한 줄 소개 → 장르 → 본 엔딩 → 주요 내용 → 주변 인물 →
+ * 시작 상황 → 제작자·생성일이다.
  *
  * 값이 없는 항목은 자리를 비우지 않고 아예 그리지 않는다 — 이유 없는 공백이 생기지 않게 한다.
  *
@@ -69,6 +70,16 @@ internal fun LazyListScope.storyDetailBody(
             }
         }
     }
+    if (story.characters.isNotEmpty()) {
+        item(key = CHARACTERS_KEY) {
+            LabeledSection(
+                labelRes = R.string.story_detail_characters,
+                modifier = Modifier.padding(horizontal = ManyakTheme.spacing.gutter),
+            ) {
+                CharacterSection(characters = story.characters)
+            }
+        }
+    }
     if (selectedStartSetting != null) {
         item(key = START_SETTING_KEY) {
             LabeledSection(
@@ -84,9 +95,9 @@ internal fun LazyListScope.storyDetailBody(
             }
         }
     }
-    story.createdDate?.let { date ->
-        item(key = CREATED_AT_KEY) {
-            CreatedDateRow(date = date)
+    if (story.authorNickname != null || story.createdDate != null) {
+        item(key = META_KEY) {
+            MetaBlock(authorNickname = story.authorNickname, date = story.createdDate)
         }
     }
 }
@@ -204,42 +215,6 @@ private fun GenreBadges(
 }
 
 /**
- * 이름과 값을 양 끝으로 벌린 한 줄. 값이 하나뿐이라 표를 만들지 않고 줄 하나로 둔다.
- *
- * 본문 마지막에 딸린 메타 정보라 다른 섹션과 달리 화면 폭을 그대로 채우는 옅은 바탕을 깔아
- * 읽을 글과 구분한다. 좌우 여백은 바탕 밖이 아니라 안에 둔다.
- */
-@Composable
-private fun CreatedDateRow(
-    date: String,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .background(ManyakTheme.colors.backgroundNeutral)
-                .padding(
-                    horizontal = ManyakTheme.spacing.gutter,
-                    vertical = ManyakTheme.spacing.component,
-                ),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = stringResource(R.string.story_detail_created_at),
-            style = ManyakTheme.typography.labelLarge,
-            color = ManyakTheme.colors.textSubtle,
-        )
-        Text(
-            text = date,
-            style = ManyakTheme.typography.bodyMedium,
-            color = ManyakTheme.colors.textSubtle,
-        )
-    }
-}
-
-/**
  * 시작 상황은 이름·설명·엔딩 세 갈래다. 이름은 고를 수 있는 값이고 나머지 둘은 그 값에 딸리므로,
  * 한 덩어리로 두면 무엇을 바꿀 수 있는지 드러나지 않는다.
  */
@@ -257,7 +232,7 @@ private fun StartSettingSection(
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.section),
     ) {
         if (startSettings.isNotEmpty()) {
-            SubLabeledBlock(labelRes = R.string.story_detail_start_setting_name) {
+            SubLabeledBlock(label = stringResource(R.string.story_detail_start_setting_name)) {
                 StartSettingSelect(
                     startSettings = startSettings,
                     selectedId = selectedId,
@@ -265,7 +240,7 @@ private fun StartSettingSection(
                 )
             }
         }
-        SubLabeledBlock(labelRes = R.string.story_detail_start_setting_situation) {
+        SubLabeledBlock(label = stringResource(R.string.story_detail_start_setting_situation)) {
             Text(
                 text = selected.startSituation,
                 style = ManyakTheme.typography.bodyLarge,
@@ -274,7 +249,7 @@ private fun StartSettingSection(
         }
         if (selected.endings.isNotEmpty()) {
             SubLabeledBlock(
-                labelRes = R.string.story_detail_start_setting_endings,
+                label = stringResource(R.string.story_detail_start_setting_endings),
                 labelTrailing = { EndingInfoButton() },
             ) {
                 EndingList(endings = selected.endings)
@@ -341,8 +316,8 @@ private fun EndingRow(
  * 깔면 무엇이 라벨이고 무엇이 내용인지 흐려진다.
  */
 @Composable
-private fun SubLabeledBlock(
-    @StringRes labelRes: Int,
+internal fun SubLabeledBlock(
+    label: String,
     modifier: Modifier = Modifier,
     labelTrailing: (@Composable () -> Unit)? = null,
     content: @Composable () -> Unit,
@@ -356,7 +331,7 @@ private fun SubLabeledBlock(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = stringResource(labelRes),
+                text = label,
                 style = ManyakTheme.typography.bodyLargeStrong,
                 color = ManyakTheme.colors.text,
             )
@@ -390,5 +365,6 @@ internal val StoryHeroBorderWidth = 1.dp
 
 private const val OVERVIEW_KEY = "overview"
 private const val DESCRIPTION_KEY = "description"
+private const val CHARACTERS_KEY = "characters"
 private const val START_SETTING_KEY = "start-setting"
-private const val CREATED_AT_KEY = "created-at"
+private const val META_KEY = "meta"

@@ -1,5 +1,6 @@
 package app.manyak.feature.story
 
+import app.manyak.core.domain.story.StoryCharacter
 import app.manyak.core.domain.story.StoryDetail
 import app.manyak.core.domain.story.StoryStartSetting
 
@@ -12,6 +13,7 @@ internal fun previewStory(
         id = "1",
         title = "두 번째 시계공",
         oneLineIntro = "멈춘 시계탑을 고치는 견습공의 하루",
+        authorNickname = "마냑",
         description = "도시의 모든 시계가 같은 시각에 멈췄다. 당신은 그 이유를 아는 마지막 사람이다.",
         genres = listOf("판타지", "미스터리", "일상"),
         thumbnailUrl = null,
@@ -19,6 +21,13 @@ internal fun previewStory(
         createdDate = "2026-08-27",
         startSettings = startSettings,
         reachedEndings = reachedEndings,
+        characters = previewCharacters(),
+    )
+
+internal fun previewCharacters(): List<StoryCharacter> =
+    listOf(
+        StoryCharacter(name = "세린", imageUrl = "https://cdn.manyak.app/characters/generated/serin.webp"),
+        StoryCharacter(name = "도윤", imageUrl = null),
     )
 
 internal fun previewStartSettings(): List<StoryStartSetting> =

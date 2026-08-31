@@ -1,5 +1,6 @@
 package app.manyak.feature.chat.message
 
+import app.manyak.core.ui.component.isAllowedCharacterImageUrl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -94,20 +95,20 @@ class ChatMessageSegmentsTest {
 
     @Test
     fun `운영과 개발 CDN 의 생성 · 오리지널 인물 경로만 허용한다`() {
-        assertTrue(isAllowedChatCharacterImageUrl(IMAGE_URL))
-        assertTrue(isAllowedChatCharacterImageUrl("https://dev-cdn.manyak.app/characters/generated/a.png"))
-        assertTrue(isAllowedChatCharacterImageUrl(ORIGINAL_IMAGE_URL))
-        assertTrue(isAllowedChatCharacterImageUrl("https://cdn.manyak.app/characters/originals/a.png"))
+        assertTrue(isAllowedCharacterImageUrl(IMAGE_URL))
+        assertTrue(isAllowedCharacterImageUrl("https://dev-cdn.manyak.app/characters/generated/a.png"))
+        assertTrue(isAllowedCharacterImageUrl(ORIGINAL_IMAGE_URL))
+        assertTrue(isAllowedCharacterImageUrl("https://cdn.manyak.app/characters/originals/a.png"))
 
         // 다른 호스트·평문·포트·자격 증명·다른 경로는 모두 막는다.
-        assertFalse(isAllowedChatCharacterImageUrl("https://cdn.manyak.app.evil.example/characters/generated/a.png"))
-        assertFalse(isAllowedChatCharacterImageUrl("http://cdn.manyak.app/characters/generated/a.png"))
-        assertFalse(isAllowedChatCharacterImageUrl("https://cdn.manyak.app:8443/characters/generated/a.png"))
-        assertFalse(isAllowedChatCharacterImageUrl("https://user:pw@cdn.manyak.app/characters/generated/a.png"))
-        assertFalse(isAllowedChatCharacterImageUrl("https://cdn.manyak.app/covers/a.png"))
-        assertFalse(isAllowedChatCharacterImageUrl("https://cdn.manyak.app/characters/generated/"))
-        assertFalse(isAllowedChatCharacterImageUrl("https://cdn.manyak.app/characters/originals/"))
-        assertFalse(isAllowedChatCharacterImageUrl("주소가 아님"))
+        assertFalse(isAllowedCharacterImageUrl("https://cdn.manyak.app.evil.example/characters/generated/a.png"))
+        assertFalse(isAllowedCharacterImageUrl("http://cdn.manyak.app/characters/generated/a.png"))
+        assertFalse(isAllowedCharacterImageUrl("https://cdn.manyak.app:8443/characters/generated/a.png"))
+        assertFalse(isAllowedCharacterImageUrl("https://user:pw@cdn.manyak.app/characters/generated/a.png"))
+        assertFalse(isAllowedCharacterImageUrl("https://cdn.manyak.app/covers/a.png"))
+        assertFalse(isAllowedCharacterImageUrl("https://cdn.manyak.app/characters/generated/"))
+        assertFalse(isAllowedCharacterImageUrl("https://cdn.manyak.app/characters/originals/"))
+        assertFalse(isAllowedCharacterImageUrl("주소가 아님"))
     }
 
     @Test

@@ -36,6 +36,8 @@
     <!-- 턴 수 뱃지. 숫자만 보이므로 화면 낭독기에는 무엇의 수인지 함께 읽힌다. -->
     <string name="story_turn_count_description">누적 턴 수 %1$s</string>
     <string name="story_thumbnail_placeholder">썸네일 없음</string>
+    <!-- 제작자 닉네임. 선행 @ 는 리소스 참조로 읽히지 않게 이스케이프한다. -->
+    <string name="story_author_nickname">\@%1$s</string>
 
     <!-- 홈 -->
     <string name="home_original_stories">오리지널 스토리</string>
@@ -353,6 +355,7 @@
     <string name="story_detail_thumbnail_close">닫기</string>
     <string name="story_detail_genres">장르</string>
     <string name="story_detail_description">주요 내용</string>
+    <string name="story_detail_characters">주변 인물</string>
     <string name="story_detail_start_settings">채팅 시작 상황</string>
     <string name="story_detail_start_setting_name">상황 이름</string>
     <string name="story_detail_start_setting_situation">상황 설명</string>
@@ -362,6 +365,7 @@
     <string name="story_detail_endings_info_tooltip">엔딩은 시작 상황마다 달라져요</string>
     <!-- 시작 설정이 둘 이상일 때만 나오는 선택 트리거와 그 바텀 시트. -->
     <string name="story_detail_start_setting_select">시작 상황 선택</string>
+    <string name="story_detail_author">제작자</string>
     <string name="story_detail_created_at">생성일</string>
     <string name="story_detail_start_chat">채팅 시작하기</string>
     <string name="story_detail_start_chat_failed">채팅을 시작하지 못했어요</string>
