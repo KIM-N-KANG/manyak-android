@@ -301,6 +301,7 @@
     <string name="feedback_submit">피드백 보내기</string>
     <string name="feedback_submitting">피드백 전송 중</string>
     <string name="feedback_error_empty">피드백 내용을 입력해주세요</string>
+    <string name="feedback_error_email">이메일 형식을 확인해주세요</string>
     <string name="feedback_submitted">소중한 피드백을 보내주셔서 감사해요</string>
     <string name="feedback_submit_failed">피드백 전송에 실패했어요</string>
     <string name="my_theme">테마 변경</string>

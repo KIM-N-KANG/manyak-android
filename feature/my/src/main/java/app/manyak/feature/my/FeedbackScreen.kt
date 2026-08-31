@@ -154,7 +154,7 @@ private fun FeedbackBodyField(
             onValueChange = { onIntent(FeedbackIntent.BodyChanged(it)) },
             placeholder = stringResource(R.string.feedback_body_placeholder),
             enabled = !state.isSubmitting,
-            isError = state.errorRes != null,
+            isError = state.bodyErrorRes != null,
             footer = {
                 ManyakInputCounter(
                     length = state.body.length,
@@ -182,6 +182,7 @@ private fun FeedbackEmailField(
             onValueChange = { onIntent(FeedbackIntent.EmailChanged(it)) },
             placeholder = stringResource(R.string.feedback_email_placeholder),
             enabled = !state.isSubmitting,
+            isError = state.emailErrorRes != null,
             keyboardOptions =
                 KeyboardOptions(
                     autoCorrectEnabled = false,
@@ -189,7 +190,10 @@ private fun FeedbackEmailField(
                     imeAction = ImeAction.Done,
                 ),
         )
-        MyFieldMessage(text = stringResource(R.string.feedback_email_description))
+        MyFieldMessage(
+            text = stringResource(state.emailErrorRes ?: R.string.feedback_email_description),
+            isError = state.emailErrorRes != null,
+        )
     }
 }
 
@@ -206,7 +210,7 @@ private fun FeedbackSubmit(
                 .padding(bottom = ManyakTheme.spacing.gutter),
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
-        state.errorRes?.let { errorRes ->
+        state.bodyErrorRes?.let { errorRes ->
             MyFieldMessage(text = stringResource(errorRes), isError = true)
         }
         MyPrimaryButton(
