@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,7 +15,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
@@ -34,7 +32,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -43,6 +40,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.R
+import app.manyak.core.ui.component.ManyakInputCounter
+import app.manyak.core.ui.component.ManyakTextField
 import app.manyak.core.ui.theme.ManyakTheme
 
 @Composable
@@ -193,84 +192,6 @@ internal fun KeywordChipSkeleton(modifier: Modifier = Modifier) {
     }
 }
 
-/**
- * 테두리·트레일링을 decorationBox 안에 둔다. 포커스가 들어올 때 스크롤 컨테이너가 끌어올리는
- * 범위가 decorationBox 전체라, 밖에 두면 커서 줄만 올라오고 나머지는 키보드에 가린다.
- */
-@Composable
-internal fun KeywordTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String,
-    isError: Boolean,
-    modifier: Modifier = Modifier,
-    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-    keyboardActions: KeyboardActions = KeyboardActions.Default,
-    trailing: (@Composable () -> Unit)? = null,
-) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val focused by interactionSource.collectIsFocusedAsState()
-    val borderColor =
-        when {
-            isError -> ManyakTheme.colors.borderDanger
-            focused -> ManyakTheme.colors.borderInput
-            else -> ManyakTheme.colors.border
-        }
-    BasicTextField(
-        modifier = modifier,
-        value = value,
-        onValueChange = onValueChange,
-        textStyle = ManyakTheme.typography.bodyMedium.copy(color = ManyakTheme.colors.text),
-        cursorBrush = SolidColor(ManyakTheme.colors.text),
-        singleLine = true,
-        keyboardOptions = keyboardOptions,
-        keyboardActions = keyboardActions,
-        interactionSource = interactionSource,
-        decorationBox = { innerTextField ->
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = ManyakTheme.sizes.input)
-                        .clip(ManyakTheme.shapes.control)
-                        .background(ManyakTheme.colors.surfaceRaised)
-                        .border(1.dp, borderColor, ManyakTheme.shapes.control)
-                        .padding(
-                            horizontal = ManyakTheme.spacing.controlHorizontal,
-                            vertical = ManyakTheme.spacing.controlVertical,
-                        ),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
-            ) {
-                Box(modifier = Modifier.weight(1f)) {
-                    if (value.isEmpty()) {
-                        Text(
-                            text = placeholder,
-                            style = ManyakTheme.typography.bodyMedium,
-                            color = ManyakTheme.colors.textDisabled,
-                            maxLines = 1,
-                        )
-                    }
-                    innerTextField()
-                }
-                trailing?.invoke()
-            }
-        },
-    )
-}
-
-@Composable
-internal fun InputCounter(
-    length: Int,
-    maxLength: Int,
-) {
-    Text(
-        text = stringResource(R.string.create_input_counter, length, maxLength),
-        style = ManyakTheme.typography.bodySmall,
-        color = ManyakTheme.colors.textSubtle,
-    )
-}
-
 @Composable
 internal fun AddKeywordDialog(
     categoryLabel: String,
@@ -354,7 +275,7 @@ private fun AddKeywordDialogBody(
             style = ManyakTheme.typography.labelLarge,
             color = ManyakTheme.colors.text,
         )
-        KeywordTextField(
+        ManyakTextField(
             value = input,
             onValueChange = onInputChange,
             placeholder = placeholder,
@@ -362,7 +283,7 @@ private fun AddKeywordDialogBody(
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { onDone() }),
             trailing = {
-                InputCounter(
+                ManyakInputCounter(
                     length = input.length,
                     maxLength = CreateKeywordUiState.CUSTOM_TAG_MAX_LENGTH,
                 )

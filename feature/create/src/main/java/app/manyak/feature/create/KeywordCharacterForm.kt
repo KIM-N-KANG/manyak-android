@@ -37,6 +37,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.R
+import app.manyak.core.ui.component.ManyakInputCounter
+import app.manyak.core.ui.component.ManyakTextField
 import app.manyak.core.ui.theme.ManyakTheme
 
 @Composable
@@ -105,14 +107,14 @@ private fun CharacterBasicInfo(
             required = false,
         )
         Row(horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact)) {
-            KeywordTextField(
+            ManyakTextField(
                 modifier = Modifier.weight(3f),
                 value = character.name,
                 onValueChange = { name -> onIntent(CreateKeywordIntent.ChangeCharacterName(target, name)) },
                 placeholder = namePlaceholder,
                 isError = isDuplicateName,
                 trailing = {
-                    InputCounter(
+                    ManyakInputCounter(
                         length = character.name.length,
                         maxLength = CreateKeywordUiState.CHARACTER_NAME_MAX_LENGTH,
                     )

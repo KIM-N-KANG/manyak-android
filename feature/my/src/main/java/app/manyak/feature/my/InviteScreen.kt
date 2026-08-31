@@ -46,6 +46,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.core.domain.invite.Invite
 import app.manyak.core.ui.R
+import app.manyak.core.ui.component.ManyakTextField
 import app.manyak.core.ui.component.SkeletonPlaceholder
 import app.manyak.core.ui.component.rememberSkeletonPulseAlpha
 import app.manyak.core.ui.theme.ManyakTheme
@@ -276,7 +277,7 @@ private fun InviteRedeemSection(
                 horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                MyTextField(
+                ManyakTextField(
                     modifier = Modifier.weight(1f),
                     value = state.code,
                     onValueChange = { onIntent(InviteIntent.CodeChanged(it)) },

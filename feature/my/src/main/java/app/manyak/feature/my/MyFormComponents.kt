@@ -2,21 +2,12 @@ package app.manyak.feature.my
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -24,15 +15,11 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ManyakProgressIndicator
@@ -145,75 +132,6 @@ internal fun MyFieldLabel(
             )
         }
     }
-}
-
-/**
- * 입력창. 여러 줄 입력은 [minHeight] 를 올리고 [counter] 로 글자 수를 아래에 붙인다.
- */
-@Composable
-@Suppress("LongParameterList")
-internal fun MyTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    isError: Boolean = false,
-    singleLine: Boolean = true,
-    minHeight: Dp = ManyakTheme.sizes.input,
-    textStyle: TextStyle = ManyakTheme.typography.bodyMedium,
-    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-    keyboardActions: KeyboardActions = KeyboardActions.Default,
-    counter: (@Composable () -> Unit)? = null,
-) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val focused by interactionSource.collectIsFocusedAsState()
-    val borderColor =
-        when {
-            isError -> ManyakTheme.colors.borderDanger
-            focused -> ManyakTheme.colors.borderInput
-            else -> ManyakTheme.colors.border
-        }
-    BasicTextField(
-        modifier = modifier.fillMaxWidth(),
-        value = value,
-        onValueChange = onValueChange,
-        enabled = enabled,
-        textStyle = textStyle.copy(color = ManyakTheme.colors.text),
-        cursorBrush = SolidColor(ManyakTheme.colors.text),
-        singleLine = singleLine,
-        keyboardOptions = keyboardOptions,
-        keyboardActions = keyboardActions,
-        interactionSource = interactionSource,
-        decorationBox = { innerTextField ->
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = minHeight)
-                        .background(ManyakTheme.colors.surfaceRaised, ManyakTheme.shapes.control)
-                        .border(1.dp, borderColor, ManyakTheme.shapes.control)
-                        .padding(
-                            horizontal = ManyakTheme.spacing.controlHorizontal,
-                            vertical = ManyakTheme.spacing.controlVertical,
-                        ),
-                verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
-            ) {
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    if (value.isEmpty()) {
-                        Text(
-                            text = placeholder,
-                            style = textStyle,
-                            color = ManyakTheme.colors.textDisabled,
-                            maxLines = if (singleLine) 1 else Int.MAX_VALUE,
-                        )
-                    }
-                    innerTextField()
-                }
-                counter?.let { Box(modifier = Modifier.align(Alignment.End)) { it() } }
-            }
-        },
-    )
 }
 
 /** 입력 아래에 붙는 오류·보조 문구. */

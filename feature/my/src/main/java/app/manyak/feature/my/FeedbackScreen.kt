@@ -29,6 +29,9 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.core.ui.R
+import app.manyak.core.ui.component.ManyakInputCounter
+import app.manyak.core.ui.component.ManyakMultilineTextField
+import app.manyak.core.ui.component.ManyakTextField
 import app.manyak.core.ui.theme.ManyakTheme
 
 /**
@@ -133,23 +136,17 @@ private fun FeedbackBodyField(
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
         MyFieldLabel(text = stringResource(R.string.feedback_body_label), isRequired = true)
-        MyTextField(
+        ManyakMultilineTextField(
+            modifier = Modifier.fillMaxWidth(),
             value = state.body,
             onValueChange = { onIntent(FeedbackIntent.BodyChanged(it)) },
             placeholder = stringResource(R.string.feedback_body_placeholder),
             enabled = !state.isSubmitting,
             isError = state.errorRes != null,
-            singleLine = false,
-            counter = {
-                Text(
-                    text =
-                        stringResource(
-                            R.string.feedback_body_counter,
-                            state.body.length,
-                            FeedbackUiState.BODY_MAX_LENGTH,
-                        ),
-                    style = ManyakTheme.typography.bodySmall,
-                    color = ManyakTheme.colors.textSubtle,
+            footer = {
+                ManyakInputCounter(
+                    length = state.body.length,
+                    maxLength = FeedbackUiState.BODY_MAX_LENGTH,
                 )
             },
         )
@@ -167,7 +164,8 @@ private fun FeedbackEmailField(
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
         MyFieldLabel(text = stringResource(R.string.feedback_email_label))
-        MyTextField(
+        ManyakTextField(
+            modifier = Modifier.fillMaxWidth(),
             value = state.email,
             onValueChange = { onIntent(FeedbackIntent.EmailChanged(it)) },
             placeholder = stringResource(R.string.feedback_email_placeholder),

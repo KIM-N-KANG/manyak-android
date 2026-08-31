@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -29,16 +27,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.R
+import app.manyak.core.ui.component.ManyakInputCounter
+import app.manyak.core.ui.component.ManyakMultilineTextField
 import app.manyak.core.ui.component.RowRevealTransition
 import app.manyak.core.ui.text.storyAnnotatedString
 import app.manyak.core.ui.theme.ManyakTheme
@@ -253,12 +251,18 @@ private fun AdditionalInfoRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
     ) {
-        AdditionalInfoField(
+        ManyakMultilineTextField(
             modifier = Modifier.weight(1f),
             value = input.value,
-            label = stringResource(R.string.create_additional_input_description, index + 1),
-            placeholder = placeholder,
             onValueChange = onValueChange,
+            placeholder = placeholder,
+            contentDescription = stringResource(R.string.create_additional_input_description, index + 1),
+            footer = {
+                ManyakInputCounter(
+                    length = input.value.length,
+                    maxLength = CreateAdditionalInfoUiState.INPUT_MAX_LENGTH,
+                )
+            },
         )
         IconButton(
             modifier = Modifier.size(32.dp),
@@ -272,62 +276,4 @@ private fun AdditionalInfoRow(
             )
         }
     }
-}
-
-/**
- * 여러 줄 입력과 글자 수 카운터를 담은 자유 텍스트 필드. 시각 문법은 [KeywordTextField]와 같다.
- *
- * 테두리·카운터를 decorationBox 안에 두는 것이 중요하다. 포커스가 들어올 때 스크롤 컨테이너가
- * 끌어올리는 범위는 decorationBox 전체라, 밖에 두면 커서 줄만 올라오고 카운터는 키보드에 가린다.
- */
-@Composable
-private fun AdditionalInfoField(
-    value: String,
-    label: String,
-    placeholder: String,
-    onValueChange: (String) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val focused by interactionSource.collectIsFocusedAsState()
-    val borderColor = if (focused) ManyakTheme.colors.borderInput else ManyakTheme.colors.border
-    BasicTextField(
-        modifier = modifier.semantics { contentDescription = label },
-        value = value,
-        onValueChange = onValueChange,
-        textStyle = ManyakTheme.typography.bodyMedium.copy(color = ManyakTheme.colors.text),
-        cursorBrush = SolidColor(ManyakTheme.colors.text),
-        interactionSource = interactionSource,
-        decorationBox = { innerTextField ->
-            Column(
-                modifier =
-                    Modifier
-                        .clip(ManyakTheme.shapes.control)
-                        .background(ManyakTheme.colors.surfaceRaised)
-                        .border(1.dp, borderColor, ManyakTheme.shapes.control)
-                        .padding(
-                            horizontal = ManyakTheme.spacing.controlHorizontal,
-                            vertical = ManyakTheme.spacing.controlVertical,
-                        ),
-                verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
-            ) {
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    if (value.isEmpty()) {
-                        Text(
-                            text = placeholder,
-                            style = ManyakTheme.typography.bodyMedium,
-                            color = ManyakTheme.colors.textDisabled,
-                        )
-                    }
-                    innerTextField()
-                }
-                Box(modifier = Modifier.align(Alignment.End)) {
-                    InputCounter(
-                        length = value.length,
-                        maxLength = CreateAdditionalInfoUiState.INPUT_MAX_LENGTH,
-                    )
-                }
-            }
-        },
-    )
 }

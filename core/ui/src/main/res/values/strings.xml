@@ -94,8 +94,6 @@
     <string name="create_add_keyword_placeholder_protagonist">예: 사랑에 서툰, 타인을 믿지 못하는</string>
     <string name="create_add_keyword_placeholder_supporting_character">예: 상냥해서 더 위험한, 어딘가 망가진</string>
     <string name="create_add_keyword_error_empty">키워드를 입력해주세요</string>
-    <!-- %1$d 는 현재 글자 수, %2$d 는 상한. 키워드·인물 이름 입력의 카운터에 함께 쓴다. -->
-    <string name="create_input_counter">%1$d / %2$d</string>
     <string name="create_dialog_close">닫기</string>
     <string name="create_dialog_add">추가하기</string>
     <string name="create_name_placeholder_protagonist">예: 서지우</string>
@@ -282,8 +280,6 @@
     <string name="feedback_description">보내주신 피드백은 다음 개선에 꼼꼼히 참고할게요</string>
     <string name="feedback_body_label">피드백 내용</string>
     <string name="feedback_body_placeholder">예: 이런 점이 불편했어요, 이런 기능이 있으면 좋겠어요</string>
-    <!-- %1$d 는 현재 글자 수, %2$d 는 상한. -->
-    <string name="feedback_body_counter">%1$d / %2$d</string>
     <string name="feedback_email_label">답변 받을 이메일</string>
     <string name="feedback_email_placeholder">예: contact@manyak.app</string>
     <string name="feedback_email_description">답변이 필요하시면 이메일을 남겨주세요</string>
@@ -426,6 +422,8 @@
     <string name="error_unknown">문제가 생겼어요. 다시 시도해주세요</string>
 
     <!-- 공통 -->
+    <!-- %1$d 는 현재 글자 수, %2$d 는 상한. 입력 상한이 있는 모든 입력창이 함께 쓴다. -->
+    <string name="input_counter">%1$d / %2$d</string>
     <string name="common_back">뒤로</string>
     <string name="common_retry">다시 시도</string>
     <string name="common_confirm">확인</string>
