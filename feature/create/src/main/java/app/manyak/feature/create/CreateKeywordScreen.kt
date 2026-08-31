@@ -39,7 +39,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.core.domain.story.StoryTagCategory
 import app.manyak.core.ui.R
+import app.manyak.core.ui.component.FocusScrollMargin
 import app.manyak.core.ui.component.ScrollEdgeFade
+import app.manyak.core.ui.component.clearFocusOnTap
 import app.manyak.core.ui.theme.ManyakTheme
 
 /**
@@ -102,7 +104,7 @@ private fun CreateKeywordContent(
     val imeVisible = WindowInsets.isImeVisible
     val focusManager = LocalFocusManager.current
 
-    FunnelFocusScroll {
+    FocusScrollMargin {
         Column(
             modifier =
                 modifier

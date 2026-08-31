@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
@@ -30,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -46,8 +46,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.core.domain.invite.Invite
 import app.manyak.core.ui.R
+import app.manyak.core.ui.component.FocusScrollMargin
 import app.manyak.core.ui.component.ManyakTextField
 import app.manyak.core.ui.component.SkeletonPlaceholder
+import app.manyak.core.ui.component.clearFocusOnTap
 import app.manyak.core.ui.component.rememberSkeletonPulseAlpha
 import app.manyak.core.ui.theme.ManyakTheme
 
@@ -63,6 +65,7 @@ fun InviteScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
 
     LaunchedEffect(viewModel) { viewModel.onIntent(InviteIntent.Load) }
 
@@ -77,18 +80,21 @@ fun InviteScreen(
         }
     }
 
-    Column(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.safeDrawing),
-    ) {
-        MyDetailHeader(titleRes = R.string.my_invite, onBack = onBack)
-        InviteContent(
-            state = state,
-            onIntent = viewModel::onIntent,
-            modifier = Modifier.weight(1f),
-        )
+    FocusScrollMargin {
+        Column(
+            modifier =
+                modifier
+                    .fillMaxSize()
+                    .windowInsetsPadding(WindowInsets.safeDrawing)
+                    .clearFocusOnTap(focusManager),
+        ) {
+            MyDetailHeader(titleRes = R.string.my_invite, onBack = onBack)
+            InviteContent(
+                state = state,
+                onIntent = viewModel::onIntent,
+                modifier = Modifier.weight(1f),
+            )
+        }
     }
 }
 
@@ -103,7 +109,6 @@ private fun InviteContent(
             modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .imePadding()
                 .padding(horizontal = ManyakTheme.spacing.gutter)
                 .padding(top = ManyakTheme.spacing.gutter, bottom = ManyakTheme.spacing.screenBottom),
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.block),
