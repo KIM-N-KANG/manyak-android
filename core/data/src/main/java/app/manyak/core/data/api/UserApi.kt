@@ -43,6 +43,10 @@ interface UserApi {
         @Body request: RedeemInviteCodeRequestDto,
     ): Response<Unit>
 
+    /** 회원 탈퇴. 성공은 본문 없는 204 다. */
+    @DELETE("users/me")
+    suspend fun withdraw(): Response<Unit>
+
     /** 내 스토리 소프트 삭제. 성공은 본문 없는 204 다. */
     @DELETE("stories/{storyId}")
     suspend fun deleteStory(

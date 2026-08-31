@@ -17,6 +17,8 @@ import androidx.compose.ui.unit.dp
  */
 @Immutable
 data class ManyakShapes(
+    /** 6dp — 체크박스처럼 한 변이 20dp 남짓인 작은 네모 */
+    val checkbox: CornerBasedShape,
     /** 10dp — 셀렉트 메뉴 항목·라벨 없는 아이콘 버튼 */
     val menuItem: CornerBasedShape,
     /** 12dp — 썸네일·작은 아이콘 컨테이너 */
@@ -35,6 +37,7 @@ data class ManyakShapes(
 
 internal val ManyakDefaultShapes =
     ManyakShapes(
+        checkbox = RoundedCornerShape(6.dp),
         menuItem = RoundedCornerShape(10.dp),
         thumbnail = RoundedCornerShape(12.dp),
         control = RoundedCornerShape(14.dp),

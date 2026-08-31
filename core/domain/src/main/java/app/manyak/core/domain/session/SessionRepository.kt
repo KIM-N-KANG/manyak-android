@@ -35,6 +35,14 @@ interface SessionRepository {
     /** 종료 절차를 시작한다. 이미 진행 중이면 그 작업에 합류하고 새로 만들지 않는다. */
     suspend fun signOut()
 
+    /**
+     * 계정을 지우고 세션을 끝낸다.
+     *
+     * 서버 삭제가 성공한 뒤에만 종료 절차를 시작한다 — 먼저 지우면 삭제 요청에 붙일 토큰이 없다.
+     * 종료 자체는 [signOut] 과 같은 흐름을 타므로 로컬 정리 범위가 경로마다 갈리지 않는다.
+     */
+    suspend fun withdraw(): DomainResult<Unit>
+
     /** [SessionState.SignedOut.notice]를 사용자가 확인했음을 알린다. */
     suspend fun acknowledgeSessionEndNotice()
 }

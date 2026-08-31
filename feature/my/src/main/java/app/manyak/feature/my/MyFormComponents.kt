@@ -30,6 +30,7 @@ import app.manyak.core.ui.theme.ManyakTheme
  *
  * `:core:ui` 로 올리지 않는다 — 아직 이 모듈 밖에 쓰는 곳이 없다.
  *
+ * @param isDanger 되돌릴 수 없는 동작. 형태는 그대로 두고 배경만 위험 색으로 바꾼다.
  * @param isCompact 입력창 옆에 나란히 서는 버튼. 높이를 입력창과 같은 40dp 로 낮춘다 — 옆 칸보다
  *   크면 한 줄로 읽히지 않는다. 최소 터치 타깃 48dp 에 못 미치는 것은 칩과 같은 예외로 수용한다.
  */
@@ -42,6 +43,7 @@ internal fun MyPrimaryButton(
     enabled: Boolean = true,
     isLoading: Boolean = false,
     isCompact: Boolean = false,
+    isDanger: Boolean = false,
     @DrawableRes iconRes: Int? = null,
 ) {
     Button(
@@ -54,7 +56,7 @@ internal fun MyPrimaryButton(
         shape = ManyakTheme.shapes.control,
         colors =
             ButtonDefaults.buttonColors(
-                containerColor = ManyakTheme.colors.brand,
+                containerColor = if (isDanger) ManyakTheme.colors.backgroundDangerBold else ManyakTheme.colors.brand,
                 contentColor = ManyakTheme.colors.textInverse,
                 disabledContainerColor = ManyakTheme.colors.backgroundDisabled,
                 disabledContentColor = ManyakTheme.colors.textDisabled,

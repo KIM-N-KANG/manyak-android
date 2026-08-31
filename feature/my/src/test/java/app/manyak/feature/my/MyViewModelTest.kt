@@ -139,6 +139,8 @@ private class FakeSessionRepository : SessionRepository {
 
     override suspend fun signOut() = Unit
 
+    override suspend fun withdraw() = error("탈퇴는 이 테스트의 대상이 아니다")
+
     override suspend fun acknowledgeSessionEndNotice() = Unit
 }
 

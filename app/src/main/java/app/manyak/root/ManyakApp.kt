@@ -64,8 +64,8 @@ import app.manyak.feature.login.LoginScreen
 import app.manyak.feature.my.FeedbackScreen
 import app.manyak.feature.my.InviteOnboardingSheet
 import app.manyak.feature.my.InviteScreen
-import app.manyak.feature.my.MyPlaceholderScreen
 import app.manyak.feature.my.OpenSourceLicenseScreen
+import app.manyak.feature.my.WithdrawalScreen
 import app.manyak.feature.story.StoryDetailScreen
 
 /**
@@ -280,9 +280,7 @@ private fun MainNavDisplay() {
     )
 }
 
-/**
- * 마이 탭의 하위 목적지들. 아직 구현하지 않은 것은 자리 화면이고, 본 기능이 구현되면 각 화면으로 대체한다.
- */
+/** 마이 탭의 하위 목적지들. 셸 없이 전체 화면으로 열리고 뒤로가기는 마이 탭으로 돌아온다. */
 private fun EntryProviderScope<NavKey>.myDestinationEntries(backStack: MutableList<NavKey>) {
     entry<MyInviteRoute> {
         InviteScreen(onBack = { backStack.removeLastOrNull() })
@@ -298,7 +296,7 @@ private fun EntryProviderScope<NavKey>.myDestinationEntries(backStack: MutableLi
         )
     }
     entry<WithdrawalRoute> {
-        MyPlaceholderScreen(titleRes = R.string.my_withdrawal, onBack = { backStack.removeLastOrNull() })
+        WithdrawalScreen(onBack = { backStack.removeLastOrNull() })
     }
 }
 

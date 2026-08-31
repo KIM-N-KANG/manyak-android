@@ -136,6 +136,7 @@ typography:
     lineHeight: 16sp
 
 rounded:
+  checkbox: 6dp
   menu-item: 10dp
   thumbnail: 12dp
   control: 14dp
@@ -184,6 +185,16 @@ components:
     backgroundColor: "{colors.background-brand-bold}"
     textColor: "{colors.text-inverse}"
     rounded: "{rounded.control}"
+  checkbox:
+    size: "{sizes.icon}"
+    backgroundColor: "{colors.surface}"
+    borderColor: "{colors.border}"
+    borderWidth: 1dp
+    rounded: "{rounded.checkbox}"
+  checkbox-checked:
+    backgroundColor: "{colors.brand}"
+    borderColor: "{colors.brand}"
+    iconColor: "{colors.text-inverse}"
   button-danger:
     backgroundColor: "{colors.background-danger-bold}"
     textColor: "{colors.text-inverse}"
@@ -574,6 +585,7 @@ components:
 
 | 토큰 | 값 | 용도 |
 | --- | --- | --- |
+| `{rounded.checkbox}` | 6dp | 체크박스처럼 한 변이 20dp 남짓인 작은 네모 |
 | `{rounded.menu-item}` | 10dp | 셀렉트 메뉴 항목 · 라벨 없는 아이콘 버튼 |
 | `{rounded.thumbnail}` | 12dp | 썸네일·작은 아이콘 컨테이너 |
 | `{rounded.control}` | 14dp | 버튼·입력창·탭 |
@@ -593,6 +605,8 @@ components:
 **`button-primary`** — 주 동작. 배경은 **기본 프라이머리 `{colors.brand}`** 이고(버튼의 프라이머리는 반드시 이 색 — 위 브랜드 절), 텍스트 `{colors.text-inverse}`, `{typography.label-large}`, 모서리 `{rounded.control}`, 내부 여백 세로 `{spacing.compact}` · 가로 `{spacing.component}`. 눌림은 `{component.button-primary-pressed}`로 배경만 `{colors.background-brand-bold}`로 한 단계 어둡게 바꿉니다. M3 슬롯 파생(primary = `{colors.background-brand-bold}`)은 안전망일 뿐이므로, 기본 `Button` 색에 기대지 말고 이 색을 명시합니다.
 
 **`button-danger`** — 파괴적 동작(탈퇴·삭제). 같은 형태에 배경만 `{colors.background-danger-bold}`. 눌림은 `{component.button-danger-pressed}`.
+
+**`checkbox`** — 동의·확인 항목의 체크 표시. `{sizes.icon}` 정사각에 `{rounded.checkbox}` 모서리이고, 기본은 `{colors.surface}` 채움 + `{colors.border}` 1dp, 체크되면 `{colors.brand}` 채움에 같은 색 경계와 `{colors.text-inverse}` 체크 아이콘(16dp)이다. **체크박스 자체는 누르는 대상이 아니다** — 줄 전체가 토글을 맡아 문구를 눌러도 켜지고, 최소 터치 타깃도 그 줄이 확보한다. 체크박스에 따로 접근성 이름을 붙이지 않는다(줄이 이미 이름과 상태를 읽힌다).
 
 **`button-neutral`** — 보조 동작. 배경 `{colors.background-neutral}`, 텍스트 `{colors.text}`. 눌림은 `{component.button-neutral-pressed}`.
 
