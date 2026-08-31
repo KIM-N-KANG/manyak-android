@@ -31,6 +31,7 @@ colors:
   background-information-subtle: "#E9F5FF"
   background-disabled: "#EEEEEE"
   border: "#EEEEEE"
+  border-strong: "#B9B9B9"
   border-input: "#8D8D8D"
   border-brand: "#00995F"
   border-danger: "#E23531"
@@ -66,6 +67,7 @@ colors-dark:
   background-information-subtle: "#003364"
   background-disabled: "#3A3A3A"
   border: "#2C2C2C"
+  border-strong: "#3A3A3A"
   border-input: "#666666"
   border-brand: "#58C58F"
   border-danger: "#FF7669"
@@ -335,6 +337,20 @@ components:
     textColor: "{colors.text-brand}"
     borderColor: "{colors.border-brand}"
     rounded: "{rounded.control}"
+  provider-chip:
+    textColor: "{colors.text-subtle}"
+    kakaoLogoColor: "{colors.text}"
+    typography: "{typography.label-small}"
+    borderColor: "{colors.border}"
+    borderWidth: 1dp
+    rounded: "{rounded.pill}"
+    height: 24dp
+    logoSize: 12dp
+    gap: "{spacing.dense}"
+    padding: "0 {spacing.compact}"
+  provider-chip-link:
+    borderColor: "{colors.border-strong}"
+    borderStyle: "dashed 3dp/3dp"
   logo-manyak:
     asset: "res/drawable/ic_logo_manyak.xml"
     color: "{colors.brand}"
@@ -346,6 +362,7 @@ components:
     asset: "res/drawable/ic_logo_kakao.xml"
     backgroundColor: "#FEE500"
     size: 24dp
+    monoColor: "{colors.text}"
 ---
 
 ## 개요
@@ -430,6 +447,7 @@ components:
 ### 경계
 
 - **장식 경계** (`{colors.border}`): 구분선·카드 테두리. 대비 요구 대상이 아닙니다.
+- **점선 경계** (`{colors.border-strong}` — 라이트 #B9B9B9 / 다크 #3A3A3A): 점선은 잉크가 절반만 닿아 같은 색이어도 실선보다 한참 연하게 읽힙니다. 실선 이웃과 같은 무게로 보이게 하는 한 단계 진한 장식 경계이며, **점선에만** 씁니다 — 실선에 쓰면 그냥 진한 테두리가 됩니다.
 - **입력 경계** (`{colors.border-input}` — 라이트 #8D8D8D / 다크 #666666): 경계가 유일한 식별 수단일 때. **표면이 아니라 자기 채움색 기준으로** 역산한 값입니다 — 표면 기준으로 잡았더니 `{colors.background-neutral}` 위에서 2.85로 미달했기 때문입니다.
 - **포커스 링** (`{colors.border-focused}`): 선택된 테두리 `{colors.border-brand}`와 같은 값입니다.
 - 상태 경계 `{colors.border-danger}` · `{colors.border-warning}` · `{colors.border-information}`는 각 배너·입력창에 씁니다.
@@ -632,6 +650,8 @@ components:
 
 **`badge`** — 배경 `{colors.background-brand-subtle}`, 텍스트 `{colors.text-brand}` + `{typography.body-small}`, 모서리 `{rounded.pill}`, 여백 세로 `{spacing.hairline}` · 가로 `{spacing.compact}`.
 
+**`provider-chip` / `provider-chip-link`** — 마이 프로필 헤더의 연동 계정 표시. 웹 배지와 같은 치수를 씁니다(높이 24dp, 로고 12dp) — 같은 정보를 두 플랫폼에서 나란히 보게 되는 자리라 크기가 다르면 다른 것으로 읽힙니다. 로고와 이름 사이는 `{spacing.dense}`, 가로 여백은 `{spacing.compact}`이고 세로 여백은 두지 않습니다(높이가 고정). 로고는 이 시스템에서 가장 작게 쓰이므로 `{sizes.icon-small}`(16dp)보다 한 단계 아래인 12dp 를 이 컴포넌트 안에서만 씁니다. **연동된 제공자는 `{colors.border}` 실선, 아직 아닌 제공자는 같은 모양의 `{colors.border-strong}` 점선(3dp 대시·3dp 간격) 버튼**입니다 — 점선을 실선과 같은 색으로 두면 잉크가 절반만 닿아 나란히 놓인 칩보다 눈에 띄게 연해집니다 — 미연동을 색이 아니라 선의 모양으로 말하고, 누를 수 있다는 것은 같은 자리에 놓인 형태가 전달합니다. 둘 다 연동되면 점선 버튼이 사라져 칩만 남습니다.
+
 **`banner-danger` / `banner-warning` / `banner-information`** — 배경은 각 `subtle`, 텍스트는 같은 계열의 텍스트 색, 모서리 `{rounded.control}`, 내부 여백 `{spacing.component}`. 배너 자체가 상태를 말하므로 아이콘 없이도 성립하지만, 색만으로 구분되지 않도록 문구를 명시합니다.
 
 ### 스토리
@@ -681,7 +701,7 @@ components:
 
 **`logo-google`** — `res/drawable/ic_logo_google.xml`. 공식 4색 G를 그대로 씁니다. **tint·변형·재색칠 금지.**
 
-**`logo-kakao`** — `res/drawable/ic_logo_kakao.xml`. 카카오 말풍선 심벌은 노란 컨테이너 `#FEE500` 위에만 올립니다. 이 노랑은 카카오가 정한 값이라 토큰 팔레트에 넣지 않았습니다.
+**`logo-kakao`** — `res/drawable/ic_logo_kakao.xml`. 카카오 말풍선 심벌은 노란 컨테이너 `#FEE500` 위에 검정으로 올립니다(로그인 버튼). 이 노랑은 카카오가 정한 값이라 토큰 팔레트에 넣지 않았습니다. **컨테이너 없이 놓을 때는 `{colors.text}` 단색으로 칠합니다**(`{component.provider-chip}`) — 검정 그대로 두면 다크 모드에서 배경에 묻힙니다. 구글 로고와 달리 카카오는 단색 사용을 허용하므로 이 자리에서만 재색칠합니다.
 
 ## 해야 할 것 / 하지 말아야 할 것
 

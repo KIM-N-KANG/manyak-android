@@ -6,10 +6,12 @@ import app.manyak.core.data.datastore.ProfileCacheStore
 import app.manyak.core.data.provider.GoogleIdTokenProvider
 import app.manyak.core.data.provider.KakaoIdTokenProvider
 import app.manyak.core.data.provider.SocialIdTokenProvider
+import app.manyak.core.data.repository.AccountLinkRepositoryImpl
 import app.manyak.core.data.repository.SessionRepositoryImpl
 import app.manyak.core.data.repository.UserProfileRepositoryImpl
 import app.manyak.core.data.session.SessionBootstrap
 import app.manyak.core.data.session.UserScopedStore
+import app.manyak.core.domain.auth.AccountLinkRepository
 import app.manyak.core.domain.auth.AuthProvider
 import app.manyak.core.domain.invite.InviteOnboardingRepository
 import app.manyak.core.domain.session.SessionRepository
@@ -50,6 +52,10 @@ abstract class AuthModule {
     @Binds
     @Singleton
     abstract fun bindUserProfileRepository(impl: UserProfileRepositoryImpl): UserProfileRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAccountLinkRepository(impl: AccountLinkRepositoryImpl): AccountLinkRepository
 
     @Binds
     @IntoMap

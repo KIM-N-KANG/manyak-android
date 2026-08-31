@@ -16,6 +16,15 @@ interface SocialIdTokenProvider {
     /** OIDC `idToken` 을 얻는다. 사용자가 창을 닫으면 취소 오류를 돌려준다. */
     suspend fun requestIdToken(): DomainResult<String>
 
+    /**
+     * **방금 발급된** `idToken` 을 얻는다.
+     *
+     * 계정 연동 재인증은 서버가 `iat` 신선도(10분)를 요구하는데, 제공자 SDK 는 유효기간이 남은 토큰을
+     * 캐시에서 그대로 돌려줄 수 있다. 로그인은 신선도를 요구하지 않으므로 [requestIdToken] 을 쓰고,
+     * 연동만 이 경로를 쓴다 — 강제 재발급은 사용자에게 인증 절차를 한 번 더 보이게 하는 비용이 있다.
+     */
+    suspend fun requestFreshIdToken(): DomainResult<String>
+
     /** 로그아웃 정리 5단계. 실패의 의미는 제공자마다 다르다(각 구현의 문서 참고). */
     suspend fun clearLocalState(): ProviderCleanupResult
 }

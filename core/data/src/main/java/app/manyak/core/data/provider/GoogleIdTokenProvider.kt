@@ -1,6 +1,7 @@
 package app.manyak.core.data.provider
 
 import android.content.Context
+import android.util.Base64
 import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.Credential
 import androidx.credentials.CredentialManager
@@ -16,6 +17,7 @@ import app.manyak.core.domain.error.DomainResult
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.security.SecureRandom
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -40,7 +42,16 @@ class GoogleIdTokenProvider
 
         private val credentialManager by lazy { CredentialManager.create(context) }
 
-        override suspend fun requestIdToken(): DomainResult<String> {
+        override suspend fun requestIdToken(): DomainResult<String> = requestIdToken(nonce = null)
+
+        /**
+         * Credential Manager 는 유효기간이 남은 ID 토큰을 캐시에서 그대로 돌려준다(실측 — 31분 전
+         * 발급 토큰 재사용). nonce 를 요구하면 그 값이 토큰 클레임에 실려야 하므로 캐시로는 만족할 수
+         * 없고 새 `iat` 로 다시 발급된다. 서버는 이 클레임을 검사하지 않고 무시한다.
+         */
+        override suspend fun requestFreshIdToken(): DomainResult<String> = requestIdToken(nonce = newNonce())
+
+        private suspend fun requestIdToken(nonce: String?): DomainResult<String> {
             if (config.googleServerClientId.isBlank()) {
                 return DomainResult.Failure(DomainError.ProviderNotConfigured(provider))
             }
@@ -48,11 +59,12 @@ class GoogleIdTokenProvider
                 activityProvider.currentActivity()
                     ?: return DomainResult.Failure(DomainError.ProviderFailed(provider, "no-activity"))
 
-            val request =
-                GetCredentialRequest
-                    .Builder()
-                    .addCredentialOption(GetSignInWithGoogleOption.Builder(config.googleServerClientId).build())
+            val option =
+                GetSignInWithGoogleOption
+                    .Builder(config.googleServerClientId)
+                    .apply { nonce?.let(::setNonce) }
                     .build()
+            val request = GetCredentialRequest.Builder().addCredentialOption(option).build()
 
             return try {
                 extractIdToken(credentialManager.getCredential(activity, request).credential)
@@ -81,7 +93,16 @@ class GoogleIdTokenProvider
             return DomainResult.Success(GoogleIdTokenCredential.createFrom(credential.data).idToken)
         }
 
+        private fun newNonce(): String {
+            val bytes = ByteArray(NONCE_BYTES)
+            SecureRandom().nextBytes(bytes)
+            return Base64.encodeToString(bytes, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
+        }
+
         private companion object {
+            /** 캐시 우회에만 쓰는 값이라 서버가 검사하지 않는다. 추측 불가능하기만 하면 된다. */
+            const val NONCE_BYTES = 16
+
             val GOOGLE_ID_TOKEN_TYPES =
                 setOf(
                     GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL,
