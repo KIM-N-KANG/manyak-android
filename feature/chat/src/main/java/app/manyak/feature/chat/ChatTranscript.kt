@@ -30,7 +30,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -74,8 +73,9 @@ internal fun ChatTranscript(
 ) {
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
-    // 보낸 턴이 상단까지 올라갈 자리. 목록 끝 항목이 이 값을 높이로 읽는다.
-    val padPx = remember { mutableIntStateOf(0) }
+    // 보낸 턴이 상단까지 올라갈 자리. 목록 끝 항목이 이 값을 높이로 읽는다. 구성 변경에서 잃으면
+    // 목록만 (인덱스, 오프셋)으로 복원돼 자리가 사라지고, 복원한 위치가 콘텐츠 끝에 걸린다.
+    val padPx = rememberSaveable { mutableIntStateOf(0) }
     val prologueCount = if (state.prologue.isNotBlank()) 1 else 0
     val streaming = state.streaming
     // 재생성은 대상 턴 자리에서 진행하므로 목록 끝에 블록을 더하지 않는다.
