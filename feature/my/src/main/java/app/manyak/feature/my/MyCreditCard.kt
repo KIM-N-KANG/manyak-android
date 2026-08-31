@@ -1,5 +1,6 @@
 package app.manyak.feature.my
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -16,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import app.manyak.core.domain.user.UserProfile
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ManyakProgressIndicator
@@ -27,6 +29,7 @@ internal fun CreditBalanceCard(
     profile: UserProfile?,
     isClaiming: Boolean,
     onClaimAttendance: () -> Unit,
+    onOpenHistory: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -40,7 +43,7 @@ internal fun CreditBalanceCard(
                     shape = ManyakTheme.shapes.card,
                 ).padding(ManyakTheme.spacing.gutter),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
+        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
         Row(
             modifier = Modifier.weight(1f),
@@ -61,7 +64,33 @@ internal fun CreditBalanceCard(
                 )
             }
         }
+        CreditHistoryButton(onClick = onOpenHistory)
         AttendanceButton(profile = profile, isClaiming = isClaiming, onClick = onClaimAttendance)
+    }
+}
+
+@Composable
+private fun CreditHistoryButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Button(
+        modifier = modifier.heightIn(min = ManyakTheme.sizes.input),
+        onClick = onClick,
+        shape = ManyakTheme.shapes.control,
+        border = BorderStroke(1.dp, ManyakTheme.colors.border),
+        contentPadding =
+            PaddingValues(
+                horizontal = ManyakTheme.spacing.controlHorizontal,
+                vertical = ManyakTheme.spacing.controlVertical,
+            ),
+        colors =
+            ButtonDefaults.buttonColors(
+                containerColor = ManyakTheme.colors.surfaceRaised,
+                contentColor = ManyakTheme.colors.text,
+            ),
+    ) {
+        Text(text = stringResource(R.string.my_credit_history), style = ManyakTheme.typography.labelLarge)
     }
 }
 

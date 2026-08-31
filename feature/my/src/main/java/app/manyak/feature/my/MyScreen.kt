@@ -53,6 +53,7 @@ fun MyScreen(
     onOpenFeedback: () -> Unit,
     onOpenOpenSourceLicense: () -> Unit,
     onOpenWithdrawal: () -> Unit,
+    onOpenCreditHistory: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MyViewModel = hiltViewModel(),
 ) {
@@ -106,6 +107,7 @@ fun MyScreen(
         onOpenFeedback = onOpenFeedback,
         onOpenOpenSourceLicense = onOpenOpenSourceLicense,
         onOpenWithdrawal = onOpenWithdrawal,
+        onOpenCreditHistory = onOpenCreditHistory,
         contentPadding = contentPadding,
         modifier = modifier,
     )
@@ -149,6 +151,7 @@ private fun MyContent(
     onOpenFeedback: () -> Unit,
     onOpenOpenSourceLicense: () -> Unit,
     onOpenWithdrawal: () -> Unit,
+    onOpenCreditHistory: () -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
 ) {
@@ -167,6 +170,7 @@ private fun MyContent(
             profile = state.profile,
             isClaiming = state.isClaimingAttendance,
             onClaimAttendance = { onIntent(MyIntent.ClaimAttendance) },
+            onOpenHistory = onOpenCreditHistory,
         )
         MySection(labelRes = R.string.my_section_event) {
             MyMenuItem(
@@ -396,6 +400,7 @@ private fun MyScreenPreview() {
             onOpenFeedback = {},
             onOpenOpenSourceLicense = {},
             onOpenWithdrawal = {},
+            onOpenCreditHistory = {},
             contentPadding = PaddingValues(0.dp),
         )
     }

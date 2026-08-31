@@ -2,6 +2,7 @@ package app.manyak.core.data.api
 
 import app.manyak.core.data.api.dto.AttendanceRewardResponseDto
 import app.manyak.core.data.api.dto.ChatSummaryDto
+import app.manyak.core.data.api.dto.CreditTransactionsResponseDto
 import app.manyak.core.data.api.dto.InviteResponseDto
 import app.manyak.core.data.api.dto.MeResponseDto
 import app.manyak.core.data.api.dto.RedeemInviteCodeRequestDto
@@ -12,6 +13,7 @@ import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 /** 회원 본인 소유 자원의 보호 경로. access 토큰을 붙이는 클라이언트로 호출한다. */
 interface UserApi {
@@ -32,6 +34,15 @@ interface UserApi {
     /** 출석 보상 지급. KST 자정 기준 1일 1회이며 오늘 이미 받았으면 rewarded=false 로 200 이다(멱등). */
     @POST("users/me/credits/attendance")
     suspend fun claimAttendance(): Response<AttendanceRewardResponseDto>
+
+    /**
+     * 이프 내역(원장) 최신순 한 페이지. cursor 를 생략하면 첫 페이지이고, 응답의 nextCursor 를
+     * 그대로 실어 다음 페이지를 잇는다. limit·type 은 서버 기본값(50건·전체)을 쓴다.
+     */
+    @GET("users/me/credits/transactions")
+    suspend fun creditTransactions(
+        @Query("cursor") cursor: String?,
+    ): Response<CreditTransactionsResponseDto>
 
     /** 내 초대 코드와 이번 달 보상 진행. 월 상한은 정책 값이라 응답이 함께 싣는다. */
     @GET("users/me/invite")
