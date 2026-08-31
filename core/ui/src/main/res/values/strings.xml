@@ -217,6 +217,7 @@
 
     <!-- 마이 -->
     <string name="my_credit_label">내 이프</string>
+    <string name="my_credit_history">내역</string>
     <string name="my_attendance_check">출석 체크</string>
     <string name="my_attendance_done">출석 완료</string>
     <string name="my_attendance_in_progress">출석 체크 중</string>

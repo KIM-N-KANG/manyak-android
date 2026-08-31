@@ -54,6 +54,8 @@ fun MyScreen(
     onOpenOpenSourceLicense: () -> Unit,
     onOpenWithdrawal: () -> Unit,
     modifier: Modifier = Modifier,
+    // 내역 화면이 아직 없어 기본값을 둔다. 화면이 생기면 앱 내비게이션이 넘긴다.
+    onOpenCreditHistory: () -> Unit = {},
     viewModel: MyViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -106,6 +108,7 @@ fun MyScreen(
         onOpenFeedback = onOpenFeedback,
         onOpenOpenSourceLicense = onOpenOpenSourceLicense,
         onOpenWithdrawal = onOpenWithdrawal,
+        onOpenCreditHistory = onOpenCreditHistory,
         contentPadding = contentPadding,
         modifier = modifier,
     )
@@ -149,6 +152,7 @@ private fun MyContent(
     onOpenFeedback: () -> Unit,
     onOpenOpenSourceLicense: () -> Unit,
     onOpenWithdrawal: () -> Unit,
+    onOpenCreditHistory: () -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
 ) {
@@ -167,6 +171,7 @@ private fun MyContent(
             profile = state.profile,
             isClaiming = state.isClaimingAttendance,
             onClaimAttendance = { onIntent(MyIntent.ClaimAttendance) },
+            onOpenHistory = onOpenCreditHistory,
         )
         MySection(labelRes = R.string.my_section_event) {
             MyMenuItem(
@@ -396,6 +401,7 @@ private fun MyScreenPreview() {
             onOpenFeedback = {},
             onOpenOpenSourceLicense = {},
             onOpenWithdrawal = {},
+            onOpenCreditHistory = {},
             contentPadding = PaddingValues(0.dp),
         )
     }
