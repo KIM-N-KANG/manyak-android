@@ -110,7 +110,7 @@ private fun FeedbackContent(
 private fun FeedbackHeadline(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
         Text(
             text = stringResource(R.string.feedback_title),
