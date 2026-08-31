@@ -12,6 +12,8 @@ data class StoryDetail(
     val title: String,
     /** 한 줄 소개. 서버가 없는 값을 빈 문자열로 주므로 비면 줄 자체를 그리지 않는다. */
     val oneLineIntro: String,
+    /** 제작자 닉네임. 작성자가 없는 스토리는 `null` 이라 줄 자체를 그리지 않는다. */
+    val authorNickname: String?,
     /** 주요 내용. 없으면 `null` 이고 섹션을 그리지 않는다. */
     val description: String?,
     val genres: List<String>,

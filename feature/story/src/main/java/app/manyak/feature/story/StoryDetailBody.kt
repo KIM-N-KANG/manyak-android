@@ -33,8 +33,8 @@ import app.manyak.core.ui.component.StoryThumbnail
 import app.manyak.core.ui.theme.ManyakTheme
 
 /**
- * 상세 본문. 순서는 히어로 → 제목 → 한 줄 소개 → 장르 → 본 엔딩 → 주요 내용 → 주변 인물 → 시작 상황 →
- * 생성일이다.
+ * 상세 본문. 순서는 히어로 → 제목 → 한 줄 소개 → 장르 → 본 엔딩 → 주요 내용 → 주변 인물 →
+ * 시작 상황 → 제작자·생성일이다.
  *
  * 값이 없는 항목은 자리를 비우지 않고 아예 그리지 않는다 — 이유 없는 공백이 생기지 않게 한다.
  *
@@ -95,9 +95,9 @@ internal fun LazyListScope.storyDetailBody(
             }
         }
     }
-    story.createdDate?.let { date ->
-        item(key = CREATED_AT_KEY) {
-            CreatedDateRow(date = date)
+    if (story.authorNickname != null || story.createdDate != null) {
+        item(key = META_KEY) {
+            MetaBlock(authorNickname = story.authorNickname, date = story.createdDate)
         }
     }
 }
@@ -211,42 +211,6 @@ private fun GenreBadges(
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
     ) {
         genres.forEach { genre -> StoryGenreBadge(text = genre, scale = StoryBadgeScale.Large) }
-    }
-}
-
-/**
- * 이름과 값을 양 끝으로 벌린 한 줄. 값이 하나뿐이라 표를 만들지 않고 줄 하나로 둔다.
- *
- * 본문 마지막에 딸린 메타 정보라 다른 섹션과 달리 화면 폭을 그대로 채우는 옅은 바탕을 깔아
- * 읽을 글과 구분한다. 좌우 여백은 바탕 밖이 아니라 안에 둔다.
- */
-@Composable
-private fun CreatedDateRow(
-    date: String,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .background(ManyakTheme.colors.backgroundNeutral)
-                .padding(
-                    horizontal = ManyakTheme.spacing.gutter,
-                    vertical = ManyakTheme.spacing.component,
-                ),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = stringResource(R.string.story_detail_created_at),
-            style = ManyakTheme.typography.labelLarge,
-            color = ManyakTheme.colors.textSubtle,
-        )
-        Text(
-            text = date,
-            style = ManyakTheme.typography.bodyMedium,
-            color = ManyakTheme.colors.textSubtle,
-        )
     }
 }
 
@@ -403,4 +367,4 @@ private const val OVERVIEW_KEY = "overview"
 private const val DESCRIPTION_KEY = "description"
 private const val CHARACTERS_KEY = "characters"
 private const val START_SETTING_KEY = "start-setting"
-private const val CREATED_AT_KEY = "created-at"
+private const val META_KEY = "meta"

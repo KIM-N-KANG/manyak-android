@@ -66,7 +66,7 @@ internal fun StoryCard(
             // 공식 계정이라 "마냑" 이 들어오지만, 작성자가 없는 스토리는 줄 자체를 그리지 않는다.
             story.authorNickname?.let { nickname ->
                 Text(
-                    text = nickname,
+                    text = stringResource(R.string.story_author_nickname, nickname),
                     style = ManyakTheme.typography.bodyMedium,
                     color = ManyakTheme.colors.textSubtle,
                     maxLines = 1,

@@ -28,6 +28,7 @@ internal fun sampleStoryDetail(
         id = STORY_ID,
         title = "두 번째 시계공",
         oneLineIntro = "멈춘 시계탑을 고치는 견습공의 하루",
+        authorNickname = "마냑",
         description = "도시의 모든 시계가 같은 시각에 멈췄다.",
         genres = listOf("판타지", "미스터리"),
         thumbnailUrl = "https://cdn.manyak.app/thumbnails/1.png",

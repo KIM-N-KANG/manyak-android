@@ -17,6 +17,8 @@ data class StoryDetailResponseDto(
     val id: String,
     val title: String = "",
     val oneLineIntro: String = "",
+    /** 목록 응답과 같은 모양이라 [StoryAuthorDto] 를 그대로 쓴다. */
+    val author: StoryAuthorDto? = null,
     val description: String? = null,
     val genres: List<String> = emptyList(),
     /** 히어로용 원본. 목록·카드가 쓰는 축소본(`thumbnailUrlSm`)과 다른 URL 이다. */
@@ -63,6 +65,7 @@ fun StoryDetailResponseDto.toDomain(): StoryDetail =
         id = id,
         title = title,
         oneLineIntro = oneLineIntro,
+        authorNickname = author?.nickname?.takeIf { nickname -> nickname.isNotBlank() },
         description = description?.takeIf { text -> text.isNotBlank() },
         genres = genres.filter { genre -> genre.isNotBlank() },
         thumbnailUrl = thumbnailUrl?.takeIf { url -> url.isNotBlank() },
