@@ -104,12 +104,14 @@ private fun InviteContent(
                 .verticalScroll(rememberScrollState())
                 .imePadding()
                 .padding(horizontal = ManyakTheme.spacing.gutter)
-                .padding(top = ManyakTheme.spacing.compact, bottom = ManyakTheme.spacing.screenBottom),
-        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.section),
+                .padding(top = ManyakTheme.spacing.gutter, bottom = ManyakTheme.spacing.screenBottom),
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.block),
     ) {
         InviteHeadline()
-        InviteCodeCard(state = state, onRetry = { onIntent(InviteIntent.Retry) })
-        InviteShareActions(state = state)
+        Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact)) {
+            InviteCodeCard(state = state, onRetry = { onIntent(InviteIntent.Retry) })
+            InviteShareActions(state = state)
+        }
         InviteRedeemSection(state = state, onIntent = onIntent)
         InviteGuide()
     }
@@ -128,7 +130,7 @@ private fun InviteHeadline(modifier: Modifier = Modifier) {
         )
         Text(
             text = stringResource(R.string.invite_description),
-            style = ManyakTheme.typography.bodyMedium,
+            style = ManyakTheme.typography.bodyLarge,
             color = ManyakTheme.colors.textSubtle,
         )
     }
@@ -145,7 +147,6 @@ private fun InviteCodeCard(
         modifier =
             modifier
                 .fillMaxWidth()
-                .padding(top = ManyakTheme.spacing.compact)
                 .background(ManyakTheme.colors.backgroundNeutral, ManyakTheme.shapes.card)
                 .padding(ManyakTheme.spacing.gutter),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -196,7 +197,7 @@ private fun InviteCodeUnavailable(
     ) {
         Text(
             text = stringResource(R.string.invite_code_load_failed),
-            style = ManyakTheme.typography.bodySmall,
+            style = ManyakTheme.typography.bodyMedium,
             color = ManyakTheme.colors.textSubtle,
             textAlign = TextAlign.Center,
         )
@@ -261,44 +262,46 @@ private fun InviteRedeemSection(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
     ) {
         Text(
             text = stringResource(R.string.invite_redeem_title),
             style = ManyakTheme.typography.titleMediumStrong,
             color = ManyakTheme.colors.text,
         )
-        MyFieldLabel(text = stringResource(R.string.invite_code_label))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            MyTextField(
-                modifier = Modifier.weight(1f),
-                value = state.code,
-                onValueChange = { onIntent(InviteIntent.CodeChanged(it)) },
-                placeholder = stringResource(R.string.invite_code_placeholder),
-                enabled = !state.isSubmitting,
-                isError = state.errorRes != null,
-                keyboardOptions =
-                    KeyboardOptions(
-                        capitalization = KeyboardCapitalization.Characters,
-                        autoCorrectEnabled = false,
-                        // 코드가 영문·숫자라 한글 자판이 먼저 뜨지 않게 한다.
-                        keyboardType = KeyboardType.Ascii,
-                        imeAction = ImeAction.Done,
-                    ),
-                keyboardActions = KeyboardActions(onDone = { onIntent(InviteIntent.Redeem) }),
-            )
-            MyPrimaryButton(
-                label = stringResource(R.string.invite_redeem_submit),
-                isLoading = state.isSubmitting,
-                onClick = { onIntent(InviteIntent.Redeem) },
-            )
-        }
-        state.errorRes?.let { errorRes ->
-            MyFieldMessage(text = stringResource(errorRes), isError = true)
+        Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact)) {
+            MyFieldLabel(text = stringResource(R.string.invite_code_label))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                MyTextField(
+                    modifier = Modifier.weight(1f),
+                    value = state.code,
+                    onValueChange = { onIntent(InviteIntent.CodeChanged(it)) },
+                    placeholder = stringResource(R.string.invite_code_placeholder),
+                    enabled = !state.isSubmitting,
+                    isError = state.errorRes != null,
+                    keyboardOptions =
+                        KeyboardOptions(
+                            capitalization = KeyboardCapitalization.Characters,
+                            autoCorrectEnabled = false,
+                            // 코드가 영문·숫자라 한글 자판이 먼저 뜨지 않게 한다.
+                            keyboardType = KeyboardType.Ascii,
+                            imeAction = ImeAction.Done,
+                        ),
+                    keyboardActions = KeyboardActions(onDone = { onIntent(InviteIntent.Redeem) }),
+                )
+                MyPrimaryButton(
+                    label = stringResource(R.string.invite_redeem_submit),
+                    isLoading = state.isSubmitting,
+                    onClick = { onIntent(InviteIntent.Redeem) },
+                )
+            }
+            state.errorRes?.let { errorRes ->
+                MyFieldMessage(text = stringResource(errorRes), isError = true)
+            }
         }
     }
 }
@@ -307,25 +310,28 @@ private fun InviteRedeemSection(
 private fun InviteGuide(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
     ) {
         Text(
             text = stringResource(R.string.invite_guide_title),
             style = ManyakTheme.typography.titleMediumStrong,
             color = ManyakTheme.colors.text,
         )
-        stringArrayResource(R.array.invite_guide_lines).forEach { line ->
-            Row(horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact)) {
-                Text(
-                    text = GUIDE_BULLET,
-                    style = ManyakTheme.typography.bodyMedium,
-                    color = ManyakTheme.colors.textSubtle,
-                )
-                Text(
-                    text = line,
-                    style = ManyakTheme.typography.bodyMedium,
-                    color = ManyakTheme.colors.textSubtle,
-                )
+        // 항목 사이는 벌리지 않는다. 글머리 목록의 리듬은 행간이 만든다.
+        Column {
+            stringArrayResource(R.array.invite_guide_lines).forEach { line ->
+                Row(horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact)) {
+                    Text(
+                        text = GUIDE_BULLET,
+                        style = ManyakTheme.typography.bodyLarge,
+                        color = ManyakTheme.colors.textSubtle,
+                    )
+                    Text(
+                        text = line,
+                        style = ManyakTheme.typography.bodyLarge,
+                        color = ManyakTheme.colors.textSubtle,
+                    )
+                }
             }
         }
     }

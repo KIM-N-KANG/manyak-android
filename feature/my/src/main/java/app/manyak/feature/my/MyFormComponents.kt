@@ -199,13 +199,7 @@ internal fun MyTextField(
                         ),
                 verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
             ) {
-                // 글자 수는 입력창 바닥에 붙어야 한다. 본문이 짧아도 위로 딸려 올라오지 않게 남은 높이를 준다.
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .then(if (counter == null) Modifier else Modifier.weight(1f)),
-                ) {
+                Box(modifier = Modifier.fillMaxWidth()) {
                     if (value.isEmpty()) {
                         Text(
                             text = placeholder,
@@ -232,7 +226,7 @@ internal fun MyFieldMessage(
     Text(
         modifier = modifier,
         text = text,
-        style = ManyakTheme.typography.bodySmall,
+        style = ManyakTheme.typography.bodyMedium,
         color = if (isError) ManyakTheme.colors.textDanger else ManyakTheme.colors.textSubtle,
     )
 }

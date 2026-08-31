@@ -23,7 +23,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -91,12 +90,14 @@ private fun FeedbackContent(
                 Modifier
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
-                    .padding(top = ManyakTheme.spacing.compact),
-            verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.section),
+                    .padding(vertical = ManyakTheme.spacing.gutter),
+            verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.block),
         ) {
             FeedbackHeadline()
-            FeedbackBodyField(state = state, onIntent = onIntent)
-            FeedbackEmailField(state = state, onIntent = onIntent)
+            Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.section)) {
+                FeedbackBodyField(state = state, onIntent = onIntent)
+                FeedbackEmailField(state = state, onIntent = onIntent)
+            }
         }
         FeedbackSubmit(state = state, onIntent = onIntent)
     }
@@ -115,7 +116,7 @@ private fun FeedbackHeadline(modifier: Modifier = Modifier) {
         )
         Text(
             text = stringResource(R.string.feedback_description),
-            style = ManyakTheme.typography.bodyMedium,
+            style = ManyakTheme.typography.bodyLarge,
             color = ManyakTheme.colors.textSubtle,
         )
     }
@@ -139,7 +140,6 @@ private fun FeedbackBodyField(
             enabled = !state.isSubmitting,
             isError = state.errorRes != null,
             singleLine = false,
-            minHeight = BodyFieldMinHeight,
             counter = {
                 Text(
                     text =
@@ -193,7 +193,7 @@ private fun FeedbackSubmit(
         modifier =
             modifier
                 .fillMaxWidth()
-                .padding(top = ManyakTheme.spacing.gutter, bottom = ManyakTheme.spacing.gutter),
+                .padding(bottom = ManyakTheme.spacing.gutter),
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
         state.errorRes?.let { errorRes ->
@@ -207,9 +207,6 @@ private fun FeedbackSubmit(
         )
     }
 }
-
-/** 여러 줄 입력. 한 화면에 대여섯 줄은 보여야 무엇을 쓰는 자리인지 드러난다. */
-private val BodyFieldMinHeight = 160.dp
 
 @Preview(showBackground = true, name = "피드백 · 라이트")
 @Composable
