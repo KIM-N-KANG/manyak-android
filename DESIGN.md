@@ -272,7 +272,7 @@ components:
   section-header:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.text}"
-    typography: "{typography.title-medium}"
+    typography: "{typography.title-large}"
     minHeight: 64dp
     padding: "{spacing.gutter}"
   tab-bar:
@@ -298,7 +298,12 @@ components:
   funnel-header:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.text}"
-    typography: "{typography.title-medium}"
+    typography: "{typography.title-large}"
+    minHeight: 64dp
+  detail-header:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.text}"
+    typography: "{typography.body-large-strong}"
     minHeight: 64dp
   step-indicator:
     completedColor: "{colors.text-disabled}"
@@ -623,7 +628,7 @@ components:
 
 > 셸의 두 컴포넌트는 **M3 컴포넌트 위에 색만 얹어** 만든다. 인셋·높이·최소 터치 타깃·시맨틱을 직접 계산하지 않기 위해서다. 이 시스템에 없는 요소만 골라 지운다.
 
-**`section-header`** — 메인 탭의 상단 헤더. `TopAppBar` 위에 배경 `{colors.surface}`와 제목 색 `{colors.text}`를 얹는다. 좌우 여백은 앱 바 기본값이 16dp 라 `{spacing.gutter}`와 같고, 로고와 섹션 이름(`{typography.title-medium}`) 사이도 `{spacing.gutter}`다. 높이는 최소 64dp 이고 제목이 커지면 함께 늘어난다. 구분선과 그림자를 두지 않는다. `TopAppBar`가 아직 실험 API 라 `@OptIn`이 필요하며, 사용처는 이 컴포넌트와 퍼널 헤더(`funnel-header`) 둘이다.
+**`section-header`** — 메인 탭의 상단 헤더. `TopAppBar` 위에 배경 `{colors.surface}`와 제목 색 `{colors.text}`를 얹는다. 좌우 여백은 앱 바 기본값이 16dp 라 `{spacing.gutter}`와 같고, 로고와 섹션 이름(`{typography.title-large}`) 사이도 `{spacing.gutter}`다. 높이는 최소 64dp 이고 제목이 커지면 함께 늘어난다. 구분선과 그림자를 두지 않는다. `TopAppBar`가 아직 실험 API 라 `@OptIn`이 필요하며, 사용처는 이 컴포넌트와 퍼널 헤더(`funnel-header`) 둘이다.
 
 **`tab-bar`** — 홈·채팅·마이 고정 3탭. 배경 `{colors.surface}`, 위쪽 경계 `{colors.border}` 1dp. 아이콘(`{sizes.tab-icon}`) 아래에 이름을 `{typography.label-small}`로 둔다. 선택은 filled 아이콘 + `{colors.text}`, 비선택은 outline 아이콘 + `{colors.text-subtle}`이고 아이콘과 라벨이 같은 색을 쓴다. 라벨이 이름을 맡으므로 **아이콘은 장식으로 두고 접근성 이름을 붙이지 않는다** — 둘 다 붙이면 탐색 서비스가 같은 이름을 두 번 읽는다. 선택을 색 하나로만 구분하지 않고 아이콘 모양을 함께 바꾼다.
 
@@ -642,7 +647,9 @@ components:
 
 **`fab`** — 홈 우측 하단의 제작 진입 버튼. **원형**(`{rounded.pill}`)이고 배경은 주 버튼(`{component.button-primary}`)과 같은 브랜드 원색 `{colors.brand}`, 아이콘 `{colors.text-inverse}`, 크기 56dp(M3 FAB 기본). **고도(그림자)를 0으로 없앤다** — 이 시스템은 층을 표면 색으로만 나눈다. 하단 바에 초록을 두지 않는 것과 어긋나지 않는다 — FAB 은 상시 chrome 이 아니라 화면의 주 동작 그 자체라서, 초록이 "지금 누를 것"을 가리킨다는 규칙 그대로다.
 
-**`funnel-header`** — 섹션 헤더처럼 M3 `TopAppBar` 위에 색만 얹고, 로고 대신 뒤로가기 아이콘 버튼과 화면 제목(`{typography.title-medium}`)을 둔다. 높이는 앱 바 기본 64dp 다. 구분선과 그림자를 두지 않는다.
+**`funnel-header`** — 섹션 헤더처럼 M3 `TopAppBar` 위에 색만 얹고, 로고 대신 화면 제목(`{typography.title-large}`)과 오른쪽의 임시 저장·닫기 버튼을 둔다. 높이는 앱 바 기본 64dp 다. 구분선과 그림자를 두지 않는다.
+
+**`detail-header`** — 셸을 두르지 않는 하위 화면(스토리 상세·채팅방·친구 초대·피드백)의 앱 바. 같은 `TopAppBar` 위에 뒤로가기 버튼과 제목(`{typography.body-large-strong}`)을 둔다. **섹션·퍼널 헤더보다 한 단 작은 것은 이 자리의 제목이 화면 이름이 아니라 지금 보고 있는 것의 이름이기 때문이다** — 스토리 제목처럼 길어질 수 있는 값이라 한 줄로 자르고, 고정된 화면 이름과 위계도 갈린다.
 
 **`step-indicator`** — 헤더 아래 얇은 막대 분절로 퍼널 진행을 표시한다. 높이 3dp, 양끝 `{rounded.pill}` 라운드, 분절 사이 `{spacing.component}`, 좌우 여백 `{spacing.gutter}`. 완료 단계는 `{colors.text-disabled}`, 현재 단계는 그보다 반 단계 연한 `{colors.step-indicator-active}`(라이트 #9F9F9F · 다크 #666666), 미도달 단계는 `{colors.border}`다. 단계 이름은 시각 라벨 없이 접근성 텍스트로만 제공하고, 막대들은 장식이라 시맨틱을 하나로 묶는다. 채움에 브랜드 초록을 쓰지 않는 이유는 진행 표시가 정보이지 눌러야 할 동작이 아니기 때문이고, 미도달을 `{colors.background-neutral}`이 아니라 `{colors.border}`로 두는 이유는 표면(`{colors.surface}`) 위에서 전자가 거의 보이지 않기 때문이다.
 

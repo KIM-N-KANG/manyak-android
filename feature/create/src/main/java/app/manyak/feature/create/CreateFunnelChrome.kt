@@ -118,7 +118,7 @@ internal fun CreateFunnelHeader(
         title = {
             Text(
                 text = stringResource(R.string.create_title),
-                style = ManyakTheme.typography.titleMedium,
+                style = ManyakTheme.typography.titleLarge,
                 color = ManyakTheme.colors.text,
             )
         },
