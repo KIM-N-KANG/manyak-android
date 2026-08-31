@@ -70,6 +70,22 @@ fun authProperty(
     return localProperties.getProperty(key) ?: System.getenv(key) ?: ""
 }
 
+// 업로드 키는 저장소에 두지 않는다. local.properties(추적 제외)나 CI 환경변수에서 읽고,
+// 하나라도 비면 signingConfig 를 붙이지 않는다 — 반쯤 채워진 값으로 서명이 조용히 어긋나는 것보다
+// 서명되지 않은 산출물이 업로드 단계에서 바로 거부되는 편이 낫다.
+fun signingProperty(name: String): String? =
+    (localProperties.getProperty(name) ?: System.getenv(name))?.takeIf { it.isNotBlank() }
+
+val uploadKeystore = signingProperty("RELEASE_STORE_FILE")?.let { rootProject.file(it) }
+val uploadStorePassword = signingProperty("RELEASE_STORE_PASSWORD")
+val uploadKeyAlias = signingProperty("RELEASE_KEY_ALIAS")
+val uploadKeyPassword = signingProperty("RELEASE_KEY_PASSWORD")
+val hasUploadKey =
+    uploadKeystore?.exists() == true &&
+        uploadStorePassword != null &&
+        uploadKeyAlias != null &&
+        uploadKeyPassword != null
+
 android {
     namespace = "app.manyak"
     compileSdk {
@@ -91,6 +107,17 @@ android {
         buildConfigField("String", "WEB_BASE_URL", "\"$webBaseUrl\"")
     }
 
+    signingConfigs {
+        if (hasUploadKey) {
+            create("release") {
+                storeFile = uploadKeystore
+                storePassword = uploadStorePassword
+                keyAlias = uploadKeyAlias
+                keyPassword = uploadKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         debug {
             // 로컬 서버에 붙일 때는 local.properties 에 BASE_URL 을 넣어 덮어쓴다.
@@ -109,6 +136,7 @@ android {
             manifestPlaceholders["kakaoNativeAppKey"] = authProperty("KAKAO_NATIVE_APP_KEY", "debug")
         }
         release {
+            signingConfig = signingConfigs.findByName("release")
             buildConfigField("String", "BASE_URL", "\"https://api.manyak.app/api/v1/\"")
             buildConfigField(
                 "String",
