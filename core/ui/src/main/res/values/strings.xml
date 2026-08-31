@@ -239,16 +239,14 @@
     <!-- %1$s 는 다시 인증할 현재 제공자, %2$s 는 새로 연동할 제공자. -->
     <string name="my_link_confirm_reauth">보안을 위해 %1$s 계정을 다시 인증한 뒤 %2$s 계정을 연동해요</string>
     <string name="my_link_confirm_irreversible">한 번 연동하면 해제할 수 없어요</string>
-    <string name="my_link_confirm_cancel">나중에 하기</string>
+    <string name="my_link_confirm_cancel">닫기</string>
     <string name="my_link_confirm_action">연동하기</string>
-    <string name="my_link_confirm_pending">연동 준비 중</string>
     <string name="my_link_succeeded">%1$s 계정을 연동했어요</string>
     <string name="my_link_already_linked">이미 연동된 계정이에요</string>
     <string name="my_link_failed">계정 연동에 실패했어요</string>
     <string name="my_link_other_user_title">이미 다른 마냑 계정에 연동된 계정이에요</string>
     <string name="my_link_other_user_reason">방금 인증한 소셜 계정은 이미 다른 마냑 계정에 연동되어 있어 지금 계정에는 연동할 수 없어요</string>
     <string name="my_link_other_user_action_guide">그 마냑 계정을 쓰려면 로그아웃한 뒤 해당 소셜 계정으로 다시 로그인해주세요</string>
-    <string name="my_link_other_user_action">확인</string>
 
     <!-- 신규 가입 초대 코드 안내 -->
     <string name="invite_onboarding_title">초대 코드를 등록하면\n2,000 크레딧을 받을 수 있어요</string>

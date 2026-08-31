@@ -158,7 +158,7 @@ internal fun LinkedToOtherUserDialog(
                     ),
             ) {
                 Text(
-                    text = stringResource(R.string.my_link_other_user_action),
+                    text = stringResource(R.string.common_confirm),
                     style = ManyakTheme.typography.labelLarge,
                 )
             }
