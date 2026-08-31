@@ -1,7 +1,6 @@
 package app.manyak.feature.chat.message
 
-import java.net.URI
-import java.net.URISyntaxException
+import app.manyak.core.ui.component.isAllowedCharacterImageUrl
 
 /** AI 출력을 그리는 단위. 저장 본문과 스트리밍 조각이 같은 목록으로 환원돼 한 렌더러를 쓴다. */
 sealed interface ChatMessageSegment {
@@ -74,7 +73,7 @@ fun List<ChatMessageSegment>.appendCharacterImage(
     name: String,
     imageUrl: String,
 ): List<ChatMessageSegment> {
-    if (name.isBlank() || !isAllowedChatCharacterImageUrl(imageUrl)) return this
+    if (name.isBlank() || !isAllowedCharacterImageUrl(imageUrl)) return this
 
     val last = lastOrNull()
     val head =
@@ -86,25 +85,6 @@ fun List<ChatMessageSegment>.appendCharacterImage(
         }
     return head + ChatMessageSegment.CharacterImage(name = name.trim(), imageUrl = imageUrl)
 }
-
-/**
- * 채팅 인물 이미지로 허용된 주소인지 본다.
- *
- * 마커는 AI 가 만든 본문에서 오므로 **주소를 그대로 믿지 않는다.** 임의 호스트를 그리면 본문이
- * 외부로 요청을 내보내는 통로가 된다.
- */
-fun isAllowedChatCharacterImageUrl(imageUrl: String): Boolean =
-    try {
-        val uri = URI(imageUrl)
-        uri.scheme == "https" &&
-            uri.userInfo == null &&
-            uri.port == -1 &&
-            uri.host in AllowedImageHosts &&
-            uri.path != null &&
-            AllowedImagePathPrefixes.any { uri.path.startsWith(it) && uri.path.length > it.length }
-    } catch (_: URISyntaxException) {
-        false
-    }
 
 private data class MarkerMatch(
     val start: Int,
@@ -122,7 +102,7 @@ private fun findMarkers(content: String): List<MarkerMatch> {
         val lineEnd = if (lineBreak == -1) content.length else lineBreak
         val imageUrl = MarkerLine.matchEntire(content.substring(lineStart, lineEnd))?.groupValues?.get(1)
 
-        if (imageUrl != null && content.startsWith("\n\n", lineEnd) && isAllowedChatCharacterImageUrl(imageUrl)) {
+        if (imageUrl != null && content.startsWith("\n\n", lineEnd) && isAllowedCharacterImageUrl(imageUrl)) {
             val speakerLineStart = lineEnd + BLANK_LINE_LENGTH
             val name = speakerName(content, speakerLineStart)
             if (name != null) {
@@ -156,11 +136,6 @@ private fun speakerName(
 private val MarkerLine = Regex("""^\[\[(https://[^\r\n]+)]]$""")
 
 private val SpeakerLabel = Regex("""^(.+?)[ \t]*:(?=[ \t]|$)""")
-
-private val AllowedImageHosts = setOf("cdn.manyak.app", "dev-cdn.manyak.app")
-
-/** 사용자가 만든 스토리는 `generated`, 오리지널 스토리는 `originals` 아래에 인물 이미지가 올라간다. */
-private val AllowedImagePathPrefixes = listOf("/characters/generated/", "/characters/originals/")
 
 /** 마커 줄과 대사 줄 사이의 빈 줄(`\n\n`) 길이. */
 private const val BLANK_LINE_LENGTH = 2

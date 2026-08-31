@@ -1,5 +1,6 @@
 package app.manyak.feature.story
 
+import app.manyak.core.domain.story.StoryCharacter
 import app.manyak.core.domain.story.StoryDetail
 import app.manyak.core.domain.story.StoryStartSetting
 
@@ -19,6 +20,13 @@ internal fun previewStory(
         createdDate = "2026-08-27",
         startSettings = startSettings,
         reachedEndings = reachedEndings,
+        characters = previewCharacters(),
+    )
+
+internal fun previewCharacters(): List<StoryCharacter> =
+    listOf(
+        StoryCharacter(name = "세린", imageUrl = "https://cdn.manyak.app/characters/generated/serin.webp"),
+        StoryCharacter(name = "도윤", imageUrl = null),
     )
 
 internal fun previewStartSettings(): List<StoryStartSetting> =

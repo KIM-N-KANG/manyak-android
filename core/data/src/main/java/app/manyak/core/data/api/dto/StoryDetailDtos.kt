@@ -1,5 +1,6 @@
 package app.manyak.core.data.api.dto
 
+import app.manyak.core.domain.story.StoryCharacter
 import app.manyak.core.domain.story.StoryDetail
 import app.manyak.core.domain.story.StoryStartSetting
 import kotlinx.serialization.Serializable
@@ -24,6 +25,18 @@ data class StoryDetailResponseDto(
     val createdAt: String? = null,
     val startSettings: List<StoryStartSettingDto> = emptyList(),
     val reachedEndings: List<String> = emptyList(),
+    val characters: List<StoryCharacterDto> = emptyList(),
+)
+
+/**
+ * 등장인물 하나. 서버는 외형 필드와 공개 식별자를 상세에 싣지 않고 이름·이미지만 준다.
+ *
+ * 이미지 생성에 실패한 인물도 목록에 남고 그 `imageUrl` 이 `null` 이다.
+ */
+@Serializable
+data class StoryCharacterDto(
+    val name: String = "",
+    val imageUrl: String? = null,
 )
 
 /** 프롤로그·추천 입력은 상세가 그리지 않아 역직렬화하지 않는다. */
@@ -65,4 +78,13 @@ fun StoryDetailResponseDto.toDomain(): StoryDetail =
                 )
             },
         reachedEndings = reachedEndings.filter { ending -> ending.isNotBlank() },
+        characters =
+            characters
+                .filter { character -> character.name.isNotBlank() }
+                .map { character ->
+                    StoryCharacter(
+                        name = character.name,
+                        imageUrl = character.imageUrl?.takeIf { url -> url.isNotBlank() },
+                    )
+                },
     )

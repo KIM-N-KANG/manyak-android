@@ -56,10 +56,6 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.coroutines.core)
 
-    // 인물 이미지는 채팅방에만 있는 표현(마커 계약·4:3·실패 시 자리 제거)이라 :core:ui 의 표지
-    // 컴포넌트로 올리지 않는다. 두 번째 사용처가 생기면 그때 옮긴다.
-    implementation(libs.coil.compose)
-
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)

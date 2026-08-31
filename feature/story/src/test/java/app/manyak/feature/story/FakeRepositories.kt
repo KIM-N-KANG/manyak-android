@@ -35,6 +35,7 @@ internal fun sampleStoryDetail(
         createdDate = "2026-08-27",
         startSettings = startSettings,
         reachedEndings = reachedEndings,
+        characters = emptyList(),
     )
 
 internal fun sampleStartSettings(): List<StoryStartSetting> =

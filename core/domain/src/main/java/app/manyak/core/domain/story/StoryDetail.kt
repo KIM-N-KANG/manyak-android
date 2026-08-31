@@ -28,6 +28,18 @@ data class StoryDetail(
      * 게스트 로컬 서재 합산 분기는 없다.
      */
     val reachedEndings: List<String>,
+    /** 주변 인물. 이미지를 만들지 못한 스토리는 비어 있고, 그때는 섹션을 그리지 않는다. */
+    val characters: List<StoryCharacter>,
+)
+
+/**
+ * 스토리에 등장하는 인물 하나. 이름과 이미지뿐이고 소개는 없다 — 서버가 인물별 설명을 두지 않고
+ * 인물 소개에 해당하는 글은 스토리 설정 통글 한 덩어리라 인물별로 쪼갤 근거가 없다.
+ */
+data class StoryCharacter(
+    val name: String,
+    /** 이미지 생성에 실패한 인물은 `null` 이고, 그때는 이름만 그린다. */
+    val imageUrl: String?,
 )
 
 /** 채팅을 시작할 상황 하나. 프롤로그와 추천 입력은 상세가 그리지 않고 채팅 화면이 노출한다. */
