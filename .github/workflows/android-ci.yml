@@ -1,0 +1,61 @@
+name: Android CI
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - main
+  push:
+    branches:
+      - dev
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# 같은 브랜치에 연속 푸시가 나면 이전 실행을 취소한다.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Check and build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          # gradle/gradle-daemon-jvm.properties 의 toolchainVersion 과 맞춘다.
+          # 어긋나면 Gradle 이 데몬용 JDK 를 따로 내려받아 빌드가 느려진다.
+          java-version: "25"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # ktlint, detekt, Android lint, testDebugUnitTest 가 모두 check 에 물려 있다.
+      - name: Run check
+        run: ./gradlew check
+
+      # check 는 APK 패키징까지 하지 않아 리소스·매니페스트 문제를 놓친다.
+      - name: Assemble debug APK
+        run: ./gradlew assembleDebug
+
+      - name: Upload reports
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: reports
+          path: |
+            **/build/reports/ktlint/
+            **/build/reports/detekt/
+            **/build/reports/lint-results-*.html
+            **/build/reports/tests/
+          retention-days: 7
+          if-no-files-found: ignore

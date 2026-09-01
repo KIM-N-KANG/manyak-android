@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.ManyakAndroid" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- 화면은 전부 Compose 가 그린다. 이 스타일은 Compose 가 첫 프레임을 그리기 전 창 배경만 정한다. -->
+    <style name="Theme.ManyakAndroid" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/surface</item>
+    </style>
 </resources>

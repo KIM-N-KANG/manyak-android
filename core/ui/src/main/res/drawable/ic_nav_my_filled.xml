@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    마이 탭 아이콘 — 선택 상태.
+    색은 사용처에서 tint 하므로 자산 자체는 단색으로 둔다.
+    원본: user-filled.svg (24×24).
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <path
+        android:pathData="M12,2A4,4 0,1 1,12 10A4,4 0,1 1,12 2Z"
+        android:fillColor="#FF000000" />
+
+    <path
+        android:pathData="M20,17.5C20,19.985 20,22 12,22C4,22 4,19.985 4,17.5C4,15.015 7.582,13 12,13C16.418,13 20,15.015 20,17.5Z"
+        android:fillColor="#FF000000" />
+</vector>

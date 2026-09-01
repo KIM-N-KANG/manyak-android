@@ -1,0 +1,27 @@
+package app.manyak.core.data.di
+
+import app.manyak.core.data.datastore.ChatPreferencesStore
+import app.manyak.core.data.repository.ChatRepositoryImpl
+import app.manyak.core.domain.chat.ChatPreferencesRepository
+import app.manyak.core.domain.chat.ChatRepository
+import dagger.Binds
+import dagger.Module
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
+
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class ChatModule {
+    @Binds
+    @Singleton
+    abstract fun bindChatRepository(impl: ChatRepositoryImpl): ChatRepository
+
+    /**
+     * 기기 귀속 설정이라 `UserScopedStore` 집합에는 넣지 않는다. 로그아웃 정리에서 누락된 것이
+     * 아니라 대상이 아니다.
+     */
+    @Binds
+    @Singleton
+    abstract fun bindChatPreferencesRepository(impl: ChatPreferencesStore): ChatPreferencesRepository
+}
