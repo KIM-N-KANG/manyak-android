@@ -66,17 +66,31 @@ internal fun ChatCard(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
         ) {
-            Text(
-                text = chat.storyTitle,
-                style = ManyakTheme.typography.bodyLargeStrong,
-                color = ManyakTheme.colors.text,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            StoryTitle(title = chat.storyTitle)
             LastStoryPreview(preview = chat.lastStoryPreview)
             ChatMeta(turnCount = chat.turnCount, updatedAtEpochMillis = chat.updatedAtEpochMillis)
         }
     }
+}
+
+/**
+ * 스토리 제목. 참조 스토리가 삭제되면 빈 문자열이 정상 값이라 그 자리에 상태를 적는다 —
+ * 스토리는 사라져도 채팅은 계속 열 수 있고, 줄을 비워 두면 무엇의 채팅인지 알 수 없다.
+ */
+@Composable
+private fun StoryTitle(
+    title: String,
+    modifier: Modifier = Modifier,
+) {
+    val isDeleted = title.isBlank()
+    Text(
+        modifier = modifier,
+        text = if (isDeleted) stringResource(R.string.chat_list_deleted_story) else title,
+        style = ManyakTheme.typography.bodyLargeStrong,
+        color = if (isDeleted) ManyakTheme.colors.textSubtlest else ManyakTheme.colors.text,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+    )
 }
 
 /**

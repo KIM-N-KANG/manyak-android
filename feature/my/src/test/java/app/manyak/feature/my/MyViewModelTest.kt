@@ -2,9 +2,6 @@ package app.manyak.feature.my
 
 import app.manyak.core.domain.auth.AccountLinkRepository
 import app.manyak.core.domain.auth.AuthProvider
-import app.manyak.core.domain.credit.AttendanceResult
-import app.manyak.core.domain.credit.CreditRepository
-import app.manyak.core.domain.credit.CreditTransactionPage
 import app.manyak.core.domain.error.DomainError
 import app.manyak.core.domain.error.DomainResult
 import app.manyak.core.domain.session.SessionRepository
@@ -82,19 +79,6 @@ class MyViewModelTest {
             advanceUntilIdle()
 
             assertEquals(1, fixture.profileRepository.refreshCount)
-        }
-
-    /** 지급 결과는 반드시 보여야 하므로 방금 읽었더라도 간격을 보지 않는다. */
-    @Test
-    fun `출석 보상 뒤에는 간격과 무관하게 다시 읽는다`() =
-        runTest {
-            val fixture = fixture()
-
-            fixture.viewModel.onIntent(MyIntent.Refresh)
-            fixture.viewModel.onIntent(MyIntent.ClaimAttendance)
-            advanceUntilIdle()
-
-            assertEquals(2, fixture.profileRepository.refreshCount)
         }
 
     /** 재인증이 현재 제공자로 진행된다는 예고가 확인의 핵심이라 버튼만으로 시작하지 않는다. */
@@ -249,7 +233,6 @@ class MyViewModelTest {
                 MyViewModel(
                     FakeSessionRepository(),
                     profileRepository,
-                    FakeCreditRepository(),
                     FakeThemePreferenceRepository(),
                     accountLink,
                 ),
@@ -288,14 +271,6 @@ private class FakeUserProfileRepository : UserProfileRepository {
         cached.value = refreshed
         return DomainResult.Success(refreshed)
     }
-}
-
-private class FakeCreditRepository : CreditRepository {
-    override suspend fun claimAttendance(): DomainResult<AttendanceResult> =
-        DomainResult.Success(AttendanceResult(rewarded = true, amount = 250))
-
-    override suspend fun getTransactions(cursor: String?): DomainResult<CreditTransactionPage> =
-        error("이프 내역은 이 테스트의 대상이 아니다")
 }
 
 private class FakeSessionRepository : SessionRepository {

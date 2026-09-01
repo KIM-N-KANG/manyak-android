@@ -5,11 +5,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -24,7 +22,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,33 +54,48 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import java.text.NumberFormat
 
 /**
- * 이프 내역. 잔액 상자 하나와 그 아래 원장 목록뿐이고, 분류 필터는 두지 않는다.
+ * 이프 충전.
  *
- * 잔액 상자도 목록의 첫 항목이라 함께 스크롤된다 — 긴 목록에서 화면 위쪽을 고정으로 내주지 않는다.
+ * 잔액 상자와 탭 줄은 화면 위에 고정하고 탭 내용만 스크롤한다 — 잔액은 어느 탭에서 무엇을 하든
+ * 계속 보여야 하는 값이라, 스크롤을 따라 올려 보내면 출석하러 들어온 사람이 지금 얼마인지 모르는
+ * 채로 버튼을 누르게 된다.
  */
 @Composable
-fun CreditHistoryScreen(
+fun CreditChargeScreen(
     onBack: () -> Unit,
+    onOpenInvite: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: CreditHistoryViewModel = hiltViewModel(),
+    viewModel: CreditChargeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
+    // 보상 금액은 효과가 도착할 때 정해져 서식만 나중에 채운다.
+    val attendanceClaimed = stringResource(R.string.my_attendance_claimed)
+    val attendanceAlready = stringResource(R.string.my_attendance_already)
+    val attendanceFailed = stringResource(R.string.my_attendance_failed)
+    val refreshFailed = stringResource(R.string.story_refresh_failed)
 
     LaunchedEffect(viewModel, lifecycleOwner) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
             viewModel.uiEffect.collect { effect ->
-                when (effect) {
-                    CreditHistoryEffect.ShowRefreshFailed ->
-                        Toast.makeText(context, R.string.story_refresh_failed, Toast.LENGTH_SHORT).show()
-                }
+                val message =
+                    when (effect) {
+                        CreditChargeEffect.ShowRefreshFailed -> refreshFailed
+                        is CreditChargeEffect.AttendanceRewarded -> attendanceClaimed.format(effect.amount)
+                        CreditChargeEffect.AttendanceAlreadyDone -> attendanceAlready
+                        CreditChargeEffect.AttendanceFailed -> attendanceFailed
+                    }
+                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
             }
         }
     }
 
-    // 이프는 채팅·제작에서 줄어들고 마이에서 출석으로 늘어난다. 화면이 보일 때마다 잔액을 맞춘다.
-    LifecycleEventEffect(Lifecycle.Event.ON_START) { viewModel.onIntent(CreditHistoryIntent.ScreenShown) }
+    // 이프는 채팅·제작에서 줄어들고 여기서 출석으로 늘어난다. 화면이 보일 때마다 잔액을 맞춘다.
+    LifecycleEventEffect(Lifecycle.Event.ON_START) { viewModel.onIntent(CreditChargeIntent.ScreenShown) }
+
+    // 탭은 목적지가 아니라 화면 상태다. 구성 변경에서만 유지하면 되고 복원할 바깥 맥락이 없다.
+    var selectedTab by rememberSaveable { mutableStateOf(CreditChargeTab.FREE) }
 
     Column(
         modifier =
@@ -87,19 +103,40 @@ fun CreditHistoryScreen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.safeDrawing),
     ) {
-        MyDetailHeader(titleRes = R.string.my_credit_history_title, onBack = onBack)
-        CreditHistoryContent(
-            state = state,
-            onIntent = viewModel::onIntent,
-            modifier = Modifier.weight(1f),
+        MyDetailHeader(titleRes = R.string.my_credit_charge_title, onBack = onBack)
+        CreditBalanceBox(
+            balance = state.balance,
+            modifier = Modifier.padding(horizontal = ManyakTheme.spacing.gutter),
         )
+        CreditChargeTabRow(
+            selected = selectedTab,
+            onSelect = { selectedTab = it },
+            modifier = Modifier.padding(top = ManyakTheme.spacing.gutter),
+        )
+        when (selectedTab) {
+            CreditChargeTab.FREE ->
+                CreditFreeChargeTab(
+                    state = state,
+                    onIntent = viewModel::onIntent,
+                    onOpenInvite = onOpenInvite,
+                    modifier = Modifier.weight(1f),
+                )
+
+            CreditChargeTab.HISTORY ->
+                CreditHistoryTab(
+                    state = state,
+                    onIntent = viewModel::onIntent,
+                    modifier = Modifier.weight(1f),
+                )
+        }
     }
 }
 
+/** 내역 탭. 원장 목록만 담고 잔액은 화면 위 상자가 이미 말한다. */
 @Composable
-private fun CreditHistoryContent(
-    state: CreditHistoryUiState,
-    onIntent: (CreditHistoryIntent) -> Unit,
+private fun CreditHistoryTab(
+    state: CreditChargeUiState,
+    onIntent: (CreditChargeIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
@@ -108,44 +145,30 @@ private fun CreditHistoryContent(
     ManyakPullToRefreshBox(
         modifier = modifier,
         isRefreshing = state.isRefreshing,
-        onRefresh = { onIntent(CreditHistoryIntent.Refresh) },
+        onRefresh = { onIntent(CreditChargeIntent.Refresh) },
         // 헤더가 목록 위에 따로 있어 표시자를 내려 둘 chrome 이 없다.
         contentPadding = PaddingValues(),
     ) {
-        CreditHistoryList(state = state, listState = listState, onIntent = onIntent)
-    }
-}
-
-@Composable
-private fun CreditHistoryList(
-    state: CreditHistoryUiState,
-    listState: LazyListState,
-    onIntent: (CreditHistoryIntent) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        state = listState,
-        contentPadding =
-            PaddingValues(
-                start = ManyakTheme.spacing.gutter,
-                end = ManyakTheme.spacing.gutter,
-                bottom = ManyakTheme.spacing.screenBottom,
-            ),
-    ) {
-        item {
-            CreditBalanceBox(balance = state.balance)
-            // 잔액과 내역은 다른 이야기라 다음 절 간격만큼 띄운다.
-            Spacer(Modifier.height(ManyakTheme.spacing.block))
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            state = listState,
+            contentPadding =
+                PaddingValues(
+                    start = ManyakTheme.spacing.gutter,
+                    end = ManyakTheme.spacing.gutter,
+                    top = ManyakTheme.spacing.compact,
+                    bottom = ManyakTheme.spacing.screenBottom,
+                ),
+        ) {
+            creditHistoryBody(state = state, onIntent = onIntent)
         }
-        creditHistoryBody(state = state, onIntent = onIntent)
     }
 }
 
-/** 잔액·목록·상태별 자리. 상자 아래에 오는 것은 이 셋 중 하나뿐이다. */
+/** 목록·상태별 자리. 탭 안에 오는 것은 이 셋 중 하나뿐이다. */
 private fun LazyListScope.creditHistoryBody(
-    state: CreditHistoryUiState,
-    onIntent: (CreditHistoryIntent) -> Unit,
+    state: CreditChargeUiState,
+    onIntent: (CreditChargeIntent) -> Unit,
 ) {
     when {
         state.isLoading -> item { CreditHistorySkeleton() }
@@ -154,7 +177,7 @@ private fun LazyListScope.creditHistoryBody(
             item {
                 LoadFailedContent(
                     message = stringResource(R.string.my_credit_history_load_failed),
-                    onRetry = { onIntent(CreditHistoryIntent.Retry) },
+                    onRetry = { onIntent(CreditChargeIntent.Retry) },
                     modifier = Modifier.fillMaxWidth().padding(top = ManyakTheme.spacing.block),
                 )
             }
@@ -168,7 +191,7 @@ private fun LazyListScope.creditHistoryBody(
                 item {
                     CreditHistoryLoadMoreFooter(
                         isLoading = state.isLoadingMore,
-                        onRetry = { onIntent(CreditHistoryIntent.LoadMore) },
+                        onRetry = { onIntent(CreditChargeIntent.LoadMore) },
                     )
                 }
             }
@@ -183,8 +206,8 @@ private fun LazyListScope.creditHistoryBody(
 @Composable
 private fun LoadMoreWhenListEnds(
     listState: LazyListState,
-    state: CreditHistoryUiState,
-    onIntent: (CreditHistoryIntent) -> Unit,
+    state: CreditChargeUiState,
+    onIntent: (CreditChargeIntent) -> Unit,
 ) {
     val canLoadMore = state.hasMore && !state.isLoadingMore && !state.loadMoreFailed && state.items.isNotEmpty()
 
@@ -196,11 +219,11 @@ private fun LoadMoreWhenListEnds(
             val lastIndex = layout.visibleItemsInfo.lastOrNull()?.index ?: return@snapshotFlow false
             lastIndex >= layout.totalItemsCount - 1
         }.distinctUntilChanged()
-            .collect { reachedEnd -> if (reachedEnd) onIntent(CreditHistoryIntent.LoadMore) }
+            .collect { reachedEnd -> if (reachedEnd) onIntent(CreditChargeIntent.LoadMore) }
     }
 }
 
-/** 내 이프 잔액. 친구 초대의 코드 상자와 같은 바탕·여백을 쓴다. */
+/** 내 이프 잔액. 라벨이 위, 값이 아래 오른쪽에 온다. */
 @Composable
 private fun CreditBalanceBox(
     balance: Long?,
@@ -209,7 +232,7 @@ private fun CreditBalanceBox(
     val density = LocalDensity.current
     val balanceHeight =
         with(density) {
-            ManyakTheme.typography.titleLarge.fontSize
+            ManyakTheme.typography.headlineSmall.fontSize
                 .toDp()
         }
 
@@ -219,8 +242,7 @@ private fun CreditBalanceBox(
                 .fillMaxWidth()
                 .background(ManyakTheme.colors.backgroundNeutral, ManyakTheme.shapes.card)
                 .padding(ManyakTheme.spacing.gutter),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
     ) {
         Text(
             text = stringResource(R.string.my_credit_label),
@@ -230,12 +252,17 @@ private fun CreditBalanceBox(
         if (balance == null) {
             SkeletonPlaceholder(
                 alpha = rememberSkeletonPulseAlpha(),
-                modifier = Modifier.width(BalanceSkeletonWidth).heightIn(min = balanceHeight),
+                modifier =
+                    Modifier
+                        .align(Alignment.End)
+                        .width(BalanceSkeletonWidth)
+                        .heightIn(min = balanceHeight),
             )
         } else {
             Text(
+                modifier = Modifier.align(Alignment.End),
                 text = remember(balance) { NumberFormat.getInstance().format(balance) },
-                style = ManyakTheme.typography.titleLarge.copy(fontFeatureSettings = "tnum"),
+                style = ManyakTheme.typography.headlineSmall.copy(fontFeatureSettings = "tnum"),
                 color = ManyakTheme.colors.text,
             )
         }
@@ -255,14 +282,14 @@ private fun EmptyCreditHistory(modifier: Modifier = Modifier) {
 
 private val BalanceSkeletonWidth = 96.dp
 
-@Preview(showBackground = true, name = "이프 내역")
+@Preview(showBackground = true, name = "이프 충전 · 내역")
 @Composable
-private fun CreditHistoryPreview() {
+private fun CreditHistoryTabPreview() {
     ManyakTheme(darkTheme = false) {
-        CreditHistoryContent(
+        CreditHistoryTab(
             state =
-                CreditHistoryUiState(
-                    balance = 3160,
+                CreditChargeUiState(
+                    balance = 3230,
                     isLoading = false,
                     items =
                         listOf(
@@ -277,7 +304,7 @@ private fun CreditHistoryPreview() {
                             CreditTransaction(
                                 type = CreditTransactionType.EARN,
                                 reason = CreditTransactionReason.ATTENDANCE_REWARD,
-                                amount = 350,
+                                amount = 700,
                                 title = null,
                                 expiresDate = "2026-09-30",
                                 createdDate = "2026-08-31",

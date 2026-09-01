@@ -87,7 +87,7 @@ data class ChatRoomRoute(
 data object MyInviteRoute : NavKey
 
 @Serializable
-data object MyCreditHistoryRoute : NavKey
+data object MyCreditChargeRoute : NavKey
 
 @Serializable
 data object MyFeedbackRoute : NavKey
