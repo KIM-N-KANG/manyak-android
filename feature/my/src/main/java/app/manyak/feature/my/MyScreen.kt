@@ -1,31 +1,22 @@
 package app.manyak.feature.my
 
 import android.widget.Toast
-import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -53,17 +44,14 @@ fun MyScreen(
     onOpenFeedback: () -> Unit,
     onOpenOpenSourceLicense: () -> Unit,
     onOpenWithdrawal: () -> Unit,
-    onOpenCreditHistory: () -> Unit,
+    onOpenCreditCharge: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MyViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
-    // 문구는 구성에 묶인 값이라 컴포지션에서 읽는다. 보상 금액은 효과가 도착할 때 정해져 서식만 나중에 채운다.
-    val attendanceClaimed = stringResource(R.string.my_attendance_claimed)
-    val attendanceAlready = stringResource(R.string.my_attendance_already)
-    val attendanceFailed = stringResource(R.string.my_attendance_failed)
+    // 문구는 구성에 묶인 값이라 컴포지션에서 읽는다.
     val linkSucceeded = stringResource(R.string.my_link_succeeded)
     val linkAlreadyLinked = stringResource(R.string.my_link_already_linked)
     val linkFailed = stringResource(R.string.my_link_failed)
@@ -73,7 +61,7 @@ fun MyScreen(
             AuthProvider.KAKAO to stringResource(R.string.my_provider_kakao),
         )
 
-    // 잔액·출석 여부는 채팅·제작에서 바뀌므로 화면이 다시 보일 때마다 새로 읽는다. ViewModel 은 탭을
+    // 잔액은 채팅·제작·이프 충전에서 바뀌므로 화면이 다시 보일 때마다 새로 읽는다. ViewModel 은 탭을
     // 옮겨도 살아 있어(탭별 백스택이 목적지를 계속 들고 있다) 생성 시점 한 번으로는 낡은 값이 남는다.
     LaunchedEffect(viewModel, lifecycleOwner) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -86,9 +74,6 @@ fun MyScreen(
             viewModel.uiEffect.collect { effect ->
                 val message =
                     when (effect) {
-                        is MyEffect.AttendanceRewarded -> attendanceClaimed.format(effect.amount)
-                        MyEffect.AttendanceAlreadyDone -> attendanceAlready
-                        MyEffect.AttendanceFailed -> attendanceFailed
                         is MyEffect.AccountLinked ->
                             linkSucceeded.format(providerLabels[effect.provider].orEmpty())
                         MyEffect.AccountAlreadyLinked -> linkAlreadyLinked
@@ -107,7 +92,7 @@ fun MyScreen(
         onOpenFeedback = onOpenFeedback,
         onOpenOpenSourceLicense = onOpenOpenSourceLicense,
         onOpenWithdrawal = onOpenWithdrawal,
-        onOpenCreditHistory = onOpenCreditHistory,
+        onOpenCreditCharge = onOpenCreditCharge,
         contentPadding = contentPadding,
         modifier = modifier,
     )
@@ -151,7 +136,7 @@ private fun MyContent(
     onOpenFeedback: () -> Unit,
     onOpenOpenSourceLicense: () -> Unit,
     onOpenWithdrawal: () -> Unit,
-    onOpenCreditHistory: () -> Unit,
+    onOpenCreditCharge: () -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
 ) {
@@ -166,19 +151,9 @@ private fun MyContent(
             profile = state.profile,
             onLinkAccount = { provider -> onIntent(MyIntent.RequestAccountLink(provider)) },
         )
-        CreditBalanceCard(
-            profile = state.profile,
-            isClaiming = state.isClaimingAttendance,
-            onClaimAttendance = { onIntent(MyIntent.ClaimAttendance) },
-            onOpenHistory = onOpenCreditHistory,
-        )
+        CreditBalanceCard(profile = state.profile, onOpenCharge = onOpenCreditCharge)
         MySection(labelRes = R.string.my_section_event) {
-            MyMenuItem(
-                iconRes = R.drawable.ic_people,
-                labelRes = R.string.my_invite,
-                onClick = onOpenInvite,
-                trailing = { MenuTrailingIcon(iconRes = R.drawable.ic_chevron_right) },
-            )
+            InviteMenuItem(onClick = onOpenInvite)
         }
         MySection(labelRes = R.string.my_section_display) {
             ThemeMenuItem(themeMode = state.themeMode, onClick = { onIntent(MyIntent.CycleTheme) })
@@ -318,63 +293,6 @@ private fun ThemeMenuItem(
     )
 }
 
-/** [onClick] 이 없으면 값만 보여 주는 행이다 — 버전처럼 열 곳이 없는 항목이 여기 해당한다. */
-@Composable
-@Suppress("LongParameterList")
-private fun MyMenuItem(
-    @DrawableRes iconRes: Int,
-    @StringRes labelRes: Int,
-    onClick: (() -> Unit)?,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    contentColor: Color = ManyakTheme.colors.text,
-    trailing: (@Composable () -> Unit)? = null,
-) {
-    val clickable =
-        if (onClick == null) Modifier else Modifier.clickable(enabled = enabled, onClick = onClick)
-    Row(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .heightIn(min = ManyakTheme.sizes.control)
-                .then(clickable)
-                .padding(horizontal = ManyakTheme.spacing.gutter),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
-    ) {
-        Icon(
-            painter = painterResource(iconRes),
-            contentDescription = null,
-            modifier = Modifier.size(MenuIconSize),
-            tint = contentColor,
-        )
-        Text(
-            modifier = Modifier.weight(1f),
-            text = stringResource(labelRes),
-            style = ManyakTheme.typography.bodyLarge,
-            color = contentColor,
-        )
-        trailing?.invoke()
-    }
-}
-
-/** 목적지 이동·바깥 문서 열림을 알리는 오른쪽 끝 표시. */
-@Composable
-private fun MenuTrailingIcon(
-    @DrawableRes iconRes: Int,
-    modifier: Modifier = Modifier,
-) {
-    Icon(
-        painter = painterResource(iconRes),
-        contentDescription = null,
-        modifier = modifier.size(ManyakTheme.sizes.iconSmall),
-        tint = ManyakTheme.colors.textSubtlest,
-    )
-}
-
-/** 메뉴 항목의 왼쪽 아이콘. 라벨 옆이지만 목록의 주된 시각 요소라 [ManyakTheme.sizes.icon]보다 크다. */
-private val MenuIconSize = 24.dp
-
 @Preview(showBackground = true, name = "마이 · 라이트")
 @Composable
 private fun MyScreenPreview() {
@@ -400,7 +318,7 @@ private fun MyScreenPreview() {
             onOpenFeedback = {},
             onOpenOpenSourceLicense = {},
             onOpenWithdrawal = {},
-            onOpenCreditHistory = {},
+            onOpenCreditCharge = {},
             contentPadding = PaddingValues(0.dp),
         )
     }

@@ -45,7 +45,7 @@ import app.manyak.core.navigation.LegalDocument
 import app.manyak.core.navigation.LegalRoute
 import app.manyak.core.navigation.LoginRoute
 import app.manyak.core.navigation.MainTabsRoute
-import app.manyak.core.navigation.MyCreditHistoryRoute
+import app.manyak.core.navigation.MyCreditChargeRoute
 import app.manyak.core.navigation.MyFeedbackRoute
 import app.manyak.core.navigation.MyInviteRoute
 import app.manyak.core.navigation.MyOpenSourceLicenseRoute
@@ -62,7 +62,7 @@ import app.manyak.feature.create.CreateKeywordScreen
 import app.manyak.feature.create.CreateStorylineScreen
 import app.manyak.feature.legal.LegalDocumentScreen
 import app.manyak.feature.login.LoginScreen
-import app.manyak.feature.my.CreditHistoryScreen
+import app.manyak.feature.my.CreditChargeScreen
 import app.manyak.feature.my.FeedbackScreen
 import app.manyak.feature.my.InviteOnboardingSheet
 import app.manyak.feature.my.InviteScreen
@@ -252,7 +252,7 @@ private fun MainNavDisplay() {
                         onOpenFeedback = { backStack.add(MyFeedbackRoute) },
                         onOpenOpenSourceLicense = { backStack.add(MyOpenSourceLicenseRoute) },
                         onOpenWithdrawal = { backStack.add(WithdrawalRoute) },
-                        onOpenCreditHistory = { backStack.add(MyCreditHistoryRoute) },
+                        onOpenCreditCharge = { backStack.add(MyCreditChargeRoute) },
                     )
                 }
                 myDestinationEntries(backStack)
@@ -288,8 +288,12 @@ private fun EntryProviderScope<NavKey>.myDestinationEntries(backStack: MutableLi
     entry<MyInviteRoute> {
         InviteScreen(onBack = { backStack.removeLastOrNull() })
     }
-    entry<MyCreditHistoryRoute> {
-        CreditHistoryScreen(onBack = { backStack.removeLastOrNull() })
+    entry<MyCreditChargeRoute> {
+        CreditChargeScreen(
+            onBack = { backStack.removeLastOrNull() },
+            // 무료 충전 탭의 초대 줄은 마이와 같은 목적지로 간다.
+            onOpenInvite = { backStack.add(MyInviteRoute) },
+        )
     }
     entry<MyFeedbackRoute> {
         FeedbackScreen(onBack = { backStack.removeLastOrNull() })
