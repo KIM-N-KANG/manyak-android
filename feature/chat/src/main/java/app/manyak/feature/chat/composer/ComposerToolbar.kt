@@ -8,10 +8,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
 import app.manyak.core.domain.chat.ChatInputMode
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ManyakDestructiveDialog
+import app.manyak.core.ui.credit.LocalCreditPolicy
+import app.manyak.core.ui.credit.creditAmountAlpha
+import app.manyak.core.ui.credit.creditAmountText
 import app.manyak.core.ui.theme.ManyakTheme
 
 /** 컴포저 아래 줄. 왼쪽부터 추가 버튼·설정 메뉴이고 턴 비용과 전송만 오른쪽 끝이다. */
@@ -78,8 +82,10 @@ internal fun ComposerToolbar(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             // 전송 버튼 상태(전송·랜덤·대기)가 바뀌어도 자리가 그대로다.
+            val chatTurnCost = LocalCreditPolicy.current?.chatTurnCost
             Text(
-                text = stringResource(R.string.chat_composer_turn_credit_cost),
+                modifier = Modifier.alpha(creditAmountAlpha(chatTurnCost == null)),
+                text = stringResource(R.string.chat_composer_turn_credit_cost, creditAmountText(chatTurnCost)),
                 style = ManyakTheme.typography.bodySmall,
                 color = ManyakTheme.colors.textSubtle,
             )

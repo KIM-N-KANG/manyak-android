@@ -16,6 +16,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,6 +55,7 @@ import app.manyak.core.navigation.WithdrawalRoute
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ManyakProgressIndicator
 import app.manyak.core.ui.component.rememberDelayedProgressVisibility
+import app.manyak.core.ui.credit.LocalCreditPolicy
 import app.manyak.core.ui.error.messageResOrNull
 import app.manyak.core.ui.theme.ManyakTheme
 import app.manyak.feature.chat.ChatRoomScreen
@@ -84,6 +86,7 @@ fun ManyakApp(
 ) {
     val sessionState by viewModel.sessionState.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
+    val creditPolicy by viewModel.creditPolicy.collectAsStateWithLifecycle()
     val showSessionProgress = rememberDelayedProgressVisibility(sessionState == SessionState.Undetermined)
     val darkTheme =
         when (themeMode) {
@@ -92,20 +95,23 @@ fun ManyakApp(
             ThemeMode.DARK -> true
         }
 
-    ManyakTheme(darkTheme = darkTheme) {
-        SystemBarIconAppearance(darkTheme = darkTheme)
-        Surface(modifier = modifier.fillMaxSize(), color = ManyakTheme.colors.surface) {
-            when (val state = sessionState) {
-                SessionState.Undetermined -> if (showSessionProgress) SessionProgress()
-                is SessionState.SignedOut -> AuthNavDisplay()
-                SessionState.Member -> {
-                    MainNavDisplay()
-                    // 신규 가입 안내는 어느 탭에 있든 회원 그래프 위에 뜬다. 로그인 화면에 두면
-                    // 로그인 성공과 동시에 인증 백스택이 사라져 안내도 함께 걷힌다.
-                    InviteOnboardingSheet()
+    // 이프 수치는 세 기능 모듈의 화면이 함께 쓰므로 화면마다 상태를 늘리지 않고 루트에서 내린다.
+    CompositionLocalProvider(LocalCreditPolicy provides creditPolicy) {
+        ManyakTheme(darkTheme = darkTheme) {
+            SystemBarIconAppearance(darkTheme = darkTheme)
+            Surface(modifier = modifier.fillMaxSize(), color = ManyakTheme.colors.surface) {
+                when (val state = sessionState) {
+                    SessionState.Undetermined -> if (showSessionProgress) SessionProgress()
+                    is SessionState.SignedOut -> AuthNavDisplay()
+                    SessionState.Member -> {
+                        MainNavDisplay()
+                        // 신규 가입 안내는 어느 탭에 있든 회원 그래프 위에 뜬다. 로그인 화면에 두면
+                        // 로그인 성공과 동시에 인증 백스택이 사라져 안내도 함께 걷힌다.
+                        InviteOnboardingSheet()
+                    }
+                    // 이전 사용자의 데이터가 남아 있다. 정리가 끝날 때까지 어느 그래프도 열지 않는다.
+                    is SessionState.CleanupFailed -> CleanupFailed(state, onRetry = viewModel::onRetryCleanup)
                 }
-                // 이전 사용자의 데이터가 남아 있다. 정리가 끝날 때까지 어느 그래프도 열지 않는다.
-                is SessionState.CleanupFailed -> CleanupFailed(state, onRetry = viewModel::onRetryCleanup)
             }
         }
     }

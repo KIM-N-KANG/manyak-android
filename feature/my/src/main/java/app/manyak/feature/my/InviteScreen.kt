@@ -26,8 +26,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringArrayResource
@@ -51,6 +53,9 @@ import app.manyak.core.ui.component.ManyakTextField
 import app.manyak.core.ui.component.SkeletonPlaceholder
 import app.manyak.core.ui.component.clearFocusOnTap
 import app.manyak.core.ui.component.rememberSkeletonPulseAlpha
+import app.manyak.core.ui.credit.LocalCreditPolicy
+import app.manyak.core.ui.credit.creditAmountAlpha
+import app.manyak.core.ui.credit.creditAmountText
 import app.manyak.core.ui.theme.ManyakTheme
 
 /**
@@ -69,12 +74,22 @@ fun InviteScreen(
 
     LaunchedEffect(viewModel) { viewModel.onIntent(InviteIntent.Load) }
 
+    // 토스트는 그 순간 문자열이 필요해 자리표시·쉬머를 둘 수 없다. 늦게 도착한 수치도 읽도록
+    // 갱신되는 상태로 들고 있는다 — 화면을 띄운 뒤 코드를 내는 흐름이라 보통은 이미 도착해 있다.
+    val redeemedMessage by
+        rememberUpdatedState(
+            stringResource(
+                R.string.invite_code_redeemed,
+                creditAmountText(LocalCreditPolicy.current?.inviteReward),
+            ),
+        )
+
     LaunchedEffect(viewModel, lifecycleOwner) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
             viewModel.uiEffect.collect { effect ->
                 when (effect) {
                     InviteEffect.Redeemed ->
-                        Toast.makeText(context, R.string.invite_code_redeemed, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, redeemedMessage, Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -125,6 +140,7 @@ private fun InviteContent(
 
 @Composable
 private fun InviteHeadline(modifier: Modifier = Modifier) {
+    val inviteReward = LocalCreditPolicy.current?.inviteReward
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
@@ -135,7 +151,8 @@ private fun InviteHeadline(modifier: Modifier = Modifier) {
             color = ManyakTheme.colors.text,
         )
         Text(
-            text = stringResource(R.string.invite_description),
+            modifier = Modifier.alpha(creditAmountAlpha(inviteReward == null)),
+            text = stringResource(R.string.invite_description, creditAmountText(inviteReward)),
             style = ManyakTheme.typography.bodyLarge,
             color = ManyakTheme.colors.textSubtle,
         )
@@ -226,8 +243,12 @@ private fun InviteShareActions(
     val copied = stringResource(R.string.invite_code_copied)
     val copyFailed = stringResource(R.string.invite_code_copy_failed)
     val shareFailed = stringResource(R.string.invite_share_failed)
-    val shareSubject = stringResource(R.string.invite_share_subject)
-    val shareMessage = stringResource(R.string.invite_share_message, code.orEmpty(), state.shareUrl)
+    // 공유 카드도 그 순간 문자열이 필요해 자리표시·쉬머를 둘 수 없다. 화면을 띄운 뒤 누르는 흐름이라
+    // 그때는 수치가 도착해 있다.
+    val rewardText = creditAmountText(LocalCreditPolicy.current?.inviteReward)
+    val shareSubject = stringResource(R.string.invite_share_subject, rewardText)
+    val shareMessage =
+        stringResource(R.string.invite_share_message, rewardText, code.orEmpty(), state.shareUrl)
 
     Row(
         modifier = modifier.fillMaxWidth(),

@@ -53,6 +53,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ManyakProgressIndicator
+import app.manyak.core.ui.credit.LocalCreditPolicy
+import app.manyak.core.ui.credit.creditAmountAlpha
+import app.manyak.core.ui.credit.creditAmountText
 import app.manyak.core.ui.theme.ManyakTheme
 
 /**
@@ -70,12 +73,22 @@ fun InviteOnboardingSheet(
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
 
+    // 토스트는 그 순간 문자열이 필요해 자리표시·쉬머를 둘 수 없다. 늦게 도착한 수치도 읽도록
+    // 갱신되는 상태로 들고 있는다 — 화면을 띄운 뒤 코드를 내는 흐름이라 보통은 이미 도착해 있다.
+    val redeemedMessage by
+        rememberUpdatedState(
+            stringResource(
+                R.string.invite_code_redeemed,
+                creditAmountText(LocalCreditPolicy.current?.inviteReward),
+            ),
+        )
+
     LaunchedEffect(viewModel, lifecycleOwner) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
             viewModel.uiEffect.collect { effect ->
                 when (effect) {
                     InviteOnboardingEffect.Redeemed ->
-                        Toast.makeText(context, R.string.invite_code_redeemed, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, redeemedMessage, Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -158,12 +171,14 @@ private fun InviteOnboardingContent(
 
 @Composable
 private fun InviteOnboardingHeadline(modifier: Modifier = Modifier) {
+    val inviteReward = LocalCreditPolicy.current?.inviteReward
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
         Text(
-            text = stringResource(R.string.invite_onboarding_title),
+            modifier = Modifier.alpha(creditAmountAlpha(inviteReward == null)),
+            text = stringResource(R.string.invite_onboarding_title, creditAmountText(inviteReward)),
             style = ManyakTheme.typography.titleLarge,
             color = ManyakTheme.colors.text,
         )
