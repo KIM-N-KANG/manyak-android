@@ -4,6 +4,7 @@ import app.manyak.core.data.api.AccountLinkApi
 import app.manyak.core.data.api.AuthApi
 import app.manyak.core.data.api.ChatApi
 import app.manyak.core.data.api.CreationRequestApi
+import app.manyak.core.data.api.CreditPolicyApi
 import app.manyak.core.data.api.FeedbackApi
 import app.manyak.core.data.api.SimpleStoryApi
 import app.manyak.core.data.api.StoryApi
@@ -219,6 +220,15 @@ object NetworkModule {
         config: DataLayerConfig,
         json: Json,
     ): FeedbackApi = retrofit(client, config, json).create(FeedbackApi::class.java)
+
+    /** 이프 수치는 인증이 필요 없는 공개 조회라 토큰 없는 클라이언트로 부른다. */
+    @Provides
+    @Singleton
+    fun provideCreditPolicyApi(
+        @PlainClient client: OkHttpClient,
+        config: DataLayerConfig,
+        json: Json,
+    ): CreditPolicyApi = retrofit(client, config, json).create(CreditPolicyApi::class.java)
 
     @Provides
     @Singleton

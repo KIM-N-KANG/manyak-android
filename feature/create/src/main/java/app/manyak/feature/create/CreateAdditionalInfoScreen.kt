@@ -32,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
@@ -45,6 +46,9 @@ import app.manyak.core.ui.R
 import app.manyak.core.ui.component.FocusScrollMargin
 import app.manyak.core.ui.component.ScrollEdgeFade
 import app.manyak.core.ui.component.clearFocusOnTap
+import app.manyak.core.ui.credit.LocalCreditPolicy
+import app.manyak.core.ui.credit.creditAmountAlpha
+import app.manyak.core.ui.credit.creditAmountText
 import app.manyak.core.ui.theme.ManyakTheme
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withTimeoutOrNull
@@ -347,6 +351,7 @@ private fun CreateAdditionalInfoFooter(
 /** 완성 비용 안내. 좌우 여백 없이 화면 폭을 채워 CTA 행과 다른 층으로 읽힌다. */
 @Composable
 private fun StoryCompletionCostRow(modifier: Modifier = Modifier) {
+    val storyCreationCost = LocalCreditPolicy.current?.storyCreationCost
     Row(
         modifier =
             modifier
@@ -363,7 +368,12 @@ private fun StoryCompletionCostRow(modifier: Modifier = Modifier) {
             color = ManyakTheme.colors.textSubtle,
         )
         Text(
-            text = stringResource(R.string.create_completion_credit_cost_amount),
+            modifier = Modifier.alpha(creditAmountAlpha(storyCreationCost == null)),
+            text =
+                stringResource(
+                    R.string.create_completion_credit_cost_amount,
+                    creditAmountText(storyCreationCost),
+                ),
             style = ManyakTheme.typography.bodyMediumStrong,
             color = ManyakTheme.colors.text,
         )

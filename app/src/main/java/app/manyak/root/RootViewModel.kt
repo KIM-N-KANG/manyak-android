@@ -2,6 +2,8 @@ package app.manyak.root
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.manyak.core.domain.credit.CreditPolicy
+import app.manyak.core.domain.credit.CreditPolicyRepository
 import app.manyak.core.domain.session.SessionRepository
 import app.manyak.core.domain.session.SessionState
 import app.manyak.core.domain.settings.ThemeMode
@@ -21,6 +23,7 @@ class RootViewModel
     constructor(
         sessionRepository: SessionRepository,
         themePreferenceRepository: ThemePreferenceRepository,
+        private val creditPolicyRepository: CreditPolicyRepository,
         private val coordinator: SessionTerminationCoordinator,
     ) : ViewModel() {
         val sessionState: StateFlow<SessionState> = sessionRepository.sessionState
@@ -29,6 +32,15 @@ class RootViewModel
         val themeMode: StateFlow<ThemeMode> =
             themePreferenceRepository.themeMode
                 .stateIn(viewModelScope, SharingStarted.Eagerly, ThemeMode.SYSTEM)
+
+        /** 서버가 정본인 이프 수치. 세 기능 모듈이 같은 값을 보도록 루트가 한 번만 읽는다. */
+        val creditPolicy: StateFlow<CreditPolicy?> = creditPolicyRepository.policy
+
+        init {
+            // 인증이 필요 없는 공개 조회라 세션이 정해지기 전에 시작해도 된다. 실패해도 되살리지 않는다 —
+            // 수치를 못 받은 자리는 자리표시 숫자로 그려지고 다음 실행에서 다시 읽는다.
+            viewModelScope.launch { creditPolicyRepository.refresh() }
+        }
 
         /**
          * 끝내지 못한 종료 정리를 다시 시도한다.

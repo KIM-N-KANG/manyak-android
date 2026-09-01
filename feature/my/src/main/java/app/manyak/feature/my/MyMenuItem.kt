@@ -15,17 +15,22 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.R
+import app.manyak.core.ui.credit.LocalCreditPolicy
+import app.manyak.core.ui.credit.creditAmountAlpha
+import app.manyak.core.ui.credit.creditAmountText
 import app.manyak.core.ui.theme.ManyakTheme
 
 /**
  * 마이의 메뉴 줄. [onClick] 이 없으면 값만 보여 주는 행이다 — 버전처럼 열 곳이 없는 항목이 여기 해당한다.
  *
- * [subLabelRes] 는 라벨 아래에 강조색으로 붙어 라벨과 한 문장으로 이어 읽힌다.
+ * [subLabel] 은 라벨 아래에 강조색으로 붙어 라벨과 한 문장으로 이어 읽힌다. 아직 확정되지 않은 값을
+ * 담고 있으면 [subLabelPending] 으로 알려 맥박을 준다.
  */
 @Composable
 @Suppress("LongParameterList")
@@ -36,7 +41,8 @@ internal fun MyMenuItem(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     contentColor: Color = ManyakTheme.colors.text,
-    @StringRes subLabelRes: Int? = null,
+    subLabel: String? = null,
+    subLabelPending: Boolean = false,
     trailing: (@Composable () -> Unit)? = null,
 ) {
     val clickable =
@@ -66,9 +72,10 @@ internal fun MyMenuItem(
                 style = ManyakTheme.typography.bodyLarge,
                 color = contentColor,
             )
-            subLabelRes?.let {
+            subLabel?.let {
                 Text(
-                    text = stringResource(it),
+                    modifier = Modifier.alpha(creditAmountAlpha(subLabelPending)),
+                    text = it,
                     style = ManyakTheme.typography.labelSmall,
                     color = ManyakTheme.colors.textBrand,
                 )
@@ -100,12 +107,14 @@ internal fun InviteMenuItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val inviteReward = LocalCreditPolicy.current?.inviteReward
     MyMenuItem(
         iconRes = R.drawable.ic_people,
         labelRes = R.string.my_invite,
         onClick = onClick,
         modifier = modifier,
-        subLabelRes = R.string.my_invite_reward,
+        subLabel = stringResource(R.string.my_invite_reward, creditAmountText(inviteReward)),
+        subLabelPending = inviteReward == null,
         trailing = { MenuTrailingIcon(iconRes = R.drawable.ic_chevron_right) },
     )
 }
