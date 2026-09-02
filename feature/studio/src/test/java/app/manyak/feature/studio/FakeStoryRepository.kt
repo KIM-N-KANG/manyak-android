@@ -3,6 +3,7 @@ package app.manyak.feature.studio
 import app.manyak.core.domain.error.DomainError
 import app.manyak.core.domain.error.DomainResult
 import app.manyak.core.domain.story.StoryDetail
+import app.manyak.core.domain.story.StoryReportReason
 import app.manyak.core.domain.story.StoryRepository
 import app.manyak.core.domain.story.StorySummary
 import kotlinx.coroutines.yield
@@ -56,4 +57,10 @@ internal class FakeStoryRepository : StoryRepository {
         deletedStoryIds += storyId
         return queuedDeleteResults.removeFirstOrNull() ?: DomainResult.Success(Unit)
     }
+
+    override suspend fun reportStory(
+        storyId: String,
+        reason: StoryReportReason,
+        detail: String?,
+    ): DomainResult<Unit> = DomainResult.Success(Unit)
 }

@@ -204,7 +204,12 @@ class ChatRoomStreamTest {
     private fun viewModel(
         repository: FakeChatRepository,
         preferences: FakeChatPreferencesRepository = FakeChatPreferencesRepository(),
-    ) = ChatRoomViewModel(chatId = "chat-1", chatRepository = repository, preferences = preferences)
+    ) = ChatRoomViewModel(
+        chatId = "chat-1",
+        chatRepository = repository,
+        storyRepository = FakeStoryRepository(),
+        preferences = preferences,
+    )
 
     /** 블럭 하나에 문장을 넣는다. 기본 모드가 블럭이라 첫 칸이 상황이다. */
     private fun ChatRoomViewModel.type(text: String) {

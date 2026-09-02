@@ -7,6 +7,11 @@ import app.manyak.core.domain.error.DomainResult
 import app.manyak.core.domain.story.StoryDetail
 import app.manyak.core.domain.story.StoryRepository
 import app.manyak.core.ui.mvi.MviViewModel
+import app.manyak.core.ui.report.StoryReportAction
+import app.manyak.core.ui.report.StoryReportChange
+import app.manyak.core.ui.report.StoryReportController
+import app.manyak.core.ui.report.StoryReportUiState
+import app.manyak.core.ui.report.reduceReport
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -32,6 +37,7 @@ data class StoryDetailUiState(
     val isImageViewerOpen: Boolean = false,
     val isStartingChat: Boolean = false,
     val startChatFailed: Boolean = false,
+    val report: StoryReportUiState = StoryReportUiState(),
 ) {
     val selectedStartSetting
         get() = story?.startSettings?.firstOrNull { setting -> setting.id == selectedStartSettingId }
@@ -52,6 +58,10 @@ sealed interface StoryDetailIntent {
     ) : StoryDetailIntent
 
     data object StartChat : StoryDetailIntent
+
+    data class Report(
+        val action: StoryReportAction,
+    ) : StoryDetailIntent
 }
 
 sealed interface StoryDetailEvent {
@@ -80,12 +90,20 @@ sealed interface StoryDetailEvent {
 
     /** 채팅방에서 돌아왔다. 성공 뒤 남겨 둔 시작 잠금을 걷는다. */
     data object ChatStartReset : StoryDetailEvent
+
+    data class Report(
+        val change: StoryReportChange,
+    ) : StoryDetailEvent
 }
 
 sealed interface StoryDetailEffect {
     data class NavigateToChat(
         val chatId: String,
     ) : StoryDetailEffect
+
+    data object ShowReportSubmitted : StoryDetailEffect
+
+    data object ShowReportFailed : StoryDetailEffect
 }
 
 /**
@@ -122,6 +140,23 @@ class StoryDetailViewModel
          */
         private var selectedStartSettingId: String? = null
 
+        /** 신고 절차는 채팅방과 같아 :core:ui 의 컨트롤러가 소유한다. */
+        private val report =
+            StoryReportController(
+                scope = viewModelScope,
+                repository = storyRepository,
+                emit = { change -> dispatchEvent(StoryDetailEvent.Report(change)) },
+                notify = { submitted ->
+                    dispatchEffect(
+                        if (submitted) {
+                            StoryDetailEffect.ShowReportSubmitted
+                        } else {
+                            StoryDetailEffect.ShowReportFailed
+                        },
+                    )
+                },
+            )
+
         override suspend fun handleIntent(intent: StoryDetailIntent) {
             val state = uiState.value
             when (intent) {
@@ -150,6 +185,8 @@ class StoryDetailViewModel
                 }
 
                 StoryDetailIntent.StartChat -> startChat(state)
+
+                is StoryDetailIntent.Report -> report.handle(intent.action, state.story?.id, state.report)
             }
         }
 
@@ -224,6 +261,8 @@ class StoryDetailViewModel
                 // 실패 문구는 남긴다 — 화면이 다시 만들어졌다고 해서 사용자가 읽지 않은 실패가 없던 일이 되지는 않는다.
                 // 다시 누르면 ChatStartRequested 가 지운다.
                 StoryDetailEvent.ChatStartReset -> state.copy(isStartingChat = false)
+
+                is StoryDetailEvent.Report -> state.copy(report = state.report.reduceReport(event.change))
             }
     }
 

@@ -3,6 +3,8 @@ package app.manyak.feature.story
 import app.manyak.core.domain.chat.CreatedChat
 import app.manyak.core.domain.error.DomainError
 import app.manyak.core.domain.error.DomainResult
+import app.manyak.core.domain.story.StoryReportReason
+import app.manyak.core.ui.report.StoryReportAction
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -301,6 +303,65 @@ class StoryDetailViewModelTest {
             viewModel.onIntent(StoryDetailIntent.CloseImageViewer)
             advanceUntilIdle()
             assertFalse(viewModel.uiState.value.isImageViewerOpen)
+        }
+
+    @Test
+    fun `신고를 접수하면 시트를 닫고 입력을 비운다`() =
+        runTest(dispatcher) {
+            val storyRepository = FakeStoryRepository()
+            val viewModel = viewModel(storyRepository = storyRepository)
+            viewModel.onIntent(StoryDetailIntent.ScreenShown)
+            advanceUntilIdle()
+
+            viewModel.onIntent(StoryDetailIntent.Report(StoryReportAction.Open))
+            viewModel.onIntent(
+                StoryDetailIntent.Report(StoryReportAction.SelectReason(StoryReportReason.INAPPROPRIATE)),
+            )
+            viewModel.onIntent(StoryDetailIntent.Report(StoryReportAction.ChangeDetail("불쾌한 묘사가 있어요")))
+            advanceUntilIdle()
+            viewModel.onIntent(StoryDetailIntent.Report(StoryReportAction.Submit))
+            advanceUntilIdle()
+
+            assertEquals(
+                listOf(Triple(STORY_ID, StoryReportReason.INAPPROPRIATE, "불쾌한 묘사가 있어요")),
+                storyRepository.reportedStories,
+            )
+            val state = viewModel.uiState.value
+            assertFalse(state.report.isSheetOpen)
+            assertNull(state.report.reason)
+            assertEquals("", state.report.detail)
+        }
+
+    @Test
+    fun `신고가 실패하면 시트와 입력을 그대로 둔다`() =
+        runTest(dispatcher) {
+            val storyRepository = FakeStoryRepository()
+            storyRepository.queuedReportResults += DomainResult.Failure(DomainError.Network)
+            val viewModel = viewModel(storyRepository = storyRepository)
+            viewModel.onIntent(StoryDetailIntent.ScreenShown)
+            advanceUntilIdle()
+
+            viewModel.onIntent(StoryDetailIntent.Report(StoryReportAction.Open))
+            viewModel.onIntent(StoryDetailIntent.Report(StoryReportAction.SelectReason(StoryReportReason.SPAM)))
+            advanceUntilIdle()
+            viewModel.onIntent(StoryDetailIntent.Report(StoryReportAction.Submit))
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertTrue(state.report.isSheetOpen)
+            assertEquals(StoryReportReason.SPAM, state.report.reason)
+            assertFalse(state.report.isSubmitting)
+        }
+
+    @Test
+    fun `조회 전에는 신고 시트를 열지 않는다`() =
+        runTest(dispatcher) {
+            val viewModel = viewModel()
+
+            viewModel.onIntent(StoryDetailIntent.Report(StoryReportAction.Open))
+            advanceUntilIdle()
+
+            assertFalse(viewModel.uiState.value.report.isSheetOpen)
         }
 }
 

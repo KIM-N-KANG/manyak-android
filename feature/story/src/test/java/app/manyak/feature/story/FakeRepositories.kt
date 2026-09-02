@@ -9,6 +9,7 @@ import app.manyak.core.domain.chat.UserSource
 import app.manyak.core.domain.error.DomainError
 import app.manyak.core.domain.error.DomainResult
 import app.manyak.core.domain.story.StoryDetail
+import app.manyak.core.domain.story.StoryReportReason
 import app.manyak.core.domain.story.StoryRepository
 import app.manyak.core.domain.story.StoryStartSetting
 import app.manyak.core.domain.story.StorySummary
@@ -76,6 +77,20 @@ internal class FakeStoryRepository : StoryRepository {
     override suspend fun myStories(): DomainResult<List<StorySummary>> = DomainResult.Success(emptyList())
 
     override suspend fun deleteStory(storyId: String): DomainResult<Unit> = DomainResult.Success(Unit)
+
+    /** 접수된 신고 — 화면이 무엇을 보냈는지 확인할 때 쓴다. */
+    val reportedStories = mutableListOf<Triple<String, StoryReportReason, String?>>()
+    val queuedReportResults = ArrayDeque<DomainResult<Unit>>()
+
+    override suspend fun reportStory(
+        storyId: String,
+        reason: StoryReportReason,
+        detail: String?,
+    ): DomainResult<Unit> {
+        yield()
+        reportedStories += Triple(storyId, reason, detail)
+        return queuedReportResults.removeFirstOrNull() ?: DomainResult.Success(Unit)
+    }
 }
 
 internal class FakeChatRepository : ChatRepository {

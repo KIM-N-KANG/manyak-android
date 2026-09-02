@@ -1,11 +1,13 @@
-package app.manyak.feature.chat
+package app.manyak.core.ui.component
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -22,9 +24,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
@@ -38,17 +40,22 @@ import app.manyak.core.ui.R
 import app.manyak.core.ui.theme.ManyakTheme
 
 /**
- * 헤더 오른쪽 옵션 메뉴. **채팅 삭제의 유일한 진입점**이고 항목도 그것 하나다.
+ * 헤더 오른쪽 더보기 메뉴. 트리거 아이콘과 팝업 배치·모양을 소유하고, 항목은 호출부가 채운다.
  *
- * 웹 헤더의 공유 버튼은 앱에 두지 않는다 — 공유 URL 을 앱이 열지 웹으로 넘길지가 정해지지 않았다.
+ * 펼침 상태는 구성 변경에서 살아남는다 — 회전했다고 열어 둔 메뉴가 닫히면 무엇을 누르려던 중이었는지
+ * 사라진다.
+ *
+ * @param tint 트리거 아이콘 색. 스토리 상세처럼 배경이 스크롤에 따라 바뀌는 앱바가 직접 정한다.
+ * @param content 항목 슬롯. 넘어오는 `dismiss` 를 항목의 동작과 함께 불러 메뉴를 닫는다.
  */
 @Composable
-internal fun ChatRoomOptionsMenu(
-    onDelete: () -> Unit,
+fun ManyakOptionsMenu(
+    contentDescription: String,
     modifier: Modifier = Modifier,
+    tint: Color = ManyakTheme.colors.text,
+    content: @Composable ColumnScope.(dismiss: () -> Unit) -> Unit,
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
-    val label = stringResource(R.string.chat_room_options)
 
     Box(modifier = modifier) {
         Box(
@@ -56,25 +63,57 @@ internal fun ChatRoomOptionsMenu(
                 Modifier
                     .size(ManyakTheme.sizes.control)
                     .clip(ManyakTheme.shapes.pill)
-                    .clickable(role = Role.Button, onClickLabel = label, onClick = { expanded = true }),
+                    .clickable(
+                        role = Role.Button,
+                        onClickLabel = contentDescription,
+                        onClick = { expanded = true },
+                    ),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 modifier = Modifier.size(ManyakTheme.sizes.icon),
                 painter = painterResource(R.drawable.ic_more),
-                contentDescription = label,
-                tint = ManyakTheme.colors.text,
+                contentDescription = contentDescription,
+                tint = tint,
             )
         }
         if (expanded) {
-            OptionsPopup(
-                onDismiss = { expanded = false },
-                onDelete = {
-                    expanded = false
-                    onDelete()
-                },
-            )
+            OptionsPopup(onDismiss = { expanded = false }, content = content)
         }
+    }
+}
+
+/** 메뉴 항목 하나. */
+@Composable
+fun ManyakOptionsMenuItem(
+    @DrawableRes iconRes: Int,
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    isDanger: Boolean = false,
+) {
+    val color = if (isDanger) ManyakTheme.colors.textDanger else ManyakTheme.colors.text
+    Row(
+        modifier =
+            modifier
+                // 한 단어 항목이라 내용 폭만으로는 누를 자리가 좁다.
+                .widthIn(min = MenuItemMinWidth)
+                .clip(ManyakTheme.shapes.menuItem)
+                .clickable(role = Role.Button, onClick = onClick)
+                .padding(
+                    horizontal = ManyakTheme.spacing.controlHorizontal,
+                    vertical = ManyakTheme.spacing.controlVertical,
+                ),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+    ) {
+        Icon(
+            modifier = Modifier.size(ManyakTheme.sizes.icon),
+            painter = painterResource(iconRes),
+            contentDescription = null,
+            tint = color,
+        )
+        Text(text = label, style = ManyakTheme.typography.bodyMedium, color = color)
     }
 }
 
@@ -82,7 +121,7 @@ internal fun ChatRoomOptionsMenu(
 @Composable
 private fun OptionsPopup(
     onDismiss: () -> Unit,
-    onDelete: () -> Unit,
+    content: @Composable ColumnScope.(dismiss: () -> Unit) -> Unit,
 ) {
     val gapPx = with(LocalDensity.current) { ManyakTheme.spacing.inline.roundToPx() }
     val positionProvider =
@@ -115,42 +154,8 @@ private fun OptionsPopup(
                     .clip(ManyakTheme.shapes.control)
                     .padding(ManyakTheme.spacing.compact),
         ) {
-            DeleteMenuItem(onClick = onDelete)
+            content(onDismiss)
         }
-    }
-}
-
-/** 파괴적 항목이라 아이콘·글자를 danger 색으로 둔다. 확인은 다이얼로그가 한 번 더 묻는다. */
-@Composable
-private fun DeleteMenuItem(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier =
-            modifier
-                // 한 단어 항목이라 내용 폭만으로는 누를 자리가 좁다.
-                .widthIn(min = MenuItemMinWidth)
-                .clip(ManyakTheme.shapes.menuItem)
-                .clickable(role = Role.Button, onClick = onClick)
-                .padding(
-                    horizontal = ManyakTheme.spacing.controlHorizontal,
-                    vertical = ManyakTheme.spacing.controlVertical,
-                ),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
-    ) {
-        Icon(
-            modifier = Modifier.size(ManyakTheme.sizes.icon),
-            painter = painterResource(R.drawable.ic_delete),
-            contentDescription = null,
-            tint = ManyakTheme.colors.textDanger,
-        )
-        Text(
-            text = stringResource(R.string.chat_room_delete),
-            style = ManyakTheme.typography.bodyMedium,
-            color = ManyakTheme.colors.textDanger,
-        )
     }
 }
 

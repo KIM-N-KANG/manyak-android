@@ -1,5 +1,6 @@
 package app.manyak.feature.story
 
+import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -42,6 +43,7 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
@@ -61,10 +63,14 @@ import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.core.domain.story.StoryDetail
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.LoadFailedContent
+import app.manyak.core.ui.component.ManyakOptionsMenu
+import app.manyak.core.ui.component.ManyakOptionsMenuItem
 import app.manyak.core.ui.component.STORY_THUMBNAIL_ASPECT_RATIO
 import app.manyak.core.ui.component.ScrollEdgeFadeHeight
 import app.manyak.core.ui.component.StoryOverlayScrim
+import app.manyak.core.ui.component.StoryReportSheet
 import app.manyak.core.ui.component.rememberDelayedProgressVisibility
+import app.manyak.core.ui.report.StoryReportAction
 import app.manyak.core.ui.theme.ManyakTheme
 
 /**
@@ -87,12 +93,19 @@ fun StoryDetailScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val currentOnEnterChat by rememberUpdatedState(onEnterChat)
     val lifecycleOwner = LocalLifecycleOwner.current
+    val context = LocalContext.current
 
     LaunchedEffect(viewModel, lifecycleOwner) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
             viewModel.uiEffect.collect { effect ->
                 when (effect) {
                     is StoryDetailEffect.NavigateToChat -> currentOnEnterChat(effect.chatId)
+
+                    StoryDetailEffect.ShowReportSubmitted ->
+                        Toast.makeText(context, R.string.story_report_submitted, Toast.LENGTH_SHORT).show()
+
+                    StoryDetailEffect.ShowReportFailed ->
+                        Toast.makeText(context, R.string.story_report_failed, Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -177,14 +190,40 @@ private fun StoryDetailContent(
             // 스크롤 값은 앱바 안에서만 읽는다 — 여기서 읽으면 본문까지 매 프레임 다시 구성된다.
             surfaceAlpha = { headerSurfaceAlpha },
             onBack = onBack,
+            // 신고할 대상이 아직 없으면 진입점을 두지 않는다.
+            onReport =
+                if (state.story !=
+                    null
+                ) {
+                    ({ onIntent(StoryDetailIntent.Report(StoryReportAction.Open)) })
+                } else {
+                    null
+                },
         )
 
-        if (state.isImageViewerOpen && thumbnailUrl != null) {
-            StoryImageViewer(
-                imageUrl = thumbnailUrl,
-                onClose = { onIntent(StoryDetailIntent.CloseImageViewer) },
-            )
-        }
+        StoryDetailOverlays(state = state, thumbnailUrl = thumbnailUrl, onIntent = onIntent)
+    }
+}
+
+/** 본문 위에 얹히는 것들 — 이미지 뷰어와 신고 시트. 본문 배치와 섞이지 않게 따로 둔다. */
+@Composable
+private fun StoryDetailOverlays(
+    state: StoryDetailUiState,
+    thumbnailUrl: String?,
+    onIntent: (StoryDetailIntent) -> Unit,
+) {
+    if (state.isImageViewerOpen && thumbnailUrl != null) {
+        StoryImageViewer(
+            imageUrl = thumbnailUrl,
+            onClose = { onIntent(StoryDetailIntent.CloseImageViewer) },
+        )
+    }
+
+    if (state.report.isSheetOpen) {
+        StoryReportSheet(
+            state = state.report,
+            onAction = { action -> onIntent(StoryDetailIntent.Report(action)) },
+        )
     }
 }
 
@@ -297,6 +336,7 @@ private fun StoryDetailHeader(
     showTitle: Boolean,
     surfaceAlpha: () -> Float,
     onBack: () -> Unit,
+    onReport: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     val alpha = surfaceAlpha()
@@ -331,6 +371,24 @@ private fun StoryDetailHeader(
                         contentDescription = stringResource(R.string.common_back),
                         tint = contentColor,
                     )
+                }
+            },
+            actions = {
+                if (onReport != null) {
+                    ManyakOptionsMenu(
+                        contentDescription = stringResource(R.string.story_detail_options),
+                        // 표지 위에서는 앱바 아이콘과 같은 색을 따라간다.
+                        tint = contentColor,
+                    ) { dismiss ->
+                        ManyakOptionsMenuItem(
+                            iconRes = R.drawable.ic_info,
+                            label = stringResource(R.string.story_report_action),
+                            onClick = {
+                                dismiss()
+                                onReport()
+                            },
+                        )
+                    }
                 }
             },
             // 표지가 상태바 뒤까지 올라가므로 상태바 자리는 앱바가 직접 낀다.

@@ -227,7 +227,12 @@ class ChatRoomSuggestionTest {
     private fun viewModel(
         repository: FakeChatRepository,
         preferences: FakeChatPreferencesRepository = FakeChatPreferencesRepository(),
-    ) = ChatRoomViewModel(chatId = "chat-1", chatRepository = repository, preferences = preferences)
+    ) = ChatRoomViewModel(
+        chatId = "chat-1",
+        chatRepository = repository,
+        storyRepository = FakeStoryRepository(),
+        preferences = preferences,
+    )
 
     /** 마지막 턴에 선택지가 달린 방. */
     private fun TestScope.loadedWithChoices(repository: FakeChatRepository): ChatRoomViewModel {
