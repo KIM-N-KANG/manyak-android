@@ -7,17 +7,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -28,6 +22,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import app.manyak.core.domain.story.StoryTagCategory
 import app.manyak.core.ui.R
+import app.manyak.core.ui.component.ManyakBottomSheet
 import app.manyak.core.ui.component.ManyakProgressIndicator
 import app.manyak.core.ui.theme.ManyakTheme
 
@@ -72,34 +67,17 @@ internal fun SelectedKeywordsSheet(
     modifier: Modifier = Modifier,
 ) {
     if (keywords is SelectedKeywords.Hidden) return
-    ModalBottomSheet(
+    ManyakBottomSheet(
         modifier = modifier,
         onDismissRequest = onDismiss,
-        containerColor = ManyakTheme.colors.surfaceRaised,
-        shape = ManyakTheme.shapes.sheet,
-        // 하단 안전 영역은 내용이 직접 낀다.
-        contentWindowInsets = { WindowInsets(0, 0, 0, 0) },
-        dragHandle = { BottomSheetDefaults.DragHandle(color = ManyakTheme.colors.border) },
+        // 안내와 키워드 두 덩어리를 32로 떼어 놓는다.
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.block),
     ) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .navigationBarsPadding()
-                    .padding(horizontal = ManyakTheme.spacing.gutter)
-                    // 인물마다 키워드가 붙으면 화면을 넘길 수 있어 안에서 스크롤한다.
-                    .verticalScroll(rememberScrollState())
-                    // 위쪽은 드래그 핸들이 자체 여백을 갖고 있어 더 두지 않는다.
-                    .padding(bottom = ManyakTheme.spacing.gutter),
-            // 안내와 키워드 두 덩어리를 32로 떼어 놓는다.
-            verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.block),
-        ) {
-            SelectedKeywordsHeadline()
-            when (keywords) {
-                is SelectedKeywords.Loaded -> SelectedKeywordGroups(groups = keywords.groups)
-                SelectedKeywords.Failed -> SelectedKeywordsFailure(onRetry = onRetry)
-                else -> SelectedKeywordsLoading()
-            }
+        SelectedKeywordsHeadline()
+        when (keywords) {
+            is SelectedKeywords.Loaded -> SelectedKeywordGroups(groups = keywords.groups)
+            SelectedKeywords.Failed -> SelectedKeywordsFailure(onRetry = onRetry)
+            else -> SelectedKeywordsLoading()
         }
     }
 }

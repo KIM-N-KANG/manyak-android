@@ -10,24 +10,17 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -52,6 +45,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.core.ui.R
+import app.manyak.core.ui.component.ManyakBottomSheet
 import app.manyak.core.ui.component.ManyakProgressIndicator
 import app.manyak.core.ui.credit.LocalCreditPolicy
 import app.manyak.core.ui.credit.creditAmountAlpha
@@ -109,63 +103,45 @@ private fun InviteOnboardingContent(
     val submitting by rememberUpdatedState(state.isSubmitting)
     // 등록 중에는 끌어내려 닫는 것도 막는다 — 결과가 나오기 전에 화면이 사라지면 어떤 요청이
     // 무엇이 됐는지 알 수 없다.
-    val sheetState =
-        rememberModalBottomSheetState(
-            confirmValueChange = { value -> !(submitting && value == SheetValue.Hidden) },
-        )
     val skip = { onIntent(InviteOnboardingIntent.Skip) }
 
-    ModalBottomSheet(
+    ManyakBottomSheet(
         modifier = modifier,
         // 스크림 탭·끌어내리기·뒤로가기는 "나중에 하기"와 같은 처리다.
         onDismissRequest = { if (!state.isSubmitting) skip() },
-        sheetState = sheetState,
-        containerColor = ManyakTheme.colors.surfaceRaised,
-        shape = ManyakTheme.shapes.sheet,
-        // 하단 안전 영역과 키보드 높이는 내용이 직접 낀다.
-        contentWindowInsets = { WindowInsets(0, 0, 0, 0) },
-        dragHandle = { BottomSheetDefaults.DragHandle(color = ManyakTheme.colors.border) },
+        // 등록 중에는 끌어내려 닫는 것도 막는다 — 결과가 나오기 전에 화면이 사라지면 어떤 요청이
+        // 무엇이 됐는지 알 수 없다.
+        dismissEnabled = !state.isSubmitting,
+        // 안내 · 입력 · 동작 세 덩어리를 32로 떼어 놓고, 한 덩어리 안은 8로 붙인다.
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.block),
     ) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .imePadding()
-                    .navigationBarsPadding()
-                    .padding(horizontal = ManyakTheme.spacing.gutter)
-                    // 위쪽은 드래그 핸들이 자체 여백을 갖고 있어 더 두지 않는다.
-                    .padding(bottom = ManyakTheme.spacing.gutter),
-            // 안내 · 입력 · 동작 세 덩어리를 32로 떼어 놓고, 한 덩어리 안은 8로 붙인다.
-            verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.block),
-        ) {
-            InviteOnboardingHeadline()
-            Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact)) {
-                Text(
-                    text = stringResource(R.string.invite_code_label),
-                    style = ManyakTheme.typography.labelLarge,
-                    color = ManyakTheme.colors.text,
-                )
-                InviteCodeField(
-                    code = state.code,
-                    enabled = !state.isSubmitting,
-                    isError = state.errorRes != null,
-                    onCodeChange = { onIntent(InviteOnboardingIntent.CodeChanged(it)) },
-                    onSubmit = { onIntent(InviteOnboardingIntent.Submit) },
-                )
-                state.errorRes?.let { errorRes ->
-                    Text(
-                        text = stringResource(errorRes),
-                        style = ManyakTheme.typography.bodySmall,
-                        color = ManyakTheme.colors.textDanger,
-                    )
-                }
-            }
-            InviteOnboardingActions(
-                isSubmitting = state.isSubmitting,
-                onSkip = skip,
+        InviteOnboardingHeadline()
+        Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact)) {
+            Text(
+                text = stringResource(R.string.invite_code_label),
+                style = ManyakTheme.typography.labelLarge,
+                color = ManyakTheme.colors.text,
+            )
+            InviteCodeField(
+                code = state.code,
+                enabled = !state.isSubmitting,
+                isError = state.errorRes != null,
+                onCodeChange = { onIntent(InviteOnboardingIntent.CodeChanged(it)) },
                 onSubmit = { onIntent(InviteOnboardingIntent.Submit) },
             )
+            state.errorRes?.let { errorRes ->
+                Text(
+                    text = stringResource(errorRes),
+                    style = ManyakTheme.typography.bodySmall,
+                    color = ManyakTheme.colors.textDanger,
+                )
+            }
         }
+        InviteOnboardingActions(
+            isSubmitting = state.isSubmitting,
+            onSkip = skip,
+            onSubmit = { onIntent(InviteOnboardingIntent.Submit) },
+        )
     }
 }
 
