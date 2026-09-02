@@ -38,6 +38,7 @@ class ChatRoomViewModelTest {
                 ChatRoomViewModel(
                     chatId = "chat-1",
                     chatRepository = repository,
+                    storyRepository = FakeStoryRepository(),
                     preferences = FakeChatPreferencesRepository(),
                 )
             advanceUntilIdle()
@@ -62,6 +63,7 @@ class ChatRoomViewModelTest {
                 ChatRoomViewModel(
                     chatId = "chat-1",
                     chatRepository = repository,
+                    storyRepository = FakeStoryRepository(),
                     preferences = FakeChatPreferencesRepository(),
                 )
             advanceUntilIdle()

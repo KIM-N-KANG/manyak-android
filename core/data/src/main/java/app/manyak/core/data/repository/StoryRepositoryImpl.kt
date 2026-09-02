@@ -4,12 +4,14 @@ import app.manyak.core.data.api.StoryApi
 import app.manyak.core.data.api.StoryDetailApi
 import app.manyak.core.data.api.UserApi
 import app.manyak.core.data.api.apiCall
+import app.manyak.core.data.api.dto.CreateStoryReportRequestDto
 import app.manyak.core.data.api.dto.toDomain
 import app.manyak.core.data.api.emptyBodyApiCall
 import app.manyak.core.domain.error.DomainError
 import app.manyak.core.domain.error.DomainResult
 import app.manyak.core.domain.error.map
 import app.manyak.core.domain.story.StoryDetail
+import app.manyak.core.domain.story.StoryReportReason
 import app.manyak.core.domain.story.StoryRepository
 import app.manyak.core.domain.story.StorySummary
 import javax.inject.Inject
@@ -44,6 +46,23 @@ class StoryRepositoryImpl
                 result
             }
         }
+
+        override suspend fun reportStory(
+            storyId: String,
+            reason: StoryReportReason,
+            detail: String?,
+        ): DomainResult<Unit> =
+            emptyBodyApiCall {
+                storyDetailApi.reportStory(
+                    storyId = storyId,
+                    request =
+                        CreateStoryReportRequestDto(
+                            reason = reason.name,
+                            // 빈 문자열은 미작성과 같은 뜻이라 null 로 보낸다.
+                            detail = detail?.takeIf { it.isNotBlank() },
+                        ),
+                )
+            }
     }
 
 private const val HTTP_NOT_FOUND = 404

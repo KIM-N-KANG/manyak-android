@@ -7,7 +7,13 @@ import app.manyak.core.domain.chat.ChatRepository
 import app.manyak.core.domain.chat.ChatStreamEvent
 import app.manyak.core.domain.error.DomainError
 import app.manyak.core.domain.error.DomainResult
+import app.manyak.core.domain.story.StoryRepository
 import app.manyak.core.ui.mvi.MviViewModel
+import app.manyak.core.ui.report.StoryReportAction
+import app.manyak.core.ui.report.StoryReportChange
+import app.manyak.core.ui.report.StoryReportController
+import app.manyak.core.ui.report.StoryReportUiState
+import app.manyak.core.ui.report.reduceReport
 import app.manyak.feature.chat.composer.ChatComposerState
 import app.manyak.feature.chat.composer.InputBlockType
 import app.manyak.feature.chat.composer.addBlock
@@ -74,6 +80,9 @@ data class ChatRoomUiState(
     val regeneratingTurnId: Long? = null,
     /** 삭제 요청 중. 확인 다이얼로그의 버튼을 잠근다. */
     val isDeleting: Boolean = false,
+    /** 이 방이 참조하는 스토리. 신고 대상이라 조회 전에는 진입점을 두지 않는다. */
+    val storyId: String? = null,
+    val report: StoryReportUiState = StoryReportUiState(),
 ) {
     /** 컴포저와 메시지 목록이 함께 쓰는 추천 목록. */
     val suggestions: ChatSuggestions
@@ -131,12 +140,17 @@ sealed interface ChatRoomIntent {
 
     /** 확인 다이얼로그에서 삭제를 확정했다. */
     data object DeleteConfirmed : ChatRoomIntent
+
+    data class Report(
+        val action: StoryReportAction,
+    ) : ChatRoomIntent
 }
 
 sealed interface ChatRoomEvent {
     data object LoadStarted : ChatRoomEvent
 
     data class Loaded(
+        val storyId: String,
         val storyTitle: String,
         val prologue: String,
         val turns: List<ChatRoomTurn>,
@@ -205,6 +219,10 @@ sealed interface ChatRoomEvent {
     data object DeleteStarted : ChatRoomEvent
 
     data object DeleteFailed : ChatRoomEvent
+
+    data class Report(
+        val change: StoryReportChange,
+    ) : ChatRoomEvent
 }
 
 sealed interface ChatRoomEffect {
@@ -220,6 +238,10 @@ sealed interface ChatRoomEffect {
     data object ChatDeleted : ChatRoomEffect
 
     data object ShowDeleteFailed : ChatRoomEffect
+
+    data object ShowReportSubmitted : ChatRoomEffect
+
+    data object ShowReportFailed : ChatRoomEffect
 }
 
 /**
@@ -233,11 +255,25 @@ class ChatRoomViewModel
     constructor(
         @Assisted private val chatId: String,
         private val chatRepository: ChatRepository,
+        private val storyRepository: StoryRepository,
         private val preferences: ChatPreferencesRepository,
     ) : MviViewModel<ChatRoomIntent, ChatRoomUiState, ChatRoomEvent, ChatRoomEffect>(ChatRoomUiState()) {
         private var preferencesJob: Job? = null
         private var loadJob: Job? = null
         private var streamJob: Job? = null
+
+        /** 신고 절차는 스토리 상세와 같아 :core:ui 의 컨트롤러가 소유한다. */
+        private val report =
+            StoryReportController(
+                scope = viewModelScope,
+                repository = storyRepository,
+                emit = { change -> dispatchEvent(ChatRoomEvent.Report(change)) },
+                notify = { submitted ->
+                    dispatchEffect(
+                        if (submitted) ChatRoomEffect.ShowReportSubmitted else ChatRoomEffect.ShowReportFailed,
+                    )
+                },
+            )
         private var choicesJob: Job? = null
         private var deleteJob: Job? = null
 
@@ -328,6 +364,9 @@ class ChatRoomViewModel
 
                 ChatRoomIntent.DeleteConfirmed -> delete()
 
+                is ChatRoomIntent.Report ->
+                    report.handle(intent.action, uiState.value.storyId, uiState.value.report)
+
                 is ChatRoomIntent.RegenerateRequested -> {
                     // 화면이 본 마지막 턴과 지금 마지막 턴이 다르면 낡은 클릭이다.
                     val turn = turns.lastOrNull()?.takeIf { last -> last.id == intent.turnId } ?: return
@@ -358,6 +397,7 @@ class ChatRoomViewModel
                             suggestedInputs = result.value.suggestedInputs
                             dispatchEvent(
                                 ChatRoomEvent.Loaded(
+                                    storyId = result.value.storyId,
                                     storyTitle = result.value.storyTitle,
                                     prologue = result.value.prologue,
                                     turns = turns,
@@ -629,11 +669,14 @@ private fun reduceChatRoom(
         is ChatRoomEvent.Loaded ->
             state.copy(
                 isLoading = false,
+                storyId = event.storyId,
                 storyTitle = event.storyTitle,
                 prologue = event.prologue,
                 turns = event.turns,
                 suggestedInputs = event.suggestedInputs,
             )
+
+        is ChatRoomEvent.Report -> state.copy(report = state.report.reduceReport(event.change))
 
         ChatRoomEvent.LoadFailed -> state.copy(isLoading = false, loadFailed = true)
 

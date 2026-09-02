@@ -41,8 +41,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ManyakDestructiveDialog
+import app.manyak.core.ui.component.ManyakOptionsMenu
+import app.manyak.core.ui.component.ManyakOptionsMenuItem
 import app.manyak.core.ui.component.ManyakProgressIndicator
+import app.manyak.core.ui.component.StoryReportSheet
 import app.manyak.core.ui.component.rememberDelayedProgressVisibility
+import app.manyak.core.ui.report.StoryReportAction
+import app.manyak.core.ui.report.StoryReportUiState
 import app.manyak.core.ui.theme.ManyakTheme
 import app.manyak.feature.chat.composer.ChatComposer
 import app.manyak.feature.chat.composer.ChatComposerActions
@@ -94,6 +99,12 @@ fun ChatRoomScreen(
                             .makeText(context, R.string.chat_room_delete_failed, Toast.LENGTH_SHORT)
                             .show()
                     }
+
+                    ChatRoomEffect.ShowReportSubmitted ->
+                        Toast.makeText(context, R.string.story_report_submitted, Toast.LENGTH_SHORT).show()
+
+                    ChatRoomEffect.ShowReportFailed ->
+                        Toast.makeText(context, R.string.story_report_failed, Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -118,6 +129,21 @@ fun ChatRoomScreen(
             inProgress = state.isDeleting,
         )
     }
+
+    ChatRoomReportSheet(state = state.report, onIntent = viewModel::onIntent)
+}
+
+/** 신고 시트. 화면 본체가 길어지지 않게 따로 둔다. */
+@Composable
+private fun ChatRoomReportSheet(
+    state: StoryReportUiState,
+    onIntent: (ChatRoomIntent) -> Unit,
+) {
+    if (!state.isSheetOpen) return
+    StoryReportSheet(
+        state = state,
+        onAction = { action -> onIntent(ChatRoomIntent.Report(action)) },
+    )
 }
 
 @Composable
@@ -146,6 +172,7 @@ private fun ChatRoomContent(
             showsOptions = phase == ChatRoomPhase.CONTENT,
             onBack = onBack,
             onDeleteClick = onDeleteClick,
+            onReportClick = { onIntent(ChatRoomIntent.Report(StoryReportAction.Open)) },
         )
         val millis = ManyakTheme.motion.screenTransitionMillis
         AnimatedContent(
@@ -268,6 +295,7 @@ private fun ChatRoomHeader(
     showsOptions: Boolean,
     onBack: () -> Unit,
     onDeleteClick: () -> Unit,
+    onReportClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     TopAppBar(
@@ -291,7 +319,29 @@ private fun ChatRoomHeader(
             }
         },
         // 오른쪽에는 옵션 메뉴 하나만 둔다 — 웹 헤더의 공유 버튼은 앱 범위 밖이다.
-        actions = { if (showsOptions) ChatRoomOptionsMenu(onDelete = onDeleteClick) },
+        actions = {
+            if (showsOptions) {
+                ManyakOptionsMenu(contentDescription = stringResource(R.string.chat_room_options)) { dismiss ->
+                    ManyakOptionsMenuItem(
+                        iconRes = R.drawable.ic_info,
+                        label = stringResource(R.string.story_report_action),
+                        onClick = {
+                            dismiss()
+                            onReportClick()
+                        },
+                    )
+                    ManyakOptionsMenuItem(
+                        iconRes = R.drawable.ic_delete,
+                        label = stringResource(R.string.chat_room_delete),
+                        onClick = {
+                            dismiss()
+                            onDeleteClick()
+                        },
+                        isDanger = true,
+                    )
+                }
+            }
+        },
         // 화면 루트에서 적용한 safeDrawing 인셋이 중복되지 않게 한다.
         windowInsets = WindowInsets(0, 0, 0, 0),
         colors =
