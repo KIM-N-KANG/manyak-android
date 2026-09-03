@@ -76,6 +76,20 @@ class CreditChargeViewModelTest {
             assertTrue(fixture.viewModel.uiState.value.canClaimAttendance)
         }
 
+    @Test
+    fun `무료 충전 탭을 당기면 프로필만 다시 읽어 출석 여부를 맞춘다`() =
+        runTest {
+            val fixture = fixture(attendedToday = false)
+            fixture.viewModel.onIntent(CreditChargeIntent.RefreshProfile)
+            advanceUntilIdle()
+
+            // 내역 조회 없이 프로필만 다시 읽고, 갱신된 출석 여부가 상태에 실린다.
+            assertEquals(1, fixture.profileRepository.refreshCount)
+            assertEquals(true, fixture.viewModel.uiState.value.attendedToday)
+            assertEquals(false, fixture.viewModel.uiState.value.isRefreshingProfile)
+            assertEquals(false, fixture.viewModel.uiState.value.isRefreshing)
+        }
+
     private class Fixture(
         val profileRepository: FakeChargeProfileRepository,
         val viewModel: CreditChargeViewModel,

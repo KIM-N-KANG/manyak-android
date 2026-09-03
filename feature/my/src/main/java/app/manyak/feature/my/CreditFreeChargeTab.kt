@@ -25,6 +25,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ManyakProgressIndicator
+import app.manyak.core.ui.component.ManyakPullToRefreshBox
 import app.manyak.core.ui.credit.LocalCreditPolicy
 import app.manyak.core.ui.credit.creditAmountAlpha
 import app.manyak.core.ui.credit.creditAmountText
@@ -34,6 +35,10 @@ import app.manyak.core.ui.theme.ManyakTheme
  * 무료 충전 탭. 이프를 결제 없이 얻는 두 수단(출석·친구 초대)만 모은다.
  *
  * 초대 줄은 마이 메뉴와 같은 전체 너비 행이라 가로 여백은 출석 상자 쪽에만 준다.
+ *
+ * 당겨서 새로고침은 프로필만 다시 읽는다 — 자정이 지나 출석이 초기화됐는데 버튼이 "출석 완료"로
+ * 남아 있을 때 화면을 나가지 않고 맞추는 수단이다. 내용이 화면보다 짧아도 당길 수 있어야 하므로
+ * 스크롤 컨테이너를 그대로 둔다.
  */
 @Composable
 internal fun CreditFreeChargeTab(
@@ -42,19 +47,27 @@ internal fun CreditFreeChargeTab(
     onOpenInvite: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(
-                    top = ManyakTheme.spacing.gutter,
-                    bottom = ManyakTheme.spacing.screenBottom,
-                ),
+    ManyakPullToRefreshBox(
+        modifier = modifier,
+        isRefreshing = state.isRefreshingProfile,
+        onRefresh = { onIntent(CreditChargeIntent.RefreshProfile) },
+        // 헤더가 탭 위에 따로 있어 표시자를 내려 둘 chrome 이 없다.
+        contentPadding = PaddingValues(),
     ) {
-        AttendanceCard(state = state, onIntent = onIntent)
-        Spacer(Modifier.height(ManyakTheme.spacing.block))
-        InviteMenuItem(onClick = onOpenInvite)
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(
+                        top = ManyakTheme.spacing.gutter,
+                        bottom = ManyakTheme.spacing.screenBottom,
+                    ),
+        ) {
+            AttendanceCard(state = state, onIntent = onIntent)
+            Spacer(Modifier.height(ManyakTheme.spacing.block))
+            InviteMenuItem(onClick = onOpenInvite)
+        }
     }
 }
 
