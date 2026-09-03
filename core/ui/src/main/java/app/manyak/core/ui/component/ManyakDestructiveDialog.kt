@@ -1,8 +1,12 @@
 package app.manyak.core.ui.component
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
@@ -33,26 +37,58 @@ fun ManyakDestructiveDialog(
     modifier: Modifier = Modifier,
     inProgress: Boolean = false,
 ) {
-    AlertDialog(
-        modifier = modifier,
-        onDismissRequest = onDismiss,
-        containerColor = ManyakTheme.colors.surfaceRaised,
-        shape = ManyakTheme.shapes.overlay,
-        title = {
-            Text(
-                text = title,
-                style = ManyakTheme.typography.titleMedium,
-                color = ManyakTheme.colors.text,
-            )
-        },
-        text = {
-            Text(
-                text = description,
-                style = ManyakTheme.typography.bodyMedium,
-                color = ManyakTheme.colors.textSubtle,
-            )
-        },
-        confirmButton = {
+    ManyakDialog(modifier = modifier, onDismissRequest = onDismiss) {
+        ManyakDestructiveDialogContent(
+            title = title,
+            description = description,
+            confirmLabel = confirmLabel,
+            cancelLabel = cancelLabel,
+            onConfirm = onConfirm,
+            onDismiss = onDismiss,
+            inProgress = inProgress,
+        )
+    }
+}
+
+/**
+ * 확인 다이얼로그의 내용. 다른 내용을 보여 주던 [ManyakDialog] 창 안에서 갈아 끼울 때 쓴다 —
+ * 옵션 목록에서 "삭제하기"를 고른 뒤 같은 창이 확인으로 바뀌는 자리다.
+ */
+@Composable
+fun ManyakDestructiveDialogContent(
+    title: String,
+    description: String,
+    confirmLabel: String,
+    cancelLabel: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+    inProgress: Boolean = false,
+) {
+    Column(modifier = modifier.fillMaxWidth().padding(ManyakTheme.spacing.section)) {
+        Text(
+            text = title,
+            style = ManyakTheme.typography.titleMedium,
+            color = ManyakTheme.colors.text,
+        )
+        Text(
+            modifier = Modifier.padding(top = ManyakTheme.spacing.gutter),
+            text = description,
+            style = ManyakTheme.typography.bodyMedium,
+            color = ManyakTheme.colors.textSubtle,
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = ManyakTheme.spacing.section),
+            horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact, Alignment.End),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            ManyakTextButton(onClick = onDismiss, enabled = !inProgress) {
+                Text(
+                    text = cancelLabel,
+                    style = ManyakTheme.typography.labelLarge,
+                    color = ManyakTheme.colors.textSubtle,
+                )
+            }
             Button(
                 onClick = onConfirm,
                 enabled = !inProgress,
@@ -80,15 +116,6 @@ fun ManyakDestructiveDialog(
                     }
                 }
             }
-        },
-        dismissButton = {
-            ManyakTextButton(onClick = onDismiss, enabled = !inProgress) {
-                Text(
-                    text = cancelLabel,
-                    style = ManyakTheme.typography.labelLarge,
-                    color = ManyakTheme.colors.textSubtle,
-                )
-            }
-        },
-    )
+        }
+    }
 }

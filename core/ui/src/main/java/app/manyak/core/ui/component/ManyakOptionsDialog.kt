@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -25,7 +24,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import app.manyak.core.ui.R
 import app.manyak.core.ui.theme.ManyakTheme
 import kotlin.math.roundToInt
@@ -46,27 +44,31 @@ fun ManyakOptionsDialog(
     preview: @Composable () -> Unit,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Dialog(onDismissRequest = onDismissRequest) {
-        Surface(
-            modifier = modifier.fillMaxWidth(),
-            shape = ManyakTheme.shapes.overlay,
-            color = ManyakTheme.colors.surfaceRaised,
+    ManyakDialog(modifier = modifier, onDismissRequest = onDismissRequest) {
+        ManyakOptionsDialogContent(preview = preview, content = content)
+    }
+}
+
+/** 옵션 다이얼로그의 내용. 같은 창이 확인 다이얼로그로 바뀌는 흐름에서는 [ManyakDialog] 안에 직접 놓는다. */
+@Composable
+fun ManyakOptionsDialogContent(
+    preview: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Column(modifier = modifier.fillMaxWidth().padding(ManyakTheme.spacing.gutter)) {
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    // 미리보기와 항목 사이. 항목 터치 영역이 위로 넓어 실제로는 이보다 떠 보인다.
+                    .padding(bottom = ManyakTheme.spacing.compact)
+                    .background(ManyakTheme.colors.backgroundNeutral, ManyakTheme.shapes.card)
+                    .padding(ManyakTheme.spacing.compact),
         ) {
-            Column(modifier = Modifier.padding(ManyakTheme.spacing.gutter)) {
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            // 미리보기와 항목 사이. 항목 터치 영역이 위로 넓어 실제로는 이보다 떠 보인다.
-                            .padding(bottom = ManyakTheme.spacing.compact)
-                            .background(ManyakTheme.colors.backgroundNeutral, ManyakTheme.shapes.card)
-                            .padding(ManyakTheme.spacing.compact),
-                ) {
-                    preview()
-                }
-                content()
-            }
+            preview()
         }
+        content()
     }
 }
 

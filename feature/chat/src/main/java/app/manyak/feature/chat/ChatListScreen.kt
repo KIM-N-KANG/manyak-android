@@ -1,6 +1,8 @@
 package app.manyak.feature.chat
 
 import android.widget.Toast
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,8 +35,9 @@ import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.core.domain.chat.ChatSummary
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.LoadFailedContent
-import app.manyak.core.ui.component.ManyakDestructiveDialog
-import app.manyak.core.ui.component.ManyakOptionsDialog
+import app.manyak.core.ui.component.ManyakDestructiveDialogContent
+import app.manyak.core.ui.component.ManyakDialog
+import app.manyak.core.ui.component.ManyakOptionsDialogContent
 import app.manyak.core.ui.component.ManyakOptionsDialogItem
 import app.manyak.core.ui.component.ManyakPullToRefreshBox
 import app.manyak.core.ui.component.StoryReportSheet
@@ -158,44 +161,64 @@ private fun ChatListOverlays(
     state: ChatListUiState,
     onIntent: (ChatListIntent) -> Unit,
 ) {
-    state.optionsTarget?.let { chat ->
-        ManyakOptionsDialog(
-            onDismissRequest = { onIntent(ChatListIntent.CloseOptions) },
-            preview = { ChatCardPreview(chat = chat) },
+    // 옵션과 삭제 확인은 한 창을 나눠 쓴다 — 창을 닫고 새로 열면 스크림이 두 번 페이드돼 번쩍인다.
+    val deleteTarget = state.deleteTarget
+    val optionsTarget = state.optionsTarget
+    if (optionsTarget != null || deleteTarget != null) {
+        ManyakDialog(
+            onDismissRequest = {
+                onIntent(if (deleteTarget != null) ChatListIntent.DismissDeleteDialog else ChatListIntent.CloseOptions)
+            },
         ) {
-            // 참조 스토리가 없으면 신고할 대상도 없다.
-            if (chat.storyId.isNotBlank()) {
-                ManyakOptionsDialogItem(
-                    iconRes = R.drawable.ic_info,
-                    label = stringResource(R.string.story_report_action),
-                    onClick = { onIntent(ChatListIntent.Report(StoryReportAction.Open)) },
-                )
+            Crossfade(
+                targetState = deleteTarget,
+                animationSpec = tween(ManyakTheme.motion.elementEnterMillis),
+                label = "chatCardDialog",
+            ) { target ->
+                if (target != null) {
+                    ManyakDestructiveDialogContent(
+                        title = stringResource(R.string.chat_room_delete_dialog_title),
+                        description = stringResource(R.string.chat_room_delete_dialog_description),
+                        confirmLabel = stringResource(R.string.chat_room_delete),
+                        cancelLabel = stringResource(R.string.chat_room_delete_dialog_cancel),
+                        onConfirm = { onIntent(ChatListIntent.ConfirmDelete) },
+                        onDismiss = { onIntent(ChatListIntent.DismissDeleteDialog) },
+                        inProgress = state.isDeleting,
+                    )
+                } else if (optionsTarget != null) {
+                    ChatOptions(chat = optionsTarget, onIntent = onIntent)
+                }
             }
-            ManyakOptionsDialogItem(
-                iconRes = R.drawable.ic_delete,
-                label = stringResource(R.string.chat_room_delete),
-                onClick = { onIntent(ChatListIntent.RequestDelete) },
-                isDanger = true,
-            )
         }
-    }
-
-    if (state.deleteTarget != null) {
-        ManyakDestructiveDialog(
-            title = stringResource(R.string.chat_room_delete_dialog_title),
-            description = stringResource(R.string.chat_room_delete_dialog_description),
-            confirmLabel = stringResource(R.string.chat_room_delete),
-            cancelLabel = stringResource(R.string.chat_room_delete_dialog_cancel),
-            onConfirm = { onIntent(ChatListIntent.ConfirmDelete) },
-            onDismiss = { onIntent(ChatListIntent.DismissDeleteDialog) },
-            inProgress = state.isDeleting,
-        )
     }
 
     if (state.report.isSheetOpen) {
         StoryReportSheet(
             state = state.report,
             onAction = { action -> onIntent(ChatListIntent.Report(action)) },
+        )
+    }
+}
+
+@Composable
+private fun ChatOptions(
+    chat: ChatSummary,
+    onIntent: (ChatListIntent) -> Unit,
+) {
+    ManyakOptionsDialogContent(preview = { ChatCardPreview(chat = chat) }) {
+        // 참조 스토리가 없으면 신고할 대상도 없다.
+        if (chat.storyId.isNotBlank()) {
+            ManyakOptionsDialogItem(
+                iconRes = R.drawable.ic_info,
+                label = stringResource(R.string.story_report_action),
+                onClick = { onIntent(ChatListIntent.Report(StoryReportAction.Open)) },
+            )
+        }
+        ManyakOptionsDialogItem(
+            iconRes = R.drawable.ic_delete,
+            label = stringResource(R.string.chat_room_delete),
+            onClick = { onIntent(ChatListIntent.RequestDelete) },
+            isDanger = true,
         )
     }
 }
