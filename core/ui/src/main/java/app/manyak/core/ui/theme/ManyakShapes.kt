@@ -21,6 +21,8 @@ data class ManyakShapes(
     val checkbox: CornerBasedShape,
     /** 10dp — 셀렉트 메뉴 항목·라벨 없는 아이콘 버튼 */
     val menuItem: CornerBasedShape,
+    /** 8dp — 한 단계 작게 그린 미리보기의 썸네일. 상자 안에 들어가 바깥 모서리보다 작아야 동심으로 읽힌다 */
+    val thumbnailSmall: CornerBasedShape,
     /** 12dp — 썸네일·작은 아이콘 컨테이너 */
     val thumbnail: CornerBasedShape,
     /** 14dp — 버튼·입력창·탭 */
@@ -39,6 +41,7 @@ internal val ManyakDefaultShapes =
     ManyakShapes(
         checkbox = RoundedCornerShape(6.dp),
         menuItem = RoundedCornerShape(10.dp),
+        thumbnailSmall = RoundedCornerShape(8.dp),
         thumbnail = RoundedCornerShape(12.dp),
         control = RoundedCornerShape(14.dp),
         card = RoundedCornerShape(16.dp),

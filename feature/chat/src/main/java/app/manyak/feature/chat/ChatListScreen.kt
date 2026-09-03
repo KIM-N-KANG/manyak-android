@@ -36,8 +36,13 @@ import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.core.domain.chat.ChatSummary
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.LoadFailedContent
+import app.manyak.core.ui.component.ManyakDestructiveDialog
+import app.manyak.core.ui.component.ManyakOptionsDialog
+import app.manyak.core.ui.component.ManyakOptionsDialogItem
 import app.manyak.core.ui.component.ManyakPullToRefreshBox
+import app.manyak.core.ui.component.StoryReportSheet
 import app.manyak.core.ui.component.rememberDelayedProgressVisibility
+import app.manyak.core.ui.report.StoryReportAction
 import app.manyak.core.ui.theme.ManyakTheme
 
 /**
@@ -67,6 +72,18 @@ fun ChatListScreen(
                 when (effect) {
                     ChatListEffect.ShowRefreshFailed ->
                         Toast.makeText(context, R.string.story_refresh_failed, Toast.LENGTH_SHORT).show()
+
+                    ChatListEffect.ShowChatDeleted ->
+                        Toast.makeText(context, R.string.chat_room_deleted, Toast.LENGTH_SHORT).show()
+
+                    ChatListEffect.ShowChatDeleteFailed ->
+                        Toast.makeText(context, R.string.chat_room_delete_failed, Toast.LENGTH_SHORT).show()
+
+                    ChatListEffect.ShowReportSubmitted ->
+                        Toast.makeText(context, R.string.story_report_submitted, Toast.LENGTH_SHORT).show()
+
+                    ChatListEffect.ShowReportFailed ->
+                        Toast.makeText(context, R.string.story_report_failed, Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -133,6 +150,56 @@ private fun ChatListContent(
                 )
         }
     }
+
+    ChatListOverlays(state = state, onIntent = onIntent)
+}
+
+/** 카드 위에 얹히는 것들 — 옵션 시트·삭제 확인·신고 시트. 목록 배치와 섞이지 않게 따로 둔다. */
+@Composable
+private fun ChatListOverlays(
+    state: ChatListUiState,
+    onIntent: (ChatListIntent) -> Unit,
+) {
+    state.optionsTarget?.let { chat ->
+        ManyakOptionsDialog(
+            onDismissRequest = { onIntent(ChatListIntent.CloseOptions) },
+            preview = { ChatCardPreview(chat = chat) },
+        ) {
+            // 참조 스토리가 없으면 신고할 대상도 없다.
+            if (chat.storyId.isNotBlank()) {
+                ManyakOptionsDialogItem(
+                    iconRes = R.drawable.ic_info,
+                    label = stringResource(R.string.story_report_action),
+                    onClick = { onIntent(ChatListIntent.Report(StoryReportAction.Open)) },
+                )
+            }
+            ManyakOptionsDialogItem(
+                iconRes = R.drawable.ic_delete,
+                label = stringResource(R.string.chat_room_delete),
+                onClick = { onIntent(ChatListIntent.RequestDelete) },
+                isDanger = true,
+            )
+        }
+    }
+
+    if (state.deleteTarget != null) {
+        ManyakDestructiveDialog(
+            title = stringResource(R.string.chat_room_delete_dialog_title),
+            description = stringResource(R.string.chat_room_delete_dialog_description),
+            confirmLabel = stringResource(R.string.chat_room_delete),
+            cancelLabel = stringResource(R.string.chat_room_delete_dialog_cancel),
+            onConfirm = { onIntent(ChatListIntent.ConfirmDelete) },
+            onDismiss = { onIntent(ChatListIntent.DismissDeleteDialog) },
+            inProgress = state.isDeleting,
+        )
+    }
+
+    if (state.report.isSheetOpen) {
+        StoryReportSheet(
+            state = state.report,
+            onAction = { action -> onIntent(ChatListIntent.Report(action)) },
+        )
+    }
 }
 
 @Composable
@@ -157,7 +224,11 @@ private fun Chats(
             contentPadding = contentPadding.withListBottomMargin(),
         ) {
             items(chats, key = { chat -> chat.id }) { chat ->
-                ChatCard(chat = chat, onClick = { onOpenChat(chat.id) })
+                ChatCard(
+                    chat = chat,
+                    onClick = { onOpenChat(chat.id) },
+                    onLongClick = { onIntent(ChatListIntent.OpenOptions(chat)) },
+                )
             }
         }
     }
@@ -263,6 +334,7 @@ private fun previewChats(): List<ChatSummary> {
     return listOf(
         ChatSummary(
             id = "1",
+            storyId = "story-1",
             storyTitle = "두 번째 시계공",
             thumbnailUrl = null,
             lastStoryPreview = "낡은 문이 열리자 태엽 소리가 쏟아진다. 당신은 한 발 물러섰다.",
@@ -271,6 +343,7 @@ private fun previewChats(): List<ChatSummary> {
         ),
         ChatSummary(
             id = "2",
+            storyId = "story-2",
             storyTitle = "아주 긴 제목은 한 줄에서 잘려 카드 높이를 흔들지 않는다",
             thumbnailUrl = null,
             lastStoryPreview = "아주 긴 미리보기도 마찬가지로 한 줄에서 잘려 카드 높이를 흔들지 않는다",
@@ -279,6 +352,7 @@ private fun previewChats(): List<ChatSummary> {
         ),
         ChatSummary(
             id = "3",
+            storyId = "story-3",
             storyTitle = "달빛 아래의 계약",
             thumbnailUrl = null,
             lastStoryPreview = "",

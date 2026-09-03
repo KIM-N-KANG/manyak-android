@@ -22,6 +22,7 @@ internal fun previewStory(
         startSettings = startSettings,
         reachedEndings = reachedEndings,
         characters = previewCharacters(),
+        isOwner = false,
     )
 
 internal fun previewCharacters(): List<StoryCharacter> =

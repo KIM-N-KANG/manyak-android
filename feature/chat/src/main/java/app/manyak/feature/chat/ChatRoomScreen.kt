@@ -169,6 +169,8 @@ private fun ChatRoomContent(
         // 열지 못한 상태에서는 삭제를 권하지 않는다.
         ChatRoomHeader(
             title = state.storyTitle,
+            // 방을 연 뒤에도 제목이 비어 있으면 참조 스토리가 삭제된 것이다 — 목록 카드와 같은 문구로 알린다.
+            isStoryDeleted = phase == ChatRoomPhase.CONTENT && state.storyTitle.isBlank(),
             showsOptions = phase == ChatRoomPhase.CONTENT,
             onBack = onBack,
             onDeleteClick = onDeleteClick,
@@ -292,6 +294,7 @@ private fun ReplaceDraftDialog(
 @Composable
 private fun ChatRoomHeader(
     title: String,
+    isStoryDeleted: Boolean,
     showsOptions: Boolean,
     onBack: () -> Unit,
     onDeleteClick: () -> Unit,
@@ -302,9 +305,9 @@ private fun ChatRoomHeader(
         modifier = modifier,
         title = {
             Text(
-                text = title,
+                text = if (isStoryDeleted) stringResource(R.string.chat_list_deleted_story) else title,
                 style = ManyakTheme.typography.bodyLargeStrong,
-                color = ManyakTheme.colors.text,
+                color = if (isStoryDeleted) ManyakTheme.colors.textSubtlest else ManyakTheme.colors.text,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )

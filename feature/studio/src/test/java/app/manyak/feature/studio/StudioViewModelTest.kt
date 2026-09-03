@@ -8,9 +8,11 @@ import app.manyak.core.domain.story.PendingStoryCreation
 import app.manyak.core.domain.story.PendingStoryCreationStore
 import app.manyak.core.domain.story.StoryCharacterInput
 import app.manyak.core.domain.story.StoryCompletionCommand
+import app.manyak.core.domain.story.StoryReportReason
 import app.manyak.core.domain.story.Storyline
 import app.manyak.core.domain.story.StorylineGeneration
 import app.manyak.core.domain.story.StorylineGenerationCommand
+import app.manyak.core.ui.report.StoryReportAction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -240,7 +242,9 @@ class StudioViewModelTest {
             val loadedState = viewModel.uiState.value
             val target = loadedState.stories.first()
 
-            viewModel.onIntent(StudioIntent.RequestDeleteStory(target))
+            viewModel.onIntent(StudioIntent.OpenStoryOptions(target))
+            advanceUntilIdle()
+            viewModel.onIntent(StudioIntent.RequestDeleteStory)
             advanceUntilIdle()
             assertEquals(target, viewModel.uiState.value.deleteTarget)
 
@@ -270,7 +274,9 @@ class StudioViewModelTest {
             val target = loadedState.stories.first()
 
             // 실제 화면처럼 다이얼로그가 뜬 뒤에야 확인을 누를 수 있다.
-            viewModel.onIntent(StudioIntent.RequestDeleteStory(target))
+            viewModel.onIntent(StudioIntent.OpenStoryOptions(target))
+            advanceUntilIdle()
+            viewModel.onIntent(StudioIntent.RequestDeleteStory)
             advanceUntilIdle()
             viewModel.onIntent(StudioIntent.ConfirmDeleteStory)
             advanceUntilIdle()
@@ -294,12 +300,43 @@ class StudioViewModelTest {
             val loadedState = viewModel.uiState.value
             val target = loadedState.stories.first()
 
-            viewModel.onIntent(StudioIntent.RequestDeleteStory(target))
+            viewModel.onIntent(StudioIntent.OpenStoryOptions(target))
+            advanceUntilIdle()
+            viewModel.onIntent(StudioIntent.RequestDeleteStory)
             viewModel.onIntent(StudioIntent.DismissDeleteDialog)
             advanceUntilIdle()
 
             assertNull(viewModel.uiState.value.deleteTarget)
             assertTrue(repository.deletedStoryIds.isEmpty())
+        }
+
+    @Test
+    fun `옵션 시트에서 연 신고는 그 카드의 스토리로 나가고 시트를 닫는다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryRepository()
+            val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository)
+            viewModel.onIntent(StudioIntent.ScreenShown)
+            advanceUntilIdle()
+            val target =
+                viewModel.uiState.value.stories
+                    .first()
+
+            viewModel.onIntent(StudioIntent.OpenStoryOptions(target))
+            advanceUntilIdle()
+            viewModel.onIntent(StudioIntent.Report(StoryReportAction.Open))
+            advanceUntilIdle()
+            // 신고하기는 옵션 시트를 닫고 신고 시트를 연다 — 두 시트가 겹치지 않는다.
+            assertNull(viewModel.uiState.value.optionsTarget)
+            assertTrue(viewModel.uiState.value.report.isSheetOpen)
+
+            viewModel.onIntent(StudioIntent.Report(StoryReportAction.SelectReason(StoryReportReason.SPAM)))
+            advanceUntilIdle()
+            viewModel.onIntent(StudioIntent.Report(StoryReportAction.Submit))
+            advanceUntilIdle()
+
+            assertEquals(listOf(target.id), repository.reportedStoryIds)
+            assertFalse(viewModel.uiState.value.report.isSheetOpen)
+            assertNull(viewModel.uiState.value.reportStoryId)
         }
 }
 

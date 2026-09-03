@@ -2,6 +2,7 @@ package app.manyak.feature.studio
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.res.stringResource
@@ -25,6 +26,8 @@ import app.manyak.core.ui.theme.ManyakTheme
 internal fun StoryGenreBadges(
     genres: List<String>,
     modifier: Modifier = Modifier,
+    scale: StoryBadgeScale = BadgeScale,
+    containerColor: Color = ManyakTheme.colors.backgroundNeutral,
 ) {
     val description = genres.joinToString(separator = ", ")
     // 측정 스코프는 composition 이 아니라 테마 토큰을 읽을 수 없으므로 여기서 값으로 붙잡는다.
@@ -37,7 +40,9 @@ internal fun StoryGenreBadges(
         val badgeConstraints = constraints.copy(minWidth = 0, minHeight = 0)
         val badges =
             subcompose(GenreBadgeSlot.Genres) {
-                genres.forEach { genre -> StoryGenreBadge(text = genre, scale = BadgeScale) }
+                genres.forEach { genre ->
+                    StoryGenreBadge(text = genre, scale = scale, containerColor = containerColor)
+                }
             }.map { measurable -> measurable.measure(badgeConstraints) }
 
         val totalWidth = badges.sumOf { badge -> badge.width } + gap * (badges.size - 1)
@@ -50,7 +55,7 @@ internal fun StoryGenreBadges(
             // 접힘 개수가 가장 클 때의 +N 폭으로 자리를 재면, 실제 +N 이 더 좁을 수는 있어도 넘칠 일은 없다.
             val widestOverflow =
                 subcompose(GenreBadgeSlot.OverflowProbe) {
-                    OverflowBadge(hiddenCount = genres.size - 1)
+                    OverflowBadge(hiddenCount = genres.size - 1, scale = scale, containerColor = containerColor)
                 }.first().measure(badgeConstraints)
             visibleCount =
                 visibleBadgeCount(
@@ -61,7 +66,11 @@ internal fun StoryGenreBadges(
                 )
             overflowBadge =
                 subcompose(GenreBadgeSlot.Overflow) {
-                    OverflowBadge(hiddenCount = genres.size - visibleCount)
+                    OverflowBadge(
+                        hiddenCount = genres.size - visibleCount,
+                        scale = scale,
+                        containerColor = containerColor,
+                    )
                 }.first().measure(badgeConstraints)
         }
 
@@ -102,12 +111,15 @@ internal fun visibleBadgeCount(
 @Composable
 private fun OverflowBadge(
     hiddenCount: Int,
+    scale: StoryBadgeScale,
+    containerColor: Color,
     modifier: Modifier = Modifier,
 ) {
     StoryGenreBadge(
         text = stringResource(R.string.studio_genre_overflow, hiddenCount),
         modifier = modifier,
-        scale = BadgeScale,
+        scale = scale,
+        containerColor = containerColor,
     )
 }
 

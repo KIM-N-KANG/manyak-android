@@ -32,6 +32,11 @@ data class StoryDetail(
     val reachedEndings: List<String>,
     /** 주변 인물. 이미지를 만들지 못한 스토리는 비어 있고, 그때는 섹션을 그리지 않는다. */
     val characters: List<StoryCharacter>,
+    /**
+     * 요청 회원이 이 스토리의 소유자인지. 서버가 판정한다 — `author` 에는 식별자가 없어 클라이언트가
+     * 비교할 수 없다. 삭제 같은 소유자 동작의 노출 근거다.
+     */
+    val isOwner: Boolean,
 )
 
 /**

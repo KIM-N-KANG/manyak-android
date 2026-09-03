@@ -32,9 +32,13 @@ import app.manyak.core.domain.story.StorySummary
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.LoadFailedContent
 import app.manyak.core.ui.component.ManyakDestructiveDialog
+import app.manyak.core.ui.component.ManyakOptionsDialog
+import app.manyak.core.ui.component.ManyakOptionsDialogItem
 import app.manyak.core.ui.component.ManyakPullToRefreshBox
+import app.manyak.core.ui.component.StoryReportSheet
 import app.manyak.core.ui.component.rememberDelayedProgressVisibility
 import app.manyak.core.ui.component.withScreenMargins
+import app.manyak.core.ui.report.StoryReportAction
 import app.manyak.core.ui.theme.ManyakTheme
 
 /**
@@ -79,6 +83,12 @@ fun StudioScreen(
 
                     StudioEffect.ShowRefreshFailed ->
                         Toast.makeText(context, R.string.story_refresh_failed, Toast.LENGTH_SHORT).show()
+
+                    StudioEffect.ShowReportSubmitted ->
+                        Toast.makeText(context, R.string.story_report_submitted, Toast.LENGTH_SHORT).show()
+
+                    StudioEffect.ShowReportFailed ->
+                        Toast.makeText(context, R.string.story_report_failed, Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -156,12 +166,38 @@ private fun StudioContent(
     StudioDialogs(state = state, onIntent = onIntent)
 }
 
-/** 제작 탭이 띄우는 확인 다이얼로그 둘. 본문 배치와 섞이지 않게 따로 둔다. */
+/** 제작 탭이 본문 위에 띄우는 것들 — 확인 다이얼로그 둘과 카드 옵션·신고 시트. 본문 배치와 섞이지 않게 따로 둔다. */
 @Composable
 private fun StudioDialogs(
     state: StudioUiState,
     onIntent: (StudioIntent) -> Unit,
 ) {
+    state.optionsTarget?.let { story ->
+        ManyakOptionsDialog(
+            onDismissRequest = { onIntent(StudioIntent.CloseStoryOptions) },
+            preview = { MyStoryCardPreview(story = story) },
+        ) {
+            ManyakOptionsDialogItem(
+                iconRes = R.drawable.ic_info,
+                label = stringResource(R.string.story_report_action),
+                onClick = { onIntent(StudioIntent.Report(StoryReportAction.Open)) },
+            )
+            ManyakOptionsDialogItem(
+                iconRes = R.drawable.ic_delete,
+                label = stringResource(R.string.studio_story_delete),
+                onClick = { onIntent(StudioIntent.RequestDeleteStory) },
+                isDanger = true,
+            )
+        }
+    }
+
+    if (state.report.isSheetOpen) {
+        StoryReportSheet(
+            state = state.report,
+            onAction = { action -> onIntent(StudioIntent.Report(action)) },
+        )
+    }
+
     if (state.showResumeChoiceDialog) {
         ResumeChoiceDialog(
             onStartNew = { onIntent(StudioIntent.StartNewCreation) },
@@ -250,7 +286,7 @@ private fun MyStories(
                 MyStoryCard(
                     story = story,
                     onClick = { onOpenStory(story.id) },
-                    onDeleteClick = { onIntent(StudioIntent.RequestDeleteStory(story)) },
+                    onOptionsClick = { onIntent(StudioIntent.OpenStoryOptions(story)) },
                 )
             }
         }

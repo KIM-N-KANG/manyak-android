@@ -38,6 +38,7 @@ internal fun sampleChats(): List<ChatSummary> =
     listOf(
         ChatSummary(
             id = "chat-1",
+            storyId = "story-1",
             storyTitle = "두 번째 시계공",
             thumbnailUrl = null,
             lastStoryPreview = "문이 열리자 태엽 소리가 쏟아진다.",
@@ -46,6 +47,7 @@ internal fun sampleChats(): List<ChatSummary> =
         ),
         ChatSummary(
             id = "chat-2",
+            storyId = "story-2",
             storyTitle = "달빛 아래의 계약",
             thumbnailUrl = null,
             lastStoryPreview = "",

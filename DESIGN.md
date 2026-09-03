@@ -140,6 +140,7 @@ typography:
 rounded:
   checkbox: 6dp
   menu-item: 10dp
+  thumbnail-small: 8dp
   thumbnail: 12dp
   control: 14dp
   card: 16dp
@@ -611,6 +612,7 @@ components:
 | --- | --- | --- |
 | `{rounded.checkbox}` | 6dp | 체크박스처럼 한 변이 20dp 남짓인 작은 네모 |
 | `{rounded.menu-item}` | 10dp | 셀렉트 메뉴 항목 · 라벨 없는 아이콘 버튼 |
+| `{rounded.thumbnail-small}` | 8dp | 회색 상자 안에 한 단계 작게 그린 카드 미리보기의 썸네일 — 상자(`card`)보다 작아야 동심으로 읽힌다 |
 | `{rounded.thumbnail}` | 12dp | 썸네일·작은 아이콘 컨테이너 |
 | `{rounded.control}` | 14dp | 버튼·입력창·탭 |
 | `{rounded.card}` | 16dp | 카드·리스트 항목 |

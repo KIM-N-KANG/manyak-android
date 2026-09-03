@@ -9,6 +9,11 @@ import app.manyak.core.domain.story.StoryRepository
 import app.manyak.core.domain.story.StorySummary
 import app.manyak.core.domain.story.resumePoint
 import app.manyak.core.ui.mvi.MviViewModel
+import app.manyak.core.ui.report.StoryReportAction
+import app.manyak.core.ui.report.StoryReportChange
+import app.manyak.core.ui.report.StoryReportController
+import app.manyak.core.ui.report.StoryReportUiState
+import app.manyak.core.ui.report.reduceReport
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -30,9 +35,15 @@ data class StudioUiState(
     val pendingBanner: PendingCreationBanner? = null,
     /** FAB 등 배너가 아닌 경로로 진입하려는데 임시 저장본이 있어 이어서/새로 만들기를 묻는 중. */
     val showResumeChoiceDialog: Boolean = false,
+    /** 더보기·길게 누르기로 옵션 시트를 연 카드. null 이면 시트가 없다. */
+    val optionsTarget: StorySummary? = null,
     /** 삭제 확인을 묻는 대상. null 이면 다이얼로그가 없다. */
     val deleteTarget: StorySummary? = null,
     val isDeleting: Boolean = false,
+    /** 신고 시트. 대상은 옵션 시트를 연 카드다. */
+    val report: StoryReportUiState = StoryReportUiState(),
+    /** 신고 시트가 열려 있는 동안의 대상. 옵션 시트가 닫혀도 신고가 어느 스토리인지 남아야 한다. */
+    val reportStoryId: String? = null,
 )
 
 sealed interface StudioIntent {
@@ -56,9 +67,19 @@ sealed interface StudioIntent {
     /** 목록을 당겨서 새로고침. */
     data object Refresh : StudioIntent
 
-    /** 카드 더보기 메뉴의 "삭제하기" — 바로 지우지 않고 확인을 묻는다. */
-    data class RequestDeleteStory(
+    /** 카드 더보기·길게 누르기 — 신고·삭제를 담은 옵션 시트를 연다. */
+    data class OpenStoryOptions(
         val story: StorySummary,
+    ) : StudioIntent
+
+    data object CloseStoryOptions : StudioIntent
+
+    /** 옵션 시트의 "삭제하기" — 바로 지우지 않고 확인을 묻는다. */
+    data object RequestDeleteStory : StudioIntent
+
+    /** 옵션 시트의 "신고하기" 이후 신고 시트 안의 동작. */
+    data class Report(
+        val action: StoryReportAction,
     ) : StudioIntent
 
     data object ConfirmDeleteStory : StudioIntent
@@ -79,8 +100,20 @@ sealed interface StudioEvent {
 
     data object RefreshFailed : StudioEvent
 
+    data class OptionsTargetChanged(
+        val story: StorySummary?,
+    ) : StudioEvent
+
     data class DeleteRequested(
         val story: StorySummary,
+    ) : StudioEvent
+
+    data class ReportTargetChanged(
+        val storyId: String?,
+    ) : StudioEvent
+
+    data class Report(
+        val change: StoryReportChange,
     ) : StudioEvent
 
     data object DeleteDialogDismissed : StudioEvent
@@ -116,6 +149,10 @@ sealed interface StudioEffect {
     data object ShowStoryDeleteFailed : StudioEffect
 
     data object ShowRefreshFailed : StudioEffect
+
+    data object ShowReportSubmitted : StudioEffect
+
+    data object ShowReportFailed : StudioEffect
 }
 
 /**
@@ -138,6 +175,19 @@ class StudioViewModel
         private var loadJob: Job? = null
         private var deleteJob: Job? = null
 
+        /** 신고 절차는 상세·채팅방과 같아 :core:ui 의 컨트롤러가 소유한다. */
+        private val report =
+            StoryReportController(
+                scope = viewModelScope,
+                repository = storyRepository,
+                emit = { change -> dispatchEvent(StudioEvent.Report(change)) },
+                notify = { submitted ->
+                    dispatchEffect(
+                        if (submitted) StudioEffect.ShowReportSubmitted else StudioEffect.ShowReportFailed,
+                    )
+                },
+            )
+
         init {
             viewModelScope.launch {
                 pendingCreationStore.record.collect { record ->
@@ -157,11 +207,13 @@ class StudioViewModel
 
                 StudioIntent.Refresh -> load(LoadKind.Refresh)
 
-                is StudioIntent.RequestDeleteStory -> dispatchEvent(StudioEvent.DeleteRequested(intent.story))
-
-                StudioIntent.ConfirmDeleteStory -> confirmDelete(state.deleteTarget)
-
-                StudioIntent.DismissDeleteDialog -> dismissDeleteDialog()
+                is StudioIntent.OpenStoryOptions,
+                StudioIntent.CloseStoryOptions,
+                StudioIntent.RequestDeleteStory,
+                StudioIntent.ConfirmDeleteStory,
+                StudioIntent.DismissDeleteDialog,
+                is StudioIntent.Report,
+                -> handleCardIntent(intent, state)
 
                 StudioIntent.CreateStory -> startCreation(state.pendingBanner)
 
@@ -181,6 +233,53 @@ class StudioViewModel
                 StudioIntent.DismissResumeChoiceDialog ->
                     dispatchEvent(StudioEvent.ResumeChoiceDialogVisibleChanged(visible = false))
             }
+        }
+
+        /** 카드 옵션 시트에서 갈라지는 동작 — 신고와 삭제. */
+        private suspend fun handleCardIntent(
+            intent: StudioIntent,
+            state: StudioUiState,
+        ) {
+            when (intent) {
+                is StudioIntent.OpenStoryOptions -> dispatchEvent(StudioEvent.OptionsTargetChanged(intent.story))
+
+                StudioIntent.CloseStoryOptions -> dispatchEvent(StudioEvent.OptionsTargetChanged(null))
+
+                // 삭제하기는 시트를 닫고 확인을 묻는다 — 시트 위에 다이얼로그가 겹치지 않는다.
+                StudioIntent.RequestDeleteStory ->
+                    state.optionsTarget?.let { story ->
+                        dispatchEvent(StudioEvent.OptionsTargetChanged(null))
+                        dispatchEvent(StudioEvent.DeleteRequested(story))
+                    }
+
+                StudioIntent.ConfirmDeleteStory -> confirmDelete(state.deleteTarget)
+
+                StudioIntent.DismissDeleteDialog -> dismissDeleteDialog()
+
+                is StudioIntent.Report -> handleReport(intent.action, state)
+
+                else -> Unit
+            }
+        }
+
+        /**
+         * 신고 대상은 옵션 시트를 연 카드다. 열 때 대상을 따로 적어 두는 이유는 옵션 시트가 닫힌 뒤에도
+         * 신고 시트가 어느 스토리를 보내는지 알아야 해서다.
+         */
+        private suspend fun handleReport(
+            action: StoryReportAction,
+            state: StudioUiState,
+        ) {
+            val storyId =
+                if (action == StoryReportAction.Open) {
+                    val target = state.optionsTarget?.id ?: return
+                    dispatchEvent(StudioEvent.OptionsTargetChanged(null))
+                    dispatchEvent(StudioEvent.ReportTargetChanged(target))
+                    target
+                } else {
+                    state.reportStoryId
+                }
+            report.handle(action, storyId, state.report)
         }
 
         private fun load(kind: LoadKind) {
@@ -278,21 +377,15 @@ class StudioViewModel
                 // 새로고침 실패는 보고 있던 목록을 건드리지 않는다 — 알림은 토스트가 맡는다.
                 StudioEvent.RefreshFailed -> state.copy(isRefreshing = false)
 
-                is StudioEvent.DeleteRequested -> state.copy(deleteTarget = event.story)
-
-                StudioEvent.DeleteDialogDismissed -> state.copy(deleteTarget = null)
-
-                StudioEvent.DeleteStarted -> state.copy(isDeleting = true)
-
-                // 서버 재조회 대신 로컬 제거로 목록을 맞춘다 — 서버가 지운 것을 다시 물을 이유가 없다.
-                is StudioEvent.DeleteSucceeded ->
-                    state.copy(
-                        isDeleting = false,
-                        deleteTarget = null,
-                        stories = state.stories.filterNot { story -> story.id == event.storyId },
-                    )
-
-                StudioEvent.DeleteFailed -> state.copy(isDeleting = false, deleteTarget = null)
+                is StudioEvent.OptionsTargetChanged,
+                is StudioEvent.DeleteRequested,
+                is StudioEvent.ReportTargetChanged,
+                is StudioEvent.Report,
+                StudioEvent.DeleteDialogDismissed,
+                StudioEvent.DeleteStarted,
+                is StudioEvent.DeleteSucceeded,
+                StudioEvent.DeleteFailed,
+                -> reduceCardEvent(state, event)
 
                 is StudioEvent.PendingCreationChanged ->
                     state.copy(
@@ -304,6 +397,41 @@ class StudioViewModel
                 is StudioEvent.ResumeChoiceDialogVisibleChanged ->
                     state.copy(showResumeChoiceDialog = event.visible)
             }
+    }
+
+/** 카드 옵션 시트에서 갈라지는 상태 전이 — 신고와 삭제. 순수 함수라 [MviViewModel.reduce] 와 같은 규칙을 따른다. */
+private fun reduceCardEvent(
+    state: StudioUiState,
+    event: StudioEvent,
+): StudioUiState =
+    when (event) {
+        is StudioEvent.OptionsTargetChanged -> state.copy(optionsTarget = event.story)
+
+        is StudioEvent.DeleteRequested -> state.copy(deleteTarget = event.story)
+
+        is StudioEvent.ReportTargetChanged -> state.copy(reportStoryId = event.storyId)
+
+        is StudioEvent.Report -> {
+            val report = state.report.reduceReport(event.change)
+            // 시트가 닫히면 대상도 함께 지운다 — 다음 신고가 지난 대상으로 나가면 안 된다.
+            state.copy(report = report, reportStoryId = state.reportStoryId.takeIf { report.isSheetOpen })
+        }
+
+        StudioEvent.DeleteDialogDismissed -> state.copy(deleteTarget = null)
+
+        StudioEvent.DeleteStarted -> state.copy(isDeleting = true)
+
+        // 서버 재조회 대신 로컬 제거로 목록을 맞춘다 — 서버가 지운 것을 다시 물을 이유가 없다.
+        is StudioEvent.DeleteSucceeded ->
+            state.copy(
+                isDeleting = false,
+                deleteTarget = null,
+                stories = state.stories.filterNot { story -> story.id == event.storyId },
+            )
+
+        StudioEvent.DeleteFailed -> state.copy(isDeleting = false, deleteTarget = null)
+
+        else -> state
     }
 
 /** 목록 조회를 부른 자리. 진행을 어떻게 보이고 실패를 어떻게 알릴지가 여기서 갈린다. */

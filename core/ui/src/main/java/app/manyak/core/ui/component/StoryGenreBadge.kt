@@ -6,6 +6,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import app.manyak.core.ui.theme.ManyakTheme
 
@@ -20,12 +21,14 @@ fun StoryGenreBadge(
     text: String,
     modifier: Modifier = Modifier,
     scale: StoryBadgeScale = StoryBadgeScale.Compact,
+    // 회색 상자 위에 놓일 때는 바탕과 같은 색이라 묻히므로, 그 자리만 밝은 알약을 쓴다.
+    containerColor: Color = ManyakTheme.colors.backgroundNeutral,
 ) {
     Text(
         modifier =
             modifier
                 .clip(ManyakTheme.shapes.pill)
-                .background(ManyakTheme.colors.backgroundNeutral)
+                .background(containerColor)
                 .padding(
                     horizontal = scale.horizontalPadding,
                     vertical = scale.verticalPadding,

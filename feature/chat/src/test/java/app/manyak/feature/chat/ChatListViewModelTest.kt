@@ -2,6 +2,8 @@ package app.manyak.feature.chat
 
 import app.manyak.core.domain.error.DomainError
 import app.manyak.core.domain.error.DomainResult
+import app.manyak.core.domain.story.StoryReportReason
+import app.manyak.core.ui.report.StoryReportAction
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -14,6 +16,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -36,7 +39,7 @@ class ChatListViewModelTest {
     fun `화면이 보이면 조회해 서버가 준 순서 그대로 목록을 만든다`() =
         runTest(dispatcher) {
             val repository = FakeChatRepository()
-            val viewModel = ChatListViewModel(repository)
+            val viewModel = ChatListViewModel(repository, FakeStoryRepository())
 
             viewModel.onIntent(ChatListIntent.ScreenShown)
             advanceUntilIdle()
@@ -52,7 +55,7 @@ class ChatListViewModelTest {
     fun `이미 그릴 목록이 있는 복귀 갱신은 골격을 다시 깔지 않는다`() =
         runTest(dispatcher) {
             val repository = FakeChatRepository()
-            val viewModel = ChatListViewModel(repository)
+            val viewModel = ChatListViewModel(repository, FakeStoryRepository())
             viewModel.onIntent(ChatListIntent.ScreenShown)
             advanceUntilIdle()
 
@@ -70,7 +73,7 @@ class ChatListViewModelTest {
     fun `복귀 갱신이 실패해도 보고 있던 목록을 지우지 않는다`() =
         runTest(dispatcher) {
             val repository = FakeChatRepository()
-            val viewModel = ChatListViewModel(repository)
+            val viewModel = ChatListViewModel(repository, FakeStoryRepository())
             viewModel.onIntent(ChatListIntent.ScreenShown)
             advanceUntilIdle()
 
@@ -88,7 +91,7 @@ class ChatListViewModelTest {
         runTest(dispatcher) {
             val repository = FakeChatRepository()
             repository.queuedMyChatsResults += DomainResult.Failure(DomainError.Network)
-            val viewModel = ChatListViewModel(repository)
+            val viewModel = ChatListViewModel(repository, FakeStoryRepository())
 
             viewModel.onIntent(ChatListIntent.ScreenShown)
             advanceUntilIdle()
@@ -109,7 +112,7 @@ class ChatListViewModelTest {
     fun `당겨서 새로고침 실패는 목록을 남기고 토스트 효과를 낸다`() =
         runTest(dispatcher) {
             val repository = FakeChatRepository()
-            val viewModel = ChatListViewModel(repository)
+            val viewModel = ChatListViewModel(repository, FakeStoryRepository())
             viewModel.onIntent(ChatListIntent.ScreenShown)
             advanceUntilIdle()
 
@@ -133,7 +136,7 @@ class ChatListViewModelTest {
     fun `새로고침은 진행 중인 조용한 재조회를 취소하고 시작한다`() =
         runTest(dispatcher) {
             val repository = FakeChatRepository()
-            val viewModel = ChatListViewModel(repository)
+            val viewModel = ChatListViewModel(repository, FakeStoryRepository())
             viewModel.onIntent(ChatListIntent.ScreenShown)
             advanceUntilIdle()
 
@@ -152,5 +155,102 @@ class ChatListViewModelTest {
             assertEquals(3, repository.myChatsCallCount)
             assertFalse(viewModel.uiState.value.isRefreshing)
             assertFalse(gate.isCompleted)
+        }
+
+    @Test
+    fun `길게 눌러 연 시트에서 삭제를 확인하면 그 카드만 목록에서 빠진다`() =
+        runTest(dispatcher) {
+            val repository = FakeChatRepository()
+            val viewModel = ChatListViewModel(repository, FakeStoryRepository())
+            viewModel.onIntent(ChatListIntent.ScreenShown)
+            advanceUntilIdle()
+            val effects = mutableListOf<ChatListEffect>()
+            val collection = launch { viewModel.uiEffect.collect { effect -> effects += effect } }
+            val target =
+                viewModel.uiState.value.chats
+                    .first()
+
+            viewModel.onIntent(ChatListIntent.OpenOptions(target))
+            advanceUntilIdle()
+            viewModel.onIntent(ChatListIntent.RequestDelete)
+            advanceUntilIdle()
+            // 삭제하기는 시트를 닫고 확인을 묻는다 — 시트 위에 다이얼로그가 겹치지 않는다.
+            assertNull(viewModel.uiState.value.optionsTarget)
+            assertEquals(target, viewModel.uiState.value.deleteTarget)
+
+            viewModel.onIntent(ChatListIntent.ConfirmDelete)
+            advanceUntilIdle()
+
+            assertEquals(listOf(target.id), repository.deletedChatIds)
+            assertEquals(
+                listOf("chat-2"),
+                viewModel.uiState.value.chats
+                    .map { chat -> chat.id },
+            )
+            assertNull(viewModel.uiState.value.deleteTarget)
+            assertEquals(listOf(ChatListEffect.ShowChatDeleted), effects)
+            // 재조회 없이 로컬에서 뺀다.
+            assertEquals(1, repository.myChatsCallCount)
+
+            collection.cancel()
+        }
+
+    @Test
+    fun `삭제 실패는 목록을 그대로 두고 실패를 알린다`() =
+        runTest(dispatcher) {
+            val repository = FakeChatRepository()
+            repository.queuedDeleteResults += DomainResult.Failure(DomainError.Unknown)
+            val viewModel = ChatListViewModel(repository, FakeStoryRepository())
+            viewModel.onIntent(ChatListIntent.ScreenShown)
+            advanceUntilIdle()
+            val effects = mutableListOf<ChatListEffect>()
+            val collection = launch { viewModel.uiEffect.collect { effect -> effects += effect } }
+
+            viewModel.onIntent(
+                ChatListIntent.OpenOptions(
+                    viewModel.uiState.value.chats
+                        .first(),
+                ),
+            )
+            advanceUntilIdle()
+            viewModel.onIntent(ChatListIntent.RequestDelete)
+            advanceUntilIdle()
+            viewModel.onIntent(ChatListIntent.ConfirmDelete)
+            advanceUntilIdle()
+
+            assertEquals(2, viewModel.uiState.value.chats.size)
+            assertFalse(viewModel.uiState.value.isDeleting)
+            assertEquals(listOf(ChatListEffect.ShowChatDeleteFailed), effects)
+
+            collection.cancel()
+        }
+
+    @Test
+    fun `시트에서 연 신고는 그 카드가 참조하는 스토리로 나간다`() =
+        runTest(dispatcher) {
+            val storyRepository = FakeStoryRepository()
+            val viewModel = ChatListViewModel(FakeChatRepository(), storyRepository)
+            viewModel.onIntent(ChatListIntent.ScreenShown)
+            advanceUntilIdle()
+            val target =
+                viewModel.uiState.value.chats
+                    .last()
+
+            viewModel.onIntent(ChatListIntent.OpenOptions(target))
+            advanceUntilIdle()
+            viewModel.onIntent(ChatListIntent.Report(StoryReportAction.Open))
+            advanceUntilIdle()
+            assertNull(viewModel.uiState.value.optionsTarget)
+            assertTrue(viewModel.uiState.value.report.isSheetOpen)
+
+            viewModel.onIntent(ChatListIntent.Report(StoryReportAction.SelectReason(StoryReportReason.SPAM)))
+            advanceUntilIdle()
+            viewModel.onIntent(ChatListIntent.Report(StoryReportAction.Submit))
+            advanceUntilIdle()
+
+            assertEquals(target.storyId, storyRepository.reportedStories.single().first)
+            assertFalse(viewModel.uiState.value.report.isSheetOpen)
+            // 다음 신고가 지난 대상으로 나가지 않도록 시트가 닫히면 대상도 지운다.
+            assertNull(viewModel.uiState.value.reportStoryId)
         }
 }
