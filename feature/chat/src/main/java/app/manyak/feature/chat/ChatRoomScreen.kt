@@ -105,6 +105,11 @@ fun ChatRoomScreen(
 
                     ChatRoomEffect.ShowReportFailed ->
                         Toast.makeText(context, R.string.story_report_failed, Toast.LENGTH_SHORT).show()
+
+                    ChatRoomEffect.ShowComposerLocked ->
+                        Toast
+                            .makeText(context, R.string.chat_composer_locked_streaming, Toast.LENGTH_SHORT)
+                            .show()
                 }
             }
         }
@@ -272,6 +277,7 @@ private fun composerActions(onIntent: (ChatRoomIntent) -> Unit): ChatComposerAct
         onChoicesEnabledChange = { enabled -> onIntent(ChatRoomIntent.ChoicesEnabledChanged(enabled)) },
         onSend = { onIntent(ChatRoomIntent.Sent) },
         onSendRandomSuggestion = { onIntent(ChatRoomIntent.RandomSuggestionSent) },
+        onLockedTap = { onIntent(ChatRoomIntent.LockedComposerTapped) },
     )
 
 /** 채우기가 쓰던 초안을 덮어쓰기 전에 묻는다. */

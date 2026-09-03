@@ -8,6 +8,7 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -171,10 +172,50 @@ internal fun ComposerTextField(
     containerShape: CornerBasedShape? = ManyakTheme.shapes.control,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     leading: (@Composable () -> Unit)? = null,
+    onDisabledTap: (() -> Unit)? = null,
 ) {
     val focused by interactionSource.collectIsFocusedAsState()
+    Box(modifier = modifier) {
+        ComposerTextFieldBody(
+            state = state,
+            placeholder = placeholder,
+            enabled = enabled,
+            maxLines = maxLines,
+            textColor = textColor,
+            contentPadding = contentPadding,
+            containerShape = containerShape,
+            interactionSource = interactionSource,
+            focused = focused,
+            leading = leading,
+        )
+        // 잠긴 입력창은 터치를 받지 않아 아무 반응이 없다 — 위에 투명한 자리를 깔아 눌렀다는 것만 받는다.
+        if (!enabled && onDisabledTap != null) {
+            Box(
+                modifier =
+                    Modifier
+                        .matchParentSize()
+                        .clickable(interactionSource = null, indication = null, onClick = onDisabledTap),
+            )
+        }
+    }
+}
+
+@Composable
+@Suppress("LongParameterList")
+private fun ComposerTextFieldBody(
+    state: TextFieldState,
+    placeholder: String,
+    enabled: Boolean,
+    maxLines: Int,
+    textColor: Color,
+    contentPadding: PaddingValues,
+    containerShape: CornerBasedShape?,
+    interactionSource: MutableInteractionSource,
+    focused: Boolean,
+    leading: (@Composable () -> Unit)?,
+) {
     BasicTextField(
-        modifier = modifier,
+        modifier = Modifier.fillMaxWidth(),
         state = state,
         enabled = enabled,
         lineLimits = TextFieldLineLimits.MultiLine(maxHeightInLines = maxLines),

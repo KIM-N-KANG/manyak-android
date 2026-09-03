@@ -482,6 +482,8 @@
     <string name="chat_composer_plain_placeholder">이야기를 어떻게 이어갈까요?</string>
     <string name="chat_composer_situation_label">상황</string>
     <string name="chat_composer_situation_placeholder">어떤 상황을 묘사할까요?</string>
+    <!-- 응답 생성 중 잠긴 입력창을 눌렀을 때. 왜 안 되는지와 언제 되는지를 한 문장에 담는다. -->
+    <string name="chat_composer_locked_streaming">응답을 만드는 중이에요. 끝나면 입력할 수 있어요</string>
     <string name="chat_composer_dialogue_label">대사</string>
     <string name="chat_composer_dialogue_placeholder">어떤 대사를 건넬까요?</string>
     <string name="chat_composer_add_situation">상황 추가</string>

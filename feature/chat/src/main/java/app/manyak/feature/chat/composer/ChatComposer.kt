@@ -86,6 +86,7 @@ internal fun ChatComposer(
                 modifier = modifier,
                 state = plainState,
                 enabled = !isStreaming,
+                onDisabledTap = actions.onLockedTap,
                 toolbar = toolbar,
             )
     }
@@ -96,6 +97,7 @@ internal fun ChatComposer(
 private fun PlainComposer(
     state: TextFieldState,
     enabled: Boolean,
+    onDisabledTap: () -> Unit,
     toolbar: @Composable (Modifier) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -126,6 +128,7 @@ private fun PlainComposer(
             PlainInput(
                 state = state,
                 enabled = enabled,
+                onDisabledTap = onDisabledTap,
                 interactionSource = interactionSource,
             )
             // 상자 안쪽 여백은 입력 글자(14)보다 좁아 툴바가 테두리에 더 가깝다.
@@ -138,6 +141,7 @@ private fun PlainComposer(
 private fun PlainInput(
     state: TextFieldState,
     enabled: Boolean,
+    onDisabledTap: () -> Unit,
     interactionSource: MutableInteractionSource,
     modifier: Modifier = Modifier,
 ) {
@@ -148,6 +152,7 @@ private fun PlainInput(
         state = state,
         placeholder = stringResource(R.string.chat_composer_plain_placeholder),
         enabled = enabled,
+        onDisabledTap = onDisabledTap,
         // 상자는 툴바까지 감싸는 바깥 Column 이 그린다.
         containerShape = null,
         interactionSource = interactionSource,
@@ -172,12 +177,14 @@ internal fun SyncedTextField(
     maxLines: Int = Int.MAX_VALUE,
     textColor: androidx.compose.ui.graphics.Color = ManyakTheme.colors.text,
     leading: (@Composable () -> Unit)? = null,
+    onDisabledTap: (() -> Unit)? = null,
 ) {
     ComposerTextField(
         modifier = modifier,
         state = rememberSyncedTextFieldState(text, onTextChange),
         placeholder = placeholder,
         enabled = enabled,
+        onDisabledTap = onDisabledTap,
         maxLines = maxLines,
         textColor = textColor,
         leading = leading,
@@ -240,6 +247,7 @@ private fun previewActions(): ChatComposerActions =
         onChoicesEnabledChange = {},
         onSend = {},
         onSendRandomSuggestion = {},
+        onLockedTap = {},
     )
 
 @Preview(showBackground = true, name = "컴포저 · 블럭 모드")

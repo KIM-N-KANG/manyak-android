@@ -201,6 +201,30 @@ class ChatRoomStreamTest {
             assertEquals("*문이 열린다* 누구세요?", viewModel.uiState.value.composer.plainText)
         }
 
+    @Test
+    fun `응답 생성 중에 잠긴 입력창을 누르면 안내 효과를 낸다`() =
+        runTest(dispatcher) {
+            val repository = FakeChatRepository()
+            val viewModel = startStreaming(repository)
+
+            viewModel.onIntent(ChatRoomIntent.LockedComposerTapped)
+            advanceUntilIdle()
+
+            assertEquals(ChatRoomEffect.ShowComposerLocked, viewModel.uiEffect())
+        }
+
+    @Test
+    fun `생성 중이 아니면 입력창 탭은 아무 효과도 내지 않는다`() =
+        runTest(dispatcher) {
+            val viewModel = viewModel(FakeChatRepository())
+            advanceUntilIdle()
+
+            viewModel.onIntent(ChatRoomIntent.LockedComposerTapped)
+            advanceUntilIdle()
+
+            assertNull(withTimeoutOrNull(100) { viewModel.uiEffect() })
+        }
+
     private fun viewModel(
         repository: FakeChatRepository,
         preferences: FakeChatPreferencesRepository = FakeChatPreferencesRepository(),
