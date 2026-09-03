@@ -639,6 +639,8 @@ components:
 
 **`button-neutral`** — 보조 동작. 배경 `{colors.background-neutral}`, 텍스트 `{colors.text}`. 눌림은 `{component.button-neutral-pressed}`.
 
+**`button-text`** — 다이얼로그·시트의 닫기, 배너의 보조 동작, 인라인 재시도처럼 채움 없이 글자만 있는 버튼. 배경 없음, 텍스트 `{typography.label-large}`에 색은 자리가 정한다(닫기는 `{colors.text-subtle}`, 진입·재시도는 브랜드 색). **모서리는 `{rounded.control}`** — M3 `TextButton` 기본은 완전한 알약이라 눌림 리플이 채움 버튼과 다른 모양으로 돈다. `ManyakTextButton`을 쓴다.
+
 **`button-disabled`** — 배경 `{colors.background-disabled}`, 텍스트 `{colors.text-disabled}`. 비활성은 색만으로 전달하지 않고 상태 안내를 함께 둡니다.
 
 ### 입력

@@ -23,7 +23,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -40,6 +39,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LifecycleEventEffect
 import app.manyak.core.ui.R
+import app.manyak.core.ui.component.ManyakTextButton
 import app.manyak.core.ui.theme.ManyakTheme
 
 /** 진행 표시기가 노출하는 단계 수. 완료(생성 로딩)는 단계로 세지 않는다. */
@@ -381,7 +381,7 @@ private fun FunnelWarningDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            ManyakTextButton(onClick = onDismiss) {
                 Text(
                     text = stringResource(dismissRes),
                     style = ManyakTheme.typography.labelLarge,

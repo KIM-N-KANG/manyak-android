@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.saveable.Saver
@@ -28,6 +27,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.manyak.core.navigation.LegalDocument
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ManyakProgressIndicator
+import app.manyak.core.ui.component.ManyakTextButton
 import app.manyak.core.ui.component.rememberDelayedProgressVisibility
 import app.manyak.core.ui.theme.ManyakTheme
 
@@ -89,7 +89,7 @@ private fun LegalLoadFailure(
             style = ManyakTheme.typography.bodyMedium,
             color = ManyakTheme.colors.textSubtle,
         )
-        TextButton(onClick = onRetry) {
+        ManyakTextButton(onClick = onRetry) {
             Text(text = stringResource(R.string.common_retry), style = ManyakTheme.typography.labelLarge)
         }
     }

@@ -22,7 +22,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,6 +40,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ManyakInputCounter
+import app.manyak.core.ui.component.ManyakTextButton
 import app.manyak.core.ui.component.ManyakTextField
 import app.manyak.core.ui.theme.ManyakTheme
 
@@ -249,7 +249,7 @@ internal fun AddKeywordDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            ManyakTextButton(onClick = onDismiss) {
                 Text(
                     text = stringResource(R.string.create_dialog_close),
                     style = ManyakTheme.typography.labelLarge,
