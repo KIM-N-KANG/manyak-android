@@ -1,6 +1,8 @@
 package app.manyak.feature.my
 
 import androidx.annotation.StringRes
+import app.manyak.core.analytics.Analytics
+import app.manyak.core.analytics.AnalyticsEvent
 import app.manyak.core.domain.error.DomainResult
 import app.manyak.core.domain.session.SessionRepository
 import app.manyak.core.ui.R
@@ -74,7 +76,12 @@ class WithdrawalViewModel
     @Inject
     constructor(
         private val sessionRepository: SessionRepository,
+        private val analytics: Analytics,
     ) : MviViewModel<WithdrawalIntent, WithdrawalUiState, WithdrawalEvent, WithdrawalEffect>(WithdrawalUiState()) {
+        init {
+            analytics.track(AnalyticsEvent.WithdrawalViewed)
+        }
+
         override suspend fun handleIntent(intent: WithdrawalIntent) {
             when (intent) {
                 is WithdrawalIntent.ToggleConfirmation ->
@@ -110,9 +117,14 @@ class WithdrawalViewModel
             if (state.isWithdrawing || !state.canWithdraw) return
             dispatchEvent(WithdrawalEvent.WithdrawStarted)
             // 성공하면 진행 표시를 내리지 않는다 — 세션 종료가 이 화면을 걷어낼 때까지 잠긴 채로 둔다.
-            if (sessionRepository.withdraw() is DomainResult.Failure) {
-                dispatchEvent(WithdrawalEvent.WithdrawFailed)
-                dispatchEffect(WithdrawalEffect.Failed)
+            when (sessionRepository.withdraw()) {
+                // 종료 정리가 프로필을 비워 식별자를 떼기 전에 보낸다. 늦으면 익명 탈퇴로 남는다.
+                is DomainResult.Success -> analytics.track(AnalyticsEvent.WithdrawalCompleted)
+
+                is DomainResult.Failure -> {
+                    dispatchEvent(WithdrawalEvent.WithdrawFailed)
+                    dispatchEffect(WithdrawalEffect.Failed)
+                }
             }
         }
     }

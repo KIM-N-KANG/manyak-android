@@ -2,6 +2,9 @@ package app.manyak.feature.my
 
 import androidx.annotation.StringRes
 import androidx.lifecycle.viewModelScope
+import app.manyak.core.analytics.Analytics
+import app.manyak.core.analytics.AnalyticsEvent
+import app.manyak.core.analytics.InviteCodeSource
 import app.manyak.core.domain.error.DomainError
 import app.manyak.core.domain.error.DomainResult
 import app.manyak.core.domain.invite.InviteOnboardingRepository
@@ -71,12 +74,17 @@ class InviteOnboardingViewModel
         private val inviteRepository: InviteRepository,
         private val onboardingRepository: InviteOnboardingRepository,
         private val userProfileRepository: UserProfileRepository,
+        private val analytics: Analytics,
     ) : MviViewModel<InviteOnboardingIntent, InviteOnboardingUiState, InviteOnboardingEvent, InviteOnboardingEffect>(
             InviteOnboardingUiState(),
         ) {
         init {
             viewModelScope.launch {
                 onboardingRepository.pending.collect { pending ->
+                    // 안내가 실제로 뜨는 전이만 센다 — 저장 실패로 pending 이 남아도 이번 실행에서는 다시 뜨지 않는다.
+                    if (pending && !uiState.value.pending && !uiState.value.dismissed) {
+                        analytics.track(AnalyticsEvent.InviteOnboardingShown)
+                    }
                     dispatchEvent(InviteOnboardingEvent.PendingChanged(pending))
                 }
             }
@@ -88,7 +96,10 @@ class InviteOnboardingViewModel
                     dispatchEvent(InviteOnboardingEvent.CodeChanged(sanitizeInviteCode(intent.code)))
 
                 InviteOnboardingIntent.Submit -> submit()
-                InviteOnboardingIntent.Skip -> dismiss()
+                InviteOnboardingIntent.Skip -> {
+                    analytics.track(AnalyticsEvent.InviteOnboardingSkipped)
+                    dismiss()
+                }
             }
         }
 
@@ -114,16 +125,25 @@ class InviteOnboardingViewModel
                 return
             }
             dispatchEvent(InviteOnboardingEvent.SubmitStarted)
+            analytics.track(AnalyticsEvent.InviteCodeSubmitted(InviteCodeSource.ONBOARDING))
             when (val result = inviteRepository.redeemInviteCode(code)) {
                 is DomainResult.Success -> {
+                    analytics.track(AnalyticsEvent.InviteCodeSucceeded(InviteCodeSource.ONBOARDING))
                     dispatchEffect(InviteOnboardingEffect.Redeemed)
                     // 잔액 정본은 프로필이라 지급액을 더하지 않고 다시 읽는다.
                     userProfileRepository.refresh()
                     dismiss()
                 }
 
-                is DomainResult.Failure ->
+                is DomainResult.Failure -> {
+                    analytics.track(
+                        AnalyticsEvent.InviteCodeFailed(
+                            InviteCodeSource.ONBOARDING,
+                            result.error.inviteCodeErrorType(),
+                        ),
+                    )
                     dispatchEvent(InviteOnboardingEvent.SubmitFailed(result.error.inviteCodeMessageRes()))
+                }
             }
         }
 
@@ -156,6 +176,15 @@ internal fun DomainError.inviteCodeMessageRes(): Int {
         else -> R.string.invite_code_error_failed
     }
 }
+
+/** 분석 이벤트의 `error_type`. 웹 `InviteCodeErrorType` 과 같은 값이다. */
+internal fun DomainError.inviteCodeErrorType(): String =
+    when (inviteCodeMessageRes()) {
+        R.string.invite_code_error_not_found -> "not_found"
+        R.string.invite_code_error_self -> "self_code"
+        R.string.invite_code_error_already_redeemed -> "already_redeemed"
+        else -> if (this is DomainError.Network) "network" else "server"
+    }
 
 /** 영문·숫자 8자. */
 internal const val INVITE_CODE_MAX_LENGTH = 8

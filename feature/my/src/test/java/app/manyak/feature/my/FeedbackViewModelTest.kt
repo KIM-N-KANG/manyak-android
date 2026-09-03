@@ -1,5 +1,6 @@
 package app.manyak.feature.my
 
+import app.manyak.core.analytics.NoOpAnalytics
 import app.manyak.core.domain.error.DomainError
 import app.manyak.core.domain.error.DomainResult
 import app.manyak.core.domain.feedback.FeedbackRepository
@@ -40,7 +41,7 @@ class FeedbackViewModelTest {
     fun `이메일 형식이 어긋나면 보내지 않고 그 칸에 오류를 세운다`() =
         runTest {
             val repository = FakeFeedbackRepository()
-            val viewModel = FeedbackViewModel(repository)
+            val viewModel = FeedbackViewModel(repository, NoOpAnalytics)
 
             viewModel.onIntent(FeedbackIntent.BodyChanged("채팅이 조금 느려요"))
             viewModel.onIntent(FeedbackIntent.EmailChanged("마냑"))
@@ -58,7 +59,7 @@ class FeedbackViewModelTest {
     fun `이메일을 비워 두면 그대로 보낸다`() =
         runTest {
             val repository = FakeFeedbackRepository()
-            val viewModel = FeedbackViewModel(repository)
+            val viewModel = FeedbackViewModel(repository, NoOpAnalytics)
 
             viewModel.onIntent(FeedbackIntent.BodyChanged("채팅이 조금 느려요"))
             advanceUntilIdle()
@@ -73,7 +74,7 @@ class FeedbackViewModelTest {
     fun `형식에 맞는 이메일은 그대로 보낸다`() =
         runTest {
             val repository = FakeFeedbackRepository()
-            val viewModel = FeedbackViewModel(repository)
+            val viewModel = FeedbackViewModel(repository, NoOpAnalytics)
 
             viewModel.onIntent(FeedbackIntent.BodyChanged("채팅이 조금 느려요"))
             viewModel.onIntent(FeedbackIntent.EmailChanged("reader@manyak.app"))
@@ -90,7 +91,7 @@ class FeedbackViewModelTest {
     fun `이메일을 고치면 오류가 사라진다`() =
         runTest {
             val repository = FakeFeedbackRepository()
-            val viewModel = FeedbackViewModel(repository)
+            val viewModel = FeedbackViewModel(repository, NoOpAnalytics)
 
             viewModel.onIntent(FeedbackIntent.BodyChanged("채팅이 조금 느려요"))
             viewModel.onIntent(FeedbackIntent.EmailChanged("마냑"))
@@ -108,7 +109,7 @@ class FeedbackViewModelTest {
     fun `본문이 비고 이메일도 어긋나면 두 오류를 함께 세운다`() =
         runTest {
             val repository = FakeFeedbackRepository()
-            val viewModel = FeedbackViewModel(repository)
+            val viewModel = FeedbackViewModel(repository, NoOpAnalytics)
 
             viewModel.onIntent(FeedbackIntent.EmailChanged("마냑"))
             advanceUntilIdle()
@@ -125,7 +126,7 @@ class FeedbackViewModelTest {
     fun `전송에 실패하면 입력을 그대로 둔다`() =
         runTest {
             val repository = FakeFeedbackRepository(result = DomainResult.Failure(DomainError.Network))
-            val viewModel = FeedbackViewModel(repository)
+            val viewModel = FeedbackViewModel(repository, NoOpAnalytics)
 
             viewModel.onIntent(FeedbackIntent.BodyChanged("채팅이 조금 느려요"))
             advanceUntilIdle()

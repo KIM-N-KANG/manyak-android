@@ -1,5 +1,6 @@
 package app.manyak.feature.create
 
+import app.manyak.core.analytics.NoOpAnalytics
 import app.manyak.core.domain.error.DomainError
 import app.manyak.core.domain.error.DomainResult
 import app.manyak.core.domain.story.CharacterGender
@@ -54,6 +55,7 @@ class CreateKeywordViewModelTest {
             storyCreationRepository = repository,
             storylineGenerationStore = StorylineGenerationStore(repository, pending, this),
             pendingCreationStore = pending,
+            analytics = NoOpAnalytics,
         )
 
     @Test
@@ -172,6 +174,7 @@ class CreateKeywordViewModelTest {
                     storyCreationRepository = repository,
                     storylineGenerationStore = store,
                     pendingCreationStore = pendingStore,
+                    analytics = NoOpAnalytics,
                 )
 
             viewModel.onIntent(CreateKeywordIntent.LeaveFunnel)

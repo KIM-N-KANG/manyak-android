@@ -1,5 +1,6 @@
 package app.manyak.feature.chat
 
+import app.manyak.core.analytics.NoOpAnalytics
 import app.manyak.core.domain.chat.ChatDetail
 import app.manyak.core.domain.chat.ChatStreamEvent
 import app.manyak.core.domain.chat.ChatTurn
@@ -196,6 +197,7 @@ class ChatRoomRegenerateTest {
             chatRepository = repository,
             storyRepository = FakeStoryRepository(),
             preferences = FakeChatPreferencesRepository(),
+            analytics = NoOpAnalytics,
         )
 
     private fun TestScope.loaded(repository: FakeChatRepository): ChatRoomViewModel {

@@ -46,6 +46,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
+import app.manyak.core.analytics.AnalyticsEvent
+import app.manyak.core.analytics.LocalAnalytics
 import app.manyak.core.domain.invite.Invite
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.FocusScrollMargin
@@ -239,6 +241,7 @@ private fun InviteShareActions(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val analytics = LocalAnalytics.current
     val code = state.inviteCode
     val copied = stringResource(R.string.invite_code_copied)
     val copyFailed = stringResource(R.string.invite_code_copy_failed)
@@ -260,6 +263,7 @@ private fun InviteShareActions(
             iconRes = R.drawable.ic_copy,
             enabled = code != null,
             onClick = {
+                analytics.track(AnalyticsEvent.InviteCopyButtonClicked)
                 val message = if (context.copyToClipboard(code.orEmpty())) copied else copyFailed
                 // 안드로이드 13 부터는 시스템이 복사 확인을 직접 띄운다. 같은 말을 두 번 하지 않는다.
                 if (message != copied || Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
@@ -273,6 +277,7 @@ private fun InviteShareActions(
             iconRes = R.drawable.ic_share,
             enabled = code != null,
             onClick = {
+                analytics.track(AnalyticsEvent.InviteShareButtonClicked)
                 if (!context.shareText(subject = shareSubject, message = shareMessage)) {
                     Toast.makeText(context, shareFailed, Toast.LENGTH_SHORT).show()
                 }

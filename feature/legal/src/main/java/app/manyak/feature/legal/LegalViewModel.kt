@@ -1,6 +1,8 @@
 package app.manyak.feature.legal
 
 import android.net.Uri
+import app.manyak.core.analytics.Analytics
+import app.manyak.core.analytics.AnalyticsEvent
 import app.manyak.core.navigation.LegalDocument
 import app.manyak.core.ui.mvi.MviViewModel
 import dagger.assisted.Assisted
@@ -44,6 +46,7 @@ class LegalViewModel
     constructor(
         @Assisted document: LegalDocument,
         urlProvider: LegalUrlProvider,
+        analytics: Analytics,
     ) : MviViewModel<LegalIntent, LegalUiState, LegalEvent, Nothing>(
             initialState =
                 urlProvider.urlFor(document).let { url ->
@@ -57,6 +60,17 @@ class LegalViewModel
         @AssistedFactory
         interface Factory {
             fun create(document: LegalDocument): LegalViewModel
+        }
+
+        init {
+            // 화면은 하나지만 screen_name 은 웹처럼 문서별로 갈라야 같은 필터로 볼 수 있다.
+            analytics.track(
+                when (document) {
+                    LegalDocument.TERMS -> AnalyticsEvent.TermsViewed
+                    LegalDocument.PRIVACY -> AnalyticsEvent.PrivacyViewed
+                    LegalDocument.ABOUT -> AnalyticsEvent.ServiceInfoViewed
+                },
+            )
         }
 
         override suspend fun handleIntent(intent: LegalIntent) {

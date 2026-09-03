@@ -1,6 +1,9 @@
 package app.manyak.feature.create
 
 import androidx.lifecycle.viewModelScope
+import app.manyak.core.analytics.Analytics
+import app.manyak.core.analytics.AnalyticsEvent
+import app.manyak.core.analytics.CreateStep
 import app.manyak.core.domain.error.DomainResult
 import app.manyak.core.domain.story.CharacterGender
 import app.manyak.core.domain.story.KeywordCharacterSnapshot
@@ -340,6 +343,7 @@ class CreateKeywordViewModel
         private val storyCreationRepository: StoryCreationRepository,
         private val storylineGenerationStore: StorylineGenerationStore,
         private val pendingCreationStore: PendingStoryCreationStore,
+        private val analytics: Analytics,
     ) : MviViewModel<CreateKeywordIntent, CreateKeywordUiState, CreateKeywordEvent, CreateKeywordEffect>(
             CreateKeywordUiState(),
         ) {
@@ -354,6 +358,8 @@ class CreateKeywordViewModel
         private var persistedSnapshot: KeywordDraftSnapshot? = null
 
         init {
+            analytics.track(AnalyticsEvent.StoryCreateViewed)
+            analytics.track(AnalyticsEvent.StoryCreateStepViewed(CreateStep.KEYWORD))
             startTagsLoad()
             viewModelScope.launch {
                 // 레코드가 남아 있는 진입은 곧 재개다. 재개 의도를 따로 저장하지 않는다.
@@ -388,12 +394,10 @@ class CreateKeywordViewModel
             val state = uiState.value
             when (intent) {
                 is CreateKeywordIntent.SelectCategory ->
-                    if (state.isUnlocked(intent.category)) {
-                        dispatchEvent(CreateKeywordEvent.CategoryChanged(intent.category))
-                    }
+                    if (state.isUnlocked(intent.category)) moveToCategory(state, intent.category)
 
                 CreateKeywordIntent.GoPrevious ->
-                    state.activeCategory.previous?.let { dispatchEvent(CreateKeywordEvent.CategoryChanged(it)) }
+                    state.activeCategory.previous?.let { moveToCategory(state, it) }
 
                 CreateKeywordIntent.GoNext -> goNext(state)
                 CreateKeywordIntent.GenerateStorylines -> generateStorylines(state)
@@ -427,6 +431,7 @@ class CreateKeywordViewModel
                     )
 
                 CreateKeywordIntent.ConfirmLeaveFunnel -> {
+                    analytics.track(AnalyticsEvent.CreateExitButtonClicked(CreateStep.KEYWORD))
                     dispatchEvent(CreateKeywordEvent.ExitWarningChanged(null))
                     leaveFunnel()
                 }
@@ -448,7 +453,10 @@ class CreateKeywordViewModel
                     state.customTagToggleEvent(intent)?.let { dispatchEvent(it) }
 
                 is CreateKeywordIntent.AddCustomTag ->
-                    state.customTagAddEvent(intent)?.let { dispatchEvent(it) }
+                    state.customTagAddEvent(intent)?.let {
+                        analytics.track(AnalyticsEvent.AddTagSubmitted(intent.target.category))
+                        dispatchEvent(it)
+                    }
 
                 is CreateKeywordIntent.ChangeCharacterName ->
                     dispatchEvent(
@@ -473,9 +481,20 @@ class CreateKeywordViewModel
             }
         }
 
+        /** 같은 카테고리 재선택은 이동이 아니라 이벤트를 내지 않는다. */
+        private suspend fun moveToCategory(
+            state: CreateKeywordUiState,
+            category: StoryTagCategory,
+        ) {
+            if (category != state.activeCategory) {
+                analytics.track(AnalyticsEvent.TagCategorySelected(from = state.activeCategory, to = category))
+            }
+            dispatchEvent(CreateKeywordEvent.CategoryChanged(category))
+        }
+
         private suspend fun goNext(state: CreateKeywordUiState) {
             if (state.isComplete(state.activeCategory)) {
-                state.activeCategory.next?.let { dispatchEvent(CreateKeywordEvent.CategoryChanged(it)) }
+                state.activeCategory.next?.let { moveToCategory(state, it) }
             } else {
                 dispatchEvent(CreateKeywordEvent.ValidationFailed(state.activeCategory))
             }
@@ -505,6 +524,7 @@ class CreateKeywordViewModel
                             return@launch
                         }
                         persistedSnapshot = snapshot
+                        analytics.track(AnalyticsEvent.DraftSaved(CreateStep.KEYWORD))
                     }
                     dispatchEvent(CreateKeywordEvent.DraftSaveFinished(snapshot, saved = true))
                     scheduleSavedDisplayReset()
@@ -545,6 +565,7 @@ class CreateKeywordViewModel
             // 진행 중 KeywordDraft 쓰기가 요청 직전 Generating 레코드를 늦게 덮지 않게 먼저 합류한다.
             draftSaveJob?.join()
             dispatchEvent(CreateKeywordEvent.StorylineGenerationStarted)
+            analytics.track(AnalyticsEvent.StoryGenerationRequested)
             storylineGenerationStore.generate(state.toGenerationInput())
             dispatchEffect(CreateKeywordEffect.NavigateToStoryline)
         }

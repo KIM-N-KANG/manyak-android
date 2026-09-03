@@ -1,6 +1,11 @@
 package app.manyak.feature.chat
 
 import androidx.lifecycle.viewModelScope
+import app.manyak.core.analytics.Analytics
+import app.manyak.core.analytics.AnalyticsEvent
+import app.manyak.core.analytics.CreditShortageTrigger
+import app.manyak.core.analytics.MessageInputMode
+import app.manyak.core.analytics.ReportSource
 import app.manyak.core.domain.chat.ChatInputMode
 import app.manyak.core.domain.chat.ChatPreferencesRepository
 import app.manyak.core.domain.chat.ChatRepository
@@ -263,6 +268,7 @@ class ChatRoomViewModel
         private val chatRepository: ChatRepository,
         private val storyRepository: StoryRepository,
         private val preferences: ChatPreferencesRepository,
+        private val analytics: Analytics,
     ) : MviViewModel<ChatRoomIntent, ChatRoomUiState, ChatRoomEvent, ChatRoomEffect>(ChatRoomUiState()) {
         private var preferencesJob: Job? = null
         private var loadJob: Job? = null
@@ -273,6 +279,8 @@ class ChatRoomViewModel
             StoryReportController(
                 scope = viewModelScope,
                 repository = storyRepository,
+                analytics = analytics,
+                source = ReportSource.CHAT,
                 emit = { change -> dispatchEvent(ChatRoomEvent.Report(change)) },
                 notify = { submitted ->
                     dispatchEffect(
@@ -317,6 +325,7 @@ class ChatRoomViewModel
             get() = chatSuggestions(turns.lastOrNull(), suggestedInputs, choicesEnabled)
 
         init {
+            analytics.track(AnalyticsEvent.ChatViewed(chatId))
             preferencesJob =
                 viewModelScope.launch {
                     composer = composer.convertTo(preferences.inputMode())
@@ -334,6 +343,7 @@ class ChatRoomViewModel
         }
 
         override suspend fun handleIntent(intent: ChatRoomIntent) {
+            intent.analyticsEvent(chatId, composer)?.let(analytics::track)
             when (intent) {
                 ChatRoomIntent.Retry -> load()
 
@@ -365,7 +375,9 @@ class ChatRoomViewModel
                 ChatRoomIntent.Sent -> {
                     val userInput = composer.toUserInput()
                     val origin = composerOrigin(userInput, filled)
-                    startTurn(userInput) { chatRepository.turnStream(chatId, userInput, origin) }
+                    startTurn(userInput, inputMode = composer.mode.messageInputMode) {
+                        chatRepository.turnStream(chatId, userInput, origin)
+                    }
                 }
 
                 ChatRoomIntent.DeleteConfirmed -> delete()
@@ -376,6 +388,7 @@ class ChatRoomViewModel
                 is ChatRoomIntent.RegenerateRequested -> {
                     // 화면이 본 마지막 턴과 지금 마지막 턴이 다르면 낡은 클릭이다.
                     val turn = turns.lastOrNull()?.takeIf { last -> last.id == intent.turnId } ?: return
+                    analytics.track(AnalyticsEvent.RegenerateTurnButtonClicked(chatId, turnNumber = turns.size))
                     startTurn(userInput = turn.userInput, regeneratedTurnId = turn.id) {
                         chatRepository.regenerateTurn(chatId, turn.id)
                     }
@@ -414,7 +427,10 @@ class ChatRoomViewModel
                             if (hintUnseen && turns.isEmpty()) preferences.markChoicesHintSeen()
                         }
 
-                        is DomainResult.Failure -> dispatchEvent(ChatRoomEvent.LoadFailed)
+                        is DomainResult.Failure -> {
+                            analytics.track(AnalyticsEvent.ChatLoadErrorShown(chatId))
+                            dispatchEvent(ChatRoomEvent.LoadFailed)
+                        }
                     }
                 }
         }
@@ -458,12 +474,20 @@ class ChatRoomViewModel
                     if (text.isEmpty()) return
                     val userInput = normalizeSuggestion(text)
                     val origin = choiceOrigin(intent.position, current.sourceTurnId)
-                    startTurn(userInput) { chatRepository.turnStream(chatId, userInput, origin) }
+                    analytics.track(
+                        AnalyticsEvent.ChoiceOptionSelected(chatId, turns.nextTurnNumber(), intent.position),
+                    )
+                    startTurn(userInput, inputMode = MessageInputMode.CHOICE) {
+                        chatRepository.turnStream(chatId, userInput, origin)
+                    }
                 }
 
                 is ChatRoomIntent.SuggestionFilled -> {
                     val current = suggestions
                     val text = current.items.getOrNull(intent.position) ?: return
+                    analytics.track(
+                        AnalyticsEvent.ChoiceFillButtonClicked(chatId, turns.nextTurnNumber(), intent.position),
+                    )
                     filled =
                         FilledSuggestion(
                             text = text,
@@ -496,11 +520,16 @@ class ChatRoomViewModel
         private fun startTurn(
             userInput: String,
             regeneratedTurnId: Long? = null,
+            inputMode: MessageInputMode? = null,
             stream: () -> Flow<ChatStreamEvent>,
         ) {
             // 스트림을 만들기 전에 막는다 — 진행 중에 또 만들면 버린 요청이 서버 기록에 남는다.
             if (streamJob?.isActive == true) return
             if (userInput.isBlank()) return
+            // 실제로 열리는 턴만 센다 — 잠금·빈 입력으로 걸러진 탭은 전송이 아니다.
+            if (inputMode != null) {
+                analytics.track(AnalyticsEvent.MessageInputSubmitted(chatId, turns.nextTurnNumber(), inputMode))
+            }
 
             // 상태를 바꾸기 전에 만든다 — 출처 판정이 아직 비우지 않은 채우기 기억을 봐야 한다.
             val events = stream()
@@ -548,6 +577,7 @@ class ChatRoomViewModel
 
                 ChatStreamEvent.Interrupted -> {
                     isStreaming = false
+                    analytics.track(AnalyticsEvent.StreamErrorShown(chatId, turns.activeTurnNumber(regeneratingTurnId)))
                     dispatchEvent(ChatRoomEvent.StreamCleared)
                     dispatchEffect(ChatRoomEffect.ShowStreamFailure(null))
                     // 서버 저장·교체 여부가 불명이라 임의로 복원하지 않고 확정 상태를 다시 읽는다.
@@ -579,8 +609,10 @@ class ChatRoomViewModel
             }
             val status = (event.error as? DomainError.Server)?.status
             if (status == HTTP_PAYMENT_REQUIRED) {
+                analytics.track(AnalyticsEvent.CreditShortageShown(CreditShortageTrigger.CHAT_TURN))
                 dispatchEffect(ChatRoomEffect.ShowCreditRequired)
             } else {
+                analytics.track(AnalyticsEvent.StreamErrorShown(chatId, turns.activeTurnNumber(regeneratingTurnId)))
                 dispatchEffect(ChatRoomEffect.ShowStreamFailure(event.message))
             }
             if (regeneratingTurnId != null && status == HTTP_CONFLICT) refreshTurns(confirmed = false)
@@ -801,3 +833,34 @@ private fun app.manyak.core.domain.chat.ChatTurn.toUi(): ChatRoomTurn =
         choices = choices,
         reachedEnding = reachedEnding,
     )
+
+/** 다음에 열릴 턴의 번호. 웹과 같이 1부터 센다. */
+private fun List<ChatRoomTurn>.nextTurnNumber(): Int = size + 1
+
+/** 진행 중인 턴의 번호. 재생성이면 그 자리, 이어쓰기면 새 자리다. */
+private fun List<ChatRoomTurn>.activeTurnNumber(regeneratingTurnId: Long?): Int =
+    if (regeneratingTurnId != null) size else size + 1
+
+private val ChatInputMode.messageInputMode: MessageInputMode
+    get() = if (this == ChatInputMode.BLOCK) MessageInputMode.BLOCK else MessageInputMode.PLAIN
+
+/**
+ * 컴포저 조작 의도가 만드는 분석 이벤트. 상태를 바꾸기 전의 [composer] 를 봐야 하므로 처리기 첫 줄에서 부른다 —
+ * 같은 모드 재선택은 이동이 아니고, 지우는 블럭의 종류는 지우기 전에만 알 수 있다.
+ */
+private fun ChatRoomIntent.analyticsEvent(
+    chatId: String,
+    composer: ChatComposerState,
+): AnalyticsEvent? =
+    when (this) {
+        ChatRoomIntent.Retry -> AnalyticsEvent.ChatRetryButtonClicked(chatId)
+        is ChatRoomIntent.BlockAdded -> AnalyticsEvent.AddBlockButtonClicked(chatId, type.name.lowercase())
+        is ChatRoomIntent.BlockRemoved ->
+            composer.blocks
+                .firstOrNull { block -> block.id == id }
+                ?.let { block -> AnalyticsEvent.RemoveBlockButtonClicked(chatId, block.type.name.lowercase()) }
+        is ChatRoomIntent.InputModeChanged ->
+            AnalyticsEvent.ChatInputModeSelected(chatId, mode).takeIf { mode != composer.mode }
+        is ChatRoomIntent.ChoicesEnabledChanged -> AnalyticsEvent.ChoicesToggleClicked(chatId, enabled)
+        else -> null
+    }

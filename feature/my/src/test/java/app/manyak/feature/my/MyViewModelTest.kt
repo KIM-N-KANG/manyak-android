@@ -1,5 +1,6 @@
 package app.manyak.feature.my
 
+import app.manyak.core.analytics.NoOpAnalytics
 import app.manyak.core.domain.auth.AccountLinkRepository
 import app.manyak.core.domain.auth.AuthProvider
 import app.manyak.core.domain.error.DomainError
@@ -235,6 +236,7 @@ class MyViewModelTest {
                     profileRepository,
                     FakeThemePreferenceRepository(),
                     accountLink,
+                    NoOpAnalytics,
                 ),
         )
     }

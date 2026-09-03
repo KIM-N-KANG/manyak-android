@@ -25,6 +25,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
+import app.manyak.core.analytics.AnalyticsEvent
+import app.manyak.core.analytics.LocalAnalytics
 import app.manyak.core.domain.auth.AuthProvider
 import app.manyak.core.domain.settings.ThemeMode
 import app.manyak.core.domain.user.AccountStatus
@@ -151,7 +153,14 @@ private fun MyContent(
             profile = state.profile,
             onLinkAccount = { provider -> onIntent(MyIntent.RequestAccountLink(provider)) },
         )
-        CreditBalanceCard(profile = state.profile, onOpenCharge = onOpenCreditCharge)
+        val analytics = LocalAnalytics.current
+        CreditBalanceCard(
+            profile = state.profile,
+            onOpenCharge = {
+                analytics.track(AnalyticsEvent.CreditChargeButtonClicked)
+                onOpenCreditCharge()
+            },
+        )
         MySection(labelRes = R.string.my_section_event) {
             InviteMenuItem(onClick = onOpenInvite)
         }

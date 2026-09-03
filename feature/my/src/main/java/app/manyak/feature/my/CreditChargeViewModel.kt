@@ -1,6 +1,8 @@
 package app.manyak.feature.my
 
 import androidx.lifecycle.viewModelScope
+import app.manyak.core.analytics.Analytics
+import app.manyak.core.analytics.AnalyticsEvent
 import app.manyak.core.domain.credit.CreditRepository
 import app.manyak.core.domain.credit.CreditTransaction
 import app.manyak.core.domain.credit.CreditTransactionPage
@@ -114,6 +116,7 @@ class CreditChargeViewModel
     constructor(
         private val creditRepository: CreditRepository,
         private val userProfileRepository: UserProfileRepository,
+        private val analytics: Analytics,
     ) : MviViewModel<CreditChargeIntent, CreditChargeUiState, CreditChargeEvent, CreditChargeEffect>(
             CreditChargeUiState(),
         ) {
@@ -121,6 +124,7 @@ class CreditChargeViewModel
         private var lastRefreshMark: TimeSource.Monotonic.ValueTimeMark? = null
 
         init {
+            analytics.track(AnalyticsEvent.CreditChargeViewed)
             viewModelScope.launch {
                 userProfileRepository.profile.collect { profile ->
                     dispatchEvent(
@@ -250,6 +254,7 @@ class CreditChargeViewModel
          */
         private suspend fun claimAttendance() {
             if (uiState.value.isClaimingAttendance) return
+            analytics.track(AnalyticsEvent.AttendanceButtonClicked)
             dispatchEvent(CreditChargeEvent.AttendanceStarted)
             when (val result = creditRepository.claimAttendance()) {
                 is DomainResult.Success -> {

@@ -35,6 +35,7 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import app.manyak.core.analytics.LocalAnalytics
 import app.manyak.core.domain.session.SessionState
 import app.manyak.core.domain.settings.ThemeMode
 import app.manyak.core.domain.story.CreationResumePoint
@@ -96,7 +97,10 @@ fun ManyakApp(
         }
 
     // 이프 수치는 세 기능 모듈의 화면이 함께 쓰므로 화면마다 상태를 늘리지 않고 루트에서 내린다.
-    CompositionLocalProvider(LocalCreditPolicy provides creditPolicy) {
+    CompositionLocalProvider(
+        LocalCreditPolicy provides creditPolicy,
+        LocalAnalytics provides viewModel.analytics,
+    ) {
         ManyakTheme(darkTheme = darkTheme) {
             SystemBarIconAppearance(darkTheme = darkTheme)
             Surface(modifier = modifier.fillMaxSize(), color = ManyakTheme.colors.surface) {

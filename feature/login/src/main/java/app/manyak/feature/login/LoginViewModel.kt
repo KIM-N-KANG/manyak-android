@@ -1,6 +1,8 @@
 package app.manyak.feature.login
 
 import androidx.lifecycle.viewModelScope
+import app.manyak.core.analytics.Analytics
+import app.manyak.core.analytics.AnalyticsEvent
 import app.manyak.core.domain.auth.AuthProvider
 import app.manyak.core.domain.error.DomainError
 import app.manyak.core.domain.error.DomainResult
@@ -68,8 +70,10 @@ class LoginViewModel
     @Inject
     constructor(
         private val sessionRepository: SessionRepository,
+        private val analytics: Analytics,
     ) : MviViewModel<LoginIntent, LoginUiState, LoginEvent, Nothing>(LoginUiState()) {
         init {
+            analytics.track(AnalyticsEvent.LoginViewed)
             viewModelScope.launch {
                 sessionRepository.sessionState
                     .filterIsInstance<SessionState.SignedOut>()
@@ -109,10 +113,19 @@ class LoginViewModel
          */
         private suspend fun startSignIn(provider: AuthProvider) {
             if (sessionRepository.signInInProgress.value != null) return
+            analytics.track(AnalyticsEvent.LoginProviderButtonClicked(provider))
             dispatchEvent(LoginEvent.ErrorDismissed)
             when (val result = sessionRepository.signIn(provider)) {
                 is DomainResult.Success -> dispatchEvent(LoginEvent.Succeeded)
-                is DomainResult.Failure -> dispatchEvent(LoginEvent.Failed(result.error))
+                is DomainResult.Failure -> {
+                    // 사용자가 제공자 창을 스스로 닫은 것은 실패 안내가 뜨지 않으므로 이벤트도 없다.
+                    if (result.error != DomainError.ProviderCancelled) {
+                        analytics.track(
+                            AnalyticsEvent.LoginOauthErrorShown(result.error::class.simpleName.orEmpty(), provider),
+                        )
+                    }
+                    dispatchEvent(LoginEvent.Failed(result.error))
+                }
             }
         }
     }

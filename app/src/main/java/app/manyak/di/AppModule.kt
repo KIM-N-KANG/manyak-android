@@ -1,6 +1,7 @@
 package app.manyak.di
 
 import app.manyak.BuildConfig
+import app.manyak.core.analytics.AnalyticsConfig
 import app.manyak.core.data.di.DataLayerConfig
 import app.manyak.core.data.di.SocialAuthConfig
 import app.manyak.core.data.provider.ActivityProvider
@@ -35,6 +36,14 @@ object AppConfigModule {
         object : InviteShareLinkProvider {
             override fun shareUrl(): String = BuildConfig.WEB_BASE_URL
         }
+
+    @Provides
+    @Singleton
+    fun provideAnalyticsConfig(): AnalyticsConfig =
+        AnalyticsConfig(
+            apiKey = BuildConfig.AMPLITUDE_API_KEY,
+            isDebugBuild = BuildConfig.DEBUG,
+        )
 
     @Provides
     @Singleton

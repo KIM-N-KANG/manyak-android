@@ -1,6 +1,11 @@
 package app.manyak.feature.create
 
 import androidx.lifecycle.viewModelScope
+import app.manyak.core.analytics.Analytics
+import app.manyak.core.analytics.AnalyticsEvent
+import app.manyak.core.analytics.CompletionStage
+import app.manyak.core.analytics.CreateStep
+import app.manyak.core.analytics.CreditShortageTrigger
 import app.manyak.core.domain.chat.ChatRepository
 import app.manyak.core.domain.error.DomainError
 import app.manyak.core.domain.error.DomainResult
@@ -177,6 +182,7 @@ class CreateAdditionalInfoViewModel
         private val storyCreationRepository: StoryCreationRepository,
         private val chatRepository: ChatRepository,
         private val pendingCreationStore: PendingStoryCreationStore,
+        private val analytics: Analytics,
     ) : MviViewModel<
             CreateAdditionalInfoIntent,
             CreateAdditionalInfoUiState,
@@ -202,6 +208,7 @@ class CreateAdditionalInfoViewModel
         val draftSave = storylineGenerationStore.draftSave
 
         init {
+            analytics.track(AnalyticsEvent.StoryCreateStepViewed(CreateStep.ADDITIONAL_INFO))
             viewModelScope.launch {
                 // 프로세스 재시작·재개 진입이면 진행 레코드에서 스토어를 먼저 복원한다.
                 storylineGenerationStore.ensureRestored()
@@ -288,6 +295,11 @@ class CreateAdditionalInfoViewModel
             restoreDraft: Boolean = false,
         ) {
             if (restoreDraft) storylineGenerationStore.restoreDraftAfterCompletionFailure()
+            val stage = if (completedStoryId != null) CompletionStage.CHAT else CompletionStage.STORY
+            analytics.track(AnalyticsEvent.CompleteErrorShown(stage))
+            if (failure == CompletionFailure.CREDIT) {
+                analytics.track(AnalyticsEvent.CreditShortageShown(CreditShortageTrigger.STORY_CREATE))
+            }
             dispatchEvent(CreateAdditionalInfoEvent.CompletionFailed)
             dispatchEffect(CreateAdditionalInfoEffect.ShowCompletionFailure(failure))
         }
@@ -295,16 +307,21 @@ class CreateAdditionalInfoViewModel
         override suspend fun handleIntent(intent: CreateAdditionalInfoIntent) {
             val state = uiState.value
             when (intent) {
-                is CreateAdditionalInfoIntent.ToggleRecommendation ->
+                is CreateAdditionalInfoIntent.ToggleRecommendation -> {
+                    val selected = intent.text !in state.selectedRecommendations
+                    analytics.track(AnalyticsEvent.RecommendedInfoClicked(selected))
                     dispatchEvent(CreateAdditionalInfoEvent.RecommendationToggled(intent.text))
+                }
 
                 CreateAdditionalInfoIntent.AddInput ->
                     if (state.canAddInput) {
+                        analytics.track(AnalyticsEvent.AdditionalInfoAddButtonClicked)
                         dispatchEvent(CreateAdditionalInfoEvent.InputAdded)
                     }
 
                 is CreateAdditionalInfoIntent.RemoveInput ->
                     if (state.additionalInfos.any { it.id == intent.inputId }) {
+                        analytics.track(AnalyticsEvent.AdditionalInfoRemoveButtonClicked)
                         dispatchEvent(CreateAdditionalInfoEvent.InputRemoved(intent.inputId))
                     }
 
@@ -319,6 +336,7 @@ class CreateAdditionalInfoViewModel
                 is CreateAdditionalInfoIntent.CompleteStory -> completeStory(state, intent.storylineIndex)
 
                 CreateAdditionalInfoIntent.SaveDraft -> {
+                    analytics.track(AnalyticsEvent.DraftSaved(CreateStep.ADDITIONAL_INFO))
                     // 미러링 수집이 UiState 보다 늦게 돌아도 저장에는 지금 입력이 들어가야 한다.
                     storylineGenerationStore.updateAdditionalInfoProgress(
                         inputs = state.additionalInfos.map(AdditionalInfoInput::value),
@@ -338,7 +356,10 @@ class CreateAdditionalInfoViewModel
             when (intent) {
                 CreateAdditionalInfoIntent.LeaveFunnel -> leaveFunnel(confirmed = false)
 
-                CreateAdditionalInfoIntent.ConfirmLeaveFunnel -> leaveFunnel(confirmed = true)
+                CreateAdditionalInfoIntent.ConfirmLeaveFunnel -> {
+                    analytics.track(AnalyticsEvent.CreateExitButtonClicked(CreateStep.ADDITIONAL_INFO))
+                    leaveFunnel(confirmed = true)
+                }
 
                 CreateAdditionalInfoIntent.DismissExitWarning ->
                     dispatchEvent(CreateAdditionalInfoEvent.ExitWarningChanged(null))
@@ -389,6 +410,7 @@ class CreateAdditionalInfoViewModel
          * 남아 있던 화면 상태가 방금 비운 진행을 다시 채운다.
          */
         private suspend fun confirmReselect() {
+            analytics.track(AnalyticsEvent.BackToStorylineButtonClicked)
             isLeaving = true
             storylineGenerationStore.clearAdditionalInfoProgress()
             dispatchEffect(CreateAdditionalInfoEffect.NavigateBackToStoryline)
@@ -403,6 +425,9 @@ class CreateAdditionalInfoViewModel
             // 스토리는 완성됐고 채팅 생성만 실패한 재시도 — 완성 요청을 건너뛴다(3-1 완성 재시도 분기).
             val alreadyCompletedStoryId = completedStoryId
             if (alreadyCompletedStoryId != null) {
+                state.simpleCreationId?.let {
+                    analytics.track(AnalyticsEvent.StoryCompletionRequested(it.toString()))
+                }
                 dispatchEvent(CreateAdditionalInfoEvent.CompletionStarted)
                 completeJob = viewModelScope.launch { startChat(alreadyCompletedStoryId) }
                 return
@@ -424,6 +449,7 @@ class CreateAdditionalInfoViewModel
             )
             // 요청 전에 영속한다 — 응답을 못 받아도 재진입 복구 조회가 이 requestId 를 쓴다.
             storylineGenerationStore.beginCompletion(command)
+            analytics.track(AnalyticsEvent.StoryCompletionRequested(simpleCreationId.toString()))
             dispatchEvent(CreateAdditionalInfoEvent.CompletionStarted)
             completeJob =
                 viewModelScope.launch {
@@ -465,6 +491,7 @@ class CreateAdditionalInfoViewModel
         private suspend fun startChat(storyId: String) {
             when (val result = chatRepository.createChat(storyId)) {
                 is DomainResult.Success -> {
+                    analytics.track(AnalyticsEvent.StoryCreateCompleted(storyId = storyId, chatId = result.value.id))
                     pendingCreationStore.clear()
                     // 스토어를 비워야 다음 퍼널 이탈에서 이미 완성된 결과가 임시 저장으로 둔갑하지 않는다.
                     storylineGenerationStore.resetAfterCompletion()

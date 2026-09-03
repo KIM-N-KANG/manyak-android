@@ -1,6 +1,11 @@
 package app.manyak.feature.studio
 
 import androidx.lifecycle.viewModelScope
+import app.manyak.core.analytics.Analytics
+import app.manyak.core.analytics.AnalyticsEvent
+import app.manyak.core.analytics.PendingCreationStage
+import app.manyak.core.analytics.ReportSource
+import app.manyak.core.analytics.StoryListSection
 import app.manyak.core.domain.error.DomainResult
 import app.manyak.core.domain.story.CreationResumePoint
 import app.manyak.core.domain.story.PendingStoryCreation
@@ -171,15 +176,21 @@ class StudioViewModel
     constructor(
         private val pendingCreationStore: PendingStoryCreationStore,
         private val storyRepository: StoryRepository,
+        private val analytics: Analytics,
     ) : MviViewModel<StudioIntent, StudioUiState, StudioEvent, StudioEffect>(StudioUiState()) {
         private var loadJob: Job? = null
         private var deleteJob: Job? = null
+
+        /** 배너로 보여 준 레코드 단계. 같은 레코드가 다시 흘러와도 노출을 두 번 세지 않는다. */
+        private var shownBannerStage: PendingCreationStage? = null
 
         /** 신고 절차는 상세·채팅방과 같아 :core:ui 의 컨트롤러가 소유한다. */
         private val report =
             StoryReportController(
                 scope = viewModelScope,
                 repository = storyRepository,
+                analytics = analytics,
+                source = ReportSource.STUDIO,
                 emit = { change -> dispatchEvent(StudioEvent.Report(change)) },
                 notify = { submitted ->
                     dispatchEffect(
@@ -189,8 +200,14 @@ class StudioViewModel
             )
 
         init {
+            analytics.track(AnalyticsEvent.StoryListViewed(StoryListSection.CREATED))
             viewModelScope.launch {
                 pendingCreationStore.record.collect { record ->
+                    val stage = record?.toStage()
+                    if (stage != null && stage != shownBannerStage) {
+                        analytics.track(AnalyticsEvent.ContinueBannerShown(stage))
+                    }
+                    shownBannerStage = stage
                     dispatchEvent(StudioEvent.PendingCreationChanged(record?.toBanner()))
                 }
             }
@@ -219,11 +236,22 @@ class StudioViewModel
 
                 StudioIntent.ResumeCreation ->
                     state.pendingBanner?.let { banner ->
+                        // 같은 Intent 가 배너와 재개 다이얼로그 두 곳에서 온다. 열려 있던 쪽이 출처다.
+                        analytics.track(
+                            if (state.showResumeChoiceDialog) {
+                                AnalyticsEvent.ResumeDialogContinued
+                            } else {
+                                AnalyticsEvent.ContinueBannerClicked(
+                                    shownBannerStage ?: PendingCreationStage.STORY_DRAFT,
+                                )
+                            },
+                        )
                         dispatchEvent(StudioEvent.ResumeChoiceDialogVisibleChanged(visible = false))
                         dispatchEffect(StudioEffect.NavigateToResume(banner.resumePoint))
                     }
 
                 StudioIntent.StartNewCreation -> {
+                    analytics.track(AnalyticsEvent.ResumeDialogDiscarded)
                     // 레코드 폐기가 진입보다 먼저다 — 레코드가 남은 채 들어가면 재개로 복원된다.
                     pendingCreationStore.clear()
                     dispatchEvent(StudioEvent.ResumeChoiceDialogVisibleChanged(visible = false))
@@ -241,7 +269,10 @@ class StudioViewModel
             state: StudioUiState,
         ) {
             when (intent) {
-                is StudioIntent.OpenStoryOptions -> dispatchEvent(StudioEvent.OptionsTargetChanged(intent.story))
+                is StudioIntent.OpenStoryOptions -> {
+                    analytics.track(AnalyticsEvent.StoryOptionsOpened(intent.story.id))
+                    dispatchEvent(StudioEvent.OptionsTargetChanged(intent.story))
+                }
 
                 StudioIntent.CloseStoryOptions -> dispatchEvent(StudioEvent.OptionsTargetChanged(null))
 
@@ -305,7 +336,10 @@ class StudioViewModel
 
         private suspend fun reportLoadFailure(kind: LoadKind) {
             when (kind) {
-                LoadKind.Blocking -> dispatchEvent(StudioEvent.LoadFailed)
+                LoadKind.Blocking -> {
+                    analytics.track(AnalyticsEvent.StoryListLoadErrorShown(StoryListSection.CREATED))
+                    dispatchEvent(StudioEvent.LoadFailed)
+                }
 
                 LoadKind.Refresh -> {
                     dispatchEvent(StudioEvent.RefreshFailed)
@@ -321,6 +355,7 @@ class StudioViewModel
             if (pendingBanner == null) {
                 dispatchEffect(StudioEffect.NavigateToCreate)
             } else {
+                analytics.track(AnalyticsEvent.ResumeDialogShown)
                 dispatchEvent(StudioEvent.ResumeChoiceDialogVisibleChanged(visible = true))
             }
         }
@@ -342,6 +377,7 @@ class StudioViewModel
                     dispatchEvent(StudioEvent.DeleteStarted)
                     when (storyRepository.deleteStory(target.id)) {
                         is DomainResult.Success -> {
+                            analytics.track(AnalyticsEvent.StoryListStoryDeleted(target.id))
                             dispatchEvent(StudioEvent.DeleteSucceeded(target.id))
                             dispatchEffect(StudioEffect.ShowStoryDeleted)
                         }
@@ -445,6 +481,15 @@ private enum class LoadKind {
     /** 당겨서 새로고침. 당김 표시자로 진행을 알리고 실패는 토스트로 알린다. */
     Refresh,
 }
+
+/** 카탈로그의 `stage` 값. 웹의 진행 레코드 단계 이름과 맞춘다. */
+private fun PendingStoryCreation.toStage(): PendingCreationStage =
+    when (this) {
+        is PendingStoryCreation.KeywordDraft -> PendingCreationStage.KEYWORD_DRAFT
+        is PendingStoryCreation.GeneratingStorylines -> PendingCreationStage.STORYLINE_GENERATION
+        is PendingStoryCreation.CompletingStory -> PendingCreationStage.STORY_COMPLETION
+        is PendingStoryCreation.Draft -> PendingCreationStage.STORY_DRAFT
+    }
 
 private fun PendingStoryCreation.toBanner(): PendingCreationBanner =
     PendingCreationBanner(

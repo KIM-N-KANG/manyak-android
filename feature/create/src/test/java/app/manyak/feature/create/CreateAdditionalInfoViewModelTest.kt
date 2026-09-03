@@ -1,5 +1,6 @@
 package app.manyak.feature.create
 
+import app.manyak.core.analytics.NoOpAnalytics
 import app.manyak.core.domain.error.DomainError
 import app.manyak.core.domain.error.DomainResult
 import app.manyak.core.domain.story.CompletedStory
@@ -49,6 +50,7 @@ class CreateAdditionalInfoViewModelTest {
             repository,
             FakeChatRepository(),
             pendingStore,
+            NoOpAnalytics,
         )
     }
 
@@ -75,7 +77,7 @@ class CreateAdditionalInfoViewModelTest {
             chatRepository = chatRepository,
             pendingStore = pendingStore,
             store = store,
-            viewModel = CreateAdditionalInfoViewModel(store, repository, chatRepository, pendingStore),
+            viewModel = CreateAdditionalInfoViewModel(store, repository, chatRepository, pendingStore, NoOpAnalytics),
         )
     }
 
@@ -417,7 +419,7 @@ class CreateAdditionalInfoViewModelTest {
                 )
             val store = StorylineGenerationStore(repository, pendingStore, this)
             val viewModel =
-                CreateAdditionalInfoViewModel(store, repository, FakeChatRepository(), pendingStore)
+                CreateAdditionalInfoViewModel(store, repository, FakeChatRepository(), pendingStore, NoOpAnalytics)
             advanceUntilIdle()
 
             val state = viewModel.uiState.value
@@ -443,7 +445,7 @@ class CreateAdditionalInfoViewModelTest {
             val store = StorylineGenerationStore(repository, pendingStore, this)
 
             val viewModel =
-                CreateAdditionalInfoViewModel(store, repository, FakeChatRepository(), pendingStore)
+                CreateAdditionalInfoViewModel(store, repository, FakeChatRepository(), pendingStore, NoOpAnalytics)
 
             // 복원 결과가 오기 전 첫 프레임. 여기서 입력 화면을 그리면 본문 없는 화면이 스쳐 지나간다.
             assertTrue(viewModel.uiState.value.isRestoring)
@@ -483,7 +485,7 @@ class CreateAdditionalInfoViewModelTest {
                 )
             val store = StorylineGenerationStore(repository, pendingStore, this)
             val viewModel =
-                CreateAdditionalInfoViewModel(store, repository, FakeChatRepository(), pendingStore)
+                CreateAdditionalInfoViewModel(store, repository, FakeChatRepository(), pendingStore, NoOpAnalytics)
 
             advanceUntilIdle()
 
@@ -511,7 +513,7 @@ class CreateAdditionalInfoViewModelTest {
                 )
             val store = StorylineGenerationStore(repository, pendingStore, this)
 
-            CreateAdditionalInfoViewModel(store, repository, FakeChatRepository(), pendingStore)
+            CreateAdditionalInfoViewModel(store, repository, FakeChatRepository(), pendingStore, NoOpAnalytics)
             advanceUntilIdle()
 
             assertEquals(inputs, store.progress.additionalInfoInputs)

@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -24,6 +24,11 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
+import app.manyak.core.analytics.AnalyticsEvent
+import app.manyak.core.analytics.LocalAnalytics
+import app.manyak.core.analytics.StoryListSection
+import app.manyak.core.analytics.rememberImpressionTracker
+import app.manyak.core.analytics.trackImpression
 import app.manyak.core.domain.story.StorySummary
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.LoadFailedContent
@@ -124,6 +129,8 @@ private fun OriginalStories(
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val analytics = LocalAnalytics.current
+    val impressions = rememberImpressionTracker()
     ManyakPullToRefreshBox(
         modifier = modifier,
         isRefreshing = isRefreshing,
@@ -142,8 +149,20 @@ private fun OriginalStories(
             item(key = SECTION_TITLE_KEY, span = { GridItemSpan(maxLineSpan) }) {
                 SectionTitle()
             }
-            items(stories, key = { story -> story.id }) { story ->
-                StoryCard(story = story, onClick = { onOpenStory(story.id) })
+            itemsIndexed(stories, key = { _, story -> story.id }) { index, story ->
+                StoryCard(
+                    story = story,
+                    onClick = {
+                        analytics.track(AnalyticsEvent.StoryCardClicked(story.id, index, StoryListSection.ORIGINAL))
+                        onOpenStory(story.id)
+                    },
+                    modifier =
+                        Modifier.trackImpression(impressions, key = story.id) {
+                            analytics.track(
+                                AnalyticsEvent.StoryCardImpressed(story.id, index, StoryListSection.ORIGINAL),
+                            )
+                        },
+                )
             }
         }
     }

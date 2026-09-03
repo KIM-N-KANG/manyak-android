@@ -1,6 +1,9 @@
 package app.manyak.feature.story
 
 import androidx.lifecycle.viewModelScope
+import app.manyak.core.analytics.Analytics
+import app.manyak.core.analytics.AnalyticsEvent
+import app.manyak.core.analytics.ReportSource
 import app.manyak.core.domain.chat.ChatRepository
 import app.manyak.core.domain.error.DomainError
 import app.manyak.core.domain.error.DomainResult
@@ -146,6 +149,7 @@ class StoryDetailViewModel
         @Assisted private val storyId: String,
         private val storyRepository: StoryRepository,
         private val chatRepository: ChatRepository,
+        private val analytics: Analytics,
     ) : MviViewModel<StoryDetailIntent, StoryDetailUiState, StoryDetailEvent, StoryDetailEffect>(
             StoryDetailUiState(),
         ) {
@@ -169,6 +173,8 @@ class StoryDetailViewModel
             StoryReportController(
                 scope = viewModelScope,
                 repository = storyRepository,
+                analytics = analytics,
+                source = ReportSource.STORY_DETAIL,
                 emit = { change -> dispatchEvent(StoryDetailEvent.Report(change)) },
                 notify = { submitted ->
                     dispatchEffect(
@@ -180,6 +186,10 @@ class StoryDetailViewModel
                     )
                 },
             )
+
+        init {
+            analytics.track(AnalyticsEvent.StoryDetailViewed(storyId))
+        }
 
         override suspend fun handleIntent(intent: StoryDetailIntent) {
             val state = uiState.value
@@ -197,6 +207,7 @@ class StoryDetailViewModel
                 StoryDetailIntent.OpenImageViewer ->
                     // 열 이미지가 없으면 빈 화면이 뜬다.
                     if (state.story?.thumbnailUrl != null) {
+                        analytics.track(AnalyticsEvent.ThumbnailClicked(storyId))
                         dispatchEvent(StoryDetailEvent.ImageViewerVisibleChanged(visible = true))
                     }
 
@@ -204,6 +215,7 @@ class StoryDetailViewModel
                     dispatchEvent(StoryDetailEvent.ImageViewerVisibleChanged(visible = false))
 
                 is StoryDetailIntent.SelectStartSetting -> {
+                    analytics.track(AnalyticsEvent.StartSettingSelected(storyId, intent.startSettingId))
                     selectedStartSettingId = intent.startSettingId
                     dispatchEvent(StoryDetailEvent.StartSettingSelected(intent.startSettingId))
                 }
@@ -250,6 +262,7 @@ class StoryDetailViewModel
         private suspend fun startChat(state: StoryDetailUiState) {
             val story = state.story ?: return
             if (startChatJob?.isActive == true) return
+            analytics.track(AnalyticsEvent.ChatStartButtonClicked(story.id))
             dispatchEvent(StoryDetailEvent.ChatStartRequested)
             startChatJob =
                 viewModelScope.launch {
@@ -271,7 +284,10 @@ class StoryDetailViewModel
                 viewModelScope.launch {
                     dispatchEvent(StoryDetailEvent.DeleteStarted)
                     when (storyRepository.deleteStory(storyId)) {
-                        is DomainResult.Success -> dispatchEffect(StoryDetailEffect.StoryDeleted)
+                        is DomainResult.Success -> {
+                            analytics.track(AnalyticsEvent.StoryDetailStoryDeleted(storyId))
+                            dispatchEffect(StoryDetailEffect.StoryDeleted)
+                        }
 
                         is DomainResult.Failure -> {
                             dispatchEvent(StoryDetailEvent.DeleteFailed)

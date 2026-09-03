@@ -1,6 +1,9 @@
 package app.manyak.feature.chat
 
 import androidx.lifecycle.viewModelScope
+import app.manyak.core.analytics.Analytics
+import app.manyak.core.analytics.AnalyticsEvent
+import app.manyak.core.analytics.ReportSource
 import app.manyak.core.domain.chat.ChatRepository
 import app.manyak.core.domain.chat.ChatSummary
 import app.manyak.core.domain.error.DomainResult
@@ -135,15 +138,22 @@ class ChatListViewModel
     constructor(
         private val chatRepository: ChatRepository,
         storyRepository: StoryRepository,
+        private val analytics: Analytics,
     ) : MviViewModel<ChatListIntent, ChatListUiState, ChatListEvent, ChatListEffect>(ChatListUiState()) {
         private var loadJob: Job? = null
         private var deleteJob: Job? = null
+
+        init {
+            analytics.track(AnalyticsEvent.ChatListViewed)
+        }
 
         /** 신고 절차는 채팅방·상세와 같아 :core:ui 의 컨트롤러가 소유한다. */
         private val report =
             StoryReportController(
                 scope = viewModelScope,
                 repository = storyRepository,
+                analytics = analytics,
+                source = ReportSource.CHAT_LIST,
                 emit = { change -> dispatchEvent(ChatListEvent.Report(change)) },
                 notify = { submitted ->
                     dispatchEffect(
@@ -163,7 +173,10 @@ class ChatListViewModel
 
                 ChatListIntent.Refresh -> load(LoadKind.Refresh)
 
-                is ChatListIntent.OpenOptions -> dispatchEvent(ChatListEvent.OptionsTargetChanged(intent.chat))
+                is ChatListIntent.OpenOptions -> {
+                    analytics.track(AnalyticsEvent.ChatOptionsOpened(intent.chat.id))
+                    dispatchEvent(ChatListEvent.OptionsTargetChanged(intent.chat))
+                }
 
                 ChatListIntent.CloseOptions -> dispatchEvent(ChatListEvent.OptionsTargetChanged(null))
 
@@ -226,7 +239,10 @@ class ChatListViewModel
 
         private suspend fun reportLoadFailure(kind: LoadKind) {
             when (kind) {
-                LoadKind.Blocking -> dispatchEvent(ChatListEvent.LoadFailed)
+                LoadKind.Blocking -> {
+                    analytics.track(AnalyticsEvent.ChatListLoadErrorShown)
+                    dispatchEvent(ChatListEvent.LoadFailed)
+                }
 
                 LoadKind.Refresh -> {
                     dispatchEvent(ChatListEvent.RefreshFailed)
@@ -244,6 +260,7 @@ class ChatListViewModel
                     dispatchEvent(ChatListEvent.DeleteStarted)
                     when (chatRepository.deleteChat(target.id)) {
                         is DomainResult.Success -> {
+                            analytics.track(AnalyticsEvent.ChatListChatDeleted(target.id))
                             dispatchEvent(ChatListEvent.DeleteSucceeded(target.id))
                             dispatchEffect(ChatListEffect.ShowChatDeleted)
                         }

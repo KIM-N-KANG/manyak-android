@@ -1,5 +1,6 @@
 package app.manyak.feature.studio
 
+import app.manyak.core.analytics.NoOpAnalytics
 import app.manyak.core.domain.error.DomainError
 import app.manyak.core.domain.error.DomainResult
 import app.manyak.core.domain.story.CreationProgress
@@ -49,7 +50,7 @@ class StudioViewModelTest {
     @Test
     fun `진행 레코드가 없으면 배너 없이 바로 새 생성으로 진입한다`() =
         runTest(dispatcher) {
-            val viewModel = StudioViewModel(FakePendingStoryCreationStore(), FakeStoryRepository())
+            val viewModel = StudioViewModel(FakePendingStoryCreationStore(), FakeStoryRepository(), NoOpAnalytics)
             viewModel.onIntent(StudioIntent.ScreenShown)
             advanceUntilIdle()
 
@@ -68,7 +69,7 @@ class StudioViewModelTest {
     fun `완성 진행 레코드는 완성 중 배너와 추가 정보 재개 지점이 된다`() =
         runTest(dispatcher) {
             val store = FakePendingStoryCreationStore(initial = completingRecord(selectedIndex = 2))
-            val viewModel = StudioViewModel(store, FakeStoryRepository())
+            val viewModel = StudioViewModel(store, FakeStoryRepository(), NoOpAnalytics)
             viewModel.onIntent(StudioIntent.ScreenShown)
             advanceUntilIdle()
 
@@ -81,7 +82,7 @@ class StudioViewModelTest {
     fun `레코드가 있는 FAB 진입은 다이얼로그로 묻고 새로 만들기는 폐기 후 진입한다`() =
         runTest(dispatcher) {
             val store = FakePendingStoryCreationStore(initial = generatingRecord())
-            val viewModel = StudioViewModel(store, FakeStoryRepository())
+            val viewModel = StudioViewModel(store, FakeStoryRepository(), NoOpAnalytics)
             viewModel.onIntent(StudioIntent.ScreenShown)
             advanceUntilIdle()
 
@@ -104,7 +105,7 @@ class StudioViewModelTest {
     fun `이어서 만들기는 레코드 단계의 재개 지점으로 진입한다`() =
         runTest(dispatcher) {
             val store = FakePendingStoryCreationStore(initial = generatingRecord())
-            val viewModel = StudioViewModel(store, FakeStoryRepository())
+            val viewModel = StudioViewModel(store, FakeStoryRepository(), NoOpAnalytics)
             viewModel.onIntent(StudioIntent.ScreenShown)
             advanceUntilIdle()
 
@@ -121,7 +122,7 @@ class StudioViewModelTest {
     fun `화면이 보이면 내 스토리를 조회해 목록 상태가 된다`() =
         runTest(dispatcher) {
             val repository = FakeStoryRepository()
-            val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository)
+            val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository, NoOpAnalytics)
             viewModel.onIntent(StudioIntent.ScreenShown)
             advanceUntilIdle()
 
@@ -137,7 +138,7 @@ class StudioViewModelTest {
         runTest(dispatcher) {
             val repository = FakeStoryRepository()
             repository.queuedResults.add(DomainResult.Success(sampleStories().take(1)))
-            val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository)
+            val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository, NoOpAnalytics)
             viewModel.onIntent(StudioIntent.ScreenShown)
             advanceUntilIdle()
             assertEquals(sampleStories().take(1), viewModel.uiState.value.stories)
@@ -156,7 +157,7 @@ class StudioViewModelTest {
     fun `갱신이 실패해도 보고 있던 목록을 그대로 둔다`() =
         runTest(dispatcher) {
             val repository = FakeStoryRepository()
-            val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository)
+            val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository, NoOpAnalytics)
             viewModel.onIntent(StudioIntent.ScreenShown)
             advanceUntilIdle()
 
@@ -175,7 +176,7 @@ class StudioViewModelTest {
         runTest(dispatcher) {
             val repository = FakeStoryRepository()
             repository.queuedResults.add(DomainResult.Failure(DomainError.Network))
-            val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository)
+            val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository, NoOpAnalytics)
             viewModel.onIntent(StudioIntent.ScreenShown)
             advanceUntilIdle()
 
@@ -196,7 +197,7 @@ class StudioViewModelTest {
     fun `당겨서 새로고침은 골격 없이 목록을 다시 읽는다`() =
         runTest(dispatcher) {
             val repository = FakeStoryRepository()
-            val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository)
+            val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository, NoOpAnalytics)
             viewModel.onIntent(StudioIntent.ScreenShown)
             advanceUntilIdle()
 
@@ -214,7 +215,7 @@ class StudioViewModelTest {
     fun `새로고침 실패는 목록을 그대로 두고 실패 안내를 보낸다`() =
         runTest(dispatcher) {
             val repository = FakeStoryRepository()
-            val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository)
+            val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository, NoOpAnalytics)
             viewModel.onIntent(StudioIntent.ScreenShown)
             advanceUntilIdle()
 
@@ -236,7 +237,7 @@ class StudioViewModelTest {
     fun `삭제는 확인을 거쳐 목록에서 대상만 제거하고 완료 안내를 보낸다`() =
         runTest(dispatcher) {
             val repository = FakeStoryRepository()
-            val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository)
+            val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository, NoOpAnalytics)
             viewModel.onIntent(StudioIntent.ScreenShown)
             advanceUntilIdle()
             val loadedState = viewModel.uiState.value
@@ -267,7 +268,7 @@ class StudioViewModelTest {
         runTest(dispatcher) {
             val repository = FakeStoryRepository()
             repository.queuedDeleteResults.add(DomainResult.Failure(DomainError.Network))
-            val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository)
+            val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository, NoOpAnalytics)
             viewModel.onIntent(StudioIntent.ScreenShown)
             advanceUntilIdle()
             val loadedState = viewModel.uiState.value
@@ -294,7 +295,7 @@ class StudioViewModelTest {
     fun `삭제 다이얼로그는 닫기 요청으로 대상 없이 닫힌다`() =
         runTest(dispatcher) {
             val repository = FakeStoryRepository()
-            val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository)
+            val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository, NoOpAnalytics)
             viewModel.onIntent(StudioIntent.ScreenShown)
             advanceUntilIdle()
             val loadedState = viewModel.uiState.value
@@ -314,7 +315,7 @@ class StudioViewModelTest {
     fun `옵션 시트에서 연 신고는 그 카드의 스토리로 나가고 시트를 닫는다`() =
         runTest(dispatcher) {
             val repository = FakeStoryRepository()
-            val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository)
+            val viewModel = StudioViewModel(FakePendingStoryCreationStore(), repository, NoOpAnalytics)
             viewModel.onIntent(StudioIntent.ScreenShown)
             advanceUntilIdle()
             val target =

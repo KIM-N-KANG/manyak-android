@@ -1,6 +1,9 @@
 package app.manyak.feature.home
 
 import androidx.lifecycle.viewModelScope
+import app.manyak.core.analytics.Analytics
+import app.manyak.core.analytics.AnalyticsEvent
+import app.manyak.core.analytics.StoryListSection
 import app.manyak.core.domain.error.DomainResult
 import app.manyak.core.domain.story.StoryRepository
 import app.manyak.core.domain.story.StorySummary
@@ -59,10 +62,12 @@ class HomeViewModel
     @Inject
     constructor(
         private val storyRepository: StoryRepository,
+        private val analytics: Analytics,
     ) : MviViewModel<HomeIntent, HomeUiState, HomeEvent, HomeEffect>(HomeUiState()) {
         private var loadJob: Job? = null
 
         init {
+            analytics.track(AnalyticsEvent.StoryListViewed(StoryListSection.ORIGINAL))
             load(refresh = false)
         }
 
@@ -93,6 +98,7 @@ class HomeViewModel
                                 dispatchEvent(HomeEvent.RefreshFailed)
                                 dispatchEffect(HomeEffect.ShowRefreshFailed)
                             } else {
+                                analytics.track(AnalyticsEvent.StoryListLoadErrorShown(StoryListSection.ORIGINAL))
                                 dispatchEvent(HomeEvent.LoadFailed)
                             }
                     }

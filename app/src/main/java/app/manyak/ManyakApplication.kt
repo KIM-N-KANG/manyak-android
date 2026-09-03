@@ -3,6 +3,7 @@ package app.manyak
 import android.app.Application
 import app.manyak.core.data.datastore.LegacyPendingCreationFile
 import app.manyak.core.data.provider.KakaoSdkInitializer
+import app.manyak.session.AnalyticsSessionBinder
 import app.manyak.session.CurrentActivityProvider
 import app.manyak.session.SessionBootstrapper
 import dagger.hilt.android.HiltAndroidApp
@@ -22,6 +23,9 @@ class ManyakApplication : Application() {
     @Inject
     lateinit var legacyPendingCreationFile: LegacyPendingCreationFile
 
+    @Inject
+    lateinit var analyticsSessionBinder: AnalyticsSessionBinder
+
     override fun onCreate() {
         super.onCreate()
         registerActivityLifecycleCallbacks(activityProvider)
@@ -29,6 +33,8 @@ class ManyakApplication : Application() {
         kakaoSdkInitializer.initialize()
         // 저장된 세션을 읽기 전까지 공개 상태는 미확정이며, 그동안 루트는 어느 그래프도 그리지 않는다.
         sessionBootstrapper.start()
+        // device_id 를 SDK 에 넣기 전까지 이벤트가 나가지 않으므로 세션 복원과 나란히 시작해도 된다.
+        analyticsSessionBinder.start()
         // 진행 레코드가 Room 으로 옮겨 가기 전 쓰던 파일을 치운다. 읽는 곳이 없어진 사용자
         // 귀속 데이터를 기기에 남기지 않는다.
         legacyPendingCreationFile.delete()

@@ -1,5 +1,6 @@
 package app.manyak.feature.chat
 
+import app.manyak.core.analytics.NoOpAnalytics
 import app.manyak.core.domain.chat.ChatDetail
 import app.manyak.core.domain.chat.ChatInputMode
 import app.manyak.core.domain.chat.ChatStreamEvent
@@ -233,6 +234,7 @@ class ChatRoomStreamTest {
         chatRepository = repository,
         storyRepository = FakeStoryRepository(),
         preferences = preferences,
+        analytics = NoOpAnalytics,
     )
 
     /** 블럭 하나에 문장을 넣는다. 기본 모드가 블럭이라 첫 칸이 상황이다. */

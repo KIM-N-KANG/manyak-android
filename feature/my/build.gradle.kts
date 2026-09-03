@@ -52,6 +52,7 @@ dependencies {
     // 구현이 있는 :core:data 는 의존하지 않는다. ViewModel 은 Repository 인터페이스만 안다.
     implementation(projects.core.domain)
     implementation(projects.core.ui)
+    implementation(projects.core.analytics)
     implementation(projects.core.navigation)
 
     implementation(libs.androidx.core.ktx)
