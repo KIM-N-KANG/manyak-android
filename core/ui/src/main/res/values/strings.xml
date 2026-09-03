@@ -199,6 +199,11 @@
     <string name="create_unsaved_warning_description">지금 나가면 임시 저장한 뒤에 만든 내용은 사라져요</string>
     <string name="create_unsaved_warning_stay">닫기</string>
     <string name="create_unsaved_warning_leave">나가기</string>
+    <!-- 잃을 것은 없지만 닫기 자체를 확인하는 경고. 임시 저장본·진행 중 생성 모두 이어서 만들기로 돌아온다. -->
+    <string name="create_saved_exit_warning_title">스토리 만들기를 그만둘까요?</string>
+    <string name="create_saved_exit_warning_description">만들던 내용은 제작 탭의 이어서 만들기에서 계속할 수 있어요</string>
+    <string name="create_saved_exit_warning_stay">닫기</string>
+    <string name="create_saved_exit_warning_leave">나가기</string>
     <string name="create_reselect_warning_title">스토리라인을 바꿀까요?</string>
     <string name="create_reselect_warning_description">입력한 추가 정보는 모두 사라져요</string>
     <string name="create_reselect_warning_confirm">다시 선택하기</string>

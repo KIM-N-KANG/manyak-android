@@ -219,7 +219,7 @@ class CreateStorylineViewModelTest {
         }
 
     @Test
-    fun `저장한 결과만 남은 이탈은 경고 없이 나간다`() =
+    fun `저장한 결과만 남은 이탈은 닫기 확인을 거쳐 나간다`() =
         runTest(dispatcher) {
             val repository = FakeStoryCreationRepository()
             val pendingStore = FakePendingStoryCreationStore()
@@ -231,6 +231,10 @@ class CreateStorylineViewModelTest {
 
             viewModel.onIntent(CreateStorylineIntent.LeaveFunnel)
             advanceUntilIdle()
+            assertEquals(FunnelExitWarning.SAVED_DRAFT, viewModel.uiState.value.exitWarning)
+
+            viewModel.onIntent(CreateStorylineIntent.ConfirmLeaveFunnel)
+            advanceUntilIdle()
 
             assertNull(viewModel.uiState.value.exitWarning)
             assertTrue(pendingStore.current is PendingStoryCreation.Draft)
@@ -241,7 +245,7 @@ class CreateStorylineViewModelTest {
         }
 
     @Test
-    fun `탭만 옮긴 이탈은 잃을 내용이 없어 경고 없이 나간다`() =
+    fun `탭만 옮긴 이탈은 잃을 내용이 없어 미저장 경고 대신 닫기 확인만 거친다`() =
         runTest(dispatcher) {
             val repository = FakeStoryCreationRepository()
             val pendingStore = FakePendingStoryCreationStore()
@@ -255,9 +259,13 @@ class CreateStorylineViewModelTest {
 
             viewModel.onIntent(CreateStorylineIntent.LeaveFunnel)
             advanceUntilIdle()
+            assertEquals(FunnelExitWarning.SAVED_DRAFT, viewModel.uiState.value.exitWarning)
+            assertFalse(viewModel.draftSave.value.hasUnsavedChanges)
+
+            viewModel.onIntent(CreateStorylineIntent.ConfirmLeaveFunnel)
+            advanceUntilIdle()
 
             assertNull(viewModel.uiState.value.exitWarning)
-            assertFalse(viewModel.draftSave.value.hasUnsavedChanges)
             assertEquals(
                 CreateStorylineEffect.ExitFunnel,
                 withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
@@ -327,6 +335,9 @@ class CreateStorylineViewModelTest {
 
             viewModel.onIntent(CreateStorylineIntent.LeaveFunnel)
             advanceUntilIdle()
+            assertEquals(FunnelExitWarning.SAVED_DRAFT, viewModel.uiState.value.exitWarning)
+            viewModel.onIntent(CreateStorylineIntent.ConfirmLeaveFunnel)
+            advanceUntilIdle()
 
             assertTrue(pendingStore.current is PendingStoryCreation.GeneratingStorylines)
             assertEquals(
@@ -347,6 +358,8 @@ class CreateStorylineViewModelTest {
             advanceUntilIdle()
 
             viewModel.onIntent(CreateStorylineIntent.LeaveFunnel)
+            advanceUntilIdle()
+            viewModel.onIntent(CreateStorylineIntent.ConfirmLeaveFunnel)
             advanceUntilIdle()
 
             // 이탈로 스토어는 Idle 이 됐지만, pop 애니메이션 동안 나가는 화면이 빈 실패 상태로

@@ -315,6 +315,16 @@ internal fun FunnelExitWarningDialog(
                 onConfirm = onConfirmLeave,
                 onDismiss = onDismiss,
             )
+
+        FunnelExitWarning.SAVED_DRAFT ->
+            FunnelWarningDialog(
+                titleRes = R.string.create_saved_exit_warning_title,
+                descriptionRes = R.string.create_saved_exit_warning_description,
+                confirmRes = R.string.create_saved_exit_warning_leave,
+                dismissRes = R.string.create_saved_exit_warning_stay,
+                onConfirm = onConfirmLeave,
+                onDismiss = onDismiss,
+            )
     }
 }
 

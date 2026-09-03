@@ -176,6 +176,9 @@ class CreateKeywordViewModelTest {
 
             viewModel.onIntent(CreateKeywordIntent.LeaveFunnel)
             advanceUntilIdle()
+            assertEquals(FunnelExitWarning.SAVED_DRAFT, viewModel.uiState.value.exitWarning)
+            viewModel.onIntent(CreateKeywordIntent.ConfirmLeaveFunnel)
+            advanceUntilIdle()
 
             // 생성 성공 시점에 이미 저장된 초안은 이탈해도 재개 재료로 남는다.
             assertTrue(pendingStore.current is PendingStoryCreation.Draft)
@@ -186,13 +189,16 @@ class CreateKeywordViewModelTest {
         }
 
     @Test
-    fun `입력이 없으면 경고 없이 이탈하고 레코드도 남기지 않는다`() =
+    fun `입력이 없으면 소실 확인만 거쳐 이탈하고 레코드도 남기지 않는다`() =
         runTest(dispatcher) {
             val pending = FakePendingStoryCreationStore()
             val viewModel = viewModel(fixedTagsRepository(), pending)
             advanceUntilIdle()
 
             viewModel.onIntent(CreateKeywordIntent.LeaveFunnel)
+            advanceUntilIdle()
+            assertEquals(FunnelExitWarning.NOTHING_TO_PRESERVE, viewModel.uiState.value.exitWarning)
+            viewModel.onIntent(CreateKeywordIntent.ConfirmLeaveFunnel)
             advanceUntilIdle()
 
             assertNull(pending.read())
