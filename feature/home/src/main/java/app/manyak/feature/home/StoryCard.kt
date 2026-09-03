@@ -35,7 +35,8 @@ internal fun StoryCard(
 ) {
     Column(
         // 카드 전체가 상세로 가는 링크다. 카드를 둥글게 클립하지 않는다 — 맨 아래 줄인 제작자
-        // 이름이 아래 모서리 라운드에 깎인다. 눌림 표시가 사각형으로 도는 편을 받아들인다.
+        // 이름이 아래 모서리 라운드에 깎이고, 표지 곡률로 깎으면 표지 테두리 위에 클립 경계가 겹친다.
+        // 눌림 리플이 사각형으로 도는 편을 받아들인다.
         modifier = modifier.clickable(role = Role.Button, onClick = onClick),
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {

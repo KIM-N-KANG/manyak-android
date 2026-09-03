@@ -21,6 +21,7 @@ colors:
   surface-raised: "#FFFFFF"
   background-neutral: "#F5F5F5"
   background-neutral-pressed: "#EEEEEE"
+  overlay-pressed: "#0F000000"
   background-brand-bold: "#00804B"
   background-brand-bold-pressed: "#006034"
   background-brand-subtle: "#E8F8EE"
@@ -57,6 +58,7 @@ colors-dark:
   surface-raised: "#1F1F1F"
   background-neutral: "#1F1F1F"
   background-neutral-pressed: "#575757"
+  overlay-pressed: "#14FFFFFF"
   background-brand-bold: "#00804B"
   background-brand-bold-pressed: "#006034"
   background-brand-subtle: "#00411F"
@@ -427,6 +429,7 @@ components:
 - **표면** (`{colors.surface}` — 라이트 #FCFCFC / 다크 #131313): 앱 바탕·카드·시트. 화면의 기본 바닥입니다.
 - **떠 있는 표면** (`{colors.surface-raised}` — 라이트 #FFFFFF / 다크 #1F1F1F): 팝오버·플로팅. **순백을 쓰는 유일한 자리**입니다.
 - **보조 배경** (`{colors.background-neutral}` — 라이트 #F5F5F5 / 다크 #191919): 입력창·비강조 채움. 눌림은 `{colors.background-neutral-pressed}`.
+- **눌림 리플** (`{colors.overlay-pressed}` — 라이트 검정 6% / 다크 흰 8%): 리플의 색이고 알파가 곧 눌림 농도다. 흰 행에서는 보조 배경 눌림 색 근처가 되고, 표지 위에서는 옅은 스크림이 된다. 배경색이 없는 카드에도 같은 규칙으로 눌림을 말하기 위한 값이라 채움 색이 아니라 반투명이다.
 - **비활성 채움** (`{colors.background-disabled}`): 비활성 컨트롤의 바닥.
 
 ### 텍스트
@@ -604,7 +607,7 @@ components:
 출발해도 앞 항목이 아직 움직이고 있어 목록 전체가 하나의 흐름으로 읽히게 한다. 값은 웹과 같다 —
 추천 입력처럼 두 플랫폼에 같은 목록이 있는 자리에서 리듬이 갈리면 안 된다.
 
-**눌림 상태에는 애니메이션을 쓰지 않는다.** 색 변화로만 말한다. **눌림 리플은 앱 전역에서 끈다**(2026-08-24) — `ManyakTheme`이 리플 설정을 비워 내리므로 컴포넌트마다 따로 끄지 않아도 되고, 개별 컴포넌트에서 다시 켜지 않는다.
+**눌림은 리플 하나로 말한다**(2026-09-03 — 2026-08-24 의 "리플 전역 끄기"를 대체). `ManyakTheme`이 `LocalRippleConfiguration`으로 색과 농도를 내린다 — 색·눌림 농도는 `{colors.overlay-pressed}`(라이트 검정 6% / 다크 흰 8%)이고 호버·포커스·드래그 농도는 0 이다. 그래서 `clickable`을 쓰는 카드·행·메뉴 항목·다이얼로그 항목과 M3 버튼이 같은 리플을 받고, 탭 바처럼 눌림을 두지 않는 자리(`tab-bar`·이미지 뷰어 닫기 영역)만 하위 트리에서 리플을 끄거나 `indication = null`로 둔다. 홈 오리지널 카드는 둥글게 클립하지 않아 리플이 사각형으로 돈다 — 카드 곡률로 깎으면 맨 아래 제작자 줄이 깎이고, 표지 곡률로 깎으면 표지 테두리 위에 클립 경계가 겹친다. 눌림 표시를 색 변화 없이 다른 애니메이션(축소 등)으로 더하지 않는다. **길게 누르기는 열리는 순간 `LongPress` 햅틱을 한 번 울린다** — 화면에 드러나지 않는 제스처라 손으로도 확인을 준다.
 
 ## 모양
 

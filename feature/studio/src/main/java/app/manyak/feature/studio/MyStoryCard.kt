@@ -14,7 +14,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.FirstBaseline
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.intl.LocaleList
@@ -52,6 +54,7 @@ internal fun MyStoryCard(
     onOptionsClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val haptic = LocalHapticFeedback.current
     Row(
         // 카드 전체가 상세로 가는 링크다. 길게 누르기와 제목 줄 더보기 버튼은 같은 옵션 다이얼로그를 연다 —
         // 더보기 버튼은 자기 클릭을 먹어 상세로 가지 않는다.
@@ -60,7 +63,11 @@ internal fun MyStoryCard(
                 role = Role.Button,
                 onLongClickLabel = stringResource(R.string.studio_story_options),
                 onClick = onClick,
-                onLongClick = onOptionsClick,
+                // 길게 누르기는 화면에 드러나지 않는 제스처라 다이얼로그가 열리는 순간 손으로도 알린다.
+                onLongClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onOptionsClick()
+                },
             ),
         horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
         // 텍스트는 표지보다 짧아 가운데 정렬하면 제목이 표지 한가운데에서 시작한다.

@@ -6,6 +6,12 @@ import androidx.compose.ui.graphics.Color
 // Primitive — 팔레트. 시맨틱이 가리키는 단계만 둔다.
 // private 이므로 화면 코드에서 직접 참조할 수 없다. 화면은 아래 시맨틱 이름만 쓴다.
 private val Gray0 = Color(0xFFFFFFFF)
+
+/** 눌림 리플 색·농도. 검정 6% — 순백 위에서 `Gray100`(#F5F5F5) 근처가 되도록 잡은 값이다. */
+private val PressedOverlayLight = Color(0x0F000000)
+
+/** 눌림 리플 색·농도(다크). 흰 8% — 어두운 표면에서 한 단계 밝아지는 정도가 라이트와 비슷하게 읽힌다. */
+private val PressedOverlayDark = Color(0x14FFFFFF)
 private val Gray50 = Color(0xFFFCFCFC)
 private val Gray100 = Color(0xFFF5F5F5)
 private val Gray150 = Color(0xFFEEEEEE)
@@ -78,6 +84,11 @@ data class ManyakColors(
     val surfaceRaised: Color,
     val backgroundNeutral: Color,
     val backgroundNeutralPressed: Color,
+    /**
+     * 눌림 리플의 색과 농도. 알파가 곧 리플의 눌림 농도라, 흰 행에서는 보조 배경 눌림 색에 가깝게
+     * 어두워지고 표지 위에서는 옅은 스크림이 된다.
+     */
+    val overlayPressed: Color,
     val backgroundBrandBold: Color,
     val backgroundBrandBoldPressed: Color,
     val backgroundBrandSubtle: Color,
@@ -116,6 +127,7 @@ internal val ManyakLightColors =
         surfaceRaised = Gray0,
         backgroundNeutral = Gray100,
         backgroundNeutralPressed = Gray150,
+        overlayPressed = PressedOverlayLight,
         backgroundBrandBold = Green800,
         backgroundBrandBoldPressed = Green900,
         backgroundBrandSubtle = Green50,
@@ -154,6 +166,7 @@ internal val ManyakDarkColors =
         surfaceRaised = Gray900,
         backgroundNeutral = Gray900,
         backgroundNeutralPressed = Gray750,
+        overlayPressed = PressedOverlayDark,
         backgroundBrandBold = Green800,
         backgroundBrandBoldPressed = Green900,
         backgroundBrandSubtle = Green950,

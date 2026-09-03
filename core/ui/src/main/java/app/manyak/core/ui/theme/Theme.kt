@@ -1,11 +1,13 @@
 package app.manyak.core.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material.ripple.RippleAlpha
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RippleConfiguration
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
 import androidx.compose.material3.lightColorScheme
@@ -15,7 +17,7 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
-private val LocalManyakColors =
+internal val LocalManyakColors =
     staticCompositionLocalOf<ManyakColors> { error("ManyakTheme 밖에서는 색 토큰을 쓸 수 없습니다.") }
 private val LocalManyakTypography =
     staticCompositionLocalOf<ManyakTypography> { error("ManyakTheme 밖에서는 타이포 토큰을 쓸 수 없습니다.") }
@@ -25,7 +27,7 @@ private val LocalManyakShapes =
     staticCompositionLocalOf<ManyakShapes> { error("ManyakTheme 밖에서는 모서리 토큰을 쓸 수 없습니다.") }
 private val LocalManyakSizes =
     staticCompositionLocalOf<ManyakSizes> { error("ManyakTheme 밖에서는 크기 토큰을 쓸 수 없습니다.") }
-private val LocalManyakMotion =
+internal val LocalManyakMotion =
     staticCompositionLocalOf<ManyakMotion> { error("ManyakTheme 밖에서는 모션 토큰을 쓸 수 없습니다.") }
 
 /**
@@ -58,8 +60,9 @@ fun ManyakTheme(
             CompositionLocalProvider(
                 LocalTextStyle provides ManyakDefaultTypography.bodyMedium,
                 LocalContentColor provides colors.text,
-                // 눌림 리플은 앱 전역에서 끈다 — 이 시스템은 눌림을 색 변화로만 말한다.
-                LocalRippleConfiguration provides null,
+                // 눌림은 리플 하나로 말한다 — 색·농도는 토큰이 정하고, 호버·포커스·드래그는 그리지 않는다.
+                // 탭 바처럼 눌림을 두지 않는 자리는 그 하위 트리에서 다시 끈다.
+                LocalRippleConfiguration provides colors.toRippleConfiguration(),
                 content = content,
             )
         }
@@ -161,4 +164,17 @@ private fun ManyakShapes.toMaterialShapes(): Shapes =
         medium = control,
         large = card,
         extraLarge = overlay,
+    )
+
+/** 눌림 리플. [ManyakColors.overlayPressed] 의 색을 쓰고 그 알파를 눌림 농도로 삼는다. */
+private fun ManyakColors.toRippleConfiguration(): RippleConfiguration =
+    RippleConfiguration(
+        color = overlayPressed.copy(alpha = 1f),
+        rippleAlpha =
+            RippleAlpha(
+                pressedAlpha = overlayPressed.alpha,
+                focusedAlpha = 0f,
+                hoveredAlpha = 0f,
+                draggedAlpha = 0f,
+            ),
     )

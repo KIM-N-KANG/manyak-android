@@ -13,7 +13,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.FirstBaseline
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -49,6 +51,7 @@ internal fun ChatCard(
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val haptic = LocalHapticFeedback.current
     ChatCardContent(
         chat = chat,
         compact = false,
@@ -61,7 +64,11 @@ internal fun ChatCard(
                     onClickLabel = stringResource(R.string.chat_list_card_action),
                     onLongClickLabel = stringResource(R.string.chat_list_card_options),
                     onClick = onClick,
-                    onLongClick = onLongClick,
+                    // 길게 누르기는 화면에 드러나지 않는 제스처라 다이얼로그가 열리는 순간 손으로도 알린다.
+                    onLongClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onLongClick()
+                    },
                 ).padding(
                     horizontal = ManyakTheme.spacing.gutter,
                     vertical = ManyakTheme.spacing.compact,
