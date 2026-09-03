@@ -11,9 +11,11 @@
 | 이 레포가 소유하는 값(빌드 주입·검증 정책) | `docs/plans/_project.md`                           |
 | 색·타이포·여백·컴포넌트 규칙 | `DESIGN.md`                                        |
 | 기능별 구현 순서와 그 기능에서 새로 내린 결정 | `docs/plans/<기능>.md`                               |
+| **서버 API 계약(엔드포인트·요청·응답 필드·상태 코드)** | **dev 서버 Swagger** `https://dev-api.manyak.app/swagger-ui/index.html` (기계 판독은 `https://dev-api.manyak.app/v3/api-docs`) |
 
 - 공통 결정은 하네스에 쓰고 이 레포에는 포인터만 둡니다. 같은 결정을 두 곳에 두지 않습니다.
 - 하네스 문서를 읽을 때는 해당 절이 `dev`에 병합됐는지 확인하세요. 미병합 브랜치 내용을 정본으로 오인하면 잘못된 전제 위에서 작업하게 됩니다.
+- **API 관련 확인은 하네스(`4-backend.md`)가 아니라 Swagger를 직접 봅니다.** 하네스의 API 절은 서버 구현보다 뒤처질 수 있어(예: `author`·`isOwner`가 구현됐는데 문서는 "계획"으로 남아 있었음) 응답 필드 유무·타입·상태 코드는 반드시 Swagger 또는 `../manyak-server` 코드로 확인합니다. 하네스와 Swagger가 다르면 Swagger가 맞고, 그 차이를 하네스에 정정합니다.
 
 ## 작업 방식
 
