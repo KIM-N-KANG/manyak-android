@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -22,7 +20,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -42,6 +39,7 @@ import app.manyak.core.ui.component.ManyakOptionsDialogItem
 import app.manyak.core.ui.component.ManyakPullToRefreshBox
 import app.manyak.core.ui.component.StoryReportSheet
 import app.manyak.core.ui.component.rememberDelayedProgressVisibility
+import app.manyak.core.ui.component.withRowListMargins
 import app.manyak.core.ui.report.StoryReportAction
 import app.manyak.core.ui.theme.ManyakTheme
 
@@ -221,7 +219,7 @@ private fun Chats(
             modifier = Modifier.fillMaxSize(),
             // 좌우 여백은 카드가 스스로 갖는다 — 카드 전체가 눌리는 자리라 눌림 효과가 화면 폭을
             // 채워야 한다. 그래서 셸이 넘긴 여백에 하단 여유만 더한다.
-            contentPadding = contentPadding.withListBottomMargin(),
+            contentPadding = contentPadding.withRowListMargins(),
         ) {
             items(chats, key = { chat -> chat.id }) { chat ->
                 ChatCard(
@@ -279,25 +277,6 @@ private fun EmptyChats(
             )
         }
     }
-}
-
-/**
- * 셸이 넘긴 여백에 하단 여유만 더한다. 좌우에는 화면 여백을 더하지 않는다 — 그 여백은 카드 안쪽에
- * 있어야 눌림 효과가 화면 폭을 채운다.
- *
- * 하단 여유가 홈·제작 그리드(`gutter`)보다 작은 `compact` 인 이유는 이 목록의 리듬이 다르기
- * 때문이다 — 카드가 스스로 위아래 `compact` 를 갖고 붙어 있으므로, 마지막 카드 아래도 같은 값이어야
- * 카드 사이와 끝이 같은 간격으로 읽힌다.
- */
-@Composable
-private fun PaddingValues.withListBottomMargin(): PaddingValues {
-    val layoutDirection = LocalLayoutDirection.current
-    return PaddingValues(
-        start = calculateStartPadding(layoutDirection),
-        top = calculateTopPadding(),
-        end = calculateEndPadding(layoutDirection),
-        bottom = calculateBottomPadding() + ManyakTheme.spacing.compact,
-    )
 }
 
 @Preview(showBackground = true, name = "채팅 · 목록")

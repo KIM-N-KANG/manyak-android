@@ -59,16 +59,19 @@ internal fun MyStoryCard(
         // 카드 전체가 상세로 가는 링크다. 길게 누르기와 제목 줄 더보기 버튼은 같은 옵션 다이얼로그를 연다 —
         // 더보기 버튼은 자기 클릭을 먹어 상세로 가지 않는다.
         modifier =
-            modifier.fillMaxWidth().combinedClickable(
-                role = Role.Button,
-                onLongClickLabel = stringResource(R.string.studio_story_options),
-                onClick = onClick,
-                // 길게 누르기는 화면에 드러나지 않는 제스처라 다이얼로그가 열리는 순간 손으로도 알린다.
-                onLongClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    onOptionsClick()
-                },
-            ),
+            modifier
+                .fillMaxWidth()
+                .combinedClickable(
+                    role = Role.Button,
+                    onLongClickLabel = stringResource(R.string.studio_story_options),
+                    onClick = onClick,
+                    // 길게 누르기는 화면에 드러나지 않는 제스처라 다이얼로그가 열리는 순간 손으로도 알린다.
+                    onLongClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onOptionsClick()
+                    },
+                    // 좌우 여백은 카드가 스스로 갖는다 — 채팅 카드와 같이 눌림 표시가 화면 폭을 채워야 한다.
+                ).padding(horizontal = ManyakTheme.spacing.gutter, vertical = ManyakTheme.spacing.compact),
         horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
         // 텍스트는 표지보다 짧아 가운데 정렬하면 제목이 표지 한가운데에서 시작한다.
         verticalAlignment = Alignment.Top,

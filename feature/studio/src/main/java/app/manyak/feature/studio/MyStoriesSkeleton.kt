@@ -2,7 +2,6 @@ package app.manyak.feature.studio
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -31,17 +30,12 @@ import app.manyak.core.ui.theme.ManyakTheme
  * 표시 여부는 호출부가 지연 판정으로 정한다 — 금방 끝나는 조회에서는 아예 그리지 않는다.
  */
 @Composable
-internal fun MyStoriesSkeleton(
-    contentPadding: PaddingValues,
-    modifier: Modifier = Modifier,
-) {
+internal fun MyStoriesSkeleton(modifier: Modifier = Modifier) {
     val description = stringResource(R.string.studio_loading)
     val alpha = rememberSkeletonPulseAlpha()
 
     LazyColumn(
         modifier = modifier.fillMaxSize().semantics { contentDescription = description },
-        contentPadding = contentPadding,
-        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
         // 아직 아무것도 없는 자리이므로 스크롤로 더 볼 것이 없다.
         userScrollEnabled = false,
     ) {
@@ -57,7 +51,11 @@ private fun CardPlaceholder(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier.fillMaxWidth(),
+        // 카드와 같은 자리 여백 — 목록이 도착할 때 표지 자리가 튀지 않는다.
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(horizontal = ManyakTheme.spacing.gutter, vertical = ManyakTheme.spacing.compact),
         horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
         verticalAlignment = Alignment.Top,
     ) {
