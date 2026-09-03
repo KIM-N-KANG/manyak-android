@@ -1,12 +1,12 @@
 package app.manyak.feature.chat
 
 import android.widget.Toast
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -22,7 +22,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -36,8 +35,15 @@ import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.core.domain.chat.ChatSummary
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.LoadFailedContent
+import app.manyak.core.ui.component.ManyakDestructiveDialogContent
+import app.manyak.core.ui.component.ManyakDialog
+import app.manyak.core.ui.component.ManyakOptionsDialogContent
+import app.manyak.core.ui.component.ManyakOptionsDialogItem
 import app.manyak.core.ui.component.ManyakPullToRefreshBox
+import app.manyak.core.ui.component.StoryReportSheet
 import app.manyak.core.ui.component.rememberDelayedProgressVisibility
+import app.manyak.core.ui.component.withRowListMargins
+import app.manyak.core.ui.report.StoryReportAction
 import app.manyak.core.ui.theme.ManyakTheme
 
 /**
@@ -67,6 +73,18 @@ fun ChatListScreen(
                 when (effect) {
                     ChatListEffect.ShowRefreshFailed ->
                         Toast.makeText(context, R.string.story_refresh_failed, Toast.LENGTH_SHORT).show()
+
+                    ChatListEffect.ShowChatDeleted ->
+                        Toast.makeText(context, R.string.chat_room_deleted, Toast.LENGTH_SHORT).show()
+
+                    ChatListEffect.ShowChatDeleteFailed ->
+                        Toast.makeText(context, R.string.chat_room_delete_failed, Toast.LENGTH_SHORT).show()
+
+                    ChatListEffect.ShowReportSubmitted ->
+                        Toast.makeText(context, R.string.story_report_submitted, Toast.LENGTH_SHORT).show()
+
+                    ChatListEffect.ShowReportFailed ->
+                        Toast.makeText(context, R.string.story_report_failed, Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -133,6 +151,76 @@ private fun ChatListContent(
                 )
         }
     }
+
+    ChatListOverlays(state = state, onIntent = onIntent)
+}
+
+/** 카드 위에 얹히는 것들 — 옵션 시트·삭제 확인·신고 시트. 목록 배치와 섞이지 않게 따로 둔다. */
+@Composable
+private fun ChatListOverlays(
+    state: ChatListUiState,
+    onIntent: (ChatListIntent) -> Unit,
+) {
+    // 옵션과 삭제 확인은 한 창을 나눠 쓴다 — 창을 닫고 새로 열면 스크림이 두 번 페이드돼 번쩍인다.
+    val deleteTarget = state.deleteTarget
+    val optionsTarget = state.optionsTarget
+    if (optionsTarget != null || deleteTarget != null) {
+        ManyakDialog(
+            onDismissRequest = {
+                onIntent(if (deleteTarget != null) ChatListIntent.DismissDeleteDialog else ChatListIntent.CloseOptions)
+            },
+        ) {
+            Crossfade(
+                targetState = deleteTarget,
+                animationSpec = tween(ManyakTheme.motion.elementEnterMillis),
+                label = "chatCardDialog",
+            ) { target ->
+                if (target != null) {
+                    ManyakDestructiveDialogContent(
+                        title = stringResource(R.string.chat_room_delete_dialog_title),
+                        description = stringResource(R.string.chat_room_delete_dialog_description),
+                        confirmLabel = stringResource(R.string.chat_room_delete),
+                        cancelLabel = stringResource(R.string.chat_room_delete_dialog_cancel),
+                        onConfirm = { onIntent(ChatListIntent.ConfirmDelete) },
+                        onDismiss = { onIntent(ChatListIntent.DismissDeleteDialog) },
+                        inProgress = state.isDeleting,
+                    )
+                } else if (optionsTarget != null) {
+                    ChatOptions(chat = optionsTarget, onIntent = onIntent)
+                }
+            }
+        }
+    }
+
+    if (state.report.isSheetOpen) {
+        StoryReportSheet(
+            state = state.report,
+            onAction = { action -> onIntent(ChatListIntent.Report(action)) },
+        )
+    }
+}
+
+@Composable
+private fun ChatOptions(
+    chat: ChatSummary,
+    onIntent: (ChatListIntent) -> Unit,
+) {
+    ManyakOptionsDialogContent(preview = { ChatCardPreview(chat = chat) }) {
+        // 참조 스토리가 없으면 신고할 대상도 없다.
+        if (chat.storyId.isNotBlank()) {
+            ManyakOptionsDialogItem(
+                iconRes = R.drawable.ic_info,
+                label = stringResource(R.string.story_report_action),
+                onClick = { onIntent(ChatListIntent.Report(StoryReportAction.Open)) },
+            )
+        }
+        ManyakOptionsDialogItem(
+            iconRes = R.drawable.ic_delete,
+            label = stringResource(R.string.chat_room_delete),
+            onClick = { onIntent(ChatListIntent.RequestDelete) },
+            isDanger = true,
+        )
+    }
 }
 
 @Composable
@@ -154,10 +242,14 @@ private fun Chats(
             modifier = Modifier.fillMaxSize(),
             // 좌우 여백은 카드가 스스로 갖는다 — 카드 전체가 눌리는 자리라 눌림 효과가 화면 폭을
             // 채워야 한다. 그래서 셸이 넘긴 여백에 하단 여유만 더한다.
-            contentPadding = contentPadding.withListBottomMargin(),
+            contentPadding = contentPadding.withRowListMargins(),
         ) {
             items(chats, key = { chat -> chat.id }) { chat ->
-                ChatCard(chat = chat, onClick = { onOpenChat(chat.id) })
+                ChatCard(
+                    chat = chat,
+                    onClick = { onOpenChat(chat.id) },
+                    onLongClick = { onIntent(ChatListIntent.OpenOptions(chat)) },
+                )
             }
         }
     }
@@ -210,25 +302,6 @@ private fun EmptyChats(
     }
 }
 
-/**
- * 셸이 넘긴 여백에 하단 여유만 더한다. 좌우에는 화면 여백을 더하지 않는다 — 그 여백은 카드 안쪽에
- * 있어야 눌림 효과가 화면 폭을 채운다.
- *
- * 하단 여유가 홈·제작 그리드(`gutter`)보다 작은 `compact` 인 이유는 이 목록의 리듬이 다르기
- * 때문이다 — 카드가 스스로 위아래 `compact` 를 갖고 붙어 있으므로, 마지막 카드 아래도 같은 값이어야
- * 카드 사이와 끝이 같은 간격으로 읽힌다.
- */
-@Composable
-private fun PaddingValues.withListBottomMargin(): PaddingValues {
-    val layoutDirection = LocalLayoutDirection.current
-    return PaddingValues(
-        start = calculateStartPadding(layoutDirection),
-        top = calculateTopPadding(),
-        end = calculateEndPadding(layoutDirection),
-        bottom = calculateBottomPadding() + ManyakTheme.spacing.compact,
-    )
-}
-
 @Preview(showBackground = true, name = "채팅 · 목록")
 @Composable
 private fun ChatListScreenPreview() {
@@ -263,6 +336,7 @@ private fun previewChats(): List<ChatSummary> {
     return listOf(
         ChatSummary(
             id = "1",
+            storyId = "story-1",
             storyTitle = "두 번째 시계공",
             thumbnailUrl = null,
             lastStoryPreview = "낡은 문이 열리자 태엽 소리가 쏟아진다. 당신은 한 발 물러섰다.",
@@ -271,6 +345,7 @@ private fun previewChats(): List<ChatSummary> {
         ),
         ChatSummary(
             id = "2",
+            storyId = "story-2",
             storyTitle = "아주 긴 제목은 한 줄에서 잘려 카드 높이를 흔들지 않는다",
             thumbnailUrl = null,
             lastStoryPreview = "아주 긴 미리보기도 마찬가지로 한 줄에서 잘려 카드 높이를 흔들지 않는다",
@@ -279,6 +354,7 @@ private fun previewChats(): List<ChatSummary> {
         ),
         ChatSummary(
             id = "3",
+            storyId = "story-3",
             storyTitle = "달빛 아래의 계약",
             thumbnailUrl = null,
             lastStoryPreview = "",

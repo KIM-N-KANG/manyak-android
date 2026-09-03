@@ -131,6 +131,9 @@ sealed interface ChatRoomIntent {
 
     data object RandomSuggestionSent : ChatRoomIntent
 
+    /** 잠긴 입력창을 눌렀다. 응답 생성 중이면 왜 입력할 수 없는지 알린다. */
+    data object LockedComposerTapped : ChatRoomIntent
+
     data object ChoicesRetried : ChatRoomIntent
 
     /** 마지막 턴의 AI 출력을 다시 만든다. */
@@ -238,6 +241,9 @@ sealed interface ChatRoomEffect {
     data object ChatDeleted : ChatRoomEffect
 
     data object ShowDeleteFailed : ChatRoomEffect
+
+    /** 응답 생성 중에 입력창을 눌렀다. 끝나면 입력할 수 있다고 알린다. */
+    data object ShowComposerLocked : ChatRoomEffect
 
     data object ShowReportSubmitted : ChatRoomEffect
 
@@ -466,6 +472,9 @@ class ChatRoomViewModel
                         )
                     updateComposer(composer.filledWith(text))
                 }
+
+                ChatRoomIntent.LockedComposerTapped ->
+                    if (uiState.value.isStreaming) dispatchEffect(ChatRoomEffect.ShowComposerLocked)
 
                 ChatRoomIntent.RandomSuggestionSent ->
                     randomSuggestionPosition(suggestions.items, random)?.let { position ->

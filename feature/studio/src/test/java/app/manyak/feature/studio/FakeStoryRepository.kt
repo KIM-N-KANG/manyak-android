@@ -58,9 +58,15 @@ internal class FakeStoryRepository : StoryRepository {
         return queuedDeleteResults.removeFirstOrNull() ?: DomainResult.Success(Unit)
     }
 
+    val reportedStoryIds = mutableListOf<String>()
+
     override suspend fun reportStory(
         storyId: String,
         reason: StoryReportReason,
         detail: String?,
-    ): DomainResult<Unit> = DomainResult.Success(Unit)
+    ): DomainResult<Unit> {
+        yield()
+        reportedStoryIds += storyId
+        return DomainResult.Success(Unit)
+    }
 }

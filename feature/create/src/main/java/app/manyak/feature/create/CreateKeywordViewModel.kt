@@ -414,12 +414,17 @@ class CreateKeywordViewModel
             state: CreateKeywordUiState,
         ) {
             when (intent) {
+                // 닫기는 상태와 무관하게 늘 확인을 거친다 — 무엇을 잃는지에 따라 문구만 갈린다.
                 CreateKeywordIntent.LeaveFunnel ->
-                    if (state.hasUnsavedChanges) {
-                        dispatchEvent(CreateKeywordEvent.ExitWarningChanged(FunnelExitWarning.UNSAVED_CHANGES))
-                    } else {
-                        leaveFunnel()
-                    }
+                    dispatchEvent(
+                        CreateKeywordEvent.ExitWarningChanged(
+                            when {
+                                state.hasUnsavedChanges -> FunnelExitWarning.UNSAVED_CHANGES
+                                pendingCreationStore.read() != null -> FunnelExitWarning.SAVED_DRAFT
+                                else -> FunnelExitWarning.NOTHING_TO_PRESERVE
+                            },
+                        ),
+                    )
 
                 CreateKeywordIntent.ConfirmLeaveFunnel -> {
                     dispatchEvent(CreateKeywordEvent.ExitWarningChanged(null))

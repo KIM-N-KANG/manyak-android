@@ -18,8 +18,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -46,7 +44,6 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -63,8 +60,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.core.domain.story.StoryDetail
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.LoadFailedContent
-import app.manyak.core.ui.component.ManyakOptionsMenu
-import app.manyak.core.ui.component.ManyakOptionsMenuItem
+import app.manyak.core.ui.component.ManyakDestructiveDialog
+import app.manyak.core.ui.component.ManyakIconButton
 import app.manyak.core.ui.component.STORY_THUMBNAIL_ASPECT_RATIO
 import app.manyak.core.ui.component.ScrollEdgeFadeHeight
 import app.manyak.core.ui.component.StoryOverlayScrim
@@ -92,6 +89,7 @@ fun StoryDetailScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val currentOnEnterChat by rememberUpdatedState(onEnterChat)
+    val currentOnBack by rememberUpdatedState(onBack)
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
 
@@ -100,6 +98,14 @@ fun StoryDetailScreen(
             viewModel.uiEffect.collect { effect ->
                 when (effect) {
                     is StoryDetailEffect.NavigateToChat -> currentOnEnterChat(effect.chatId)
+
+                    StoryDetailEffect.StoryDeleted -> {
+                        Toast.makeText(context, R.string.studio_story_deleted, Toast.LENGTH_SHORT).show()
+                        currentOnBack()
+                    }
+
+                    StoryDetailEffect.ShowDeleteFailed ->
+                        Toast.makeText(context, R.string.studio_story_delete_failed, Toast.LENGTH_SHORT).show()
 
                     StoryDetailEffect.ShowReportSubmitted ->
                         Toast.makeText(context, R.string.story_report_submitted, Toast.LENGTH_SHORT).show()
@@ -191,14 +197,9 @@ private fun StoryDetailContent(
             surfaceAlpha = { headerSurfaceAlpha },
             onBack = onBack,
             // 신고할 대상이 아직 없으면 진입점을 두지 않는다.
-            onReport =
-                if (state.story !=
-                    null
-                ) {
-                    ({ onIntent(StoryDetailIntent.Report(StoryReportAction.Open)) })
-                } else {
-                    null
-                },
+            onReport = { onIntent(StoryDetailIntent.Report(StoryReportAction.Open)) }.takeIf { state.story != null },
+            // 삭제는 서버가 내 것이라고 한 스토리에만 — 소유 판정은 응답의 몫이다.
+            onDelete = { onIntent(StoryDetailIntent.RequestDelete) }.takeIf { state.story?.isOwner == true },
         )
 
         StoryDetailOverlays(state = state, thumbnailUrl = thumbnailUrl, onIntent = onIntent)
@@ -223,6 +224,18 @@ private fun StoryDetailOverlays(
         StoryReportSheet(
             state = state.report,
             onAction = { action -> onIntent(StoryDetailIntent.Report(action)) },
+        )
+    }
+
+    if (state.isDeleteDialogOpen) {
+        ManyakDestructiveDialog(
+            title = stringResource(R.string.studio_delete_dialog_title),
+            description = stringResource(R.string.studio_delete_dialog_description),
+            confirmLabel = stringResource(R.string.studio_story_delete),
+            cancelLabel = stringResource(R.string.studio_delete_dialog_cancel),
+            onConfirm = { onIntent(StoryDetailIntent.ConfirmDelete) },
+            onDismiss = { onIntent(StoryDetailIntent.DismissDeleteDialog) },
+            inProgress = state.isDeleting,
         )
     }
 }
@@ -337,6 +350,7 @@ private fun StoryDetailHeader(
     surfaceAlpha: () -> Float,
     onBack: () -> Unit,
     onReport: (() -> Unit)?,
+    onDelete: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     val alpha = surfaceAlpha()
@@ -365,30 +379,16 @@ private fun StoryDetailHeader(
                 )
             },
             navigationIcon = {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_arrow_back),
-                        contentDescription = stringResource(R.string.common_back),
-                        tint = contentColor,
-                    )
-                }
+                ManyakIconButton(
+                    iconRes = R.drawable.ic_arrow_back,
+                    contentDescription = stringResource(R.string.common_back),
+                    onClick = onBack,
+                    tint = contentColor,
+                )
             },
             actions = {
                 if (onReport != null) {
-                    ManyakOptionsMenu(
-                        contentDescription = stringResource(R.string.story_detail_options),
-                        // 표지 위에서는 앱바 아이콘과 같은 색을 따라간다.
-                        tint = contentColor,
-                    ) { dismiss ->
-                        ManyakOptionsMenuItem(
-                            iconRes = R.drawable.ic_info,
-                            label = stringResource(R.string.story_report_action),
-                            onClick = {
-                                dismiss()
-                                onReport()
-                            },
-                        )
-                    }
+                    StoryDetailHeaderMenu(onReport = onReport, onDelete = onDelete, tint = contentColor)
                 }
             },
             // 표지가 상태바 뒤까지 올라가므로 상태바 자리는 앱바가 직접 낀다.

@@ -51,6 +51,7 @@ internal fun BlockComposer(
                 enabled = enabled,
                 onValueChange = actions.onBlockValueChange,
                 onRemoveBlock = actions.onRemoveBlock,
+                onDisabledTap = actions.onLockedTap,
             )
         }
         toolbar(
@@ -74,6 +75,7 @@ private fun BlockInputList(
     enabled: Boolean,
     onValueChange: (Long, String) -> Unit,
     onRemoveBlock: (Long) -> Unit,
+    onDisabledTap: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // 내용이 있는 블럭을 지울 때만 묻는다. 확인 대상은 회전에서 사라지면 안 되므로 saveable 이다.
@@ -125,6 +127,7 @@ private fun BlockInputList(
                                 pendingRemoveId = block.id
                             }
                         },
+                        onDisabledTap = onDisabledTap,
                     )
                 }
             }
@@ -160,27 +163,14 @@ private fun BlockInputRow(
     enabled: Boolean,
     onValueChange: (String) -> Unit,
     onRemove: () -> Unit,
+    onDisabledTap: () -> Unit,
 ) {
     val isSituation = block.type == InputBlockType.SITUATION
     // 라벨과 입력 글자를 같은 색으로 둔다 — 쓰는 중에도 상황이 강조로 나갈 것임이 보여야 한다.
     val contentColor = if (isSituation) ManyakTheme.colors.textNarration else ManyakTheme.colors.text
     // 라벨에 종류별 순번을 붙인다 — 칸이 여럿일 때 방금 늘어난 자리가 어디인지 라벨만 보고 안다.
-    val label =
-        stringResource(
-            if (isSituation) {
-                R.string.chat_composer_situation_label
-            } else {
-                R.string.chat_composer_dialogue_label
-            },
-        )
-    val placeholder =
-        stringResource(
-            if (isSituation) {
-                R.string.chat_composer_situation_placeholder
-            } else {
-                R.string.chat_composer_dialogue_placeholder
-            },
-        )
+    val label = stringResource(block.type.labelRes())
+    val placeholder = stringResource(block.type.placeholderRes())
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -193,6 +183,7 @@ private fun BlockInputRow(
             onTextChange = onValueChange,
             placeholder = placeholder,
             enabled = enabled,
+            onDisabledTap = onDisabledTap,
             maxLines = BLOCK_MAX_LINES,
             textColor = contentColor,
             leading = {
@@ -286,3 +277,15 @@ private const val ORDINAL_RESERVED_DIGITS = 2
 
 /** 등장 시간의 몇 배까지 목록 끝을 따라갈지. 마지막 프레임의 높이 변화까지 담을 여유다. */
 private const val FOLLOW_TIMEOUT_FACTOR = 2L
+
+private fun InputBlockType.labelRes(): Int =
+    when (this) {
+        InputBlockType.SITUATION -> R.string.chat_composer_situation_label
+        InputBlockType.DIALOGUE -> R.string.chat_composer_dialogue_label
+    }
+
+private fun InputBlockType.placeholderRes(): Int =
+    when (this) {
+        InputBlockType.SITUATION -> R.string.chat_composer_situation_placeholder
+        InputBlockType.DIALOGUE -> R.string.chat_composer_dialogue_placeholder
+    }

@@ -361,8 +361,8 @@ class CreateAdditionalInfoViewModel
         }
 
         /**
-         * 저장하지 않은 편집이 있으면 먼저 경고하고, 저장할 것도 저장된 것도 없으면 소실 경고를 띄운다.
-         * 둘 다 아니면 마지막 저장분이 그대로 재개 지점이므로 조용히 나간다.
+         * 닫기는 상태와 무관하게 늘 확인을 거친다. 저장하지 않은 편집이 있으면 미저장 경고, 저장할 것도
+         * 저장된 것도 없으면 소실 경고, 저장분·진행 중 레코드만 남았으면 잃는 것 없이 닫는다는 확인이다.
          */
         private suspend fun leaveFunnel(confirmed: Boolean) {
             val warning =
@@ -371,7 +371,7 @@ class CreateAdditionalInfoViewModel
                     storylineGenerationStore.draftSave.value.hasUnsavedChanges ->
                         FunnelExitWarning.UNSAVED_CHANGES
 
-                    storylineGenerationStore.hasContentToPreserve() -> null
+                    storylineGenerationStore.hasContentToPreserve() -> FunnelExitWarning.SAVED_DRAFT
                     else -> FunnelExitWarning.NOTHING_TO_PRESERVE
                 }
             if (warning != null) {

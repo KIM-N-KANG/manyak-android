@@ -18,7 +18,6 @@ import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -38,6 +37,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ManyakInputCounter
+import app.manyak.core.ui.component.ManyakTextButton
 import app.manyak.core.ui.component.ManyakTextField
 import app.manyak.core.ui.theme.ManyakTheme
 
@@ -416,7 +416,7 @@ private fun SupportingCharacterHeader(
                 color = ManyakTheme.colors.textSubtle,
             )
         }
-        TextButton(
+        ManyakTextButton(
             modifier =
                 Modifier
                     .width(ManyakTheme.sizes.control)

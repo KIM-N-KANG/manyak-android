@@ -206,12 +206,13 @@ private fun SessionProgress() {
 @Composable
 private fun AuthNavDisplay() {
     val backStack = rememberNavBackStack(LoginRoute)
-    val screenTransition = rememberScreenTransition()
+    val slide = rememberScreenSlideTransitions()
     NavDisplay(
         backStack = backStack,
         entryDecorators = rememberManyakEntryDecorators(),
-        transitionSpec = screenTransition,
-        popTransitionSpec = screenTransition,
+        transitionSpec = slide.push,
+        popTransitionSpec = slide.pop,
+        predictivePopTransitionSpec = slide.predictivePop,
         entryProvider =
             entryProvider<NavKey> {
                 entry<LoginRoute> {
@@ -231,12 +232,14 @@ private fun MainNavDisplay() {
     val backStack = rememberNavBackStack(MainTabsRoute)
     // 셸 밖에서도 탭을 바꿀 수 있어야 한다 — 채팅을 지우면 방을 걷어내고 채팅 탭을 편다.
     var selectedTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
-    val screenTransition = rememberScreenTransition()
+    val slide = rememberScreenSlideTransitions()
+    val creationFunnelMetadata = rememberCreationFunnelMetadata()
     NavDisplay(
         backStack = backStack,
         entryDecorators = rememberManyakEntryDecorators(),
-        transitionSpec = screenTransition,
-        popTransitionSpec = screenTransition,
+        transitionSpec = slide.push,
+        popTransitionSpec = slide.pop,
+        predictivePopTransitionSpec = slide.predictivePop,
         entryProvider =
             entryProvider<NavKey> {
                 entry<MainTabsRoute> {
@@ -271,7 +274,7 @@ private fun MainNavDisplay() {
                         onEnterChat = { chatId -> backStack.add(ChatRoomRoute(chatId)) },
                     )
                 }
-                creationFunnelEntries(backStack)
+                creationFunnelEntries(backStack, creationFunnelMetadata)
                 entry<ChatRoomRoute> { route ->
                     ChatRoomScreen(
                         chatId = route.chatId,
@@ -330,8 +333,11 @@ private fun MutableList<NavKey>.addCreationResumeChain(resumePoint: CreationResu
 /**
  * 간편 제작 퍼널 세 단계. 셸을 두르지 않는 전체 화면이며 백스택 구조가 단계 관계를 그대로 드러낸다.
  */
-private fun EntryProviderScope<NavKey>.creationFunnelEntries(backStack: MutableList<NavKey>) {
-    entry<CreateKeywordRoute> {
+private fun EntryProviderScope<NavKey>.creationFunnelEntries(
+    backStack: MutableList<NavKey>,
+    metadata: Map<String, Any>,
+) {
+    entry<CreateKeywordRoute>(metadata = metadata) {
         CreateKeywordScreen(
             onLeaveFunnel = { backStack.removeLastOrNull() },
             // 스토리라인 단계는 키워드 목적지를 대체한다 — 그 화면의 뒤로가기가
@@ -342,7 +348,7 @@ private fun EntryProviderScope<NavKey>.creationFunnelEntries(backStack: MutableL
             },
         )
     }
-    entry<CreateStorylineRoute> {
+    entry<CreateStorylineRoute>(metadata = metadata) {
         CreateStorylineScreen(
             onLeaveFunnel = { backStack.removeLastOrNull() },
             onOpenAdditionalInfoStep = { storylineIndex ->
@@ -350,7 +356,7 @@ private fun EntryProviderScope<NavKey>.creationFunnelEntries(backStack: MutableL
             },
         )
     }
-    entry<CreateAdditionalInfoRoute> { route ->
+    entry<CreateAdditionalInfoRoute>(metadata = metadata) { route ->
         CreateAdditionalInfoScreen(
             storylineIndex = route.storylineIndex,
             // 이탈은 퍼널 단계를 전부 걷어내고 홈으로 돌아간다. 스토리라인 단계만 pop 하면

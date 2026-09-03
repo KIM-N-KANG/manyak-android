@@ -15,8 +15,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -30,7 +28,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -41,6 +38,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ManyakDestructiveDialog
+import app.manyak.core.ui.component.ManyakIconButton
 import app.manyak.core.ui.component.ManyakOptionsMenu
 import app.manyak.core.ui.component.ManyakOptionsMenuItem
 import app.manyak.core.ui.component.ManyakProgressIndicator
@@ -105,6 +103,11 @@ fun ChatRoomScreen(
 
                     ChatRoomEffect.ShowReportFailed ->
                         Toast.makeText(context, R.string.story_report_failed, Toast.LENGTH_SHORT).show()
+
+                    ChatRoomEffect.ShowComposerLocked ->
+                        Toast
+                            .makeText(context, R.string.chat_composer_locked_streaming, Toast.LENGTH_SHORT)
+                            .show()
                 }
             }
         }
@@ -169,6 +172,8 @@ private fun ChatRoomContent(
         // 열지 못한 상태에서는 삭제를 권하지 않는다.
         ChatRoomHeader(
             title = state.storyTitle,
+            // 방을 연 뒤에도 제목이 비어 있으면 참조 스토리가 삭제된 것이다 — 목록 카드와 같은 문구로 알린다.
+            isStoryDeleted = phase == ChatRoomPhase.CONTENT && state.storyTitle.isBlank(),
             showsOptions = phase == ChatRoomPhase.CONTENT,
             onBack = onBack,
             onDeleteClick = onDeleteClick,
@@ -270,6 +275,7 @@ private fun composerActions(onIntent: (ChatRoomIntent) -> Unit): ChatComposerAct
         onChoicesEnabledChange = { enabled -> onIntent(ChatRoomIntent.ChoicesEnabledChanged(enabled)) },
         onSend = { onIntent(ChatRoomIntent.Sent) },
         onSendRandomSuggestion = { onIntent(ChatRoomIntent.RandomSuggestionSent) },
+        onLockedTap = { onIntent(ChatRoomIntent.LockedComposerTapped) },
     )
 
 /** 채우기가 쓰던 초안을 덮어쓰기 전에 묻는다. */
@@ -292,6 +298,7 @@ private fun ReplaceDraftDialog(
 @Composable
 private fun ChatRoomHeader(
     title: String,
+    isStoryDeleted: Boolean,
     showsOptions: Boolean,
     onBack: () -> Unit,
     onDeleteClick: () -> Unit,
@@ -302,21 +309,19 @@ private fun ChatRoomHeader(
         modifier = modifier,
         title = {
             Text(
-                text = title,
+                text = if (isStoryDeleted) stringResource(R.string.chat_list_deleted_story) else title,
                 style = ManyakTheme.typography.bodyLargeStrong,
-                color = ManyakTheme.colors.text,
+                color = if (isStoryDeleted) ManyakTheme.colors.textSubtlest else ManyakTheme.colors.text,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
         },
         navigationIcon = {
-            IconButton(onClick = onBack) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_arrow_back),
-                    contentDescription = stringResource(R.string.common_back),
-                    tint = ManyakTheme.colors.text,
-                )
-            }
+            ManyakIconButton(
+                iconRes = R.drawable.ic_arrow_back,
+                contentDescription = stringResource(R.string.common_back),
+                onClick = onBack,
+            )
         },
         // 오른쪽에는 옵션 메뉴 하나만 둔다 — 웹 헤더의 공유 버튼은 앱 범위 밖이다.
         actions = {

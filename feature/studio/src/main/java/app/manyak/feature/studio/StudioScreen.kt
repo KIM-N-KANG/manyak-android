@@ -31,10 +31,9 @@ import app.manyak.core.domain.story.CreationResumePoint
 import app.manyak.core.domain.story.StorySummary
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.LoadFailedContent
-import app.manyak.core.ui.component.ManyakDestructiveDialog
 import app.manyak.core.ui.component.ManyakPullToRefreshBox
 import app.manyak.core.ui.component.rememberDelayedProgressVisibility
-import app.manyak.core.ui.component.withScreenMargins
+import app.manyak.core.ui.component.withRowListMargins
 import app.manyak.core.ui.theme.ManyakTheme
 
 /**
@@ -79,6 +78,12 @@ fun StudioScreen(
 
                     StudioEffect.ShowRefreshFailed ->
                         Toast.makeText(context, R.string.story_refresh_failed, Toast.LENGTH_SHORT).show()
+
+                    StudioEffect.ShowReportSubmitted ->
+                        Toast.makeText(context, R.string.story_report_submitted, Toast.LENGTH_SHORT).show()
+
+                    StudioEffect.ShowReportFailed ->
+                        Toast.makeText(context, R.string.story_report_failed, Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -111,9 +116,7 @@ private fun StudioContent(
             state.isLoading ->
                 StoriesStatus(state = state, contentPadding = contentPadding, onIntent = onIntent) {
                     if (showSkeleton) {
-                        MyStoriesSkeleton(
-                            contentPadding = PaddingValues(horizontal = ManyakTheme.spacing.gutter),
-                        )
+                        MyStoriesSkeleton()
                     }
                     // 금방 끝나는 조회에서 자리만 잡았다 사라지는 깜빡임을 만들지 않는다.
                 }
@@ -154,32 +157,6 @@ private fun StudioContent(
     }
 
     StudioDialogs(state = state, onIntent = onIntent)
-}
-
-/** 제작 탭이 띄우는 확인 다이얼로그 둘. 본문 배치와 섞이지 않게 따로 둔다. */
-@Composable
-private fun StudioDialogs(
-    state: StudioUiState,
-    onIntent: (StudioIntent) -> Unit,
-) {
-    if (state.showResumeChoiceDialog) {
-        ResumeChoiceDialog(
-            onStartNew = { onIntent(StudioIntent.StartNewCreation) },
-            onDismiss = { onIntent(StudioIntent.DismissResumeChoiceDialog) },
-        )
-    }
-
-    if (state.deleteTarget != null) {
-        ManyakDestructiveDialog(
-            title = stringResource(R.string.studio_delete_dialog_title),
-            description = stringResource(R.string.studio_delete_dialog_description),
-            confirmLabel = stringResource(R.string.studio_story_delete),
-            cancelLabel = stringResource(R.string.studio_delete_dialog_cancel),
-            onConfirm = { onIntent(StudioIntent.ConfirmDeleteStory) },
-            onDismiss = { onIntent(StudioIntent.DismissDeleteDialog) },
-            inProgress = state.isDeleting,
-        )
-    }
 }
 
 /**
@@ -233,9 +210,8 @@ private fun MyStories(
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = contentPadding.withScreenMargins(),
-            // 배너도 목록의 한 줄이라 이 값이 배너와 첫 카드 사이 간격까지 겸한다.
-            verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
+            // 좌우 여백은 카드가 스스로 갖는다 — 채팅 목록과 같은 리듬이다.
+            contentPadding = contentPadding.withRowListMargins(),
         ) {
             // 배너도 목록과 함께 스크롤된다 — 맨 위로 돌아오면 다시 보이므로 진입을 잃지 않는다.
             banner?.let {
@@ -243,6 +219,11 @@ private fun MyStories(
                     PendingCreationBannerRow(
                         banner = it,
                         onResume = { onIntent(StudioIntent.ResumeCreation) },
+                        // 카드가 위쪽 여백을 스스로 갖고 있어, 배너 아래 같은 값을 더하면 둘 사이가 gutter 가 된다.
+                        modifier =
+                            Modifier
+                                .padding(horizontal = ManyakTheme.spacing.gutter)
+                                .padding(bottom = ManyakTheme.spacing.compact),
                     )
                 }
             }
@@ -250,7 +231,7 @@ private fun MyStories(
                 MyStoryCard(
                     story = story,
                     onClick = { onOpenStory(story.id) },
-                    onDeleteClick = { onIntent(StudioIntent.RequestDeleteStory(story)) },
+                    onOptionsClick = { onIntent(StudioIntent.OpenStoryOptions(story)) },
                 )
             }
         }

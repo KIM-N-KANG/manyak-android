@@ -38,6 +38,9 @@ data class StoryDetailUiState(
     val isStartingChat: Boolean = false,
     val startChatFailed: Boolean = false,
     val report: StoryReportUiState = StoryReportUiState(),
+    /** 삭제 확인 다이얼로그. 내 스토리로 들어온 상세에서만 열린다. */
+    val isDeleteDialogOpen: Boolean = false,
+    val isDeleting: Boolean = false,
 ) {
     val selectedStartSetting
         get() = story?.startSettings?.firstOrNull { setting -> setting.id == selectedStartSettingId }
@@ -62,6 +65,13 @@ sealed interface StoryDetailIntent {
     data class Report(
         val action: StoryReportAction,
     ) : StoryDetailIntent
+
+    /** 헤더 메뉴의 "삭제하기" — 바로 지우지 않고 확인을 묻는다. */
+    data object RequestDelete : StoryDetailIntent
+
+    data object ConfirmDelete : StoryDetailIntent
+
+    data object DismissDeleteDialog : StoryDetailIntent
 }
 
 sealed interface StoryDetailEvent {
@@ -94,6 +104,14 @@ sealed interface StoryDetailEvent {
     data class Report(
         val change: StoryReportChange,
     ) : StoryDetailEvent
+
+    data class DeleteDialogVisibleChanged(
+        val visible: Boolean,
+    ) : StoryDetailEvent
+
+    data object DeleteStarted : StoryDetailEvent
+
+    data object DeleteFailed : StoryDetailEvent
 }
 
 sealed interface StoryDetailEffect {
@@ -104,6 +122,11 @@ sealed interface StoryDetailEffect {
     data object ShowReportSubmitted : StoryDetailEffect
 
     data object ShowReportFailed : StoryDetailEffect
+
+    /** 삭제됐다 — 더 볼 것이 없으니 화면이 진입한 목록으로 돌아간다. */
+    data object StoryDeleted : StoryDetailEffect
+
+    data object ShowDeleteFailed : StoryDetailEffect
 }
 
 /**
@@ -133,6 +156,7 @@ class StoryDetailViewModel
 
         private var loadJob: Job? = null
         private var startChatJob: Job? = null
+        private var deleteJob: Job? = null
 
         /**
          * 고른 시작 설정의 장부. UiState 가 아니라 여기서 읽는 이유는 상태 반영이 이벤트 채널을 거쳐
@@ -187,6 +211,17 @@ class StoryDetailViewModel
                 StoryDetailIntent.StartChat -> startChat(state)
 
                 is StoryDetailIntent.Report -> report.handle(intent.action, state.story?.id, state.report)
+
+                StoryDetailIntent.RequestDelete ->
+                    dispatchEvent(StoryDetailEvent.DeleteDialogVisibleChanged(visible = true))
+
+                StoryDetailIntent.ConfirmDelete -> delete()
+
+                // 삭제가 진행 중이면 닫지 않는다 — 결과가 정해진 뒤 상태 전이가 닫는다.
+                StoryDetailIntent.DismissDeleteDialog ->
+                    if (deleteJob?.isActive != true) {
+                        dispatchEvent(StoryDetailEvent.DeleteDialogVisibleChanged(visible = false))
+                    }
             }
         }
 
@@ -229,6 +264,23 @@ class StoryDetailViewModel
                 }
         }
 
+        /** 삭제 성공 뒤 다이얼로그는 걷지 않는다 — 화면이 곧 사라지므로 걷으면 본문이 잠깐 되살아난다. */
+        private fun delete() {
+            if (deleteJob?.isActive == true) return
+            deleteJob =
+                viewModelScope.launch {
+                    dispatchEvent(StoryDetailEvent.DeleteStarted)
+                    when (storyRepository.deleteStory(storyId)) {
+                        is DomainResult.Success -> dispatchEffect(StoryDetailEffect.StoryDeleted)
+
+                        is DomainResult.Failure -> {
+                            dispatchEvent(StoryDetailEvent.DeleteFailed)
+                            dispatchEffect(StoryDetailEffect.ShowDeleteFailed)
+                        }
+                    }
+                }
+        }
+
         override fun reduce(
             state: StoryDetailUiState,
             event: StoryDetailEvent,
@@ -263,6 +315,12 @@ class StoryDetailViewModel
                 StoryDetailEvent.ChatStartReset -> state.copy(isStartingChat = false)
 
                 is StoryDetailEvent.Report -> state.copy(report = state.report.reduceReport(event.change))
+
+                is StoryDetailEvent.DeleteDialogVisibleChanged -> state.copy(isDeleteDialogOpen = event.visible)
+
+                StoryDetailEvent.DeleteStarted -> state.copy(isDeleting = true)
+
+                StoryDetailEvent.DeleteFailed -> state.copy(isDeleting = false, isDeleteDialogOpen = false)
             }
     }
 

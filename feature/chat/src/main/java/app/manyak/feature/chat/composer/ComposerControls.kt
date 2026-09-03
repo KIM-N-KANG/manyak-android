@@ -1,5 +1,6 @@
 package app.manyak.feature.chat.composer
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -8,6 +9,7 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -30,39 +32,31 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.R
+import app.manyak.core.ui.component.ManyakIconButton
 import app.manyak.core.ui.component.ManyakProgressIndicator
 import app.manyak.core.ui.theme.ManyakTheme
 
 /** 툴바의 아이콘 버튼. */
 @Composable
 internal fun ComposerIconButton(
-    iconRes: Int,
+    @DrawableRes iconRes: Int,
     contentDescription: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     tint: Color = ManyakTheme.colors.textSubtle,
     enabled: Boolean = true,
 ) {
-    Box(
-        modifier =
-            modifier
-                .size(ManyakTheme.sizes.controlSmall)
-                .clip(ManyakTheme.shapes.menuItem)
-                .clickable(
-                    enabled = enabled,
-                    role = Role.Button,
-                    onClickLabel = contentDescription,
-                    onClick = onClick,
-                ),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            modifier = Modifier.size(ManyakTheme.sizes.iconSmall),
-            painter = painterResource(iconRes),
-            contentDescription = contentDescription,
-            tint = if (enabled) tint else ManyakTheme.colors.textDisabled,
-        )
-    }
+    ManyakIconButton(
+        modifier = modifier,
+        iconRes = iconRes,
+        contentDescription = contentDescription,
+        onClick = onClick,
+        size = ManyakTheme.sizes.controlSmall,
+        iconSize = ManyakTheme.sizes.iconSmall,
+        shape = ManyakTheme.shapes.menuItem,
+        tint = tint,
+        enabled = enabled,
+    )
 }
 
 /** "상황 추가"·"대사 추가" 처럼 툴바에 놓이는 작은 채움 버튼. */
@@ -171,10 +165,50 @@ internal fun ComposerTextField(
     containerShape: CornerBasedShape? = ManyakTheme.shapes.control,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     leading: (@Composable () -> Unit)? = null,
+    onDisabledTap: (() -> Unit)? = null,
 ) {
     val focused by interactionSource.collectIsFocusedAsState()
+    Box(modifier = modifier) {
+        ComposerTextFieldBody(
+            state = state,
+            placeholder = placeholder,
+            enabled = enabled,
+            maxLines = maxLines,
+            textColor = textColor,
+            contentPadding = contentPadding,
+            containerShape = containerShape,
+            interactionSource = interactionSource,
+            focused = focused,
+            leading = leading,
+        )
+        // 잠긴 입력창은 터치를 받지 않아 아무 반응이 없다 — 위에 투명한 자리를 깔아 눌렀다는 것만 받는다.
+        if (!enabled && onDisabledTap != null) {
+            Box(
+                modifier =
+                    Modifier
+                        .matchParentSize()
+                        .clickable(interactionSource = null, indication = null, onClick = onDisabledTap),
+            )
+        }
+    }
+}
+
+@Composable
+@Suppress("LongParameterList")
+private fun ComposerTextFieldBody(
+    state: TextFieldState,
+    placeholder: String,
+    enabled: Boolean,
+    maxLines: Int,
+    textColor: Color,
+    contentPadding: PaddingValues,
+    containerShape: CornerBasedShape?,
+    interactionSource: MutableInteractionSource,
+    focused: Boolean,
+    leading: (@Composable () -> Unit)?,
+) {
     BasicTextField(
-        modifier = modifier,
+        modifier = Modifier.fillMaxWidth(),
         state = state,
         enabled = enabled,
         lineLimits = TextFieldLineLimits.MultiLine(maxHeightInLines = maxLines),

@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -35,6 +34,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.R
+import app.manyak.core.ui.component.ManyakIconButton
 import app.manyak.core.ui.component.ManyakInputCounter
 import app.manyak.core.ui.component.ManyakMultilineTextField
 import app.manyak.core.ui.component.RowRevealTransition
@@ -83,7 +83,8 @@ private fun SelectedStorylineToggle(
     Row(
         modifier =
             modifier
-                .clip(ManyakTheme.shapes.control)
+                // 높이가 낮은 글자 버튼이라 컨트롤 곡률이면 알약으로 보인다 — 아이콘 버튼과 같은 곡률을 쓴다.
+                .clip(ManyakTheme.shapes.menuItem)
                 .clickable(onClick = onClick)
                 .padding(horizontal = ManyakTheme.spacing.compact, vertical = ManyakTheme.spacing.inline),
         verticalAlignment = Alignment.CenterVertically,
@@ -264,16 +265,14 @@ private fun AdditionalInfoRow(
                 )
             },
         )
-        IconButton(
-            modifier = Modifier.size(32.dp),
+        ManyakIconButton(
+            iconRes = R.drawable.ic_close,
+            contentDescription = stringResource(R.string.create_additional_delete_description, index + 1),
             onClick = onRemove,
-        ) {
-            Icon(
-                modifier = Modifier.size(16.dp),
-                painter = painterResource(R.drawable.ic_close),
-                contentDescription = stringResource(R.string.create_additional_delete_description, index + 1),
-                tint = ManyakTheme.colors.textSubtlest,
-            )
-        }
+            size = ManyakTheme.sizes.controlSmall,
+            iconSize = ManyakTheme.sizes.iconSmall,
+            shape = ManyakTheme.shapes.menuItem,
+            tint = ManyakTheme.colors.textSubtlest,
+        )
     }
 }

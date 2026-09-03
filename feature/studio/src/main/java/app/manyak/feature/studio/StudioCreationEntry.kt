@@ -11,7 +11,6 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,6 +18,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.R
+import app.manyak.core.ui.component.ManyakTextButton
 import app.manyak.core.ui.theme.ManyakTheme
 
 /** 이어서 만들기 배너 한 줄. 목록 그리드에서는 전폭 아이템으로 함께 스크롤된다. */
@@ -50,7 +50,7 @@ internal fun PendingCreationBannerRow(
             style = ManyakTheme.typography.bodyMedium,
             color = ManyakTheme.colors.text,
         )
-        TextButton(onClick = onResume) {
+        ManyakTextButton(onClick = onResume) {
             Text(
                 text = stringResource(R.string.studio_pending_banner_resume),
                 style = ManyakTheme.typography.labelLarge,
@@ -107,7 +107,7 @@ internal fun ResumeChoiceDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            ManyakTextButton(onClick = onDismiss) {
                 Text(
                     text = stringResource(R.string.studio_pending_dialog_close),
                     style = ManyakTheme.typography.labelLarge,

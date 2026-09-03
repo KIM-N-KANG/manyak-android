@@ -9,7 +9,8 @@ data class CreatedChat(
 )
 
 /**
- * 채팅 목록 카드 한 건. 카드가 그리지 않는 참조 스토리 ID·도달 엔딩은 담지 않는다.
+ * 채팅 목록 카드 한 건. 카드가 그리지 않는 도달 엔딩은 담지 않는다. 참조 스토리 ID 는 카드가
+ * 그리지는 않지만 카드에서 여는 신고의 대상이라 담는다.
  *
  * [updatedAtEpochMillis] 가 문자열이 아니라 시각인 이유는 카드가 상대 시간("3일 전")으로 그리기
  * 때문이다. 와이어 형식을 아는 곳은 데이터 계층이고, 형식이 예상과 다르면 `null` 로 와서 카드가
@@ -17,6 +18,8 @@ data class CreatedChat(
  */
 data class ChatSummary(
     val id: String,
+    /** 참조 스토리. 신고는 스토리 단위라 카드에서 신고를 열 때 이 값을 쓴다. */
+    val storyId: String,
     val storyTitle: String,
     val thumbnailUrl: String?,
     /** 마지막 AI 출력 전문. 완료 턴이 없는 채팅은 빈 문자열이며 카드가 안내 문구로 대신한다. */

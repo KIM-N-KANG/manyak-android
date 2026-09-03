@@ -12,6 +12,8 @@ internal data class ChatComposerActions(
     val onChoicesEnabledChange: (Boolean) -> Unit,
     val onSend: () -> Unit,
     val onSendRandomSuggestion: () -> Unit,
+    /** 잠긴 입력창을 눌렀다. 왜 입력할 수 없는지 알리는 데 쓴다. */
+    val onLockedTap: () -> Unit,
 )
 
 /** 설정 메뉴 항목 하나. 설명은 라벨만으로 무엇이 달라지는지 알기 어려운 설정에 붙인다. */

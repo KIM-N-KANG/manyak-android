@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,6 +25,7 @@ import app.manyak.core.domain.credit.CreditTransactionReason
 import app.manyak.core.domain.credit.CreditTransactionType
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ManyakProgressIndicator
+import app.manyak.core.ui.component.ManyakTextButton
 import app.manyak.core.ui.component.SkeletonPlaceholder
 import app.manyak.core.ui.component.rememberSkeletonPulseAlpha
 import app.manyak.core.ui.theme.ManyakTheme
@@ -140,7 +140,7 @@ internal fun CreditHistoryLoadMoreFooter(
         if (isLoading) {
             ManyakProgressIndicator(modifier = Modifier.size(ManyakTheme.sizes.icon))
         } else {
-            TextButton(onClick = onRetry) {
+            ManyakTextButton(onClick = onRetry) {
                 Text(
                     text = stringResource(R.string.common_retry),
                     style = ManyakTheme.typography.labelLarge,

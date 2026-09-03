@@ -10,18 +10,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import app.manyak.core.ui.R
+import app.manyak.core.ui.component.ManyakIconButton
 import app.manyak.core.ui.theme.ManyakTheme
 import coil3.compose.AsyncImage
 
@@ -66,21 +64,18 @@ internal fun StoryImageViewer(
             // 스토리 제목·소개가 이미 말하는 것을 되풀이하지 않는다. 낭독 대상은 닫기 버튼이다.
             contentDescription = null,
         )
-        IconButton(
+        ManyakIconButton(
             modifier =
                 Modifier
                     .align(Alignment.TopEnd)
                     .windowInsetsPadding(WindowInsets.safeDrawing)
                     .padding(ManyakTheme.spacing.compact),
+            iconRes = R.drawable.ic_close,
+            contentDescription = closeLabel,
             onClick = onClose,
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_close),
-                contentDescription = closeLabel,
-                // 어떤 이미지 위에 놓일지 알 수 없어 색은 테마가 아니라 어두운 바탕 대비로 정한다.
-                tint = Color.White,
-            )
-        }
+            // 어떤 이미지 위에 놓일지 알 수 없어 색은 테마가 아니라 어두운 바탕 대비로 정한다.
+            tint = Color.White,
+        )
     }
 }
 

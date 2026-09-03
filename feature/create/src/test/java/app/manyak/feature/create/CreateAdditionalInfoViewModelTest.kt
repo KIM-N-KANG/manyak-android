@@ -554,13 +554,16 @@ class CreateAdditionalInfoViewModelTest {
         }
 
     @Test
-    fun `저장한 뒤 이탈하면 경고 없이 이탈 효과를 낸다`() =
+    fun `저장한 뒤 이탈하면 닫기 확인만 거쳐 이탈 효과를 낸다`() =
         runTest(dispatcher) {
             val fixture = loadedViewModel(selectedStorylineIndex = 0)
             fixture.viewModel.onIntent(CreateAdditionalInfoIntent.SaveDraft)
             advanceUntilIdle()
 
             fixture.viewModel.onIntent(CreateAdditionalInfoIntent.LeaveFunnel)
+            advanceUntilIdle()
+            assertEquals(FunnelExitWarning.SAVED_DRAFT, fixture.viewModel.uiState.value.exitWarning)
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.ConfirmLeaveFunnel)
             advanceUntilIdle()
 
             assertNull(fixture.viewModel.uiState.value.exitWarning)

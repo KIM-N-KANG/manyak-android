@@ -19,8 +19,11 @@ sealed interface CreditChargeIntent {
 
     data object Retry : CreditChargeIntent
 
-    /** 당겨서 새로고침. 잔액과 첫 페이지를 다시 읽는다. */
+    /** 내역 탭의 당겨서 새로고침. 잔액과 첫 페이지를 다시 읽는다. */
     data object Refresh : CreditChargeIntent
+
+    /** 무료 충전 탭의 당겨서 새로고침. 프로필만 다시 읽어 자정이 지난 출석 여부와 잔액을 맞춘다. */
+    data object RefreshProfile : CreditChargeIntent
 
     /** 목록 끝에 닿았다. 다음 커서가 없거나 이미 받고 있으면 아무 일도 하지 않는다. */
     data object LoadMore : CreditChargeIntent
@@ -41,6 +44,8 @@ data class CreditChargeUiState(
     val isLoadingMore: Boolean = false,
     val loadMoreFailed: Boolean = false,
     val isRefreshing: Boolean = false,
+    /** 무료 충전 탭을 당겨 프로필을 다시 읽는 중. 내역 탭의 [isRefreshing] 과 표시자가 따로 논다. */
+    val isRefreshingProfile: Boolean = false,
 ) {
     val hasMore: Boolean get() = nextCursor != null
 
@@ -69,6 +74,10 @@ sealed interface CreditChargeEvent {
     data object RefreshStarted : CreditChargeEvent
 
     data object RefreshFailed : CreditChargeEvent
+
+    data object ProfileRefreshStarted : CreditChargeEvent
+
+    data object ProfileRefreshFinished : CreditChargeEvent
 
     data object LoadMoreStarted : CreditChargeEvent
 
@@ -133,6 +142,7 @@ class CreditChargeViewModel
 
                 CreditChargeIntent.Retry -> loadFirstPage()
                 CreditChargeIntent.Refresh -> refresh()
+                CreditChargeIntent.RefreshProfile -> refreshProfile()
                 CreditChargeIntent.LoadMore -> loadNextPage()
                 CreditChargeIntent.ClaimAttendance -> claimAttendance()
             }
@@ -163,6 +173,8 @@ class CreditChargeViewModel
                 CreditChargeEvent.RefreshStarted -> state.copy(isRefreshing = true)
                 // 새로고침 실패는 보고 있던 목록을 건드리지 않는다 — 알림은 토스트가 맡는다.
                 CreditChargeEvent.RefreshFailed -> state.copy(isRefreshing = false)
+                CreditChargeEvent.ProfileRefreshStarted -> state.copy(isRefreshingProfile = true)
+                CreditChargeEvent.ProfileRefreshFinished -> state.copy(isRefreshingProfile = false)
                 CreditChargeEvent.LoadMoreStarted -> state.copy(isLoadingMore = true, loadMoreFailed = false)
                 is CreditChargeEvent.MoreLoaded ->
                     state.copy(
@@ -190,6 +202,21 @@ class CreditChargeViewModel
                     dispatchEffect(CreditChargeEffect.ShowRefreshFailed)
                 }
             }
+        }
+
+        /**
+         * 무료 충전 탭의 당겨서 새로고침. 출석 여부는 자정에 서버에서 초기화되는데 화면을 켜 둔 채
+         * 자정을 넘기면 프로필이 어제 값이라 버튼이 "출석 완료"로 잠겨 있다 — 화면을 나가지 않고
+         * 맞출 수단이다. 내역은 이 탭이 그리지 않으므로 읽지 않는다. 명시적 요청이라 간격을 보지 않는다.
+         */
+        private suspend fun refreshProfile() {
+            if (uiState.value.isRefreshingProfile) return
+            dispatchEvent(CreditChargeEvent.ProfileRefreshStarted)
+            lastRefreshMark = TimeSource.Monotonic.markNow()
+            if (userProfileRepository.refresh() is DomainResult.Failure) {
+                dispatchEffect(CreditChargeEffect.ShowRefreshFailed)
+            }
+            dispatchEvent(CreditChargeEvent.ProfileRefreshFinished)
         }
 
         private suspend fun loadFirstPage() {

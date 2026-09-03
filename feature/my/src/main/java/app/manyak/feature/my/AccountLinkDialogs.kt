@@ -8,7 +8,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,6 +16,7 @@ import androidx.compose.ui.res.stringResource
 import app.manyak.core.domain.auth.AuthProvider
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ManyakProgressIndicator
+import app.manyak.core.ui.component.ManyakTextButton
 import app.manyak.core.ui.theme.ManyakTheme
 
 /**
@@ -55,7 +55,7 @@ internal fun AccountLinkConfirmDialog(
         text = { ConfirmDescription(currentLabel = currentLabel, targetLabel = targetLabel) },
         confirmButton = { ConfirmActionButton(inProgress = inProgress, onConfirm = onConfirm) },
         dismissButton = {
-            TextButton(onClick = onDismiss, enabled = !inProgress) {
+            ManyakTextButton(onClick = onDismiss, enabled = !inProgress) {
                 Text(
                     text = stringResource(R.string.my_link_confirm_cancel),
                     style = ManyakTheme.typography.labelLarge,

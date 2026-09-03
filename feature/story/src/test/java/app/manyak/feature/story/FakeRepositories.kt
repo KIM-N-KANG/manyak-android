@@ -24,6 +24,7 @@ internal fun sampleStoryDetail(
     turnCount: Long = 128,
     startSettings: List<StoryStartSetting> = sampleStartSettings(),
     reachedEndings: List<String> = emptyList(),
+    isOwner: Boolean = true,
 ): StoryDetail =
     StoryDetail(
         id = STORY_ID,
@@ -38,6 +39,7 @@ internal fun sampleStoryDetail(
         startSettings = startSettings,
         reachedEndings = reachedEndings,
         characters = emptyList(),
+        isOwner = isOwner,
     )
 
 internal fun sampleStartSettings(): List<StoryStartSetting> =
@@ -76,7 +78,14 @@ internal class FakeStoryRepository : StoryRepository {
 
     override suspend fun myStories(): DomainResult<List<StorySummary>> = DomainResult.Success(emptyList())
 
-    override suspend fun deleteStory(storyId: String): DomainResult<Unit> = DomainResult.Success(Unit)
+    val deletedStoryIds = mutableListOf<String>()
+    val queuedDeleteResults = ArrayDeque<DomainResult<Unit>>()
+
+    override suspend fun deleteStory(storyId: String): DomainResult<Unit> {
+        yield()
+        deletedStoryIds += storyId
+        return queuedDeleteResults.removeFirstOrNull() ?: DomainResult.Success(Unit)
+    }
 
     /** 접수된 신고 — 화면이 무엇을 보냈는지 확인할 때 쓴다. */
     val reportedStories = mutableListOf<Triple<String, StoryReportReason, String?>>()

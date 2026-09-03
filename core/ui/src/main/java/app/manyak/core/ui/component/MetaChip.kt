@@ -27,6 +27,7 @@ fun MetaChip(
     text: String,
     description: String,
     modifier: Modifier = Modifier,
+    compact: Boolean = false,
 ) {
     Row(
         modifier = modifier.clearAndSetSemantics { contentDescription = description },
@@ -34,14 +35,14 @@ fun MetaChip(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            modifier = Modifier.size(MetaIconSize),
+            modifier = Modifier.size(if (compact) CompactMetaIconSize else MetaIconSize),
             painter = painterResource(iconRes),
             contentDescription = null,
             tint = ManyakTheme.colors.textSubtle,
         )
         Text(
             text = text,
-            style = ManyakTheme.typography.bodyMedium,
+            style = if (compact) ManyakTheme.typography.bodySmall else ManyakTheme.typography.bodyMedium,
             color = ManyakTheme.colors.textSubtle,
         )
     }
@@ -49,3 +50,6 @@ fun MetaChip(
 
 /** 메타 글줄 옆에 붙는 아이콘이라 토큰의 가장 작은 아이콘보다도 작다. 웹도 같은 14px 다. */
 private val MetaIconSize = 14.dp
+
+/** 한 단계 작은 카드 미리보기용. 글자가 12sp 로 줄어드는 만큼 아이콘도 따라 줄인다. */
+private val CompactMetaIconSize = 12.dp

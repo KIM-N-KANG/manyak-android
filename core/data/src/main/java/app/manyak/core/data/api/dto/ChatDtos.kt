@@ -61,6 +61,7 @@ fun ChatCreateResponseDto.toDomain(): CreatedChat = CreatedChat(id = id)
 @Serializable
 data class ChatSummaryDto(
     val id: String,
+    val storyId: String = "",
     val storyTitle: String = "",
     val thumbnailUrlSm: String? = null,
     val lastStoryPreview: String = "",
@@ -71,6 +72,7 @@ data class ChatSummaryDto(
 fun ChatSummaryDto.toDomain(): ChatSummary =
     ChatSummary(
         id = id,
+        storyId = storyId,
         storyTitle = storyTitle,
         thumbnailUrl = thumbnailUrlSm?.takeIf { url -> url.isNotBlank() },
         // 빈 미리보기는 완료 턴이 없는 채팅의 정상 값이라 걸러 내지 않는다 — 카드가 안내 문구로 대신한다.

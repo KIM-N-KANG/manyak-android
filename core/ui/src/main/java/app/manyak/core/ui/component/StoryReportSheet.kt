@@ -15,7 +15,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -65,7 +64,7 @@ fun StoryReportSheet(
             isSubmitting = state.isSubmitting,
             onSubmit = { onAction(StoryReportAction.Submit) },
         )
-        TextButton(
+        ManyakTextButton(
             modifier = Modifier.fillMaxWidth(),
             onClick = { onAction(StoryReportAction.Close) },
             enabled = !state.isSubmitting,

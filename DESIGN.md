@@ -21,6 +21,7 @@ colors:
   surface-raised: "#FFFFFF"
   background-neutral: "#F5F5F5"
   background-neutral-pressed: "#EEEEEE"
+  overlay-pressed: "#0F000000"
   background-brand-bold: "#00804B"
   background-brand-bold-pressed: "#006034"
   background-brand-subtle: "#E8F8EE"
@@ -57,6 +58,7 @@ colors-dark:
   surface-raised: "#1F1F1F"
   background-neutral: "#1F1F1F"
   background-neutral-pressed: "#575757"
+  overlay-pressed: "#14FFFFFF"
   background-brand-bold: "#00804B"
   background-brand-bold-pressed: "#006034"
   background-brand-subtle: "#00411F"
@@ -140,6 +142,7 @@ typography:
 rounded:
   checkbox: 6dp
   menu-item: 10dp
+  thumbnail-small: 8dp
   thumbnail: 12dp
   control: 14dp
   card: 16dp
@@ -394,7 +397,7 @@ components:
 | `ManyakSpacing.kt` | 시맨틱 여백 |
 | `ManyakShapes.kt` | 시맨틱 모서리 |
 | `ManyakSizes.kt` | 크기 5종 |
-| `ManyakMotion.kt` | 전환 시간 1종 |
+| `ManyakMotion.kt` | 전환 시간 2종 |
 | `Theme.kt` | `ManyakTheme` 컴포저블·접근자, M3 슬롯 파생 |
 
 `core/ui/src/main/java/app/manyak/core/ui/component/`
@@ -426,6 +429,7 @@ components:
 - **표면** (`{colors.surface}` — 라이트 #FCFCFC / 다크 #131313): 앱 바탕·카드·시트. 화면의 기본 바닥입니다.
 - **떠 있는 표면** (`{colors.surface-raised}` — 라이트 #FFFFFF / 다크 #1F1F1F): 팝오버·플로팅. **순백을 쓰는 유일한 자리**입니다.
 - **보조 배경** (`{colors.background-neutral}` — 라이트 #F5F5F5 / 다크 #191919): 입력창·비강조 채움. 눌림은 `{colors.background-neutral-pressed}`.
+- **눌림 리플** (`{colors.overlay-pressed}` — 라이트 검정 6% / 다크 흰 8%): 리플의 색이고 알파가 곧 눌림 농도다. 흰 행에서는 보조 배경 눌림 색 근처가 되고, 표지 위에서는 옅은 스크림이 된다. 배경색이 없는 카드에도 같은 규칙으로 눌림을 말하기 위한 값이라 채움 색이 아니라 반투명이다.
 - **비활성 채움** (`{colors.background-disabled}`): 비활성 컨트롤의 바닥.
 
 ### 텍스트
@@ -571,7 +575,8 @@ components:
 
 | 토큰 | 값 | 쓰임 |
 | --- | --- | --- |
-| `{motion.screen-transition}` | 150ms | 화면·탭이 바뀔 때의 교차 페이드 |
+| `{motion.screen-transition}` | 150ms | 탭이 바뀔 때의 교차 페이드 |
+| `{motion.screen-slide}` | 250ms | 스택 위에 쌓이고 걷히는 화면의 밀기 |
 | `{motion.element-enter}` | 200ms | 화면 안의 작은 요소가 나타날 때 |
 | `{motion.element-exit}` | 150ms | 화면 안의 작은 요소가 사라질 때 |
 | `{motion.list-item-enter}` | 300ms | 차례로 드러나는 목록에서 항목 하나 |
@@ -582,8 +587,13 @@ components:
 **전환은 짧다.** 내비게이션 라이브러리 기본값은 700ms 인데, 하단 탭처럼 자주 오가는 전환에서는
 눌렀는데 뒤늦게 따라오는 느낌을 준다. 150ms 는 전환이 있었다는 것만 알리고 비켜선다.
 
-**예측형 뒤로가기(predictive back)는 예외로 두고 라이브러리 기본값을 쓴다.** 이쪽 애니메이션은 장식이
-아니라 손가락을 따라오는 제스처 피드백 그 자체라, 짧게 만들면 제스처가 반응하지 않는 것처럼 보인다.
+**밀기는 페이드보다 길다.** 쌓이고 걷히는 화면은 폭 전체를 움직이므로(하네스 §3-3-3 화면 전환) 150ms 로는
+어느 쪽에서 왔는지 눈이 따라가지 못한다. 250ms 는 방향이 읽히면서도 눌렀다는 느낌이 끊기지 않는 값이다.
+움직이는 화면은 불투명하고, 덮이는 화면은 밀기에서는 폭의 1/4 만 물러나며, 퍼널 덮개에서는 제자리에서
+60% 로 어두워진다.
+
+**예측형 뒤로가기(predictive back)는 걷기와 같은 변환을 손가락 진행도로 되감는다.** 시간 토큰은 여기에
+쓰이지 않는다 — 진행도가 곧 시간이라 별도 길이가 없고, 놓은 뒤의 마무리만 라이브러리가 맡는다.
 
 **등장은 퇴장보다 길다.** 나타나는 요소는 눈이 따라갈 시간이 필요하지만, 사라지는 요소는 이미 볼 일이
 끝나 남아 있으면 기다리게 만든다. 방향도 함께 쓴다 — 목록 끝으로 보내는 버튼은 아래에서 올라오고
@@ -597,7 +607,7 @@ components:
 출발해도 앞 항목이 아직 움직이고 있어 목록 전체가 하나의 흐름으로 읽히게 한다. 값은 웹과 같다 —
 추천 입력처럼 두 플랫폼에 같은 목록이 있는 자리에서 리듬이 갈리면 안 된다.
 
-**눌림 상태에는 애니메이션을 쓰지 않는다.** 색 변화로만 말한다. **눌림 리플은 앱 전역에서 끈다**(2026-08-24) — `ManyakTheme`이 리플 설정을 비워 내리므로 컴포넌트마다 따로 끄지 않아도 되고, 개별 컴포넌트에서 다시 켜지 않는다.
+**눌림은 리플 하나로 말한다**(2026-09-03 — 2026-08-24 의 "리플 전역 끄기"를 대체). `ManyakTheme`이 `LocalRippleConfiguration`으로 색과 농도를 내린다 — 색·눌림 농도는 `{colors.overlay-pressed}`(라이트 검정 6% / 다크 흰 8%)이고 호버·포커스·드래그 농도는 0 이다. 그래서 `clickable`을 쓰는 카드·행·메뉴 항목·다이얼로그 항목과 M3 버튼이 같은 리플을 받고, 탭 바처럼 눌림을 두지 않는 자리(`tab-bar`·이미지 뷰어 닫기 영역)만 하위 트리에서 리플을 끄거나 `indication = null`로 둔다. 홈 오리지널 카드는 둥글게 클립하지 않아 리플이 사각형으로 돈다 — 카드 곡률로 깎으면 맨 아래 제작자 줄이 깎이고, 표지 곡률로 깎으면 표지 테두리 위에 클립 경계가 겹친다. 눌림 표시를 색 변화 없이 다른 애니메이션(축소 등)으로 더하지 않는다. **길게 누르기는 열리는 순간 `LongPress` 햅틱을 한 번 울린다** — 화면에 드러나지 않는 제스처라 손으로도 확인을 준다.
 
 ## 모양
 
@@ -605,6 +615,7 @@ components:
 | --- | --- | --- |
 | `{rounded.checkbox}` | 6dp | 체크박스처럼 한 변이 20dp 남짓인 작은 네모 |
 | `{rounded.menu-item}` | 10dp | 셀렉트 메뉴 항목 · 라벨 없는 아이콘 버튼 |
+| `{rounded.thumbnail-small}` | 8dp | 회색 상자 안에 한 단계 작게 그린 카드 미리보기의 썸네일 — 상자(`card`)보다 작아야 동심으로 읽힌다 |
 | `{rounded.thumbnail}` | 12dp | 썸네일·작은 아이콘 컨테이너 |
 | `{rounded.control}` | 14dp | 버튼·입력창·탭 |
 | `{rounded.card}` | 16dp | 카드·리스트 항목 |
@@ -627,6 +638,10 @@ components:
 **`checkbox`** — 동의·확인 항목의 체크 표시. `{sizes.icon}` 정사각에 `{rounded.checkbox}` 모서리이고, 기본은 `{colors.surface}` 채움 + `{colors.border}` 1dp, 체크되면 `{colors.brand}` 채움에 같은 색 경계와 `{colors.text-inverse}` 체크 아이콘(16dp)이다. **체크박스 자체는 누르는 대상이 아니다** — 줄 전체가 토글을 맡아 문구를 눌러도 켜지고, 최소 터치 타깃도 그 줄이 확보한다. 체크박스에 따로 접근성 이름을 붙이지 않는다(줄이 이미 이름과 상태를 읽힌다).
 
 **`button-neutral`** — 보조 동작. 배경 `{colors.background-neutral}`, 텍스트 `{colors.text}`. 눌림은 `{component.button-neutral-pressed}`.
+
+**`button-text`** — 다이얼로그·시트의 닫기, 배너의 보조 동작, 인라인 재시도처럼 채움 없이 글자만 있는 버튼. 배경 없음, 텍스트 `{typography.label-large}`에 색은 자리가 정한다(닫기는 `{colors.text-subtle}`, 진입·재시도는 브랜드 색). **모서리는 `{rounded.control}`** — M3 `TextButton` 기본은 완전한 알약이라 눌림 리플이 채움 버튼과 다른 모양으로 돈다. `ManyakTextButton`을 쓴다.
+
+**`icon-button`** — 라벨 없이 아이콘만 있는 버튼. 배경 없음이고 눌림 리플의 모양이 자리에 따라 갈린다. **앱바의 뒤로가기·닫기(`{sizes.control}`)는 원(`{rounded.pill}`)** — 안드로이드 관례라 그대로 둔다. **콘텐츠 안에 놓이는 작은 버튼(입력 칸 옆 삭제·카드 제목 줄 더보기·컴포저 아이콘, `{sizes.control-small}` 이하)은 `{rounded.menu-item}`** — M3 `IconButton` 은 모양을 고를 수 없어 원이 그대로 나오므로 `ManyakIconButton`을 쓴다. 높이가 낮은 글자 토글(추가 정보의 "더보기")도 같은 이유로 컨트롤 곡률 대신 메뉴 항목 곡률을 쓴다.
 
 **`button-disabled`** — 배경 `{colors.background-disabled}`, 텍스트 `{colors.text-disabled}`. 비활성은 색만으로 전달하지 않고 상태 안내를 함께 둡니다.
 
@@ -749,4 +764,4 @@ components:
 - **태블릿·폴더블·가로 모드 정책이 없습니다.**
 - **컨트롤 높이(`sizes.*`)는 토큰 정본이 아니라 이 레포가 정한 값입니다.** 웹과 맞추려면 디자인 토큰 쪽에 크기 층을 추가해야 합니다.
 - **토큰 값이 웹과 같은지 자동으로 확인할 방법이 없습니다.** 생성기가 레포 밖에 있고 웹은 자체 CSS 변수를 쓰므로, 두 클라이언트의 값이 갈리는지는 사람이 봐야 합니다. 다크 보조 텍스트 두 단계는 지금 앱이 웹보다 밝습니다(2026-08-29).
-- **모션 토큰이 화면 전환·요소 등장·퇴장·목록 등장 다섯 단계뿐입니다.** 눌림 상태는 여전히 색 변화로만 정의되어 있고, 스켈레톤 같은 나머지 모션은 정의되지 않았습니다. 필요해지는 시점에 `{motion.*}`에 단계를 추가합니다.
+- **모션 토큰이 탭 전환·화면 밀기·요소 등장·퇴장·목록 등장 여섯 단계뿐입니다.** 눌림 상태는 여전히 색 변화로만 정의되어 있고, 스켈레톤 같은 나머지 모션은 정의되지 않았습니다. 필요해지는 시점에 `{motion.*}`에 단계를 추가합니다.

@@ -28,6 +28,8 @@ data class StoryDetailResponseDto(
     val startSettings: List<StoryStartSettingDto> = emptyList(),
     val reachedEndings: List<String> = emptyList(),
     val characters: List<StoryCharacterDto> = emptyList(),
+    /** 서버가 요청자와 소유자를 비교한 값. 게스트·미인증은 false 다. */
+    val isOwner: Boolean = false,
 )
 
 /**
@@ -90,4 +92,5 @@ fun StoryDetailResponseDto.toDomain(): StoryDetail =
                         imageUrl = character.imageUrl?.takeIf { url -> url.isNotBlank() },
                     )
                 },
+        isOwner = isOwner,
     )

@@ -363,6 +363,51 @@ class StoryDetailViewModelTest {
 
             assertFalse(viewModel.uiState.value.report.isSheetOpen)
         }
+
+    @Test
+    fun `삭제를 확인하면 지우고 화면을 떠나라는 효과를 낸다`() =
+        runTest(dispatcher) {
+            val storyRepository = FakeStoryRepository()
+            val viewModel = viewModel(storyRepository = storyRepository)
+            viewModel.onIntent(StoryDetailIntent.ScreenShown)
+            advanceUntilIdle()
+
+            viewModel.onIntent(StoryDetailIntent.RequestDelete)
+            advanceUntilIdle()
+            assertTrue(viewModel.uiState.value.isDeleteDialogOpen)
+
+            viewModel.onIntent(StoryDetailIntent.ConfirmDelete)
+            advanceUntilIdle()
+
+            assertEquals(listOf(STORY_ID), storyRepository.deletedStoryIds)
+            assertEquals(
+                StoryDetailEffect.StoryDeleted,
+                withTimeoutOrNull(TIMEOUT_MILLIS) { viewModel.uiEffect.first() },
+            )
+        }
+
+    @Test
+    fun `삭제 실패는 다이얼로그를 닫고 실패를 알리되 본문은 그대로 둔다`() =
+        runTest(dispatcher) {
+            val storyRepository = FakeStoryRepository()
+            storyRepository.queuedDeleteResults += DomainResult.Failure(DomainError.Unknown)
+            val viewModel = viewModel(storyRepository = storyRepository)
+            viewModel.onIntent(StoryDetailIntent.ScreenShown)
+            advanceUntilIdle()
+
+            viewModel.onIntent(StoryDetailIntent.RequestDelete)
+            viewModel.onIntent(StoryDetailIntent.ConfirmDelete)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertFalse(state.isDeleteDialogOpen)
+            assertFalse(state.isDeleting)
+            assertTrue(state.story != null)
+            assertEquals(
+                StoryDetailEffect.ShowDeleteFailed,
+                withTimeoutOrNull(TIMEOUT_MILLIS) { viewModel.uiEffect.first() },
+            )
+        }
 }
 
 private const val TIMEOUT_MILLIS = 1_000L
