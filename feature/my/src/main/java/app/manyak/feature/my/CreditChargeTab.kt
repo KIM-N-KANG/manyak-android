@@ -13,6 +13,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import app.manyak.core.analytics.AnalyticsEvent
+import app.manyak.core.analytics.LocalAnalytics
 import app.manyak.core.ui.R
 import app.manyak.core.ui.theme.ManyakTheme
 
@@ -32,6 +34,7 @@ internal fun CreditChargeTabRow(
     onSelect: (CreditChargeTab) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val analytics = LocalAnalytics.current
     CompositionLocalProvider(LocalRippleConfiguration provides null) {
         SecondaryTabRow(
             modifier = modifier.fillMaxWidth(),
@@ -49,7 +52,15 @@ internal fun CreditChargeTabRow(
             CreditChargeTab.entries.forEach { tab ->
                 Tab(
                     selected = tab == selected,
-                    onClick = { onSelect(tab) },
+                    onClick = {
+                        // 같은 탭 재선택은 전환이 아니다.
+                        if (tab !=
+                            selected
+                        ) {
+                            analytics.track(AnalyticsEvent.CreditChargeTabSelected(tab.name.lowercase()))
+                        }
+                        onSelect(tab)
+                    },
                     text = {
                         Text(
                             text = stringResource(tab.labelRes),

@@ -2,6 +2,7 @@ package app.manyak.root
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.manyak.core.analytics.Analytics
 import app.manyak.core.domain.credit.CreditPolicy
 import app.manyak.core.domain.credit.CreditPolicyRepository
 import app.manyak.core.domain.session.SessionRepository
@@ -25,6 +26,8 @@ class RootViewModel
         themePreferenceRepository: ThemePreferenceRepository,
         private val creditPolicyRepository: CreditPolicyRepository,
         private val coordinator: SessionTerminationCoordinator,
+        /** 화면이 직접 보내는 이벤트의 통로. 루트가 CompositionLocal 로 내린다. */
+        val analytics: Analytics,
     ) : ViewModel() {
         val sessionState: StateFlow<SessionState> = sessionRepository.sessionState
 

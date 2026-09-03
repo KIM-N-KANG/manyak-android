@@ -1,5 +1,6 @@
 package app.manyak.feature.chat
 
+import app.manyak.core.analytics.NoOpAnalytics
 import app.manyak.core.domain.chat.ChatStreamEvent
 import app.manyak.core.domain.error.DomainError
 import app.manyak.core.domain.error.DomainResult
@@ -118,6 +119,7 @@ class ChatRoomDeleteTest {
             chatRepository = repository,
             storyRepository = FakeStoryRepository(),
             preferences = FakeChatPreferencesRepository(),
+            analytics = NoOpAnalytics,
         )
 
     private fun kotlinx.coroutines.test.TestScope.loaded(repository: FakeChatRepository): ChatRoomViewModel {

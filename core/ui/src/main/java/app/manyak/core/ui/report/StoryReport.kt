@@ -1,5 +1,8 @@
 package app.manyak.core.ui.report
 
+import app.manyak.core.analytics.Analytics
+import app.manyak.core.analytics.AnalyticsEvent
+import app.manyak.core.analytics.ReportSource
 import app.manyak.core.domain.error.DomainResult
 import app.manyak.core.domain.story.StoryReportReason
 import app.manyak.core.domain.story.StoryRepository
@@ -79,6 +82,8 @@ fun StoryReportUiState.reduceReport(change: StoryReportChange): StoryReportUiSta
 class StoryReportController(
     private val scope: CoroutineScope,
     private val repository: StoryRepository,
+    private val analytics: Analytics,
+    private val source: ReportSource,
     private val emit: suspend (StoryReportChange) -> Unit,
     private val notify: suspend (submitted: Boolean) -> Unit,
 ) {
@@ -91,7 +96,11 @@ class StoryReportController(
     ) {
         when (action) {
             // 신고 대상이 아직 없으면 보낼 곳이 없다.
-            StoryReportAction.Open -> if (storyId != null) emit(StoryReportChange.SheetVisibleChanged(true))
+            StoryReportAction.Open ->
+                if (storyId != null) {
+                    analytics.track(AnalyticsEvent.ReportSheetOpened(storyId, source))
+                    emit(StoryReportChange.SheetVisibleChanged(true))
+                }
 
             // 전송 중에는 닫지 않는다 — 결과를 못 본 채 시트만 사라진다.
             StoryReportAction.Close -> if (!state.isSubmitting) emit(StoryReportChange.SheetVisibleChanged(false))
@@ -112,9 +121,10 @@ class StoryReportController(
         val reason = state.reason ?: return
         if (submitJob?.isActive == true) return
         emit(StoryReportChange.SubmitRequested)
+        analytics.track(AnalyticsEvent.ReportSubmitted(target, reason, hasDetail = state.detail.isNotBlank()))
         submitJob =
             scope.launch {
-                when (repository.reportStory(target, reason, state.detail)) {
+                when (val result = repository.reportStory(target, reason, state.detail)) {
                     is DomainResult.Success -> {
                         // 접수되면 닫는다 — 같은 스토리를 다시 신고할 이유가 없다.
                         emit(StoryReportChange.SheetVisibleChanged(false))
@@ -122,6 +132,7 @@ class StoryReportController(
                     }
 
                     is DomainResult.Failure -> {
+                        analytics.track(AnalyticsEvent.ReportFailed(result.error::class.simpleName.orEmpty()))
                         // 시트는 열어 둔다 — 쓰던 사유·상세를 다시 입력하게 하지 않는다.
                         emit(StoryReportChange.SubmitFailed)
                         notify(false)

@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -27,6 +27,12 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
+import app.manyak.core.analytics.AnalyticsEvent
+import app.manyak.core.analytics.CreateButtonSource
+import app.manyak.core.analytics.LocalAnalytics
+import app.manyak.core.analytics.StoryListSection
+import app.manyak.core.analytics.rememberImpressionTracker
+import app.manyak.core.analytics.trackImpression
 import app.manyak.core.domain.story.CreationResumePoint
 import app.manyak.core.domain.story.StorySummary
 import app.manyak.core.ui.R
@@ -110,6 +116,7 @@ private fun StudioContent(
     modifier: Modifier = Modifier,
 ) {
     val showSkeleton = rememberDelayedProgressVisibility(state.isLoading)
+    val analytics = LocalAnalytics.current
 
     Box(modifier = modifier.fillMaxSize()) {
         when {
@@ -147,7 +154,11 @@ private fun StudioContent(
         }
 
         CreateStoryFab(
-            onClick = { onIntent(StudioIntent.CreateStory) },
+            onClick = {
+                // 앱은 빈 목록에도 FAB 하나만 두므로 출처는 늘 fab 이다.
+                analytics.track(AnalyticsEvent.StoryListCreateButtonClicked(CreateButtonSource.FAB))
+                onIntent(StudioIntent.CreateStory)
+            },
             modifier =
                 Modifier
                     .align(Alignment.BottomEnd)
@@ -202,6 +213,8 @@ private fun MyStories(
     onIntent: (StudioIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val analytics = LocalAnalytics.current
+    val impressions = rememberImpressionTracker()
     ManyakPullToRefreshBox(
         modifier = modifier,
         isRefreshing = isRefreshing,
@@ -227,11 +240,20 @@ private fun MyStories(
                     )
                 }
             }
-            items(stories, key = { story -> story.id }) { story ->
+            itemsIndexed(stories, key = { _, story -> story.id }) { index, story ->
                 MyStoryCard(
                     story = story,
-                    onClick = { onOpenStory(story.id) },
+                    onClick = {
+                        analytics.track(AnalyticsEvent.StoryCardClicked(story.id, index, StoryListSection.CREATED))
+                        onOpenStory(story.id)
+                    },
                     onOptionsClick = { onIntent(StudioIntent.OpenStoryOptions(story)) },
+                    modifier =
+                        Modifier.trackImpression(impressions, key = story.id) {
+                            analytics.track(
+                                AnalyticsEvent.StoryCardImpressed(story.id, index, StoryListSection.CREATED),
+                            )
+                        },
                 )
             }
         }

@@ -1,6 +1,8 @@
 package app.manyak.feature.my
 
 import androidx.lifecycle.viewModelScope
+import app.manyak.core.analytics.Analytics
+import app.manyak.core.analytics.AnalyticsEvent
 import app.manyak.core.domain.auth.AccountLinkRepository
 import app.manyak.core.domain.auth.AuthProvider
 import app.manyak.core.domain.error.DomainError
@@ -97,6 +99,7 @@ class MyViewModel
         private val userProfileRepository: UserProfileRepository,
         private val themePreferenceRepository: ThemePreferenceRepository,
         private val accountLinkRepository: AccountLinkRepository,
+        private val analytics: Analytics,
     ) : MviViewModel<MyIntent, MyUiState, MyEvent, MyEffect>(MyUiState()) {
         /** 마지막으로 프로필을 다시 읽은 시점. 없으면 아직 한 번도 읽지 않았다. */
         private var lastRefreshMark: TimeSource.Monotonic.ValueTimeMark? = null
@@ -108,6 +111,7 @@ class MyViewModel
         private var accountLinkJob: Job? = null
 
         init {
+            analytics.track(AnalyticsEvent.AccountViewed)
             viewModelScope.launch {
                 userProfileRepository.profile.collect { profile -> dispatchEvent(MyEvent.ProfileChanged(profile)) }
             }
@@ -121,7 +125,10 @@ class MyViewModel
                 MyIntent.LogOut -> logOut()
                 MyIntent.Refresh -> refreshProfileIfStale()
                 MyIntent.CycleTheme -> themePreferenceRepository.setThemeMode(uiState.value.themeMode.next())
-                is MyIntent.RequestAccountLink -> dispatchEvent(MyEvent.AccountLinkRequested(intent.target))
+                is MyIntent.RequestAccountLink -> {
+                    analytics.track(AnalyticsEvent.LinkAccountButtonClicked(intent.target))
+                    dispatchEvent(MyEvent.AccountLinkRequested(intent.target))
+                }
                 MyIntent.ConfirmAccountLink -> startAccountLink()
                 MyIntent.DismissAccountLink -> dispatchEvent(MyEvent.AccountLinkDismissed)
                 MyIntent.DismissLinkedToOtherUserNotice -> dispatchEvent(MyEvent.LinkedToOtherUserDismissed)
@@ -205,6 +212,8 @@ class MyViewModel
 
         private suspend fun logOut() {
             if (uiState.value.isLoggingOut) return
+            // 종료 정리가 사용자 식별자를 떼기 전에 보내야 옛 사용자에게 귀속된다.
+            analytics.track(AnalyticsEvent.LogoutButtonClicked)
             dispatchEvent(MyEvent.LogOutStarted)
             sessionRepository.signOut()
         }

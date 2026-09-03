@@ -1,6 +1,9 @@
 package app.manyak.feature.my
 
 import androidx.annotation.StringRes
+import app.manyak.core.analytics.Analytics
+import app.manyak.core.analytics.AnalyticsEvent
+import app.manyak.core.analytics.InviteCodeSource
 import app.manyak.core.domain.error.DomainResult
 import app.manyak.core.domain.invite.Invite
 import app.manyak.core.domain.invite.InviteRepository
@@ -76,9 +79,14 @@ class InviteViewModel
         private val inviteRepository: InviteRepository,
         private val userProfileRepository: UserProfileRepository,
         shareLinkProvider: InviteShareLinkProvider,
+        private val analytics: Analytics,
     ) : MviViewModel<InviteIntent, InviteUiState, InviteEvent, InviteEffect>(
             InviteUiState(shareUrl = shareLinkProvider.shareUrl()),
         ) {
+        init {
+            analytics.track(AnalyticsEvent.InviteViewed)
+        }
+
         override suspend fun handleIntent(intent: InviteIntent) {
             when (intent) {
                 InviteIntent.Load -> if (uiState.value.invite == null) load()
@@ -121,16 +129,25 @@ class InviteViewModel
                 return
             }
             dispatchEvent(InviteEvent.SubmitStarted)
+            analytics.track(AnalyticsEvent.InviteCodeSubmitted(InviteCodeSource.INVITE_PAGE))
             when (val result = inviteRepository.redeemInviteCode(code)) {
                 is DomainResult.Success -> {
+                    analytics.track(AnalyticsEvent.InviteCodeSucceeded(InviteCodeSource.INVITE_PAGE))
                     dispatchEvent(InviteEvent.SubmitSucceeded)
                     dispatchEffect(InviteEffect.Redeemed)
                     // 잔액 정본은 프로필이라 지급액을 더하지 않고 다시 읽는다.
                     userProfileRepository.refresh()
                 }
 
-                is DomainResult.Failure ->
+                is DomainResult.Failure -> {
+                    analytics.track(
+                        AnalyticsEvent.InviteCodeFailed(
+                            InviteCodeSource.INVITE_PAGE,
+                            result.error.inviteCodeErrorType(),
+                        ),
+                    )
                     dispatchEvent(InviteEvent.SubmitFailed(result.error.inviteCodeMessageRes()))
+                }
             }
         }
     }

@@ -1,6 +1,9 @@
 package app.manyak.feature.create
 
 import androidx.lifecycle.viewModelScope
+import app.manyak.core.analytics.Analytics
+import app.manyak.core.analytics.AnalyticsEvent
+import app.manyak.core.analytics.CreateStep
 import app.manyak.core.domain.error.DomainResult
 import app.manyak.core.domain.story.StoryCreationRepository
 import app.manyak.core.domain.story.StoryTag
@@ -150,6 +153,7 @@ class CreateStorylineViewModel
     constructor(
         private val storylineGenerationStore: StorylineGenerationStore,
         private val storyCreationRepository: StoryCreationRepository,
+        private val analytics: Analytics,
     ) : MviViewModel<CreateStorylineIntent, CreateStorylineUiState, CreateStorylineEvent, CreateStorylineEffect>(
             storylineGenerationStore.toStorylineSnapshot(),
         ) {
@@ -173,6 +177,7 @@ class CreateStorylineViewModel
         val draftSave = storylineGenerationStore.draftSave
 
         init {
+            analytics.track(AnalyticsEvent.StoryCreateStepViewed(CreateStep.STORYLINE_SELECT))
             viewModelScope.launch {
                 // 프로세스 재시작·재개 진입으로 스토어가 비어 있으면 진행 레코드에서 먼저 복원한다.
                 storylineGenerationStore.ensureRestored()
@@ -200,6 +205,7 @@ class CreateStorylineViewModel
 
         override suspend fun handleIntent(intent: CreateStorylineIntent) {
             val state = uiState.value
+            intent.analyticsEvent(state, creationId())?.let(analytics::track)
             when (intent) {
                 is CreateStorylineIntent.SelectStoryline ->
                     if (intent.index in state.storylines.indices) {
@@ -288,6 +294,7 @@ class CreateStorylineViewModel
             rating: StorylineRating,
         ) {
             val next = if (desiredRatings[storylineId] == rating) null else rating
+            analytics.track(AnalyticsEvent.StorylineRatingClicked(storylineId, rating, active = next != null))
             desiredRatings.putOrRemove(storylineId, next)
             dispatchEvent(CreateStorylineEvent.RatingChanged(storylineId, next))
             scheduleRatingSync(storylineId)
@@ -343,6 +350,13 @@ class CreateStorylineViewModel
                 }
             }
         }
+
+        /** 분석 이벤트의 `creation_id`. 생성 결과가 없으면 프로퍼티를 채울 수 없어 이벤트를 내지 않는다. */
+        private fun creationId(): String? =
+            storylineGenerationStore.state.value
+                .resultOrNull()
+                ?.simpleCreationId
+                ?.toString()
 
         /** 새 생성 결과가 오면 이전 스토리라인의 평가 동기화는 의미가 없다. */
         private fun resetRatingSync() {
@@ -481,3 +495,27 @@ private fun MutableMap<Long, StorylineRating>.putOrRemove(
 ) {
     if (rating == null) remove(storylineId) else put(storylineId, rating)
 }
+
+/**
+ * 의도가 만드는 분석 이벤트. `creation_id` 가 필요한 이벤트는 생성 결과가 없으면 내지 않는다 —
+ * 프로퍼티가 빈 이벤트는 퍼널 집계에서 짝을 잃는다.
+ */
+private fun CreateStorylineIntent.analyticsEvent(
+    state: CreateStorylineUiState,
+    creationId: String?,
+): AnalyticsEvent? =
+    when (this) {
+        is CreateStorylineIntent.SelectStoryline ->
+            creationId
+                ?.takeIf { index in state.storylines.indices }
+                ?.let { AnalyticsEvent.StorylineTabSelected(it, index) }
+        CreateStorylineIntent.Regenerate -> creationId?.let(AnalyticsEvent::RegenerateStorylineButtonClicked)
+        CreateStorylineIntent.SaveDraft -> AnalyticsEvent.DraftSaved(CreateStep.STORYLINE_SELECT)
+        CreateStorylineIntent.ConfirmLeaveFunnel -> AnalyticsEvent.CreateExitButtonClicked(CreateStep.STORYLINE_SELECT)
+        CreateStorylineIntent.ShowSelectedKeywords -> creationId?.let(AnalyticsEvent::SelectedTagsButtonClicked)
+        CreateStorylineIntent.ConfirmSelection ->
+            creationId
+                ?.takeIf { state.activeStoryline != null }
+                ?.let { AnalyticsEvent.StorylineOptionSelected(it, state.activeIndex) }
+        else -> null
+    }

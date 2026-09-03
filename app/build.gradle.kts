@@ -134,6 +134,7 @@ android {
                 "\"${authProperty("KAKAO_NATIVE_APP_KEY", "debug")}\"",
             )
             manifestPlaceholders["kakaoNativeAppKey"] = authProperty("KAKAO_NATIVE_APP_KEY", "debug")
+            buildConfigField("String", "AMPLITUDE_API_KEY", "\"${authProperty("AMPLITUDE_API_KEY", "debug")}\"")
         }
         release {
             signingConfig = signingConfigs.findByName("release")
@@ -149,6 +150,7 @@ android {
                 "\"${authProperty("KAKAO_NATIVE_APP_KEY", "release")}\"",
             )
             manifestPlaceholders["kakaoNativeAppKey"] = authProperty("KAKAO_NATIVE_APP_KEY", "release")
+            buildConfigField("String", "AMPLITUDE_API_KEY", "\"${authProperty("AMPLITUDE_API_KEY", "release")}\"")
             optimization {
                 enable = false
             }
@@ -169,6 +171,7 @@ dependencies {
     implementation(projects.core.data)
     implementation(projects.core.ui)
     implementation(projects.core.navigation)
+    implementation(projects.core.analytics)
     implementation(projects.feature.login)
     implementation(projects.feature.legal)
     implementation(projects.feature.home)

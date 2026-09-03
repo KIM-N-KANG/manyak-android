@@ -1,5 +1,6 @@
 package app.manyak.feature.my
 
+import app.manyak.core.analytics.NoOpAnalytics
 import app.manyak.core.domain.credit.AttendanceResult
 import app.manyak.core.domain.credit.CreditRepository
 import app.manyak.core.domain.credit.CreditTransactionPage
@@ -103,7 +104,7 @@ class CreditChargeViewModelTest {
         val profileRepository = FakeChargeProfileRepository(attendedToday)
         return Fixture(
             profileRepository = profileRepository,
-            viewModel = CreditChargeViewModel(FakeChargeCreditRepository(attendance), profileRepository),
+            viewModel = CreditChargeViewModel(FakeChargeCreditRepository(attendance), profileRepository, NoOpAnalytics),
         )
     }
 }

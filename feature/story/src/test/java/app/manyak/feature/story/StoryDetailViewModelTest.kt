@@ -1,5 +1,6 @@
 package app.manyak.feature.story
 
+import app.manyak.core.analytics.NoOpAnalytics
 import app.manyak.core.domain.chat.CreatedChat
 import app.manyak.core.domain.error.DomainError
 import app.manyak.core.domain.error.DomainResult
@@ -40,7 +41,7 @@ class StoryDetailViewModelTest {
     private fun viewModel(
         storyRepository: FakeStoryRepository = FakeStoryRepository(),
         chatRepository: FakeChatRepository = FakeChatRepository(),
-    ) = StoryDetailViewModel(STORY_ID, storyRepository, chatRepository)
+    ) = StoryDetailViewModel(STORY_ID, storyRepository, chatRepository, NoOpAnalytics)
 
     @Test
     fun `화면이 보이면 상세를 조회하고 첫 시작 설정을 고른다`() =

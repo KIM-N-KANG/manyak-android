@@ -1,5 +1,6 @@
 package app.manyak.feature.chat
 
+import app.manyak.core.analytics.NoOpAnalytics
 import app.manyak.core.domain.chat.ChatDetail
 import app.manyak.core.domain.chat.ChatStreamEvent
 import app.manyak.core.domain.chat.ChatTurn
@@ -232,6 +233,7 @@ class ChatRoomSuggestionTest {
         chatRepository = repository,
         storyRepository = FakeStoryRepository(),
         preferences = preferences,
+        analytics = NoOpAnalytics,
     )
 
     /** 마지막 턴에 선택지가 달린 방. */

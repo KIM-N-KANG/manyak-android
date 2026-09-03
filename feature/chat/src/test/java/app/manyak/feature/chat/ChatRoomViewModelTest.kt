@@ -1,5 +1,6 @@
 package app.manyak.feature.chat
 
+import app.manyak.core.analytics.NoOpAnalytics
 import app.manyak.core.domain.error.DomainError
 import app.manyak.core.domain.error.DomainResult
 import kotlinx.coroutines.Dispatchers
@@ -40,6 +41,7 @@ class ChatRoomViewModelTest {
                     chatRepository = repository,
                     storyRepository = FakeStoryRepository(),
                     preferences = FakeChatPreferencesRepository(),
+                    analytics = NoOpAnalytics,
                 )
             advanceUntilIdle()
 
@@ -65,6 +67,7 @@ class ChatRoomViewModelTest {
                     chatRepository = repository,
                     storyRepository = FakeStoryRepository(),
                     preferences = FakeChatPreferencesRepository(),
+                    analytics = NoOpAnalytics,
                 )
             advanceUntilIdle()
 

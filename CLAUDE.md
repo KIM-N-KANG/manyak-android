@@ -54,6 +54,7 @@
 | `:core:data` | Repository 구현 · Retrofit API · DataStore · Room · 인터셉터 · 세션 토큰 관리 · 소셜 SDK 어댑터 |
 | `:core:ui` | 디자인 시스템(`ManyakTheme`) · 공용 컴포저블 · `MviViewModel` · 문자열 리소스 전량 |
 | `:core:navigation` | 타입 안전 라우트의 단일 등록처 |
+| `:core:analytics` | `Analytics` 계약 · `AnalyticsEvent` 카탈로그 · Amplitude 배선 · `LocalAnalytics` · 노출 추적(`trackImpression`) |
 | `:feature:login` `legal` `home` `chat` `studio` `my` `create` | 화면 단위 |
 | `app` | Navigation 3 백스택 · 메인 탭 셸 · 세션 부트스트랩·종료 조율 · DI 조립 |
 

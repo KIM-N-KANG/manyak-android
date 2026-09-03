@@ -1,6 +1,8 @@
 package app.manyak.feature.my
 
 import androidx.annotation.StringRes
+import app.manyak.core.analytics.Analytics
+import app.manyak.core.analytics.AnalyticsEvent
 import app.manyak.core.domain.error.DomainResult
 import app.manyak.core.domain.feedback.FeedbackRepository
 import app.manyak.core.ui.R
@@ -71,7 +73,12 @@ class FeedbackViewModel
     @Inject
     constructor(
         private val feedbackRepository: FeedbackRepository,
+        private val analytics: Analytics,
     ) : MviViewModel<FeedbackIntent, FeedbackUiState, FeedbackEvent, FeedbackEffect>(FeedbackUiState()) {
+        init {
+            analytics.track(AnalyticsEvent.FeedbackViewed)
+        }
+
         override suspend fun handleIntent(intent: FeedbackIntent) {
             when (intent) {
                 is FeedbackIntent.BodyChanged ->
@@ -117,6 +124,7 @@ class FeedbackViewModel
                 return
             }
             dispatchEvent(FeedbackEvent.SubmitStarted)
+            analytics.track(AnalyticsEvent.FeedbackFormSubmitted)
             when (feedbackRepository.submitFeedback(body = body, email = email)) {
                 is DomainResult.Success -> {
                     dispatchEvent(FeedbackEvent.SubmitSucceeded)

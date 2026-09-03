@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
@@ -32,6 +32,10 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
+import app.manyak.core.analytics.AnalyticsEvent
+import app.manyak.core.analytics.LocalAnalytics
+import app.manyak.core.analytics.rememberImpressionTracker
+import app.manyak.core.analytics.trackImpression
 import app.manyak.core.domain.chat.ChatSummary
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.LoadFailedContent
@@ -232,6 +236,8 @@ private fun Chats(
     onIntent: (ChatListIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val analytics = LocalAnalytics.current
+    val impressions = rememberImpressionTracker()
     ManyakPullToRefreshBox(
         modifier = modifier,
         isRefreshing = isRefreshing,
@@ -244,11 +250,18 @@ private fun Chats(
             // 채워야 한다. 그래서 셸이 넘긴 여백에 하단 여유만 더한다.
             contentPadding = contentPadding.withRowListMargins(),
         ) {
-            items(chats, key = { chat -> chat.id }) { chat ->
+            itemsIndexed(chats, key = { _, chat -> chat.id }) { index, chat ->
                 ChatCard(
                     chat = chat,
-                    onClick = { onOpenChat(chat.id) },
+                    onClick = {
+                        analytics.track(AnalyticsEvent.ChatCardClicked(chat.id, index))
+                        onOpenChat(chat.id)
+                    },
                     onLongClick = { onIntent(ChatListIntent.OpenOptions(chat)) },
+                    modifier =
+                        Modifier.trackImpression(impressions, key = chat.id) {
+                            analytics.track(AnalyticsEvent.ChatCardImpressed(chat.id, index))
+                        },
                 )
             }
         }

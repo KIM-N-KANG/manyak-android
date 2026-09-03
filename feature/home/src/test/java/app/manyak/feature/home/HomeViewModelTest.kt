@@ -1,5 +1,6 @@
 package app.manyak.feature.home
 
+import app.manyak.core.analytics.NoOpAnalytics
 import app.manyak.core.domain.error.DomainError
 import app.manyak.core.domain.error.DomainResult
 import kotlinx.coroutines.CompletableDeferred
@@ -37,7 +38,7 @@ class HomeViewModelTest {
     fun `진입 시 오리지널 목록을 조회해 서버 순서 그대로 상태에 담는다`() =
         runTest(dispatcher) {
             val repository = FakeStoryRepository()
-            val viewModel = HomeViewModel(storyRepository = repository)
+            val viewModel = HomeViewModel(storyRepository = repository, analytics = NoOpAnalytics)
             advanceUntilIdle()
 
             assertEquals(1, repository.originalStoriesCallCount)
@@ -52,7 +53,7 @@ class HomeViewModelTest {
         runTest(dispatcher) {
             val repository = FakeStoryRepository()
             repository.queuedResults += DomainResult.Success(emptyList())
-            val viewModel = HomeViewModel(storyRepository = repository)
+            val viewModel = HomeViewModel(storyRepository = repository, analytics = NoOpAnalytics)
             advanceUntilIdle()
 
             val state = viewModel.uiState.value
@@ -66,7 +67,7 @@ class HomeViewModelTest {
         runTest(dispatcher) {
             val repository = FakeStoryRepository()
             repository.queuedResults += DomainResult.Failure(DomainError.Network)
-            val viewModel = HomeViewModel(storyRepository = repository)
+            val viewModel = HomeViewModel(storyRepository = repository, analytics = NoOpAnalytics)
             advanceUntilIdle()
 
             assertTrue(viewModel.uiState.value.loadFailed)
@@ -87,7 +88,7 @@ class HomeViewModelTest {
             val repository = FakeStoryRepository()
             val gate = CompletableDeferred<Unit>()
             repository.inFlightGate = gate
-            val viewModel = HomeViewModel(storyRepository = repository)
+            val viewModel = HomeViewModel(storyRepository = repository, analytics = NoOpAnalytics)
             advanceUntilIdle()
 
             // 진입 조회가 아직 응답을 기다리는 동안 재시도를 눌렀을 때다.
@@ -104,7 +105,7 @@ class HomeViewModelTest {
     fun `당겨서 새로고침은 골격 없이 목록을 다시 읽는다`() =
         runTest(dispatcher) {
             val repository = FakeStoryRepository()
-            val viewModel = HomeViewModel(storyRepository = repository)
+            val viewModel = HomeViewModel(storyRepository = repository, analytics = NoOpAnalytics)
             advanceUntilIdle()
 
             val gate = CompletableDeferred<Unit>()
@@ -129,7 +130,7 @@ class HomeViewModelTest {
     fun `새로고침 실패는 목록을 그대로 두고 실패 안내를 보낸다`() =
         runTest(dispatcher) {
             val repository = FakeStoryRepository()
-            val viewModel = HomeViewModel(storyRepository = repository)
+            val viewModel = HomeViewModel(storyRepository = repository, analytics = NoOpAnalytics)
             advanceUntilIdle()
 
             repository.queuedResults += DomainResult.Failure(DomainError.Network)
