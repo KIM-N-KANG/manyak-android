@@ -1,5 +1,6 @@
 package app.manyak.feature.chat.composer
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -31,39 +32,31 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.R
+import app.manyak.core.ui.component.ManyakIconButton
 import app.manyak.core.ui.component.ManyakProgressIndicator
 import app.manyak.core.ui.theme.ManyakTheme
 
 /** 툴바의 아이콘 버튼. */
 @Composable
 internal fun ComposerIconButton(
-    iconRes: Int,
+    @DrawableRes iconRes: Int,
     contentDescription: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     tint: Color = ManyakTheme.colors.textSubtle,
     enabled: Boolean = true,
 ) {
-    Box(
-        modifier =
-            modifier
-                .size(ManyakTheme.sizes.controlSmall)
-                .clip(ManyakTheme.shapes.menuItem)
-                .clickable(
-                    enabled = enabled,
-                    role = Role.Button,
-                    onClickLabel = contentDescription,
-                    onClick = onClick,
-                ),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            modifier = Modifier.size(ManyakTheme.sizes.iconSmall),
-            painter = painterResource(iconRes),
-            contentDescription = contentDescription,
-            tint = if (enabled) tint else ManyakTheme.colors.textDisabled,
-        )
-    }
+    ManyakIconButton(
+        modifier = modifier,
+        iconRes = iconRes,
+        contentDescription = contentDescription,
+        onClick = onClick,
+        size = ManyakTheme.sizes.controlSmall,
+        iconSize = ManyakTheme.sizes.iconSmall,
+        shape = ManyakTheme.shapes.menuItem,
+        tint = tint,
+        enabled = enabled,
+    )
 }
 
 /** "상황 추가"·"대사 추가" 처럼 툴바에 놓이는 작은 채움 버튼. */

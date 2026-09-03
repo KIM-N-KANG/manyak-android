@@ -15,8 +15,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -30,7 +28,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -41,6 +38,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ManyakDestructiveDialog
+import app.manyak.core.ui.component.ManyakIconButton
 import app.manyak.core.ui.component.ManyakOptionsMenu
 import app.manyak.core.ui.component.ManyakOptionsMenuItem
 import app.manyak.core.ui.component.ManyakProgressIndicator
@@ -319,13 +317,11 @@ private fun ChatRoomHeader(
             )
         },
         navigationIcon = {
-            IconButton(onClick = onBack) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_arrow_back),
-                    contentDescription = stringResource(R.string.common_back),
-                    tint = ManyakTheme.colors.text,
-                )
-            }
+            ManyakIconButton(
+                iconRes = R.drawable.ic_arrow_back,
+                contentDescription = stringResource(R.string.common_back),
+                onClick = onBack,
+            )
         },
         // 오른쪽에는 옵션 메뉴 하나만 둔다 — 웹 헤더의 공유 버튼은 앱 범위 밖이다.
         actions = {

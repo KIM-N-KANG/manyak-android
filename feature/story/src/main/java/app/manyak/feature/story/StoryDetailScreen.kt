@@ -18,8 +18,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -46,7 +44,6 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -64,6 +61,7 @@ import app.manyak.core.domain.story.StoryDetail
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.LoadFailedContent
 import app.manyak.core.ui.component.ManyakDestructiveDialog
+import app.manyak.core.ui.component.ManyakIconButton
 import app.manyak.core.ui.component.STORY_THUMBNAIL_ASPECT_RATIO
 import app.manyak.core.ui.component.ScrollEdgeFadeHeight
 import app.manyak.core.ui.component.StoryOverlayScrim
@@ -381,13 +379,12 @@ private fun StoryDetailHeader(
                 )
             },
             navigationIcon = {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_arrow_back),
-                        contentDescription = stringResource(R.string.common_back),
-                        tint = contentColor,
-                    )
-                }
+                ManyakIconButton(
+                    iconRes = R.drawable.ic_arrow_back,
+                    contentDescription = stringResource(R.string.common_back),
+                    onClick = onBack,
+                    tint = contentColor,
+                )
             },
             actions = {
                 if (onReport != null) {

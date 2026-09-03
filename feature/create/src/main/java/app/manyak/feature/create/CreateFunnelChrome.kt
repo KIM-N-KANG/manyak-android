@@ -20,7 +20,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -39,6 +38,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LifecycleEventEffect
 import app.manyak.core.ui.R
+import app.manyak.core.ui.component.ManyakIconButton
 import app.manyak.core.ui.component.ManyakTextButton
 import app.manyak.core.ui.theme.ManyakTheme
 
@@ -71,13 +71,11 @@ internal fun CreateFunnelHeader(
                 horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
             ) {
                 DraftSaveButton(draftSave = draftSave, onClick = onSaveDraft)
-                IconButton(onClick = onClose) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_close),
-                        contentDescription = stringResource(R.string.create_close_funnel),
-                        tint = ManyakTheme.colors.text,
-                    )
-                }
+                ManyakIconButton(
+                    iconRes = R.drawable.ic_close,
+                    contentDescription = stringResource(R.string.create_close_funnel),
+                    onClick = onClose,
+                )
             }
         },
         // 화면 루트에서 적용한 safeDrawing 인셋이 중복되지 않게 한다.

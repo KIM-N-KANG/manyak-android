@@ -111,21 +111,16 @@ fun ManyakMoreButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier =
-            modifier
-                .size(MoreButtonSize)
-                .clip(ManyakTheme.shapes.pill)
-                .clickable(role = Role.Button, onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            modifier = Modifier.size(ManyakTheme.sizes.iconSmall),
-            painter = painterResource(R.drawable.ic_more),
-            contentDescription = contentDescription,
-            tint = ManyakTheme.colors.textSubtle,
-        )
-    }
+    ManyakIconButton(
+        modifier = modifier,
+        iconRes = R.drawable.ic_more,
+        contentDescription = contentDescription,
+        onClick = onClick,
+        size = MoreButtonSize,
+        iconSize = ManyakTheme.sizes.iconSmall,
+        shape = ManyakTheme.shapes.menuItem,
+        tint = ManyakTheme.colors.textSubtle,
+    )
 }
 
 /**
