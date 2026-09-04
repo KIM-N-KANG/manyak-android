@@ -16,4 +16,8 @@ abstract class AnalyticsModule {
     @Binds
     @Singleton
     abstract fun bindAnalyticsIdentity(impl: AmplitudeAnalytics): AnalyticsIdentity
+
+    @Binds
+    @Singleton
+    abstract fun bindCrashReporter(impl: FirebaseCrashReporter): CrashReporter
 }

@@ -9,6 +9,8 @@ plugins {
     alias(libs.plugins.hilt) apply false
     alias(libs.plugins.room) apply false
     alias(libs.plugins.aboutlibraries) apply false
+    alias(libs.plugins.google.services) apply false
+    alias(libs.plugins.firebase.crashlytics) apply false
 
     // 루트의 *.gradle.kts 도 검사 대상에 포함시키기 위해 루트에도 적용한다.
     alias(libs.plugins.ktlint)
