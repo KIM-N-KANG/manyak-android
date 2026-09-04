@@ -56,6 +56,8 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.amplitude.analytics.android)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.crashlytics)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

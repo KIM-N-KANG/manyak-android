@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "832740969285",
+    "project_id": "manyak-500606",
+    "storage_bucket": "manyak-500606.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:832740969285:android:9418abb235e38b133ccc2c",
+        "android_client_info": {
+          "package_name": "app.manyak"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "832740969285-4a8sl8q9obfaufniffraafn87vcde5as.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAyCHO1qGbNf-n_mwojohZazoxFWFdBGCA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "832740969285-4a8sl8q9obfaufniffraafn87vcde5as.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -9,10 +9,11 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Amplitude 배선.
+ * Amplitude 배선. 크래시 리포트의 breadcrumb·사용자 식별자도 같은 퍼널에서 [CrashReporter] 로 넘긴다.
  *
  * `device_id` 주입 전에 들어온 이벤트는 그때의 프로퍼티째로 쌓아 두었다가 주입 직후 순서대로 보낸다.
- * SDK 큐에 먼저 넣으면 SDK 생성 값이 식별자로 굳는다.
+ * SDK 큐에 먼저 넣으면 SDK 생성 값이 식별자로 굳는다. breadcrumb 는 이 대기열을 타지 않는다 —
+ * `device_id` 가 붙기 전에 죽어도 직전에 무엇을 했는지는 리포트에 남아야 한다.
  */
 @Singleton
 class AmplitudeAnalytics
@@ -20,6 +21,7 @@ class AmplitudeAnalytics
     constructor(
         @ApplicationContext context: Context,
         private val config: AnalyticsConfig,
+        private val crashReporter: CrashReporter,
     ) : Analytics,
         AnalyticsIdentity {
         private val amplitude: Amplitude? =
@@ -35,6 +37,7 @@ class AmplitudeAnalytics
         private var userId: String? = null
 
         override fun track(event: AnalyticsEvent) {
+            crashReporter.recordEvent(event.name, event.screenName, event.properties)
             val payload = event.payload(userId)
             synchronized(lock) {
                 if (!deviceIdReady) {
@@ -58,11 +61,13 @@ class AmplitudeAnalytics
         override fun setUser(userId: String) {
             this.userId = userId
             amplitude?.setUserId(userId)
+            crashReporter.setUser(userId)
         }
 
         override fun clearUser() {
             userId = null
             amplitude?.setUserId(null)
+            crashReporter.setUser(null)
         }
 
         private fun send(
