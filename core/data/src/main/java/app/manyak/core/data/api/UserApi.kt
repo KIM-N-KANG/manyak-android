@@ -2,7 +2,6 @@ package app.manyak.core.data.api
 
 import app.manyak.common.data.story.StorySummaryDto
 import app.manyak.core.data.api.dto.AttendanceRewardResponseDto
-import app.manyak.core.data.api.dto.ChatSummaryDto
 import app.manyak.core.data.api.dto.CreditTransactionsResponseDto
 import app.manyak.core.data.api.dto.InviteResponseDto
 import app.manyak.core.data.api.dto.MeResponseDto
@@ -23,13 +22,6 @@ interface UserApi {
     /** 내가 만든 스토리 목록. limit 을 생략해 서버 기본 상한(100건)을 그대로 쓴다. */
     @GET("users/me/stories")
     suspend fun myStories(): Response<List<StorySummaryDto>>
-
-    /**
-     * 내 채팅 목록(최근 활동순). 스토리 목록과 같이 limit 을 생략해 서버 기본 상한(100건)을 쓴다 —
-     * 커서도 오프셋도 없는 계약이라 더 받을 수단이 없고, 페이징은 서버 확장을 기다린다.
-     */
-    @GET("users/me/chats")
-    suspend fun myChats(): Response<List<ChatSummaryDto>>
 
     /** 출석 보상 지급. KST 자정 기준 1일 1회이며 오늘 이미 받았으면 rewarded=false 로 200 이다(멱등). */
     @POST("users/me/credits/attendance")

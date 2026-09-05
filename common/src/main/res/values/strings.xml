@@ -13,4 +13,5 @@
     <string name="story_author_nickname">\@%1$s</string>
     <string name="story_load_failed">스토리를 불러오지 못했어요</string>
     <string name="story_refresh_failed">새로고침하지 못했어요</string>
+    <string name="common_back">뒤로</string>
 </resources>

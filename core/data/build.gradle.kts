@@ -35,7 +35,6 @@ dependencies {
     implementation(libs.retrofit.converter.kotlinx.serialization)
     implementation(platform(libs.okhttp.bom))
     implementation(libs.okhttp.logging.interceptor)
-    implementation(libs.okhttp.sse)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

@@ -4,7 +4,7 @@ import androidx.lifecycle.viewModelScope
 import app.manyak.analytics.domain.Analytics
 import app.manyak.analytics.entity.AnalyticsEvent
 import app.manyak.analytics.entity.ReportSource
-import app.manyak.common.domain.chat.ChatRepository
+import app.manyak.common.domain.chat.ChatStarter
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.story.StoryRepository
@@ -149,7 +149,7 @@ class StoryDetailViewModel
     constructor(
         @Assisted private val storyId: String,
         private val storyRepository: StoryRepository,
-        private val chatRepository: ChatRepository,
+        private val chatRepository: ChatStarter,
         private val analytics: Analytics,
         reportRepository: ReportRepository,
     ) : MviViewModel<StoryDetailIntent, StoryDetailUiState, StoryDetailEvent, StoryDetailEffect>(

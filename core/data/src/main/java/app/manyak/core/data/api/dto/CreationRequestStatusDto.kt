@@ -1,6 +1,5 @@
 package app.manyak.core.data.api.dto
 
-import app.manyak.common.data.story.toDomain
 import app.manyak.common.entity.story.CreationRequestSnapshot
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json

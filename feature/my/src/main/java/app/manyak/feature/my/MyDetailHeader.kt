@@ -9,9 +9,9 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import app.manyak.core.ui.R
 import app.manyak.designsystem.component.ManyakIconButton
 import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.common.R as CommonR
 import app.manyak.designsystem.R as DesignsystemR
 
 /**
@@ -36,7 +36,7 @@ internal fun MyDetailHeader(
         navigationIcon = {
             ManyakIconButton(
                 iconRes = DesignsystemR.drawable.ic_arrow_back,
-                contentDescription = stringResource(R.string.common_back),
+                contentDescription = stringResource(CommonR.string.common_back),
                 onClick = onBack,
             )
         },

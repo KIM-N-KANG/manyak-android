@@ -6,7 +6,7 @@ import app.manyak.analytics.entity.AnalyticsEvent
 import app.manyak.analytics.entity.CompletionStage
 import app.manyak.analytics.entity.CreateStep
 import app.manyak.analytics.entity.CreditShortageTrigger
-import app.manyak.common.domain.chat.ChatRepository
+import app.manyak.common.domain.chat.ChatStarter
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.story.StoryCreationRepository
@@ -180,7 +180,7 @@ class CreateAdditionalInfoViewModel
     constructor(
         private val storylineGenerationStore: StorylineGenerationStore,
         private val storyCreationRepository: StoryCreationRepository,
-        private val chatRepository: ChatRepository,
+        private val chatRepository: ChatStarter,
         private val pendingCreationStore: PendingStoryCreationStore,
         private val analytics: Analytics,
     ) : MviViewModel<

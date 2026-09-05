@@ -384,7 +384,7 @@ private fun StoryDetailHeader(
             navigationIcon = {
                 ManyakIconButton(
                     iconRes = DesignsystemR.drawable.ic_arrow_back,
-                    contentDescription = stringResource(R.string.common_back),
+                    contentDescription = stringResource(CommonR.string.common_back),
                     onClick = onBack,
                     tint = contentColor,
                 )

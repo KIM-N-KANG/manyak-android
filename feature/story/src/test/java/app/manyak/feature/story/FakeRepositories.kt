@@ -1,22 +1,15 @@
 package app.manyak.feature.story
 
-import app.manyak.common.domain.chat.ChatRepository
-import app.manyak.common.domain.error.DomainError
+import app.manyak.common.domain.chat.ChatStarter
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.story.StoryRepository
-import app.manyak.common.entity.chat.ChatDetail
-import app.manyak.common.entity.chat.ChatStreamEvent
-import app.manyak.common.entity.chat.ChatSummary
 import app.manyak.common.entity.chat.CreatedChat
-import app.manyak.common.entity.chat.UserSource
 import app.manyak.common.entity.story.StoryDetail
 import app.manyak.common.entity.story.StoryStartSetting
 import app.manyak.common.entity.story.StorySummary
 import app.manyak.report.domain.ReportRepository
 import app.manyak.report.entity.StoryReportReason
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.yield
 
 internal const val STORY_ID = "story-1"
@@ -103,7 +96,7 @@ internal class FakeStoryRepository :
     }
 }
 
-internal class FakeChatRepository : ChatRepository {
+internal class FakeChatRepository : ChatStarter {
     /** 호출마다 넘어온 시작 설정 — null 이면 서버 폴백을 쓴 호출이다. */
     val createChatStartSettingIds = mutableListOf<String?>()
     val queuedCreateChatResults = ArrayDeque<DomainResult<CreatedChat>>()
@@ -116,31 +109,4 @@ internal class FakeChatRepository : ChatRepository {
         createChatStartSettingIds += startSettingId
         return queuedCreateChatResults.removeFirstOrNull() ?: DomainResult.Success(CreatedChat(id = "chat-1"))
     }
-
-    /** 상세는 채팅 목록을 조회하지 않는다 — 계약을 채우기만 한다. */
-    override suspend fun myChats(): DomainResult<List<ChatSummary>> = DomainResult.Success(emptyList())
-
-    override suspend fun chatDetail(chatId: String): DomainResult<ChatDetail> =
-        DomainResult.Failure(DomainError.Unknown)
-
-    /** 상세는 턴을 진행하지 않는다 — 계약을 채우기만 한다. */
-    override fun streamTurn(
-        chatId: String,
-        userInput: String,
-        userSource: UserSource,
-        sourceTurnId: Long?,
-        choiceOrder: Int?,
-    ): Flow<ChatStreamEvent> = emptyFlow()
-
-    override fun regenerateTurn(
-        chatId: String,
-        turnId: Long,
-    ): Flow<ChatStreamEvent> = emptyFlow()
-
-    override suspend fun generateChoices(
-        chatId: String,
-        turnId: Long,
-    ): DomainResult<Unit> = DomainResult.Success(Unit)
-
-    override suspend fun deleteChat(chatId: String): DomainResult<Unit> = DomainResult.Success(Unit)
 }

@@ -16,6 +16,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberDecoratedNavEntries
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import app.manyak.chat.list.presentation.ChatListScreen
 import app.manyak.common.entity.story.CreationResumePoint
 import app.manyak.core.navigation.ChatListRoute
 import app.manyak.core.navigation.HomeRoute
@@ -26,7 +27,6 @@ import app.manyak.designsystem.component.ManyakNavigationBar
 import app.manyak.designsystem.component.ManyakNavigationItem
 import app.manyak.designsystem.component.ManyakSectionHeader
 import app.manyak.designsystem.theme.ManyakTheme
-import app.manyak.feature.chat.ChatListScreen
 import app.manyak.feature.my.MyScreen
 import app.manyak.feature.studio.StudioScreen
 import app.manyak.home.presentation.HomeScreen
