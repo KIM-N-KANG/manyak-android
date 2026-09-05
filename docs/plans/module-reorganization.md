@@ -191,3 +191,9 @@
 - 이동 전 기준: `:app:assembleDebug` 통과. 기준 APK와 원본 소스 스냅숏은 작업 임시 디렉터리에 보관했습니다. 복원 fixture는 해당 모듈 검증에서 준비합니다.
 - 전환 중 common에는 아직 이동하지 않은 기능의 기존 계약이 잠시 남을 수 있습니다. 각 기능 커밋에서 최종 소유 위치로 이동하며, common에서 다른 프로젝트 모듈로의 역참조는 허용하지 않습니다.
 - 기존 `.idea/gradle.xml` 변경은 커밋 대상에서 제외합니다.
+
+### build-logic
+
+- Android Library·Compose·Hilt·품질 convention plugin 추출, SDK·버전·실패 정책 유지.
+- `check assembleDebug :app:assembleRelease` 통과, configuration cache 저장/재사용 확인.
+- included build 검사를 루트 check에 연결하고 원본 플러그인 소스만 ktlint 입력으로 지정. 기존 생성 코드 진단은 해당 ktlint 태스크 재실행으로 갱신.

@@ -20,4 +20,12 @@ plugins {
 
 ktlint {
     ignoreFailures = false
+    filter {
+        exclude("**/build/**")
+    }
+}
+
+// Included builds are not selected by an unqualified task name in the main build.
+tasks.register("check") {
+    dependsOn(gradle.includedBuild("build-logic").task(":check"))
 }
