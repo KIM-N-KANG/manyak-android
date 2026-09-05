@@ -14,4 +14,5 @@
     <string name="story_load_failed">스토리를 불러오지 못했어요</string>
     <string name="story_refresh_failed">새로고침하지 못했어요</string>
     <string name="common_back">뒤로</string>
+    <string name="my_service_info">서비스 안내</string>
 </resources>

@@ -1,4 +1,4 @@
-package app.manyak.feature.legal
+package app.manyak.legal.presentation
 
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
@@ -25,12 +25,13 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.manyak.core.navigation.LegalDocument
-import app.manyak.core.ui.R
 import app.manyak.designsystem.component.ManyakProgressIndicator
 import app.manyak.designsystem.component.ManyakTextButton
 import app.manyak.designsystem.component.rememberDelayedProgressVisibility
 import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.common.R as CommonR
 import app.manyak.designsystem.R as DesignsystemR
+import app.manyak.legal.R as LegalR
 
 /**
  * 약관·개인정보처리방침·서비스 안내를 웹 페이지 그대로 보여 준다.
@@ -86,7 +87,7 @@ private fun LegalLoadFailure(
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
         Text(
-            text = stringResource(R.string.legal_load_failed),
+            text = stringResource(LegalR.string.legal_load_failed),
             style = ManyakTheme.typography.bodyMedium,
             color = ManyakTheme.colors.textSubtle,
         )
@@ -190,7 +191,7 @@ private val LegalPageStateSaver: Saver<LegalPageState, Bundle> =
 /** 화면 제목. 라우트 인자만으로 결정되므로 호스트가 직접 읽는다. */
 fun LegalDocument.titleRes(): Int =
     when (this) {
-        LegalDocument.TERMS -> R.string.legal_terms_title
-        LegalDocument.PRIVACY -> R.string.legal_privacy_title
-        LegalDocument.ABOUT -> R.string.my_service_info
+        LegalDocument.TERMS -> LegalR.string.legal_terms_title
+        LegalDocument.PRIVACY -> LegalR.string.legal_privacy_title
+        LegalDocument.ABOUT -> CommonR.string.my_service_info
     }

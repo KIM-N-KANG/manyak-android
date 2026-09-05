@@ -9,9 +9,6 @@
     <!-- %1$s·%2$s 는 아래 두 문서 이름이며, 화면에서 밑줄과 링크가 붙는다. -->
 
     <!-- 법적 문서 -->
-    <string name="legal_terms_title">서비스 이용약관</string>
-    <string name="legal_privacy_title">개인정보 처리방침</string>
-    <string name="legal_load_failed">문서를 불러오지 못했어요. 네트워크 상태를 확인해주세요</string>
 
     <!-- 메인 탭. 헤더의 섹션 이름과 하단 탭의 라벨에 함께 쓴다. -->
     <string name="main_tab_home">홈</string>
@@ -347,7 +344,6 @@
     <string name="my_theme_system">시스템 설정</string>
     <string name="my_theme_light">라이트 모드</string>
     <string name="my_theme_dark">다크 모드</string>
-    <string name="my_service_info">서비스 안내</string>
     <string name="my_feedback">피드백</string>
     <string name="my_open_source_license">오픈소스 라이선스</string>
     <string name="my_app_version">버전 정보</string>

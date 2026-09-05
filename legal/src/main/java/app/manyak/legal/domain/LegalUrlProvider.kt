@@ -1,4 +1,4 @@
-package app.manyak.feature.legal
+package app.manyak.legal.domain
 
 import app.manyak.core.navigation.LegalDocument
 

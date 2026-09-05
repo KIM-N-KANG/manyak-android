@@ -248,3 +248,8 @@
 
 - login 화면·배경 모듈 분리.
 - 전용 문자열·배경 자산을 login으로 이동하고 화면·컴포넌트 경계를 구분했습니다. 기존 본문·이미지 동일성, login 컴파일·ktlint·detekt와 app Hilt 컴파일을 확인했습니다.
+
+### legal
+
+- legal 약관 화면·주소 계약 모듈 분리.
+- 웹 문서 화면은 presentation, 주소 공급 계약은 domain으로 분리했습니다. 본문·문자열 동일성, legal 컴파일·정적 검사와 app Hilt 컴파일을 확인했습니다.

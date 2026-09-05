@@ -1,10 +1,11 @@
-package app.manyak.feature.legal
+package app.manyak.legal.presentation
 
 import android.net.Uri
 import app.manyak.analytics.domain.Analytics
 import app.manyak.analytics.entity.AnalyticsEvent
 import app.manyak.common.presentation.mvi.MviViewModel
 import app.manyak.core.navigation.LegalDocument
+import app.manyak.legal.domain.LegalUrlProvider
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject

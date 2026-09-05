@@ -34,6 +34,7 @@ import app.manyak.common.entity.user.UserProfile
 import app.manyak.core.ui.R
 import app.manyak.designsystem.component.ManyakProgressIndicator
 import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.common.R as CommonR
 import app.manyak.designsystem.R as DesignsystemR
 
 /**
@@ -177,7 +178,7 @@ private fun MyContent(
             )
             MyMenuItem(
                 iconRes = DesignsystemR.drawable.ic_info,
-                labelRes = R.string.my_service_info,
+                labelRes = CommonR.string.my_service_info,
                 onClick = onOpenServiceInfo,
                 trailing = { MenuTrailingIcon(iconRes = DesignsystemR.drawable.ic_external_link) },
             )
