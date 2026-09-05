@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="error_account_suspended">이용이 제한된 계정이에요</string>
+    <string name="error_network">네트워크 연결을 확인해주세요</string>
+    <string name="error_provider_failed">로그인에 실패했어요. 다시 시도해주세요</string>
+    <string name="error_provider_not_configured">이 빌드에서는 해당 로그인을 사용할 수 없어요</string>
+    <string name="error_server">잠시 후 다시 시도해주세요</string>
+    <string name="error_unauthorized">다시 로그인해주세요</string>
+    <string name="error_unknown">문제가 생겼어요. 다시 시도해주세요</string>
+    <string name="session_ended_account_suspended">이용이 제한된 계정이에요. 자세한 내용은 고객센터로 문의해주세요</string>
+    <string name="session_ended_reauthentication_required">로그인이 만료되어 다시 로그인해야 해요</string>
+    <string name="session_ended_token_persistence_failed">로그인 정보를 저장하지 못해 다시 로그인해야 해요</string>
+    <string name="story_author_nickname">\@%1$s</string>
+    <string name="story_load_failed">스토리를 불러오지 못했어요</string>
+    <string name="story_refresh_failed">새로고침하지 못했어요</string>
+    <string name="common_back">뒤로</string>
+    <string name="my_service_info">서비스 안내</string>
+    <string name="studio_delete_dialog_cancel">닫기</string>
+    <string name="studio_delete_dialog_description">삭제하면 목록에서 사라지며 되돌릴 수 없어요</string>
+    <string name="studio_delete_dialog_title">스토리를 삭제할까요?</string>
+    <string name="studio_story_delete">삭제하기</string>
+    <string name="studio_story_delete_failed">스토리 삭제에 실패했어요</string>
+    <string name="studio_story_deleted">스토리가 삭제되었어요</string>
+</resources>

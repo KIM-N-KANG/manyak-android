@@ -1,5 +1,6 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
+    id("manyak.architecture")
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.android.library) apply false
     alias(libs.plugins.kotlin.jvm) apply false
@@ -20,4 +21,13 @@ plugins {
 
 ktlint {
     ignoreFailures = false
+    filter {
+        exclude("**/build/**")
+    }
+}
+
+// Included builds are not selected by an unqualified task name in the main build.
+tasks.register("check") {
+    dependsOn("checkModuleArchitecture")
+    dependsOn(gradle.includedBuild("build-logic").task(":check"))
 }

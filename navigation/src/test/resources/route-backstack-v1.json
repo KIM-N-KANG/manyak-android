@@ -1,0 +1,7 @@
+[
+  {"type": "app.manyak.core.navigation.MainTabsRoute"},
+  {"type": "app.manyak.core.navigation.StoryDetailRoute", "storyId": "story-fixture"},
+  {"type": "app.manyak.core.navigation.ChatRoomRoute", "chatId": "chat-fixture"},
+  {"type": "app.manyak.core.navigation.CreateAdditionalInfoRoute", "storylineIndex": 2},
+  {"type": "app.manyak.core.navigation.LegalRoute", "document": "PRIVACY"}
+]

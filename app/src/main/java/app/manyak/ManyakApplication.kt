@@ -1,8 +1,8 @@
 package app.manyak
 
 import android.app.Application
-import app.manyak.core.data.datastore.LegacyPendingCreationFile
-import app.manyak.core.data.provider.KakaoSdkInitializer
+import app.manyak.auth.data.provider.KakaoSdkInitializer
+import app.manyak.create.data.datastore.LegacyPendingCreationFile
 import app.manyak.session.AnalyticsSessionBinder
 import app.manyak.session.CurrentActivityProvider
 import app.manyak.session.SessionBootstrapper

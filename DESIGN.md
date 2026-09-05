@@ -388,7 +388,7 @@ components:
 
 ## 코드 대응
 
-`core/ui/src/main/java/app/manyak/core/ui/theme/`
+`designsystem/src/main/java/app/manyak/designsystem/theme/`
 
 | 파일 | 내용 |
 | --- | --- |
@@ -400,7 +400,7 @@ components:
 | `ManyakMotion.kt` | 전환 시간 2종 |
 | `Theme.kt` | `ManyakTheme` 컴포저블·접근자, M3 슬롯 파생 |
 
-`core/ui/src/main/java/app/manyak/core/ui/component/`
+`designsystem/src/main/java/app/manyak/designsystem/component/`
 
 | 파일 | 내용 |
 | --- | --- |
@@ -692,9 +692,9 @@ components:
 ### 퍼널
 
 > 간편 제작 퍼널은 셸을 두르지 않는 전체 화면이라 chrome 을 화면이 직접 그린다. 아래 세 컴포넌트는
-> 지금 `:feature:create`(FAB 은 `:feature:home`)가 소유하고, 두 번째 모듈 사용처가 생기면 `:core:ui`로 올린다.
+> 지금 `:create`(FAB은 `:studio`)가 소유하고, 두 번째 모듈 사용처가 생기면 `:designsystem`로 올린다.
 
-**`fab`** — 홈 우측 하단의 제작 진입 버튼. **원형**(`{rounded.pill}`)이고 배경은 주 버튼(`{component.button-primary}`)과 같은 브랜드 원색 `{colors.brand}`, 아이콘 `{colors.text-inverse}`, 크기 56dp(M3 FAB 기본). **고도(그림자)를 0으로 없앤다** — 이 시스템은 층을 표면 색으로만 나눈다. 하단 바에 초록을 두지 않는 것과 어긋나지 않는다 — FAB 은 상시 chrome 이 아니라 화면의 주 동작 그 자체라서, 초록이 "지금 누를 것"을 가리킨다는 규칙 그대로다.
+**`fab`** — 제작 탭 우측 하단의 제작 진입 버튼. **원형**(`{rounded.pill}`)이고 배경은 주 버튼(`{component.button-primary}`)과 같은 브랜드 원색 `{colors.brand}`, 아이콘 `{colors.text-inverse}`, 크기 56dp(M3 FAB 기본). **고도(그림자)를 0으로 없앤다** — 이 시스템은 층을 표면 색으로만 나눈다. 하단 바에 초록을 두지 않는 것과 어긋나지 않는다 — FAB 은 상시 chrome 이 아니라 화면의 주 동작 그 자체라서, 초록이 "지금 누를 것"을 가리킨다는 규칙 그대로다.
 
 **`funnel-header`** — 섹션 헤더처럼 M3 `TopAppBar` 위에 색만 얹고, 로고 대신 화면 제목(`{typography.title-large}`)과 오른쪽의 임시 저장·닫기 버튼을 둔다. 높이는 앱 바 기본 64dp 다. 구분선과 그림자를 두지 않는다.
 

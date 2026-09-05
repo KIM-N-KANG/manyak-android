@@ -3,7 +3,7 @@ package app.manyak.session
 import android.app.Activity
 import android.app.Application
 import android.os.Bundle
-import app.manyak.core.data.provider.ActivityProvider
+import app.manyak.auth.data.provider.ActivityProvider
 import java.lang.ref.WeakReference
 import javax.inject.Inject
 import javax.inject.Singleton

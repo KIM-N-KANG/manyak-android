@@ -1,5 +1,7 @@
 # 간편 제작 임시 저장 개편 — 스냅숏 축적과 명시적 저장
 
+> **KNK-1197 구조 이전 안내 (2026-09-05)** — 아래 모듈 경로·코드 예시·검증 명령은 작성 당시 기록입니다. 현재 소유 위치와 검증 결과는 [모듈 재구성 기록](./module-reorganization.md), 현재 계층·의존 규칙은 [하네스 모듈 아키텍처](../../../knk-harness/docs/planning/android-module-architecture.md)를 따릅니다.
+
 - 공통 계약 정본: `../../../knk-harness/docs/product-specs/3-1-client.md` §3-1-4(이탈 가드·제작 임시 저장)
 - 앱 결정 정본: `../../../knk-harness/docs/product-specs/3-3-android-app.md` §3-3-3(퍼널 chrome)·§3-3-5(라이프사이클)
 - 선행 계획: `create-funnel-exit-redesign.md` — 이 계획이 그 문서의 E11·E19(300ms 자동 저장)·E20(뱃지)·E21을 대체한다

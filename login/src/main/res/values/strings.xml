@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="login_consent">로그인하면 %1$s과 %2$s에\n동의하는 것으로 간주해요</string>
+    <string name="login_consent_privacy">개인정보 처리방침</string>
+    <string name="login_consent_terms">서비스 이용약관</string>
+    <string name="login_google">Google로 시작하기</string>
+    <string name="login_headline">키워드 몇 개로\n나만의 세계를 만들어 보세요</string>
+    <string name="login_in_progress">로그인하는 중</string>
+    <string name="login_kakao">카카오로 시작하기</string>
+    <string name="login_provider_conflict">소셜 계정 하나로 먼저 로그인한 뒤 다른 계정을 연동하면,\n어느 계정으로 로그인해도 똑같이 이용할 수 있어요</string>
+    <string name="login_title">로그인</string>
+</resources>

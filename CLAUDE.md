@@ -7,8 +7,10 @@
 | 확인할 것 | 위치                                                 |
 | --- |----------------------------------------------------|
 | 앱 공통 기술 결정(구조·계층·인증·내비게이션)과 화면·흐름 구현 상태 매트릭스 | `../knk-harness/docs/product-specs/3-3-android-app.md` |
+| 모듈 소유권·내부 계층·의존 방향 상세 규칙 | `../knk-harness/docs/planning/android-module-architecture.md` |
 | 웹·앱 공통 계약(화면·상태·사용자 흐름·API 사용) | `../knk-harness/docs/product-specs/3-1-client.md`  |
 | 이 레포가 소유하는 값(빌드 주입·검증 정책) | `docs/plans/_project.md`                           |
+| 기술 스택·모듈 폴더 트리·로컬 실행 준비 | `README.md` (이동 내역은 `docs/plans/module-reorganization.md`) |
 | 색·타이포·여백·컴포넌트 규칙 | `DESIGN.md`                                        |
 | 기능별 구현 순서와 그 기능에서 새로 내린 결정 | `docs/plans/<기능>.md`                               |
 | **서버 API 계약(엔드포인트·요청·응답 필드·상태 코드)** | **dev 서버 Swagger** `https://dev-api.manyak.app/swagger-ui/index.html` (기계 판독은 `https://dev-api.manyak.app/v3/api-docs`) |
@@ -36,34 +38,24 @@
 ## 코드 규칙
 
 - 색·크기·여백·모서리는 `ManyakTheme` 접근자로만 읽습니다. 팔레트 값(`#05A66B` 등)이나 `MaterialTheme.colorScheme`·`MaterialTheme.typography`를 화면 코드에서 직접 쓰지 않습니다. 토큰에 없는 값이 필요하면 Kotlin 토큰 파일과 `DESIGN.md` 표를 함께 고칩니다(`DESIGN.md` 갱신 지침).
-- 사용자에게 보이는 문자열은 전부 `core/ui/src/main/res/values/strings.xml`에 둡니다. 화면 코드에 문구를 직접 쓰지 않습니다.
+- 사용자에게 보이는 문자열은 소유 모듈의 `src/main/res/values/strings.xml`에 둡니다. 기능 전용·디자인 공용·공통 오류·앱 셸의 소유 기준은 하네스 모듈 아키텍처를 따릅니다. 화면 코드에 문구를 직접 쓰지 않습니다.
 - 코드 주석에 `하네스 §3-3-3`·`공통 계약`·`FE-SCREEN-008`·`검수 #4` 같은 스펙 참조를 넣지 않습니다. 코드만 보고는 알 수 없는 이유만 남기고, 결정 근거는 `docs/plans/*.md`가 소유합니다.
-- 화면 ViewModel은 `:core:ui`의 `MviViewModel`을 상속합니다(Intent → 부수효과 → Event → `reduce` → State, 일회성 출력은 Effect). `reduce`는 순수 함수입니다.
+- 화면 ViewModel은 `:common`의 `MviViewModel`을 상속합니다(Intent → 부수효과 → Event → `reduce` → State, 일회성 출력은 Effect). `reduce`는 순수 함수입니다.
 - 화면 부수효과는 구성 변경(회전·다크 모드·글자 크기)에서 다시 실행되고 `remember` 값은 사라집니다. 되돌리기·초기화·저장을 하는 효과는 `configuration-changes` 스킬 기준으로 점검합니다.
-- 라우트는 `:core:navigation`의 `Routes.kt` 한 곳에만 등록하고 **복원 가능한 식별자만** 싣습니다. `:feature:*` 끼리 직접 참조하지 않습니다.
-- 오류는 `:core:domain`의 `DomainError`로 올리고 문구는 `:core:ui`의 `DomainErrorMessages`가 붙입니다.
-- 두 번째 사용처가 생기기 전에는 공용 컴포넌트를 `:core:ui`로 올리지 않습니다.
+- 라우트는 `:navigation`의 `Routes.kt` 한 곳에만 등록하고 **복원 가능한 식별자만** 싣습니다. 화면 기능 모듈끼리 직접 참조하지 않습니다.
+- 오류는 `:common`의 `DomainError`로 올리고 문구는 `:common`의 `DomainErrorMessages`가 붙입니다.
+- 두 번째 사용처가 생기기 전에는 공용 컴포넌트를 `:designsystem`으로 올리지 않습니다.
 
 ## 모듈 구조
 
-`app`이 모든 모듈을 조립하고 `:feature:*`는 서로 참조하지 않습니다. 화면은 모듈 루트 패키지에 두고 모듈 이름을 화면·탭 이름과 맞춥니다.
+정본은 하네스 `docs/product-specs/3-3-android-app.md`와 거기서 위임한 `docs/planning/android-module-architecture.md`입니다. 실제 모듈 등록은 `settings.gradle.kts`를 확인하세요.
 
-| 모듈 | 소유하는 것 |
-| --- | --- |
-| `:core:domain` | 순수 Kotlin. 도메인 모델 · Repository 계약 · `DomainError` |
-| `:core:data` | Repository 구현 · Retrofit API · DataStore · Room · 인터셉터 · 세션 토큰 관리 · 소셜 SDK 어댑터 |
-| `:core:ui` | 디자인 시스템(`ManyakTheme`) · 공용 컴포저블 · `MviViewModel` · 문자열 리소스 전량 |
-| `:core:navigation` | 타입 안전 라우트의 단일 등록처 |
-| `:core:analytics` | `Analytics` 계약 · `AnalyticsEvent` 카탈로그 · Amplitude 배선 · `LocalAnalytics` · 노출 추적(`trackImpression`) |
-| `:feature:login` `legal` `home` `chat` `studio` `my` `create` | 화면 단위 |
-| `app` | Navigation 3 백스택 · 메인 탭 셸 · 세션 부트스트랩·종료 조율 · DI 조립 |
-
-화면별·흐름별 구현 진척은 하네스 `3-3-android-app.md`의 매트릭스가 정본입니다.
+`app`이 최상위 기능·기반 모듈을 조립합니다. 기능은 필요한 entity/domain/data/presentation 패키지를 소유하고, chat·create·my의 하위 기능도 패키지로 구분합니다. `checkModuleArchitecture`가 프로젝트 의존과 Kotlin PSI 기반 계층 경계를 검사하며 루트 `check`에 연결되어 있습니다. navigation의 기존 Kotlin 패키지는 직렬화 호환을 위해 유지합니다.
 
 ## 명령어
 
 ```bash
-./gradlew check          # ktlint · detekt · Android lint · testDebugUnitTest
+./gradlew check          # 모듈/계층 검사 · ktlint · detekt · Android lint · 유닛 테스트
 ./gradlew assembleDebug  # 리소스·매니페스트까지 확인
 ./gradlew installDebug   # 연결된 기기에 설치
 ```
@@ -77,4 +69,8 @@
 - CI(`.github/workflows/android-ci.yml`)가 PR에서 `check`와 `assembleDebug`를 돌립니다. **같은 전체 작업을 로컬에서 자동으로 반복하지 않습니다.**
 - 로컬에서는 변경 모듈의 컴파일과 직접 관련된 테스트를 먼저 돌립니다. 전체 게이트는 사용자가 요청했거나 공통 빌드 로직을 바꿨을 때만 실행합니다.
 - 로컬 검증에 변경 모듈의 `ktlintCheck`·`detekt`도 포함합니다. 몇 초면 끝나고, CI까지 끌고 갈 종류가 아닙니다.
+
+  ```bash
+  ./gradlew :<모듈>:ktlintCheck :<모듈>:detekt :<모듈>:testDebugUnitTest
+  ```
 - UI 동작에 대한 주장은 `installDebug` 후 에뮬레이터에서 `adb exec-out screencap`으로 전후를 비교해 확인합니다. 확인하지 못했으면 코드로만 판단했다고 밝힙니다.

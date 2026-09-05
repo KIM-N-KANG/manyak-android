@@ -1,15 +1,15 @@
 package app.manyak.session
 
-import app.manyak.core.analytics.AnalyticsIdentity
-import app.manyak.core.data.api.AuthApi
-import app.manyak.core.data.api.dto.LogoutRequestDto
-import app.manyak.core.data.datastore.DeviceIdStore
-import app.manyak.core.data.provider.ProviderCleanupResult
-import app.manyak.core.data.provider.SocialIdTokenProvider
-import app.manyak.core.data.session.TokenReadResult
-import app.manyak.core.data.session.TokenStorage
-import app.manyak.core.data.session.UserScopedStore
-import app.manyak.core.domain.auth.AuthProvider
+import app.manyak.analytics.domain.AnalyticsIdentity
+import app.manyak.auth.data.api.AuthApi
+import app.manyak.auth.data.api.dto.LogoutRequestDto
+import app.manyak.auth.data.provider.ProviderCleanupResult
+import app.manyak.auth.data.provider.SocialIdTokenProvider
+import app.manyak.auth.data.session.TokenReadResult
+import app.manyak.auth.data.session.TokenStorage
+import app.manyak.common.data.datastore.DeviceIdStore
+import app.manyak.common.domain.session.UserScopedStore
+import app.manyak.common.entity.auth.AuthProvider
 import kotlinx.coroutines.delay
 import java.io.IOException
 import javax.inject.Inject

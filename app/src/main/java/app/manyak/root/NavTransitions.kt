@@ -16,7 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.scene.Scene
 import androidx.navigation3.ui.NavDisplay
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.theme.ManyakTheme
 
 typealias SceneTransform = AnimatedContentTransitionScope<Scene<NavKey>>.() -> ContentTransform
 

@@ -11,7 +11,7 @@ import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDe
 import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.theme.ManyakTheme
 
 /**
  * 목적지 하나가 자기 상태를 갖게 하는 최소 구성. 바깥부터 배경 → `rememberSaveable` → ViewModel

@@ -16,20 +16,20 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberDecoratedNavEntries
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
-import app.manyak.core.domain.story.CreationResumePoint
+import app.manyak.chat.list.presentation.ChatListScreen
+import app.manyak.common.entity.story.CreationResumePoint
 import app.manyak.core.navigation.ChatListRoute
 import app.manyak.core.navigation.HomeRoute
 import app.manyak.core.navigation.MyRoute
 import app.manyak.core.navigation.StudioRoute
-import app.manyak.core.ui.component.ManyakBrandHeader
-import app.manyak.core.ui.component.ManyakNavigationBar
-import app.manyak.core.ui.component.ManyakNavigationItem
-import app.manyak.core.ui.component.ManyakSectionHeader
-import app.manyak.core.ui.theme.ManyakTheme
-import app.manyak.feature.chat.ChatListScreen
-import app.manyak.feature.home.HomeScreen
-import app.manyak.feature.my.MyScreen
-import app.manyak.feature.studio.StudioScreen
+import app.manyak.designsystem.component.ManyakBrandHeader
+import app.manyak.designsystem.component.ManyakNavigationBar
+import app.manyak.designsystem.component.ManyakNavigationItem
+import app.manyak.designsystem.component.ManyakSectionHeader
+import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.home.presentation.HomeScreen
+import app.manyak.my.profile.presentation.MyScreen
+import app.manyak.studio.presentation.StudioScreen
 
 /**
  * 하단 탭 넷을 두르는 셸. 헤더와 하단 바를 여기서만 그리고, 탭 화면에는 chrome 이 차지한 여백만 넘긴다.

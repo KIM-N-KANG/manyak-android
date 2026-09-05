@@ -1,43 +1,20 @@
 import java.util.Properties
 
 plugins {
+    id("manyak.quality")
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.ksp)
-    alias(libs.plugins.hilt)
+    id("manyak.hilt")
     alias(libs.plugins.aboutlibraries)
     alias(libs.plugins.google.services)
     alias(libs.plugins.firebase.crashlytics)
-
-    alias(libs.plugins.ktlint)
-    alias(libs.plugins.detekt)
 }
 
 ktlint {
-    // 코드 스타일/규칙은 루트 .editorconfig 에서 관리한다.
-    ignoreFailures = false
     reporters {
         reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.PLAIN)
         reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.CHECKSTYLE)
-    }
-    // filter { exclude { ... } } 는 configuration cache 와 호환되지 않으므로 사용하지 않는다.
-}
-
-detekt {
-    // 포맷팅은 ktlint 담당. detekt 는 코드 스멜/복잡도만 본다(detekt-formatting 룰셋 미사용).
-    buildUponDefaultConfig = true
-    config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
-    parallel = true
-    ignoreFailures = false
-}
-
-tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
-    reports {
-        html.required = true
-        checkstyle.required = true
-        sarif.required = false
-        markdown.required = false
     }
 }
 
@@ -169,19 +146,21 @@ android {
 }
 
 dependencies {
-    implementation(projects.core.domain)
-    implementation(projects.core.data)
-    implementation(projects.core.ui)
-    implementation(projects.core.navigation)
-    implementation(projects.core.analytics)
-    implementation(projects.feature.login)
-    implementation(projects.feature.legal)
-    implementation(projects.feature.home)
-    implementation(projects.feature.chat)
-    implementation(projects.feature.studio)
-    implementation(projects.feature.my)
-    implementation(projects.feature.create)
-    implementation(projects.feature.story)
+    implementation(projects.report)
+    implementation(projects.auth)
+    implementation(projects.network)
+    implementation(projects.designsystem)
+    implementation(projects.common)
+    implementation(projects.navigation)
+    implementation(projects.analytics)
+    implementation(projects.login)
+    implementation(projects.legal)
+    implementation(projects.home)
+    implementation(projects.chat)
+    implementation(projects.studio)
+    implementation(projects.my)
+    implementation(projects.create)
+    implementation(projects.story)
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
@@ -202,8 +181,6 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
-    implementation(libs.hilt.android)
-    ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.kotlinx.serialization)

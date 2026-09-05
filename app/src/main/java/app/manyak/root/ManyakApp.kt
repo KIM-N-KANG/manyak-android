@@ -35,10 +35,13 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
-import app.manyak.core.analytics.LocalAnalytics
-import app.manyak.core.domain.session.SessionState
-import app.manyak.core.domain.settings.ThemeMode
-import app.manyak.core.domain.story.CreationResumePoint
+import app.manyak.analytics.presentation.LocalAnalytics
+import app.manyak.auth.entity.SessionState
+import app.manyak.chat.room.presentation.ChatRoomScreen
+import app.manyak.common.entity.settings.ThemeMode
+import app.manyak.common.entity.story.CreationResumePoint
+import app.manyak.common.presentation.credit.LocalCreditPolicy
+import app.manyak.common.presentation.error.messageResOrNull
 import app.manyak.core.navigation.ChatRoomRoute
 import app.manyak.core.navigation.CreateAdditionalInfoRoute
 import app.manyak.core.navigation.CreateKeywordRoute
@@ -53,25 +56,23 @@ import app.manyak.core.navigation.MyInviteRoute
 import app.manyak.core.navigation.MyOpenSourceLicenseRoute
 import app.manyak.core.navigation.StoryDetailRoute
 import app.manyak.core.navigation.WithdrawalRoute
-import app.manyak.core.ui.R
-import app.manyak.core.ui.component.ManyakProgressIndicator
-import app.manyak.core.ui.component.rememberDelayedProgressVisibility
-import app.manyak.core.ui.credit.LocalCreditPolicy
-import app.manyak.core.ui.error.messageResOrNull
-import app.manyak.core.ui.theme.ManyakTheme
-import app.manyak.feature.chat.ChatRoomScreen
-import app.manyak.feature.create.CreateAdditionalInfoScreen
-import app.manyak.feature.create.CreateKeywordScreen
-import app.manyak.feature.create.CreateStorylineScreen
-import app.manyak.feature.legal.LegalDocumentScreen
-import app.manyak.feature.login.LoginScreen
-import app.manyak.feature.my.CreditChargeScreen
-import app.manyak.feature.my.FeedbackScreen
-import app.manyak.feature.my.InviteOnboardingSheet
-import app.manyak.feature.my.InviteScreen
-import app.manyak.feature.my.OpenSourceLicenseScreen
-import app.manyak.feature.my.WithdrawalScreen
-import app.manyak.feature.story.StoryDetailScreen
+import app.manyak.create.additionalinfo.presentation.CreateAdditionalInfoScreen
+import app.manyak.create.keyword.presentation.CreateKeywordScreen
+import app.manyak.create.storyline.presentation.CreateStorylineScreen
+import app.manyak.designsystem.component.ManyakProgressIndicator
+import app.manyak.designsystem.component.rememberDelayedProgressVisibility
+import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.legal.presentation.LegalDocumentScreen
+import app.manyak.login.presentation.LoginScreen
+import app.manyak.my.credit.presentation.CreditChargeScreen
+import app.manyak.my.feedback.presentation.FeedbackScreen
+import app.manyak.my.invite.presentation.InviteScreen
+import app.manyak.my.invite.presentation.onboarding.InviteOnboardingSheet
+import app.manyak.my.licenses.presentation.OpenSourceLicenseScreen
+import app.manyak.my.withdrawal.presentation.WithdrawalScreen
+import app.manyak.story.detail.presentation.StoryDetailScreen
+import app.manyak.R as AppR
+import app.manyak.designsystem.R as DesignsystemR
 
 /**
  * 세션 상태가 어느 그래프를 띄울지 결정한다. 그래프 안에서 가드로 막지 않는다 —
@@ -166,7 +167,7 @@ private fun CleanupFailed(
         }
         Text(
             modifier = Modifier.fillMaxWidth(),
-            text = stringResource(R.string.session_cleanup_failed),
+            text = stringResource(AppR.string.session_cleanup_failed),
             style = ManyakTheme.typography.bodyMedium,
             color = ManyakTheme.colors.textDanger,
             textAlign = TextAlign.Center,
@@ -184,7 +185,7 @@ private fun CleanupFailed(
                     contentColor = ManyakTheme.colors.textInverse,
                 ),
         ) {
-            Text(text = stringResource(R.string.common_retry), style = ManyakTheme.typography.labelLarge)
+            Text(text = stringResource(DesignsystemR.string.common_retry), style = ManyakTheme.typography.labelLarge)
         }
     }
 }
@@ -313,8 +314,7 @@ private fun EntryProviderScope<NavKey>.myDestinationEntries(backStack: MutableLi
     }
     entry<MyOpenSourceLicenseRoute> {
         OpenSourceLicenseScreen(
-            // 이 파일의 R 은 :core:ui 의 것이다. 빌드가 만든 목록은 :app 자기 리소스라 온전한 이름으로 가리킨다.
-            librariesRes = app.manyak.R.raw.aboutlibraries,
+            librariesRes = AppR.raw.aboutlibraries,
             onBack = { backStack.removeLastOrNull() },
         )
     }

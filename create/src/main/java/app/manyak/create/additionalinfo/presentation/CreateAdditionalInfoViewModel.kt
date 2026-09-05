@@ -1,0 +1,651 @@
+package app.manyak.create.additionalinfo.presentation
+
+import androidx.lifecycle.viewModelScope
+import app.manyak.analytics.domain.Analytics
+import app.manyak.analytics.entity.AnalyticsEvent
+import app.manyak.analytics.entity.CompletionStage
+import app.manyak.analytics.entity.CreateStep
+import app.manyak.analytics.entity.CreditShortageTrigger
+import app.manyak.common.domain.chat.ChatStarter
+import app.manyak.common.domain.error.DomainError
+import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.presentation.mvi.MviViewModel
+import app.manyak.create.domain.PendingStoryCreationStore
+import app.manyak.create.domain.StoryCreationRepository
+import app.manyak.create.entity.CreationRequestSnapshot
+import app.manyak.create.entity.StoryCompletionCommand
+import app.manyak.create.presentation.state.FunnelExitWarning
+import app.manyak.create.presentation.state.StorylineGenerationState
+import app.manyak.create.presentation.state.StorylineGenerationStore
+import app.manyak.create.presentation.state.isConflict
+import app.manyak.create.presentation.state.resultOrNull
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import java.util.UUID
+import javax.inject.Inject
+
+/** [id]는 서버 ID가 아닌 화면 로컬 식별자다. 입력 삭제·변경의 대상 지정에 쓴다. */
+data class AdditionalInfoInput(
+    val id: Long,
+    val value: String = "",
+)
+
+/** 화면이 그릴 스토리라인 본문과 추천 추가 정보. 생성 결과 순번대로 담긴다. */
+data class AdditionalInfoStoryline(
+    /** 완성 요청에 싣는 스토리라인 서버 ID. */
+    val id: Long,
+    val text: String,
+    val recommendedInfos: List<String>,
+)
+
+/**
+ * 완성 실패 사유. 앱은 로그인 필수라 402 는 회원 이프 부족뿐이며, 이프 획득 UI 가
+ * 생기기 전까지 토스트 문구만 구분해 안내한다.
+ */
+enum class CompletionFailure {
+    GENERAL,
+    CREDIT,
+}
+
+data class CreateAdditionalInfoUiState(
+    /**
+     * 스토어가 비어 있어 진행 레코드 복원을 기다리는 중. 어떤 스토리라인을 골랐고 무엇을 입력해
+     * 뒀는지 아직 모르므로 아무것도 그리지 않는다 — 재개 진입에서 빈 입력 화면이 스쳐 지나가지
+     * 않게 한다.
+     */
+    val isRestoring: Boolean = false,
+    /** 완성 요청에 싣는 간편 제작 진행 ID. 복원 전 잠깐을 제외하면 항상 있다. */
+    val simpleCreationId: Long? = null,
+    /** 생성 결과 스냅숏. 이 화면에 머무는 동안 재생성은 일어나지 않는다. */
+    val storylines: List<AdditionalInfoStoryline> = emptyList(),
+    /** 선택한 추천 추가 정보 텍스트. 완성 요청에 자유 텍스트보다 앞서 실린다. */
+    val selectedRecommendations: Set<String> = emptySet(),
+    val additionalInfos: List<AdditionalInfoInput> =
+        List(INITIAL_INPUT_COUNT) { index -> AdditionalInfoInput(id = index.toLong()) },
+    val nextInputId: Long = INITIAL_INPUT_COUNT.toLong(),
+    /** 완성 요청 진행 중. 입력 화면 대신 완성 로딩을 그린다. */
+    val isCompletingStory: Boolean = false,
+    /** 이탈을 막고 띄운 경고. */
+    val exitWarning: FunnelExitWarning? = null,
+    /** "다시 선택하기"가 추가 정보를 버린다고 알리는 중. */
+    val showReselectWarningDialog: Boolean = false,
+) {
+    val canAddInput: Boolean get() = additionalInfos.size < INPUT_MAX_COUNT
+
+    /** 버리면 아쉬운 추가 정보가 있는지. 빈 입력 칸만 있는 상태는 아니다. */
+    val hasAdditionalInfo: Boolean
+        get() = selectedRecommendations.isNotEmpty() || additionalInfos.any { it.value.isNotBlank() }
+
+    companion object {
+        const val INITIAL_INPUT_COUNT: Int = 3
+        const val INPUT_MAX_COUNT: Int = 10
+        const val INPUT_MAX_LENGTH: Int = 100
+    }
+}
+
+sealed interface CreateAdditionalInfoIntent {
+    data class ToggleRecommendation(
+        val text: String,
+    ) : CreateAdditionalInfoIntent
+
+    data object AddInput : CreateAdditionalInfoIntent
+
+    data class RemoveInput(
+        val inputId: Long,
+    ) : CreateAdditionalInfoIntent
+
+    data class ChangeInput(
+        val inputId: Long,
+        val value: String,
+    ) : CreateAdditionalInfoIntent
+
+    data class CompleteStory(
+        val storylineIndex: Int,
+    ) : CreateAdditionalInfoIntent
+
+    /** 헤더의 임시 저장 버튼과 백그라운드 전환. */
+    data object SaveDraft : CreateAdditionalInfoIntent
+
+    sealed interface FunnelNavigation : CreateAdditionalInfoIntent
+
+    /** 앱 바 닫기·디바이스 뒤로가기 — 퍼널 이탈. */
+    data object LeaveFunnel : FunnelNavigation
+
+    /** 이탈 경고의 "나가기"·"그만 만들기". */
+    data object ConfirmLeaveFunnel : FunnelNavigation
+
+    data object DismissExitWarning : FunnelNavigation
+
+    /** 하단 "다시 선택하기" — 스토리라인 단계 복귀. */
+    data object ReselectStoryline : FunnelNavigation
+
+    /** 초기화 경고 다이얼로그의 "다시 선택하기". */
+    data object ConfirmReselect : FunnelNavigation
+
+    data object DismissReselectWarning : FunnelNavigation
+}
+
+sealed interface CreateAdditionalInfoEvent {
+    data class RecommendationToggled(
+        val text: String,
+    ) : CreateAdditionalInfoEvent
+
+    data object InputAdded : CreateAdditionalInfoEvent
+
+    data class InputRemoved(
+        val inputId: Long,
+    ) : CreateAdditionalInfoEvent
+
+    data class InputChanged(
+        val inputId: Long,
+        val value: String,
+    ) : CreateAdditionalInfoEvent
+
+    data object CompletionStarted : CreateAdditionalInfoEvent
+
+    data object CompletionFailed : CreateAdditionalInfoEvent
+
+    /** 프로세스 재시작·재개 진입 복원으로 생성 결과·입력 스냅숏이 늦게 도착했다. */
+    data class SnapshotRestored(
+        val snapshot: CreateAdditionalInfoUiState,
+    ) : CreateAdditionalInfoEvent
+
+    data class ExitWarningChanged(
+        val warning: FunnelExitWarning?,
+    ) : CreateAdditionalInfoEvent
+
+    data class ReselectWarningVisibleChanged(
+        val visible: Boolean,
+    ) : CreateAdditionalInfoEvent
+}
+
+sealed interface CreateAdditionalInfoEffect {
+    /** 완성 성공 — 생성된 채팅방으로 진입하며 퍼널을 닫는다(웹의 채팅 화면 `replace` 대응). */
+    data class EnterChatAfterCompletion(
+        val chatId: String,
+    ) : CreateAdditionalInfoEffect
+
+    /** 완성 실패 안내. 사유에 따라 문구만 다르다. */
+    data class ShowCompletionFailure(
+        val failure: CompletionFailure,
+    ) : CreateAdditionalInfoEffect
+
+    /** 퍼널 이탈 확정. */
+    data object ExitFunnel : CreateAdditionalInfoEffect
+
+    /** "다시 선택하기" 확정 — 스토리라인 단계로 pop 한다. */
+    data object NavigateBackToStoryline : CreateAdditionalInfoEffect
+}
+
+@HiltViewModel
+class CreateAdditionalInfoViewModel
+    @Inject
+    constructor(
+        private val storylineGenerationStore: StorylineGenerationStore,
+        private val storyCreationRepository: StoryCreationRepository,
+        private val chatRepository: ChatStarter,
+        private val pendingCreationStore: PendingStoryCreationStore,
+        private val analytics: Analytics,
+    ) : MviViewModel<
+            CreateAdditionalInfoIntent,
+            CreateAdditionalInfoUiState,
+            CreateAdditionalInfoEvent,
+            CreateAdditionalInfoEffect,
+        >(
+            storylineGenerationStore.toInitialAdditionalInfoState(),
+        ) {
+        private var completeJob: Job? = null
+
+        /**
+         * 스토리 완성은 성공했는데 채팅 생성이 실패한 경우의 스토리 ID.
+         * 재시도는 스토리 완성을 건너뛰고 채팅 생성만 재호출해 스토리를 중복 생성하지 않는다.
+         */
+        private var completedStoryId: String? = null
+
+        /**
+         * 이탈·초기화 처리 중. 이 전이는 스토어의 진행 미러를 비우는데, 그 사이 화면 상태를
+         * 미러링하면 방금 저장한 재료를 빈 값으로 덮어쓴다. 이후 미러링을 멈춘다.
+         */
+        private var isLeaving = false
+
+        val draftSave = storylineGenerationStore.draftSave
+
+        init {
+            analytics.track(AnalyticsEvent.StoryCreateStepViewed(CreateStep.ADDITIONAL_INFO))
+            viewModelScope.launch {
+                // 프로세스 재시작·재개 진입이면 진행 레코드에서 스토어를 먼저 복원한다.
+                storylineGenerationStore.ensureRestored()
+                if (uiState.value.isRestoring) {
+                    // 완성 진행 중이던 레코드는 입력 화면이 아니라 완성 로딩으로 이어진다. 복구
+                    // 폴링이 같은 전이를 내지만 한 박자 늦어, 입력 화면이 한 프레임 비친다.
+                    if (storylineGenerationStore.completionRecoveryTarget.value != null) {
+                        dispatchEvent(CreateAdditionalInfoEvent.CompletionStarted)
+                    }
+                    dispatchEvent(
+                        CreateAdditionalInfoEvent.SnapshotRestored(
+                            storylineGenerationStore.toAdditionalInfoSnapshot(),
+                        ),
+                    )
+                }
+            }
+            viewModelScope.launch {
+                // 입력·추천 선택을 스토어에 미러링해 이탈 시 임시 저장 재료로 쓴다.
+                uiState.collect { state ->
+                    // 복원 전의 빈 입력을 미러링하면 되살릴 임시 저장 재료를 덮어쓴다.
+                    if (state.isRestoring || isLeaving) return@collect
+                    storylineGenerationStore.updateAdditionalInfoProgress(
+                        inputs = state.additionalInfos.map(AdditionalInfoInput::value),
+                        recommendations = state.selectedRecommendations.toList(),
+                    )
+                }
+            }
+        }
+
+        /**
+         * 응답을 못 받았거나 409 로 거절된 완성 요청의 복구 폴링. 화면이 STARTED 동안 수집해
+         * 백그라운드에서 멈추고 복귀 시 재개된다. 복구 대상이 없으면 아무 일도 하지 않는다.
+         */
+        suspend fun driveCompletionRecovery() {
+            // collectLatest 를 쓰면 블록 안에서 target 을 비우는 순간 채팅 생성 연결이 취소된다.
+            storylineGenerationStore.completionRecoveryTarget.collect { command ->
+                if (command == null) return@collect
+                dispatchEvent(CreateAdditionalInfoEvent.CompletionStarted)
+                pollCompletion(command)
+            }
+        }
+
+        private suspend fun pollCompletion(command: StoryCompletionCommand) {
+            while (true) {
+                when (val result = storyCreationRepository.creationRequest(command.requestId)) {
+                    is DomainResult.Success ->
+                        when (val snapshot = result.value) {
+                            CreationRequestSnapshot.Pending -> Unit
+
+                            is CreationRequestSnapshot.StoryReady -> {
+                                completedStoryId = snapshot.story.id
+                                storylineGenerationStore.clearCompletionRecovery()
+                                // 원 성공 경로의 부수효과 — 채팅 생성으로 이어 붙인다.
+                                startChat(snapshot.story.id)
+                                return
+                            }
+
+                            is CreationRequestSnapshot.StorylinesReady -> {
+                                failCompletion(CompletionFailure.GENERAL, restoreDraft = true)
+                                return
+                            }
+
+                            CreationRequestSnapshot.Failed -> {
+                                failCompletion(CompletionFailure.GENERAL, restoreDraft = true)
+                                return
+                            }
+                        }
+
+                    is DomainResult.Failure ->
+                        // 폴링은 읽기라 네트워크 단절은 다음 주기로 넘기고, 404 를 포함한
+                        // 서버 응답 실패는 기존 완성 실패 처리로 합류한다.
+                        if (result.error !is DomainError.Network) {
+                            failCompletion(CompletionFailure.GENERAL, restoreDraft = true)
+                            return
+                        }
+                }
+                delay(StorylineGenerationStore.RECOVERY_POLL_INTERVAL_MS)
+            }
+        }
+
+        /** 입력 화면으로 되돌리고 실패를 알린다. [restoreDraft] 는 재료를 임시 저장으로 되살린다. */
+        private suspend fun failCompletion(
+            failure: CompletionFailure,
+            restoreDraft: Boolean = false,
+        ) {
+            if (restoreDraft) storylineGenerationStore.restoreDraftAfterCompletionFailure()
+            val stage = if (completedStoryId != null) CompletionStage.CHAT else CompletionStage.STORY
+            analytics.track(AnalyticsEvent.CompleteErrorShown(stage))
+            if (failure == CompletionFailure.CREDIT) {
+                analytics.track(AnalyticsEvent.CreditShortageShown(CreditShortageTrigger.STORY_CREATE))
+            }
+            dispatchEvent(CreateAdditionalInfoEvent.CompletionFailed)
+            dispatchEffect(CreateAdditionalInfoEffect.ShowCompletionFailure(failure))
+        }
+
+        override suspend fun handleIntent(intent: CreateAdditionalInfoIntent) {
+            val state = uiState.value
+            when (intent) {
+                is CreateAdditionalInfoIntent.ToggleRecommendation -> {
+                    val selected = intent.text !in state.selectedRecommendations
+                    analytics.track(AnalyticsEvent.RecommendedInfoClicked(selected))
+                    dispatchEvent(CreateAdditionalInfoEvent.RecommendationToggled(intent.text))
+                }
+
+                CreateAdditionalInfoIntent.AddInput ->
+                    if (state.canAddInput) {
+                        analytics.track(AnalyticsEvent.AdditionalInfoAddButtonClicked)
+                        dispatchEvent(CreateAdditionalInfoEvent.InputAdded)
+                    }
+
+                is CreateAdditionalInfoIntent.RemoveInput ->
+                    if (state.additionalInfos.any { it.id == intent.inputId }) {
+                        analytics.track(AnalyticsEvent.AdditionalInfoRemoveButtonClicked)
+                        dispatchEvent(CreateAdditionalInfoEvent.InputRemoved(intent.inputId))
+                    }
+
+                is CreateAdditionalInfoIntent.ChangeInput ->
+                    dispatchEvent(
+                        CreateAdditionalInfoEvent.InputChanged(
+                            inputId = intent.inputId,
+                            value = intent.value.take(CreateAdditionalInfoUiState.INPUT_MAX_LENGTH),
+                        ),
+                    )
+
+                is CreateAdditionalInfoIntent.CompleteStory -> completeStory(state, intent.storylineIndex)
+
+                CreateAdditionalInfoIntent.SaveDraft -> {
+                    analytics.track(AnalyticsEvent.DraftSaved(CreateStep.ADDITIONAL_INFO))
+                    // 미러링 수집이 UiState 보다 늦게 돌아도 저장에는 지금 입력이 들어가야 한다.
+                    storylineGenerationStore.updateAdditionalInfoProgress(
+                        inputs = state.additionalInfos.map(AdditionalInfoInput::value),
+                        recommendations = state.selectedRecommendations.toList(),
+                    )
+                    storylineGenerationStore.saveDraft()
+                }
+
+                is CreateAdditionalInfoIntent.FunnelNavigation -> handleFunnelNavigation(intent, state)
+            }
+        }
+
+        private suspend fun handleFunnelNavigation(
+            intent: CreateAdditionalInfoIntent.FunnelNavigation,
+            state: CreateAdditionalInfoUiState,
+        ) {
+            when (intent) {
+                CreateAdditionalInfoIntent.LeaveFunnel -> leaveFunnel(confirmed = false)
+
+                CreateAdditionalInfoIntent.ConfirmLeaveFunnel -> {
+                    analytics.track(AnalyticsEvent.CreateExitButtonClicked(CreateStep.ADDITIONAL_INFO))
+                    leaveFunnel(confirmed = true)
+                }
+
+                CreateAdditionalInfoIntent.DismissExitWarning ->
+                    dispatchEvent(CreateAdditionalInfoEvent.ExitWarningChanged(null))
+
+                CreateAdditionalInfoIntent.ReselectStoryline ->
+                    if (state.hasAdditionalInfo) {
+                        dispatchEvent(CreateAdditionalInfoEvent.ReselectWarningVisibleChanged(visible = true))
+                    } else {
+                        confirmReselect()
+                    }
+
+                CreateAdditionalInfoIntent.ConfirmReselect -> {
+                    dispatchEvent(CreateAdditionalInfoEvent.ReselectWarningVisibleChanged(visible = false))
+                    confirmReselect()
+                }
+
+                CreateAdditionalInfoIntent.DismissReselectWarning ->
+                    dispatchEvent(CreateAdditionalInfoEvent.ReselectWarningVisibleChanged(visible = false))
+            }
+        }
+
+        /**
+         * 닫기는 상태와 무관하게 늘 확인을 거친다. 저장하지 않은 편집이 있으면 미저장 경고, 저장할 것도
+         * 저장된 것도 없으면 소실 경고, 저장분·진행 중 레코드만 남았으면 잃는 것 없이 닫는다는 확인이다.
+         */
+        private suspend fun leaveFunnel(confirmed: Boolean) {
+            val warning =
+                when {
+                    confirmed -> null
+                    storylineGenerationStore.draftSave.value.hasUnsavedChanges ->
+                        FunnelExitWarning.UNSAVED_CHANGES
+
+                    storylineGenerationStore.hasContentToPreserve() -> FunnelExitWarning.SAVED_DRAFT
+                    else -> FunnelExitWarning.NOTHING_TO_PRESERVE
+                }
+            if (warning != null) {
+                dispatchEvent(CreateAdditionalInfoEvent.ExitWarningChanged(warning))
+                return
+            }
+            if (confirmed) dispatchEvent(CreateAdditionalInfoEvent.ExitWarningChanged(null))
+            isLeaving = true
+            storylineGenerationStore.leaveFunnel()
+            dispatchEffect(CreateAdditionalInfoEffect.ExitFunnel)
+        }
+
+        /**
+         * 스토리라인 단계로 되돌아간다. 미러링을 먼저 끊고 스토어를 비운다 — 순서를 바꾸면
+         * 남아 있던 화면 상태가 방금 비운 진행을 다시 채운다.
+         */
+        private suspend fun confirmReselect() {
+            analytics.track(AnalyticsEvent.BackToStorylineButtonClicked)
+            isLeaving = true
+            storylineGenerationStore.clearAdditionalInfoProgress()
+            dispatchEffect(CreateAdditionalInfoEffect.NavigateBackToStoryline)
+        }
+
+        private suspend fun completeStory(
+            state: CreateAdditionalInfoUiState,
+            storylineIndex: Int,
+        ) {
+            if (state.isCompletingStory || completeJob?.isActive == true) return
+
+            // 스토리는 완성됐고 채팅 생성만 실패한 재시도 — 완성 요청을 건너뛴다(3-1 완성 재시도 분기).
+            val alreadyCompletedStoryId = completedStoryId
+            if (alreadyCompletedStoryId != null) {
+                state.simpleCreationId?.let {
+                    analytics.track(AnalyticsEvent.StoryCompletionRequested(it.toString()))
+                }
+                dispatchEvent(CreateAdditionalInfoEvent.CompletionStarted)
+                completeJob = viewModelScope.launch { startChat(alreadyCompletedStoryId) }
+                return
+            }
+
+            val simpleCreationId = state.simpleCreationId ?: return
+            val storylineId = state.storylines.getOrNull(storylineIndex)?.id ?: return
+            val command =
+                buildCompletionCommand(
+                    previous = storylineGenerationStore.lastCompletionCommand,
+                    simpleCreationId = simpleCreationId,
+                    storylineId = storylineId,
+                    additionalInfos = state.submittedAdditionalInfos(),
+                )
+            // UiState가 이벤트 채널보다 먼저 읽힌 직후에도 완성 레코드에는 최신 입력이 들어가야 한다.
+            storylineGenerationStore.updateAdditionalInfoProgress(
+                inputs = state.additionalInfos.map(AdditionalInfoInput::value),
+                recommendations = state.selectedRecommendations.toList(),
+            )
+            // 요청 전에 영속한다 — 응답을 못 받아도 재진입 복구 조회가 이 requestId 를 쓴다.
+            storylineGenerationStore.beginCompletion(command)
+            analytics.track(AnalyticsEvent.StoryCompletionRequested(simpleCreationId.toString()))
+            dispatchEvent(CreateAdditionalInfoEvent.CompletionStarted)
+            completeJob =
+                viewModelScope.launch {
+                    when (val result = storyCreationRepository.completeStory(command)) {
+                        is DomainResult.Success -> {
+                            completedStoryId = result.value.id
+                            startChat(result.value.id)
+                        }
+
+                        is DomainResult.Failure -> onCompletionFailed(command, result.error)
+                    }
+                }
+        }
+
+        private suspend fun onCompletionFailed(
+            command: StoryCompletionCommand,
+            error: DomainError,
+        ) {
+            when {
+                // 같은 requestId 재시도가 서버 PENDING 과 겹쳤다(409). 실패가 아니라 진행 중이라는
+                // 뜻이므로 복구 폴링으로 결과를 되찾는다. 로딩 상태는 폴링 드라이브가 유지한다.
+                error.isConflict() -> storylineGenerationStore.requestCompletionRecovery(command)
+
+                // 상태 코드로 응답한 실패는 복구 대상이 아니라 레코드를 지운다. 응답을 못 받은
+                // 네트워크 오류만 보존한다(3-1 정리 규칙). 레코드는 쥔 채로 임시 저장만 다시 연다.
+                error is DomainError.Network -> {
+                    storylineGenerationStore.keepCompletionRecordEditable()
+                    failCompletion(error.toCompletionFailure())
+                }
+
+                else -> failCompletion(error.toCompletionFailure(), restoreDraft = true)
+            }
+        }
+
+        /**
+         * 완성 흐름의 마지막 단계 — 채팅을 만들어 바로 진입한다. 실패는 완성 실패와 같은 안내이며,
+         * 스토리가 이미 완성됐으므로 레코드는 남겨 재진입 복구가 채팅 생성으로 이어지게 한다.
+         */
+        private suspend fun startChat(storyId: String) {
+            when (val result = chatRepository.createChat(storyId)) {
+                is DomainResult.Success -> {
+                    analytics.track(AnalyticsEvent.StoryCreateCompleted(storyId = storyId, chatId = result.value.id))
+                    pendingCreationStore.clear()
+                    // 스토어를 비워야 다음 퍼널 이탈에서 이미 완성된 결과가 임시 저장으로 둔갑하지 않는다.
+                    storylineGenerationStore.resetAfterCompletion()
+                    dispatchEffect(CreateAdditionalInfoEffect.EnterChatAfterCompletion(result.value.id))
+                }
+
+                is DomainResult.Failure -> failCompletion(CompletionFailure.GENERAL)
+            }
+        }
+
+        override fun reduce(
+            state: CreateAdditionalInfoUiState,
+            event: CreateAdditionalInfoEvent,
+        ): CreateAdditionalInfoUiState =
+            when (event) {
+                is CreateAdditionalInfoEvent.RecommendationToggled ->
+                    state.copy(
+                        selectedRecommendations =
+                            if (event.text in state.selectedRecommendations) {
+                                state.selectedRecommendations - event.text
+                            } else {
+                                state.selectedRecommendations + event.text
+                            },
+                    )
+
+                CreateAdditionalInfoEvent.InputAdded ->
+                    state.copy(
+                        additionalInfos = state.additionalInfos + AdditionalInfoInput(id = state.nextInputId),
+                        nextInputId = state.nextInputId + 1,
+                    )
+
+                is CreateAdditionalInfoEvent.InputRemoved ->
+                    state.copy(additionalInfos = state.additionalInfos.filterNot { it.id == event.inputId })
+
+                is CreateAdditionalInfoEvent.InputChanged ->
+                    state.copy(
+                        additionalInfos =
+                            state.additionalInfos.map { input ->
+                                if (input.id == event.inputId) input.copy(value = event.value) else input
+                            },
+                    )
+
+                CreateAdditionalInfoEvent.CompletionStarted -> state.copy(isCompletingStory = true)
+
+                CreateAdditionalInfoEvent.CompletionFailed -> state.copy(isCompletingStory = false)
+
+                is CreateAdditionalInfoEvent.SnapshotRestored ->
+                    // 복원 스냅숏이 늦게 도착하는 동안 화면 조작은 불가능했으므로 통째로 대체한다.
+                    // 되살릴 레코드가 없었더라도 복원 대기는 여기서 끝난다 — 빈 화면으로 남지 않는다.
+                    event.snapshot.copy(
+                        isRestoring = false,
+                        isCompletingStory = state.isCompletingStory,
+                        exitWarning = state.exitWarning,
+                        showReselectWarningDialog = state.showReselectWarningDialog,
+                    )
+
+                is CreateAdditionalInfoEvent.ExitWarningChanged -> state.copy(exitWarning = event.warning)
+
+                is CreateAdditionalInfoEvent.ReselectWarningVisibleChanged ->
+                    state.copy(showReselectWarningDialog = event.visible)
+            }
+    }
+
+/**
+ * 같은 페이로드의 재시도는 requestId 를 재사용한다 — 서버가 이미 완성했다면(응답 유실)
+ * AI 재호출 없이 저장된 결과를 돌려받아 중복 생성·중복 과금이 없다(멱등 계약).
+ * [previous] 는 스토어가 기억한 마지막 명령이라 임시 저장 재개 후의 재시도에도 승계된다.
+ */
+private fun buildCompletionCommand(
+    previous: StoryCompletionCommand?,
+    simpleCreationId: Long,
+    storylineId: Long,
+    additionalInfos: List<String>,
+): StoryCompletionCommand {
+    val reusableRequestId =
+        previous
+            ?.takeIf {
+                it.simpleCreationId == simpleCreationId &&
+                    it.storylineId == storylineId &&
+                    it.additionalInfos == additionalInfos
+            }?.requestId
+    return StoryCompletionCommand(
+        requestId = reusableRequestId ?: UUID.randomUUID().toString(),
+        simpleCreationId = simpleCreationId,
+        storylineId = storylineId,
+        additionalInfos = additionalInfos,
+    )
+}
+
+/** 추천 채택분이 앞, 그 뒤로 공백을 정리한 자유 입력이 실린다. 빈 입력은 보내지 않는다. */
+private fun CreateAdditionalInfoUiState.submittedAdditionalInfos(): List<String> =
+    selectedRecommendations.toList() +
+        additionalInfos.map { it.value.trim() }.filter(String::isNotEmpty)
+
+/**
+ * 스토어의 현재 상태로 첫 프레임을 만든다.
+ *
+ * 스토리라인 단계에서 넘어온 진입은 스토어에 결과가 있어 입력 화면이 곧바로 그려지고, 스토어가 빈
+ * 재개 진입은 복원 결과를 알기 전까지 [CreateAdditionalInfoUiState.isRestoring] 으로 남는다.
+ */
+private fun StorylineGenerationStore.toInitialAdditionalInfoState(): CreateAdditionalInfoUiState =
+    if (state.value is StorylineGenerationState.Idle) {
+        CreateAdditionalInfoUiState(isRestoring = true)
+    } else {
+        toAdditionalInfoSnapshot()
+    }
+
+/** 스토어의 생성 결과·진행 미러로 초기 상태를 만든다. 임시 저장 복원 입력도 여기서 되살아난다. */
+internal fun StorylineGenerationStore.toAdditionalInfoSnapshot(): CreateAdditionalInfoUiState {
+    val result = state.value.resultOrNull()
+    val storylines =
+        result
+            ?.storylines
+            .orEmpty()
+            .map { storyline ->
+                AdditionalInfoStoryline(
+                    id = storyline.id,
+                    text = storyline.storyline,
+                    recommendedInfos = storyline.recommendedInfos.map { it.text },
+                )
+            }
+    val savedInputs = progress.additionalInfoInputs
+    val inputs =
+        if (savedInputs.isEmpty()) {
+            List(CreateAdditionalInfoUiState.INITIAL_INPUT_COUNT) { index ->
+                AdditionalInfoInput(id = index.toLong())
+            }
+        } else {
+            savedInputs.mapIndexed { index, value -> AdditionalInfoInput(id = index.toLong(), value = value) }
+        }
+    // 추천 선택은 실제 추천 목록에 남아 있는 것만 복원한다 — 다른 스토리라인의 선택이 섞여
+    // 완성 요청에 실리는 것을 막는다.
+    val availableRecommendations = storylines.flatMapTo(mutableSetOf()) { it.recommendedInfos }
+    return CreateAdditionalInfoUiState(
+        simpleCreationId = result?.simpleCreationId,
+        storylines = storylines,
+        selectedRecommendations =
+            progress.selectedRecommendations.filterTo(mutableSetOf()) { it in availableRecommendations },
+        additionalInfos = inputs,
+        nextInputId = inputs.size.toLong(),
+    )
+}
+
+// 앱은 로그인 필수라 402 는 게스트 한도가 아니라 회원 이프 부족이다.
+private fun DomainError.toCompletionFailure(): CompletionFailure =
+    if (this is DomainError.Server && status == HTTP_PAYMENT_REQUIRED) {
+        CompletionFailure.CREDIT
+    } else {
+        CompletionFailure.GENERAL
+    }
+
+private const val HTTP_PAYMENT_REQUIRED = 402

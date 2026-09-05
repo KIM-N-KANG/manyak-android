@@ -2,7 +2,7 @@ package app.manyak.di
 
 import app.manyak.BuildConfig
 import app.manyak.core.navigation.LegalDocument
-import app.manyak.feature.legal.LegalUrlProvider
+import app.manyak.legal.domain.LegalUrlProvider
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
