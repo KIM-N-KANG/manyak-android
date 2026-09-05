@@ -1,10 +1,6 @@
 package app.manyak.core.data.di
 
 import android.content.Context
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.room.Room
 import app.manyak.core.data.database.ManyakDatabase
 import app.manyak.core.data.database.PendingStoryCreationDao
@@ -18,14 +14,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object StorageModule {
-    @Provides
-    @Singleton
-    @ProfileDataStore
-    fun provideProfileDataStore(
-        @ApplicationContext context: Context,
-    ): DataStore<Preferences> =
-        PreferenceDataStoreFactory.create { context.preferencesDataStoreFile(PROFILE_STORE_NAME) }
-
     @Provides
     @Singleton
     fun provideManyakDatabase(
@@ -42,6 +30,4 @@ object StorageModule {
     @Singleton
     fun providePendingStoryCreationDao(database: ManyakDatabase): PendingStoryCreationDao =
         database.pendingStoryCreationDao()
-
-    private const val PROFILE_STORE_NAME = "profile"
 }

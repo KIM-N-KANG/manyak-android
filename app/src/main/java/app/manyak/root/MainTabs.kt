@@ -27,8 +27,8 @@ import app.manyak.designsystem.component.ManyakNavigationBar
 import app.manyak.designsystem.component.ManyakNavigationItem
 import app.manyak.designsystem.component.ManyakSectionHeader
 import app.manyak.designsystem.theme.ManyakTheme
-import app.manyak.feature.my.MyScreen
 import app.manyak.home.presentation.HomeScreen
+import app.manyak.my.profile.presentation.MyScreen
 import app.manyak.studio.presentation.StudioScreen
 
 /**

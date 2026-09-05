@@ -53,7 +53,7 @@ include(":legal")
 include(":home")
 include(":chat")
 include(":studio")
-include(":feature:my")
+include(":my")
 include(":feature:create")
 include(":story")
 

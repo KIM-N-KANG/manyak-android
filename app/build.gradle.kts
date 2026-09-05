@@ -160,7 +160,7 @@ dependencies {
     implementation(projects.home)
     implementation(projects.chat)
     implementation(projects.studio)
-    implementation(projects.feature.my)
+    implementation(projects.my)
     implementation(projects.feature.create)
     implementation(projects.story)
 

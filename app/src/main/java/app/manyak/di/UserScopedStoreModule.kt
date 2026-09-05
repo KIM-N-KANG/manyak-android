@@ -2,8 +2,8 @@ package app.manyak.di
 
 import app.manyak.common.domain.session.UserScopedStore
 import app.manyak.core.data.database.PendingStoryCreationRoomStore
-import app.manyak.core.data.datastore.InviteOnboardingStore
-import app.manyak.core.data.datastore.ProfileCacheStore
+import app.manyak.my.invite.data.datastore.InviteOnboardingStore
+import app.manyak.my.profile.data.datastore.ProfileCacheStore
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
