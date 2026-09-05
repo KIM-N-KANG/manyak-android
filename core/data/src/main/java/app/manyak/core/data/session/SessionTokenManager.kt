@@ -6,6 +6,8 @@ import app.manyak.core.data.api.AuthApi
 import app.manyak.core.data.api.dto.RefreshTokenRequestDto
 import app.manyak.core.data.api.dto.TokenResponseDto
 import app.manyak.core.data.datastore.StoredSession
+import app.manyak.network.domain.SessionTokenAccess
+import app.manyak.network.entity.TokenAccess
 import dagger.Lazy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -21,22 +23,6 @@ import retrofit2.Response
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
-
-/** 요청에 쓸 access 토큰을 얻으려는 시도의 결과. */
-sealed interface TokenAccess {
-    data class Available(
-        val accessToken: String,
-    ) : TokenAccess
-
-    /** 저장된 세션이 없다. 보호 요청을 보내지 않는다. */
-    data object NoSession : TokenAccess
-
-    /** 네트워크 때문에 실패했다. **세션은 유지**하고 이 요청만 실패시킨다. */
-    data object TemporarilyUnavailable : TokenAccess
-
-    /** 재로그인이 필요하다. 종료 절차가 이미 시작됐다. */
-    data object SessionEnded : TokenAccess
-}
 
 /** 발급받은 토큰을 저장하려는 시도의 결과. */
 enum class TokenPersistResult {
@@ -73,15 +59,15 @@ class SessionTokenManager
         private val gate: SessionGate,
         @param:ApplicationScope private val applicationScope: CoroutineScope,
         private val sessionEndSignal: Lazy<SessionEndSignal>,
-    ) {
+    ) : SessionTokenAccess {
         private val refreshMutex = Mutex()
         private var inFlightRefresh: Deferred<RefreshOutcome>? = null
 
         /** 요청을 보내기 전에 관찰한 세션 세대. 401 재시도가 다음 사용자의 토큰으로 실행되지 않게 한다. */
-        val currentGeneration: Long get() = gate.currentGeneration
+        override val currentGeneration: Long get() = gate.currentGeneration
 
         /** 저장된 세션을 그대로 쓸 수 있는지 판정하고, 필요하면 먼저 재발급한다. */
-        suspend fun accessToken(): TokenAccess {
+        override suspend fun accessToken(): TokenAccess {
             if (gate.isTerminating) return TokenAccess.SessionEnded
             return when (val read = tokenStore.read()) {
                 TokenReadResult.Absent -> TokenAccess.NoSession
@@ -111,7 +97,7 @@ class SessionTokenManager
          * @param observedGeneration 원 요청을 보내기 전에 읽은 세대. 그 사이 세션이 바뀌었으면
          *  재발급 결과를 쓰지 않는다 — 이전 사용자의 401 처리가 새 사용자의 토큰으로 재시도되면 안 된다.
          */
-        suspend fun refreshAfterUnauthorized(observedGeneration: Long): TokenAccess {
+        override suspend fun refreshAfterUnauthorized(observedGeneration: Long): TokenAccess {
             if (!gate.isCurrentGeneration(observedGeneration)) return TokenAccess.SessionEnded
             val outcome = refresh()
             if (!gate.isCurrentGeneration(observedGeneration)) return TokenAccess.SessionEnded

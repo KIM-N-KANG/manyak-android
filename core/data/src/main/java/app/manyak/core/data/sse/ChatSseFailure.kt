@@ -1,7 +1,7 @@
 package app.manyak.core.data.sse
 
 import app.manyak.common.domain.error.DomainError
-import app.manyak.core.data.interceptor.SessionUnavailableException
+import app.manyak.network.data.interceptor.SessionUnavailableException
 
 /**
  * 스트림이 실패로 끝난 이유를 오류 타입으로 옮긴다.

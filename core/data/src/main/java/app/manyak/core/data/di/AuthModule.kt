@@ -16,6 +16,8 @@ import app.manyak.core.data.repository.AccountLinkRepositoryImpl
 import app.manyak.core.data.repository.SessionRepositoryImpl
 import app.manyak.core.data.repository.UserProfileRepositoryImpl
 import app.manyak.core.data.session.SessionBootstrap
+import app.manyak.core.data.session.SessionTokenManager
+import app.manyak.network.domain.SessionTokenAccess
 import dagger.Binds
 import dagger.MapKey
 import dagger.Module
@@ -41,6 +43,10 @@ annotation class AuthProviderKey(
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class AuthModule {
+    @Binds
+    @Singleton
+    abstract fun bindSessionTokenAccess(impl: SessionTokenManager): SessionTokenAccess
+
     @Binds
     @Singleton
     abstract fun bindSessionRepository(impl: SessionRepositoryImpl): SessionRepository

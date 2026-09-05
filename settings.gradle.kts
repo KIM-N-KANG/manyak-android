@@ -58,3 +58,5 @@ include(":feature:create")
 include(":feature:story")
 
 include(":designsystem")
+
+include(":network")

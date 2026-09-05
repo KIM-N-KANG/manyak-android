@@ -1,4 +1,4 @@
-package app.manyak.core.data.api
+package app.manyak.network.data.api
 
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
@@ -73,7 +73,7 @@ fun Response<*>.parseErrorCode(): String? {
     val raw = errorBody()?.string().orEmpty()
     if (raw.isBlank()) return null
     return try {
-        lenientJson.decodeFromString<app.manyak.core.data.api.dto.ApiErrorResponseDto>(raw).code
+        lenientJson.decodeFromString<app.manyak.network.data.api.dto.ApiErrorResponseDto>(raw).code
     } catch (_: SerializationException) {
         null
     }
@@ -82,7 +82,7 @@ fun Response<*>.parseErrorCode(): String? {
 const val HEADER_DEVICE_ID = "X-Manyak-Device-Id"
 const val HEADER_REQUEST_ID = "X-Manyak-Request-Id"
 
-internal const val HTTP_UNAUTHORIZED = 401
+const val HTTP_UNAUTHORIZED = 401
 private const val HTTP_FORBIDDEN = 403
 
 private val lenientJson = Json { ignoreUnknownKeys = true }

@@ -20,6 +20,7 @@ room {
 }
 
 dependencies {
+    implementation(projects.network)
     implementation(projects.common)
 
     implementation(libs.androidx.core.ktx)

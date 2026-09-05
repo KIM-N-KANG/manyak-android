@@ -11,13 +11,13 @@ import app.manyak.common.entity.chat.CreatedChat
 import app.manyak.common.entity.chat.UserSource
 import app.manyak.core.data.api.ChatApi
 import app.manyak.core.data.api.UserApi
-import app.manyak.core.data.api.apiCall
 import app.manyak.core.data.api.dto.ChatCreateRequestDto
 import app.manyak.core.data.api.dto.ChatRegenerateRequestDto
 import app.manyak.core.data.api.dto.ChatTurnStreamRequestDto
 import app.manyak.core.data.api.dto.toDomain
-import app.manyak.core.data.api.emptyBodyApiCall
 import app.manyak.core.data.sse.ChatSseSource
+import app.manyak.network.data.api.apiCall
+import app.manyak.network.data.api.emptyBodyApiCall
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton

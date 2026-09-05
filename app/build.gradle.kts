@@ -146,6 +146,7 @@ android {
 }
 
 dependencies {
+    implementation(projects.network)
     implementation(projects.designsystem)
     implementation(projects.common)
     implementation(projects.core.data)

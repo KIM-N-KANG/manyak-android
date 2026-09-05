@@ -218,3 +218,8 @@
 
 - analytics 모듈과 계층 경계 분리.
 - 이벤트 계약·제작·채팅 테스트, 앱 Hilt 조립, ktlint·detekt 통과; 이벤트 이름과 전송 값 유지
+
+### network
+
+- network 기반 모듈과 토큰 접근 계약 분리.
+- 401 재시도·세대 전달 테스트 및 기존 인증 테스트, 앱 Hilt 조립, ktlint·detekt 통과

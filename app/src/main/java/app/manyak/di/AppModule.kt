@@ -2,11 +2,11 @@ package app.manyak.di
 
 import app.manyak.BuildConfig
 import app.manyak.analytics.data.di.AnalyticsConfig
-import app.manyak.core.data.di.DataLayerConfig
 import app.manyak.core.data.di.SocialAuthConfig
 import app.manyak.core.data.provider.ActivityProvider
 import app.manyak.core.data.session.SessionEndSignal
 import app.manyak.feature.my.InviteShareLinkProvider
+import app.manyak.network.data.di.DataLayerConfig
 import app.manyak.session.CurrentActivityProvider
 import app.manyak.session.SessionTerminationCoordinator
 import dagger.Binds

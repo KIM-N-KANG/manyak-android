@@ -7,6 +7,7 @@ import app.manyak.core.data.api.dto.RefreshTokenRequestDto
 import app.manyak.core.data.api.dto.SocialLoginRequestDto
 import app.manyak.core.data.api.dto.TokenResponseDto
 import app.manyak.core.data.datastore.StoredSession
+import app.manyak.network.entity.TokenAccess
 import dagger.Lazy
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async

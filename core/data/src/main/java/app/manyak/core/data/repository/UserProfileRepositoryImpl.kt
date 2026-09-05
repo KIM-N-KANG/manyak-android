@@ -10,11 +10,11 @@ import app.manyak.common.entity.session.SessionEndNotice
 import app.manyak.common.entity.user.AccountStatus
 import app.manyak.common.entity.user.UserProfile
 import app.manyak.core.data.api.UserApi
-import app.manyak.core.data.api.apiCall
 import app.manyak.core.data.api.dto.MeResponseDto
 import app.manyak.core.data.datastore.ProfileCacheStore
 import app.manyak.core.data.session.SessionEndSignal
 import app.manyak.core.data.session.SessionGate
+import app.manyak.network.data.api.apiCall
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted

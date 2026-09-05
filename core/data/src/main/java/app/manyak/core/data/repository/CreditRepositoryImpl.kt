@@ -6,8 +6,8 @@ import app.manyak.common.domain.error.map
 import app.manyak.common.entity.credit.AttendanceResult
 import app.manyak.common.entity.credit.CreditTransactionPage
 import app.manyak.core.data.api.UserApi
-import app.manyak.core.data.api.apiCall
 import app.manyak.core.data.api.dto.toDomain
+import app.manyak.network.data.api.apiCall
 import javax.inject.Inject
 import javax.inject.Singleton
 

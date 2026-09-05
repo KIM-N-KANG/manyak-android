@@ -15,11 +15,11 @@ import app.manyak.core.data.api.CreationRequestApi
 import app.manyak.core.data.api.SimpleStoryApi
 import app.manyak.core.data.api.StoryGenerationApi
 import app.manyak.core.data.api.StoryRatingApi
-import app.manyak.core.data.api.apiCall
 import app.manyak.core.data.api.dto.toDomain
 import app.manyak.core.data.api.dto.toDomainOrNull
 import app.manyak.core.data.api.dto.toRequestDto
-import app.manyak.core.data.api.emptyBodyApiCall
+import app.manyak.network.data.api.apiCall
+import app.manyak.network.data.api.emptyBodyApiCall
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import javax.inject.Inject

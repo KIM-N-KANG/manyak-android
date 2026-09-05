@@ -10,10 +10,10 @@ import app.manyak.common.entity.story.StorySummary
 import app.manyak.core.data.api.StoryApi
 import app.manyak.core.data.api.StoryDetailApi
 import app.manyak.core.data.api.UserApi
-import app.manyak.core.data.api.apiCall
 import app.manyak.core.data.api.dto.CreateStoryReportRequestDto
 import app.manyak.core.data.api.dto.toDomain
-import app.manyak.core.data.api.emptyBodyApiCall
+import app.manyak.network.data.api.apiCall
+import app.manyak.network.data.api.emptyBodyApiCall
 import javax.inject.Inject
 import javax.inject.Singleton
 

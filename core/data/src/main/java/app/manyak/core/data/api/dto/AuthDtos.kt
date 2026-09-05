@@ -55,10 +55,3 @@ data class MeResponseDto(
     val attendedToday: Boolean = false,
     val linkedProviders: List<String> = emptyList(),
 )
-
-@Serializable
-data class ApiErrorResponseDto(
-    val status: Int? = null,
-    val code: String? = null,
-    val message: String? = null,
-)

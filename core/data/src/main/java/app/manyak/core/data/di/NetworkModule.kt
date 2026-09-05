@@ -12,33 +12,22 @@ import app.manyak.core.data.api.StoryDetailApi
 import app.manyak.core.data.api.StoryGenerationApi
 import app.manyak.core.data.api.StoryRatingApi
 import app.manyak.core.data.api.UserApi
-import app.manyak.core.data.interceptor.AuthInterceptor
-import app.manyak.core.data.interceptor.DeviceIdInterceptor
+import app.manyak.network.data.di.AuthenticatedClient
+import app.manyak.network.data.di.DataLayerConfig
+import app.manyak.network.data.di.PlainClient
+import app.manyak.network.data.retrofit
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.json.Json
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSources
-import retrofit2.Retrofit
-import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import java.util.concurrent.TimeUnit
 import javax.inject.Qualifier
 import javax.inject.Singleton
-
-/** access 토큰을 붙이지 않는 클라이언트. 로그인·재발급·로그아웃이 쓴다. */
-@Qualifier
-@Retention(AnnotationRetention.BINARY)
-annotation class PlainClient
-
-/** access 토큰을 붙이고 선제·반응형 재발급을 수행하는 클라이언트. 보호 요청이 쓴다. */
-@Qualifier
-@Retention(AnnotationRetention.BINARY)
-annotation class AuthenticatedClient
 
 /** 채팅 턴 스트리밍 전용 클라이언트. 인증 클라이언트에서 파생해 상한만 바꾼다. */
 @Qualifier
@@ -50,51 +39,7 @@ annotation class SseClient
 @Suppress("TooManyFunctions")
 @Module
 @InstallIn(SingletonComponent::class)
-object NetworkModule {
-    @Provides
-    @Singleton
-    fun provideJson(): Json =
-        Json {
-            ignoreUnknownKeys = true
-            explicitNulls = false
-        }
-
-    @Provides
-    @Singleton
-    fun provideLoggingInterceptor(config: DataLayerConfig): HttpLoggingInterceptor =
-        HttpLoggingInterceptor().apply {
-            // 헤더에 access 토큰이 들어가므로 debug 에서도 본문·헤더를 찍지 않는다.
-            level = if (config.isDebugBuild) HttpLoggingInterceptor.Level.BASIC else HttpLoggingInterceptor.Level.NONE
-        }
-
-    @Provides
-    @Singleton
-    @PlainClient
-    fun providePlainClient(
-        deviceIdInterceptor: DeviceIdInterceptor,
-        loggingInterceptor: HttpLoggingInterceptor,
-    ): OkHttpClient =
-        OkHttpClient
-            .Builder()
-            .addInterceptor(deviceIdInterceptor)
-            .addInterceptor(loggingInterceptor)
-            .build()
-
-    @Provides
-    @Singleton
-    @AuthenticatedClient
-    fun provideAuthenticatedClient(
-        deviceIdInterceptor: DeviceIdInterceptor,
-        authInterceptor: AuthInterceptor,
-        loggingInterceptor: HttpLoggingInterceptor,
-    ): OkHttpClient =
-        OkHttpClient
-            .Builder()
-            .addInterceptor(deviceIdInterceptor)
-            .addInterceptor(authInterceptor)
-            .addInterceptor(loggingInterceptor)
-            .build()
-
+object ApiNetworkModule {
     /**
      * 스트리밍 전용 클라이언트. 연결 풀·디스패처·인터셉터를 인증 클라이언트와 공유하되 셋을 바꾼다.
      *
@@ -237,18 +182,6 @@ object NetworkModule {
         config: DataLayerConfig,
         json: Json,
     ): UserApi = retrofit(client, config, json).create(UserApi::class.java)
-
-    private fun retrofit(
-        client: OkHttpClient,
-        config: DataLayerConfig,
-        json: Json,
-    ): Retrofit =
-        Retrofit
-            .Builder()
-            .baseUrl(config.apiBaseUrl)
-            .client(client)
-            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
-            .build()
 
     private const val GENERATION_READ_TIMEOUT_SECONDS = 120L
     private const val GENERATION_CALL_TIMEOUT_SECONDS = 150L

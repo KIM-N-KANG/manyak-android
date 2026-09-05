@@ -1,7 +1,7 @@
-package app.manyak.core.data.interceptor
+package app.manyak.network.data.interceptor
 
-import app.manyak.core.data.session.SessionTokenManager
-import app.manyak.core.data.session.TokenAccess
+import app.manyak.network.domain.SessionTokenAccess
+import app.manyak.network.entity.TokenAccess
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.Request
@@ -28,7 +28,7 @@ class SessionUnavailableException(
 class AuthInterceptor
     @Inject
     constructor(
-        private val tokenManager: SessionTokenManager,
+        private val tokenManager: SessionTokenAccess,
     ) : Interceptor {
         override fun intercept(chain: Interceptor.Chain): Response {
             val generation = tokenManager.currentGeneration

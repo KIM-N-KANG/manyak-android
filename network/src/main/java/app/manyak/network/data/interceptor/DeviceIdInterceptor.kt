@@ -1,7 +1,7 @@
-package app.manyak.core.data.interceptor
+package app.manyak.network.data.interceptor
 
 import app.manyak.common.data.datastore.DeviceIdStore
-import app.manyak.core.data.api.HEADER_DEVICE_ID
+import app.manyak.network.data.api.HEADER_DEVICE_ID
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.Response
