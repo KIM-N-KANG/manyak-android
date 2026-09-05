@@ -1,6 +1,6 @@
 package app.manyak.feature.chat.composer
 
-import app.manyak.core.ui.text.parseTextSegments
+import app.manyak.designsystem.text.parseTextSegments
 
 /** 블럭 종류. 상황은 강조 마커로 감싸 보내고 대사는 그대로 보낸다. */
 enum class InputBlockType {

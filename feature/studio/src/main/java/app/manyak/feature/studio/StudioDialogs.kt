@@ -6,13 +6,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import app.manyak.common.entity.story.StorySummary
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.ManyakDestructiveDialogContent
-import app.manyak.core.ui.component.ManyakDialog
-import app.manyak.core.ui.component.ManyakOptionsDialogContent
-import app.manyak.core.ui.component.ManyakOptionsDialogItem
 import app.manyak.core.ui.component.StoryReportSheet
 import app.manyak.core.ui.report.StoryReportAction
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.ManyakDestructiveDialogContent
+import app.manyak.designsystem.component.ManyakDialog
+import app.manyak.designsystem.component.ManyakOptionsDialogContent
+import app.manyak.designsystem.component.ManyakOptionsDialogItem
+import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.designsystem.R as DesignsystemR
 
 /** 제작 탭이 본문 위에 띄우는 것들 — 확인 다이얼로그 둘과 카드 옵션·신고 시트. 본문 배치와 섞이지 않게 따로 둔다. */
 @Composable
@@ -73,12 +74,12 @@ private fun StoryOptions(
 ) {
     ManyakOptionsDialogContent(preview = { MyStoryCardPreview(story = story) }) {
         ManyakOptionsDialogItem(
-            iconRes = R.drawable.ic_info,
+            iconRes = DesignsystemR.drawable.ic_info,
             label = stringResource(R.string.story_report_action),
             onClick = { onIntent(StudioIntent.Report(StoryReportAction.Open)) },
         )
         ManyakOptionsDialogItem(
-            iconRes = R.drawable.ic_delete,
+            iconRes = DesignsystemR.drawable.ic_delete,
             label = stringResource(R.string.studio_story_delete),
             onClick = { onIntent(StudioIntent.RequestDeleteStory) },
             isDanger = true,

@@ -6,8 +6,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import app.manyak.common.entity.story.StoryCharacter
-import app.manyak.core.ui.component.CharacterImage
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.CharacterImage
+import app.manyak.designsystem.theme.ManyakTheme
 
 /**
  * 주변 인물. 인물 하나는 이름과 이미지 한 장이고, 이름은 시작 상황의 갈래 제목과 같은 자리다 —

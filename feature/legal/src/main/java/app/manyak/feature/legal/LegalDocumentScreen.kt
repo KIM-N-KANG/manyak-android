@@ -26,10 +26,11 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.manyak.core.navigation.LegalDocument
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.ManyakProgressIndicator
-import app.manyak.core.ui.component.ManyakTextButton
-import app.manyak.core.ui.component.rememberDelayedProgressVisibility
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.ManyakProgressIndicator
+import app.manyak.designsystem.component.ManyakTextButton
+import app.manyak.designsystem.component.rememberDelayedProgressVisibility
+import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.designsystem.R as DesignsystemR
 
 /**
  * 약관·개인정보처리방침·서비스 안내를 웹 페이지 그대로 보여 준다.
@@ -90,7 +91,7 @@ private fun LegalLoadFailure(
             color = ManyakTheme.colors.textSubtle,
         )
         ManyakTextButton(onClick = onRetry) {
-            Text(text = stringResource(R.string.common_retry), style = ManyakTheme.typography.labelLarge)
+            Text(text = stringResource(DesignsystemR.string.common_retry), style = ManyakTheme.typography.labelLarge)
         }
     }
 }

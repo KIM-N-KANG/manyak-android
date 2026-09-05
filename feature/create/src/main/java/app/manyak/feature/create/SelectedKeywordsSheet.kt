@@ -22,9 +22,10 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import app.manyak.common.entity.story.StoryTagCategory
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.ManyakBottomSheet
-import app.manyak.core.ui.component.ManyakProgressIndicator
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.ManyakBottomSheet
+import app.manyak.designsystem.component.ManyakProgressIndicator
+import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.designsystem.R as DesignsystemR
 
 /**
  * 선택 키워드 시트를 여는 띠. 좌우 여백 없이 프레임을 꽉 채우고 모서리도 두지 않는다 — 푸터의 두
@@ -180,7 +181,7 @@ private fun SelectedKeywordsFailure(
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = stringResource(R.string.common_retry),
+                text = stringResource(DesignsystemR.string.common_retry),
                 style = ManyakTheme.typography.labelSmall,
                 color = ManyakTheme.colors.textSubtle,
             )

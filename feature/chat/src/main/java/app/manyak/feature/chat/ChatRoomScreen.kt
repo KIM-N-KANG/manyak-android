@@ -37,18 +37,19 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.ManyakDestructiveDialog
-import app.manyak.core.ui.component.ManyakIconButton
-import app.manyak.core.ui.component.ManyakOptionsMenu
-import app.manyak.core.ui.component.ManyakOptionsMenuItem
-import app.manyak.core.ui.component.ManyakProgressIndicator
 import app.manyak.core.ui.component.StoryReportSheet
-import app.manyak.core.ui.component.rememberDelayedProgressVisibility
 import app.manyak.core.ui.report.StoryReportAction
 import app.manyak.core.ui.report.StoryReportUiState
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.ManyakDestructiveDialog
+import app.manyak.designsystem.component.ManyakIconButton
+import app.manyak.designsystem.component.ManyakOptionsMenu
+import app.manyak.designsystem.component.ManyakOptionsMenuItem
+import app.manyak.designsystem.component.ManyakProgressIndicator
+import app.manyak.designsystem.component.rememberDelayedProgressVisibility
+import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.feature.chat.composer.ChatComposer
 import app.manyak.feature.chat.composer.ChatComposerActions
+import app.manyak.designsystem.R as DesignsystemR
 
 /**
  * 채팅방. 셸 없는 전체 화면이며 상세 조회 렌더와 턴 진행, 추천 입력·선택지를 담는다.
@@ -318,7 +319,7 @@ private fun ChatRoomHeader(
         },
         navigationIcon = {
             ManyakIconButton(
-                iconRes = R.drawable.ic_arrow_back,
+                iconRes = DesignsystemR.drawable.ic_arrow_back,
                 contentDescription = stringResource(R.string.common_back),
                 onClick = onBack,
             )
@@ -328,7 +329,7 @@ private fun ChatRoomHeader(
             if (showsOptions) {
                 ManyakOptionsMenu(contentDescription = stringResource(R.string.chat_room_options)) { dismiss ->
                     ManyakOptionsMenuItem(
-                        iconRes = R.drawable.ic_info,
+                        iconRes = DesignsystemR.drawable.ic_info,
                         label = stringResource(R.string.story_report_action),
                         onClick = {
                             dismiss()
@@ -336,7 +337,7 @@ private fun ChatRoomHeader(
                         },
                     )
                     ManyakOptionsMenuItem(
-                        iconRes = R.drawable.ic_delete,
+                        iconRes = DesignsystemR.drawable.ic_delete,
                         label = stringResource(R.string.chat_room_delete),
                         onClick = {
                             dismiss()

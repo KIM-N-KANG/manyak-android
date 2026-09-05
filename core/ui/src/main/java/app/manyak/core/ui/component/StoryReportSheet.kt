@@ -26,7 +26,12 @@ import app.manyak.common.entity.story.StoryReportReason
 import app.manyak.core.ui.R
 import app.manyak.core.ui.report.StoryReportAction
 import app.manyak.core.ui.report.StoryReportUiState
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.ManyakBottomSheet
+import app.manyak.designsystem.component.ManyakInputCounter
+import app.manyak.designsystem.component.ManyakMultilineTextField
+import app.manyak.designsystem.component.ManyakProgressIndicator
+import app.manyak.designsystem.component.ManyakTextButton
+import app.manyak.designsystem.theme.ManyakTheme
 
 /** 서버가 받는 상세 서술의 상한. 넘겨 보내면 400 이라 입력 단계에서 막는다. */
 const val STORY_REPORT_DETAIL_MAX_LENGTH: Int = 500

@@ -5,8 +5,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import app.manyak.common.entity.story.CharacterGender
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.ManyakSelectField
-import app.manyak.core.ui.component.ManyakSelectOption
+import app.manyak.designsystem.component.ManyakSelectField
+import app.manyak.designsystem.component.ManyakSelectOption
 
 /**
  * 인물 성별 셀렉트. 고르지 않은 상태(무작위)가 기본이라 그때는 값을 placeholder 로 흐리게 둔다.

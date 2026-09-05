@@ -21,7 +21,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import app.manyak.common.entity.story.StoryTagCategory
 import app.manyak.core.ui.R
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.theme.ManyakTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

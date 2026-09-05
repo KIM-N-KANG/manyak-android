@@ -17,9 +17,9 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.CharacterImage
-import app.manyak.core.ui.text.storyAnnotatedString
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.CharacterImage
+import app.manyak.designsystem.text.storyAnnotatedString
+import app.manyak.designsystem.theme.ManyakTheme
 
 /**
  * 사용자 입력. **말풍선이 아니라 화면 폭을 다 쓰는 밴드다** — 정렬도 최대 폭도 둥근 모서리도 없고

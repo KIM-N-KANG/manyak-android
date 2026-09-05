@@ -17,7 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import app.manyak.common.entity.user.UserProfile
 import app.manyak.core.ui.R
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.theme.ManyakTheme
 import java.text.NumberFormat
 
 /**

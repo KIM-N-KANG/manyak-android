@@ -36,10 +36,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.ManyakInputCounter
-import app.manyak.core.ui.component.ManyakTextButton
-import app.manyak.core.ui.component.ManyakTextField
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.ManyakInputCounter
+import app.manyak.designsystem.component.ManyakTextButton
+import app.manyak.designsystem.component.ManyakTextField
+import app.manyak.designsystem.theme.ManyakTheme
 
 @Composable
 internal fun CharacterForm(

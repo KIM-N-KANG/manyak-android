@@ -31,11 +31,11 @@ import app.manyak.core.analytics.StoryListSection
 import app.manyak.core.analytics.rememberImpressionTracker
 import app.manyak.core.analytics.trackImpression
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.LoadFailedContent
-import app.manyak.core.ui.component.ManyakPullToRefreshBox
-import app.manyak.core.ui.component.rememberDelayedProgressVisibility
-import app.manyak.core.ui.component.withScreenMargins
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.LoadFailedContent
+import app.manyak.designsystem.component.ManyakPullToRefreshBox
+import app.manyak.designsystem.component.rememberDelayedProgressVisibility
+import app.manyak.designsystem.component.withScreenMargins
+import app.manyak.designsystem.theme.ManyakTheme
 
 /**
  * 홈 탭(오리지널 스토리 목록). 헤더와 하단 탭은 셸이 그리므로 여기서는 콘텐츠만 둔다.

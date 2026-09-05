@@ -31,12 +31,12 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.FocusScrollMargin
-import app.manyak.core.ui.component.ManyakInputCounter
-import app.manyak.core.ui.component.ManyakMultilineTextField
-import app.manyak.core.ui.component.ManyakTextField
-import app.manyak.core.ui.component.clearFocusOnTap
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.FocusScrollMargin
+import app.manyak.designsystem.component.ManyakInputCounter
+import app.manyak.designsystem.component.ManyakMultilineTextField
+import app.manyak.designsystem.component.ManyakTextField
+import app.manyak.designsystem.component.clearFocusOnTap
+import app.manyak.designsystem.theme.ManyakTheme
 
 /**
  * 피드백. 본문만 필수이고 이메일은 답변이 필요할 때만 받는다.

@@ -4,8 +4,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.ManyakOptionsMenu
-import app.manyak.core.ui.component.ManyakOptionsMenuItem
+import app.manyak.designsystem.component.ManyakOptionsMenu
+import app.manyak.designsystem.component.ManyakOptionsMenuItem
+import app.manyak.designsystem.R as DesignsystemR
 
 /** 헤더 오른쪽 더보기 메뉴. 신고는 누구에게나, 삭제는 내 스토리로 들어왔을 때만 항목이 있다. */
 @Composable
@@ -20,7 +21,7 @@ internal fun StoryDetailHeaderMenu(
         tint = tint,
     ) { dismiss ->
         ManyakOptionsMenuItem(
-            iconRes = R.drawable.ic_info,
+            iconRes = DesignsystemR.drawable.ic_info,
             label = stringResource(R.string.story_report_action),
             onClick = {
                 dismiss()
@@ -29,7 +30,7 @@ internal fun StoryDetailHeaderMenu(
         )
         if (onDelete != null) {
             ManyakOptionsMenuItem(
-                iconRes = R.drawable.ic_delete,
+                iconRes = DesignsystemR.drawable.ic_delete,
                 label = stringResource(R.string.studio_story_delete),
                 onClick = {
                     dismiss()

@@ -11,9 +11,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.constrainHeight
 import androidx.compose.ui.unit.constrainWidth
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.StoryBadgeScale
-import app.manyak.core.ui.component.StoryGenreBadge
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.StoryBadgeScale
+import app.manyak.designsystem.component.StoryGenreBadge
+import app.manyak.designsystem.theme.ManyakTheme
 
 /**
  * 카드의 장르 뱃지 한 줄. 폭에 들어가는 만큼만 보이고 나머지는 `+N` 뱃지로 접는다.

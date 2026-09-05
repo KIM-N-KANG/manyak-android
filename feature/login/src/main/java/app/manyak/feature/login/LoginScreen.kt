@@ -50,9 +50,10 @@ import app.manyak.common.entity.auth.AuthProvider
 import app.manyak.common.presentation.error.messageResOrNull
 import app.manyak.core.navigation.LegalDocument
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.ManyakLogo
-import app.manyak.core.ui.component.ManyakProgressIndicator
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.ManyakLogo
+import app.manyak.designsystem.component.ManyakProgressIndicator
+import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.designsystem.R as DesignsystemR
 
 @Composable
 fun LoginScreen(
@@ -222,7 +223,7 @@ private fun ProviderButtons(
         ProviderButton(
             provider = AuthProvider.KAKAO,
             labelRes = R.string.login_kakao,
-            logoRes = R.drawable.ic_logo_kakao,
+            logoRes = DesignsystemR.drawable.ic_logo_kakao,
             containerColor = KakaoContainerColor,
             contentColor = KakaoContentColor,
             state = state,
@@ -231,7 +232,7 @@ private fun ProviderButtons(
         ProviderButton(
             provider = AuthProvider.GOOGLE,
             labelRes = R.string.login_google,
-            logoRes = R.drawable.ic_logo_google,
+            logoRes = DesignsystemR.drawable.ic_logo_google,
             containerColor = GoogleContainerColor,
             contentColor = GoogleContentColor,
             border = BorderStroke(ProviderButtonBorderWidth, ManyakTheme.colors.border),

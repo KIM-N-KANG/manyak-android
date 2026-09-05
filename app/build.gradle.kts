@@ -146,6 +146,7 @@ android {
 }
 
 dependencies {
+    implementation(projects.designsystem)
     implementation(projects.common)
     implementation(projects.core.data)
     implementation(projects.core.ui)

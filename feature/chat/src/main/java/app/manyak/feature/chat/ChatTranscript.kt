@@ -48,9 +48,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.ScrollEdgeFade
-import app.manyak.core.ui.component.clearFocusOnTap
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.ScrollEdgeFade
+import app.manyak.designsystem.component.clearFocusOnTap
+import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.feature.chat.message.ChatAiOutput
 import app.manyak.feature.chat.message.ChatUserBand
 import app.manyak.feature.chat.message.rememberTypewriterSegments
@@ -58,6 +58,7 @@ import app.manyak.feature.chat.suggestion.ChatSuggestionArea
 import app.manyak.feature.chat.suggestion.ChatSuggestions
 import app.manyak.feature.chat.suggestion.hasSuggestionArea
 import kotlinx.coroutines.launch
+import app.manyak.designsystem.R as DesignsystemR
 
 /**
  * 렌더 순서는 프롤로그 → 각 턴(사용자 밴드 → AI 출력)이다.
@@ -306,7 +307,7 @@ private fun ScrollToBottomButton(
     ) {
         Icon(
             modifier = Modifier.size(ManyakTheme.sizes.iconSmall),
-            painter = painterResource(R.drawable.ic_angle_down),
+            painter = painterResource(DesignsystemR.drawable.ic_angle_down),
             contentDescription = label,
             tint = ManyakTheme.colors.text,
         )

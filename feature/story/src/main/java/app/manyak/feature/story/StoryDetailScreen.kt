@@ -59,16 +59,17 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.common.entity.story.StoryDetail
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.LoadFailedContent
-import app.manyak.core.ui.component.ManyakDestructiveDialog
-import app.manyak.core.ui.component.ManyakIconButton
-import app.manyak.core.ui.component.STORY_THUMBNAIL_ASPECT_RATIO
-import app.manyak.core.ui.component.ScrollEdgeFadeHeight
-import app.manyak.core.ui.component.StoryOverlayScrim
 import app.manyak.core.ui.component.StoryReportSheet
-import app.manyak.core.ui.component.rememberDelayedProgressVisibility
 import app.manyak.core.ui.report.StoryReportAction
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.LoadFailedContent
+import app.manyak.designsystem.component.ManyakDestructiveDialog
+import app.manyak.designsystem.component.ManyakIconButton
+import app.manyak.designsystem.component.STORY_THUMBNAIL_ASPECT_RATIO
+import app.manyak.designsystem.component.ScrollEdgeFadeHeight
+import app.manyak.designsystem.component.StoryOverlayScrim
+import app.manyak.designsystem.component.rememberDelayedProgressVisibility
+import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.designsystem.R as DesignsystemR
 
 /**
  * 스토리 상세. 셸 없는 전체 화면이며 홈·제작 목록의 카드 탭으로 들어온다.
@@ -380,7 +381,7 @@ private fun StoryDetailHeader(
             },
             navigationIcon = {
                 ManyakIconButton(
-                    iconRes = R.drawable.ic_arrow_back,
+                    iconRes = DesignsystemR.drawable.ic_arrow_back,
                     contentDescription = stringResource(R.string.common_back),
                     onClick = onBack,
                     tint = contentColor,

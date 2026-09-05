@@ -38,9 +38,10 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LifecycleEventEffect
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.ManyakIconButton
-import app.manyak.core.ui.component.ManyakTextButton
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.ManyakIconButton
+import app.manyak.designsystem.component.ManyakTextButton
+import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.designsystem.R as DesignsystemR
 
 /** 진행 표시기가 노출하는 단계 수. 완료(생성 로딩)는 단계로 세지 않는다. */
 internal const val INDICATOR_STEP_COUNT = 3
@@ -72,7 +73,7 @@ internal fun CreateFunnelHeader(
             ) {
                 DraftSaveButton(draftSave = draftSave, onClick = onSaveDraft)
                 ManyakIconButton(
-                    iconRes = R.drawable.ic_close,
+                    iconRes = DesignsystemR.drawable.ic_close,
                     contentDescription = stringResource(R.string.create_close_funnel),
                     onClick = onClose,
                 )
@@ -140,7 +141,7 @@ private fun DraftSaveButton(
                 if (isSaved) {
                     Icon(
                         modifier = Modifier.size(ManyakTheme.sizes.iconSmall),
-                        painter = painterResource(R.drawable.ic_check),
+                        painter = painterResource(DesignsystemR.drawable.ic_check),
                         contentDescription = null,
                         tint = LocalContentColor.current,
                     )

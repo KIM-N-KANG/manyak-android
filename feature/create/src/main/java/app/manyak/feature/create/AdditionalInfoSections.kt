@@ -34,12 +34,13 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.ManyakIconButton
-import app.manyak.core.ui.component.ManyakInputCounter
-import app.manyak.core.ui.component.ManyakMultilineTextField
-import app.manyak.core.ui.component.RowRevealTransition
-import app.manyak.core.ui.text.storyAnnotatedString
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.ManyakIconButton
+import app.manyak.designsystem.component.ManyakInputCounter
+import app.manyak.designsystem.component.ManyakMultilineTextField
+import app.manyak.designsystem.component.RowRevealTransition
+import app.manyak.designsystem.text.storyAnnotatedString
+import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.designsystem.R as DesignsystemR
 
 /** 선택한 스토리라인 본문. 진입 뒤 높이가 바뀌지 않게 더보기·접기 토글을 처음부터 함께 그린다. */
 @Composable
@@ -79,7 +80,7 @@ private fun SelectedStorylineToggle(
     modifier: Modifier = Modifier,
 ) {
     val labelRes = if (expanded) R.string.create_additional_collapse else R.string.create_additional_expand
-    val iconRes = if (expanded) R.drawable.ic_angle_up else R.drawable.ic_angle_down
+    val iconRes = if (expanded) DesignsystemR.drawable.ic_angle_up else DesignsystemR.drawable.ic_angle_down
     Row(
         modifier =
             modifier
@@ -266,7 +267,7 @@ private fun AdditionalInfoRow(
             },
         )
         ManyakIconButton(
-            iconRes = R.drawable.ic_close,
+            iconRes = DesignsystemR.drawable.ic_close,
             contentDescription = stringResource(R.string.create_additional_delete_description, index + 1),
             onClick = onRemove,
             size = ManyakTheme.sizes.controlSmall,

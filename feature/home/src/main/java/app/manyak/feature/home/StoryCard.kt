@@ -17,8 +17,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.manyak.common.entity.story.StorySummary
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.StoryThumbnail
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.StoryThumbnail
+import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.designsystem.R as DesignsystemR
 
 /**
  * 오리지널 스토리 카드.
@@ -52,7 +53,7 @@ internal fun StoryCard(
                         .align(Alignment.TopStart)
                         .width(OriginalTagWidth)
                         .aspectRatio(ORIGINAL_TAG_ASPECT_RATIO),
-                painter = painterResource(R.drawable.ic_story_original_tag),
+                painter = painterResource(DesignsystemR.drawable.ic_story_original_tag),
                 contentDescription = stringResource(R.string.home_original_tag),
             )
         }

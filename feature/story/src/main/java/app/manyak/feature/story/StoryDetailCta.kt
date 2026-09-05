@@ -24,9 +24,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.ManyakProgressIndicator
-import app.manyak.core.ui.component.ScrollEdgeFade
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.ManyakProgressIndicator
+import app.manyak.designsystem.component.ScrollEdgeFade
+import app.manyak.designsystem.theme.ManyakTheme
 
 /** 본문 위에 떠 있는 하단 CTA. 버튼 위쪽 페이드가 본문이 버튼 뒤로 흘러 들어가는 경계를 만든다. */
 @Composable

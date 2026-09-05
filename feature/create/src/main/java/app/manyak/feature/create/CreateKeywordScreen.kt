@@ -39,10 +39,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.common.entity.story.StoryTagCategory
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.FocusScrollMargin
-import app.manyak.core.ui.component.ScrollEdgeFade
-import app.manyak.core.ui.component.clearFocusOnTap
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.FocusScrollMargin
+import app.manyak.designsystem.component.ScrollEdgeFade
+import app.manyak.designsystem.component.clearFocusOnTap
+import app.manyak.designsystem.theme.ManyakTheme
 
 /**
  * 키워드 단계 뒤로가기는 생성 전 퍼널 이탈이다. 임시 저장하지 않은 입력이 있으면 경고를 거치고,

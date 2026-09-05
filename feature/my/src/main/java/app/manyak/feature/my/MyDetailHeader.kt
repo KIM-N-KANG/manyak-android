@@ -10,8 +10,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.ManyakIconButton
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.ManyakIconButton
+import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.designsystem.R as DesignsystemR
 
 /**
  * 마이 하위 목적지의 상단 헤더. 셸을 두르지 않는 전체 화면이라 제목과 뒤로가기를 화면이 직접 갖는다.
@@ -34,7 +35,7 @@ internal fun MyDetailHeader(
         },
         navigationIcon = {
             ManyakIconButton(
-                iconRes = R.drawable.ic_arrow_back,
+                iconRes = DesignsystemR.drawable.ic_arrow_back,
                 contentDescription = stringResource(R.string.common_back),
                 onClick = onBack,
             )

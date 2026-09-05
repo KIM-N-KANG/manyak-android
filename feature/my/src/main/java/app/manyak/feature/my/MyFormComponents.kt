@@ -22,8 +22,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.ManyakProgressIndicator
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.ManyakProgressIndicator
+import app.manyak.designsystem.theme.ManyakTheme
 
 /**
  * 마이 하위 화면들의 폼 조각. 초대·피드백 두 화면이 같은 버튼을 쓴다.

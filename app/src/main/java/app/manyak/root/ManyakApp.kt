@@ -56,9 +56,9 @@ import app.manyak.core.navigation.MyOpenSourceLicenseRoute
 import app.manyak.core.navigation.StoryDetailRoute
 import app.manyak.core.navigation.WithdrawalRoute
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.ManyakProgressIndicator
-import app.manyak.core.ui.component.rememberDelayedProgressVisibility
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.ManyakProgressIndicator
+import app.manyak.designsystem.component.rememberDelayedProgressVisibility
+import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.feature.chat.ChatRoomScreen
 import app.manyak.feature.create.CreateAdditionalInfoScreen
 import app.manyak.feature.create.CreateKeywordScreen
@@ -72,6 +72,7 @@ import app.manyak.feature.my.InviteScreen
 import app.manyak.feature.my.OpenSourceLicenseScreen
 import app.manyak.feature.my.WithdrawalScreen
 import app.manyak.feature.story.StoryDetailScreen
+import app.manyak.designsystem.R as DesignsystemR
 
 /**
  * 세션 상태가 어느 그래프를 띄울지 결정한다. 그래프 안에서 가드로 막지 않는다 —
@@ -184,7 +185,7 @@ private fun CleanupFailed(
                     contentColor = ManyakTheme.colors.textInverse,
                 ),
         ) {
-            Text(text = stringResource(R.string.common_retry), style = ManyakTheme.typography.labelLarge)
+            Text(text = stringResource(DesignsystemR.string.common_retry), style = ManyakTheme.typography.labelLarge)
         }
     }
 }

@@ -18,7 +18,7 @@ import androidx.compose.ui.graphics.Shader
 import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.theme.ManyakTheme
 
 /**
  * 대기 문구 위로 옅은 띠가 왼쪽에서 오른쪽으로 지나가는 텍스트 브러시.

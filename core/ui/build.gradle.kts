@@ -7,6 +7,7 @@ android {
 }
 
 dependencies {
+    implementation(projects.designsystem)
     // 화면 모듈이 그대로 쓰는 것들은 api 로 노출한다. feature 마다 같은 줄을 복제하지 않기 위해서다.
     api(platform(libs.androidx.compose.bom))
     api(libs.androidx.compose.material3)

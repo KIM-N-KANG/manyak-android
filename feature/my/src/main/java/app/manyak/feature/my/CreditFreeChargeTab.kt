@@ -26,10 +26,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import app.manyak.common.presentation.credit.LocalCreditPolicy
 import app.manyak.common.presentation.credit.creditAmountText
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.ManyakProgressIndicator
-import app.manyak.core.ui.component.ManyakPullToRefreshBox
-import app.manyak.core.ui.credit.creditAmountAlpha
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.ManyakProgressIndicator
+import app.manyak.designsystem.component.ManyakPullToRefreshBox
+import app.manyak.designsystem.credit.creditAmountAlpha
+import app.manyak.designsystem.theme.ManyakTheme
 
 /**
  * 무료 충전 탭. 이프를 결제 없이 얻는 두 수단(출석·친구 초대)만 모은다.

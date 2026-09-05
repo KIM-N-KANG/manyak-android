@@ -47,10 +47,10 @@ import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.common.presentation.credit.LocalCreditPolicy
 import app.manyak.common.presentation.credit.creditAmountText
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.ManyakBottomSheet
-import app.manyak.core.ui.component.ManyakProgressIndicator
-import app.manyak.core.ui.credit.creditAmountAlpha
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.ManyakBottomSheet
+import app.manyak.designsystem.component.ManyakProgressIndicator
+import app.manyak.designsystem.credit.creditAmountAlpha
+import app.manyak.designsystem.theme.ManyakTheme
 
 /**
  * 신규 가입 직후 뜨는 초대 코드 안내.

@@ -16,7 +16,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.theme.ManyakTheme
 import kotlinx.coroutines.flow.filterNotNull
 
 /** 목록 끝 패드의 항목 키. 앵커 계산은 콘텐츠 끝을 잴 때 이 항목만 빼야 한다. */

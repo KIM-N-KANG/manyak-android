@@ -26,8 +26,9 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.R
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.theme.ManyakTheme
 import kotlinx.coroutines.launch
+import app.manyak.designsystem.R as DesignsystemR
 
 /**
  * 엔딩 라벨 옆 안내 버튼. 엔딩이 스토리가 아니라 고른 시작 상황에 딸린다는 사실은 목록만 봐서는
@@ -71,7 +72,7 @@ internal fun EndingInfoButton(modifier: Modifier = Modifier) {
         ) {
             Icon(
                 modifier = Modifier.size(ManyakTheme.sizes.iconSmall),
-                painter = painterResource(R.drawable.ic_info),
+                painter = painterResource(DesignsystemR.drawable.ic_info),
                 contentDescription = label,
                 tint = ManyakTheme.colors.textSubtle,
             )

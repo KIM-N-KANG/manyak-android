@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import app.manyak.core.analytics.AnalyticsEvent
 import app.manyak.core.analytics.LocalAnalytics
 import app.manyak.core.ui.R
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.theme.ManyakTheme
 
 /** 이프 충전의 두 탭. 이프를 얻는 수단은 무료 충전이, 쓰고 받은 기록은 내역이 맡는다. */
 internal enum class CreditChargeTab(

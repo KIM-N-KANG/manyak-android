@@ -56,3 +56,5 @@ include(":feature:studio")
 include(":feature:my")
 include(":feature:create")
 include(":feature:story")
+
+include(":designsystem")

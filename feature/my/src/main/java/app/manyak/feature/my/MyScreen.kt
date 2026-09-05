@@ -32,8 +32,9 @@ import app.manyak.common.entity.user.UserProfile
 import app.manyak.core.analytics.AnalyticsEvent
 import app.manyak.core.analytics.LocalAnalytics
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.ManyakProgressIndicator
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.ManyakProgressIndicator
+import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.designsystem.R as DesignsystemR
 
 /**
  * 마이 탭. 화면 제목은 셸 헤더가 표시하므로 여기서 다시 그리지 않는다.
@@ -169,22 +170,22 @@ private fun MyContent(
         }
         MySection(labelRes = R.string.my_section_etc) {
             MyMenuItem(
-                iconRes = R.drawable.ic_mailbox,
+                iconRes = DesignsystemR.drawable.ic_mailbox,
                 labelRes = R.string.my_feedback,
                 onClick = onOpenFeedback,
-                trailing = { MenuTrailingIcon(iconRes = R.drawable.ic_chevron_right) },
+                trailing = { MenuTrailingIcon(iconRes = DesignsystemR.drawable.ic_chevron_right) },
             )
             MyMenuItem(
-                iconRes = R.drawable.ic_info,
+                iconRes = DesignsystemR.drawable.ic_info,
                 labelRes = R.string.my_service_info,
                 onClick = onOpenServiceInfo,
-                trailing = { MenuTrailingIcon(iconRes = R.drawable.ic_external_link) },
+                trailing = { MenuTrailingIcon(iconRes = DesignsystemR.drawable.ic_external_link) },
             )
             MyMenuItem(
-                iconRes = R.drawable.ic_book_open,
+                iconRes = DesignsystemR.drawable.ic_book_open,
                 labelRes = R.string.my_open_source_license,
                 onClick = onOpenOpenSourceLicense,
-                trailing = { MenuTrailingIcon(iconRes = R.drawable.ic_chevron_right) },
+                trailing = { MenuTrailingIcon(iconRes = DesignsystemR.drawable.ic_chevron_right) },
             )
             AppVersionMenuItem()
         }
@@ -201,7 +202,7 @@ private fun AccountSection(
 ) {
     MySection(labelRes = R.string.my_section_account, modifier = modifier) {
         MyMenuItem(
-            iconRes = R.drawable.ic_logout,
+            iconRes = DesignsystemR.drawable.ic_logout,
             labelRes = if (state.isLoggingOut) R.string.my_logout_in_progress else R.string.my_logout,
             onClick = { onIntent(MyIntent.LogOut) },
             enabled = !state.isLoggingOut,
@@ -213,7 +214,7 @@ private fun AccountSection(
                 },
         )
         MyMenuItem(
-            iconRes = R.drawable.ic_user_x,
+            iconRes = DesignsystemR.drawable.ic_user_x,
             labelRes = R.string.my_withdrawal,
             onClick = onOpenWithdrawal,
             contentColor = ManyakTheme.colors.textDanger,
@@ -249,7 +250,7 @@ private fun MySection(
 @Composable
 private fun AppVersionMenuItem(modifier: Modifier = Modifier) {
     MyMenuItem(
-        iconRes = R.drawable.ic_programming,
+        iconRes = DesignsystemR.drawable.ic_programming,
         labelRes = R.string.my_app_version,
         onClick = null,
         modifier = modifier,
@@ -283,9 +284,9 @@ private fun ThemeMenuItem(
 ) {
     val (iconRes, descriptionRes) =
         when (themeMode) {
-            ThemeMode.SYSTEM -> R.drawable.ic_display to R.string.my_theme_system
-            ThemeMode.LIGHT -> R.drawable.ic_sun to R.string.my_theme_light
-            ThemeMode.DARK -> R.drawable.ic_moon to R.string.my_theme_dark
+            ThemeMode.SYSTEM -> DesignsystemR.drawable.ic_display to R.string.my_theme_system
+            ThemeMode.LIGHT -> DesignsystemR.drawable.ic_sun to R.string.my_theme_light
+            ThemeMode.DARK -> DesignsystemR.drawable.ic_moon to R.string.my_theme_dark
         }
     MyMenuItem(
         iconRes = iconRes,

@@ -25,14 +25,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.manyak.common.entity.story.StorySummary
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.ManyakMoreButton
-import app.manyak.core.ui.component.MetaChip
-import app.manyak.core.ui.component.STORY_THUMBNAIL_ASPECT_RATIO
-import app.manyak.core.ui.component.StoryBadgeScale
-import app.manyak.core.ui.component.StoryCover
-import app.manyak.core.ui.component.moreButtonTitleAlignment
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.ManyakMoreButton
+import app.manyak.designsystem.component.MetaChip
+import app.manyak.designsystem.component.STORY_THUMBNAIL_ASPECT_RATIO
+import app.manyak.designsystem.component.StoryBadgeScale
+import app.manyak.designsystem.component.StoryCover
+import app.manyak.designsystem.component.moreButtonTitleAlignment
+import app.manyak.designsystem.theme.ManyakTheme
 import java.text.NumberFormat
+import app.manyak.designsystem.R as DesignsystemR
 
 /**
  * 내가 만든 스토리 카드. 채팅 목록 카드와 같은 가로 행이지만 표지가 훨씬 크다 — 내가 만든 표지가
@@ -208,14 +209,14 @@ private fun StoryMeta(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         MetaChip(
-            iconRes = R.drawable.ic_dialog,
+            iconRes = DesignsystemR.drawable.ic_dialog,
             text = formattedTurnCount,
-            description = stringResource(R.string.story_turn_count_description, formattedTurnCount),
+            description = stringResource(DesignsystemR.string.story_turn_count_description, formattedTurnCount),
             compact = compact,
         )
         createdDate?.let { date ->
             MetaChip(
-                iconRes = R.drawable.ic_calendar,
+                iconRes = DesignsystemR.drawable.ic_calendar,
                 text = date,
                 description = stringResource(R.string.studio_story_created_date_description, date),
                 compact = compact,

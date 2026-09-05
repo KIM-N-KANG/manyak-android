@@ -4,7 +4,6 @@
     이 배치가 곧 "Repository 구현은 UI 문구를 알지 않는다"를 컴파일러가 강제하는 장치가 된다.
 -->
 <resources>
-    <string name="app_logo_description">마냑</string>
 
     <!-- 로그인 -->
     <string name="login_title">로그인</string>
@@ -34,8 +33,6 @@
     <!-- 목록을 보고 있는 중에 당겨서 새로고침한 결과. 목록은 그대로 남으므로 "불러오지 못했어요"와 구분한다. -->
     <string name="story_refresh_failed">새로고침하지 못했어요</string>
     <!-- 턴 수 뱃지. 숫자만 보이므로 화면 낭독기에는 무엇의 수인지 함께 읽힌다. -->
-    <string name="story_turn_count_description">누적 턴 수 %1$s</string>
-    <string name="story_thumbnail_placeholder">썸네일 없음</string>
     <!-- 제작자 닉네임. 선행 @ 는 리소스 참조로 읽히지 않게 이스케이프한다. -->
     <string name="story_author_nickname">\@%1$s</string>
 
@@ -510,8 +507,6 @@
 
     <!-- 공통 -->
     <!-- %1$d 는 현재 글자 수, %2$d 는 상한. 입력 상한이 있는 모든 입력창이 함께 쓴다. -->
-    <string name="input_counter">%1$d / %2$d</string>
     <string name="common_back">뒤로</string>
-    <string name="common_retry">다시 시도</string>
     <string name="common_confirm">확인</string>
 </resources>

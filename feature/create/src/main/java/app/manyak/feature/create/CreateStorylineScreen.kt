@@ -45,9 +45,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.common.entity.story.StorylineRating
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.ScrollEdgeFade
-import app.manyak.core.ui.text.storyAnnotatedString
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.ScrollEdgeFade
+import app.manyak.designsystem.text.storyAnnotatedString
+import app.manyak.designsystem.theme.ManyakTheme
 
 /**
  * 스토리라인 선택 단계. 이 목적지는 키워드 목적지를 대체하므로 뒤로가기는 홈 복귀(퍼널 이탈)다.

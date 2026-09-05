@@ -19,9 +19,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.SkeletonPlaceholder
-import app.manyak.core.ui.component.rememberSkeletonPulseAlpha
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.SkeletonPlaceholder
+import app.manyak.designsystem.component.rememberSkeletonPulseAlpha
+import app.manyak.designsystem.theme.ManyakTheme
 
 /**
  * 조회 중 자리를 잡아 두는 골격. 카드와 **같은 행 구조**(3:4 표지 + 제목 줄 + 소개 두 줄 + 뱃지 줄 + 메타 줄)라

@@ -31,9 +31,10 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.RowRevealTransition
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.RowRevealTransition
+import app.manyak.designsystem.theme.ManyakTheme
 import kotlinx.coroutines.withTimeoutOrNull
+import app.manyak.designsystem.R as DesignsystemR
 
 /** 블럭 모드. 칸마다 상자가 따로라 툴바는 상자 밖 아래에 선다. */
 @Composable
@@ -212,7 +213,7 @@ private fun BlockInputRow(
         ComposerIconButton(
             // 포커스 순서에서 빼 블럭 사이를 키보드로 바로 오가게 한다.
             modifier = Modifier.focusProperties { canFocus = false },
-            iconRes = R.drawable.ic_close,
+            iconRes = DesignsystemR.drawable.ic_close,
             contentDescription = stringResource(R.string.chat_composer_remove_block),
             enabled = enabled,
             onClick = onRemove,

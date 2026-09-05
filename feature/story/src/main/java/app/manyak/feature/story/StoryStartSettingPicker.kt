@@ -6,9 +6,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import app.manyak.common.entity.story.StoryStartSetting
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.ManyakSelectField
-import app.manyak.core.ui.component.ManyakSelectOption
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.ManyakSelectField
+import app.manyak.designsystem.component.ManyakSelectOption
+import app.manyak.designsystem.theme.ManyakTheme
 
 /**
  * 시작 상황 셀렉트. 고를 것이 하나뿐이어도 그린다 — 스토리마다 이 자리의 모양이 달라지면

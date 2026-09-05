@@ -31,13 +31,14 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.ManyakProgressIndicator
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.ManyakProgressIndicator
+import app.manyak.designsystem.theme.ManyakTheme
 import com.mikepenz.aboutlibraries.Libs
 import com.mikepenz.aboutlibraries.entity.License
 import com.mikepenz.aboutlibraries.ui.compose.produceLibraries
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import app.manyak.designsystem.R as DesignsystemR
 
 /**
  * 오픈소스 고지. 목록은 빌드가 실제 의존성 그래프에서 뽑아 둔 것을 읽는다 — 손으로 적으면
@@ -180,9 +181,9 @@ private fun LicenseText(
                 painter =
                     painterResource(
                         when {
-                            content == null -> R.drawable.ic_external_link
-                            isExpanded -> R.drawable.ic_angle_up
-                            else -> R.drawable.ic_angle_down
+                            content == null -> DesignsystemR.drawable.ic_external_link
+                            isExpanded -> DesignsystemR.drawable.ic_angle_up
+                            else -> DesignsystemR.drawable.ic_angle_down
                         },
                     ),
                 contentDescription = null,

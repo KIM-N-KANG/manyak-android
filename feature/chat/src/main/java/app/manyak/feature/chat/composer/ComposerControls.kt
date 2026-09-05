@@ -32,9 +32,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.ManyakIconButton
-import app.manyak.core.ui.component.ManyakProgressIndicator
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.ManyakIconButton
+import app.manyak.designsystem.component.ManyakProgressIndicator
+import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.designsystem.R as DesignsystemR
 
 /** 툴바의 아이콘 버튼. */
 @Composable
@@ -130,7 +131,13 @@ internal fun ComposerSendButton(
                 modifier = Modifier.size(ManyakTheme.sizes.iconSmall),
                 painter =
                     painterResource(
-                        if (state.icon == SendButtonIcon.RANDOM) R.drawable.ic_play_filled else R.drawable.ic_arrow_up,
+                        if (state.icon ==
+                            SendButtonIcon.RANDOM
+                        ) {
+                            DesignsystemR.drawable.ic_play_filled
+                        } else {
+                            DesignsystemR.drawable.ic_arrow_up
+                        },
                     ),
                 contentDescription = label,
                 tint = contentColor,

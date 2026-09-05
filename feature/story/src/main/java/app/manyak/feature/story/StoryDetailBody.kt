@@ -27,10 +27,10 @@ import androidx.compose.ui.unit.dp
 import app.manyak.common.entity.story.StoryDetail
 import app.manyak.common.entity.story.StoryStartSetting
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.StoryBadgeScale
-import app.manyak.core.ui.component.StoryGenreBadge
-import app.manyak.core.ui.component.StoryThumbnail
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.StoryBadgeScale
+import app.manyak.designsystem.component.StoryGenreBadge
+import app.manyak.designsystem.component.StoryThumbnail
+import app.manyak.designsystem.theme.ManyakTheme
 
 /**
  * 상세 본문. 순서는 히어로 → 제목 → 한 줄 소개 → 장르 → 본 엔딩 → 주요 내용 → 주변 인물 →

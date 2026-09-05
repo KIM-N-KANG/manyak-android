@@ -14,9 +14,10 @@ import app.manyak.common.domain.chat.ChatInputMode
 import app.manyak.common.presentation.credit.LocalCreditPolicy
 import app.manyak.common.presentation.credit.creditAmountText
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.ManyakDestructiveDialog
-import app.manyak.core.ui.credit.creditAmountAlpha
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.ManyakDestructiveDialog
+import app.manyak.designsystem.credit.creditAmountAlpha
+import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.designsystem.R as DesignsystemR
 
 /** 컴포저 아래 줄. 왼쪽부터 추가 버튼·설정 메뉴이고 턴 비용과 전송만 오른쪽 끝이다. */
 @Composable
@@ -58,7 +59,7 @@ internal fun ComposerToolbar(
             )
         }
         ComposerMenu(
-            iconRes = R.drawable.ic_pen_sparkle,
+            iconRes = DesignsystemR.drawable.ic_pen_sparkle,
             contentDescription = stringResource(R.string.chat_composer_choices_menu),
             options = choicesOptions(),
             selected = choicesEnabled,
@@ -68,7 +69,7 @@ internal fun ComposerToolbar(
             enabled = enabled,
         )
         ComposerMenu(
-            iconRes = R.drawable.ic_gear,
+            iconRes = DesignsystemR.drawable.ic_gear,
             contentDescription = stringResource(R.string.chat_composer_input_mode_menu),
             options = inputModeOptions(),
             selected = mode,

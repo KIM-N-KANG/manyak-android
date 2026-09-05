@@ -33,8 +33,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
-import app.manyak.core.ui.R
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.designsystem.R as DesignsystemR
 
 /**
  * 컴포저 툴바의 설정 메뉴. 아이콘 버튼을 누르면 그 아래에 라디오 목록이 열린다.
@@ -166,7 +166,7 @@ private fun <T> ComposerMenuItem(
         Box(modifier = Modifier.size(ManyakTheme.sizes.iconSmall)) {
             if (selected) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_check),
+                    painter = painterResource(DesignsystemR.drawable.ic_check),
                     // 선택 여부는 항목의 시맨틱이 이미 알린다.
                     contentDescription = null,
                     tint = ManyakTheme.colors.text,

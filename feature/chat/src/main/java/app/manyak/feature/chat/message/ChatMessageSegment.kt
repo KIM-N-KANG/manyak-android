@@ -1,6 +1,6 @@
 package app.manyak.feature.chat.message
 
-import app.manyak.core.ui.component.isAllowedCharacterImageUrl
+import app.manyak.designsystem.component.isAllowedCharacterImageUrl
 
 /** AI 출력을 그리는 단위. 저장 본문과 스트리밍 조각이 같은 목록으로 환원돼 한 렌더러를 쓴다. */
 sealed interface ChatMessageSegment {

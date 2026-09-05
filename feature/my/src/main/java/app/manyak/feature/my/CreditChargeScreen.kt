@@ -45,11 +45,11 @@ import app.manyak.common.entity.credit.CreditTransaction
 import app.manyak.common.entity.credit.CreditTransactionReason
 import app.manyak.common.entity.credit.CreditTransactionType
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.LoadFailedContent
-import app.manyak.core.ui.component.ManyakPullToRefreshBox
-import app.manyak.core.ui.component.SkeletonPlaceholder
-import app.manyak.core.ui.component.rememberSkeletonPulseAlpha
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.LoadFailedContent
+import app.manyak.designsystem.component.ManyakPullToRefreshBox
+import app.manyak.designsystem.component.SkeletonPlaceholder
+import app.manyak.designsystem.component.rememberSkeletonPulseAlpha
+import app.manyak.designsystem.theme.ManyakTheme
 import kotlinx.coroutines.flow.distinctUntilChanged
 import java.text.NumberFormat
 

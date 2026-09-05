@@ -23,8 +23,9 @@ import androidx.compose.ui.unit.dp
 import app.manyak.common.presentation.credit.LocalCreditPolicy
 import app.manyak.common.presentation.credit.creditAmountText
 import app.manyak.core.ui.R
-import app.manyak.core.ui.credit.creditAmountAlpha
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.credit.creditAmountAlpha
+import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.designsystem.R as DesignsystemR
 
 /**
  * 마이의 메뉴 줄. [onClick] 이 없으면 값만 보여 주는 행이다 — 버전처럼 열 곳이 없는 항목이 여기 해당한다.
@@ -109,13 +110,13 @@ internal fun InviteMenuItem(
 ) {
     val inviteReward = LocalCreditPolicy.current?.inviteReward
     MyMenuItem(
-        iconRes = R.drawable.ic_people,
+        iconRes = DesignsystemR.drawable.ic_people,
         labelRes = R.string.my_invite,
         onClick = onClick,
         modifier = modifier,
         subLabel = stringResource(R.string.my_invite_reward, creditAmountText(inviteReward)),
         subLabelPending = inviteReward == null,
-        trailing = { MenuTrailingIcon(iconRes = R.drawable.ic_chevron_right) },
+        trailing = { MenuTrailingIcon(iconRes = DesignsystemR.drawable.ic_chevron_right) },
     )
 }
 

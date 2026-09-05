@@ -15,9 +15,9 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
 import app.manyak.common.entity.auth.AuthProvider
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.ManyakProgressIndicator
-import app.manyak.core.ui.component.ManyakTextButton
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.ManyakProgressIndicator
+import app.manyak.designsystem.component.ManyakTextButton
+import app.manyak.designsystem.theme.ManyakTheme
 
 /**
  * 연동 시작 확인.

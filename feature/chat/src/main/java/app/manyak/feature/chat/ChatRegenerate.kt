@@ -13,7 +13,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import app.manyak.core.ui.R
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.designsystem.R as DesignsystemR
 
 /**
  * 턴 자체의 재생성 조건. **마지막 턴인지는 그리는 쪽이 판단한다** — 목록 위치는 턴이 모르는 정보다.
@@ -43,7 +44,7 @@ internal fun RegenerateButton(
     ) {
         Icon(
             modifier = Modifier.size(ManyakTheme.sizes.iconSmall),
-            painter = painterResource(R.drawable.ic_refresh),
+            painter = painterResource(DesignsystemR.drawable.ic_refresh),
             contentDescription = label,
             tint = ManyakTheme.colors.textSubtle,
         )

@@ -39,10 +39,11 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.ManyakInputCounter
-import app.manyak.core.ui.component.ManyakTextButton
-import app.manyak.core.ui.component.ManyakTextField
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.ManyakInputCounter
+import app.manyak.designsystem.component.ManyakTextButton
+import app.manyak.designsystem.component.ManyakTextField
+import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.designsystem.R as DesignsystemR
 
 @Composable
 internal fun KeywordSectionLabel(
@@ -157,7 +158,7 @@ internal fun AddTrigger(
     ) {
         Icon(
             modifier = Modifier.size(ManyakTheme.sizes.iconSmall),
-            painter = painterResource(R.drawable.ic_add),
+            painter = painterResource(DesignsystemR.drawable.ic_add),
             contentDescription = null,
             tint = contentColor,
         )

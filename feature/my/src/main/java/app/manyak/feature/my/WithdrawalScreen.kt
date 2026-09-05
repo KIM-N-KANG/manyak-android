@@ -37,7 +37,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.core.ui.R
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.designsystem.R as DesignsystemR
 
 /**
  * 회원 탈퇴. 되돌릴 수 없는 동작이라 무엇을 잃는지 항목마다 확인을 받고 나서야 버튼이 열린다.
@@ -203,7 +204,7 @@ private fun ConfirmationCheckbox(
     ) {
         if (isChecked) {
             Icon(
-                painter = painterResource(R.drawable.ic_check),
+                painter = painterResource(DesignsystemR.drawable.ic_check),
                 contentDescription = null,
                 modifier = Modifier.size(ManyakTheme.sizes.iconSmall),
                 tint = ManyakTheme.colors.textInverse,

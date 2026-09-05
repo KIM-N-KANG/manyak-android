@@ -24,12 +24,13 @@ import app.manyak.common.entity.credit.CreditTransaction
 import app.manyak.common.entity.credit.CreditTransactionReason
 import app.manyak.common.entity.credit.CreditTransactionType
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.ManyakProgressIndicator
-import app.manyak.core.ui.component.ManyakTextButton
-import app.manyak.core.ui.component.SkeletonPlaceholder
-import app.manyak.core.ui.component.rememberSkeletonPulseAlpha
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.ManyakProgressIndicator
+import app.manyak.designsystem.component.ManyakTextButton
+import app.manyak.designsystem.component.SkeletonPlaceholder
+import app.manyak.designsystem.component.rememberSkeletonPulseAlpha
+import app.manyak.designsystem.theme.ManyakTheme
 import java.text.NumberFormat
+import app.manyak.designsystem.R as DesignsystemR
 
 /**
  * 내역 한 줄. 사유·대상·날짜가 왼쪽에, 금액이 오른쪽에 온다.
@@ -142,7 +143,7 @@ internal fun CreditHistoryLoadMoreFooter(
         } else {
             ManyakTextButton(onClick = onRetry) {
                 Text(
-                    text = stringResource(R.string.common_retry),
+                    text = stringResource(DesignsystemR.string.common_retry),
                     style = ManyakTheme.typography.labelLarge,
                     color = ManyakTheme.colors.textBrand,
                 )

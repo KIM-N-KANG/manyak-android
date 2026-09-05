@@ -36,10 +36,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.SkeletonPlaceholder
-import app.manyak.core.ui.component.rememberSkeletonPulseAlpha
-import app.manyak.core.ui.text.storyAnnotatedString
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.SkeletonPlaceholder
+import app.manyak.designsystem.component.rememberSkeletonPulseAlpha
+import app.manyak.designsystem.text.storyAnnotatedString
+import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.designsystem.R as DesignsystemR
 
 /**
  * 추천 입력·선택지 영역.
@@ -168,7 +169,7 @@ private fun SuggestionRow(
             ) {
                 Icon(
                     modifier = Modifier.size(ManyakTheme.sizes.iconSmall),
-                    painter = painterResource(R.drawable.ic_pen_circle),
+                    painter = painterResource(DesignsystemR.drawable.ic_pen_circle),
                     contentDescription = fillLabel,
                     tint = ManyakTheme.colors.textSubtle,
                 )
@@ -237,7 +238,7 @@ private fun SuggestionHint(modifier: Modifier = Modifier) {
                 ) {
                     Icon(
                         modifier = Modifier.fillMaxSize(),
-                        painter = painterResource(R.drawable.ic_pen_circle),
+                        painter = painterResource(DesignsystemR.drawable.ic_pen_circle),
                         contentDescription = null,
                         tint = ManyakTheme.colors.textSubtle,
                     )
@@ -290,7 +291,7 @@ private fun ChoicesFailure(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val label = stringResource(R.string.common_retry)
+    val label = stringResource(DesignsystemR.string.common_retry)
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),

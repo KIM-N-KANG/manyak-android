@@ -25,12 +25,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.manyak.common.entity.chat.ChatSummary
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.ManyakMoreButton
-import app.manyak.core.ui.component.MetaChip
-import app.manyak.core.ui.component.StoryCover
-import app.manyak.core.ui.component.moreButtonTitleAlignment
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.ManyakMoreButton
+import app.manyak.designsystem.component.MetaChip
+import app.manyak.designsystem.component.StoryCover
+import app.manyak.designsystem.component.moreButtonTitleAlignment
+import app.manyak.designsystem.theme.ManyakTheme
 import java.text.NumberFormat
+import app.manyak.designsystem.R as DesignsystemR
 
 /**
  * 채팅 목록 카드. 스토리 목록의 2열 그리드와 달리 세로 1열의 가로 행인데, 채팅을 가려내는 단서가
@@ -202,7 +203,7 @@ private fun ChatMeta(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         MetaChip(
-            iconRes = R.drawable.ic_comment_dots,
+            iconRes = DesignsystemR.drawable.ic_comment_dots,
             text = formattedTurnCount,
             description = stringResource(R.string.chat_list_turn_count_description, formattedTurnCount),
             compact = compact,
@@ -210,7 +211,7 @@ private fun ChatMeta(
         relativeTime?.let { time ->
             val label = time.label()
             MetaChip(
-                iconRes = R.drawable.ic_calendar,
+                iconRes = DesignsystemR.drawable.ic_calendar,
                 text = label,
                 description = stringResource(R.string.chat_list_updated_at_description, label),
                 compact = compact,

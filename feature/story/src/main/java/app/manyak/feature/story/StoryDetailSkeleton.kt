@@ -20,10 +20,10 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import app.manyak.core.ui.component.STORY_THUMBNAIL_ASPECT_RATIO
-import app.manyak.core.ui.component.SkeletonPlaceholder
-import app.manyak.core.ui.component.rememberSkeletonPulseAlpha
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.STORY_THUMBNAIL_ASPECT_RATIO
+import app.manyak.designsystem.component.SkeletonPlaceholder
+import app.manyak.designsystem.component.rememberSkeletonPulseAlpha
+import app.manyak.designsystem.theme.ManyakTheme
 
 /**
  * 조회 중 자리를 잡아 두는 골격. 본문과 **같은 구조에 같은 간격**이라 본문이 도착할 때 요소가 튀지

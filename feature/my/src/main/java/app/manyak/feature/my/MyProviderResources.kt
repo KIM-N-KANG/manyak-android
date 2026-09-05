@@ -6,15 +6,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import app.manyak.common.entity.auth.AuthProvider
 import app.manyak.core.ui.R
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.designsystem.R as DesignsystemR
 
 /** 제공자 로고와 표시 이름의 단일 매핑. 칩·다이얼로그·토스트가 같은 값을 쓴다. */
 @get:DrawableRes
 internal val AuthProvider.logoRes: Int
     get() =
         when (this) {
-            AuthProvider.GOOGLE -> R.drawable.ic_logo_google
-            AuthProvider.KAKAO -> R.drawable.ic_logo_kakao
+            AuthProvider.GOOGLE -> DesignsystemR.drawable.ic_logo_google
+            AuthProvider.KAKAO -> DesignsystemR.drawable.ic_logo_kakao
         }
 
 @get:StringRes

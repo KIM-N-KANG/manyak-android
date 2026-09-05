@@ -41,7 +41,7 @@ import androidx.compose.ui.unit.dp
 import app.manyak.common.entity.auth.AuthProvider
 import app.manyak.common.entity.user.UserProfile
 import app.manyak.core.ui.R
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.theme.ManyakTheme
 import coil3.compose.AsyncImage
 
 @Composable

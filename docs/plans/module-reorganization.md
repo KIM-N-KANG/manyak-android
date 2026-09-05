@@ -203,3 +203,8 @@
 - 공통 모델·오류·MVI·기기 ID/테마·날짜 변환·사용자 저장소 정리 계약 이동. 기존 core:domain 등록 제거.
 - `common:testDebugUnitTest`, `core:data:testDebugUnitTest`, 앱 컴파일/Hilt 조립 및 변경 모듈 ktlint·detekt 통과.
 - 이동 파일 본문 비교와 문자열 원문 1:1 비교 통과. common의 프로젝트 의존성 없음.
+
+### designsystem
+
+- 디자인 시스템 모듈 분리.
+- 디자인 시스템 테스트·앱 Hilt 조립·ktlint·detekt 통과, 기존 리소스 값 보존 확인

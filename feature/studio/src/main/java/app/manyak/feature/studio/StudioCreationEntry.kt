@@ -18,8 +18,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.ManyakTextButton
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.ManyakTextButton
+import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.designsystem.R as DesignsystemR
 
 /** 이어서 만들기 배너 한 줄. 목록 그리드에서는 전폭 아이템으로 함께 스크롤된다. */
 @Composable
@@ -138,7 +139,7 @@ internal fun CreateStoryFab(
             ),
     ) {
         Icon(
-            painter = painterResource(R.drawable.ic_add),
+            painter = painterResource(DesignsystemR.drawable.ic_add),
             contentDescription = stringResource(R.string.studio_create_story),
         )
     }

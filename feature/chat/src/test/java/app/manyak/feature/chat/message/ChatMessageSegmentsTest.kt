@@ -1,6 +1,6 @@
 package app.manyak.feature.chat.message
 
-import app.manyak.core.ui.component.isAllowedCharacterImageUrl
+import app.manyak.designsystem.component.isAllowedCharacterImageUrl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

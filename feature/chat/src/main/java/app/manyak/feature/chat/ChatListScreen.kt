@@ -38,17 +38,18 @@ import app.manyak.core.analytics.LocalAnalytics
 import app.manyak.core.analytics.rememberImpressionTracker
 import app.manyak.core.analytics.trackImpression
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.LoadFailedContent
-import app.manyak.core.ui.component.ManyakDestructiveDialogContent
-import app.manyak.core.ui.component.ManyakDialog
-import app.manyak.core.ui.component.ManyakOptionsDialogContent
-import app.manyak.core.ui.component.ManyakOptionsDialogItem
-import app.manyak.core.ui.component.ManyakPullToRefreshBox
 import app.manyak.core.ui.component.StoryReportSheet
-import app.manyak.core.ui.component.rememberDelayedProgressVisibility
-import app.manyak.core.ui.component.withRowListMargins
 import app.manyak.core.ui.report.StoryReportAction
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.LoadFailedContent
+import app.manyak.designsystem.component.ManyakDestructiveDialogContent
+import app.manyak.designsystem.component.ManyakDialog
+import app.manyak.designsystem.component.ManyakOptionsDialogContent
+import app.manyak.designsystem.component.ManyakOptionsDialogItem
+import app.manyak.designsystem.component.ManyakPullToRefreshBox
+import app.manyak.designsystem.component.rememberDelayedProgressVisibility
+import app.manyak.designsystem.component.withRowListMargins
+import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.designsystem.R as DesignsystemR
 
 /**
  * 채팅 탭(진행 중인 채팅 목록). 헤더와 하단 탭은 셸이 그리므로 여기서는 콘텐츠만 둔다.
@@ -213,13 +214,13 @@ private fun ChatOptions(
         // 참조 스토리가 없으면 신고할 대상도 없다.
         if (chat.storyId.isNotBlank()) {
             ManyakOptionsDialogItem(
-                iconRes = R.drawable.ic_info,
+                iconRes = DesignsystemR.drawable.ic_info,
                 label = stringResource(R.string.story_report_action),
                 onClick = { onIntent(ChatListIntent.Report(StoryReportAction.Open)) },
             )
         }
         ManyakOptionsDialogItem(
-            iconRes = R.drawable.ic_delete,
+            iconRes = DesignsystemR.drawable.ic_delete,
             label = stringResource(R.string.chat_room_delete),
             onClick = { onIntent(ChatListIntent.RequestDelete) },
             isDanger = true,

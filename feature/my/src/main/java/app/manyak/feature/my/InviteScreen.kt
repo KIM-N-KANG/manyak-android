@@ -52,13 +52,14 @@ import app.manyak.common.presentation.credit.creditAmountText
 import app.manyak.core.analytics.AnalyticsEvent
 import app.manyak.core.analytics.LocalAnalytics
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.FocusScrollMargin
-import app.manyak.core.ui.component.ManyakTextField
-import app.manyak.core.ui.component.SkeletonPlaceholder
-import app.manyak.core.ui.component.clearFocusOnTap
-import app.manyak.core.ui.component.rememberSkeletonPulseAlpha
-import app.manyak.core.ui.credit.creditAmountAlpha
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.FocusScrollMargin
+import app.manyak.designsystem.component.ManyakTextField
+import app.manyak.designsystem.component.SkeletonPlaceholder
+import app.manyak.designsystem.component.clearFocusOnTap
+import app.manyak.designsystem.component.rememberSkeletonPulseAlpha
+import app.manyak.designsystem.credit.creditAmountAlpha
+import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.designsystem.R as DesignsystemR
 
 /**
  * 친구 초대. 내 코드를 나눠 주는 일과 받은 코드를 등록하는 일이 한 화면에 있다.
@@ -260,7 +261,7 @@ private fun InviteShareActions(
         MyOutlineButton(
             modifier = Modifier.weight(1f),
             label = stringResource(R.string.invite_copy_code),
-            iconRes = R.drawable.ic_copy,
+            iconRes = DesignsystemR.drawable.ic_copy,
             enabled = code != null,
             onClick = {
                 analytics.track(AnalyticsEvent.InviteCopyButtonClicked)
@@ -274,7 +275,7 @@ private fun InviteShareActions(
         MyPrimaryButton(
             modifier = Modifier.weight(1f),
             label = stringResource(R.string.invite_share),
-            iconRes = R.drawable.ic_share,
+            iconRes = DesignsystemR.drawable.ic_share,
             enabled = code != null,
             onClick = {
                 analytics.track(AnalyticsEvent.InviteShareButtonClicked)

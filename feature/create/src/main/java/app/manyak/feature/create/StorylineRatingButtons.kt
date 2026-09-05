@@ -22,7 +22,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import app.manyak.common.entity.story.StorylineRating
 import app.manyak.core.ui.R
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.designsystem.R as DesignsystemR
 
 /** 활성 평가가 쓰는 채움·경계·아이콘 색 조합. 키워드 칩의 선택 문법과 같다. */
 private data class RatingActiveColors(
@@ -50,7 +51,7 @@ internal fun StorylineRatingButtons(
                     border = ManyakTheme.colors.borderBrand,
                     content = ManyakTheme.colors.textBrand,
                 ),
-            iconRes = R.drawable.ic_thumb_up,
+            iconRes = DesignsystemR.drawable.ic_thumb_up,
             contentDescription = stringResource(R.string.create_storyline_rating_good),
             onClick = { onToggle(StorylineRating.GOOD) },
         )
@@ -62,7 +63,7 @@ internal fun StorylineRatingButtons(
                     border = ManyakTheme.colors.borderDanger,
                     content = ManyakTheme.colors.textDanger,
                 ),
-            iconRes = R.drawable.ic_thumb_down,
+            iconRes = DesignsystemR.drawable.ic_thumb_down,
             contentDescription = stringResource(R.string.create_storyline_rating_bad),
             onClick = { onToggle(StorylineRating.BAD) },
         )

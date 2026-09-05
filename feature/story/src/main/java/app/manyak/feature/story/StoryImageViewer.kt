@@ -19,9 +19,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.ManyakIconButton
-import app.manyak.core.ui.theme.ManyakTheme
+import app.manyak.designsystem.component.ManyakIconButton
+import app.manyak.designsystem.theme.ManyakTheme
 import coil3.compose.AsyncImage
+import app.manyak.designsystem.R as DesignsystemR
 
 /**
  * 썸네일 전체 화면 뷰어. **목적지가 아니라 상세 화면의 오버레이**다 — 되돌아갈 수 있는 자리가
@@ -70,7 +71,7 @@ internal fun StoryImageViewer(
                     .align(Alignment.TopEnd)
                     .windowInsetsPadding(WindowInsets.safeDrawing)
                     .padding(ManyakTheme.spacing.compact),
-            iconRes = R.drawable.ic_close,
+            iconRes = DesignsystemR.drawable.ic_close,
             contentDescription = closeLabel,
             onClick = onClose,
             // 어떤 이미지 위에 놓일지 알 수 없어 색은 테마가 아니라 어두운 바탕 대비로 정한다.
