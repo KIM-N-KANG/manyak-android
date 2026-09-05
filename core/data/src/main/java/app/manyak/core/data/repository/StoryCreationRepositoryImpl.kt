@@ -1,5 +1,16 @@
 package app.manyak.core.data.repository
 
+import app.manyak.common.domain.error.DomainError
+import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.error.map
+import app.manyak.common.domain.story.StoryCreationRepository
+import app.manyak.common.entity.story.CompletedStory
+import app.manyak.common.entity.story.CreationRequestSnapshot
+import app.manyak.common.entity.story.StoryCompletionCommand
+import app.manyak.common.entity.story.StoryTag
+import app.manyak.common.entity.story.StorylineGeneration
+import app.manyak.common.entity.story.StorylineGenerationCommand
+import app.manyak.common.entity.story.StorylineRating
 import app.manyak.core.data.api.CreationRequestApi
 import app.manyak.core.data.api.SimpleStoryApi
 import app.manyak.core.data.api.StoryGenerationApi
@@ -9,17 +20,6 @@ import app.manyak.core.data.api.dto.toDomain
 import app.manyak.core.data.api.dto.toDomainOrNull
 import app.manyak.core.data.api.dto.toRequestDto
 import app.manyak.core.data.api.emptyBodyApiCall
-import app.manyak.core.domain.error.DomainError
-import app.manyak.core.domain.error.DomainResult
-import app.manyak.core.domain.error.map
-import app.manyak.core.domain.story.CompletedStory
-import app.manyak.core.domain.story.CreationRequestSnapshot
-import app.manyak.core.domain.story.StoryCompletionCommand
-import app.manyak.core.domain.story.StoryCreationRepository
-import app.manyak.core.domain.story.StoryTag
-import app.manyak.core.domain.story.StorylineGeneration
-import app.manyak.core.domain.story.StorylineGenerationCommand
-import app.manyak.core.domain.story.StorylineRating
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import javax.inject.Inject

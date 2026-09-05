@@ -1,7 +1,7 @@
 package app.manyak.core.data.di
 
+import app.manyak.common.domain.feedback.FeedbackRepository
 import app.manyak.core.data.repository.FeedbackRepositoryImpl
-import app.manyak.core.domain.feedback.FeedbackRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

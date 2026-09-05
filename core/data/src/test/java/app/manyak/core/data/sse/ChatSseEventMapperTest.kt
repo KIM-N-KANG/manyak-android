@@ -1,7 +1,7 @@
 package app.manyak.core.data.sse
 
-import app.manyak.core.domain.chat.ChatStreamEvent
-import app.manyak.core.domain.error.DomainError
+import app.manyak.common.domain.error.DomainError
+import app.manyak.common.entity.chat.ChatStreamEvent
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

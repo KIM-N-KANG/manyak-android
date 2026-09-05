@@ -1,11 +1,11 @@
 package app.manyak.core.data.repository
 
+import app.manyak.common.domain.credit.CreditPolicyRepository
+import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.entity.credit.CreditPolicy
 import app.manyak.core.data.api.CreditPolicyApi
 import app.manyak.core.data.api.apiCall
 import app.manyak.core.data.api.dto.toDomain
-import app.manyak.core.domain.credit.CreditPolicy
-import app.manyak.core.domain.credit.CreditPolicyRepository
-import app.manyak.core.domain.error.DomainResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

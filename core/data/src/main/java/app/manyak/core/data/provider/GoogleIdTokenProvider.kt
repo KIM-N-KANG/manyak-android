@@ -10,10 +10,10 @@ import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.ClearCredentialException
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialException
+import app.manyak.common.domain.error.DomainError
+import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.entity.auth.AuthProvider
 import app.manyak.core.data.di.SocialAuthConfig
-import app.manyak.core.domain.auth.AuthProvider
-import app.manyak.core.domain.error.DomainError
-import app.manyak.core.domain.error.DomainResult
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import dagger.hilt.android.qualifiers.ApplicationContext

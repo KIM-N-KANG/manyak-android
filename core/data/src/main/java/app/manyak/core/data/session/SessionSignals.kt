@@ -1,6 +1,6 @@
 package app.manyak.core.data.session
 
-import app.manyak.core.domain.session.SessionEndNotice
+import app.manyak.common.entity.session.SessionEndNotice
 
 /**
  * 세션을 끝내야 한다는 판정을 중앙 종료 흐름에 전달하는 통로.

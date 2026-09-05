@@ -4,7 +4,7 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
-import app.manyak.core.domain.story.StorySummary
+import app.manyak.common.entity.story.StorySummary
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ManyakDestructiveDialogContent
 import app.manyak.core.ui.component.ManyakDialog

@@ -1,8 +1,8 @@
 package app.manyak.feature.chat
 
+import app.manyak.common.domain.error.DomainError
+import app.manyak.common.domain.error.DomainResult
 import app.manyak.core.analytics.NoOpAnalytics
-import app.manyak.core.domain.error.DomainError
-import app.manyak.core.domain.error.DomainResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher

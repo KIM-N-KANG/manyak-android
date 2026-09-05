@@ -1,11 +1,11 @@
 package app.manyak.core.ui.report
 
+import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.story.StoryRepository
+import app.manyak.common.entity.story.StoryReportReason
 import app.manyak.core.analytics.Analytics
 import app.manyak.core.analytics.AnalyticsEvent
 import app.manyak.core.analytics.ReportSource
-import app.manyak.core.domain.error.DomainResult
-import app.manyak.core.domain.story.StoryReportReason
-import app.manyak.core.domain.story.StoryRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch

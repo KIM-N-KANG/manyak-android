@@ -1,8 +1,8 @@
 package app.manyak.feature.story
 
-import app.manyak.core.domain.story.StoryCharacter
-import app.manyak.core.domain.story.StoryDetail
-import app.manyak.core.domain.story.StoryStartSetting
+import app.manyak.common.entity.story.StoryCharacter
+import app.manyak.common.entity.story.StoryDetail
+import app.manyak.common.entity.story.StoryStartSetting
 
 /** 미리보기 전용 표본. 화면 파일이 재료 선언으로 길어지지 않게 여기 모은다. */
 internal fun previewStory(

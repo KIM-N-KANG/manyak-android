@@ -33,7 +33,7 @@ rootProject.name = "manyak-android"
 include(":app")
 
 // 순수 Kotlin. 도메인 모델·Repository 계약·오류 타입을 소유한다.
-include(":core:domain")
+include(":common")
 
 // Repository 구현 · Retrofit · DataStore · 인터셉터 · 제공자 SDK 어댑터.
 include(":core:data")

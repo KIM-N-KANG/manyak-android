@@ -1,14 +1,14 @@
 package app.manyak.core.data.repository
 
+import app.manyak.common.domain.error.DomainError
+import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.entity.auth.AuthProvider
 import app.manyak.core.data.api.AccountLinkApi
 import app.manyak.core.data.api.dto.LinkReauthRequestDto
 import app.manyak.core.data.api.dto.LinkReauthResponseDto
 import app.manyak.core.data.api.dto.SocialLoginRequestDto
 import app.manyak.core.data.provider.ProviderCleanupResult
 import app.manyak.core.data.provider.SocialIdTokenProvider
-import app.manyak.core.domain.auth.AuthProvider
-import app.manyak.core.domain.error.DomainError
-import app.manyak.core.domain.error.DomainResult
 import kotlinx.coroutines.test.runTest
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody

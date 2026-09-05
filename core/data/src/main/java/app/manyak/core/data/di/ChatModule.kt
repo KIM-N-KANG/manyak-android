@@ -1,9 +1,9 @@
 package app.manyak.core.data.di
 
+import app.manyak.common.domain.chat.ChatPreferencesRepository
+import app.manyak.common.domain.chat.ChatRepository
 import app.manyak.core.data.datastore.ChatPreferencesStore
 import app.manyak.core.data.repository.ChatRepositoryImpl
-import app.manyak.core.domain.chat.ChatPreferencesRepository
-import app.manyak.core.domain.chat.ChatRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

@@ -1,7 +1,7 @@
 package app.manyak.core.data.di
 
+import app.manyak.common.domain.invite.InviteRepository
 import app.manyak.core.data.repository.InviteRepositoryImpl
-import app.manyak.core.domain.invite.InviteRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

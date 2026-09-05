@@ -1,6 +1,6 @@
 package app.manyak.feature.chat.suggestion
 
-import app.manyak.core.domain.chat.UserSource
+import app.manyak.common.entity.chat.UserSource
 import app.manyak.feature.chat.ChatRoomTurn
 import app.manyak.feature.chat.composer.BLOCK_SEND_SEPARATOR
 import app.manyak.feature.chat.composer.parseInputBlocks

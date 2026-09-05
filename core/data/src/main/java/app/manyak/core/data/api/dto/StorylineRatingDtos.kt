@@ -1,6 +1,6 @@
 package app.manyak.core.data.api.dto
 
-import app.manyak.core.domain.story.StorylineRating
+import app.manyak.common.entity.story.StorylineRating
 import kotlinx.serialization.Serializable
 
 @Serializable

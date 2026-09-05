@@ -1,6 +1,6 @@
 package app.manyak.feature.chat.suggestion
 
-import app.manyak.core.domain.chat.UserSource
+import app.manyak.common.entity.chat.UserSource
 import app.manyak.feature.chat.ChatRoomTurn
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

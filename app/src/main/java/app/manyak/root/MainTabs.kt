@@ -16,7 +16,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberDecoratedNavEntries
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
-import app.manyak.core.domain.story.CreationResumePoint
+import app.manyak.common.entity.story.CreationResumePoint
 import app.manyak.core.navigation.ChatListRoute
 import app.manyak.core.navigation.HomeRoute
 import app.manyak.core.navigation.MyRoute

@@ -1,5 +1,15 @@
 package app.manyak.core.data.repository
 
+import app.manyak.common.data.di.ApplicationScope
+import app.manyak.common.domain.error.DomainError
+import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.error.errorOrNull
+import app.manyak.common.domain.session.SessionRepository
+import app.manyak.common.domain.session.SignInOutcome
+import app.manyak.common.domain.user.UserProfileRepository
+import app.manyak.common.entity.auth.AuthProvider
+import app.manyak.common.entity.session.SessionEndNotice
+import app.manyak.common.entity.session.SessionState
 import app.manyak.core.data.api.AuthApi
 import app.manyak.core.data.api.UserApi
 import app.manyak.core.data.api.apiCall
@@ -7,7 +17,6 @@ import app.manyak.core.data.api.dto.SocialLoginRequestDto
 import app.manyak.core.data.api.dto.TokenResponseDto
 import app.manyak.core.data.api.emptyBodyApiCall
 import app.manyak.core.data.datastore.InviteOnboardingStore
-import app.manyak.core.data.di.ApplicationScope
 import app.manyak.core.data.provider.SocialIdTokenProvider
 import app.manyak.core.data.session.AuthWork
 import app.manyak.core.data.session.SessionBootstrap
@@ -19,15 +28,6 @@ import app.manyak.core.data.session.SessionTokenManager
 import app.manyak.core.data.session.TokenPersistResult
 import app.manyak.core.data.session.TokenReadResult
 import app.manyak.core.data.session.TokenStorage
-import app.manyak.core.domain.auth.AuthProvider
-import app.manyak.core.domain.error.DomainError
-import app.manyak.core.domain.error.DomainResult
-import app.manyak.core.domain.error.errorOrNull
-import app.manyak.core.domain.session.SessionEndNotice
-import app.manyak.core.domain.session.SessionRepository
-import app.manyak.core.domain.session.SessionState
-import app.manyak.core.domain.session.SignInOutcome
-import app.manyak.core.domain.user.UserProfileRepository
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay

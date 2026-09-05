@@ -25,12 +25,12 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
+import app.manyak.common.entity.auth.AuthProvider
+import app.manyak.common.entity.settings.ThemeMode
+import app.manyak.common.entity.user.AccountStatus
+import app.manyak.common.entity.user.UserProfile
 import app.manyak.core.analytics.AnalyticsEvent
 import app.manyak.core.analytics.LocalAnalytics
-import app.manyak.core.domain.auth.AuthProvider
-import app.manyak.core.domain.settings.ThemeMode
-import app.manyak.core.domain.user.AccountStatus
-import app.manyak.core.domain.user.UserProfile
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ManyakProgressIndicator
 import app.manyak.core.ui.theme.ManyakTheme

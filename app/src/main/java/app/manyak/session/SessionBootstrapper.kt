@@ -1,10 +1,10 @@
 package app.manyak.session
 
-import app.manyak.core.data.di.ApplicationScope
+import app.manyak.common.data.di.ApplicationScope
+import app.manyak.common.entity.session.SessionEndNotice
 import app.manyak.core.data.session.SessionBootstrap
 import app.manyak.core.data.session.SessionRestoreResult
 import app.manyak.core.data.session.SessionStateHolder
-import app.manyak.core.domain.session.SessionEndNotice
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch

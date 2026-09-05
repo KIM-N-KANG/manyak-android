@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import app.manyak.core.domain.story.StoryStartSetting
+import app.manyak.common.entity.story.StoryStartSetting
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ManyakSelectField
 import app.manyak.core.ui.component.ManyakSelectOption

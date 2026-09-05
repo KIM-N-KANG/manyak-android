@@ -1,12 +1,12 @@
 package app.manyak.core.data.session
 
+import app.manyak.common.entity.session.SessionEndNotice
 import app.manyak.core.data.api.AuthApi
 import app.manyak.core.data.api.dto.LogoutRequestDto
 import app.manyak.core.data.api.dto.RefreshTokenRequestDto
 import app.manyak.core.data.api.dto.SocialLoginRequestDto
 import app.manyak.core.data.api.dto.TokenResponseDto
 import app.manyak.core.data.datastore.StoredSession
-import app.manyak.core.domain.session.SessionEndNotice
 import dagger.Lazy
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async

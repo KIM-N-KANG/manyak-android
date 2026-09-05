@@ -24,8 +24,8 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import app.manyak.core.domain.story.StoryDetail
-import app.manyak.core.domain.story.StoryStartSetting
+import app.manyak.common.entity.story.StoryDetail
+import app.manyak.common.entity.story.StoryStartSetting
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.StoryBadgeScale
 import app.manyak.core.ui.component.StoryGenreBadge

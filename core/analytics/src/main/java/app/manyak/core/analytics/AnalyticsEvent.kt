@@ -1,10 +1,10 @@
 package app.manyak.core.analytics
 
-import app.manyak.core.domain.auth.AuthProvider
-import app.manyak.core.domain.chat.ChatInputMode
-import app.manyak.core.domain.story.StoryReportReason
-import app.manyak.core.domain.story.StoryTagCategory
-import app.manyak.core.domain.story.StorylineRating
+import app.manyak.common.domain.chat.ChatInputMode
+import app.manyak.common.entity.auth.AuthProvider
+import app.manyak.common.entity.story.StoryReportReason
+import app.manyak.common.entity.story.StoryTagCategory
+import app.manyak.common.entity.story.StorylineRating
 
 /**
  * 이벤트 카탈로그. 이름과 프로퍼티는 웹과 같은 공통 계약을 쓰고, 값을 이름에 넣지 않는다.

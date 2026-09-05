@@ -1,6 +1,6 @@
 package app.manyak.feature.chat.composer
 
-import app.manyak.core.domain.chat.ChatInputMode
+import app.manyak.common.domain.chat.ChatInputMode
 
 /**
  * 컴포저가 들고 있는 것 전부. ViewModel 이 소유하고 화면은 값과 콜백만 받는다.

@@ -25,7 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import app.manyak.core.domain.chat.ChatInputMode
+import app.manyak.common.domain.chat.ChatInputMode
 import app.manyak.core.ui.R
 import app.manyak.core.ui.theme.ManyakTheme
 

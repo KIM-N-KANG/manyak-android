@@ -1,8 +1,8 @@
 package app.manyak.core.data.provider
 
 import android.app.Activity
-import app.manyak.core.domain.auth.AuthProvider
-import app.manyak.core.domain.error.DomainResult
+import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.entity.auth.AuthProvider
 
 /**
  * 제공자 SDK 인증만 담당한다. **서버 로그인은 호출하지 않는다**.

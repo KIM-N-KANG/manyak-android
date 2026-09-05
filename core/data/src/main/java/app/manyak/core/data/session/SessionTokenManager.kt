@@ -1,11 +1,11 @@
 package app.manyak.core.data.session
 
+import app.manyak.common.data.di.ApplicationScope
+import app.manyak.common.entity.session.SessionEndNotice
 import app.manyak.core.data.api.AuthApi
 import app.manyak.core.data.api.dto.RefreshTokenRequestDto
 import app.manyak.core.data.api.dto.TokenResponseDto
 import app.manyak.core.data.datastore.StoredSession
-import app.manyak.core.data.di.ApplicationScope
-import app.manyak.core.domain.session.SessionEndNotice
 import dagger.Lazy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope

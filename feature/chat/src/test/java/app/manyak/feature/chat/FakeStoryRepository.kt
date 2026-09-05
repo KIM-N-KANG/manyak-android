@@ -1,11 +1,11 @@
 package app.manyak.feature.chat
 
-import app.manyak.core.domain.error.DomainError
-import app.manyak.core.domain.error.DomainResult
-import app.manyak.core.domain.story.StoryDetail
-import app.manyak.core.domain.story.StoryReportReason
-import app.manyak.core.domain.story.StoryRepository
-import app.manyak.core.domain.story.StorySummary
+import app.manyak.common.domain.error.DomainError
+import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.story.StoryRepository
+import app.manyak.common.entity.story.StoryDetail
+import app.manyak.common.entity.story.StoryReportReason
+import app.manyak.common.entity.story.StorySummary
 import kotlinx.coroutines.yield
 
 /** 채팅방이 쓰는 것은 신고 하나뿐이라 나머지는 계약만 채운다. */

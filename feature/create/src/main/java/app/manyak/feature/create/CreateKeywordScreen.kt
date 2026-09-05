@@ -37,7 +37,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
-import app.manyak.core.domain.story.StoryTagCategory
+import app.manyak.common.entity.story.StoryTagCategory
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.FocusScrollMargin
 import app.manyak.core.ui.component.ScrollEdgeFade

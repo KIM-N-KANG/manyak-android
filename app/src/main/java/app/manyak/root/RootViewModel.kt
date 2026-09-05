@@ -2,13 +2,13 @@ package app.manyak.root
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.manyak.common.domain.credit.CreditPolicyRepository
+import app.manyak.common.domain.session.SessionRepository
+import app.manyak.common.domain.settings.ThemePreferenceRepository
+import app.manyak.common.entity.credit.CreditPolicy
+import app.manyak.common.entity.session.SessionState
+import app.manyak.common.entity.settings.ThemeMode
 import app.manyak.core.analytics.Analytics
-import app.manyak.core.domain.credit.CreditPolicy
-import app.manyak.core.domain.credit.CreditPolicyRepository
-import app.manyak.core.domain.session.SessionRepository
-import app.manyak.core.domain.session.SessionState
-import app.manyak.core.domain.settings.ThemeMode
-import app.manyak.core.domain.settings.ThemePreferenceRepository
 import app.manyak.session.SessionTerminationCoordinator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted

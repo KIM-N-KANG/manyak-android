@@ -20,7 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
-import app.manyak.core.domain.story.StoryTagCategory
+import app.manyak.common.entity.story.StoryTagCategory
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ManyakBottomSheet
 import app.manyak.core.ui.component.ManyakProgressIndicator

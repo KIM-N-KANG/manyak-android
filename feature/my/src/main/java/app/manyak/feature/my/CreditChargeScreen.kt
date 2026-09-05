@@ -41,9 +41,9 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
-import app.manyak.core.domain.credit.CreditTransaction
-import app.manyak.core.domain.credit.CreditTransactionReason
-import app.manyak.core.domain.credit.CreditTransactionType
+import app.manyak.common.entity.credit.CreditTransaction
+import app.manyak.common.entity.credit.CreditTransactionReason
+import app.manyak.common.entity.credit.CreditTransactionType
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.LoadFailedContent
 import app.manyak.core.ui.component.ManyakPullToRefreshBox

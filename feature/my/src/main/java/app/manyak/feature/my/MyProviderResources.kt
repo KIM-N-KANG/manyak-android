@@ -4,7 +4,7 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import app.manyak.core.domain.auth.AuthProvider
+import app.manyak.common.entity.auth.AuthProvider
 import app.manyak.core.ui.R
 import app.manyak.core.ui.theme.ManyakTheme
 

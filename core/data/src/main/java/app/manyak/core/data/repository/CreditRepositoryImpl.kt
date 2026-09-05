@@ -1,13 +1,13 @@
 package app.manyak.core.data.repository
 
+import app.manyak.common.domain.credit.CreditRepository
+import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.error.map
+import app.manyak.common.entity.credit.AttendanceResult
+import app.manyak.common.entity.credit.CreditTransactionPage
 import app.manyak.core.data.api.UserApi
 import app.manyak.core.data.api.apiCall
 import app.manyak.core.data.api.dto.toDomain
-import app.manyak.core.domain.credit.AttendanceResult
-import app.manyak.core.domain.credit.CreditRepository
-import app.manyak.core.domain.credit.CreditTransactionPage
-import app.manyak.core.domain.error.DomainResult
-import app.manyak.core.domain.error.map
 import javax.inject.Inject
 import javax.inject.Singleton
 

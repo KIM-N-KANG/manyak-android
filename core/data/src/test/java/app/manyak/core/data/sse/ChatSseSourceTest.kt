@@ -1,9 +1,9 @@
 package app.manyak.core.data.sse
 
+import app.manyak.common.domain.error.DomainError
+import app.manyak.common.entity.chat.ChatStreamEvent
 import app.manyak.core.data.api.dto.ChatTurnStreamRequestDto
 import app.manyak.core.data.di.DataLayerConfig
-import app.manyak.core.domain.chat.ChatStreamEvent
-import app.manyak.core.domain.error.DomainError
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.toList

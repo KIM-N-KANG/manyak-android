@@ -1,8 +1,8 @@
 package app.manyak.feature.home
 
+import app.manyak.common.domain.error.DomainError
+import app.manyak.common.domain.error.DomainResult
 import app.manyak.core.analytics.NoOpAnalytics
-import app.manyak.core.domain.error.DomainError
-import app.manyak.core.domain.error.DomainResult
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

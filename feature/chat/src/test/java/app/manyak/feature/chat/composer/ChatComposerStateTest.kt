@@ -1,6 +1,6 @@
 package app.manyak.feature.chat.composer
 
-import app.manyak.core.domain.chat.ChatInputMode
+import app.manyak.common.domain.chat.ChatInputMode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

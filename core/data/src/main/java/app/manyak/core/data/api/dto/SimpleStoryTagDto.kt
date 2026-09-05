@@ -1,7 +1,7 @@
 package app.manyak.core.data.api.dto
 
-import app.manyak.core.domain.story.StoryTag
-import app.manyak.core.domain.story.StoryTagCategory
+import app.manyak.common.entity.story.StoryTag
+import app.manyak.common.entity.story.StoryTagCategory
 import kotlinx.serialization.Serializable
 
 @Serializable

@@ -1,7 +1,7 @@
 package app.manyak.core.data.api.dto
 
-import app.manyak.core.domain.story.CompletedStory
-import app.manyak.core.domain.story.StoryCompletionCommand
+import app.manyak.common.entity.story.CompletedStory
+import app.manyak.common.entity.story.StoryCompletionCommand
 import kotlinx.serialization.Serializable
 
 @Serializable

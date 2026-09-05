@@ -15,7 +15,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import app.manyak.core.domain.story.StorySummary
+import app.manyak.common.entity.story.StorySummary
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.StoryThumbnail
 import app.manyak.core.ui.theme.ManyakTheme

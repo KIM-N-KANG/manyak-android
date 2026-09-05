@@ -46,12 +46,12 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.ViewCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import app.manyak.core.domain.auth.AuthProvider
+import app.manyak.common.entity.auth.AuthProvider
+import app.manyak.common.presentation.error.messageResOrNull
 import app.manyak.core.navigation.LegalDocument
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ManyakLogo
 import app.manyak.core.ui.component.ManyakProgressIndicator
-import app.manyak.core.ui.error.messageResOrNull
 import app.manyak.core.ui.theme.ManyakTheme
 
 @Composable

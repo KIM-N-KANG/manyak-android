@@ -1,11 +1,11 @@
 package app.manyak.core.data.sse
 
+import app.manyak.common.data.di.IoDispatcher
+import app.manyak.common.entity.chat.ChatStreamEvent
 import app.manyak.core.data.api.HEADER_REQUEST_ID
 import app.manyak.core.data.api.dto.ChatRegenerateRequestDto
 import app.manyak.core.data.api.dto.ChatTurnStreamRequestDto
 import app.manyak.core.data.di.DataLayerConfig
-import app.manyak.core.data.di.IoDispatcher
-import app.manyak.core.domain.chat.ChatStreamEvent
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking

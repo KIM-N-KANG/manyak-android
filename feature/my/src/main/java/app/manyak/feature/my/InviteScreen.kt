@@ -46,18 +46,18 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
+import app.manyak.common.entity.invite.Invite
+import app.manyak.common.presentation.credit.LocalCreditPolicy
+import app.manyak.common.presentation.credit.creditAmountText
 import app.manyak.core.analytics.AnalyticsEvent
 import app.manyak.core.analytics.LocalAnalytics
-import app.manyak.core.domain.invite.Invite
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.FocusScrollMargin
 import app.manyak.core.ui.component.ManyakTextField
 import app.manyak.core.ui.component.SkeletonPlaceholder
 import app.manyak.core.ui.component.clearFocusOnTap
 import app.manyak.core.ui.component.rememberSkeletonPulseAlpha
-import app.manyak.core.ui.credit.LocalCreditPolicy
 import app.manyak.core.ui.credit.creditAmountAlpha
-import app.manyak.core.ui.credit.creditAmountText
 import app.manyak.core.ui.theme.ManyakTheme
 
 /**

@@ -35,10 +35,12 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import app.manyak.common.entity.session.SessionState
+import app.manyak.common.entity.settings.ThemeMode
+import app.manyak.common.entity.story.CreationResumePoint
+import app.manyak.common.presentation.credit.LocalCreditPolicy
+import app.manyak.common.presentation.error.messageResOrNull
 import app.manyak.core.analytics.LocalAnalytics
-import app.manyak.core.domain.session.SessionState
-import app.manyak.core.domain.settings.ThemeMode
-import app.manyak.core.domain.story.CreationResumePoint
 import app.manyak.core.navigation.ChatRoomRoute
 import app.manyak.core.navigation.CreateAdditionalInfoRoute
 import app.manyak.core.navigation.CreateKeywordRoute
@@ -56,8 +58,6 @@ import app.manyak.core.navigation.WithdrawalRoute
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ManyakProgressIndicator
 import app.manyak.core.ui.component.rememberDelayedProgressVisibility
-import app.manyak.core.ui.credit.LocalCreditPolicy
-import app.manyak.core.ui.error.messageResOrNull
 import app.manyak.core.ui.theme.ManyakTheme
 import app.manyak.feature.chat.ChatRoomScreen
 import app.manyak.feature.create.CreateAdditionalInfoScreen

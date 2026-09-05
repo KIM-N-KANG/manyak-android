@@ -43,7 +43,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
-import app.manyak.core.domain.story.StorylineRating
+import app.manyak.common.entity.story.StorylineRating
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ScrollEdgeFade
 import app.manyak.core.ui.text.storyAnnotatedString

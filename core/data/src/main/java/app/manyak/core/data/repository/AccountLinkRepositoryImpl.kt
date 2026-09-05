@@ -1,5 +1,9 @@
 package app.manyak.core.data.repository
 
+import app.manyak.common.domain.auth.AccountLinkRepository
+import app.manyak.common.domain.error.DomainError
+import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.entity.auth.AuthProvider
 import app.manyak.core.data.api.AccountLinkApi
 import app.manyak.core.data.api.HEADER_REQUEST_ID
 import app.manyak.core.data.api.HTTP_UNAUTHORIZED
@@ -9,10 +13,6 @@ import app.manyak.core.data.api.dto.SocialLoginRequestDto
 import app.manyak.core.data.api.emptyBodyApiCall
 import app.manyak.core.data.api.parseErrorCode
 import app.manyak.core.data.provider.SocialIdTokenProvider
-import app.manyak.core.domain.auth.AccountLinkRepository
-import app.manyak.core.domain.auth.AuthProvider
-import app.manyak.core.domain.error.DomainError
-import app.manyak.core.domain.error.DomainResult
 import retrofit2.Response
 import javax.inject.Inject
 import javax.inject.Singleton

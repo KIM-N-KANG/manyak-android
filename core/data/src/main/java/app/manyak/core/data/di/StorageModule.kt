@@ -19,10 +19,6 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import javax.inject.Singleton
 
 @Module
@@ -39,14 +35,6 @@ object StorageModule {
 
     @Provides
     @Singleton
-    @DeviceDataStore
-    fun provideDeviceDataStore(
-        @ApplicationContext context: Context,
-    ): DataStore<Preferences> =
-        PreferenceDataStoreFactory.create { context.preferencesDataStoreFile(DEVICE_STORE_NAME) }
-
-    @Provides
-    @Singleton
     @ProfileDataStore
     fun provideProfileDataStore(
         @ApplicationContext context: Context,
@@ -60,17 +48,6 @@ object StorageModule {
         @ApplicationContext context: Context,
     ): DataStore<Preferences> =
         PreferenceDataStoreFactory.create { context.preferencesDataStoreFile(SESSION_JOURNAL_STORE_NAME) }
-
-    @Provides
-    @Singleton
-    @IoDispatcher
-    fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
-
-    /** 화면 이탈로 중단되면 안 되는 작업(재발급·로그아웃 정리)이 쓰는 스코프. */
-    @Provides
-    @Singleton
-    @ApplicationScope
-    fun provideApplicationScope(): CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     @Provides
     @Singleton
@@ -94,7 +71,6 @@ object StorageModule {
         database.pendingStoryCreationDao()
 
     private const val AUTH_TOKEN_STORE_NAME = "auth_tokens"
-    private const val DEVICE_STORE_NAME = "device"
     private const val PROFILE_STORE_NAME = "profile"
     private const val SESSION_JOURNAL_STORE_NAME = "session_journal"
 }

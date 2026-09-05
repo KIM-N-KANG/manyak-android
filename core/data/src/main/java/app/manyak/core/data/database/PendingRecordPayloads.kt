@@ -1,13 +1,13 @@
 package app.manyak.core.data.database
 
-import app.manyak.core.domain.story.CharacterGender
-import app.manyak.core.domain.story.CreationProgress
-import app.manyak.core.domain.story.StoryCharacterInput
-import app.manyak.core.domain.story.StoryCompletionCommand
-import app.manyak.core.domain.story.Storyline
-import app.manyak.core.domain.story.StorylineGeneration
-import app.manyak.core.domain.story.StorylineGenerationCommand
-import app.manyak.core.domain.story.StorylineRecommendedInfo
+import app.manyak.common.entity.story.CharacterGender
+import app.manyak.common.entity.story.CreationProgress
+import app.manyak.common.entity.story.StoryCharacterInput
+import app.manyak.common.entity.story.StoryCompletionCommand
+import app.manyak.common.entity.story.Storyline
+import app.manyak.common.entity.story.StorylineGeneration
+import app.manyak.common.entity.story.StorylineGenerationCommand
+import app.manyak.common.entity.story.StorylineRecommendedInfo
 import kotlinx.serialization.Serializable
 
 // 컬럼 하나에 담기는 JSON 페이로드. 슬롯이 하나라 조인할 대상이 없어 중첩 구조는 여기 남는다.

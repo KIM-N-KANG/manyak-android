@@ -1,7 +1,7 @@
 package app.manyak.core.data.api
 
-import app.manyak.core.domain.error.DomainError
-import app.manyak.core.domain.error.DomainResult
+import app.manyak.common.domain.error.DomainError
+import app.manyak.common.domain.error.DomainResult
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import retrofit2.Response

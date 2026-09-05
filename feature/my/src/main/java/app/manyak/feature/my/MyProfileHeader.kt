@@ -38,8 +38,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import app.manyak.core.domain.auth.AuthProvider
-import app.manyak.core.domain.user.UserProfile
+import app.manyak.common.entity.auth.AuthProvider
+import app.manyak.common.entity.user.UserProfile
 import app.manyak.core.ui.R
 import app.manyak.core.ui.theme.ManyakTheme
 import coil3.compose.AsyncImage

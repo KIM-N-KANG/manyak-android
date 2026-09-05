@@ -1,17 +1,17 @@
 package app.manyak.feature.create
 
 import androidx.lifecycle.viewModelScope
+import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.story.StoryCreationRepository
+import app.manyak.common.entity.story.StoryTag
+import app.manyak.common.entity.story.StoryTagCategory
+import app.manyak.common.entity.story.Storyline
+import app.manyak.common.entity.story.StorylineGenerationCommand
+import app.manyak.common.entity.story.StorylineRating
+import app.manyak.common.presentation.mvi.MviViewModel
 import app.manyak.core.analytics.Analytics
 import app.manyak.core.analytics.AnalyticsEvent
 import app.manyak.core.analytics.CreateStep
-import app.manyak.core.domain.error.DomainResult
-import app.manyak.core.domain.story.StoryCreationRepository
-import app.manyak.core.domain.story.StoryTag
-import app.manyak.core.domain.story.StoryTagCategory
-import app.manyak.core.domain.story.Storyline
-import app.manyak.core.domain.story.StorylineGenerationCommand
-import app.manyak.core.domain.story.StorylineRating
-import app.manyak.core.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay

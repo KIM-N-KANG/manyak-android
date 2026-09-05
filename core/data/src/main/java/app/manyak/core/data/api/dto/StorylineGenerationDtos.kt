@@ -1,11 +1,11 @@
 package app.manyak.core.data.api.dto
 
-import app.manyak.core.domain.story.CharacterGender
-import app.manyak.core.domain.story.StoryCharacterInput
-import app.manyak.core.domain.story.Storyline
-import app.manyak.core.domain.story.StorylineGeneration
-import app.manyak.core.domain.story.StorylineGenerationCommand
-import app.manyak.core.domain.story.StorylineRecommendedInfo
+import app.manyak.common.entity.story.CharacterGender
+import app.manyak.common.entity.story.StoryCharacterInput
+import app.manyak.common.entity.story.Storyline
+import app.manyak.common.entity.story.StorylineGeneration
+import app.manyak.common.entity.story.StorylineGenerationCommand
+import app.manyak.common.entity.story.StorylineRecommendedInfo
 import kotlinx.serialization.Serializable
 
 @Serializable

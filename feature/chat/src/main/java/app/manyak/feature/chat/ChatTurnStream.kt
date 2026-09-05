@@ -1,6 +1,6 @@
 package app.manyak.feature.chat
 
-import app.manyak.core.domain.chat.ChatStreamEvent
+import app.manyak.common.entity.chat.ChatStreamEvent
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow

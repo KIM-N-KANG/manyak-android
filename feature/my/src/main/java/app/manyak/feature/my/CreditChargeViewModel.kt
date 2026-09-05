@@ -1,14 +1,14 @@
 package app.manyak.feature.my
 
 import androidx.lifecycle.viewModelScope
+import app.manyak.common.domain.credit.CreditRepository
+import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.user.UserProfileRepository
+import app.manyak.common.entity.credit.CreditTransaction
+import app.manyak.common.entity.credit.CreditTransactionPage
+import app.manyak.common.presentation.mvi.MviViewModel
 import app.manyak.core.analytics.Analytics
 import app.manyak.core.analytics.AnalyticsEvent
-import app.manyak.core.domain.credit.CreditRepository
-import app.manyak.core.domain.credit.CreditTransaction
-import app.manyak.core.domain.credit.CreditTransactionPage
-import app.manyak.core.domain.error.DomainResult
-import app.manyak.core.domain.user.UserProfileRepository
-import app.manyak.core.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject

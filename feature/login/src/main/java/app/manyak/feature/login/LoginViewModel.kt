@@ -1,15 +1,15 @@
 package app.manyak.feature.login
 
 import androidx.lifecycle.viewModelScope
+import app.manyak.common.domain.error.DomainError
+import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.session.SessionRepository
+import app.manyak.common.entity.auth.AuthProvider
+import app.manyak.common.entity.session.SessionEndNotice
+import app.manyak.common.entity.session.SessionState
+import app.manyak.common.presentation.mvi.MviViewModel
 import app.manyak.core.analytics.Analytics
 import app.manyak.core.analytics.AnalyticsEvent
-import app.manyak.core.domain.auth.AuthProvider
-import app.manyak.core.domain.error.DomainError
-import app.manyak.core.domain.error.DomainResult
-import app.manyak.core.domain.session.SessionEndNotice
-import app.manyak.core.domain.session.SessionRepository
-import app.manyak.core.domain.session.SessionState
-import app.manyak.core.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map

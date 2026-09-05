@@ -1,14 +1,14 @@
 package app.manyak.feature.my
 
+import app.manyak.common.domain.credit.CreditRepository
+import app.manyak.common.domain.error.DomainError
+import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.user.UserProfileRepository
+import app.manyak.common.entity.credit.AttendanceResult
+import app.manyak.common.entity.credit.CreditTransactionPage
+import app.manyak.common.entity.user.AccountStatus
+import app.manyak.common.entity.user.UserProfile
 import app.manyak.core.analytics.NoOpAnalytics
-import app.manyak.core.domain.credit.AttendanceResult
-import app.manyak.core.domain.credit.CreditRepository
-import app.manyak.core.domain.credit.CreditTransactionPage
-import app.manyak.core.domain.error.DomainError
-import app.manyak.core.domain.error.DomainResult
-import app.manyak.core.domain.user.AccountStatus
-import app.manyak.core.domain.user.UserProfile
-import app.manyak.core.domain.user.UserProfileRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow

@@ -42,13 +42,13 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
+import app.manyak.common.presentation.credit.LocalCreditPolicy
+import app.manyak.common.presentation.credit.creditAmountText
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.FocusScrollMargin
 import app.manyak.core.ui.component.ScrollEdgeFade
 import app.manyak.core.ui.component.clearFocusOnTap
-import app.manyak.core.ui.credit.LocalCreditPolicy
 import app.manyak.core.ui.credit.creditAmountAlpha
-import app.manyak.core.ui.credit.creditAmountText
 import app.manyak.core.ui.theme.ManyakTheme
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withTimeoutOrNull

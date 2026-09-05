@@ -15,7 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import app.manyak.core.domain.user.UserProfile
+import app.manyak.common.entity.user.UserProfile
 import app.manyak.core.ui.R
 import app.manyak.core.ui.theme.ManyakTheme
 import java.text.NumberFormat

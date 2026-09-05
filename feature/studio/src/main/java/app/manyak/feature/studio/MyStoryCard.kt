@@ -23,7 +23,7 @@ import androidx.compose.ui.text.intl.LocaleList
 import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import app.manyak.core.domain.story.StorySummary
+import app.manyak.common.entity.story.StorySummary
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ManyakMoreButton
 import app.manyak.core.ui.component.MetaChip

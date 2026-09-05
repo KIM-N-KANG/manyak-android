@@ -1,13 +1,13 @@
 package app.manyak.feature.create
 
-import app.manyak.core.domain.error.DomainError
-import app.manyak.core.domain.error.DomainResult
-import app.manyak.core.domain.story.CreationProgress
-import app.manyak.core.domain.story.CreationRequestSnapshot
-import app.manyak.core.domain.story.PendingStoryCreation
-import app.manyak.core.domain.story.StoryCharacterInput
-import app.manyak.core.domain.story.StoryCompletionCommand
-import app.manyak.core.domain.story.StorylineGenerationCommand
+import app.manyak.common.domain.error.DomainError
+import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.entity.story.CreationProgress
+import app.manyak.common.entity.story.CreationRequestSnapshot
+import app.manyak.common.entity.story.PendingStoryCreation
+import app.manyak.common.entity.story.StoryCharacterInput
+import app.manyak.common.entity.story.StoryCompletionCommand
+import app.manyak.common.entity.story.StorylineGenerationCommand
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceTimeBy

@@ -1,6 +1,6 @@
 package app.manyak.feature.create
 
-import app.manyak.core.domain.story.StoryTagCategory
+import app.manyak.common.entity.story.StoryTagCategory
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

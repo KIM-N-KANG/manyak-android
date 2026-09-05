@@ -1,9 +1,9 @@
 package app.manyak.feature.my
 
+import app.manyak.common.domain.error.DomainError
+import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.feedback.FeedbackRepository
 import app.manyak.core.analytics.NoOpAnalytics
-import app.manyak.core.domain.error.DomainError
-import app.manyak.core.domain.error.DomainResult
-import app.manyak.core.domain.feedback.FeedbackRepository
 import app.manyak.core.ui.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

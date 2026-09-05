@@ -1,19 +1,19 @@
 package app.manyak.feature.create
 
 import androidx.lifecycle.viewModelScope
+import app.manyak.common.domain.chat.ChatRepository
+import app.manyak.common.domain.error.DomainError
+import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.story.StoryCreationRepository
+import app.manyak.common.entity.story.CreationRequestSnapshot
+import app.manyak.common.entity.story.PendingStoryCreationStore
+import app.manyak.common.entity.story.StoryCompletionCommand
+import app.manyak.common.presentation.mvi.MviViewModel
 import app.manyak.core.analytics.Analytics
 import app.manyak.core.analytics.AnalyticsEvent
 import app.manyak.core.analytics.CompletionStage
 import app.manyak.core.analytics.CreateStep
 import app.manyak.core.analytics.CreditShortageTrigger
-import app.manyak.core.domain.chat.ChatRepository
-import app.manyak.core.domain.error.DomainError
-import app.manyak.core.domain.error.DomainResult
-import app.manyak.core.domain.story.CreationRequestSnapshot
-import app.manyak.core.domain.story.PendingStoryCreationStore
-import app.manyak.core.domain.story.StoryCompletionCommand
-import app.manyak.core.domain.story.StoryCreationRepository
-import app.manyak.core.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay

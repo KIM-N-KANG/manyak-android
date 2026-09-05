@@ -1,9 +1,9 @@
 package app.manyak.feature.chat
 
+import app.manyak.common.domain.error.DomainError
+import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.entity.chat.ChatStreamEvent
 import app.manyak.core.analytics.NoOpAnalytics
-import app.manyak.core.domain.chat.ChatStreamEvent
-import app.manyak.core.domain.error.DomainError
-import app.manyak.core.domain.error.DomainResult
 import app.manyak.feature.chat.composer.InputBlockType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

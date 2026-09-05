@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import app.manyak.core.domain.story.StoryCharacter
+import app.manyak.common.entity.story.StoryCharacter
 import app.manyak.core.ui.component.CharacterImage
 import app.manyak.core.ui.theme.ManyakTheme
 

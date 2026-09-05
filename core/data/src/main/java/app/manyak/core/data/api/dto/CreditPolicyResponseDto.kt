@@ -1,6 +1,6 @@
 package app.manyak.core.data.api.dto
 
-import app.manyak.core.domain.credit.CreditPolicy
+import app.manyak.common.entity.credit.CreditPolicy
 import kotlinx.serialization.Serializable
 
 /** 서버가 내려주는 이프 수치. 필드가 빠져 오면 그 수치만 모르는 것이라 전체를 실패로 보지 않는다. */

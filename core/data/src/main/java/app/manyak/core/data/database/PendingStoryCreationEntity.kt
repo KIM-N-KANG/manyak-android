@@ -2,11 +2,11 @@ package app.manyak.core.data.database
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import app.manyak.core.domain.story.CharacterGender
-import app.manyak.core.domain.story.KeywordCharacterSnapshot
-import app.manyak.core.domain.story.KeywordCustomTagSnapshot
-import app.manyak.core.domain.story.KeywordDraftSnapshot
-import app.manyak.core.domain.story.PendingStoryCreation
+import app.manyak.common.entity.story.CharacterGender
+import app.manyak.common.entity.story.KeywordCharacterSnapshot
+import app.manyak.common.entity.story.KeywordCustomTagSnapshot
+import app.manyak.common.entity.story.KeywordDraftSnapshot
+import app.manyak.common.entity.story.PendingStoryCreation
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 

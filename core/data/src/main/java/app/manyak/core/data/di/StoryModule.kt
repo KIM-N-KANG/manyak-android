@@ -1,11 +1,11 @@
 package app.manyak.core.data.di
 
+import app.manyak.common.domain.story.StoryCreationRepository
+import app.manyak.common.domain.story.StoryRepository
+import app.manyak.common.entity.story.PendingStoryCreationStore
 import app.manyak.core.data.database.PendingStoryCreationRoomStore
 import app.manyak.core.data.repository.StoryCreationRepositoryImpl
 import app.manyak.core.data.repository.StoryRepositoryImpl
-import app.manyak.core.domain.story.PendingStoryCreationStore
-import app.manyak.core.domain.story.StoryCreationRepository
-import app.manyak.core.domain.story.StoryRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

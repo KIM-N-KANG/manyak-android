@@ -1,11 +1,11 @@
 package app.manyak.feature.chat
 
+import app.manyak.common.domain.chat.ChatInputMode
+import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.entity.chat.ChatDetail
+import app.manyak.common.entity.chat.ChatStreamEvent
+import app.manyak.common.entity.chat.ChatTurn
 import app.manyak.core.analytics.NoOpAnalytics
-import app.manyak.core.domain.chat.ChatDetail
-import app.manyak.core.domain.chat.ChatInputMode
-import app.manyak.core.domain.chat.ChatStreamEvent
-import app.manyak.core.domain.chat.ChatTurn
-import app.manyak.core.domain.error.DomainResult
 import app.manyak.feature.chat.composer.InputBlockType
 import app.manyak.feature.chat.message.ChatMessageSegment
 import kotlinx.coroutines.Dispatchers
@@ -104,7 +104,8 @@ class ChatRoomStreamTest {
             val viewModel = startStreaming(repository)
 
             repository.streamEvents.send(ChatStreamEvent.Token("문이 열린다"))
-            repository.queuedChatDetailResults += DomainResult.Failure(app.manyak.core.domain.error.DomainError.Network)
+            repository.queuedChatDetailResults +=
+                DomainResult.Failure(app.manyak.common.domain.error.DomainError.Network)
             repository.streamEvents.send(ChatStreamEvent.Completed)
             advanceUntilIdle()
 
@@ -120,7 +121,7 @@ class ChatRoomStreamTest {
             val viewModel = startStreaming(repository)
 
             repository.streamEvents.send(
-                ChatStreamEvent.Failed(app.manyak.core.domain.error.DomainError.Unknown, "생성에 실패했어요"),
+                ChatStreamEvent.Failed(app.manyak.common.domain.error.DomainError.Unknown, "생성에 실패했어요"),
             )
             advanceUntilIdle()
 
@@ -140,7 +141,7 @@ class ChatRoomStreamTest {
             val viewModel = startStreaming(repository)
 
             repository.streamEvents.send(
-                ChatStreamEvent.Failed(app.manyak.core.domain.error.DomainError.Network, null),
+                ChatStreamEvent.Failed(app.manyak.common.domain.error.DomainError.Network, null),
             )
             advanceUntilIdle()
 

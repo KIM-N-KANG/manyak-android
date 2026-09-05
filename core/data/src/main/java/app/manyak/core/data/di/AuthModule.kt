@@ -1,5 +1,11 @@
 package app.manyak.core.data.di
 
+import app.manyak.common.domain.auth.AccountLinkRepository
+import app.manyak.common.domain.invite.InviteOnboardingRepository
+import app.manyak.common.domain.session.SessionRepository
+import app.manyak.common.domain.session.UserScopedStore
+import app.manyak.common.domain.user.UserProfileRepository
+import app.manyak.common.entity.auth.AuthProvider
 import app.manyak.core.data.database.PendingStoryCreationRoomStore
 import app.manyak.core.data.datastore.InviteOnboardingStore
 import app.manyak.core.data.datastore.ProfileCacheStore
@@ -10,12 +16,6 @@ import app.manyak.core.data.repository.AccountLinkRepositoryImpl
 import app.manyak.core.data.repository.SessionRepositoryImpl
 import app.manyak.core.data.repository.UserProfileRepositoryImpl
 import app.manyak.core.data.session.SessionBootstrap
-import app.manyak.core.data.session.UserScopedStore
-import app.manyak.core.domain.auth.AccountLinkRepository
-import app.manyak.core.domain.auth.AuthProvider
-import app.manyak.core.domain.invite.InviteOnboardingRepository
-import app.manyak.core.domain.session.SessionRepository
-import app.manyak.core.domain.user.UserProfileRepository
 import dagger.Binds
 import dagger.MapKey
 import dagger.Module

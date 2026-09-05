@@ -1,15 +1,15 @@
 package app.manyak.feature.chat
 
-import app.manyak.core.domain.chat.ChatDetail
-import app.manyak.core.domain.chat.ChatInputMode
-import app.manyak.core.domain.chat.ChatPreferencesRepository
-import app.manyak.core.domain.chat.ChatRepository
-import app.manyak.core.domain.chat.ChatStreamEvent
-import app.manyak.core.domain.chat.ChatSummary
-import app.manyak.core.domain.chat.ChatTurn
-import app.manyak.core.domain.chat.CreatedChat
-import app.manyak.core.domain.chat.UserSource
-import app.manyak.core.domain.error.DomainResult
+import app.manyak.common.domain.chat.ChatInputMode
+import app.manyak.common.domain.chat.ChatPreferencesRepository
+import app.manyak.common.domain.chat.ChatRepository
+import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.entity.chat.ChatDetail
+import app.manyak.common.entity.chat.ChatStreamEvent
+import app.manyak.common.entity.chat.ChatSummary
+import app.manyak.common.entity.chat.ChatTurn
+import app.manyak.common.entity.chat.CreatedChat
+import app.manyak.common.entity.chat.UserSource
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow

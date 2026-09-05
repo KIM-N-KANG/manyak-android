@@ -1,7 +1,7 @@
 package app.manyak.core.data.session
 
-import app.manyak.core.domain.session.SessionEndNotice
-import app.manyak.core.domain.session.SessionState
+import app.manyak.common.entity.session.SessionEndNotice
+import app.manyak.common.entity.session.SessionState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

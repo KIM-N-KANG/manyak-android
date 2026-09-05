@@ -1,9 +1,9 @@
 package app.manyak.session
 
+import app.manyak.common.data.datastore.DeviceIdStore
+import app.manyak.common.data.di.ApplicationScope
+import app.manyak.common.domain.user.UserProfileRepository
 import app.manyak.core.analytics.AnalyticsIdentity
-import app.manyak.core.data.datastore.DeviceIdStore
-import app.manyak.core.data.di.ApplicationScope
-import app.manyak.core.domain.user.UserProfileRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map

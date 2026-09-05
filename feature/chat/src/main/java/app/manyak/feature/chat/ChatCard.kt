@@ -23,7 +23,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import app.manyak.core.domain.chat.ChatSummary
+import app.manyak.common.entity.chat.ChatSummary
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ManyakMoreButton
 import app.manyak.core.ui.component.MetaChip

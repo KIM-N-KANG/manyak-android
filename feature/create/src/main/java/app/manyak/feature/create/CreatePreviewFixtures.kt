@@ -1,9 +1,9 @@
 package app.manyak.feature.create
 
-import app.manyak.core.domain.story.StoryTag
-import app.manyak.core.domain.story.StoryTagCategory
-import app.manyak.core.domain.story.Storyline
-import app.manyak.core.domain.story.StorylineRecommendedInfo
+import app.manyak.common.entity.story.StoryTag
+import app.manyak.common.entity.story.StoryTagCategory
+import app.manyak.common.entity.story.Storyline
+import app.manyak.common.entity.story.StorylineRecommendedInfo
 
 /** 프리뷰 확인용 예시 생성 결과. 스토리라인·추가 정보 화면 프리뷰가 같은 짝을 쓴다. */
 internal fun previewStorylines(): List<Storyline> =

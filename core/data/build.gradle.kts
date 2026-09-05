@@ -20,7 +20,7 @@ room {
 }
 
 dependencies {
-    implementation(projects.core.domain)
+    implementation(projects.common)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.coroutines.core)

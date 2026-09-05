@@ -1,5 +1,12 @@
 package app.manyak.core.data.repository
 
+import app.manyak.common.domain.error.DomainError
+import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.error.map
+import app.manyak.common.domain.story.StoryRepository
+import app.manyak.common.entity.story.StoryDetail
+import app.manyak.common.entity.story.StoryReportReason
+import app.manyak.common.entity.story.StorySummary
 import app.manyak.core.data.api.StoryApi
 import app.manyak.core.data.api.StoryDetailApi
 import app.manyak.core.data.api.UserApi
@@ -7,13 +14,6 @@ import app.manyak.core.data.api.apiCall
 import app.manyak.core.data.api.dto.CreateStoryReportRequestDto
 import app.manyak.core.data.api.dto.toDomain
 import app.manyak.core.data.api.emptyBodyApiCall
-import app.manyak.core.domain.error.DomainError
-import app.manyak.core.domain.error.DomainResult
-import app.manyak.core.domain.error.map
-import app.manyak.core.domain.story.StoryDetail
-import app.manyak.core.domain.story.StoryReportReason
-import app.manyak.core.domain.story.StoryRepository
-import app.manyak.core.domain.story.StorySummary
 import javax.inject.Inject
 import javax.inject.Singleton
 

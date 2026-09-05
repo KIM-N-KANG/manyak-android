@@ -19,7 +19,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import app.manyak.core.domain.story.StoryTagCategory
+import app.manyak.common.entity.story.StoryTagCategory
 import app.manyak.core.ui.R
 import app.manyak.core.ui.theme.ManyakTheme
 

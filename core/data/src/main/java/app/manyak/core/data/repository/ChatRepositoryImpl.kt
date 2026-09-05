@@ -1,5 +1,14 @@
 package app.manyak.core.data.repository
 
+import app.manyak.common.domain.chat.ChatRepository
+import app.manyak.common.domain.error.DomainError
+import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.error.map
+import app.manyak.common.entity.chat.ChatDetail
+import app.manyak.common.entity.chat.ChatStreamEvent
+import app.manyak.common.entity.chat.ChatSummary
+import app.manyak.common.entity.chat.CreatedChat
+import app.manyak.common.entity.chat.UserSource
 import app.manyak.core.data.api.ChatApi
 import app.manyak.core.data.api.UserApi
 import app.manyak.core.data.api.apiCall
@@ -9,15 +18,6 @@ import app.manyak.core.data.api.dto.ChatTurnStreamRequestDto
 import app.manyak.core.data.api.dto.toDomain
 import app.manyak.core.data.api.emptyBodyApiCall
 import app.manyak.core.data.sse.ChatSseSource
-import app.manyak.core.domain.chat.ChatDetail
-import app.manyak.core.domain.chat.ChatRepository
-import app.manyak.core.domain.chat.ChatStreamEvent
-import app.manyak.core.domain.chat.ChatSummary
-import app.manyak.core.domain.chat.CreatedChat
-import app.manyak.core.domain.chat.UserSource
-import app.manyak.core.domain.error.DomainError
-import app.manyak.core.domain.error.DomainResult
-import app.manyak.core.domain.error.map
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton

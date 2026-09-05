@@ -1,19 +1,19 @@
 package app.manyak.feature.studio
 
 import androidx.lifecycle.viewModelScope
+import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.story.StoryRepository
+import app.manyak.common.entity.story.CreationResumePoint
+import app.manyak.common.entity.story.PendingStoryCreation
+import app.manyak.common.entity.story.PendingStoryCreationStore
+import app.manyak.common.entity.story.StorySummary
+import app.manyak.common.entity.story.resumePoint
+import app.manyak.common.presentation.mvi.MviViewModel
 import app.manyak.core.analytics.Analytics
 import app.manyak.core.analytics.AnalyticsEvent
 import app.manyak.core.analytics.PendingCreationStage
 import app.manyak.core.analytics.ReportSource
 import app.manyak.core.analytics.StoryListSection
-import app.manyak.core.domain.error.DomainResult
-import app.manyak.core.domain.story.CreationResumePoint
-import app.manyak.core.domain.story.PendingStoryCreation
-import app.manyak.core.domain.story.PendingStoryCreationStore
-import app.manyak.core.domain.story.StoryRepository
-import app.manyak.core.domain.story.StorySummary
-import app.manyak.core.domain.story.resumePoint
-import app.manyak.core.ui.mvi.MviViewModel
 import app.manyak.core.ui.report.StoryReportAction
 import app.manyak.core.ui.report.StoryReportChange
 import app.manyak.core.ui.report.StoryReportController

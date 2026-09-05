@@ -1,6 +1,7 @@
 package app.manyak.core.data.api.dto
 
-import app.manyak.core.domain.story.StorySummary
+import app.manyak.common.data.time.toDisplayDate
+import app.manyak.common.entity.story.StorySummary
 import kotlinx.serialization.Serializable
 
 /**

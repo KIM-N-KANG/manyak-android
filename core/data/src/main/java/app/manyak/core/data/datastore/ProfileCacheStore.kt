@@ -4,12 +4,12 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
-import app.manyak.core.data.di.IoDispatcher
+import app.manyak.common.data.di.IoDispatcher
+import app.manyak.common.domain.session.UserScopedStore
+import app.manyak.common.entity.auth.AuthProvider
+import app.manyak.common.entity.user.AccountStatus
+import app.manyak.common.entity.user.UserProfile
 import app.manyak.core.data.di.ProfileDataStore
-import app.manyak.core.data.session.UserScopedStore
-import app.manyak.core.domain.auth.AuthProvider
-import app.manyak.core.domain.user.AccountStatus
-import app.manyak.core.domain.user.UserProfile
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map

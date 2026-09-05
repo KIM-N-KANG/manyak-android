@@ -1,19 +1,19 @@
 package app.manyak.feature.chat
 
 import androidx.lifecycle.viewModelScope
+import app.manyak.common.domain.chat.ChatInputMode
+import app.manyak.common.domain.chat.ChatPreferencesRepository
+import app.manyak.common.domain.chat.ChatRepository
+import app.manyak.common.domain.error.DomainError
+import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.story.StoryRepository
+import app.manyak.common.entity.chat.ChatStreamEvent
+import app.manyak.common.presentation.mvi.MviViewModel
 import app.manyak.core.analytics.Analytics
 import app.manyak.core.analytics.AnalyticsEvent
 import app.manyak.core.analytics.CreditShortageTrigger
 import app.manyak.core.analytics.MessageInputMode
 import app.manyak.core.analytics.ReportSource
-import app.manyak.core.domain.chat.ChatInputMode
-import app.manyak.core.domain.chat.ChatPreferencesRepository
-import app.manyak.core.domain.chat.ChatRepository
-import app.manyak.core.domain.chat.ChatStreamEvent
-import app.manyak.core.domain.error.DomainError
-import app.manyak.core.domain.error.DomainResult
-import app.manyak.core.domain.story.StoryRepository
-import app.manyak.core.ui.mvi.MviViewModel
 import app.manyak.core.ui.report.StoryReportAction
 import app.manyak.core.ui.report.StoryReportChange
 import app.manyak.core.ui.report.StoryReportController
@@ -825,7 +825,7 @@ private fun ChatRepository.turnStream(
         choiceOrder = origin.choiceOrder,
     )
 
-private fun app.manyak.core.domain.chat.ChatTurn.toUi(): ChatRoomTurn =
+private fun app.manyak.common.entity.chat.ChatTurn.toUi(): ChatRoomTurn =
     ChatRoomTurn(
         id = id,
         userInput = userInput,

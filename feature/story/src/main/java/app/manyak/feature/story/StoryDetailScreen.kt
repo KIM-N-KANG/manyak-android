@@ -57,7 +57,7 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
-import app.manyak.core.domain.story.StoryDetail
+import app.manyak.common.entity.story.StoryDetail
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.LoadFailedContent
 import app.manyak.core.ui.component.ManyakDestructiveDialog

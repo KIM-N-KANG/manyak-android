@@ -1,10 +1,10 @@
 package app.manyak.feature.story
 
+import app.manyak.common.domain.error.DomainError
+import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.entity.chat.CreatedChat
+import app.manyak.common.entity.story.StoryReportReason
 import app.manyak.core.analytics.NoOpAnalytics
-import app.manyak.core.domain.chat.CreatedChat
-import app.manyak.core.domain.error.DomainError
-import app.manyak.core.domain.error.DomainResult
-import app.manyak.core.domain.story.StoryReportReason
 import app.manyak.core.ui.report.StoryReportAction
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers

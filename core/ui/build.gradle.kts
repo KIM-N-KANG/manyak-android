@@ -15,7 +15,7 @@ dependencies {
     api(libs.androidx.compose.ui.tooling.preview)
     api(libs.androidx.lifecycle.runtime.compose)
     api(libs.androidx.lifecycle.viewmodel.compose)
-    api(projects.core.domain)
+    api(projects.common)
     // 신고 시트 컨트롤러가 이벤트를 보낸다. 네 화면이 공유하는 절차라 발화도 한 곳에 둔다.
     implementation(projects.core.analytics)
 

@@ -22,7 +22,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
-import app.manyak.core.domain.story.StoryReportReason
+import app.manyak.common.entity.story.StoryReportReason
 import app.manyak.core.ui.R
 import app.manyak.core.ui.report.StoryReportAction
 import app.manyak.core.ui.report.StoryReportUiState

@@ -6,10 +6,10 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
-import app.manyak.core.data.di.DeviceDataStore
-import app.manyak.core.data.di.IoDispatcher
-import app.manyak.core.domain.chat.ChatInputMode
-import app.manyak.core.domain.chat.ChatPreferencesRepository
+import app.manyak.common.data.di.DeviceDataStore
+import app.manyak.common.data.di.IoDispatcher
+import app.manyak.common.domain.chat.ChatInputMode
+import app.manyak.common.domain.chat.ChatPreferencesRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext

@@ -1,11 +1,11 @@
 package app.manyak.core.data.repository
 
+import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.feedback.FeedbackRepository
 import app.manyak.core.data.api.FeedbackApi
 import app.manyak.core.data.api.dto.CreateFeedbackRequestDto
 import app.manyak.core.data.api.emptyBodyApiCall
 import app.manyak.core.data.di.DataLayerConfig
-import app.manyak.core.domain.error.DomainResult
-import app.manyak.core.domain.feedback.FeedbackRepository
 import javax.inject.Inject
 import javax.inject.Singleton
 

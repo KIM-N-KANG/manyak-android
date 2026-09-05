@@ -1,12 +1,12 @@
 package app.manyak.feature.create
 
-import app.manyak.core.domain.chat.ChatDetail
-import app.manyak.core.domain.chat.ChatRepository
-import app.manyak.core.domain.chat.ChatStreamEvent
-import app.manyak.core.domain.chat.ChatSummary
-import app.manyak.core.domain.chat.CreatedChat
-import app.manyak.core.domain.chat.UserSource
-import app.manyak.core.domain.error.DomainResult
+import app.manyak.common.domain.chat.ChatRepository
+import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.entity.chat.ChatDetail
+import app.manyak.common.entity.chat.ChatStreamEvent
+import app.manyak.common.entity.chat.ChatSummary
+import app.manyak.common.entity.chat.CreatedChat
+import app.manyak.common.entity.chat.UserSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.yield

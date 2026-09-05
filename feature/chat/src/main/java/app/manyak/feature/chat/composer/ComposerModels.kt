@@ -1,6 +1,6 @@
 package app.manyak.feature.chat.composer
 
-import app.manyak.core.domain.chat.ChatInputMode
+import app.manyak.common.domain.chat.ChatInputMode
 
 /** 컴포저가 위로 올리는 동작. 화면은 이 콜백만 받고 상태를 직접 바꾸지 않는다. */
 internal data class ChatComposerActions(

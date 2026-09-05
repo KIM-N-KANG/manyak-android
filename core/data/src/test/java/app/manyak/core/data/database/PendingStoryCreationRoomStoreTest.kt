@@ -1,8 +1,8 @@
 package app.manyak.core.data.database
 
-import app.manyak.core.domain.story.KeywordCharacterSnapshot
-import app.manyak.core.domain.story.KeywordDraftSnapshot
-import app.manyak.core.domain.story.PendingStoryCreation
+import app.manyak.common.entity.story.KeywordCharacterSnapshot
+import app.manyak.common.entity.story.KeywordDraftSnapshot
+import app.manyak.common.entity.story.PendingStoryCreation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first

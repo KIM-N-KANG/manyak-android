@@ -10,12 +10,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
-import app.manyak.core.domain.chat.ChatInputMode
+import app.manyak.common.domain.chat.ChatInputMode
+import app.manyak.common.presentation.credit.LocalCreditPolicy
+import app.manyak.common.presentation.credit.creditAmountText
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.ManyakDestructiveDialog
-import app.manyak.core.ui.credit.LocalCreditPolicy
 import app.manyak.core.ui.credit.creditAmountAlpha
-import app.manyak.core.ui.credit.creditAmountText
 import app.manyak.core.ui.theme.ManyakTheme
 
 /** 컴포저 아래 줄. 왼쪽부터 추가 버튼·설정 메뉴이고 턴 비용과 전송만 오른쪽 끝이다. */

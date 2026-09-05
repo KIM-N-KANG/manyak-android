@@ -197,3 +197,9 @@
 - Android Library·Compose·Hilt·품질 convention plugin 추출, SDK·버전·실패 정책 유지.
 - `check assembleDebug :app:assembleRelease` 통과, configuration cache 저장/재사용 확인.
 - included build 검사를 루트 check에 연결하고 원본 플러그인 소스만 ktlint 입력으로 지정. 기존 생성 코드 진단은 해당 ktlint 태스크 재실행으로 갱신.
+
+### common
+
+- 공통 모델·오류·MVI·기기 ID/테마·날짜 변환·사용자 저장소 정리 계약 이동. 기존 core:domain 등록 제거.
+- `common:testDebugUnitTest`, `core:data:testDebugUnitTest`, 앱 컴파일/Hilt 조립 및 변경 모듈 ktlint·detekt 통과.
+- 이동 파일 본문 비교와 문자열 원문 1:1 비교 통과. common의 프로젝트 의존성 없음.

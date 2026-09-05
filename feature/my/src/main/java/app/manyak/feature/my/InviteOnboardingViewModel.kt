@@ -2,16 +2,16 @@ package app.manyak.feature.my
 
 import androidx.annotation.StringRes
 import androidx.lifecycle.viewModelScope
+import app.manyak.common.domain.error.DomainError
+import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.invite.InviteOnboardingRepository
+import app.manyak.common.domain.invite.InviteRepository
+import app.manyak.common.domain.user.UserProfileRepository
+import app.manyak.common.presentation.mvi.MviViewModel
 import app.manyak.core.analytics.Analytics
 import app.manyak.core.analytics.AnalyticsEvent
 import app.manyak.core.analytics.InviteCodeSource
-import app.manyak.core.domain.error.DomainError
-import app.manyak.core.domain.error.DomainResult
-import app.manyak.core.domain.invite.InviteOnboardingRepository
-import app.manyak.core.domain.invite.InviteRepository
-import app.manyak.core.domain.user.UserProfileRepository
 import app.manyak.core.ui.R
-import app.manyak.core.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject

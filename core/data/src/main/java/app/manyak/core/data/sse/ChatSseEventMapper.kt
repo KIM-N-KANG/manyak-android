@@ -1,7 +1,7 @@
 package app.manyak.core.data.sse
 
-import app.manyak.core.domain.chat.ChatStreamEvent
-import app.manyak.core.domain.error.DomainError
+import app.manyak.common.domain.error.DomainError
+import app.manyak.common.entity.chat.ChatStreamEvent
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull

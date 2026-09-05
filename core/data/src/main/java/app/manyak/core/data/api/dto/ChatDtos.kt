@@ -1,9 +1,10 @@
 package app.manyak.core.data.api.dto
 
-import app.manyak.core.domain.chat.ChatDetail
-import app.manyak.core.domain.chat.ChatSummary
-import app.manyak.core.domain.chat.ChatTurn
-import app.manyak.core.domain.chat.CreatedChat
+import app.manyak.common.data.time.toEpochMillisOrNull
+import app.manyak.common.entity.chat.ChatDetail
+import app.manyak.common.entity.chat.ChatSummary
+import app.manyak.common.entity.chat.ChatTurn
+import app.manyak.common.entity.chat.CreatedChat
 import kotlinx.serialization.Serializable
 
 /** [startSettingId] 가 null 이면 직렬화에서 빠지고 서버가 첫 시작 설정으로 폴백한다. */
