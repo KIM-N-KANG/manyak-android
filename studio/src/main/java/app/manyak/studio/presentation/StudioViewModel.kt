@@ -7,11 +7,11 @@ import app.manyak.analytics.entity.PendingCreationStage
 import app.manyak.analytics.entity.ReportSource
 import app.manyak.analytics.entity.StoryListSection
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.story.CreationProgressAccess
+import app.manyak.common.entity.story.CreationProgressSummary
 import app.manyak.common.entity.story.CreationResumePoint
-import app.manyak.common.entity.story.PendingStoryCreation
-import app.manyak.common.entity.story.PendingStoryCreationStore
+import app.manyak.common.entity.story.CreationStage
 import app.manyak.common.entity.story.StorySummary
-import app.manyak.common.entity.story.resumePoint
 import app.manyak.common.presentation.mvi.MviViewModel
 import app.manyak.report.domain.ReportRepository
 import app.manyak.report.presentation.StoryReportAction
@@ -175,7 +175,7 @@ sealed interface StudioEffect {
 class StudioViewModel
     @Inject
     constructor(
-        private val pendingCreationStore: PendingStoryCreationStore,
+        private val pendingCreationStore: CreationProgressAccess,
         private val storyRepository: StudioRepository,
         private val analytics: Analytics,
         reportRepository: ReportRepository,
@@ -204,7 +204,7 @@ class StudioViewModel
         init {
             analytics.track(AnalyticsEvent.StoryListViewed(StoryListSection.CREATED))
             viewModelScope.launch {
-                pendingCreationStore.record.collect { record ->
+                pendingCreationStore.progress.collect { record ->
                     val stage = record?.toStage()
                     if (stage != null && stage != shownBannerStage) {
                         analytics.track(AnalyticsEvent.ContinueBannerShown(stage))
@@ -255,7 +255,7 @@ class StudioViewModel
                 StudioIntent.StartNewCreation -> {
                     analytics.track(AnalyticsEvent.ResumeDialogDiscarded)
                     // 레코드 폐기가 진입보다 먼저다 — 레코드가 남은 채 들어가면 재개로 복원된다.
-                    pendingCreationStore.clear()
+                    pendingCreationStore.discard()
                     dispatchEvent(StudioEvent.ResumeChoiceDialogVisibleChanged(visible = false))
                     dispatchEffect(StudioEffect.NavigateToCreate)
                 }
@@ -485,16 +485,16 @@ private enum class LoadKind {
 }
 
 /** 카탈로그의 `stage` 값. 웹의 진행 레코드 단계 이름과 맞춘다. */
-private fun PendingStoryCreation.toStage(): PendingCreationStage =
-    when (this) {
-        is PendingStoryCreation.KeywordDraft -> PendingCreationStage.KEYWORD_DRAFT
-        is PendingStoryCreation.GeneratingStorylines -> PendingCreationStage.STORYLINE_GENERATION
-        is PendingStoryCreation.CompletingStory -> PendingCreationStage.STORY_COMPLETION
-        is PendingStoryCreation.Draft -> PendingCreationStage.STORY_DRAFT
+private fun CreationProgressSummary.toStage(): PendingCreationStage =
+    when (stage) {
+        CreationStage.KEYWORD_DRAFT -> PendingCreationStage.KEYWORD_DRAFT
+        CreationStage.STORYLINE_GENERATION -> PendingCreationStage.STORYLINE_GENERATION
+        CreationStage.STORY_COMPLETION -> PendingCreationStage.STORY_COMPLETION
+        CreationStage.STORY_DRAFT -> PendingCreationStage.STORY_DRAFT
     }
 
-private fun PendingStoryCreation.toBanner(): PendingCreationBanner =
+private fun CreationProgressSummary.toBanner(): PendingCreationBanner =
     PendingCreationBanner(
-        isCompleting = this is PendingStoryCreation.CompletingStory,
-        resumePoint = resumePoint(),
+        isCompleting = isCompleting,
+        resumePoint = resumePoint,
     )

@@ -36,7 +36,6 @@ include(":app")
 include(":common")
 
 // Repository 구현 · Retrofit · DataStore · 인터셉터 · 제공자 SDK 어댑터.
-include(":core:data")
 
 // 디자인 시스템 · 공용 컴포저블 · MviViewModel · 문자열 리소스 전량.
 include(":core:ui")
@@ -54,7 +53,7 @@ include(":home")
 include(":chat")
 include(":studio")
 include(":my")
-include(":feature:create")
+include(":create")
 include(":story")
 
 include(":designsystem")

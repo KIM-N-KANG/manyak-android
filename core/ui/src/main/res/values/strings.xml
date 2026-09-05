@@ -31,155 +31,17 @@
     <!-- 이어서 만들기 배너 · 진입 다이얼로그 (3-1 §3-1-4 문구 계약) -->
 
     <!-- 간편 제작 퍼널 -->
-    <string name="create_title">스토리 만들기</string>
-    <string name="create_step_keyword">키워드 선택</string>
-    <string name="create_step_storyline">스토리라인 선택</string>
-    <string name="create_step_additional_info">추가 정보 입력</string>
     <!-- %1$s 는 단계 이름, %2$d·%3$d 는 현재/전체 단계 수. 인디케이터의 접근성 텍스트에만 쓴다. -->
-    <string name="create_step_progress">%1$s 단계 (%2$d/%3$d)</string>
-    <string name="create_keyword_title">만들고 싶은 스토리의\n키워드를 선택해주세요</string>
-    <string name="create_keyword_description">선택한 키워드로 AI가 스토리라인을 생성해요</string>
-    <string name="create_tab_genre">장르</string>
-    <string name="create_tab_protagonist">주인공 (나)</string>
-    <string name="create_tab_supporting_character">주변 인물</string>
-    <string name="create_tags_load_failed">키워드를 불러오지 못했어요</string>
-    <string name="create_tags_reload_description">아래 버튼으로 다시 시도해주세요</string>
-    <string name="create_tags_reload">다시 불러오기</string>
-    <string name="create_section_genre">장르 (최대 3개)</string>
-    <string name="create_section_feature">특징 (최대 3개)</string>
-    <string name="create_section_basic_info">기본 정보</string>
-    <string name="create_add_keyword">키워드 추가</string>
     <!-- %1$s 는 카테고리 탭 라벨(예: 장르). -->
-    <string name="create_add_keyword_dialog_title">%1$s 키워드 추가</string>
-    <string name="create_add_keyword_dialog_description">원하는 키워드를 입력해주세요</string>
-    <string name="create_add_keyword_label">키워드</string>
-    <string name="create_add_keyword_placeholder_genre">예: 타임루프, 영지물, 먼치킨</string>
-    <string name="create_add_keyword_placeholder_protagonist">예: 사랑에 서툰, 타인을 믿지 못하는</string>
-    <string name="create_add_keyword_placeholder_supporting_character">예: 상냥해서 더 위험한, 어딘가 망가진</string>
-    <string name="create_add_keyword_error_empty">키워드를 입력해주세요</string>
-    <string name="create_dialog_close">닫기</string>
-    <string name="create_dialog_add">추가하기</string>
-    <string name="create_name_placeholder_protagonist">예: 서지우</string>
-    <string name="create_gender_random">랜덤 성별</string>
-    <string name="create_gender_male">남성</string>
-    <string name="create_gender_female">여성</string>
-    <string name="create_character_random_hint">비워두면 랜덤으로 설정해요</string>
-    <string name="create_feature_random_hint">선택하지 않으면 랜덤으로 설정해요</string>
-    <string name="create_supporting_character_label">주변 인물 %1$d</string>
-    <string name="create_supporting_character_count">%1$d/%2$d</string>
-    <string name="create_supporting_delete">삭제</string>
-    <string name="create_supporting_delete_description">%1$s 삭제</string>
-    <string name="create_add_character">인물 추가</string>
-    <string name="create_error_duplicate_name">이미 사용한 이름이에요</string>
-    <string name="create_error_duplicate_name_footer">인물 이름이 겹치지 않게 해주세요</string>
     <!-- 주변 인물 이름 placeholder. 입력 섹션 순서대로 순환한다. -->
-    <string-array name="create_name_placeholders_supporting">
-        <item>예: 한도윤</item>
-        <item>예: 이서연</item>
-        <item>예: 박시우</item>
-        <item>예: 정하린</item>
-        <item>예: 최은우</item>
-    </string-array>
-    <string name="create_cta_previous">이전</string>
-    <string name="create_cta_next">다음</string>
-    <string name="create_cta_generate_storylines">스토리라인 만들기</string>
-    <string name="create_error_select_keyword">키워드를 하나 이상 선택해주세요</string>
-    <string name="create_storyline_title">마음에 드는\n스토리라인을 선택해주세요</string>
-    <string name="create_storyline_description">선택한 스토리라인이 스토리의 기본 흐름이 돼요</string>
-    <string name="create_storyline_view_keywords">선택한 키워드 보기</string>
-    <string name="create_selected_keywords_title">선택한 키워드들이에요</string>
-    <string name="create_selected_keywords_description">이 키워드들을 이용해서 스토리라인 세 개를 만들었어요</string>
     <!-- 스토리라인 탭의 순번 라벨. 생성 결과 순서대로 대응한다. -->
-    <string-array name="create_storyline_tab_labels">
-        <item>첫 번째</item>
-        <item>두 번째</item>
-        <item>세 번째</item>
-    </string-array>
-    <string name="create_storyline_loading_title">스토리라인을 만들고 있어요\n잠시만 기다려 주세요</string>
-    <string name="create_storyline_loading_description">키워드를 바탕으로 스토리라인을 구상하고 있어요</string>
-    <string name="create_storyline_loading_label">스토리라인 생성 중</string>
     <!-- 로딩 중 타자기형으로 순환하는 문구. -->
-    <string-array name="create_storyline_loading_phrases">
-        <item>선택한 키워드 살펴보는 중...</item>
-        <item>이야기의 뼈대 잡는 중...</item>
-        <item>장면 순서 엮는 중...</item>
-    </string-array>
     <!-- 생성이 길어질 때 힌트 위에 뜨는 경과 구분선 문구. -->
-    <string name="create_loading_hint_elapsed">%1$d초 지남</string>
-    <string name="create_storyline_loading_hint_delayed">스토리라인을 잡는 데 시간이 조금 더 걸리고 있어요</string>
-    <string name="create_storyline_loading_hint_long">장면 흐름을 다시 맞춰보고 있어요</string>
-    <string name="create_storyline_error_generate">스토리라인을 만들지 못했어요</string>
-    <string name="create_storyline_error_regenerate">스토리라인을 다시 만들지 못했어요</string>
-    <string name="create_storyline_empty">생성된 스토리라인이 없어요</string>
-    <string name="create_storyline_rating_sync_failed">평가 저장에 실패했어요</string>
-    <string name="create_storyline_rating_good">이 스토리라인 좋아요</string>
-    <string name="create_storyline_rating_bad">이 스토리라인 싫어요</string>
-    <string name="create_cta_regenerate">다시 만들기</string>
-    <string name="create_cta_select_storyline">선택하기</string>
-    <string name="create_additional_title">스토리라인에 더하고 싶은\n정보를 자유롭게 입력해주세요</string>
-    <string name="create_additional_description">입력한 정보는 스토리를 완성하는 데 반영돼요</string>
-    <string name="create_additional_expand">더보기</string>
-    <string name="create_additional_collapse">접기</string>
-    <string name="create_additional_recommended_label">추천 추가 정보</string>
-    <string name="create_additional_label">추가 정보</string>
-    <string name="create_additional_max_count">(최대 %1$d개)</string>
-    <string name="create_additional_input_description">추가 정보 %1$d</string>
-    <string name="create_additional_delete_description">추가 정보 %1$d 삭제</string>
-    <string name="create_add_info">정보 추가</string>
-    <string name="create_cta_reselect_storyline">다시 선택하기</string>
-    <string name="create_cta_complete_story">스토리 완성하기</string>
     <!-- CTA 위 비용 행. 값은 웹과 같은 완성 비용 정책을 따른다. -->
-    <string name="create_completion_credit_cost_label">스토리 완성 비용</string>
-    <string name="create_completion_credit_cost_amount">%1$s 이프</string>
-    <string name="create_completion_loading_title">스토리를 만들고 있어요\n잠시만 기다려 주세요</string>
-    <string name="create_completion_loading_description">스토리가 만들어지면 바로 채팅할 수 있어요</string>
-    <string name="create_completion_loading_label">스토리 생성 중</string>
     <!-- 로딩 중 타자기형으로 순환하는 문구. -->
-    <string-array name="create_completion_loading_phrases">
-        <item>입력한 정보 정리하는 중...</item>
-        <item>이야기를 문장으로 풀어내는 중...</item>
-        <item>표현을 자연스럽게 다듬는 중...</item>
-    </string-array>
-    <string name="create_completion_loading_hint_delayed">스토리를 완성하는 데 시간이 조금 더 걸리고 있어요</string>
-    <string name="create_completion_loading_hint_long">세계관과 마무리를 다시 살펴보고 있어요</string>
-    <string name="create_completion_loading_hint_almost">거의 다 완성됐어요</string>
-    <string name="create_completion_error">스토리를 완성하지 못했어요</string>
-    <string name="create_completion_error_credit">이프가 부족해요</string>
-    <string name="create_story_completed">스토리가 완성되었어요</string>
-    <string name="create_draft_save">임시 저장</string>
-    <string name="create_draft_saved">임시 저장됨</string>
-    <string name="create_close_funnel">만들기 닫기</string>
     <!-- 소실 경고 다이얼로그 (3-1 §3-1-4 이탈 가드 문구 계약) -->
-    <string name="create_exit_warning_title">스토리를 그만 만들까요?</string>
-    <string name="create_exit_warning_description">지금 나가면 만들고 있는 내용이 사라져요</string>
-    <string name="create_exit_warning_stay">닫기</string>
-    <string name="create_exit_warning_leave">그만 만들기</string>
-    <string name="create_unsaved_warning_title">임시 저장하지 않은 내용이 있어요</string>
-    <string name="create_unsaved_warning_description">지금 나가면 임시 저장한 뒤에 만든 내용은 사라져요</string>
-    <string name="create_unsaved_warning_stay">닫기</string>
-    <string name="create_unsaved_warning_leave">나가기</string>
     <!-- 잃을 것은 없지만 닫기 자체를 확인하는 경고. 임시 저장본·진행 중 생성 모두 이어서 만들기로 돌아온다. -->
-    <string name="create_saved_exit_warning_title">스토리 만들기를 그만둘까요?</string>
-    <string name="create_saved_exit_warning_description">만들던 내용은 제작 탭의 이어서 만들기에서 계속할 수 있어요</string>
-    <string name="create_saved_exit_warning_stay">닫기</string>
-    <string name="create_saved_exit_warning_leave">나가기</string>
-    <string name="create_reselect_warning_title">스토리라인을 바꿀까요?</string>
-    <string name="create_reselect_warning_description">입력한 추가 정보는 모두 사라져요</string>
-    <string name="create_reselect_warning_confirm">다시 선택하기</string>
-    <string name="create_reselect_warning_cancel">닫기</string>
     <!-- 추가 정보 입력 placeholder. 입력 순서대로 순환한다. 인물 정보는 키워드 단계에서 받으므로 예시에서 뺀다. -->
-    <string-array name="create_additional_placeholders">
-        <item>예: 배경은 현대의 서울로 해줘</item>
-        <item>예: 시대 배경은 1990년대로 잡아줘</item>
-        <item>예: 주요 무대는 오래된 서점으로 해줘</item>
-        <item>예: 계절 배경은 겨울로 해줘</item>
-        <item>예: 전체적으로 밝고 유쾌한 분위기로 그려줘</item>
-        <item>예: 초반에 큰 오해로 갈등이 시작되게 해줘</item>
-        <item>예: 잔잔하게 시작해서 후반에 몰아쳐줘</item>
-        <item>예: 비 오는 날 우연히 마주치는 장면을 넣어줘</item>
-        <item>예: 마지막은 반전이 있는 결말로 마무리해줘</item>
-        <item>예: 잔인하거나 무서운 묘사는 빼줘</item>
-    </string-array>
 
     <!-- 마이 -->
     <!-- 이프 충전의 두 탭. 이프를 얻는 수단은 무료 충전이, 쓰고 받은 기록은 내역이 맡는다. -->

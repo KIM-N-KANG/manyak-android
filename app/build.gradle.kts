@@ -151,7 +151,6 @@ dependencies {
     implementation(projects.network)
     implementation(projects.designsystem)
     implementation(projects.common)
-    implementation(projects.core.data)
     implementation(projects.core.ui)
     implementation(projects.navigation)
     implementation(projects.analytics)
@@ -161,7 +160,7 @@ dependencies {
     implementation(projects.chat)
     implementation(projects.studio)
     implementation(projects.my)
-    implementation(projects.feature.create)
+    implementation(projects.create)
     implementation(projects.story)
 
     implementation(platform(libs.androidx.compose.bom))

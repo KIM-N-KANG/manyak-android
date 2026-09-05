@@ -57,12 +57,12 @@ import app.manyak.core.navigation.MyOpenSourceLicenseRoute
 import app.manyak.core.navigation.StoryDetailRoute
 import app.manyak.core.navigation.WithdrawalRoute
 import app.manyak.core.ui.R
+import app.manyak.create.additionalinfo.presentation.CreateAdditionalInfoScreen
+import app.manyak.create.keyword.presentation.CreateKeywordScreen
+import app.manyak.create.storyline.presentation.CreateStorylineScreen
 import app.manyak.designsystem.component.ManyakProgressIndicator
 import app.manyak.designsystem.component.rememberDelayedProgressVisibility
 import app.manyak.designsystem.theme.ManyakTheme
-import app.manyak.feature.create.CreateAdditionalInfoScreen
-import app.manyak.feature.create.CreateKeywordScreen
-import app.manyak.feature.create.CreateStorylineScreen
 import app.manyak.legal.presentation.LegalDocumentScreen
 import app.manyak.login.presentation.LoginScreen
 import app.manyak.my.credit.presentation.CreditChargeScreen

@@ -3,15 +3,10 @@ package app.manyak.studio.presentation
 import app.manyak.analytics.domain.NoOpAnalytics
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
-import app.manyak.common.entity.story.CreationProgress
+import app.manyak.common.domain.story.CreationProgressAccess
+import app.manyak.common.entity.story.CreationProgressSummary
 import app.manyak.common.entity.story.CreationResumePoint
-import app.manyak.common.entity.story.PendingStoryCreation
-import app.manyak.common.entity.story.PendingStoryCreationStore
-import app.manyak.common.entity.story.StoryCharacterInput
-import app.manyak.common.entity.story.StoryCompletionCommand
-import app.manyak.common.entity.story.Storyline
-import app.manyak.common.entity.story.StorylineGeneration
-import app.manyak.common.entity.story.StorylineGenerationCommand
+import app.manyak.common.entity.story.CreationStage
 import app.manyak.report.entity.StoryReportReason
 import app.manyak.report.presentation.StoryReportAction
 import app.manyak.studio.testing.FakeStoryRepository
@@ -344,67 +339,28 @@ class StudioViewModelTest {
 }
 
 private class FakePendingStoryCreationStore(
-    initial: PendingStoryCreation? = null,
-) : PendingStoryCreationStore {
+    initial: CreationProgressSummary? = null,
+) : CreationProgressAccess {
     private val state = MutableStateFlow(initial)
 
-    override val record: Flow<PendingStoryCreation?> = state
+    override val progress: Flow<CreationProgressSummary?> = state
 
-    val current: PendingStoryCreation? get() = state.value
+    val current: CreationProgressSummary? get() = state.value
 
-    override suspend fun read(): PendingStoryCreation? = state.value
-
-    override suspend fun write(record: PendingStoryCreation): Boolean {
-        state.value = record
-        return true
-    }
-
-    override suspend fun clear(): Boolean {
+    override suspend fun discard(): Boolean {
         state.value = null
         return true
     }
 }
 
-private fun generatingRecord(): PendingStoryCreation =
-    PendingStoryCreation.GeneratingStorylines(
-        command =
-            StorylineGenerationCommand(
-                requestId = "request-1",
-                genreTagIds = listOf(1),
-                customGenreTags = emptyList(),
-                protagonist =
-                    StoryCharacterInput(
-                        name = null,
-                        gender = null,
-                        featureTagIds = emptyList(),
-                        customTags = emptyList(),
-                    ),
-                supportingCharacters = emptyList(),
-                parentCreationId = null,
-                isRegenerated = false,
-            ),
-    )
+private fun generatingRecord(): CreationProgressSummary =
+    CreationProgressSummary(CreationStage.STORYLINE_GENERATION, CreationResumePoint.StorylineStep)
 
-private fun completingRecord(selectedIndex: Int): PendingStoryCreation =
-    PendingStoryCreation.CompletingStory(
-        generationCommand = null,
-        generation =
-            StorylineGeneration(
-                simpleCreationId = 10,
-                storylines = listOf(Storyline(id = 1, storyline = "스토리라인", recommendedInfos = emptyList())),
-            ),
-        command =
-            StoryCompletionCommand(
-                requestId = "request-2",
-                simpleCreationId = 10,
-                storylineId = 1,
-                additionalInfos = emptyList(),
-            ),
-        progress = CreationProgress(selectedStorylineIndex = selectedIndex),
-    )
+private fun completingRecord(selectedIndex: Int): CreationProgressSummary =
+    CreationProgressSummary(CreationStage.STORY_COMPLETION, CreationResumePoint.AdditionalInfoStep(selectedIndex))
 
 private fun studioViewModel(
-    store: app.manyak.common.entity.story.PendingStoryCreationStore,
+    store: CreationProgressAccess,
     repository: FakeStoryRepository,
     analytics: app.manyak.analytics.domain.Analytics,
 ): StudioViewModel = StudioViewModel(store, repository, analytics, repository)
