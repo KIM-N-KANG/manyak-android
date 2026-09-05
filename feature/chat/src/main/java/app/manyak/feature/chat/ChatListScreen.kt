@@ -49,6 +49,7 @@ import app.manyak.designsystem.component.withRowListMargins
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.report.presentation.StoryReportAction
 import app.manyak.report.presentation.component.StoryReportSheet
+import app.manyak.common.R as CommonR
 import app.manyak.designsystem.R as DesignsystemR
 import app.manyak.report.R as ReportR
 
@@ -78,7 +79,7 @@ fun ChatListScreen(
             viewModel.uiEffect.collect { effect ->
                 when (effect) {
                     ChatListEffect.ShowRefreshFailed ->
-                        Toast.makeText(context, R.string.story_refresh_failed, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, CommonR.string.story_refresh_failed, Toast.LENGTH_SHORT).show()
 
                     ChatListEffect.ShowChatDeleted ->
                         Toast.makeText(context, R.string.chat_room_deleted, Toast.LENGTH_SHORT).show()

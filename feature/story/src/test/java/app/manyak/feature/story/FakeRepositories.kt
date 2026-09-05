@@ -77,8 +77,6 @@ internal class FakeStoryRepository :
         return queuedDetailResults.removeFirstOrNull() ?: DomainResult.Success(sampleStoryDetail())
     }
 
-    override suspend fun originalStories(): DomainResult<List<StorySummary>> = DomainResult.Success(emptyList())
-
     override suspend fun myStories(): DomainResult<List<StorySummary>> = DomainResult.Success(emptyList())
 
     val deletedStoryIds = mutableListOf<String>()

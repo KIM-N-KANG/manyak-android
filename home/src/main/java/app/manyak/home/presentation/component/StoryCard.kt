@@ -1,4 +1,4 @@
-package app.manyak.feature.home
+package app.manyak.home.presentation.component
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -16,10 +16,11 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.manyak.common.entity.story.StorySummary
-import app.manyak.core.ui.R
 import app.manyak.designsystem.component.StoryThumbnail
 import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.common.R as CommonR
 import app.manyak.designsystem.R as DesignsystemR
+import app.manyak.home.R as HomeR
 
 /**
  * 오리지널 스토리 카드.
@@ -54,7 +55,7 @@ internal fun StoryCard(
                         .width(OriginalTagWidth)
                         .aspectRatio(ORIGINAL_TAG_ASPECT_RATIO),
                 painter = painterResource(DesignsystemR.drawable.ic_story_original_tag),
-                contentDescription = stringResource(R.string.home_original_tag),
+                contentDescription = stringResource(HomeR.string.home_original_tag),
             )
         }
         Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.hairline)) {
@@ -68,7 +69,7 @@ internal fun StoryCard(
             // 공식 계정이라 "마냑" 이 들어오지만, 작성자가 없는 스토리는 줄 자체를 그리지 않는다.
             story.authorNickname?.let { nickname ->
                 Text(
-                    text = stringResource(R.string.story_author_nickname, nickname),
+                    text = stringResource(CommonR.string.story_author_nickname, nickname),
                     style = ManyakTheme.typography.bodyMedium,
                     color = ManyakTheme.colors.textSubtle,
                     maxLines = 1,

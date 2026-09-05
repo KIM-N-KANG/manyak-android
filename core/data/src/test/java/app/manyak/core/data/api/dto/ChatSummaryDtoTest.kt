@@ -1,5 +1,6 @@
 package app.manyak.core.data.api.dto
 
+import app.manyak.common.data.story.toDomain
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

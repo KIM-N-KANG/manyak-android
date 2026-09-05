@@ -1,13 +1,13 @@
-package app.manyak.feature.home
+package app.manyak.home.presentation
 
 import androidx.lifecycle.viewModelScope
 import app.manyak.analytics.domain.Analytics
 import app.manyak.analytics.entity.AnalyticsEvent
 import app.manyak.analytics.entity.StoryListSection
 import app.manyak.common.domain.error.DomainResult
-import app.manyak.common.domain.story.StoryRepository
 import app.manyak.common.entity.story.StorySummary
 import app.manyak.common.presentation.mvi.MviViewModel
+import app.manyak.home.domain.HomeRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -61,7 +61,7 @@ sealed interface HomeEffect {
 class HomeViewModel
     @Inject
     constructor(
-        private val storyRepository: StoryRepository,
+        private val storyRepository: HomeRepository,
         private val analytics: Analytics,
     ) : MviViewModel<HomeIntent, HomeUiState, HomeEvent, HomeEffect>(HomeUiState()) {
         private var loadJob: Job? = null

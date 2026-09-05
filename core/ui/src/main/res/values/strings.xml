@@ -29,17 +29,11 @@
     <string name="main_tab_my">마이</string>
 
     <!-- 스토리 목록 카드 공통. 홈(오리지널)과 제작(내가 만든) 목록이 함께 쓴다. -->
-    <string name="story_load_failed">스토리를 불러오지 못했어요</string>
     <!-- 목록을 보고 있는 중에 당겨서 새로고침한 결과. 목록은 그대로 남으므로 "불러오지 못했어요"와 구분한다. -->
-    <string name="story_refresh_failed">새로고침하지 못했어요</string>
     <!-- 턴 수 뱃지. 숫자만 보이므로 화면 낭독기에는 무엇의 수인지 함께 읽힌다. -->
     <!-- 제작자 닉네임. 선행 @ 는 리소스 참조로 읽히지 않게 이스케이프한다. -->
-    <string name="story_author_nickname">\@%1$s</string>
 
     <!-- 홈 -->
-    <string name="home_original_stories">오리지널 스토리</string>
-    <string name="home_original_tag">오리지널 스토리</string>
-    <string name="home_loading">오리지널 스토리 불러오는 중</string>
 
     <!-- 제작 -->
     <string name="studio_create_story">스토리 만들기</string>

@@ -1,12 +1,12 @@
 package app.manyak.core.data.repository
 
+import app.manyak.common.data.story.toDomain
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.error.map
 import app.manyak.common.domain.story.StoryRepository
 import app.manyak.common.entity.story.StoryDetail
 import app.manyak.common.entity.story.StorySummary
-import app.manyak.core.data.api.StoryApi
 import app.manyak.core.data.api.StoryDetailApi
 import app.manyak.core.data.api.UserApi
 import app.manyak.core.data.api.dto.toDomain
@@ -19,13 +19,9 @@ import javax.inject.Singleton
 class StoryRepositoryImpl
     @Inject
     constructor(
-        private val storyApi: StoryApi,
         private val storyDetailApi: StoryDetailApi,
         private val userApi: UserApi,
     ) : StoryRepository {
-        override suspend fun originalStories(): DomainResult<List<StorySummary>> =
-            apiCall { storyApi.originalStories() }.map { stories -> stories.map { story -> story.toDomain() } }
-
         // 내 스토리는 보호 경로라 인증 클라이언트를 쓰는 UserApi 쪽에 정의되어 있다.
         override suspend fun myStories(): DomainResult<List<StorySummary>> =
             apiCall { userApi.myStories() }.map { stories -> stories.map { story -> story.toDomain() } }

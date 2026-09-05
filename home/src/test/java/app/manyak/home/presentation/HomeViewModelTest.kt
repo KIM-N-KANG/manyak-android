@@ -1,8 +1,10 @@
-package app.manyak.feature.home
+package app.manyak.home.presentation
 
 import app.manyak.analytics.domain.NoOpAnalytics
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.home.testing.FakeStoryRepository
+import app.manyak.home.testing.sampleStories
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

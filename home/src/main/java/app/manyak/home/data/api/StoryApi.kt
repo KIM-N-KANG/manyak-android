@@ -1,6 +1,6 @@
-package app.manyak.core.data.api
+package app.manyak.home.data.api
 
-import app.manyak.core.data.api.dto.StorySummaryDto
+import app.manyak.common.data.story.StorySummaryDto
 import retrofit2.Response
 import retrofit2.http.GET
 

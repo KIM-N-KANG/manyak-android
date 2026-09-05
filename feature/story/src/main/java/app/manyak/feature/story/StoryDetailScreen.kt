@@ -69,6 +69,7 @@ import app.manyak.designsystem.component.rememberDelayedProgressVisibility
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.report.presentation.StoryReportAction
 import app.manyak.report.presentation.component.StoryReportSheet
+import app.manyak.common.R as CommonR
 import app.manyak.designsystem.R as DesignsystemR
 import app.manyak.report.R as ReportR
 
@@ -286,7 +287,7 @@ private fun StoryDetailStatus(
 
         state.loadError != null ->
             LoadFailedContent(
-                message = stringResource(R.string.story_load_failed),
+                message = stringResource(CommonR.string.story_load_failed),
                 onRetry = { onIntent(StoryDetailIntent.Retry) },
                 modifier = messageModifier,
             )

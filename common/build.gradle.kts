@@ -1,6 +1,7 @@
 plugins {
     id("manyak.android.compose")
     id("manyak.hilt")
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -8,6 +9,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.kotlinx.serialization.json)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.lifecycle.viewmodel.compose)

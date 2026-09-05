@@ -40,8 +40,6 @@ internal class FakeStoryRepository :
     var myStoriesCallCount = 0
     val queuedResults = ArrayDeque<DomainResult<List<StorySummary>>>()
 
-    override suspend fun originalStories(): DomainResult<List<StorySummary>> = DomainResult.Success(emptyList())
-
     override suspend fun storyDetail(storyId: String): DomainResult<StoryDetail> =
         DomainResult.Failure(DomainError.Unknown)
 

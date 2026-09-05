@@ -41,6 +41,7 @@ import app.manyak.designsystem.component.ManyakPullToRefreshBox
 import app.manyak.designsystem.component.rememberDelayedProgressVisibility
 import app.manyak.designsystem.component.withRowListMargins
 import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.common.R as CommonR
 import app.manyak.report.R as ReportR
 
 /**
@@ -84,7 +85,7 @@ fun StudioScreen(
                         Toast.makeText(context, R.string.studio_story_delete_failed, Toast.LENGTH_SHORT).show()
 
                     StudioEffect.ShowRefreshFailed ->
-                        Toast.makeText(context, R.string.story_refresh_failed, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, CommonR.string.story_refresh_failed, Toast.LENGTH_SHORT).show()
 
                     StudioEffect.ShowReportSubmitted ->
                         Toast.makeText(context, ReportR.string.story_report_submitted, Toast.LENGTH_SHORT).show()
@@ -132,7 +133,7 @@ private fun StudioContent(
             state.loadFailed ->
                 StoriesStatus(state = state, contentPadding = contentPadding, onIntent = onIntent) {
                     LoadFailedContent(
-                        message = stringResource(R.string.story_load_failed),
+                        message = stringResource(CommonR.string.story_load_failed),
                         onRetry = { onIntent(StudioIntent.Retry) },
                         modifier = Modifier.fillMaxSize().padding(horizontal = ManyakTheme.spacing.gutter),
                     )

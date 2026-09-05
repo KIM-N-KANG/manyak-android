@@ -1,5 +1,6 @@
 package app.manyak.core.data.api.dto
 
+import app.manyak.common.data.story.StoryAuthorDto
 import app.manyak.common.data.time.toDisplayDate
 import app.manyak.common.entity.story.StoryCharacter
 import app.manyak.common.entity.story.StoryDetail

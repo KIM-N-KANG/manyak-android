@@ -1,10 +1,8 @@
-package app.manyak.feature.home
+package app.manyak.home.testing
 
-import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
-import app.manyak.common.domain.story.StoryRepository
-import app.manyak.common.entity.story.StoryDetail
 import app.manyak.common.entity.story.StorySummary
+import app.manyak.home.domain.HomeRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.yield
 
@@ -33,7 +31,7 @@ internal fun sampleStories(): List<StorySummary> =
     )
 
 /** 조회 결과는 큐에서 꺼내고 비면 성공 샘플을 돌려준다. */
-internal class FakeStoryRepository : StoryRepository {
+internal class FakeStoryRepository : HomeRepository {
     var originalStoriesCallCount = 0
     val queuedResults = ArrayDeque<DomainResult<List<StorySummary>>>()
 
@@ -47,11 +45,4 @@ internal class FakeStoryRepository : StoryRepository {
         inFlightGate?.await()
         return queuedResults.removeFirstOrNull() ?: DomainResult.Success(sampleStories())
     }
-
-    override suspend fun myStories(): DomainResult<List<StorySummary>> = DomainResult.Success(emptyList())
-
-    override suspend fun storyDetail(storyId: String): DomainResult<StoryDetail> =
-        DomainResult.Failure(DomainError.Unknown)
-
-    override suspend fun deleteStory(storyId: String): DomainResult<Unit> = DomainResult.Success(Unit)
 }

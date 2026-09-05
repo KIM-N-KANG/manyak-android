@@ -52,6 +52,7 @@ import app.manyak.designsystem.component.rememberSkeletonPulseAlpha
 import app.manyak.designsystem.theme.ManyakTheme
 import kotlinx.coroutines.flow.distinctUntilChanged
 import java.text.NumberFormat
+import app.manyak.common.R as CommonR
 
 /**
  * 이프 충전.
@@ -74,7 +75,7 @@ fun CreditChargeScreen(
     val attendanceClaimed = stringResource(R.string.my_attendance_claimed)
     val attendanceAlready = stringResource(R.string.my_attendance_already)
     val attendanceFailed = stringResource(R.string.my_attendance_failed)
-    val refreshFailed = stringResource(R.string.story_refresh_failed)
+    val refreshFailed = stringResource(CommonR.string.story_refresh_failed)
 
     LaunchedEffect(viewModel, lifecycleOwner) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {

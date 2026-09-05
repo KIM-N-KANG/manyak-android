@@ -1,4 +1,4 @@
-package app.manyak.feature.home
+package app.manyak.home.presentation
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
@@ -30,12 +30,15 @@ import app.manyak.analytics.presentation.LocalAnalytics
 import app.manyak.analytics.presentation.rememberImpressionTracker
 import app.manyak.analytics.presentation.trackImpression
 import app.manyak.common.entity.story.StorySummary
-import app.manyak.core.ui.R
 import app.manyak.designsystem.component.LoadFailedContent
 import app.manyak.designsystem.component.ManyakPullToRefreshBox
 import app.manyak.designsystem.component.rememberDelayedProgressVisibility
 import app.manyak.designsystem.component.withScreenMargins
 import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.home.presentation.component.OriginalStoriesSkeleton
+import app.manyak.home.presentation.component.StoryCard
+import app.manyak.common.R as CommonR
+import app.manyak.home.R as HomeR
 
 /**
  * 홈 탭(오리지널 스토리 목록). 헤더와 하단 탭은 셸이 그리므로 여기서는 콘텐츠만 둔다.
@@ -59,7 +62,7 @@ fun HomeScreen(
             viewModel.uiEffect.collect { effect ->
                 when (effect) {
                     HomeEffect.ShowRefreshFailed ->
-                        Toast.makeText(context, R.string.story_refresh_failed, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, CommonR.string.story_refresh_failed, Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -95,7 +98,7 @@ private fun HomeContent(
 
         state.loadFailed ->
             LoadFailedContent(
-                message = stringResource(R.string.story_load_failed),
+                message = stringResource(CommonR.string.story_load_failed),
                 onRetry = { onIntent(HomeIntent.Retry) },
                 modifier =
                     modifier
@@ -173,7 +176,7 @@ private fun OriginalStories(
 private fun SectionTitle(modifier: Modifier = Modifier) {
     Text(
         modifier = modifier.fillMaxWidth(),
-        text = stringResource(R.string.home_original_stories),
+        text = stringResource(HomeR.string.home_original_stories),
         style = ManyakTheme.typography.titleMediumStrong,
         color = ManyakTheme.colors.text,
     )

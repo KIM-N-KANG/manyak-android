@@ -5,7 +5,6 @@ import app.manyak.core.data.api.CreationRequestApi
 import app.manyak.core.data.api.CreditPolicyApi
 import app.manyak.core.data.api.FeedbackApi
 import app.manyak.core.data.api.SimpleStoryApi
-import app.manyak.core.data.api.StoryApi
 import app.manyak.core.data.api.StoryDetailApi
 import app.manyak.core.data.api.StoryGenerationApi
 import app.manyak.core.data.api.StoryRatingApi
@@ -64,15 +63,6 @@ object ApiNetworkModule {
     fun provideEventSourceFactory(
         @SseClient client: OkHttpClient,
     ): EventSource.Factory = EventSources.createFactory(client)
-
-    /** 오리지널 목록은 인증을 요구하지 않아 토큰 없는 클라이언트로 부른다. */
-    @Provides
-    @Singleton
-    fun provideStoryApi(
-        @PlainClient client: OkHttpClient,
-        config: DataLayerConfig,
-        json: Json,
-    ): StoryApi = retrofit(client, config, json).create(StoryApi::class.java)
 
     /**
      * 상세는 목록과 달리 인증 클라이언트를 쓴다 — 비공개 스토리 읽기와 본 엔딩 집계가 토큰에 걸려

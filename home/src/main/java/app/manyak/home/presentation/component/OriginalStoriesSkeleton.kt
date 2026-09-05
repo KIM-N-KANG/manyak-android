@@ -1,4 +1,4 @@
-package app.manyak.feature.home
+package app.manyak.home.presentation.component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,11 +15,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import app.manyak.core.ui.R
 import app.manyak.designsystem.component.STORY_THUMBNAIL_ASPECT_RATIO
 import app.manyak.designsystem.component.SkeletonPlaceholder
 import app.manyak.designsystem.component.rememberSkeletonPulseAlpha
 import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.home.presentation.GRID_COLUMNS
+import app.manyak.home.R as HomeR
 
 /**
  * 조회 중 자리를 잡아 두는 골격. 카드와 **같은 구조**(3:4 표지 + 제목 줄 + 제작자 줄)라
@@ -35,7 +36,7 @@ internal fun OriginalStoriesSkeleton(
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
 ) {
-    val description = stringResource(R.string.home_loading)
+    val description = stringResource(HomeR.string.home_loading)
     val alpha = rememberSkeletonPulseAlpha()
 
     LazyVerticalGrid(

@@ -1,12 +1,12 @@
 package app.manyak.core.data.api
 
+import app.manyak.common.data.story.StorySummaryDto
 import app.manyak.core.data.api.dto.AttendanceRewardResponseDto
 import app.manyak.core.data.api.dto.ChatSummaryDto
 import app.manyak.core.data.api.dto.CreditTransactionsResponseDto
 import app.manyak.core.data.api.dto.InviteResponseDto
 import app.manyak.core.data.api.dto.MeResponseDto
 import app.manyak.core.data.api.dto.RedeemInviteCodeRequestDto
-import app.manyak.core.data.api.dto.StorySummaryDto
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE

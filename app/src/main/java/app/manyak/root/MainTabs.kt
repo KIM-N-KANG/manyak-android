@@ -27,9 +27,9 @@ import app.manyak.designsystem.component.ManyakNavigationItem
 import app.manyak.designsystem.component.ManyakSectionHeader
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.feature.chat.ChatListScreen
-import app.manyak.feature.home.HomeScreen
 import app.manyak.feature.my.MyScreen
 import app.manyak.feature.studio.StudioScreen
+import app.manyak.home.presentation.HomeScreen
 
 /**
  * 하단 탭 넷을 두르는 셸. 헤더와 하단 바를 여기서만 그리고, 탭 화면에는 chrome 이 차지한 여백만 넘긴다.

@@ -50,7 +50,7 @@ include(":analytics")
 // 화면 단위 모듈. 모듈 이름이 화면·탭 이름과 1:1로 맞고, 화면은 모듈 루트 패키지에 둔다.
 include(":feature:login")
 include(":feature:legal")
-include(":feature:home")
+include(":home")
 include(":feature:chat")
 include(":feature:studio")
 include(":feature:my")

@@ -1,4 +1,4 @@
-package app.manyak.core.data.api.dto
+package app.manyak.common.data.story
 
 import app.manyak.common.data.time.toDisplayDate
 import app.manyak.common.entity.story.StorySummary
