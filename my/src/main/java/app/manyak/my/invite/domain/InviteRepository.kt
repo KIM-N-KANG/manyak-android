@@ -11,7 +11,7 @@ interface InviteRepository {
     /**
      * 받은 초대 코드를 등록한다. 계정당 한 번만 성공하며 재시도는 409 로 돌아온다.
      *
-     * 실패 사유 구분은 [app.manyak.core.domain.error.DomainError.Server] 의 상태·코드가 싣는다 —
+     * 실패 사유 구분은 [app.manyak.common.domain.error.DomainError.Server] 의 상태·코드가 싣는다 —
      * 문구를 고르는 것은 화면의 몫이다.
      */
     suspend fun redeemInviteCode(code: String): DomainResult<Unit>

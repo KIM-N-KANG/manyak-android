@@ -2,7 +2,7 @@ package app.manyak.root
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import app.manyak.core.ui.R
+import app.manyak.R as AppR
 import app.manyak.designsystem.R as DesignsystemR
 
 /**
@@ -18,21 +18,21 @@ internal enum class MainTab(
     HOME(
         selectedIconRes = DesignsystemR.drawable.ic_nav_home_filled,
         unselectedIconRes = DesignsystemR.drawable.ic_nav_home_outline,
-        nameRes = R.string.main_tab_home,
+        nameRes = AppR.string.main_tab_home,
     ),
     CHAT(
         selectedIconRes = DesignsystemR.drawable.ic_nav_chat_filled,
         unselectedIconRes = DesignsystemR.drawable.ic_nav_chat_outline,
-        nameRes = R.string.main_tab_chat,
+        nameRes = AppR.string.main_tab_chat,
     ),
     STUDIO(
         selectedIconRes = DesignsystemR.drawable.ic_nav_studio_filled,
         unselectedIconRes = DesignsystemR.drawable.ic_nav_studio_outline,
-        nameRes = R.string.main_tab_studio,
+        nameRes = AppR.string.main_tab_studio,
     ),
     MY(
         selectedIconRes = DesignsystemR.drawable.ic_nav_my_filled,
         unselectedIconRes = DesignsystemR.drawable.ic_nav_my_outline,
-        nameRes = R.string.main_tab_my,
+        nameRes = AppR.string.main_tab_my,
     ),
 }

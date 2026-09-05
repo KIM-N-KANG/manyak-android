@@ -56,7 +56,6 @@ import app.manyak.core.navigation.MyInviteRoute
 import app.manyak.core.navigation.MyOpenSourceLicenseRoute
 import app.manyak.core.navigation.StoryDetailRoute
 import app.manyak.core.navigation.WithdrawalRoute
-import app.manyak.core.ui.R
 import app.manyak.create.additionalinfo.presentation.CreateAdditionalInfoScreen
 import app.manyak.create.keyword.presentation.CreateKeywordScreen
 import app.manyak.create.storyline.presentation.CreateStorylineScreen
@@ -72,6 +71,7 @@ import app.manyak.my.invite.presentation.onboarding.InviteOnboardingSheet
 import app.manyak.my.licenses.presentation.OpenSourceLicenseScreen
 import app.manyak.my.withdrawal.presentation.WithdrawalScreen
 import app.manyak.story.detail.presentation.StoryDetailScreen
+import app.manyak.R as AppR
 import app.manyak.designsystem.R as DesignsystemR
 
 /**
@@ -167,7 +167,7 @@ private fun CleanupFailed(
         }
         Text(
             modifier = Modifier.fillMaxWidth(),
-            text = stringResource(R.string.session_cleanup_failed),
+            text = stringResource(AppR.string.session_cleanup_failed),
             style = ManyakTheme.typography.bodyMedium,
             color = ManyakTheme.colors.textDanger,
             textAlign = TextAlign.Center,
@@ -314,8 +314,7 @@ private fun EntryProviderScope<NavKey>.myDestinationEntries(backStack: MutableLi
     }
     entry<MyOpenSourceLicenseRoute> {
         OpenSourceLicenseScreen(
-            // 이 파일의 R 은 :core:ui 의 것이다. 빌드가 만든 목록은 :app 자기 리소스라 온전한 이름으로 가리킨다.
-            librariesRes = app.manyak.R.raw.aboutlibraries,
+            librariesRes = AppR.raw.aboutlibraries,
             onBack = { backStack.removeLastOrNull() },
         )
     }

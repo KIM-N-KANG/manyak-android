@@ -151,7 +151,6 @@ dependencies {
     implementation(projects.network)
     implementation(projects.designsystem)
     implementation(projects.common)
-    implementation(projects.core.ui)
     implementation(projects.navigation)
     implementation(projects.analytics)
     implementation(projects.login)

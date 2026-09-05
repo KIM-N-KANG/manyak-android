@@ -4,6 +4,9 @@ plugins {
 }
 
 dependencies {
+    compileOnly("org.jetbrains.kotlin:kotlin-compiler-embeddable:${libs.versions.kotlin.get()}")
+    testImplementation(libs.junit)
+    testImplementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:${libs.versions.kotlin.get()}")
     implementation("com.android.tools.build:gradle:${libs.versions.agp.get()}")
     implementation("org.jetbrains.kotlin:compose-compiler-gradle-plugin:${libs.versions.kotlin.get()}")
     implementation("com.google.devtools.ksp:symbol-processing-gradle-plugin:${libs.versions.ksp.get()}")
@@ -18,16 +21,17 @@ ktlint {
     ignoreFailures = false
     filter {
         exclude("**/build/**")
+        exclude { it.file.invariantSeparatorsPath.contains("/build/") }
     }
 }
 
-// Precompiled plugin source sets also contain generated accessors; inspect authored sources only.
-tasks.named<org.jlleitschuh.gradle.ktlint.tasks.BaseKtLintCheckTask>("runKtlintCheckOverMainSourceSet") {
-    setSource(fileTree("src/main/kotlin"))
-    include("**/*.kts")
-}
-
-tasks.named<org.jlleitschuh.gradle.ktlint.tasks.BaseKtLintCheckTask>("runKtlintFormatOverMainSourceSet") {
-    setSource(fileTree("src/main/kotlin"))
-    include("**/*.kts")
+// Kotlin DSL attaches generated roots after plugin application; replace the final task inputs after that setup.
+afterEvaluate {
+    listOf("runKtlintCheckOverMainSourceSet", "runKtlintFormatOverMainSourceSet").forEach { taskName ->
+        tasks.named<org.jlleitschuh.gradle.ktlint.tasks.BaseKtLintCheckTask>(taskName) {
+            setSource(fileTree("src/main/kotlin"))
+            setIncludes(mutableListOf("**/*.kts", "**/*.kt"))
+            exclude { it.file.invariantSeparatorsPath.contains("/build/") }
+        }
+    }
 }

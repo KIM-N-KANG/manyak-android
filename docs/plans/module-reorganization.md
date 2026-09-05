@@ -1,9 +1,9 @@
 # KNK-1197 모듈·패키지 재구성 실행 계획
 
 - 작성일: 2026-09-05
-- 상태: **구현 진행 중**
-- 후속 구현 요청에 따라 모듈별로 이동·검증·커밋을 진행합니다.
-- 공통 설계 제안: [하네스 Android 모듈 재구성 설계](../../../knk-harness/docs/planning/android-module-architecture.md)
+- 상태: **모듈 이전·로컬 검증 완료**
+- 후속 구현 요청에 따라 모듈별 이동·검증을 완료하고 모듈 단위 로컬 커밋으로 기록했습니다.
+- 공통 설계 정본: [하네스 Android 모듈 재구성 설계](../../../knk-harness/docs/planning/android-module-architecture.md)
 - 현행 정본: [Android 스펙](../../../knk-harness/docs/product-specs/3-3-android-app.md), 로컬 검증 정책: [_project.md](./_project.md)
 
 ## 1. 목표와 기준 상태
@@ -15,10 +15,10 @@
 | Android | `refactor/KNK-1197-improve-folder-structure`, 기준 HEAD `5ee07c6` |
 | 하네스 | `dev`, 기준 HEAD `eaf081c`; 현행 구조 절이 해당 dev에 존재함을 확인 |
 | 기존 로컬 변경 | `.idea/gradle.xml` 수정이 존재함. 이 작업에서 소유하거나 되돌리지 않음 |
-| 실제 등록 모듈 | [settings.gradle.kts](../../settings.gradle.kts)의 app·core 5개·feature 8개, 총 14개 |
+| 기준 시점 등록 모듈 | [settings.gradle.kts](../../settings.gradle.kts)의 app·core 5개·feature 8개, 총 14개 |
 | CI | [android-ci.yml](../../.github/workflows/android-ci.yml)의 check·assembleDebug, 모듈 경로와 무관한 리포트 수집 |
 
-아래 클래스·파일 이름은 현재 코드를 기준으로 합니다. 새 포트 이름은 하네스의 설계 후보이며 구현된 타입을 뜻하지 않습니다. 실행 시에는 두 레포의 현재 브랜치를 다시 확인하고 그 브랜치에서 진행합니다. 현재 브랜치를 유지하며, 사용자 요청에 따라 모듈당 로컬 커밋 하나를 작성합니다. 티켓·PR·푸시는 이 작업의 범위에 포함하지 않습니다.
+아래 파일 묶음은 기준 커밋의 이동 단위이며 링크는 이전된 실제 파일을 가리킵니다. 최종 포트와 검증 결과는 실행 기록에서 확인합니다. 실행 시에는 두 레포의 현재 브랜치를 다시 확인하고 그 브랜치에서 진행합니다. 현재 브랜치를 유지하며, 사용자 요청에 따라 모듈당 로컬 커밋 하나를 작성합니다. 티켓·PR·푸시는 이 작업의 범위에 포함하지 않습니다.
 
 완료 범위는 기존 화면·데이터·인증 동작을 보존한 구조 전환입니다. 기능 추가, 서버 계약 변경, 저장 스키마 변경, 의존성 버전 업그레이드, 디자인 변경, 새 ViewModel/스코프 도입은 제외합니다.
 
@@ -28,13 +28,13 @@
 
 | 현재 파일 묶음 | 목표 소유 위치 | 함께 옮기거나 확인할 것 |
 | --- | --- | --- |
-| [ChatListScreen](../../feature/chat/src/main/java/app/manyak/feature/chat/ChatListScreen.kt), ChatListViewModel·ChatCard·ChatListSkeleton·RelativeTime | `chat/list/presentation` | 목록 ViewModel·상대 시간 테스트 |
-| [ChatRoomScreen](../../feature/chat/src/main/java/app/manyak/feature/chat/ChatRoomScreen.kt), ChatRoomViewModel·Transcript·TurnStream·Regenerate·AnchorPad·Status | `chat/room/presentation` | 삭제·재생성·스트림·추천·앵커 테스트 |
+| [ChatListScreen](../../chat/src/main/java/app/manyak/chat/list/presentation/ChatListScreen.kt), ChatListViewModel·ChatCard·ChatListSkeleton·RelativeTime | `chat/list/presentation` | 목록 ViewModel·상대 시간 테스트 |
+| [ChatRoomScreen](../../chat/src/main/java/app/manyak/chat/room/presentation/ChatRoomScreen.kt), ChatRoomViewModel·Transcript·TurnStream·Regenerate·AnchorPad·Status | `chat/room/presentation` | 삭제·재생성·스트림·추천·앵커 테스트 |
 | chat의 composer·message·suggestion | `chat/room/presentation` 하위 패키지 | 기존 내부 참조를 같은 chat 모듈 안에서 유지; 같은 위치로 관련 테스트 이동 |
-| [CreateKeywordScreen](../../feature/create/src/main/java/app/manyak/feature/create/CreateKeywordScreen.kt), Keyword 입력·캐릭터·성별 선택·선택 키워드 UI·Reducer | `create/keyword/presentation` | 키워드 상태·ViewModel 테스트; GenderSelectField는 KeywordCharacterForm에서 사용 |
+| [CreateKeywordScreen](../../create/src/main/java/app/manyak/create/keyword/presentation/CreateKeywordScreen.kt), Keyword 입력·캐릭터·성별 선택·선택 키워드 UI·Reducer | `create/keyword/presentation` | 키워드 상태·ViewModel 테스트; GenderSelectField는 KeywordCharacterForm에서 사용 |
 | CreateStorylineScreen·ViewModel·RatingButtons | `create/storyline/presentation` | 스토리라인 ViewModel 테스트 |
 | CreateAdditionalInfoScreen·ViewModel·AdditionalInfoSections | `create/additionalinfo/presentation` | 추가 정보 ViewModel 테스트 |
-| [StorylineGenerationStore](../../feature/create/src/main/java/app/manyak/feature/create/StorylineGenerationStore.kt), DraftSave·CreateFunnelModule | `create/presentation/state`, `create/presentation/di` | 기존 ActivityRetained 수명·Scope와 스토어 테스트 유지 |
+| [StorylineGenerationStore](../../create/src/main/java/app/manyak/create/presentation/state/StorylineGenerationStore.kt), DraftSave·CreateFunnelModule | `create/presentation/state`, `create/presentation/di` | 기존 ActivityRetained 수명·Scope와 스토어 테스트 유지 |
 | CreateFunnelChrome·CreateGeneratingLoading·PreviewFixtures | `create/presentation/component`, `create/presentation/preview` | 단계 간 실제 공유만 남김 |
 | MyScreen·MyViewModel·ProfileHeader·CreditCard·MenuItem·AccountLinkDialogs | `my/profile/presentation` | MyViewModelTest; 계정 연동 UI와 auth 구현을 구분 |
 | CreditCharge·CreditFreeCharge·CreditHistory 파일 묶음 | `my/credit/presentation` | CreditChargeViewModelTest |
@@ -50,23 +50,23 @@
 
 | 현재 파일/책임 | 목표 소유자 | 이동 시 해소할 참조 |
 | --- | --- | --- |
-| [MviViewModel](../../core/ui/src/main/java/app/manyak/core/ui/mvi/MviViewModel.kt)·DomainErrorMessages | common/presentation | 공통 오류·세션 안내 값과 문자열도 함께 배치; designsystem 역참조 금지 |
+| [MviViewModel](../../common/src/main/java/app/manyak/common/presentation/mvi/MviViewModel.kt)·DomainErrorMessages | common/presentation | 공통 오류·세션 안내 값과 문자열도 함께 배치; designsystem 역참조 금지 |
 | DomainResult·DomainError와 실제 공유 값/포트 | common/domain·entity | DomainError의 AuthProvider 참조를 빠뜨리지 않음 |
 | ManyakTheme·토큰·기본 UI·폰트·시각 자산 | designsystem | data·analytics·기능 모델에 의존하는 업무 코드가 함께 들어가지 않도록 분리 |
-| [CreditAmount](../../core/ui/src/main/java/app/manyak/core/ui/credit/CreditAmount.kt) | 정책 전달/숫자 변환은 common, 시각적 로딩 표현은 designsystem | 기존 rememberSkeletonPulseAlpha 호출 때문에 파일째 이동할 수 없음 |
-| [Routes](../../core/navigation/src/main/java/app/manyak/core/navigation/Routes.kt) | navigation | 첫 이동에서 Kotlin 패키지·직렬화 타입 이름 보존 |
-| [AnalyticsEvent](../../core/analytics/src/main/java/app/manyak/core/analytics/AnalyticsEvent.kt)·SDK 구현 | analytics | 기능 enum 변환을 호출부로 옮겨 분석→기능 역참조 제거 |
-| [NetworkModule](../../core/data/src/main/java/app/manyak/core/data/di/NetworkModule.kt)·ApiCall·인터셉터 | network와 각 API 소유 기능의 data/di | 클라이언트/직렬화 기반과 업무 API provider를 분리; timeout·qualifier 유지 |
-| [SessionTokenManager](../../core/data/src/main/java/app/manyak/core/data/session/SessionTokenManager.kt)·SessionGate·TokenStore·Crypto·소셜 SDK·AccountLink | auth | 인터셉터의 구현 참조를 토큰 접근 계약으로 교체; auth→my 금지 |
-| [SessionRepositoryImpl](../../core/data/src/main/java/app/manyak/core/data/repository/SessionRepositoryImpl.kt) | auth/data | 프로필은 공통 계약, 초대 안내는 최소 writer로 사용; 기록 시점 유지 |
-| [UserApi](../../core/data/src/main/java/app/manyak/core/data/api/UserApi.kt) | auth·chat·studio·my의 해당 data/api | me·withdraw·myChats·myStories/delete·credit·invite 동작별 소유자를 정해 분리 |
+| [CreditAmount](../../common/src/main/java/app/manyak/common/presentation/credit/CreditPolicyPresentation.kt) | 정책 전달/숫자 변환은 common, 시각적 로딩 표현은 designsystem | 기존 rememberSkeletonPulseAlpha 호출 때문에 파일째 이동할 수 없음 |
+| [Routes](../../navigation/src/main/java/app/manyak/core/navigation/Routes.kt) | navigation | 첫 이동에서 Kotlin 패키지·직렬화 타입 이름 보존 |
+| [AnalyticsEvent](../../analytics/src/main/java/app/manyak/analytics/entity/AnalyticsEvent.kt)·SDK 구현 | analytics | 기능 enum 변환을 호출부로 옮겨 분석→기능 역참조 제거 |
+| [NetworkModule](../../network/src/main/java/app/manyak/network/data/di/HttpModule.kt)·ApiCall·인터셉터 | network와 각 API 소유 기능의 data/di | 클라이언트/직렬화 기반과 업무 API provider를 분리; timeout·qualifier 유지 |
+| [SessionTokenManager](../../auth/src/main/java/app/manyak/auth/data/session/SessionTokenManager.kt)·SessionGate·TokenStore·Crypto·소셜 SDK·AccountLink | auth | 인터셉터의 구현 참조를 토큰 접근 계약으로 교체; auth→my 금지 |
+| [SessionRepositoryImpl](../../auth/src/main/java/app/manyak/auth/data/repository/SessionRepositoryImpl.kt) | auth/data | 프로필은 공통 계약, 초대 안내는 최소 writer로 사용; 기록 시점 유지 |
+| [UserApi](../../my/src/main/java/app/manyak/my/profile/data/api/ProfileApi.kt) | auth·chat·studio·my의 해당 data/api | me·withdraw·myChats·myStories/delete·credit·invite 동작별 소유자를 정해 분리 |
 | StoryRepository·구현·StoryApi/DetailApi | home·studio·story·report의 소유 동작 | 목록·상세·삭제·신고 계약을 분리; 원래 Repository 전체를 common으로 이동하지 않음 |
 | ChatRepository·ChatApi·SSE·ChatPreferencesStore | chat/domain·entity·data | create/story에는 채팅 생성 포트와 결과 ID만 공개 |
 | StoryCreationRepository·SimpleStory/Generation/Rating/CreationRequest API | create/domain·entity·data | 관련 DTO·생성 함수·DI provider를 같은 단위로 이동 |
-| [ManyakDatabase](../../core/data/src/main/java/app/manyak/core/data/database/ManyakDatabase.kt)·PendingStoryCreationRoomStore·LegacyPendingCreationFile | create/data | studio에 관찰/폐기 계약 제공; Application의 레거시 파일 정리 연결도 유지 |
+| [ManyakDatabase](../../create/src/main/java/app/manyak/create/data/database/ManyakDatabase.kt)·PendingStoryCreationRoomStore·LegacyPendingCreationFile | create/data | studio에 관찰/폐기 계약 제공; Application의 레거시 파일 정리 연결도 유지 |
 | UserProfileRepositoryImpl·ProfileCacheStore·InviteOnboardingStore | my/profile·my/invite, my 공통 data 구성 | 같은 profile DataStore 파일의 단일 인스턴스 유지; 사용자 귀속 정리 등록 |
 | Credit·Invite·Feedback 계약/구현 | my의 해당 하위 기능 | 공개 이프 정책만 common 계약으로 앱 루트에 제공 |
-| [StoryReport](../../core/ui/src/main/java/app/manyak/core/ui/report/StoryReport.kt)·StoryReportSheet | 권장안 report | 네 화면의 상태/Scope 유지; Repository·API·분석과 함께 공유 업무로 분리 |
+| [StoryReport](../../report/src/main/java/app/manyak/report/presentation/StoryReport.kt)·StoryReportSheet | 권장안 report | 네 화면의 상태/Scope 유지; Repository·API·분석과 함께 공유 업무로 분리 |
 | DeviceIdStore·ThemePreferencesStore·공통 dispatcher 기반 | common/data 및 필요한 공통 계약 | 기존 파일·키 유지, 기기 ID의 HTTP/분석 단일 값 유지 |
 | [SessionCleanupSteps](../../app/src/main/java/app/manyak/session/SessionCleanupSteps.kt)·종료 Coordinator·루트/탭 | app 유지 | 각 저장소 정리 구현의 중앙 등록·순서와 화면 진입 연결만 갱신 |
 
@@ -169,7 +169,7 @@
 
 기존 테스트가 위 경계를 직접 검증하지 못하면 해당 위험에 대한 회귀 테스트를 추가합니다. 이름 변경이나 이동 자체를 그대로 따라 쓰는 테스트는 만들지 않습니다. 현행 코드의 기존 실패는 기준 상태와 비교해 별도 기록하고, 기존 실패를 숨기기 위해 테스트를 제거하거나 검사를 완화하지 않습니다.
 
-전체 게이트는 공통 빌드 변경 또는 최종 통합 확인에 필요한 시점에 실행합니다. 매 단계 전체 check/assembleDebug를 반복하지 않습니다. 기기·업그레이드 fixture가 준비되지 않으면 해당 검증을 미완료로 남기고 구조 전환 전체가 검증됐다고 보고하지 않습니다.
+전체 게이트는 공통 빌드 변경 또는 최종 통합 확인에 필요한 시점에 실행합니다. 매 단계 전체 check/assembleDebug를 반복하지 않습니다. 실행하지 못한 기기·업그레이드 시나리오는 해당 검증을 미완료로 남기고, 코드 이전 완료와 전체 사용자 흐름의 기기 검증 완료를 구분합니다.
 
 ## 5. 계획 검토 결과와 외부 합의
 
@@ -273,3 +273,47 @@
 
 - create 제작 단계·복구·Room 데이터 모듈 분리.
 - 키워드·스토리라인·추가 정보와 공유 상태·컴포넌트를 구분하고 Room·요청 데이터를 create로 이동했습니다. 제작·studio 테스트, 네 저장 스테이지 JSON·진행 요약·폐기 호환 테스트, 스키마 동일성·정적 검사·app Hilt 컴파일을 통과했습니다.
+
+### app
+
+- app 최종 조립·모듈 경계 검사 및 전환 정리.
+- 잔여 core:ui 의존·리소스를 제거하고 16개 모듈의 의존·계층 검사를 check에 연결했습니다. 전체 check·debug/release 조립과 371개 테스트, APK 업데이트 및 로그인 화면 비교를 통과했습니다. 로그인 이후 기기 흐름의 미확인 범위와 최종 소유권을 문서에 기록했습니다.
+
+## 최종 검증 결과
+
+- 최종 구조: 런타임 16개 모듈 + included build `build-logic`. core/feature Gradle 등록 및 프로덕션 참조 제거. navigation의 `app.manyak.core.navigation` 패키지만 기존 라우트 직렬화 호환을 위해 유지했습니다.
+- `./gradlew check assembleDebug` 통과. 모듈 경계 검사·ktlint·detekt·Android lint·단위 테스트와 debug APK 조립을 포함합니다.
+- `./gradlew :app:assembleRelease` 통과. 앱 ID·SDK·의존성 버전·빌드 타입별 서버/SDK 주입은 유지했습니다.
+- `checkModuleArchitecture`: 16개 프로젝트의 의존과 Kotlin 341개 파일의 패키지·계층·import·전체 경로·별칭·typealias 검사 통과. 파서는 별도 512MB worker 프로세스에서 실행합니다. 전체 컴파일러 의미 분석이나 리플렉션 검사는 아닙니다.
+- debug 단위 테스트와 검사기 회귀 테스트 총 371개 통과, 건너뛴 테스트 없음. 토큰 갱신·가입 안내·계정 연동, SSE·채팅, 제작 복구, 상세·스튜디오·마이 등의 기존 테스트를 이전했습니다.
+- 기존 core UI 문자열·배열 391개를 값·속성·인자·순서가 같은 상태로 중복 없이 이전했습니다. 기존 라우트 Kotlin 원문, 백업 제외 XML, 버전 카탈로그·Wrapper·daemon toolchain 파일은 기준 커밋과 동일합니다.
+- Room 파일명 `manyak.db`, 버전 1, 테이블/컬럼/SQL과 identity hash `fe5c9972f249343ab53ca5a9a2c6b97b` 동일. 네 스테이지의 기존 JSON fixture 복원·재저장, 진행 요약·폐기, 프로필/초대 안내 저장 키·정리를 테스트했습니다.
+- Pixel_10 에뮬레이터에 기준 APK 설치 후 새 APK를 `adb install -r`로 업데이트하고 실행했습니다. 새 프로세스의 로그인 화면 문구·접근성 라벨·bounds가 동일함을 UI 트리로 비교했고 스크린샷도 확인했습니다. 배경은 기존 순환 애니메이션입니다.
+- **기기 검증 미실행:** 에뮬레이터의 세션이 만료되어 로그인 이후 탭·채팅·제작·신고·마이·로그아웃 전체 흐름과 실제 저장 제작 데이터의 기기 재개는 확인하지 않았습니다. 관련 단위 테스트·Hilt 조립·저장 fixture 검증과 구분합니다.
+- 전체 검사와 release 조립을 함께 수행한 첫 실행에서 기존 2GB Gradle 힙의 GC thrashing을 확인했습니다. 힙을 4GB로 조정하고 기본 게이트·release 조립을 나누어 통과했습니다. 의존성 버전 변경은 없습니다.
+- ktlint 플러그인이 이전 진단/포맷 스냅숏의 생성 소스를 다시 읽는 문제는 플러그인 소스로 확인했습니다. 생성 소스 입력을 제외하고 해당 main-source-set 진단 파일 3개만 작업 임시 위치에 보관한 뒤 재검증했습니다. 전체 Gradle 캐시를 초기화하거나 검사 실패를 무시하지 않았습니다.
+- 하네스의 제품 화면·흐름 매트릭스 상태 열은 유지하고 모듈 소유 위치만 갱신했습니다. Android와 하네스의 현재 브랜치에서 로컬 커밋만 작성했습니다.
+
+## 모듈별 커밋
+
+각 행은 해당 모듈의 소유 코드와 소비자·DI·리소스 연결을 함께 담는 이전 단위입니다. 마지막 app 커밋에는 잔여 core:ui 제거, 경계 검사, 최종 문서와 검증 정책을 포함합니다.
+
+| 커밋 | 이전 단위 |
+| --- | --- |
+| `4baf0d0b` | 공통 Gradle 빌드 로직 모듈 분리 |
+| `1840c40d` | common 공통 기반 모듈 분리 |
+| `756305b5` | 디자인 시스템 모듈 분리 |
+| `8df35b67` | navigation 최상위 모듈 분리 |
+| `8444dd98` | analytics 모듈과 계층 경계 분리 |
+| `ebf535b4` | network 기반 모듈과 토큰 접근 계약 분리 |
+| `a9abfc3f` | auth 인증·세션 모듈 분리 |
+| `56913490` | 공유 신고 업무 report 모듈 분리 |
+| `92ebf7bc` | home 화면·데이터 모듈 분리 |
+| `a379ffcc` | chat 목록·채팅방 및 데이터 모듈 분리 |
+| `ecf25f6a` | login 화면·배경 모듈 분리 |
+| `e4270976` | legal 약관 화면·주소 계약 모듈 분리 |
+| `cdf5ec19` | studio 목록·삭제 및 데이터 모듈 분리 |
+| `8cc4026d` | story 상세·모델·조회 데이터 모듈 분리 |
+| `e7a5c0d7` | my 세부 기능·프로필·이프·초대 데이터 모듈 분리 |
+| `9f79324a` | create 제작 단계·복구·Room 데이터 모듈 분리 |
+| 본 문서를 포함한 최종 커밋 | app 최종 조립·잔여 core 제거·경계 검사 |

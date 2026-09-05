@@ -28,7 +28,7 @@ import javax.inject.Singleton
  *
  * **실패는 완료가 아니다.** 각 단계는 성공을 확인한 뒤에야 다음 저널 단계를 기록하고, 일시적 실패는
  * 유한한 backoff 로 재시도한다. 재시도를 소진하면 저널과 장벽을 그대로 둔 채
- * [SessionState.CleanupFailed][app.manyak.core.domain.session.SessionState.CleanupFailed] 를 공개한다 —
+ * [SessionState.CleanupFailed][app.manyak.auth.entity.SessionState.CleanupFailed] 를 공개한다 —
  * 정리가 끝나지 않았는데 로그인을 허용하면 다음 실행의 재개가 새 사용자의 데이터를 지운다.
  */
 @Singleton
