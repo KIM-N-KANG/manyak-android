@@ -253,3 +253,8 @@
 
 - legal 약관 화면·주소 계약 모듈 분리.
 - 웹 문서 화면은 presentation, 주소 공급 계약은 domain으로 분리했습니다. 본문·문자열 동일성, legal 컴파일·정적 검사와 app Hilt 컴파일을 확인했습니다.
+
+### studio
+
+- studio 목록·삭제 및 데이터 모듈 분리.
+- 공유 삭제 계약 StoryDeletion만 common에 두고 studio가 구현하며 상세도 같은 구현을 사용합니다. studio·상세 화면 테스트, 삭제 204·404·500 회귀 테스트, 변경 모듈 ktlint·detekt와 app Hilt 컴파일을 통과했습니다.

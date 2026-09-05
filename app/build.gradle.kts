@@ -159,7 +159,7 @@ dependencies {
     implementation(projects.legal)
     implementation(projects.home)
     implementation(projects.chat)
-    implementation(projects.feature.studio)
+    implementation(projects.studio)
     implementation(projects.feature.my)
     implementation(projects.feature.create)
     implementation(projects.feature.story)

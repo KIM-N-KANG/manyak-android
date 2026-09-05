@@ -2,11 +2,11 @@ package app.manyak.feature.story
 
 import app.manyak.common.domain.chat.ChatStarter
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.story.StoryDeletion
 import app.manyak.common.domain.story.StoryRepository
 import app.manyak.common.entity.chat.CreatedChat
 import app.manyak.common.entity.story.StoryDetail
 import app.manyak.common.entity.story.StoryStartSetting
-import app.manyak.common.entity.story.StorySummary
 import app.manyak.report.domain.ReportRepository
 import app.manyak.report.entity.StoryReportReason
 import kotlinx.coroutines.CompletableDeferred
@@ -55,6 +55,7 @@ internal fun sampleStartSettings(): List<StoryStartSetting> =
 /** 조회 결과는 큐에서 꺼내고 비면 성공 샘플을 돌려준다. */
 internal class FakeStoryRepository :
     StoryRepository,
+    StoryDeletion,
     ReportRepository {
     var storyDetailCallCount = 0
     val queuedDetailResults = ArrayDeque<DomainResult<StoryDetail>>()
@@ -69,8 +70,6 @@ internal class FakeStoryRepository :
         inFlightGate?.await()
         return queuedDetailResults.removeFirstOrNull() ?: DomainResult.Success(sampleStoryDetail())
     }
-
-    override suspend fun myStories(): DomainResult<List<StorySummary>> = DomainResult.Success(emptyList())
 
     val deletedStoryIds = mutableListOf<String>()
     val queuedDeleteResults = ArrayDeque<DomainResult<Unit>>()

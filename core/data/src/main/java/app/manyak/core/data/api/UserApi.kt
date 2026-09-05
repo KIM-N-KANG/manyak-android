@@ -1,6 +1,5 @@
 package app.manyak.core.data.api
 
-import app.manyak.common.data.story.StorySummaryDto
 import app.manyak.core.data.api.dto.AttendanceRewardResponseDto
 import app.manyak.core.data.api.dto.CreditTransactionsResponseDto
 import app.manyak.core.data.api.dto.InviteResponseDto
@@ -8,20 +7,14 @@ import app.manyak.core.data.api.dto.MeResponseDto
 import app.manyak.core.data.api.dto.RedeemInviteCodeRequestDto
 import retrofit2.Response
 import retrofit2.http.Body
-import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
-import retrofit2.http.Path
 import retrofit2.http.Query
 
 /** 회원 본인 소유 자원의 보호 경로. access 토큰을 붙이는 클라이언트로 호출한다. */
 interface UserApi {
     @GET("auth/me")
     suspend fun me(): Response<MeResponseDto>
-
-    /** 내가 만든 스토리 목록. limit 을 생략해 서버 기본 상한(100건)을 그대로 쓴다. */
-    @GET("users/me/stories")
-    suspend fun myStories(): Response<List<StorySummaryDto>>
 
     /** 출석 보상 지급. KST 자정 기준 1일 1회이며 오늘 이미 받았으면 rewarded=false 로 200 이다(멱등). */
     @POST("users/me/credits/attendance")
@@ -44,11 +37,5 @@ interface UserApi {
     @POST("users/me/invite/redeem")
     suspend fun redeemInviteCode(
         @Body request: RedeemInviteCodeRequestDto,
-    ): Response<Unit>
-
-    /** 내 스토리 소프트 삭제. 성공은 본문 없는 204 다. */
-    @DELETE("stories/{storyId}")
-    suspend fun deleteStory(
-        @Path("storyId") storyId: String,
     ): Response<Unit>
 }

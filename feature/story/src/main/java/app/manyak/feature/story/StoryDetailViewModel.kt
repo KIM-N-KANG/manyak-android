@@ -7,6 +7,7 @@ import app.manyak.analytics.entity.ReportSource
 import app.manyak.common.domain.chat.ChatStarter
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.story.StoryDeletion
 import app.manyak.common.domain.story.StoryRepository
 import app.manyak.common.entity.story.StoryDetail
 import app.manyak.common.presentation.mvi.MviViewModel
@@ -152,6 +153,7 @@ class StoryDetailViewModel
         private val chatRepository: ChatStarter,
         private val analytics: Analytics,
         reportRepository: ReportRepository,
+        private val storyDeletion: StoryDeletion,
     ) : MviViewModel<StoryDetailIntent, StoryDetailUiState, StoryDetailEvent, StoryDetailEffect>(
             StoryDetailUiState(),
         ) {
@@ -285,7 +287,7 @@ class StoryDetailViewModel
             deleteJob =
                 viewModelScope.launch {
                     dispatchEvent(StoryDetailEvent.DeleteStarted)
-                    when (storyRepository.deleteStory(storyId)) {
+                    when (storyDeletion.deleteStory(storyId)) {
                         is DomainResult.Success -> {
                             analytics.track(AnalyticsEvent.StoryDetailStoryDeleted(storyId))
                             dispatchEffect(StoryDetailEffect.StoryDeleted)

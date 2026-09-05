@@ -6,6 +6,7 @@ import androidx.compose.ui.res.stringResource
 import app.manyak.core.ui.R
 import app.manyak.designsystem.component.ManyakOptionsMenu
 import app.manyak.designsystem.component.ManyakOptionsMenuItem
+import app.manyak.common.R as CommonR
 import app.manyak.designsystem.R as DesignsystemR
 import app.manyak.report.R as ReportR
 
@@ -32,7 +33,7 @@ internal fun StoryDetailHeaderMenu(
         if (onDelete != null) {
             ManyakOptionsMenuItem(
                 iconRes = DesignsystemR.drawable.ic_delete,
-                label = stringResource(R.string.studio_story_delete),
+                label = stringResource(CommonR.string.studio_story_delete),
                 onClick = {
                     dismiss()
                     onDelete()

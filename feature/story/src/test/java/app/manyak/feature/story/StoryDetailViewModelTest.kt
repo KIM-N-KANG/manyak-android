@@ -41,7 +41,7 @@ class StoryDetailViewModelTest {
     private fun viewModel(
         storyRepository: FakeStoryRepository = FakeStoryRepository(),
         chatRepository: FakeChatRepository = FakeChatRepository(),
-    ) = StoryDetailViewModel(STORY_ID, storyRepository, chatRepository, NoOpAnalytics, storyRepository)
+    ) = StoryDetailViewModel(STORY_ID, storyRepository, chatRepository, NoOpAnalytics, storyRepository, storyRepository)
 
     @Test
     fun `화면이 보이면 상세를 조회하고 첫 시작 설정을 고른다`() =

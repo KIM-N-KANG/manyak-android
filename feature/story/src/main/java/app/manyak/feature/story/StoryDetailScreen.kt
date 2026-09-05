@@ -103,12 +103,12 @@ fun StoryDetailScreen(
                     is StoryDetailEffect.NavigateToChat -> currentOnEnterChat(effect.chatId)
 
                     StoryDetailEffect.StoryDeleted -> {
-                        Toast.makeText(context, R.string.studio_story_deleted, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, CommonR.string.studio_story_deleted, Toast.LENGTH_SHORT).show()
                         currentOnBack()
                     }
 
                     StoryDetailEffect.ShowDeleteFailed ->
-                        Toast.makeText(context, R.string.studio_story_delete_failed, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, CommonR.string.studio_story_delete_failed, Toast.LENGTH_SHORT).show()
 
                     StoryDetailEffect.ShowReportSubmitted ->
                         Toast.makeText(context, ReportR.string.story_report_submitted, Toast.LENGTH_SHORT).show()
@@ -232,10 +232,10 @@ private fun StoryDetailOverlays(
 
     if (state.isDeleteDialogOpen) {
         ManyakDestructiveDialog(
-            title = stringResource(R.string.studio_delete_dialog_title),
-            description = stringResource(R.string.studio_delete_dialog_description),
-            confirmLabel = stringResource(R.string.studio_story_delete),
-            cancelLabel = stringResource(R.string.studio_delete_dialog_cancel),
+            title = stringResource(CommonR.string.studio_delete_dialog_title),
+            description = stringResource(CommonR.string.studio_delete_dialog_description),
+            confirmLabel = stringResource(CommonR.string.studio_story_delete),
+            cancelLabel = stringResource(CommonR.string.studio_delete_dialog_cancel),
             onConfirm = { onIntent(StoryDetailIntent.ConfirmDelete) },
             onDismiss = { onIntent(StoryDetailIntent.DismissDeleteDialog) },
             inProgress = state.isDeleting,
