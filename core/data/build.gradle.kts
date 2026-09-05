@@ -20,6 +20,7 @@ room {
 }
 
 dependencies {
+    implementation(projects.auth)
     implementation(projects.network)
     implementation(projects.common)
 
@@ -35,11 +36,6 @@ dependencies {
     implementation(platform(libs.okhttp.bom))
     implementation(libs.okhttp.logging.interceptor)
     implementation(libs.okhttp.sse)
-
-    implementation(libs.androidx.credentials)
-    implementation(libs.androidx.credentials.play.services.auth)
-    implementation(libs.googleid)
-    implementation(libs.kakao.user)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

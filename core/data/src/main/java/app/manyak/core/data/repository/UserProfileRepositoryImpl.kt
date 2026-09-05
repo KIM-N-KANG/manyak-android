@@ -1,5 +1,7 @@
 package app.manyak.core.data.repository
 
+import app.manyak.auth.domain.SessionEndSignal
+import app.manyak.auth.domain.SessionGate
 import app.manyak.common.data.di.ApplicationScope
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
@@ -12,8 +14,6 @@ import app.manyak.common.entity.user.UserProfile
 import app.manyak.core.data.api.UserApi
 import app.manyak.core.data.api.dto.MeResponseDto
 import app.manyak.core.data.datastore.ProfileCacheStore
-import app.manyak.core.data.session.SessionEndSignal
-import app.manyak.core.data.session.SessionGate
 import app.manyak.network.data.api.apiCall
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope

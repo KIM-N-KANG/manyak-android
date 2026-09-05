@@ -1,13 +1,13 @@
 package app.manyak.session
 
+import app.manyak.auth.data.datastore.TerminationJournal
+import app.manyak.auth.data.datastore.TerminationJournalStore
+import app.manyak.auth.data.datastore.TerminationStep
+import app.manyak.auth.data.session.SessionStateHolder
+import app.manyak.auth.domain.SessionEndSignal
+import app.manyak.auth.domain.SessionGate
 import app.manyak.common.data.di.ApplicationScope
 import app.manyak.common.entity.session.SessionEndNotice
-import app.manyak.core.data.datastore.TerminationJournal
-import app.manyak.core.data.datastore.TerminationJournalStore
-import app.manyak.core.data.datastore.TerminationStep
-import app.manyak.core.data.session.SessionEndSignal
-import app.manyak.core.data.session.SessionGate
-import app.manyak.core.data.session.SessionStateHolder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async

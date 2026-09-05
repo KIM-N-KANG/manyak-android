@@ -1,14 +1,14 @@
 package app.manyak.feature.my
 
 import app.manyak.analytics.domain.NoOpAnalytics
-import app.manyak.common.domain.auth.AccountLinkRepository
+import app.manyak.auth.domain.AccountLinkRepository
+import app.manyak.auth.domain.SessionRepository
+import app.manyak.auth.entity.SessionState
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
-import app.manyak.common.domain.session.SessionRepository
 import app.manyak.common.domain.settings.ThemePreferenceRepository
 import app.manyak.common.domain.user.UserProfileRepository
 import app.manyak.common.entity.auth.AuthProvider
-import app.manyak.common.entity.session.SessionState
 import app.manyak.common.entity.settings.ThemeMode
 import app.manyak.common.entity.user.AccountStatus
 import app.manyak.common.entity.user.UserProfile

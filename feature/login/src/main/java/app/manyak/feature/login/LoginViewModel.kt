@@ -3,12 +3,12 @@ package app.manyak.feature.login
 import androidx.lifecycle.viewModelScope
 import app.manyak.analytics.domain.Analytics
 import app.manyak.analytics.entity.AnalyticsEvent
+import app.manyak.auth.domain.SessionRepository
+import app.manyak.auth.entity.SessionState
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
-import app.manyak.common.domain.session.SessionRepository
 import app.manyak.common.entity.auth.AuthProvider
 import app.manyak.common.entity.session.SessionEndNotice
-import app.manyak.common.entity.session.SessionState
 import app.manyak.common.presentation.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.filterIsInstance

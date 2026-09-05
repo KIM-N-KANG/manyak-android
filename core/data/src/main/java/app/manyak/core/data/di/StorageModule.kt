@@ -8,12 +8,6 @@ import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.room.Room
 import app.manyak.core.data.database.ManyakDatabase
 import app.manyak.core.data.database.PendingStoryCreationDao
-import app.manyak.core.data.datastore.AuthTokenStore
-import app.manyak.core.data.session.AndroidSessionClock
-import app.manyak.core.data.session.ProcessAnchorState
-import app.manyak.core.data.session.SessionClock
-import app.manyak.core.data.session.TokenStorage
-import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -24,15 +18,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object StorageModule {
-    /** 파일 이름은 백업·기기 이전 제외 규칙(`backup_rules.xml`·`data_extraction_rules.xml`)과 짝이다. 바꾸면 함께 고친다. */
-    @Provides
-    @Singleton
-    @AuthTokenDataStore
-    fun provideAuthTokenDataStore(
-        @ApplicationContext context: Context,
-    ): DataStore<Preferences> =
-        PreferenceDataStoreFactory.create { context.preferencesDataStoreFile(AUTH_TOKEN_STORE_NAME) }
-
     @Provides
     @Singleton
     @ProfileDataStore
@@ -40,18 +25,6 @@ object StorageModule {
         @ApplicationContext context: Context,
     ): DataStore<Preferences> =
         PreferenceDataStoreFactory.create { context.preferencesDataStoreFile(PROFILE_STORE_NAME) }
-
-    @Provides
-    @Singleton
-    @SessionJournalDataStore
-    fun provideSessionJournalDataStore(
-        @ApplicationContext context: Context,
-    ): DataStore<Preferences> =
-        PreferenceDataStoreFactory.create { context.preferencesDataStoreFile(SESSION_JOURNAL_STORE_NAME) }
-
-    @Provides
-    @Singleton
-    fun provideProcessAnchorState(): ProcessAnchorState = ProcessAnchorState()
 
     @Provides
     @Singleton
@@ -70,19 +43,5 @@ object StorageModule {
     fun providePendingStoryCreationDao(database: ManyakDatabase): PendingStoryCreationDao =
         database.pendingStoryCreationDao()
 
-    private const val AUTH_TOKEN_STORE_NAME = "auth_tokens"
     private const val PROFILE_STORE_NAME = "profile"
-    private const val SESSION_JOURNAL_STORE_NAME = "session_journal"
-}
-
-@Module
-@InstallIn(SingletonComponent::class)
-abstract class StorageBindingModule {
-    @Binds
-    @Singleton
-    abstract fun bindSessionClock(impl: AndroidSessionClock): SessionClock
-
-    @Binds
-    @Singleton
-    abstract fun bindTokenStorage(impl: AuthTokenStore): TokenStorage
 }

@@ -1,7 +1,5 @@
 package app.manyak.core.data.di
 
-import app.manyak.core.data.api.AccountLinkApi
-import app.manyak.core.data.api.AuthApi
 import app.manyak.core.data.api.ChatApi
 import app.manyak.core.data.api.CreationRequestApi
 import app.manyak.core.data.api.CreditPolicyApi
@@ -66,23 +64,6 @@ object ApiNetworkModule {
     fun provideEventSourceFactory(
         @SseClient client: OkHttpClient,
     ): EventSource.Factory = EventSources.createFactory(client)
-
-    @Provides
-    @Singleton
-    fun provideAuthApi(
-        @PlainClient client: OkHttpClient,
-        config: DataLayerConfig,
-        json: Json,
-    ): AuthApi = retrofit(client, config, json).create(AuthApi::class.java)
-
-    /** 연동은 로그인된 세션 위에서만 성립하므로 로그인과 달리 인증 클라이언트를 쓴다. */
-    @Provides
-    @Singleton
-    fun provideAccountLinkApi(
-        @AuthenticatedClient client: OkHttpClient,
-        config: DataLayerConfig,
-        json: Json,
-    ): AccountLinkApi = retrofit(client, config, json).create(AccountLinkApi::class.java)
 
     /** 오리지널 목록은 인증을 요구하지 않아 토큰 없는 클라이언트로 부른다. */
     @Provides

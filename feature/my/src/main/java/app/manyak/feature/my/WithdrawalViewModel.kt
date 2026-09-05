@@ -3,8 +3,8 @@ package app.manyak.feature.my
 import androidx.annotation.StringRes
 import app.manyak.analytics.domain.Analytics
 import app.manyak.analytics.entity.AnalyticsEvent
+import app.manyak.auth.domain.SessionRepository
 import app.manyak.common.domain.error.DomainResult
-import app.manyak.common.domain.session.SessionRepository
 import app.manyak.common.presentation.mvi.MviViewModel
 import app.manyak.core.ui.R
 import dagger.hilt.android.lifecycle.HiltViewModel

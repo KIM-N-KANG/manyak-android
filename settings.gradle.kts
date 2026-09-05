@@ -60,3 +60,5 @@ include(":feature:story")
 include(":designsystem")
 
 include(":network")
+
+include(":auth")
