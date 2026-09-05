@@ -64,7 +64,6 @@ import app.manyak.feature.create.CreateAdditionalInfoScreen
 import app.manyak.feature.create.CreateKeywordScreen
 import app.manyak.feature.create.CreateStorylineScreen
 import app.manyak.feature.legal.LegalDocumentScreen
-import app.manyak.feature.login.LoginScreen
 import app.manyak.feature.my.CreditChargeScreen
 import app.manyak.feature.my.FeedbackScreen
 import app.manyak.feature.my.InviteOnboardingSheet
@@ -72,6 +71,7 @@ import app.manyak.feature.my.InviteScreen
 import app.manyak.feature.my.OpenSourceLicenseScreen
 import app.manyak.feature.my.WithdrawalScreen
 import app.manyak.feature.story.StoryDetailScreen
+import app.manyak.login.presentation.LoginScreen
 import app.manyak.designsystem.R as DesignsystemR
 
 /**

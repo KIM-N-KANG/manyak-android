@@ -1,4 +1,4 @@
-package app.manyak.feature.login
+package app.manyak.login.presentation
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -49,11 +49,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.manyak.common.entity.auth.AuthProvider
 import app.manyak.common.presentation.error.messageResOrNull
 import app.manyak.core.navigation.LegalDocument
-import app.manyak.core.ui.R
 import app.manyak.designsystem.component.ManyakLogo
 import app.manyak.designsystem.component.ManyakProgressIndicator
 import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.login.presentation.component.LoginBackground
 import app.manyak.designsystem.R as DesignsystemR
+import app.manyak.login.R as LoginR
 
 @Composable
 fun LoginScreen(
@@ -162,7 +163,7 @@ private fun LoginHeadline(modifier: Modifier = Modifier) {
         ManyakLogo(modifier = Modifier.padding(top = ManyakTheme.spacing.screenTop))
         Text(
             modifier = Modifier.padding(top = ManyakTheme.spacing.component),
-            text = stringResource(R.string.login_headline),
+            text = stringResource(LoginR.string.login_headline),
             style = ManyakTheme.typography.titleLarge.copy(shadow = headlineShadow()),
             color = ManyakTheme.colors.text,
         )
@@ -187,7 +188,7 @@ private fun LoginMessages(
         val errorRes = state.error?.messageResOrNull()
         CenteredMessage(
             modifier = Modifier.padding(bottom = ManyakTheme.spacing.component),
-            text = stringResource(errorRes ?: R.string.login_provider_conflict),
+            text = stringResource(errorRes ?: LoginR.string.login_provider_conflict),
             style = ManyakTheme.typography.bodySmall,
             color = if (errorRes == null) ManyakTheme.colors.textSubtle else ManyakTheme.colors.textDanger,
         )
@@ -222,7 +223,7 @@ private fun ProviderButtons(
     ) {
         ProviderButton(
             provider = AuthProvider.KAKAO,
-            labelRes = R.string.login_kakao,
+            labelRes = LoginR.string.login_kakao,
             logoRes = DesignsystemR.drawable.ic_logo_kakao,
             containerColor = KakaoContainerColor,
             contentColor = KakaoContentColor,
@@ -231,7 +232,7 @@ private fun ProviderButtons(
         )
         ProviderButton(
             provider = AuthProvider.GOOGLE,
-            labelRes = R.string.login_google,
+            labelRes = LoginR.string.login_google,
             logoRes = DesignsystemR.drawable.ic_logo_google,
             containerColor = GoogleContainerColor,
             contentColor = GoogleContentColor,
@@ -300,9 +301,9 @@ private fun LegalConsent(
     onOpenLegalDocument: (LegalDocument) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val termsLabel = stringResource(R.string.login_consent_terms)
-    val privacyLabel = stringResource(R.string.login_consent_privacy)
-    val sentence = stringResource(R.string.login_consent, termsLabel, privacyLabel)
+    val termsLabel = stringResource(LoginR.string.login_consent_terms)
+    val privacyLabel = stringResource(LoginR.string.login_consent_privacy)
+    val sentence = stringResource(LoginR.string.login_consent, termsLabel, privacyLabel)
     val linkStyles = TextLinkStyles(style = SpanStyle(textDecoration = TextDecoration.Underline))
 
     val annotated =

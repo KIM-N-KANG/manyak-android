@@ -1,4 +1,4 @@
-package app.manyak.feature.login
+package app.manyak.login.presentation
 
 import androidx.lifecycle.viewModelScope
 import app.manyak.analytics.domain.Analytics

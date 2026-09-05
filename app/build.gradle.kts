@@ -155,7 +155,7 @@ dependencies {
     implementation(projects.core.ui)
     implementation(projects.navigation)
     implementation(projects.analytics)
-    implementation(projects.feature.login)
+    implementation(projects.login)
     implementation(projects.feature.legal)
     implementation(projects.home)
     implementation(projects.chat)

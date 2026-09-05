@@ -1,4 +1,4 @@
-package app.manyak.feature.login
+package app.manyak.login.presentation.component
 
 import android.content.Context
 import android.provider.Settings
@@ -27,6 +27,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.currentStateAsState
 import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.login.R
 import kotlinx.coroutines.delay
 
 /**
