@@ -5,12 +5,10 @@ import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.error.map
 import app.manyak.common.domain.story.StoryRepository
 import app.manyak.common.entity.story.StoryDetail
-import app.manyak.common.entity.story.StoryReportReason
 import app.manyak.common.entity.story.StorySummary
 import app.manyak.core.data.api.StoryApi
 import app.manyak.core.data.api.StoryDetailApi
 import app.manyak.core.data.api.UserApi
-import app.manyak.core.data.api.dto.CreateStoryReportRequestDto
 import app.manyak.core.data.api.dto.toDomain
 import app.manyak.network.data.api.apiCall
 import app.manyak.network.data.api.emptyBodyApiCall
@@ -46,23 +44,6 @@ class StoryRepositoryImpl
                 result
             }
         }
-
-        override suspend fun reportStory(
-            storyId: String,
-            reason: StoryReportReason,
-            detail: String?,
-        ): DomainResult<Unit> =
-            emptyBodyApiCall {
-                storyDetailApi.reportStory(
-                    storyId = storyId,
-                    request =
-                        CreateStoryReportRequestDto(
-                            reason = reason.name,
-                            // 빈 문자열은 미작성과 같은 뜻이라 null 로 보낸다.
-                            detail = detail?.takeIf { it.isNotBlank() },
-                        ),
-                )
-            }
     }
 
 private const val HTTP_NOT_FOUND = 404

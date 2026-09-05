@@ -41,6 +41,7 @@ import app.manyak.designsystem.component.ManyakPullToRefreshBox
 import app.manyak.designsystem.component.rememberDelayedProgressVisibility
 import app.manyak.designsystem.component.withRowListMargins
 import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.report.R as ReportR
 
 /**
  * 제작 탭(내가 만든 스토리 목록). 헤더와 하단 탭은 셸이 그리므로 여기서는 콘텐츠만 둔다.
@@ -86,10 +87,10 @@ fun StudioScreen(
                         Toast.makeText(context, R.string.story_refresh_failed, Toast.LENGTH_SHORT).show()
 
                     StudioEffect.ShowReportSubmitted ->
-                        Toast.makeText(context, R.string.story_report_submitted, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, ReportR.string.story_report_submitted, Toast.LENGTH_SHORT).show()
 
                     StudioEffect.ShowReportFailed ->
-                        Toast.makeText(context, R.string.story_report_failed, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, ReportR.string.story_report_failed, Toast.LENGTH_SHORT).show()
                 }
             }
         }

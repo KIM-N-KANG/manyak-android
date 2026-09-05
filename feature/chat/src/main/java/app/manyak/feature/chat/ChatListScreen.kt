@@ -38,8 +38,6 @@ import app.manyak.analytics.presentation.rememberImpressionTracker
 import app.manyak.analytics.presentation.trackImpression
 import app.manyak.common.entity.chat.ChatSummary
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.StoryReportSheet
-import app.manyak.core.ui.report.StoryReportAction
 import app.manyak.designsystem.component.LoadFailedContent
 import app.manyak.designsystem.component.ManyakDestructiveDialogContent
 import app.manyak.designsystem.component.ManyakDialog
@@ -49,7 +47,10 @@ import app.manyak.designsystem.component.ManyakPullToRefreshBox
 import app.manyak.designsystem.component.rememberDelayedProgressVisibility
 import app.manyak.designsystem.component.withRowListMargins
 import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.report.presentation.StoryReportAction
+import app.manyak.report.presentation.component.StoryReportSheet
 import app.manyak.designsystem.R as DesignsystemR
+import app.manyak.report.R as ReportR
 
 /**
  * 채팅 탭(진행 중인 채팅 목록). 헤더와 하단 탭은 셸이 그리므로 여기서는 콘텐츠만 둔다.
@@ -86,10 +87,10 @@ fun ChatListScreen(
                         Toast.makeText(context, R.string.chat_room_delete_failed, Toast.LENGTH_SHORT).show()
 
                     ChatListEffect.ShowReportSubmitted ->
-                        Toast.makeText(context, R.string.story_report_submitted, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, ReportR.string.story_report_submitted, Toast.LENGTH_SHORT).show()
 
                     ChatListEffect.ShowReportFailed ->
-                        Toast.makeText(context, R.string.story_report_failed, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, ReportR.string.story_report_failed, Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -215,7 +216,7 @@ private fun ChatOptions(
         if (chat.storyId.isNotBlank()) {
             ManyakOptionsDialogItem(
                 iconRes = DesignsystemR.drawable.ic_info,
-                label = stringResource(R.string.story_report_action),
+                label = stringResource(ReportR.string.story_report_action),
                 onClick = { onIntent(ChatListIntent.Report(StoryReportAction.Open)) },
             )
         }

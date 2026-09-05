@@ -1,11 +1,11 @@
-package app.manyak.core.ui.report
+package app.manyak.report.presentation
 
 import app.manyak.analytics.domain.Analytics
 import app.manyak.analytics.entity.AnalyticsEvent
 import app.manyak.analytics.entity.ReportSource
 import app.manyak.common.domain.error.DomainResult
-import app.manyak.common.domain.story.StoryRepository
-import app.manyak.common.entity.story.StoryReportReason
+import app.manyak.report.domain.ReportRepository
+import app.manyak.report.entity.StoryReportReason
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -81,7 +81,7 @@ fun StoryReportUiState.reduceReport(change: StoryReportChange): StoryReportUiSta
  */
 class StoryReportController(
     private val scope: CoroutineScope,
-    private val repository: StoryRepository,
+    private val repository: ReportRepository,
     private val analytics: Analytics,
     private val source: ReportSource,
     private val emit: suspend (StoryReportChange) -> Unit,

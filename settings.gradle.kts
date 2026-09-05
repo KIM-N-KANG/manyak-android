@@ -62,3 +62,5 @@ include(":designsystem")
 include(":network")
 
 include(":auth")
+
+include(":report")

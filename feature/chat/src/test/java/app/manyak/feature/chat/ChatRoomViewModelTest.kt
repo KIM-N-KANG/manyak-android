@@ -39,7 +39,7 @@ class ChatRoomViewModelTest {
                 ChatRoomViewModel(
                     chatId = "chat-1",
                     chatRepository = repository,
-                    storyRepository = FakeStoryRepository(),
+                    reportRepository = FakeReportRepository(),
                     preferences = FakeChatPreferencesRepository(),
                     analytics = NoOpAnalytics,
                 )
@@ -65,7 +65,7 @@ class ChatRoomViewModelTest {
                 ChatRoomViewModel(
                     chatId = "chat-1",
                     chatRepository = repository,
-                    storyRepository = FakeStoryRepository(),
+                    reportRepository = FakeReportRepository(),
                     preferences = FakeChatPreferencesRepository(),
                     analytics = NoOpAnalytics,
                 )

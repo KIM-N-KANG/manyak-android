@@ -146,6 +146,7 @@ android {
 }
 
 dependencies {
+    implementation(projects.report)
     implementation(projects.auth)
     implementation(projects.network)
     implementation(projects.designsystem)

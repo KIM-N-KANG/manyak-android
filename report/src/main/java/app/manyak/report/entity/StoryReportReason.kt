@@ -1,4 +1,4 @@
-package app.manyak.common.entity.story
+package app.manyak.report.entity
 
 /**
  * 스토리 신고 사유. 이름은 서버 enum 과 1:1 로 맞춘다 — 데이터 계층이 `name` 을 그대로 실어 보낸다.

@@ -10,9 +10,10 @@ import app.manyak.common.entity.chat.ChatSummary
 import app.manyak.common.entity.chat.CreatedChat
 import app.manyak.common.entity.chat.UserSource
 import app.manyak.common.entity.story.StoryDetail
-import app.manyak.common.entity.story.StoryReportReason
 import app.manyak.common.entity.story.StoryStartSetting
 import app.manyak.common.entity.story.StorySummary
+import app.manyak.report.domain.ReportRepository
+import app.manyak.report.entity.StoryReportReason
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -59,7 +60,9 @@ internal fun sampleStartSettings(): List<StoryStartSetting> =
     )
 
 /** 조회 결과는 큐에서 꺼내고 비면 성공 샘플을 돌려준다. */
-internal class FakeStoryRepository : StoryRepository {
+internal class FakeStoryRepository :
+    StoryRepository,
+    ReportRepository {
     var storyDetailCallCount = 0
     val queuedDetailResults = ArrayDeque<DomainResult<StoryDetail>>()
 

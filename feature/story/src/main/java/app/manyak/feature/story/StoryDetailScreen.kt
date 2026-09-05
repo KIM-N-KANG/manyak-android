@@ -59,8 +59,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.common.entity.story.StoryDetail
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.StoryReportSheet
-import app.manyak.core.ui.report.StoryReportAction
 import app.manyak.designsystem.component.LoadFailedContent
 import app.manyak.designsystem.component.ManyakDestructiveDialog
 import app.manyak.designsystem.component.ManyakIconButton
@@ -69,7 +67,10 @@ import app.manyak.designsystem.component.ScrollEdgeFadeHeight
 import app.manyak.designsystem.component.StoryOverlayScrim
 import app.manyak.designsystem.component.rememberDelayedProgressVisibility
 import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.report.presentation.StoryReportAction
+import app.manyak.report.presentation.component.StoryReportSheet
 import app.manyak.designsystem.R as DesignsystemR
+import app.manyak.report.R as ReportR
 
 /**
  * 스토리 상세. 셸 없는 전체 화면이며 홈·제작 목록의 카드 탭으로 들어온다.
@@ -109,10 +110,10 @@ fun StoryDetailScreen(
                         Toast.makeText(context, R.string.studio_story_delete_failed, Toast.LENGTH_SHORT).show()
 
                     StoryDetailEffect.ShowReportSubmitted ->
-                        Toast.makeText(context, R.string.story_report_submitted, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, ReportR.string.story_report_submitted, Toast.LENGTH_SHORT).show()
 
                     StoryDetailEffect.ShowReportFailed ->
-                        Toast.makeText(context, R.string.story_report_failed, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, ReportR.string.story_report_failed, Toast.LENGTH_SHORT).show()
                 }
             }
         }

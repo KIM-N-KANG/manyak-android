@@ -37,9 +37,6 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.core.ui.R
-import app.manyak.core.ui.component.StoryReportSheet
-import app.manyak.core.ui.report.StoryReportAction
-import app.manyak.core.ui.report.StoryReportUiState
 import app.manyak.designsystem.component.ManyakDestructiveDialog
 import app.manyak.designsystem.component.ManyakIconButton
 import app.manyak.designsystem.component.ManyakOptionsMenu
@@ -49,7 +46,11 @@ import app.manyak.designsystem.component.rememberDelayedProgressVisibility
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.feature.chat.composer.ChatComposer
 import app.manyak.feature.chat.composer.ChatComposerActions
+import app.manyak.report.presentation.StoryReportAction
+import app.manyak.report.presentation.StoryReportUiState
+import app.manyak.report.presentation.component.StoryReportSheet
 import app.manyak.designsystem.R as DesignsystemR
+import app.manyak.report.R as ReportR
 
 /**
  * 채팅방. 셸 없는 전체 화면이며 상세 조회 렌더와 턴 진행, 추천 입력·선택지를 담는다.
@@ -100,10 +101,10 @@ fun ChatRoomScreen(
                     }
 
                     ChatRoomEffect.ShowReportSubmitted ->
-                        Toast.makeText(context, R.string.story_report_submitted, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, ReportR.string.story_report_submitted, Toast.LENGTH_SHORT).show()
 
                     ChatRoomEffect.ShowReportFailed ->
-                        Toast.makeText(context, R.string.story_report_failed, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, ReportR.string.story_report_failed, Toast.LENGTH_SHORT).show()
 
                     ChatRoomEffect.ShowComposerLocked ->
                         Toast
@@ -330,7 +331,7 @@ private fun ChatRoomHeader(
                 ManyakOptionsMenu(contentDescription = stringResource(R.string.chat_room_options)) { dismiss ->
                     ManyakOptionsMenuItem(
                         iconRes = DesignsystemR.drawable.ic_info,
-                        label = stringResource(R.string.story_report_action),
+                        label = stringResource(ReportR.string.story_report_action),
                         onClick = {
                             dismiss()
                             onReportClick()

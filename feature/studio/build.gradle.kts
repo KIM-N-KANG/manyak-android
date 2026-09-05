@@ -8,6 +8,7 @@ android {
 }
 
 dependencies {
+    implementation(projects.report)
     implementation(projects.designsystem)
     // 구현이 있는 :core:data 는 의존하지 않는다. ViewModel 은 Repository 인터페이스만 안다.
     implementation(projects.common)

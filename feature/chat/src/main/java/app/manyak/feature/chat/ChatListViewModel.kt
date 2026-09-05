@@ -6,14 +6,14 @@ import app.manyak.analytics.entity.AnalyticsEvent
 import app.manyak.analytics.entity.ReportSource
 import app.manyak.common.domain.chat.ChatRepository
 import app.manyak.common.domain.error.DomainResult
-import app.manyak.common.domain.story.StoryRepository
 import app.manyak.common.entity.chat.ChatSummary
 import app.manyak.common.presentation.mvi.MviViewModel
-import app.manyak.core.ui.report.StoryReportAction
-import app.manyak.core.ui.report.StoryReportChange
-import app.manyak.core.ui.report.StoryReportController
-import app.manyak.core.ui.report.StoryReportUiState
-import app.manyak.core.ui.report.reduceReport
+import app.manyak.report.domain.ReportRepository
+import app.manyak.report.presentation.StoryReportAction
+import app.manyak.report.presentation.StoryReportChange
+import app.manyak.report.presentation.StoryReportController
+import app.manyak.report.presentation.StoryReportUiState
+import app.manyak.report.presentation.reduceReport
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -137,7 +137,7 @@ class ChatListViewModel
     @Inject
     constructor(
         private val chatRepository: ChatRepository,
-        storyRepository: StoryRepository,
+        reportRepository: ReportRepository,
         private val analytics: Analytics,
     ) : MviViewModel<ChatListIntent, ChatListUiState, ChatListEvent, ChatListEffect>(ChatListUiState()) {
         private var loadJob: Job? = null
@@ -147,11 +147,11 @@ class ChatListViewModel
             analytics.track(AnalyticsEvent.ChatListViewed)
         }
 
-        /** 신고 절차는 채팅방·상세와 같아 :core:ui 의 컨트롤러가 소유한다. */
+        /** 신고 절차는 채팅방·상세와 같아 공유 신고 컨트롤러가 소유한다. */
         private val report =
             StoryReportController(
                 scope = viewModelScope,
-                repository = storyRepository,
+                repository = reportRepository,
                 analytics = analytics,
                 source = ReportSource.CHAT_LIST,
                 emit = { change -> dispatchEvent(ChatListEvent.Report(change)) },

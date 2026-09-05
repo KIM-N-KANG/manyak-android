@@ -11,14 +11,8 @@ import app.manyak.common.domain.chat.ChatPreferencesRepository
 import app.manyak.common.domain.chat.ChatRepository
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
-import app.manyak.common.domain.story.StoryRepository
 import app.manyak.common.entity.chat.ChatStreamEvent
 import app.manyak.common.presentation.mvi.MviViewModel
-import app.manyak.core.ui.report.StoryReportAction
-import app.manyak.core.ui.report.StoryReportChange
-import app.manyak.core.ui.report.StoryReportController
-import app.manyak.core.ui.report.StoryReportUiState
-import app.manyak.core.ui.report.reduceReport
 import app.manyak.feature.chat.composer.ChatComposerState
 import app.manyak.feature.chat.composer.InputBlockType
 import app.manyak.feature.chat.composer.addBlock
@@ -37,6 +31,12 @@ import app.manyak.feature.chat.suggestion.composerOrigin
 import app.manyak.feature.chat.suggestion.normalizeSuggestion
 import app.manyak.feature.chat.suggestion.randomSuggestionPosition
 import app.manyak.feature.chat.suggestion.shouldGenerateChoices
+import app.manyak.report.domain.ReportRepository
+import app.manyak.report.presentation.StoryReportAction
+import app.manyak.report.presentation.StoryReportChange
+import app.manyak.report.presentation.StoryReportController
+import app.manyak.report.presentation.StoryReportUiState
+import app.manyak.report.presentation.reduceReport
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -266,7 +266,7 @@ class ChatRoomViewModel
     constructor(
         @Assisted private val chatId: String,
         private val chatRepository: ChatRepository,
-        private val storyRepository: StoryRepository,
+        private val reportRepository: ReportRepository,
         private val preferences: ChatPreferencesRepository,
         private val analytics: Analytics,
     ) : MviViewModel<ChatRoomIntent, ChatRoomUiState, ChatRoomEvent, ChatRoomEffect>(ChatRoomUiState()) {
@@ -274,11 +274,11 @@ class ChatRoomViewModel
         private var loadJob: Job? = null
         private var streamJob: Job? = null
 
-        /** 신고 절차는 스토리 상세와 같아 :core:ui 의 컨트롤러가 소유한다. */
+        /** 신고 절차는 스토리 상세와 같아 공유 신고 컨트롤러가 소유한다. */
         private val report =
             StoryReportController(
                 scope = viewModelScope,
-                repository = storyRepository,
+                repository = reportRepository,
                 analytics = analytics,
                 source = ReportSource.CHAT,
                 emit = { change -> dispatchEvent(ChatRoomEvent.Report(change)) },

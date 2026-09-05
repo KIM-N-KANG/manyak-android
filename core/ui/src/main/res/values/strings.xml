@@ -403,18 +403,6 @@
     <string name="story_detail_options">스토리 옵션</string>
 
     <!-- 스토리 신고. 상세와 채팅방이 같은 시트를 쓰며, 신고 대상은 두 곳 모두 스토리다. -->
-    <string name="story_report_action">신고하기</string>
-    <string name="story_report_title">이 스토리를 신고할까요?</string>
-    <string name="story_report_description">부적절하거나 불쾌한 내용이 있으면 알려주세요</string>
-    <string name="story_report_reason_spam">도배·홍보</string>
-    <string name="story_report_reason_inappropriate">부적절한 내용</string>
-    <string name="story_report_reason_etc">기타</string>
-    <string name="story_report_detail_label">자세한 내용 (선택)</string>
-    <string name="story_report_detail_placeholder">어떤 점이 문제였는지 알려주세요</string>
-    <string name="story_report_submit">신고하기</string>
-    <string name="story_report_close">닫기</string>
-    <string name="story_report_submitted">신고가 접수되었어요</string>
-    <string name="story_report_failed">신고를 접수하지 못했어요</string>
 
     <!-- 채팅 목록 -->
     <string name="chat_list_loading">채팅 불러오는 중</string>

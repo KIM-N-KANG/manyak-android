@@ -7,6 +7,7 @@ import app.manyak.core.ui.R
 import app.manyak.designsystem.component.ManyakOptionsMenu
 import app.manyak.designsystem.component.ManyakOptionsMenuItem
 import app.manyak.designsystem.R as DesignsystemR
+import app.manyak.report.R as ReportR
 
 /** 헤더 오른쪽 더보기 메뉴. 신고는 누구에게나, 삭제는 내 스토리로 들어왔을 때만 항목이 있다. */
 @Composable
@@ -22,7 +23,7 @@ internal fun StoryDetailHeaderMenu(
     ) { dismiss ->
         ManyakOptionsMenuItem(
             iconRes = DesignsystemR.drawable.ic_info,
-            label = stringResource(R.string.story_report_action),
+            label = stringResource(ReportR.string.story_report_action),
             onClick = {
                 dismiss()
                 onReport()

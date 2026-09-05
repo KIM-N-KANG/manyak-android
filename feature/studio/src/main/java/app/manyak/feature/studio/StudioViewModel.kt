@@ -14,11 +14,12 @@ import app.manyak.common.entity.story.PendingStoryCreationStore
 import app.manyak.common.entity.story.StorySummary
 import app.manyak.common.entity.story.resumePoint
 import app.manyak.common.presentation.mvi.MviViewModel
-import app.manyak.core.ui.report.StoryReportAction
-import app.manyak.core.ui.report.StoryReportChange
-import app.manyak.core.ui.report.StoryReportController
-import app.manyak.core.ui.report.StoryReportUiState
-import app.manyak.core.ui.report.reduceReport
+import app.manyak.report.domain.ReportRepository
+import app.manyak.report.presentation.StoryReportAction
+import app.manyak.report.presentation.StoryReportChange
+import app.manyak.report.presentation.StoryReportController
+import app.manyak.report.presentation.StoryReportUiState
+import app.manyak.report.presentation.reduceReport
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -177,6 +178,7 @@ class StudioViewModel
         private val pendingCreationStore: PendingStoryCreationStore,
         private val storyRepository: StoryRepository,
         private val analytics: Analytics,
+        reportRepository: ReportRepository,
     ) : MviViewModel<StudioIntent, StudioUiState, StudioEvent, StudioEffect>(StudioUiState()) {
         private var loadJob: Job? = null
         private var deleteJob: Job? = null
@@ -184,11 +186,11 @@ class StudioViewModel
         /** 배너로 보여 준 레코드 단계. 같은 레코드가 다시 흘러와도 노출을 두 번 세지 않는다. */
         private var shownBannerStage: PendingCreationStage? = null
 
-        /** 신고 절차는 상세·채팅방과 같아 :core:ui 의 컨트롤러가 소유한다. */
+        /** 신고 절차는 상세·채팅방과 같아 공유 신고 컨트롤러가 소유한다. */
         private val report =
             StoryReportController(
                 scope = viewModelScope,
-                repository = storyRepository,
+                repository = reportRepository,
                 analytics = analytics,
                 source = ReportSource.STUDIO,
                 emit = { change -> dispatchEvent(StudioEvent.Report(change)) },

@@ -1,4 +1,4 @@
-package app.manyak.core.data.api.dto
+package app.manyak.report.data.api.dto
 
 import kotlinx.serialization.Serializable
 

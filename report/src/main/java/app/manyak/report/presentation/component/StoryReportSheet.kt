@@ -1,4 +1,4 @@
-package app.manyak.core.ui.component
+package app.manyak.report.presentation.component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,16 +22,16 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
-import app.manyak.common.entity.story.StoryReportReason
-import app.manyak.core.ui.R
-import app.manyak.core.ui.report.StoryReportAction
-import app.manyak.core.ui.report.StoryReportUiState
 import app.manyak.designsystem.component.ManyakBottomSheet
 import app.manyak.designsystem.component.ManyakInputCounter
 import app.manyak.designsystem.component.ManyakMultilineTextField
 import app.manyak.designsystem.component.ManyakProgressIndicator
 import app.manyak.designsystem.component.ManyakTextButton
 import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.report.entity.StoryReportReason
+import app.manyak.report.presentation.StoryReportAction
+import app.manyak.report.presentation.StoryReportUiState
+import app.manyak.report.R as ReportR
 
 /** 서버가 받는 상세 서술의 상한. 넘겨 보내면 400 이라 입력 단계에서 막는다. */
 const val STORY_REPORT_DETAIL_MAX_LENGTH: Int = 500
@@ -75,7 +75,7 @@ fun StoryReportSheet(
             enabled = !state.isSubmitting,
         ) {
             Text(
-                text = stringResource(R.string.story_report_close),
+                text = stringResource(ReportR.string.story_report_close),
                 style = ManyakTheme.typography.labelLarge,
                 color = ManyakTheme.colors.textSubtle,
             )
@@ -90,12 +90,12 @@ private fun StoryReportHeadline(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
         Text(
-            text = stringResource(R.string.story_report_title),
+            text = stringResource(ReportR.string.story_report_title),
             style = ManyakTheme.typography.titleLarge,
             color = ManyakTheme.colors.text,
         )
         Text(
-            text = stringResource(R.string.story_report_description),
+            text = stringResource(ReportR.string.story_report_description),
             style = ManyakTheme.typography.bodyLarge,
             color = ManyakTheme.colors.textSubtle,
         )
@@ -159,7 +159,7 @@ private fun StoryReportDetailField(
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
         Text(
-            text = stringResource(R.string.story_report_detail_label),
+            text = stringResource(ReportR.string.story_report_detail_label),
             style = ManyakTheme.typography.labelLarge,
             color = ManyakTheme.colors.text,
         )
@@ -167,7 +167,7 @@ private fun StoryReportDetailField(
             modifier = Modifier.fillMaxWidth(),
             value = detail,
             onValueChange = { input -> onDetailChange(input.take(STORY_REPORT_DETAIL_MAX_LENGTH)) },
-            placeholder = stringResource(R.string.story_report_detail_placeholder),
+            placeholder = stringResource(ReportR.string.story_report_detail_placeholder),
             enabled = enabled,
             footer = {
                 ManyakInputCounter(
@@ -203,7 +203,7 @@ private fun StoryReportSubmitButton(
             // 진행 중에도 라벨 자리를 유지해 버튼 폭이 스피너 폭으로 줄지 않게 한다.
             Text(
                 modifier = Modifier.alpha(if (isSubmitting) 0f else 1f),
-                text = stringResource(R.string.story_report_submit),
+                text = stringResource(ReportR.string.story_report_submit),
                 style = ManyakTheme.typography.labelLarge,
             )
             if (isSubmitting) ManyakProgressIndicator()
@@ -213,9 +213,9 @@ private fun StoryReportSubmitButton(
 
 private fun StoryReportReason.labelRes(): Int =
     when (this) {
-        StoryReportReason.SPAM -> R.string.story_report_reason_spam
-        StoryReportReason.INAPPROPRIATE -> R.string.story_report_reason_inappropriate
-        StoryReportReason.ETC -> R.string.story_report_reason_etc
+        StoryReportReason.SPAM -> ReportR.string.story_report_reason_spam
+        StoryReportReason.INAPPROPRIATE -> ReportR.string.story_report_reason_inappropriate
+        StoryReportReason.ETC -> ReportR.string.story_report_reason_etc
     }
 
 @Preview

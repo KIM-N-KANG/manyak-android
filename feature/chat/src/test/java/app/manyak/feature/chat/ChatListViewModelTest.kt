@@ -3,8 +3,8 @@ package app.manyak.feature.chat
 import app.manyak.analytics.domain.NoOpAnalytics
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
-import app.manyak.common.entity.story.StoryReportReason
-import app.manyak.core.ui.report.StoryReportAction
+import app.manyak.report.entity.StoryReportReason
+import app.manyak.report.presentation.StoryReportAction
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -40,7 +40,7 @@ class ChatListViewModelTest {
     fun `화면이 보이면 조회해 서버가 준 순서 그대로 목록을 만든다`() =
         runTest(dispatcher) {
             val repository = FakeChatRepository()
-            val viewModel = ChatListViewModel(repository, FakeStoryRepository(), NoOpAnalytics)
+            val viewModel = ChatListViewModel(repository, FakeReportRepository(), NoOpAnalytics)
 
             viewModel.onIntent(ChatListIntent.ScreenShown)
             advanceUntilIdle()
@@ -56,7 +56,7 @@ class ChatListViewModelTest {
     fun `이미 그릴 목록이 있는 복귀 갱신은 골격을 다시 깔지 않는다`() =
         runTest(dispatcher) {
             val repository = FakeChatRepository()
-            val viewModel = ChatListViewModel(repository, FakeStoryRepository(), NoOpAnalytics)
+            val viewModel = ChatListViewModel(repository, FakeReportRepository(), NoOpAnalytics)
             viewModel.onIntent(ChatListIntent.ScreenShown)
             advanceUntilIdle()
 
@@ -74,7 +74,7 @@ class ChatListViewModelTest {
     fun `복귀 갱신이 실패해도 보고 있던 목록을 지우지 않는다`() =
         runTest(dispatcher) {
             val repository = FakeChatRepository()
-            val viewModel = ChatListViewModel(repository, FakeStoryRepository(), NoOpAnalytics)
+            val viewModel = ChatListViewModel(repository, FakeReportRepository(), NoOpAnalytics)
             viewModel.onIntent(ChatListIntent.ScreenShown)
             advanceUntilIdle()
 
@@ -92,7 +92,7 @@ class ChatListViewModelTest {
         runTest(dispatcher) {
             val repository = FakeChatRepository()
             repository.queuedMyChatsResults += DomainResult.Failure(DomainError.Network)
-            val viewModel = ChatListViewModel(repository, FakeStoryRepository(), NoOpAnalytics)
+            val viewModel = ChatListViewModel(repository, FakeReportRepository(), NoOpAnalytics)
 
             viewModel.onIntent(ChatListIntent.ScreenShown)
             advanceUntilIdle()
@@ -113,7 +113,7 @@ class ChatListViewModelTest {
     fun `당겨서 새로고침 실패는 목록을 남기고 토스트 효과를 낸다`() =
         runTest(dispatcher) {
             val repository = FakeChatRepository()
-            val viewModel = ChatListViewModel(repository, FakeStoryRepository(), NoOpAnalytics)
+            val viewModel = ChatListViewModel(repository, FakeReportRepository(), NoOpAnalytics)
             viewModel.onIntent(ChatListIntent.ScreenShown)
             advanceUntilIdle()
 
@@ -137,7 +137,7 @@ class ChatListViewModelTest {
     fun `새로고침은 진행 중인 조용한 재조회를 취소하고 시작한다`() =
         runTest(dispatcher) {
             val repository = FakeChatRepository()
-            val viewModel = ChatListViewModel(repository, FakeStoryRepository(), NoOpAnalytics)
+            val viewModel = ChatListViewModel(repository, FakeReportRepository(), NoOpAnalytics)
             viewModel.onIntent(ChatListIntent.ScreenShown)
             advanceUntilIdle()
 
@@ -162,7 +162,7 @@ class ChatListViewModelTest {
     fun `길게 눌러 연 시트에서 삭제를 확인하면 그 카드만 목록에서 빠진다`() =
         runTest(dispatcher) {
             val repository = FakeChatRepository()
-            val viewModel = ChatListViewModel(repository, FakeStoryRepository(), NoOpAnalytics)
+            val viewModel = ChatListViewModel(repository, FakeReportRepository(), NoOpAnalytics)
             viewModel.onIntent(ChatListIntent.ScreenShown)
             advanceUntilIdle()
             val effects = mutableListOf<ChatListEffect>()
@@ -201,7 +201,7 @@ class ChatListViewModelTest {
         runTest(dispatcher) {
             val repository = FakeChatRepository()
             repository.queuedDeleteResults += DomainResult.Failure(DomainError.Unknown)
-            val viewModel = ChatListViewModel(repository, FakeStoryRepository(), NoOpAnalytics)
+            val viewModel = ChatListViewModel(repository, FakeReportRepository(), NoOpAnalytics)
             viewModel.onIntent(ChatListIntent.ScreenShown)
             advanceUntilIdle()
             val effects = mutableListOf<ChatListEffect>()
@@ -229,7 +229,7 @@ class ChatListViewModelTest {
     @Test
     fun `시트에서 연 신고는 그 카드가 참조하는 스토리로 나간다`() =
         runTest(dispatcher) {
-            val storyRepository = FakeStoryRepository()
+            val storyRepository = FakeReportRepository()
             val viewModel = ChatListViewModel(FakeChatRepository(), storyRepository, NoOpAnalytics)
             viewModel.onIntent(ChatListIntent.ScreenShown)
             advanceUntilIdle()

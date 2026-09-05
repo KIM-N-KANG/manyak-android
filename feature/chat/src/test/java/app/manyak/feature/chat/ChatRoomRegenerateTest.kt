@@ -195,7 +195,7 @@ class ChatRoomRegenerateTest {
         ChatRoomViewModel(
             chatId = "chat-1",
             chatRepository = repository,
-            storyRepository = FakeStoryRepository(),
+            reportRepository = FakeReportRepository(),
             preferences = FakeChatPreferencesRepository(),
             analytics = NoOpAnalytics,
         )

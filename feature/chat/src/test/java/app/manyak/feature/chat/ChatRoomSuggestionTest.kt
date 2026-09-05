@@ -231,7 +231,7 @@ class ChatRoomSuggestionTest {
     ) = ChatRoomViewModel(
         chatId = "chat-1",
         chatRepository = repository,
-        storyRepository = FakeStoryRepository(),
+        reportRepository = FakeReportRepository(),
         preferences = preferences,
         analytics = NoOpAnalytics,
     )

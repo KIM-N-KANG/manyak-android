@@ -4,8 +4,8 @@ import app.manyak.analytics.domain.NoOpAnalytics
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.entity.chat.CreatedChat
-import app.manyak.common.entity.story.StoryReportReason
-import app.manyak.core.ui.report.StoryReportAction
+import app.manyak.report.entity.StoryReportReason
+import app.manyak.report.presentation.StoryReportAction
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -41,7 +41,7 @@ class StoryDetailViewModelTest {
     private fun viewModel(
         storyRepository: FakeStoryRepository = FakeStoryRepository(),
         chatRepository: FakeChatRepository = FakeChatRepository(),
-    ) = StoryDetailViewModel(STORY_ID, storyRepository, chatRepository, NoOpAnalytics)
+    ) = StoryDetailViewModel(STORY_ID, storyRepository, chatRepository, NoOpAnalytics, storyRepository)
 
     @Test
     fun `화면이 보이면 상세를 조회하고 첫 시작 설정을 고른다`() =
