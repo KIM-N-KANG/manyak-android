@@ -1,6 +1,9 @@
 package app.manyak.feature.create
 
 import androidx.lifecycle.viewModelScope
+import app.manyak.analytics.domain.Analytics
+import app.manyak.analytics.entity.AnalyticsEvent
+import app.manyak.analytics.entity.CreateStep
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.story.StoryCreationRepository
 import app.manyak.common.entity.story.StoryTag
@@ -9,9 +12,6 @@ import app.manyak.common.entity.story.Storyline
 import app.manyak.common.entity.story.StorylineGenerationCommand
 import app.manyak.common.entity.story.StorylineRating
 import app.manyak.common.presentation.mvi.MviViewModel
-import app.manyak.core.analytics.Analytics
-import app.manyak.core.analytics.AnalyticsEvent
-import app.manyak.core.analytics.CreateStep
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -294,7 +294,7 @@ class CreateStorylineViewModel
             rating: StorylineRating,
         ) {
             val next = if (desiredRatings[storylineId] == rating) null else rating
-            analytics.track(AnalyticsEvent.StorylineRatingClicked(storylineId, rating, active = next != null))
+            analytics.track(AnalyticsEvent.StorylineRatingClicked(storylineId, rating.name, active = next != null))
             desiredRatings.putOrRemove(storylineId, next)
             dispatchEvent(CreateStorylineEvent.RatingChanged(storylineId, next))
             scheduleRatingSync(storylineId)

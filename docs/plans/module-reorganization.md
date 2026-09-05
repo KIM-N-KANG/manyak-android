@@ -213,3 +213,8 @@
 
 - navigation 최상위 모듈 분리.
 - 기존 직렬화 이름·식별자 복원 테스트, 앱 컴파일, ktlint·detekt 통과
+
+### analytics
+
+- analytics 모듈과 계층 경계 분리.
+- 이벤트 계약·제작·채팅 테스트, 앱 Hilt 조립, ktlint·detekt 통과; 이벤트 이름과 전송 값 유지

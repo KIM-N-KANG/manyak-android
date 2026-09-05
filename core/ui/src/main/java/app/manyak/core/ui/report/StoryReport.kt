@@ -1,11 +1,11 @@
 package app.manyak.core.ui.report
 
+import app.manyak.analytics.domain.Analytics
+import app.manyak.analytics.entity.AnalyticsEvent
+import app.manyak.analytics.entity.ReportSource
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.story.StoryRepository
 import app.manyak.common.entity.story.StoryReportReason
-import app.manyak.core.analytics.Analytics
-import app.manyak.core.analytics.AnalyticsEvent
-import app.manyak.core.analytics.ReportSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -121,7 +121,7 @@ class StoryReportController(
         val reason = state.reason ?: return
         if (submitJob?.isActive == true) return
         emit(StoryReportChange.SubmitRequested)
-        analytics.track(AnalyticsEvent.ReportSubmitted(target, reason, hasDetail = state.detail.isNotBlank()))
+        analytics.track(AnalyticsEvent.ReportSubmitted(target, reason.name, hasDetail = state.detail.isNotBlank()))
         submitJob =
             scope.launch {
                 when (val result = repository.reportStory(target, reason, state.detail)) {

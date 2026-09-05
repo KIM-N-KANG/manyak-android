@@ -1,10 +1,6 @@
-package app.manyak.core.analytics
+package app.manyak.analytics.entity
 
-import app.manyak.common.domain.chat.ChatInputMode
 import app.manyak.common.entity.auth.AuthProvider
-import app.manyak.common.entity.story.StoryReportReason
-import app.manyak.common.entity.story.StoryTagCategory
-import app.manyak.common.entity.story.StorylineRating
 
 /**
  * 이벤트 카탈로그. 이름과 프로퍼티는 웹과 같은 공통 계약을 쓰고, 값을 이름에 넣지 않는다.
@@ -83,20 +79,21 @@ sealed class AnalyticsEvent(
         )
 
     data class TagCategorySelected(
-        val from: StoryTagCategory,
-        val to: StoryTagCategory,
+        val from: String,
+        val to: String,
+        val forward: Boolean,
     ) : AnalyticsEvent(
             "client_storyCreate_tagCategory_selected",
             mapOf(
-                "from_category" to from.name,
-                "to_category" to to.name,
-                "direction" to if (to.ordinal > from.ordinal) "forward" else "backward",
+                "from_category" to from,
+                "to_category" to to,
+                "direction" to if (forward) "forward" else "backward",
             ),
         )
 
     data class AddTagSubmitted(
-        val category: StoryTagCategory,
-    ) : AnalyticsEvent("client_storyCreate_addTag_submitted", mapOf("category" to category.name))
+        val category: String,
+    ) : AnalyticsEvent("client_storyCreate_addTag_submitted", mapOf("category" to category))
 
     data object StoryGenerationRequested : AnalyticsEvent("client_storyCreate_storyGeneration_requested")
 
@@ -126,11 +123,11 @@ sealed class AnalyticsEvent(
 
     data class StorylineRatingClicked(
         val storylineId: Long,
-        val rating: StorylineRating,
+        val rating: String,
         val active: Boolean,
     ) : AnalyticsEvent(
             "client_storyCreate_storylineRating_clicked",
-            mapOf("storyline_id" to storylineId.toString(), "rating" to rating.name, "active" to active),
+            mapOf("storyline_id" to storylineId.toString(), "rating" to rating, "active" to active),
         )
 
     data object BackToStorylineButtonClicked : AnalyticsEvent("client_storyCreate_backToStorylineButton_clicked")
@@ -237,8 +234,8 @@ sealed class AnalyticsEvent(
 
     data class ChatInputModeSelected(
         val chatId: String,
-        val mode: ChatInputMode,
-    ) : AnalyticsEvent("client_chat_inputMode_selected", mapOf("chat_id" to chatId, "mode" to mode.wire))
+        val mode: String,
+    ) : AnalyticsEvent("client_chat_inputMode_selected", mapOf("chat_id" to chatId, "mode" to mode))
 
     data class ChoicesToggleClicked(
         val chatId: String,
@@ -319,14 +316,14 @@ sealed class AnalyticsEvent(
 
     data class ReportSubmitted(
         val storyId: String,
-        val reason: StoryReportReason,
+        val reason: String,
         val hasDetail: Boolean,
     ) : AnalyticsEvent(
             "client_report_submitted",
             mapOf(
                 "target_type" to "story",
                 "target_id" to storyId,
-                "reason" to reason.name,
+                "reason" to reason,
                 "has_detail" to hasDetail,
             ),
         )
@@ -469,10 +466,3 @@ enum class InviteCodeSource(
     INVITE_PAGE("invite_page"),
     ONBOARDING("onboarding"),
 }
-
-val ChatInputMode.wire: String
-    get() =
-        when (this) {
-            ChatInputMode.BLOCK -> "block"
-            ChatInputMode.PLAIN -> "plain"
-        }

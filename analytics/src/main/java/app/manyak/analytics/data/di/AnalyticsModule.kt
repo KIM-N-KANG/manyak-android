@@ -1,5 +1,10 @@
-package app.manyak.core.analytics
+package app.manyak.analytics.data.di
 
+import app.manyak.analytics.data.AmplitudeAnalytics
+import app.manyak.analytics.data.FirebaseCrashReporter
+import app.manyak.analytics.domain.Analytics
+import app.manyak.analytics.domain.AnalyticsIdentity
+import app.manyak.analytics.domain.CrashReporter
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

@@ -151,7 +151,7 @@ dependencies {
     implementation(projects.core.data)
     implementation(projects.core.ui)
     implementation(projects.navigation)
-    implementation(projects.core.analytics)
+    implementation(projects.analytics)
     implementation(projects.feature.login)
     implementation(projects.feature.legal)
     implementation(projects.feature.home)

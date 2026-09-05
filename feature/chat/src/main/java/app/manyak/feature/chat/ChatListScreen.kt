@@ -32,11 +32,11 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
+import app.manyak.analytics.entity.AnalyticsEvent
+import app.manyak.analytics.presentation.LocalAnalytics
+import app.manyak.analytics.presentation.rememberImpressionTracker
+import app.manyak.analytics.presentation.trackImpression
 import app.manyak.common.entity.chat.ChatSummary
-import app.manyak.core.analytics.AnalyticsEvent
-import app.manyak.core.analytics.LocalAnalytics
-import app.manyak.core.analytics.rememberImpressionTracker
-import app.manyak.core.analytics.trackImpression
 import app.manyak.core.ui.R
 import app.manyak.core.ui.component.StoryReportSheet
 import app.manyak.core.ui.report.StoryReportAction

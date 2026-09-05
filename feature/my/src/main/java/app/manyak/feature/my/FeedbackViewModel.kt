@@ -1,11 +1,11 @@
 package app.manyak.feature.my
 
 import androidx.annotation.StringRes
+import app.manyak.analytics.domain.Analytics
+import app.manyak.analytics.entity.AnalyticsEvent
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.feedback.FeedbackRepository
 import app.manyak.common.presentation.mvi.MviViewModel
-import app.manyak.core.analytics.Analytics
-import app.manyak.core.analytics.AnalyticsEvent
 import app.manyak.core.ui.R
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject

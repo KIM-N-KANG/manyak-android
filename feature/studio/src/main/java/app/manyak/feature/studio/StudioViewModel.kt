@@ -1,6 +1,11 @@
 package app.manyak.feature.studio
 
 import androidx.lifecycle.viewModelScope
+import app.manyak.analytics.domain.Analytics
+import app.manyak.analytics.entity.AnalyticsEvent
+import app.manyak.analytics.entity.PendingCreationStage
+import app.manyak.analytics.entity.ReportSource
+import app.manyak.analytics.entity.StoryListSection
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.story.StoryRepository
 import app.manyak.common.entity.story.CreationResumePoint
@@ -9,11 +14,6 @@ import app.manyak.common.entity.story.PendingStoryCreationStore
 import app.manyak.common.entity.story.StorySummary
 import app.manyak.common.entity.story.resumePoint
 import app.manyak.common.presentation.mvi.MviViewModel
-import app.manyak.core.analytics.Analytics
-import app.manyak.core.analytics.AnalyticsEvent
-import app.manyak.core.analytics.PendingCreationStage
-import app.manyak.core.analytics.ReportSource
-import app.manyak.core.analytics.StoryListSection
 import app.manyak.core.ui.report.StoryReportAction
 import app.manyak.core.ui.report.StoryReportChange
 import app.manyak.core.ui.report.StoryReportController

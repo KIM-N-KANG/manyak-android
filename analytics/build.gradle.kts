@@ -4,12 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "app.manyak.core.analytics"
+    namespace = "app.manyak.analytics"
 }
 
 dependencies {
-    // 이벤트 프로퍼티가 도메인 enum 을 그대로 쓴다. 화면이 값을 문자열로 옮겨 적지 않게 한다.
-    api(projects.common)
+    implementation(projects.common)
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)

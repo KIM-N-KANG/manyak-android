@@ -1,6 +1,8 @@
 package app.manyak.feature.my
 
 import androidx.lifecycle.viewModelScope
+import app.manyak.analytics.domain.Analytics
+import app.manyak.analytics.entity.AnalyticsEvent
 import app.manyak.common.domain.auth.AccountLinkRepository
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
@@ -11,8 +13,6 @@ import app.manyak.common.entity.auth.AuthProvider
 import app.manyak.common.entity.settings.ThemeMode
 import app.manyak.common.entity.user.UserProfile
 import app.manyak.common.presentation.mvi.MviViewModel
-import app.manyak.core.analytics.Analytics
-import app.manyak.core.analytics.AnalyticsEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch

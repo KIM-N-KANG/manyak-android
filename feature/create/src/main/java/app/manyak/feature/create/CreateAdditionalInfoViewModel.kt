@@ -1,6 +1,11 @@
 package app.manyak.feature.create
 
 import androidx.lifecycle.viewModelScope
+import app.manyak.analytics.domain.Analytics
+import app.manyak.analytics.entity.AnalyticsEvent
+import app.manyak.analytics.entity.CompletionStage
+import app.manyak.analytics.entity.CreateStep
+import app.manyak.analytics.entity.CreditShortageTrigger
 import app.manyak.common.domain.chat.ChatRepository
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
@@ -9,11 +14,6 @@ import app.manyak.common.entity.story.CreationRequestSnapshot
 import app.manyak.common.entity.story.PendingStoryCreationStore
 import app.manyak.common.entity.story.StoryCompletionCommand
 import app.manyak.common.presentation.mvi.MviViewModel
-import app.manyak.core.analytics.Analytics
-import app.manyak.core.analytics.AnalyticsEvent
-import app.manyak.core.analytics.CompletionStage
-import app.manyak.core.analytics.CreateStep
-import app.manyak.core.analytics.CreditShortageTrigger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay

@@ -1,6 +1,9 @@
 package app.manyak.feature.create
 
 import androidx.lifecycle.viewModelScope
+import app.manyak.analytics.domain.Analytics
+import app.manyak.analytics.entity.AnalyticsEvent
+import app.manyak.analytics.entity.CreateStep
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.story.StoryCreationRepository
 import app.manyak.common.entity.story.CharacterGender
@@ -13,9 +16,6 @@ import app.manyak.common.entity.story.StoryCharacterInput
 import app.manyak.common.entity.story.StoryTag
 import app.manyak.common.entity.story.StoryTagCategory
 import app.manyak.common.presentation.mvi.MviViewModel
-import app.manyak.core.analytics.Analytics
-import app.manyak.core.analytics.AnalyticsEvent
-import app.manyak.core.analytics.CreateStep
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -454,7 +454,7 @@ class CreateKeywordViewModel
 
                 is CreateKeywordIntent.AddCustomTag ->
                     state.customTagAddEvent(intent)?.let {
-                        analytics.track(AnalyticsEvent.AddTagSubmitted(intent.target.category))
+                        analytics.track(AnalyticsEvent.AddTagSubmitted(intent.target.category.name))
                         dispatchEvent(it)
                     }
 
@@ -487,7 +487,13 @@ class CreateKeywordViewModel
             category: StoryTagCategory,
         ) {
             if (category != state.activeCategory) {
-                analytics.track(AnalyticsEvent.TagCategorySelected(from = state.activeCategory, to = category))
+                analytics.track(
+                    AnalyticsEvent.TagCategorySelected(
+                        from = state.activeCategory.name,
+                        to = category.name,
+                        forward = category.ordinal > state.activeCategory.ordinal,
+                    ),
+                )
             }
             dispatchEvent(CreateKeywordEvent.CategoryChanged(category))
         }

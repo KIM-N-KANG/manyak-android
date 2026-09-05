@@ -1,11 +1,11 @@
 package app.manyak.feature.chat
 
+import app.manyak.analytics.domain.NoOpAnalytics
 import app.manyak.common.domain.chat.ChatInputMode
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.entity.chat.ChatDetail
 import app.manyak.common.entity.chat.ChatStreamEvent
 import app.manyak.common.entity.chat.ChatTurn
-import app.manyak.core.analytics.NoOpAnalytics
 import app.manyak.feature.chat.composer.InputBlockType
 import app.manyak.feature.chat.message.ChatMessageSegment
 import kotlinx.coroutines.Dispatchers

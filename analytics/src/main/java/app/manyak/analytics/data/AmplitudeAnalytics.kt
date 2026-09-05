@@ -1,7 +1,12 @@
-package app.manyak.core.analytics
+package app.manyak.analytics.data
 
 import android.content.Context
 import android.util.Log
+import app.manyak.analytics.data.di.AnalyticsConfig
+import app.manyak.analytics.domain.Analytics
+import app.manyak.analytics.domain.AnalyticsIdentity
+import app.manyak.analytics.domain.CrashReporter
+import app.manyak.analytics.entity.AnalyticsEvent
 import com.amplitude.android.Amplitude
 import com.amplitude.android.Configuration
 import dagger.hilt.android.qualifiers.ApplicationContext

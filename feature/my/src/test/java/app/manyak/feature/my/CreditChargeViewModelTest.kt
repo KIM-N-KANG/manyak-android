@@ -1,5 +1,6 @@
 package app.manyak.feature.my
 
+import app.manyak.analytics.domain.NoOpAnalytics
 import app.manyak.common.domain.credit.CreditRepository
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
@@ -8,7 +9,6 @@ import app.manyak.common.entity.credit.AttendanceResult
 import app.manyak.common.entity.credit.CreditTransactionPage
 import app.manyak.common.entity.user.AccountStatus
 import app.manyak.common.entity.user.UserProfile
-import app.manyak.core.analytics.NoOpAnalytics
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow

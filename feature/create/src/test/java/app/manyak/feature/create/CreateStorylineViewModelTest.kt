@@ -1,11 +1,11 @@
 package app.manyak.feature.create
 
+import app.manyak.analytics.domain.NoOpAnalytics
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.entity.story.CreationProgress
 import app.manyak.common.entity.story.PendingStoryCreation
 import app.manyak.common.entity.story.StorylineRating
-import app.manyak.core.analytics.NoOpAnalytics
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first

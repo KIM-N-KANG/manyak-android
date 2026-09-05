@@ -1,9 +1,9 @@
 package app.manyak.session
 
+import app.manyak.analytics.domain.AnalyticsIdentity
 import app.manyak.common.data.datastore.DeviceIdStore
 import app.manyak.common.domain.session.UserScopedStore
 import app.manyak.common.entity.auth.AuthProvider
-import app.manyak.core.analytics.AnalyticsIdentity
 import app.manyak.core.data.api.AuthApi
 import app.manyak.core.data.api.dto.LogoutRequestDto
 import app.manyak.core.data.provider.ProviderCleanupResult

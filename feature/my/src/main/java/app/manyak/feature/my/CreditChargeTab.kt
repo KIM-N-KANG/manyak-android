@@ -13,8 +13,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import app.manyak.core.analytics.AnalyticsEvent
-import app.manyak.core.analytics.LocalAnalytics
+import app.manyak.analytics.entity.AnalyticsEvent
+import app.manyak.analytics.presentation.LocalAnalytics
 import app.manyak.core.ui.R
 import app.manyak.designsystem.theme.ManyakTheme
 

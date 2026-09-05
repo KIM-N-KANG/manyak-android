@@ -1,4 +1,4 @@
-package app.manyak.core.analytics
+package app.manyak.analytics.domain
 
 /**
  * 식별자 배선. `:app` 의 세션 조율자만 부른다.

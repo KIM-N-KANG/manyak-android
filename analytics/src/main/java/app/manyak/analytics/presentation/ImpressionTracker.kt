@@ -1,4 +1,4 @@
-package app.manyak.core.analytics
+package app.manyak.analytics.presentation
 
 import android.os.SystemClock
 import androidx.compose.runtime.Composable

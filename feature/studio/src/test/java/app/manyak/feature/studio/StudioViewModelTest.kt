@@ -1,5 +1,6 @@
 package app.manyak.feature.studio
 
+import app.manyak.analytics.domain.NoOpAnalytics
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.entity.story.CreationProgress
@@ -12,7 +13,6 @@ import app.manyak.common.entity.story.StoryReportReason
 import app.manyak.common.entity.story.Storyline
 import app.manyak.common.entity.story.StorylineGeneration
 import app.manyak.common.entity.story.StorylineGenerationCommand
-import app.manyak.core.analytics.NoOpAnalytics
 import app.manyak.core.ui.report.StoryReportAction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

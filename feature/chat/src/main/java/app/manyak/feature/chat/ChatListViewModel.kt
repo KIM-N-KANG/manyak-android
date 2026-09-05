@@ -1,14 +1,14 @@
 package app.manyak.feature.chat
 
 import androidx.lifecycle.viewModelScope
+import app.manyak.analytics.domain.Analytics
+import app.manyak.analytics.entity.AnalyticsEvent
+import app.manyak.analytics.entity.ReportSource
 import app.manyak.common.domain.chat.ChatRepository
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.story.StoryRepository
 import app.manyak.common.entity.chat.ChatSummary
 import app.manyak.common.presentation.mvi.MviViewModel
-import app.manyak.core.analytics.Analytics
-import app.manyak.core.analytics.AnalyticsEvent
-import app.manyak.core.analytics.ReportSource
 import app.manyak.core.ui.report.StoryReportAction
 import app.manyak.core.ui.report.StoryReportChange
 import app.manyak.core.ui.report.StoryReportController

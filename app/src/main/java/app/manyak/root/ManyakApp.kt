@@ -35,12 +35,12 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import app.manyak.analytics.presentation.LocalAnalytics
 import app.manyak.common.entity.session.SessionState
 import app.manyak.common.entity.settings.ThemeMode
 import app.manyak.common.entity.story.CreationResumePoint
 import app.manyak.common.presentation.credit.LocalCreditPolicy
 import app.manyak.common.presentation.error.messageResOrNull
-import app.manyak.core.analytics.LocalAnalytics
 import app.manyak.core.navigation.ChatRoomRoute
 import app.manyak.core.navigation.CreateAdditionalInfoRoute
 import app.manyak.core.navigation.CreateKeywordRoute

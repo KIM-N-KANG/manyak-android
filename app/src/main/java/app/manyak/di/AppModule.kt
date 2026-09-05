@@ -1,7 +1,7 @@
 package app.manyak.di
 
 import app.manyak.BuildConfig
-import app.manyak.core.analytics.AnalyticsConfig
+import app.manyak.analytics.data.di.AnalyticsConfig
 import app.manyak.core.data.di.DataLayerConfig
 import app.manyak.core.data.di.SocialAuthConfig
 import app.manyak.core.data.provider.ActivityProvider

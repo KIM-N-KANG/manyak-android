@@ -1,13 +1,13 @@
 package app.manyak.feature.home
 
 import androidx.lifecycle.viewModelScope
+import app.manyak.analytics.domain.Analytics
+import app.manyak.analytics.entity.AnalyticsEvent
+import app.manyak.analytics.entity.StoryListSection
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.story.StoryRepository
 import app.manyak.common.entity.story.StorySummary
 import app.manyak.common.presentation.mvi.MviViewModel
-import app.manyak.core.analytics.Analytics
-import app.manyak.core.analytics.AnalyticsEvent
-import app.manyak.core.analytics.StoryListSection
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
