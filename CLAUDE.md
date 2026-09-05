@@ -10,6 +10,7 @@
 | 모듈 소유권·내부 계층·의존 방향 상세 규칙 | `../knk-harness/docs/planning/android-module-architecture.md` |
 | 웹·앱 공통 계약(화면·상태·사용자 흐름·API 사용) | `../knk-harness/docs/product-specs/3-1-client.md`  |
 | 이 레포가 소유하는 값(빌드 주입·검증 정책) | `docs/plans/_project.md`                           |
+| 기술 스택·모듈 폴더 트리·로컬 실행 준비 | `README.md` (이동 내역은 `docs/plans/module-reorganization.md`) |
 | 색·타이포·여백·컴포넌트 규칙 | `DESIGN.md`                                        |
 | 기능별 구현 순서와 그 기능에서 새로 내린 결정 | `docs/plans/<기능>.md`                               |
 | **서버 API 계약(엔드포인트·요청·응답 필드·상태 코드)** | **dev 서버 Swagger** `https://dev-api.manyak.app/swagger-ui/index.html` (기계 판독은 `https://dev-api.manyak.app/v3/api-docs`) |
@@ -68,4 +69,8 @@
 - CI(`.github/workflows/android-ci.yml`)가 PR에서 `check`와 `assembleDebug`를 돌립니다. **같은 전체 작업을 로컬에서 자동으로 반복하지 않습니다.**
 - 로컬에서는 변경 모듈의 컴파일과 직접 관련된 테스트를 먼저 돌립니다. 전체 게이트는 사용자가 요청했거나 공통 빌드 로직을 바꿨을 때만 실행합니다.
 - 로컬 검증에 변경 모듈의 `ktlintCheck`·`detekt`도 포함합니다. 몇 초면 끝나고, CI까지 끌고 갈 종류가 아닙니다.
+
+  ```bash
+  ./gradlew :<모듈>:ktlintCheck :<모듈>:detekt :<모듈>:testDebugUnitTest
+  ```
 - UI 동작에 대한 주장은 `installDebug` 후 에뮬레이터에서 `adb exec-out screencap`으로 전후를 비교해 확인합니다. 확인하지 못했으면 코드로만 판단했다고 밝힙니다.
