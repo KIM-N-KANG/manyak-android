@@ -22,7 +22,7 @@
 | 인증 세션 — 토큰 보관·만료 판정·재발급·로그아웃·`device_id`·소셜 로그인 | §3-3-4 |
 | 인증·로그인 검수 항목 | §3-3-7 인증·로그인 검수 항목 |
 
-> **반영 중** — 위 절들은 KNK-959([knk-harness PR #121](https://github.com/KIM-N-KANG/knk-harness/pull/121))로 작성되어 `dev` 병합 대기 중입니다. 병합 전까지는 `docs/KNK-959-define-android-architecture-and-auth-spec` 브랜치를 참조하고, 병합되면 이 안내를 지웁니다.
+> **KNK-1197 전환 중** — 공통 설계와 적용 상태는 하네스 `docs/planning/android-module-architecture.md`, 실행 순서·검증 기록은 [모듈 재구성 계획](./module-reorganization.md)을 확인합니다.
 
 ## 이 레포가 소유하는 결정
 

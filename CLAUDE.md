@@ -35,6 +35,8 @@
 
 ## 코드 규칙
 
+- **KNK-1197 전환 중:** 이동한 모듈의 계층·패키지·리소스·의존 규칙은 하네스 `docs/planning/android-module-architecture.md`와 이 레포 `docs/plans/module-reorganization.md`를 따릅니다. 아래 기존 구조·문자열 위치 규칙은 아직 이동하지 않은 코드에 적용합니다.
+
 - 색·크기·여백·모서리는 `ManyakTheme` 접근자로만 읽습니다. 팔레트 값(`#05A66B` 등)이나 `MaterialTheme.colorScheme`·`MaterialTheme.typography`를 화면 코드에서 직접 쓰지 않습니다. 토큰에 없는 값이 필요하면 Kotlin 토큰 파일과 `DESIGN.md` 표를 함께 고칩니다(`DESIGN.md` 갱신 지침).
 - 사용자에게 보이는 문자열은 전부 `core/ui/src/main/res/values/strings.xml`에 둡니다. 화면 코드에 문구를 직접 쓰지 않습니다.
 - 코드 주석에 `하네스 §3-3-3`·`공통 계약`·`FE-SCREEN-008`·`검수 #4` 같은 스펙 참조를 넣지 않습니다. 코드만 보고는 알 수 없는 이유만 남기고, 결정 근거는 `docs/plans/*.md`가 소유합니다.
