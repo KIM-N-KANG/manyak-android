@@ -7,6 +7,7 @@
 | 확인할 것 | 위치                                                 |
 | --- |----------------------------------------------------|
 | 앱 공통 기술 결정(구조·계층·인증·내비게이션)과 화면·흐름 구현 상태 매트릭스 | `../knk-harness/docs/product-specs/3-3-android-app.md` |
+| 모듈 소유권·내부 계층·의존 방향 상세 규칙 | `../knk-harness/docs/planning/android-module-architecture.md` |
 | 웹·앱 공통 계약(화면·상태·사용자 흐름·API 사용) | `../knk-harness/docs/product-specs/3-1-client.md`  |
 | 이 레포가 소유하는 값(빌드 주입·검증 정책) | `docs/plans/_project.md`                           |
 | 색·타이포·여백·컴포넌트 규칙 | `DESIGN.md`                                        |
@@ -46,14 +47,14 @@
 
 ## 모듈 구조
 
-정본은 하네스 `docs/product-specs/3-3-android-app.md`와 거기서 위임한 `docs/planning/android-module-architecture.md`입니다. 실제 모듈 등록은 `settings.gradle.kts`, KNK-1197 이동·검증 기록은 `docs/plans/module-reorganization.md`를 확인하세요.
+정본은 하네스 `docs/product-specs/3-3-android-app.md`와 거기서 위임한 `docs/planning/android-module-architecture.md`입니다. 실제 모듈 등록은 `settings.gradle.kts`를 확인하세요.
 
 `app`이 최상위 기능·기반 모듈을 조립합니다. 기능은 필요한 entity/domain/data/presentation 패키지를 소유하고, chat·create·my의 하위 기능도 패키지로 구분합니다. `checkModuleArchitecture`가 프로젝트 의존과 Kotlin PSI 기반 계층 경계를 검사하며 루트 `check`에 연결되어 있습니다. navigation의 기존 Kotlin 패키지는 직렬화 호환을 위해 유지합니다.
 
 ## 명령어
 
 ```bash
-./gradlew check          # ktlint · detekt · Android lint · testDebugUnitTest
+./gradlew check          # 모듈/계층 검사 · ktlint · detekt · Android lint · 유닛 테스트
 ./gradlew assembleDebug  # 리소스·매니페스트까지 확인
 ./gradlew installDebug   # 연결된 기기에 설치
 ```

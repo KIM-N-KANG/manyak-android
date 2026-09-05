@@ -1,5 +1,7 @@
 # 간편 제작 퍼널 이탈 개편 구현 계획
 
+> **KNK-1197 구조 이전 안내 (2026-09-05)** — 아래 모듈 경로·코드 예시·검증 명령은 작성 당시 기록입니다. 현재 소유 위치와 검증 결과는 [모듈 재구성 기록](./module-reorganization.md), 현재 계층·의존 규칙은 [하네스 모듈 아키텍처](../../../knk-harness/docs/planning/android-module-architecture.md)를 따릅니다.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 퍼널 전 화면의 이탈 수단을 오른쪽 끝 닫기(X)로 통일하고, 어느 단계에서 나가도 그 단계로 재개할 수 있게 한다.

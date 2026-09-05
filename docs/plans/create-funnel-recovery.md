@@ -1,5 +1,7 @@
 # 간편 제작 이탈 가드·백그라운드 복구
 
+> **KNK-1197 구조 이전 안내 (2026-09-05)** — 아래 모듈 경로·코드 예시·검증 명령은 작성 당시 기록입니다. 현재 소유 위치와 검증 결과는 [모듈 재구성 기록](./module-reorganization.md), 현재 계층·의존 규칙은 [하네스 모듈 아키텍처](../../../knk-harness/docs/planning/android-module-architecture.md)를 따릅니다.
+
 - 공통 계약 정본: `../../../knk-harness/docs/product-specs/3-1-client.md` §3-1-4(이탈 가드·백그라운드 생성 복귀·제작 임시 저장, dev 병합 확인), `4-backend.md` §4-3-2 KNK-623 복구 계약(dev 병합 확인)
 - 앱 결정 정본: `../../../knk-harness/docs/product-specs/3-3-android-app.md` §3-3-5 라이프사이클 절(이 계획으로 작성)
 
