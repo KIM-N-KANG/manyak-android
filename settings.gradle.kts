@@ -42,7 +42,7 @@ include(":core:data")
 include(":core:ui")
 
 // 타입 안전 라우트의 단일 등록처. feature 끼리 직접 참조하지 않고 여기를 거친다.
-include(":core:navigation")
+include(":navigation")
 
 // Amplitude 배선 · 이벤트 카탈로그 · 노출 추적 헬퍼. 화면은 이 모듈의 Analytics 만 안다.
 include(":core:analytics")

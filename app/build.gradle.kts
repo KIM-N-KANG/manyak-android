@@ -150,7 +150,7 @@ dependencies {
     implementation(projects.common)
     implementation(projects.core.data)
     implementation(projects.core.ui)
-    implementation(projects.core.navigation)
+    implementation(projects.navigation)
     implementation(projects.core.analytics)
     implementation(projects.feature.login)
     implementation(projects.feature.legal)

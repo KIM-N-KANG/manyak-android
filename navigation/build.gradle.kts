@@ -4,10 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "app.manyak.core.navigation"
+    namespace = "app.manyak.navigation"
 }
 
 dependencies {
+    testImplementation(libs.junit)
     api(libs.androidx.navigation3.runtime)
     api(libs.kotlinx.serialization.json)
 }

@@ -13,7 +13,7 @@ dependencies {
     implementation(projects.common)
     implementation(projects.core.ui)
     implementation(projects.core.analytics)
-    implementation(projects.core.navigation)
+    implementation(projects.navigation)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.coroutines.core)

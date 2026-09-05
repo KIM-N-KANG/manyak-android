@@ -208,3 +208,8 @@
 
 - 디자인 시스템 모듈 분리.
 - 디자인 시스템 테스트·앱 Hilt 조립·ktlint·detekt 통과, 기존 리소스 값 보존 확인
+
+### navigation
+
+- navigation 최상위 모듈 분리.
+- 기존 직렬화 이름·식별자 복원 테스트, 앱 컴파일, ktlint·detekt 통과
