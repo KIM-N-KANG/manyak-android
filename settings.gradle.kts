@@ -55,7 +55,7 @@ include(":chat")
 include(":studio")
 include(":feature:my")
 include(":feature:create")
-include(":feature:story")
+include(":story")
 
 include(":designsystem")
 

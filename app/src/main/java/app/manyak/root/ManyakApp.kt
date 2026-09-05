@@ -69,9 +69,9 @@ import app.manyak.feature.my.InviteOnboardingSheet
 import app.manyak.feature.my.InviteScreen
 import app.manyak.feature.my.OpenSourceLicenseScreen
 import app.manyak.feature.my.WithdrawalScreen
-import app.manyak.feature.story.StoryDetailScreen
 import app.manyak.legal.presentation.LegalDocumentScreen
 import app.manyak.login.presentation.LoginScreen
+import app.manyak.story.detail.presentation.StoryDetailScreen
 import app.manyak.designsystem.R as DesignsystemR
 
 /**

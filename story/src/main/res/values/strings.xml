@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="story_detail_author">제작자</string>
+    <string name="story_detail_characters">주변 인물</string>
+    <string name="story_detail_created_at">생성일</string>
+    <string name="story_detail_description">주요 내용</string>
+    <string name="story_detail_endings_info">엔딩 안내</string>
+    <string name="story_detail_endings_info_tooltip">엔딩은 시작 상황마다 달라져요</string>
+    <string name="story_detail_genres">장르</string>
+    <string name="story_detail_not_found">스토리를 찾을 수 없어요</string>
+    <string name="story_detail_options">스토리 옵션</string>
+    <string name="story_detail_start_chat">채팅 시작하기</string>
+    <string name="story_detail_start_chat_failed">채팅을 시작하지 못했어요</string>
+    <string name="story_detail_start_setting_endings">엔딩</string>
+    <string name="story_detail_start_setting_name">상황 이름</string>
+    <string name="story_detail_start_setting_select">시작 상황 선택</string>
+    <string name="story_detail_start_setting_situation">상황 설명</string>
+    <string name="story_detail_start_settings">채팅 시작 상황</string>
+    <string name="story_detail_thumbnail_close">닫기</string>
+    <string name="story_detail_thumbnail_open">썸네일 크게 보기</string>
+</resources>

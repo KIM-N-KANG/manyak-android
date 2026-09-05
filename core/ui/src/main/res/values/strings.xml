@@ -341,27 +341,9 @@
     <string name="session_cleanup_failed">이전 로그인 정보를 정리하지 못했어요. 다시 시도해주세요</string>
 
     <!-- 스토리 상세 -->
-    <string name="story_detail_not_found">스토리를 찾을 수 없어요</string>
-    <string name="story_detail_thumbnail_open">썸네일 크게 보기</string>
-    <string name="story_detail_thumbnail_close">닫기</string>
-    <string name="story_detail_genres">장르</string>
-    <string name="story_detail_description">주요 내용</string>
-    <string name="story_detail_characters">주변 인물</string>
-    <string name="story_detail_start_settings">채팅 시작 상황</string>
-    <string name="story_detail_start_setting_name">상황 이름</string>
-    <string name="story_detail_start_setting_situation">상황 설명</string>
-    <string name="story_detail_start_setting_endings">엔딩</string>
     <!-- 엔딩 라벨 옆 안내 버튼과 그 버튼이 여는 말풍선. -->
-    <string name="story_detail_endings_info">엔딩 안내</string>
-    <string name="story_detail_endings_info_tooltip">엔딩은 시작 상황마다 달라져요</string>
     <!-- 시작 설정이 둘 이상일 때만 나오는 선택 트리거와 그 바텀 시트. -->
-    <string name="story_detail_start_setting_select">시작 상황 선택</string>
-    <string name="story_detail_author">제작자</string>
-    <string name="story_detail_created_at">생성일</string>
-    <string name="story_detail_start_chat">채팅 시작하기</string>
-    <string name="story_detail_start_chat_failed">채팅을 시작하지 못했어요</string>
 
-    <string name="story_detail_options">스토리 옵션</string>
 
     <!-- 스토리 신고. 상세와 채팅방이 같은 시트를 쓰며, 신고 대상은 두 곳 모두 스토리다. -->
 

@@ -258,3 +258,8 @@
 
 - studio 목록·삭제 및 데이터 모듈 분리.
 - 공유 삭제 계약 StoryDeletion만 common에 두고 studio가 구현하며 상세도 같은 구현을 사용합니다. studio·상세 화면 테스트, 삭제 204·404·500 회귀 테스트, 변경 모듈 ktlint·detekt와 app Hilt 컴파일을 통과했습니다.
+
+### story
+
+- story 상세·모델·조회 데이터 모듈 분리.
+- 상세 화면 내부 컴포넌트, 전용 모델·Repository·인증 조회 API를 story로 모았습니다. 19개 이동 소스 본문 동일성과 story 테스트·ktlint·detekt, 공통·잔여 data 정적 검사 및 app Hilt 컴파일을 확인했습니다.
