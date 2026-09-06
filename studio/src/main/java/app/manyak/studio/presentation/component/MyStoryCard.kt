@@ -179,6 +179,7 @@ private fun StoryInfo(
             }
         }
         StoryMeta(
+            likeCount = story.likeCount,
             turnCount = story.turnCount,
             createdDate = story.createdDate,
             compact = compact,
@@ -189,18 +190,20 @@ private fun StoryInfo(
 }
 
 /**
- * 누적 턴 수와 제작일. 채팅 목록 카드와 같이 오른쪽 끝에 붙는다 — 왼쪽에서 읽어 내려오는 제목·소개와
- * 성질이 달라 같은 줄머리에 두면 소개의 연장으로 읽힌다.
+ * 좋아요 수·누적 턴 수·제작일. 채팅 목록 카드와 같이 오른쪽 끝에 붙는다 — 왼쪽에서 읽어 내려오는
+ * 제목·소개와 성질이 달라 같은 줄머리에 두면 소개의 연장으로 읽힌다.
  *
- * 제작일은 서버 값을 읽을 수 없을 때 그 칩만 빠지고 턴 수는 남는다.
+ * 제작일은 서버 값을 읽을 수 없을 때 그 칩만 빠지고 앞의 두 수는 남는다.
  */
 @Composable
 private fun StoryMeta(
+    likeCount: Long,
     turnCount: Long,
     createdDate: String?,
     compact: Boolean,
     modifier: Modifier = Modifier,
 ) {
+    val formattedLikeCount = remember(likeCount) { NumberFormat.getIntegerInstance().format(likeCount) }
     val formattedTurnCount = remember(turnCount) { NumberFormat.getIntegerInstance().format(turnCount) }
 
     Row(
@@ -208,6 +211,12 @@ private fun StoryMeta(
         horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact, Alignment.End),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        MetaChip(
+            iconRes = DesignsystemR.drawable.ic_heart_outline,
+            text = formattedLikeCount,
+            description = stringResource(DesignsystemR.string.story_like_count_description, formattedLikeCount),
+            compact = compact,
+        )
         MetaChip(
             iconRes = DesignsystemR.drawable.ic_dialog,
             text = formattedTurnCount,
