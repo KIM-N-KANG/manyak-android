@@ -232,6 +232,7 @@ private fun previewStory(
         thumbnailUrl = null,
         oneLineIntro = "",
         genres = emptyList(),
+        likeCount = 0,
         turnCount = turnCount,
         createdDate = null,
     )

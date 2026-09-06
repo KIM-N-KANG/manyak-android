@@ -8,7 +8,7 @@ import app.manyak.story.entity.StoryStartSetting
 import kotlinx.serialization.Serializable
 
 /**
- * 상세 응답. 상세 화면이 그리지 않는 등록 상태·공개 범위·로어북·주요 사건·해시태그·좋아요 수는
+ * 상세 응답. 상세 화면이 그리지 않는 등록 상태·공개 범위·로어북·주요 사건·해시태그는
  * 역직렬화하지 않는다.
  *
  * 식별자 밖의 필드에 기본값을 두는 이유는 목록 DTO 와 같다 — 서버가 필드를 하나 빼도 화면 전체가
@@ -23,6 +23,9 @@ data class StoryDetailResponseDto(
     val author: StoryAuthorDto? = null,
     val description: String? = null,
     val genres: List<String> = emptyList(),
+    val likeCount: Long = 0,
+    /** 서버가 요청자 기준으로 판정한 값. 미인증은 false 다. */
+    val isLiked: Boolean = false,
     /** 히어로용 원본. 목록·카드가 쓰는 축소본(`thumbnailUrlSm`)과 다른 URL 이다. */
     val thumbnailUrl: String? = null,
     val turnCount: Long = 0,
@@ -72,6 +75,8 @@ fun StoryDetailResponseDto.toDomain(): StoryDetail =
         authorNickname = author?.nickname?.takeIf { nickname -> nickname.isNotBlank() },
         description = description?.takeIf { text -> text.isNotBlank() },
         genres = genres.filter { genre -> genre.isNotBlank() },
+        likeCount = likeCount,
+        isLiked = isLiked,
         thumbnailUrl = thumbnailUrl?.takeIf { url -> url.isNotBlank() },
         turnCount = turnCount,
         createdDate = createdAt?.toDisplayDate(),

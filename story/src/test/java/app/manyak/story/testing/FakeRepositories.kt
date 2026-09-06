@@ -15,6 +15,8 @@ import kotlinx.coroutines.yield
 internal const val STORY_ID = "story-1"
 
 internal fun sampleStoryDetail(
+    likeCount: Long = 12,
+    isLiked: Boolean = false,
     turnCount: Long = 128,
     startSettings: List<StoryStartSetting> = sampleStartSettings(),
     reachedEndings: List<String> = emptyList(),
@@ -28,6 +30,8 @@ internal fun sampleStoryDetail(
         description = "도시의 모든 시계가 같은 시각에 멈췄다.",
         genres = listOf("판타지", "미스터리"),
         thumbnailUrl = "https://cdn.manyak.app/thumbnails/1.png",
+        likeCount = likeCount,
+        isLiked = isLiked,
         turnCount = turnCount,
         createdDate = "2026-08-27",
         startSettings = startSettings,
@@ -60,6 +64,10 @@ internal class FakeStoryRepository :
     var storyDetailCallCount = 0
     val queuedDetailResults = ArrayDeque<DomainResult<StoryDetail>>()
 
+    /** 좋아요 요청마다 넘어온 값 — 등록이면 true, 취소면 false 다. */
+    val likeRequests = mutableListOf<Pair<String, Boolean>>()
+    val queuedLikeResults = ArrayDeque<DomainResult<Unit>>()
+
     /** 채우면 조회가 여기서 멈춘다 — 조회가 진행 중인 동안의 동작을 볼 때 쓴다. */
     var inFlightGate: CompletableDeferred<Unit>? = null
 
@@ -69,6 +77,15 @@ internal class FakeStoryRepository :
         storyDetailCallCount++
         inFlightGate?.await()
         return queuedDetailResults.removeFirstOrNull() ?: DomainResult.Success(sampleStoryDetail())
+    }
+
+    override suspend fun setStoryLiked(
+        storyId: String,
+        liked: Boolean,
+    ): DomainResult<Unit> {
+        yield()
+        likeRequests += storyId to liked
+        return queuedLikeResults.removeFirstOrNull() ?: DomainResult.Success(Unit)
     }
 
     val deletedStoryIds = mutableListOf<String>()

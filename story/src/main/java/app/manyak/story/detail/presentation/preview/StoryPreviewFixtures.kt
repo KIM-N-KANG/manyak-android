@@ -8,6 +8,8 @@ import app.manyak.story.entity.StoryStartSetting
 internal fun previewStory(
     startSettings: List<StoryStartSetting> = previewStartSettings(),
     reachedEndings: List<String> = listOf("시계탑의 아침"),
+    isLiked: Boolean = false,
+    isOwner: Boolean = false,
 ): StoryDetail =
     StoryDetail(
         id = "1",
@@ -17,12 +19,14 @@ internal fun previewStory(
         description = "도시의 모든 시계가 같은 시각에 멈췄다. 당신은 그 이유를 아는 마지막 사람이다.",
         genres = listOf("판타지", "미스터리", "일상"),
         thumbnailUrl = null,
+        likeCount = 312,
+        isLiked = isLiked,
         turnCount = 1_284,
         createdDate = "2026-08-27",
         startSettings = startSettings,
         reachedEndings = reachedEndings,
         characters = previewCharacters(),
-        isOwner = false,
+        isOwner = isOwner,
     )
 
 internal fun previewCharacters(): List<StoryCharacter> =

@@ -2,7 +2,9 @@ package app.manyak.story.data.api
 
 import app.manyak.story.data.dto.StoryDetailResponseDto
 import retrofit2.Response
+import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.POST
 import retrofit2.http.Path
 
 /**
@@ -17,4 +19,16 @@ interface StoryDetailApi {
     suspend fun storyDetail(
         @Path("storyId") storyId: String,
     ): Response<StoryDetailResponseDto>
+
+    /** 좋아요 등록. 성공은 본문 없는 204 다. */
+    @POST("stories/{storyId}/like")
+    suspend fun likeStory(
+        @Path("storyId") storyId: String,
+    ): Response<Unit>
+
+    /** 좋아요 취소. 성공은 본문 없는 204 다. */
+    @DELETE("stories/{storyId}/like")
+    suspend fun unlikeStory(
+        @Path("storyId") storyId: String,
+    ): Response<Unit>
 }
