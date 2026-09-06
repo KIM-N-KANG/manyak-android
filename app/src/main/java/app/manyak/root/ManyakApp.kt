@@ -221,7 +221,7 @@ private fun AuthNavDisplay() {
         entryProvider =
             entryProvider<NavKey> {
                 entry<LoginRoute> {
-                    LoginScreen(onOpenLegalDocument = { document -> backStack.add(LegalRoute(document)) })
+                    LoginScreen(onOpenLegalDocument = { document -> backStack.push(LegalRoute(document)) })
                 }
                 legalEntry()
             },
@@ -253,37 +253,37 @@ private fun MainNavDisplay() {
                         onSelectTab = { tab -> selectedTab = tab },
                         // 상세는 셸 위에 쌓여 헤더도 하단 탭도 없는 전체 화면이 되고, 뒤로가기는
                         // 셸이 든 선택 탭으로 그대로 돌아온다.
-                        onOpenStory = { storyId -> backStack.add(StoryDetailRoute(storyId)) },
+                        onOpenStory = { storyId -> backStack.push(StoryDetailRoute(storyId)) },
                         // 채팅 목록에서 이어가기 — 상세에서 시작한 채팅과 같은 목적지를 쌓고,
                         // 뒤로가기는 채팅 탭으로 돌아온다.
-                        onOpenChat = { chatId -> backStack.add(ChatRoomRoute(chatId)) },
-                        onCreateStory = { backStack.add(CreateKeywordRoute) },
+                        onOpenChat = { chatId -> backStack.push(ChatRoomRoute(chatId)) },
+                        onCreateStory = { backStack.push(CreateKeywordRoute) },
                         // 재개·복구 진입 — 레코드가 가리키는 단계까지 체인을 쌓는다.
                         onResumeCreation = { resumePoint -> backStack.addCreationResumeChain(resumePoint) },
                         // 마이 하위 목적지들 — 셸 위에 쌓이는 전체 화면이고 뒤로가기는 마이 탭으로 돌아온다.
-                        onOpenInvite = { backStack.add(MyInviteRoute) },
-                        onOpenServiceInfo = { backStack.add(LegalRoute(LegalDocument.ABOUT)) },
-                        onOpenFeedback = { backStack.add(MyFeedbackRoute) },
-                        onOpenOpenSourceLicense = { backStack.add(MyOpenSourceLicenseRoute) },
-                        onOpenWithdrawal = { backStack.add(WithdrawalRoute) },
-                        onOpenCreditCharge = { backStack.add(MyCreditChargeRoute) },
+                        onOpenInvite = { backStack.push(MyInviteRoute) },
+                        onOpenServiceInfo = { backStack.push(LegalRoute(LegalDocument.ABOUT)) },
+                        onOpenFeedback = { backStack.push(MyFeedbackRoute) },
+                        onOpenOpenSourceLicense = { backStack.push(MyOpenSourceLicenseRoute) },
+                        onOpenWithdrawal = { backStack.push(WithdrawalRoute) },
+                        onOpenCreditCharge = { backStack.push(MyCreditChargeRoute) },
                     )
                 }
                 myDestinationEntries(backStack)
                 entry<StoryDetailRoute> { route ->
                     StoryDetailScreen(
                         storyId = route.storyId,
-                        onBack = { backStack.removeLastOrNull() },
+                        onBack = { backStack.pop() },
                         // 상세를 걷어내지 않고 그 위에 쌓는다 — 채팅방 뒤로가기가 방금 보던
                         // 스토리로 돌아온다(웹 `replace` 와 갈리는 앱 전용 차이).
-                        onEnterChat = { chatId -> backStack.add(ChatRoomRoute(chatId)) },
+                        onEnterChat = { chatId -> backStack.push(ChatRoomRoute(chatId)) },
                     )
                 }
                 creationFunnelEntries(backStack, creationFunnelMetadata)
                 entry<ChatRoomRoute> { route ->
                     ChatRoomScreen(
                         chatId = route.chatId,
-                        onBack = { backStack.removeLastOrNull() },
+                        onBack = { backStack.pop() },
                         // 지운 방이 뒤로가기로 되살아나면 안 되므로 셸까지 걷어내고 채팅 탭을 편다.
                         // 상세에서 시작한 채팅이면 상세도 함께 걷힌다.
                         onDeleted = {
@@ -300,36 +300,36 @@ private fun MainNavDisplay() {
 /** 마이 탭의 하위 목적지들. 셸 없이 전체 화면으로 열리고 뒤로가기는 마이 탭으로 돌아온다. */
 private fun EntryProviderScope<NavKey>.myDestinationEntries(backStack: MutableList<NavKey>) {
     entry<MyInviteRoute> {
-        InviteScreen(onBack = { backStack.removeLastOrNull() })
+        InviteScreen(onBack = { backStack.pop() })
     }
     entry<MyCreditChargeRoute> {
         CreditChargeScreen(
-            onBack = { backStack.removeLastOrNull() },
+            onBack = { backStack.pop() },
             // 무료 충전 탭의 초대 줄은 마이와 같은 목적지로 간다.
-            onOpenInvite = { backStack.add(MyInviteRoute) },
+            onOpenInvite = { backStack.push(MyInviteRoute) },
         )
     }
     entry<MyFeedbackRoute> {
-        FeedbackScreen(onBack = { backStack.removeLastOrNull() })
+        FeedbackScreen(onBack = { backStack.pop() })
     }
     entry<MyOpenSourceLicenseRoute> {
         OpenSourceLicenseScreen(
             librariesRes = AppR.raw.aboutlibraries,
-            onBack = { backStack.removeLastOrNull() },
+            onBack = { backStack.pop() },
         )
     }
     entry<WithdrawalRoute> {
-        WithdrawalScreen(onBack = { backStack.removeLastOrNull() })
+        WithdrawalScreen(onBack = { backStack.pop() })
     }
 }
 
 private fun MutableList<NavKey>.addCreationResumeChain(resumePoint: CreationResumePoint) {
     when (resumePoint) {
-        CreationResumePoint.KeywordStep -> add(CreateKeywordRoute)
-        CreationResumePoint.StorylineStep -> add(CreateStorylineRoute)
+        CreationResumePoint.KeywordStep -> push(CreateKeywordRoute)
+        CreationResumePoint.StorylineStep -> push(CreateStorylineRoute)
         is CreationResumePoint.AdditionalInfoStep -> {
-            add(CreateStorylineRoute)
-            add(CreateAdditionalInfoRoute(resumePoint.storylineIndex))
+            push(CreateStorylineRoute)
+            push(CreateAdditionalInfoRoute(resumePoint.storylineIndex))
         }
     }
 }
@@ -343,20 +343,20 @@ private fun EntryProviderScope<NavKey>.creationFunnelEntries(
 ) {
     entry<CreateKeywordRoute>(metadata = metadata) {
         CreateKeywordScreen(
-            onLeaveFunnel = { backStack.removeLastOrNull() },
+            onLeaveFunnel = { backStack.pop() },
             // 스토리라인 단계는 키워드 목적지를 대체한다 — 그 화면의 뒤로가기가
             // 홈 복귀(퍼널 이탈)가 되도록 한다.
             onOpenStorylineStep = {
-                backStack.removeLastOrNull()
-                backStack.add(CreateStorylineRoute)
+                backStack.pop()
+                backStack.push(CreateStorylineRoute)
             },
         )
     }
     entry<CreateStorylineRoute>(metadata = metadata) {
         CreateStorylineScreen(
-            onLeaveFunnel = { backStack.removeLastOrNull() },
+            onLeaveFunnel = { backStack.pop() },
             onOpenAdditionalInfoStep = { storylineIndex ->
-                backStack.add(CreateAdditionalInfoRoute(storylineIndex))
+                backStack.push(CreateAdditionalInfoRoute(storylineIndex))
             },
         )
     }
@@ -366,20 +366,15 @@ private fun EntryProviderScope<NavKey>.creationFunnelEntries(
             // 이탈은 퍼널 단계를 전부 걷어내고 홈으로 돌아간다. 스토리라인 단계만 pop 하면
             // 홈으로 나가려던 조작이 한 단계 뒤로 가기로 보인다.
             onLeaveFunnel = { backStack.popToMainTabs() },
-            onBackToStoryline = { backStack.removeLastOrNull() },
+            onBackToStoryline = { backStack.pop() },
             // 완성 성공 — 퍼널 단계를 모두 걷어내고 생성된 채팅방을 쌓는다(웹의 채팅 화면
             // `replace` 대응). 상세에서 시작한 채팅과 달리 돌아갈 단계가 남지 않는다.
             onEnterChat = { chatId ->
                 backStack.popToMainTabs()
-                backStack.add(ChatRoomRoute(chatId))
+                backStack.push(ChatRoomRoute(chatId))
             },
         )
     }
-}
-
-/** 한 번 쓰고 끝나는 퍼널 단계를 모두 걷어내 셸만 남긴다. */
-private fun MutableList<NavKey>.popToMainTabs() {
-    while (size > 1 && lastOrNull() != MainTabsRoute) removeLastOrNull()
 }
 
 /**
