@@ -107,6 +107,27 @@ class StorylineGenerationStoreTest {
         }
 
     @Test
+    fun `결과 직후의 재생성 연타는 버리고 잠깐 뒤의 요청만 보낸다`() =
+        runTest {
+            val repository = FakeStoryCreationRepository()
+            val store = StorylineGenerationStore(repository, FakePendingStoryCreationStore(), this)
+
+            store.generate(sampleGenerationInput())
+            runCurrent()
+            assertTrue(store.state.value is StorylineGenerationState.Generated)
+
+            store.regenerate()
+            runCurrent()
+            assertEquals(1, repository.generationCommands.size)
+
+            advanceTimeBy(COOLDOWN_PASSED_MILLIS)
+            runCurrent()
+            store.regenerate()
+            advanceUntilIdle()
+            assertEquals(2, repository.generationCommands.size)
+        }
+
+    @Test
     fun `직전 명령이 없으면 재생성 요청을 보내지 않는다`() =
         runTest {
             val repository = FakeStoryCreationRepository()
@@ -434,3 +455,5 @@ private fun sampleGenerationCommand(): StorylineGenerationCommand =
         parentCreationId = null,
         isRegenerated = false,
     )
+
+private const val COOLDOWN_PASSED_MILLIS = 600L
