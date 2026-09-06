@@ -155,6 +155,12 @@ FLOW-003). 홈·제작 두 목록의 카드가 지금까지 표시 전용이었�
     아래로 올리고 본문 하단에 여백을 더해 보기도 했으나 되돌렸다 — 메타 정보가 읽을 글보다 먼저
     오면 본문 진입이 늦어진다.
 
+24. **뷰어의 확대 배율·위치는 뷰어 컴포저블이 직접 든다.** 열림 여부(결정 5)와 달리 회전이나 다시 열기에서
+    이어 줄 값이 아니라 `remember` 로 충분하고, 닫히면 원래 크기로 돌아가는 것이 오히려 맞다. 제스처는
+    Compose foundation 의 `transformable`·`detectTapGestures` 만으로 처리해 확대 라이브러리를 들이지 않는다.
+    이동 범위는 실제 그려진 이미지가 아니라 뷰포트 크기로 자른다 — `Fit` 으로 남는 여백만큼 조금 더
+    밀리지만 이미지가 화면 밖으로 사라지는 일은 없고, 그려진 크기를 다시 재는 비용을 들일 자리가 아니다.
+
 ## 구현 순서
 
 1. `:core:domain` — `StoryDetail`·`StoryStartSetting`, `StoryRepository.storyDetail`, `ChatRepository.createChat`
