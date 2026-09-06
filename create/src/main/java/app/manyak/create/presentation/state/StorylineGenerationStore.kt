@@ -181,6 +181,8 @@ class StorylineGenerationStore
          */
         fun regenerate() {
             if (mutableState.value is StorylineGenerationState.Generating) return
+            // 결과가 온 직후의 연타는 생성을 곧바로 또 보낸다. 실행 Job 이 잠깐 더 살아 있는 동안 버린다.
+            if (runJob?.isActive == true) return
             val previous = lastCommand ?: return
             val command =
                 when (mutableState.value) {
@@ -201,7 +203,11 @@ class StorylineGenerationStore
             disableDraftSave()
             lastCommand = command
             mutableState.value = StorylineGenerationState.Generating
-            runJob = funnelScope.launch { run(command) }
+            runJob =
+                funnelScope.launch {
+                    run(command)
+                    delay(REGENERATE_COOLDOWN_MILLIS)
+                }
         }
 
         private suspend fun run(command: StorylineGenerationCommand) {
@@ -653,3 +659,5 @@ private fun PendingStoryCreation?.isInFlight(): Boolean =
     this is PendingStoryCreation.GeneratingStorylines || this is PendingStoryCreation.CompletingStory
 
 private const val HTTP_CONFLICT = 409
+
+private const val REGENERATE_COOLDOWN_MILLIS = 500L

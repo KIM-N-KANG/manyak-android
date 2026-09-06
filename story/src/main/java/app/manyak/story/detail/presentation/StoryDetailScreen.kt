@@ -122,6 +122,9 @@ fun StoryDetailScreen(
 
                     StoryDetailEffect.ShowReportFailed ->
                         Toast.makeText(context, ReportR.string.story_report_failed, Toast.LENGTH_SHORT).show()
+
+                    StoryDetailEffect.ShowLikeFailed ->
+                        Toast.makeText(context, StoryR.string.story_detail_like_failed, Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -347,7 +350,11 @@ private fun StoryDetailLoaded(
                     .onSizeChanged { size -> ctaHeight = with(density) { size.height.toDp() } },
             isStarting = state.isStartingChat,
             failed = state.startChatFailed,
+            canLike = state.canLike,
+            isLiked = story.isLiked,
+            isTogglingLike = state.isTogglingLike,
             onClick = { onIntent(StoryDetailIntent.StartChat) },
+            onToggleLike = { onIntent(StoryDetailIntent.ToggleLike) },
         )
     }
 }

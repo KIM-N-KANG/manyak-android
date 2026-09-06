@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -76,6 +77,7 @@ fun ChatRoomScreen(
     val currentOnDeleted by rememberUpdatedState(onDeleted)
     // 확인 다이얼로그 노출 여부. 구성 변경에서 되돌아가면 안 되는 진행 상태다.
     var confirmingDelete by rememberSaveable { mutableStateOf(false) }
+    val lockedToast = remember { ReplacingToast(context, ChatR.string.chat_composer_locked_streaming) }
 
     LaunchedEffect(viewModel, lifecycleOwner) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -108,10 +110,7 @@ fun ChatRoomScreen(
                     ChatRoomEffect.ShowReportFailed ->
                         Toast.makeText(context, ReportR.string.story_report_failed, Toast.LENGTH_SHORT).show()
 
-                    ChatRoomEffect.ShowComposerLocked ->
-                        Toast
-                            .makeText(context, ChatR.string.chat_composer_locked_streaming, Toast.LENGTH_SHORT)
-                            .show()
+                    ChatRoomEffect.ShowComposerLocked -> lockedToast.show()
                 }
             }
         }

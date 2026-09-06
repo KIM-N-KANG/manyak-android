@@ -11,4 +11,15 @@ interface StoryRepository {
      * 없는 스토리와 읽을 수 없는 스토리는 서버가 모두 404 로 돌려준다(존재 여부 비노출).
      */
     suspend fun storyDetail(storyId: String): DomainResult<StoryDetail>
+
+    /**
+     * 좋아요 등록·취소. [liked] 가 참이면 등록, 거짓이면 취소다.
+     *
+     * 갱신된 수를 돌려주지 않는 204 라 화면이 제 값을 하나 올리고 내린다 — 다음 상세 조회가
+     * 서버 값으로 맞춘다.
+     */
+    suspend fun setStoryLiked(
+        storyId: String,
+        liked: Boolean,
+    ): DomainResult<Unit>
 }

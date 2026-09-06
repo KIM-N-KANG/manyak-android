@@ -42,6 +42,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlin.random.Random
@@ -289,6 +290,8 @@ class ChatRoomViewModel
                 },
             )
         private var choicesJob: Job? = null
+        private var choicesToggleJob: Job? = null
+        private var regenerateCooldownJob: Job? = null
         private var deleteJob: Job? = null
 
         /**
@@ -369,7 +372,14 @@ class ChatRoomViewModel
                     choicesJob?.cancel()
                     dispatchEvent(ChatRoomEvent.ChoicesEnabledChanged(intent.enabled))
                     preferences.setChoicesEnabled(intent.enabled)
-                    generateChoices()
+                    // 켜기·끄기를 연타하면 그때마다 생성 요청이 나간다. 스위치는 바로 바꾸되
+                    // 생성은 손이 멈춘 뒤 마지막 값으로만 한 번 보낸다.
+                    choicesToggleJob?.cancel()
+                    choicesToggleJob =
+                        viewModelScope.launch {
+                            delay(CHOICES_TOGGLE_DEBOUNCE_MILLIS)
+                            generateChoices()
+                        }
                 }
 
                 ChatRoomIntent.Sent -> {
@@ -525,6 +535,8 @@ class ChatRoomViewModel
         ) {
             // 스트림을 만들기 전에 막는다 — 진행 중에 또 만들면 버린 요청이 서버 기록에 남는다.
             if (streamJob?.isActive == true) return
+            // 스트림이 끝난 직후의 재생성 연타는 곧바로 또 보낸다. 이어쓰기는 새 입력이라 막지 않는다.
+            if (regeneratedTurnId != null && regenerateCooldownJob?.isActive == true) return
             if (userInput.isBlank()) return
             // 실제로 열리는 턴만 센다 — 잠금·빈 입력으로 걸러진 탭은 전송이 아니다.
             if (inputMode != null) {
@@ -555,6 +567,7 @@ class ChatRoomViewModel
                         },
                     )
                     events.collectBatched { event -> handleStreamEvent(event) }
+                    regenerateCooldownJob = viewModelScope.launch { delay(REGENERATE_COOLDOWN_MILLIS) }
                 }
         }
 
@@ -697,6 +710,9 @@ class ChatRoomViewModel
 
             /** 서버가 보는 마지막 턴과 재생성 대상이 다를 때의 응답. */
             const val HTTP_CONFLICT = 409
+
+            const val CHOICES_TOGGLE_DEBOUNCE_MILLIS = 500L
+            const val REGENERATE_COOLDOWN_MILLIS = 500L
         }
     }
 

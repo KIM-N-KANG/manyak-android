@@ -15,8 +15,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -165,6 +167,27 @@ class ChatRoomRegenerateTest {
         }
 
     @Test
+    fun `스트림이 끝난 직후의 재생성 연타는 버리고 잠깐 뒤의 요청만 받는다`() =
+        runTest(dispatcher) {
+            val repository = FakeChatRepository()
+            val viewModel = regenerating(repository)
+            repository.queuedChatDetailResults += DomainResult.Success(detail(listOf(turn())))
+            repository.regenerateEvents.send(ChatStreamEvent.Completed)
+            repository.regenerateEvents.close()
+            runCurrent()
+
+            viewModel.onIntent(ChatRoomIntent.RegenerateRequested(turnId = 1))
+            runCurrent()
+            assertEquals(listOf(1L), repository.regeneratedTurnIds)
+
+            advanceTimeBy(COOLDOWN_PASSED_MILLIS)
+            runCurrent()
+            viewModel.onIntent(ChatRoomIntent.RegenerateRequested(turnId = 1))
+            advanceUntilIdle()
+            assertEquals(listOf(1L, 1L), repository.regeneratedTurnIds)
+        }
+
+    @Test
     fun `낡은 턴으로 요청하면 아무것도 하지 않는다`() =
         runTest(dispatcher) {
             // 화면이 본 마지막 턴과 지금 마지막 턴이 다른 클릭이다.
@@ -244,3 +267,5 @@ class ChatRoomRegenerateTest {
             ChatTurn(id = 2, userInput = "더 나아간다.", aiOutput = "복도가 길어진다."),
         )
 }
+
+private const val COOLDOWN_PASSED_MILLIS = 600L

@@ -22,6 +22,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /** 조회 실패의 종류. 재시도로 나아지는지가 갈려 화면이 상태 코드를 직접 보지 않게 한다. */
@@ -46,7 +47,12 @@ data class StoryDetailUiState(
     /** 삭제 확인 다이얼로그. 내 스토리로 들어온 상세에서만 열린다. */
     val isDeleteDialogOpen: Boolean = false,
     val isDeleting: Boolean = false,
+    /** 좋아요 등록·취소 요청 중. 결과가 정해질 때까지 버튼을 잠가 중복 전송을 막는다. */
+    val isTogglingLike: Boolean = false,
 ) {
+    /** 내가 만든 스토리에는 좋아요 버튼을 두지 않는다. 소유 판정은 상세 응답의 몫이다. */
+    val canLike get() = story != null && !story.isOwner
+
     val selectedStartSetting
         get() = story?.startSettings?.firstOrNull { setting -> setting.id == selectedStartSettingId }
 }
@@ -66,6 +72,9 @@ sealed interface StoryDetailIntent {
     ) : StoryDetailIntent
 
     data object StartChat : StoryDetailIntent
+
+    /** 하단 CTA 의 좋아요 버튼. 현재 상태의 반대로 보낸다. */
+    data object ToggleLike : StoryDetailIntent
 
     data class Report(
         val action: StoryReportAction,
@@ -106,6 +115,10 @@ sealed interface StoryDetailEvent {
     /** 채팅방에서 돌아왔다. 성공 뒤 남겨 둔 시작 잠금을 걷는다. */
     data object ChatStartReset : StoryDetailEvent
 
+    data class Like(
+        val change: LikeChange,
+    ) : StoryDetailEvent
+
     data class Report(
         val change: StoryReportChange,
     ) : StoryDetailEvent
@@ -117,6 +130,17 @@ sealed interface StoryDetailEvent {
     data object DeleteStarted : StoryDetailEvent
 
     data object DeleteFailed : StoryDetailEvent
+}
+
+/** 좋아요 요청의 진행. 신고와 같이 한 갈래로 묶어 reduce 가 세 갈래로 갈라지지 않게 한다. */
+sealed interface LikeChange {
+    data object Requested : LikeChange
+
+    data class Toggled(
+        val liked: Boolean,
+    ) : LikeChange
+
+    data object Failed : LikeChange
 }
 
 sealed interface StoryDetailEffect {
@@ -132,6 +156,8 @@ sealed interface StoryDetailEffect {
     data object StoryDeleted : StoryDetailEffect
 
     data object ShowDeleteFailed : StoryDetailEffect
+
+    data object ShowLikeFailed : StoryDetailEffect
 }
 
 /**
@@ -165,6 +191,7 @@ class StoryDetailViewModel
         private var loadJob: Job? = null
         private var startChatJob: Job? = null
         private var deleteJob: Job? = null
+        private var likeJob: Job? = null
 
         /**
          * 고른 시작 설정의 장부. UiState 가 아니라 여기서 읽는 이유는 상태 반영이 이벤트 채널을 거쳐
@@ -226,6 +253,8 @@ class StoryDetailViewModel
 
                 StoryDetailIntent.StartChat -> startChat(state)
 
+                StoryDetailIntent.ToggleLike -> toggleLike(state)
+
                 is StoryDetailIntent.Report -> report.handle(intent.action, state.story?.id, state.report)
 
                 StoryDetailIntent.RequestDelete ->
@@ -233,11 +262,7 @@ class StoryDetailViewModel
 
                 StoryDetailIntent.ConfirmDelete -> delete()
 
-                // 삭제가 진행 중이면 닫지 않는다 — 결과가 정해진 뒤 상태 전이가 닫는다.
-                StoryDetailIntent.DismissDeleteDialog ->
-                    if (deleteJob?.isActive != true) {
-                        dispatchEvent(StoryDetailEvent.DeleteDialogVisibleChanged(visible = false))
-                    }
+                StoryDetailIntent.DismissDeleteDialog -> dismissDeleteDialog()
             }
         }
 
@@ -281,6 +306,37 @@ class StoryDetailViewModel
                 }
         }
 
+        /** 삭제가 진행 중이면 닫지 않는다 — 결과가 정해진 뒤 상태 전이가 닫는다. */
+        private suspend fun dismissDeleteDialog() {
+            if (deleteJob?.isActive == true) return
+            dispatchEvent(StoryDetailEvent.DeleteDialogVisibleChanged(visible = false))
+        }
+
+        /**
+         * 204 는 갱신된 수를 주지 않으므로 성공한 뒤에야 상태와 수를 한 칸 옮긴다. 미리 옮겼다가
+         * 실패로 되돌리면 눌린 하트가 깜빡였다 풀린다.
+         */
+        private suspend fun toggleLike(state: StoryDetailUiState) {
+            if (!state.canLike || likeJob?.isActive == true) return
+            val liked = state.story?.isLiked != true
+            dispatchEvent(StoryDetailEvent.Like(LikeChange.Requested))
+            likeJob =
+                viewModelScope.launch {
+                    when (storyRepository.setStoryLiked(storyId, liked)) {
+                        is DomainResult.Success ->
+                            dispatchEvent(StoryDetailEvent.Like(LikeChange.Toggled(liked)))
+
+                        is DomainResult.Failure -> {
+                            dispatchEvent(StoryDetailEvent.Like(LikeChange.Failed))
+                            dispatchEffect(StoryDetailEffect.ShowLikeFailed)
+                        }
+                    }
+                    // 응답 직후의 연타는 좋아요와 취소를 번갈아 서버로 보낸다. 하트는 바로 바꾸되
+                    // 잠깐 더 잡아 두어 그 사이의 탭을 버린다.
+                    delay(LIKE_COOLDOWN_MILLIS)
+                }
+        }
+
         /** 삭제 성공 뒤 다이얼로그는 걷지 않는다 — 화면이 곧 사라지므로 걷으면 본문이 잠깐 되살아난다. */
         private fun delete() {
             if (deleteJob?.isActive == true) return
@@ -314,8 +370,7 @@ class StoryDetailViewModel
                         story = event.story,
                         loadError = null,
                         selectedStartSettingId = event.selectedStartSettingId,
-                        // 갱신으로 썸네일이 사라졌으면 열려 있던 뷰어도 닫는다.
-                        isImageViewerOpen = state.isImageViewerOpen && event.story.thumbnailUrl != null,
+                        isImageViewerOpen = state.keepsImageViewerOpen(event.story),
                     )
 
                 is StoryDetailEvent.LoadFailed ->
@@ -341,8 +396,32 @@ class StoryDetailViewModel
                 StoryDetailEvent.DeleteStarted -> state.copy(isDeleting = true)
 
                 StoryDetailEvent.DeleteFailed -> state.copy(isDeleting = false, isDeleteDialogOpen = false)
+
+                is StoryDetailEvent.Like -> state.reduceLike(event.change)
             }
     }
+
+private fun StoryDetailUiState.reduceLike(change: LikeChange): StoryDetailUiState =
+    when (change) {
+        LikeChange.Requested -> copy(isTogglingLike = true)
+
+        is LikeChange.Toggled ->
+            copy(
+                isTogglingLike = false,
+                story =
+                    story?.copy(
+                        isLiked = change.liked,
+                        // 서버가 준 수가 아니라 화면이 든 수를 옮긴다. 다음 조회가 맞춘다.
+                        likeCount = (story.likeCount + if (change.liked) 1 else -1).coerceAtLeast(0),
+                    ),
+            )
+
+        LikeChange.Failed -> copy(isTogglingLike = false)
+    }
+
+/** 갱신으로 썸네일이 사라졌으면 열려 있던 뷰어도 닫는다. */
+private fun StoryDetailUiState.keepsImageViewerOpen(story: StoryDetail): Boolean =
+    isImageViewerOpen && story.thumbnailUrl != null
 
 /**
  * 갱신 전에 고른 시작 설정이 아직 있으면 그대로 두고, 사라졌거나 처음이면 첫 번째를 고른다.
@@ -359,3 +438,5 @@ private fun DomainError.toLoadError(): StoryDetailLoadError =
     }
 
 private const val HTTP_NOT_FOUND = 404
+
+private const val LIKE_COOLDOWN_MILLIS = 500L

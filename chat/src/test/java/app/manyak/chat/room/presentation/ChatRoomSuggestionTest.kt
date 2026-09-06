@@ -18,6 +18,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -200,6 +201,24 @@ class ChatRoomSuggestionTest {
             assertFalse(viewModel.uiState.value.suggestions.hasCandidate)
 
             viewModel.onIntent(ChatRoomIntent.ChoicesEnabledChanged(true))
+            advanceUntilIdle()
+            assertEquals(listOf(1L), repository.generatedChoiceTurnIds)
+        }
+
+    @Test
+    fun `선택지 스위치 연타는 손이 멈춘 뒤 마지막 값으로 한 번만 만든다`() =
+        runTest(dispatcher) {
+            val repository = FakeChatRepository()
+            val viewModel = viewModel(repository)
+            advanceUntilIdle()
+
+            viewModel.onIntent(ChatRoomIntent.ChoicesEnabledChanged(false))
+            viewModel.onIntent(ChatRoomIntent.ChoicesEnabledChanged(true))
+            viewModel.onIntent(ChatRoomIntent.ChoicesEnabledChanged(false))
+            viewModel.onIntent(ChatRoomIntent.ChoicesEnabledChanged(true))
+            runCurrent()
+            assertEquals(emptyList<Long>(), repository.generatedChoiceTurnIds)
+
             advanceUntilIdle()
             assertEquals(listOf(1L), repository.generatedChoiceTurnIds)
         }

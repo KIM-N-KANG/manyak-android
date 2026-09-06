@@ -119,7 +119,7 @@ private fun TextLinesPlaceholder(
     }
 }
 
-/** 턴 수·제작일 자리. 카드와 같이 오른쪽 끝에 붙는다. */
+/** 좋아요 수·턴 수·제작일 자리. 카드와 같이 오른쪽 끝에 붙는다. */
 @Composable
 private fun MetaLinePlaceholder(
     alpha: Float,
@@ -132,6 +132,7 @@ private fun MetaLinePlaceholder(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact, Alignment.End),
     ) {
+        SkeletonPlaceholder(modifier = Modifier.width(MetaNarrowWidth).height(metaHeight), alpha = alpha)
         SkeletonPlaceholder(modifier = Modifier.width(MetaNarrowWidth).height(metaHeight), alpha = alpha)
         SkeletonPlaceholder(modifier = Modifier.width(MetaWideWidth).height(metaHeight), alpha = alpha)
     }
