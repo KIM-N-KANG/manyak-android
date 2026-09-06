@@ -16,8 +16,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withTimeoutOrNull
@@ -479,6 +481,34 @@ class StoryDetailViewModelTest {
         }
 
     @Test
+    fun `응답 직후의 연타는 버리고 잠깐 뒤의 탭만 다시 보낸다`() =
+        runTest(dispatcher) {
+            val storyRepository = FakeStoryRepository()
+            storyRepository.queuedDetailResults +=
+                DomainResult.Success(sampleStoryDetail(likeCount = 12, isLiked = false, isOwner = false))
+            val viewModel = viewModel(storyRepository = storyRepository)
+            viewModel.onIntent(StoryDetailIntent.ScreenShown)
+            advanceUntilIdle()
+
+            viewModel.onIntent(StoryDetailIntent.ToggleLike)
+            runCurrent()
+            viewModel.onIntent(StoryDetailIntent.ToggleLike)
+            advanceTimeBy(COOLDOWN_HALF_MILLIS)
+            viewModel.onIntent(StoryDetailIntent.ToggleLike)
+            runCurrent()
+            assertEquals(listOf(STORY_ID to true), storyRepository.likeRequests)
+            assertTrue(
+                viewModel.uiState.value.story
+                    ?.isLiked == true,
+            )
+
+            advanceUntilIdle()
+            viewModel.onIntent(StoryDetailIntent.ToggleLike)
+            advanceUntilIdle()
+            assertEquals(listOf(STORY_ID to true, STORY_ID to false), storyRepository.likeRequests)
+        }
+
+    @Test
     fun `내가 만든 스토리는 좋아요를 보내지 않는다`() =
         runTest(dispatcher) {
             val storyRepository = FakeStoryRepository()
@@ -496,3 +526,4 @@ class StoryDetailViewModelTest {
 }
 
 private const val TIMEOUT_MILLIS = 1_000L
+private const val COOLDOWN_HALF_MILLIS = 250L

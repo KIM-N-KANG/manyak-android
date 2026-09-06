@@ -22,6 +22,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /** 조회 실패의 종류. 재시도로 나아지는지가 갈려 화면이 상태 코드를 직접 보지 않게 한다. */
@@ -330,6 +331,9 @@ class StoryDetailViewModel
                             dispatchEffect(StoryDetailEffect.ShowLikeFailed)
                         }
                     }
+                    // 응답 직후의 연타는 좋아요와 취소를 번갈아 서버로 보낸다. 하트는 바로 바꾸되
+                    // 잠깐 더 잡아 두어 그 사이의 탭을 버린다.
+                    delay(LIKE_COOLDOWN_MILLIS)
                 }
         }
 
@@ -434,3 +438,5 @@ private fun DomainError.toLoadError(): StoryDetailLoadError =
     }
 
 private const val HTTP_NOT_FOUND = 404
+
+private const val LIKE_COOLDOWN_MILLIS = 500L
