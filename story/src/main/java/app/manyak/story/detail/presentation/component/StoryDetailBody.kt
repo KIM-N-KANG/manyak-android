@@ -146,6 +146,7 @@ private fun StoryHero(
                     Modifier.clickable(role = Role.Button, onClickLabel = openLabel, onClick = onClick)
                 },
             thumbnailUrl = story.thumbnailUrl,
+            likeCount = story.likeCount,
             turnCount = story.turnCount,
             badgeScale = StoryBadgeScale.Large,
             shape = RectangleShape,
