@@ -414,6 +414,85 @@ class StoryDetailViewModelTest {
                 withTimeoutOrNull(TIMEOUT_MILLIS) { viewModel.uiEffect.first() },
             )
         }
+
+    @Test
+    fun `좋아요를 누르면 등록을 보내고 성공 뒤 상태와 수를 한 칸 옮긴다`() =
+        runTest(dispatcher) {
+            val storyRepository = FakeStoryRepository()
+            storyRepository.queuedDetailResults +=
+                DomainResult.Success(sampleStoryDetail(likeCount = 12, isLiked = false, isOwner = false))
+            val viewModel = viewModel(storyRepository = storyRepository)
+            viewModel.onIntent(StoryDetailIntent.ScreenShown)
+            advanceUntilIdle()
+
+            viewModel.onIntent(StoryDetailIntent.ToggleLike)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertEquals(listOf(STORY_ID to true), storyRepository.likeRequests)
+            assertTrue(state.story?.isLiked == true)
+            assertEquals(13L, state.story?.likeCount)
+            assertFalse(state.isTogglingLike)
+        }
+
+    @Test
+    fun `이미 누른 좋아요는 취소를 보내고 수를 되돌린다`() =
+        runTest(dispatcher) {
+            val storyRepository = FakeStoryRepository()
+            storyRepository.queuedDetailResults +=
+                DomainResult.Success(sampleStoryDetail(likeCount = 12, isLiked = true, isOwner = false))
+            val viewModel = viewModel(storyRepository = storyRepository)
+            viewModel.onIntent(StoryDetailIntent.ScreenShown)
+            advanceUntilIdle()
+
+            viewModel.onIntent(StoryDetailIntent.ToggleLike)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertEquals(listOf(STORY_ID to false), storyRepository.likeRequests)
+            assertFalse(state.story?.isLiked == true)
+            assertEquals(11L, state.story?.likeCount)
+        }
+
+    @Test
+    fun `좋아요 실패는 상태와 수를 그대로 두고 실패를 알린다`() =
+        runTest(dispatcher) {
+            val storyRepository = FakeStoryRepository()
+            storyRepository.queuedDetailResults +=
+                DomainResult.Success(sampleStoryDetail(likeCount = 12, isLiked = false, isOwner = false))
+            storyRepository.queuedLikeResults += DomainResult.Failure(DomainError.Network)
+            val viewModel = viewModel(storyRepository = storyRepository)
+            viewModel.onIntent(StoryDetailIntent.ScreenShown)
+            advanceUntilIdle()
+
+            viewModel.onIntent(StoryDetailIntent.ToggleLike)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertFalse(state.story?.isLiked == true)
+            assertEquals(12L, state.story?.likeCount)
+            assertFalse(state.isTogglingLike)
+            assertEquals(
+                StoryDetailEffect.ShowLikeFailed,
+                withTimeoutOrNull(TIMEOUT_MILLIS) { viewModel.uiEffect.first() },
+            )
+        }
+
+    @Test
+    fun `내가 만든 스토리는 좋아요를 보내지 않는다`() =
+        runTest(dispatcher) {
+            val storyRepository = FakeStoryRepository()
+            storyRepository.queuedDetailResults += DomainResult.Success(sampleStoryDetail(isOwner = true))
+            val viewModel = viewModel(storyRepository = storyRepository)
+            viewModel.onIntent(StoryDetailIntent.ScreenShown)
+            advanceUntilIdle()
+
+            viewModel.onIntent(StoryDetailIntent.ToggleLike)
+            advanceUntilIdle()
+
+            assertFalse(viewModel.uiState.value.canLike)
+            assertTrue(storyRepository.likeRequests.isEmpty())
+        }
 }
 
 private const val TIMEOUT_MILLIS = 1_000L

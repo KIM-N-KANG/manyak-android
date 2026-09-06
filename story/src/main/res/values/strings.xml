@@ -7,6 +7,8 @@
     <string name="story_detail_endings_info">엔딩 안내</string>
     <string name="story_detail_endings_info_tooltip">엔딩은 시작 상황마다 달라져요</string>
     <string name="story_detail_genres">장르</string>
+    <string name="story_detail_like">좋아요</string>
+    <string name="story_detail_like_failed">좋아요 변경에 실패했어요</string>
     <string name="story_detail_not_found">스토리를 찾을 수 없어요</string>
     <string name="story_detail_options">스토리 옵션</string>
     <string name="story_detail_start_chat">채팅 시작하기</string>
@@ -18,4 +20,5 @@
     <string name="story_detail_start_settings">채팅 시작 상황</string>
     <string name="story_detail_thumbnail_close">닫기</string>
     <string name="story_detail_thumbnail_open">썸네일 크게 보기</string>
+    <string name="story_detail_unlike">좋아요 취소</string>
 </resources>
