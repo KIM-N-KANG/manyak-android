@@ -1,5 +1,6 @@
 package app.manyak.network.data.di
 
+import app.manyak.network.data.interceptor.AppVersionInterceptor
 import app.manyak.network.data.interceptor.AuthInterceptor
 import app.manyak.network.data.interceptor.DeviceIdInterceptor
 import dagger.Module
@@ -46,11 +47,13 @@ object HttpModule {
     @PlainClient
     fun providePlainClient(
         deviceIdInterceptor: DeviceIdInterceptor,
+        appVersionInterceptor: AppVersionInterceptor,
         loggingInterceptor: HttpLoggingInterceptor,
     ): OkHttpClient =
         OkHttpClient
             .Builder()
             .addInterceptor(deviceIdInterceptor)
+            .addInterceptor(appVersionInterceptor)
             .addInterceptor(loggingInterceptor)
             .build()
 
@@ -59,12 +62,14 @@ object HttpModule {
     @AuthenticatedClient
     fun provideAuthenticatedClient(
         deviceIdInterceptor: DeviceIdInterceptor,
+        appVersionInterceptor: AppVersionInterceptor,
         authInterceptor: AuthInterceptor,
         loggingInterceptor: HttpLoggingInterceptor,
     ): OkHttpClient =
         OkHttpClient
             .Builder()
             .addInterceptor(deviceIdInterceptor)
+            .addInterceptor(appVersionInterceptor)
             .addInterceptor(authInterceptor)
             .addInterceptor(loggingInterceptor)
             .build()
