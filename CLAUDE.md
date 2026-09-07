@@ -9,6 +9,7 @@
 | 앱 공통 기술 결정(구조·계층·인증·내비게이션)과 화면·흐름 구현 상태 매트릭스 | `../knk-harness/docs/product-specs/3-3-android-app.md` |
 | 모듈 소유권·내부 계층·의존 방향 상세 규칙 | `../knk-harness/docs/planning/android-module-architecture.md` |
 | 웹·앱 공통 계약(화면·상태·사용자 흐름·API 사용) | `../knk-harness/docs/product-specs/3-1-client.md`  |
+| 릴리스·배포 절차(버전 규칙·서명·트랙 승격·중단 기준) | `../knk-harness/docs/product-specs/7-deployment.md` §7-5·§7-7·§7-9 |
 | 이 레포가 소유하는 값(빌드 주입·검증 정책) | `docs/plans/_project.md`                           |
 | 기술 스택·모듈 폴더 트리·로컬 실행 준비 | `README.md` (이동 내역은 `docs/plans/module-reorganization.md`) |
 | 색·타이포·여백·컴포넌트 규칙 | `DESIGN.md`                                        |
