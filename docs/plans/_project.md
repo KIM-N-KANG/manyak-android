@@ -1,7 +1,7 @@
 # 프로젝트 결정
 
-- 최종 확인일: 2026-08-22
-- 상태: 초기 구성 단계
+- 최종 확인일: 2026-09-05
+- 상태: 기능·기반 모듈 구성
 
 구조·계층·인증·화면 이동처럼 **여러 기능이 공통으로 따라야 하는 기술 결정의 정본은 하네스**의 `../knk-harness/docs/product-specs/3-3-android-app.md`입니다. 이 문서는 그 정본을 가리키는 포인터와, 하네스가 다루지 않고 **이 레포의 코드·CI에 근거가 있는 값**만 남깁니다.
 
@@ -13,7 +13,7 @@
 | --- | --- |
 | 앱 사용자 모델(로그인 필수·게스트 비적용) | §3-3-1 앱은 로그인 필수입니다 |
 | 기술 스택(HTTP·직렬화·DI·이미지·SSE·분석·크래시) | §3-3-2 확정 스택 |
-| 계층과 책임(UI·Domain·Data), Repository 인터페이스 분리 | §3-3-2 계층과 책임 |
+| 계층과 책임(entity·domain·data·presentation), Repository 인터페이스 분리 | §3-3-2 계층과 책임 |
 | 모듈 목록과 의존 방향 | §3-3-2 모듈 구조 |
 | DI 컴포넌트 범위와 세션 수명 객체 정리 | §3-3-2 의존성 주입 구성 |
 | 오류 경로와 문자열 리소스 위치 | §3-3-2 오류 표현과 문자열 위치 |
@@ -22,7 +22,7 @@
 | 인증 세션 — 토큰 보관·만료 판정·재발급·로그아웃·`device_id`·소셜 로그인 | §3-3-4 |
 | 인증·로그인 검수 항목 | §3-3-7 인증·로그인 검수 항목 |
 
-> **반영 중** — 위 절들은 KNK-959([knk-harness PR #121](https://github.com/KIM-N-KANG/knk-harness/pull/121))로 작성되어 `dev` 병합 대기 중입니다. 병합 전까지는 `docs/KNK-959-define-android-architecture-and-auth-spec` 브랜치를 참조하고, 병합되면 이 안내를 지웁니다.
+> **KNK-1197** — 모듈 상세 정본과 적용 상태는 하네스 `docs/planning/android-module-architecture.md`, 실행 순서·검증 기록과 대응 브랜치는 [모듈 재구성 계획](./module-reorganization.md)을 확인합니다. 이전 기능 계획의 모듈 배치·명령은 작성 당시 기록입니다.
 
 ## 이 레포가 소유하는 결정
 
@@ -35,6 +35,8 @@
 | 서버 base URL 주입 | 빌드 타입별 `BuildConfig.BASE_URL`로 주입합니다. debug는 dev 서버 `https://dev-api.manyak.app/api/v1/`가 기본이고 `local.properties`의 `BASE_URL`로 덮어씁니다. release는 `https://api.manyak.app/api/v1/`입니다. | `app/build.gradle.kts` |
 | 평문 통신 | debug 소스 세트의 network security config에서 로컬 호스트에만 허용합니다. release 매니페스트에는 포함되지 않습니다. | `app/src/debug/res/xml/network_security_config.xml` |
 | 모듈 품질 게이트 | 새 모듈은 역할에 필요한 정적 검사·lint·테스트가 루트 CI 게이트에 연결되고, 리포트를 모듈 경로와 무관하게 수집할 수 있어야 합니다. | `.github/workflows/android-ci.yml` |
+| 모듈·계층 검사 | `checkModuleArchitecture`가 프로젝트 의존과 Kotlin PSI의 import·전체 경로·별칭·typealias 참조를 검사합니다. 파서는 Gradle 작업의 별도 worker 프로세스에서 실행합니다. | `build-logic/src/main/kotlin/architecture/`, 루트 `check` |
+| Gradle 힙 | 16개 Android 모듈의 전체 검사에서 기존 2GB 데몬이 GC thrashing으로 종료되어 4GB로 설정했습니다. Kotlin 경계 검사는 별도 512MB worker 프로세스에서 실행합니다. | `gradle.properties`, `CheckModuleArchitecture.kt` |
 | 로컬 검증 | 변경된 모듈의 관련 테스트 또는 가장 작은 컴파일 작업을 우선합니다. | 빠른 피드백 유지 |
 | PR 검증 | CI의 `./gradlew check`와 `./gradlew assembleDebug`가 전체 기본 게이트입니다. 로컬에서 자동으로 중복 실행하지 않습니다. | `.github/workflows/android-ci.yml` |
 | 수동 검증 | 자동화할 수 없는 고위험 경로만 기능 완료 시 확인합니다. 전체 기기·언어·버전 매트릭스는 릴리스 또는 명시적 QA에서 수행합니다. | 검증 비용을 변경 위험에 맞추기 위함 |

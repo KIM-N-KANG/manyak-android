@@ -35,9 +35,13 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
-import app.manyak.core.domain.session.SessionState
-import app.manyak.core.domain.settings.ThemeMode
-import app.manyak.core.domain.story.CreationResumePoint
+import app.manyak.analytics.presentation.LocalAnalytics
+import app.manyak.auth.entity.SessionState
+import app.manyak.chat.room.presentation.ChatRoomScreen
+import app.manyak.common.entity.settings.ThemeMode
+import app.manyak.common.entity.story.CreationResumePoint
+import app.manyak.common.presentation.credit.LocalCreditPolicy
+import app.manyak.common.presentation.error.messageResOrNull
 import app.manyak.core.navigation.ChatRoomRoute
 import app.manyak.core.navigation.CreateAdditionalInfoRoute
 import app.manyak.core.navigation.CreateKeywordRoute
@@ -52,25 +56,23 @@ import app.manyak.core.navigation.MyInviteRoute
 import app.manyak.core.navigation.MyOpenSourceLicenseRoute
 import app.manyak.core.navigation.StoryDetailRoute
 import app.manyak.core.navigation.WithdrawalRoute
-import app.manyak.core.ui.R
-import app.manyak.core.ui.component.ManyakProgressIndicator
-import app.manyak.core.ui.component.rememberDelayedProgressVisibility
-import app.manyak.core.ui.credit.LocalCreditPolicy
-import app.manyak.core.ui.error.messageResOrNull
-import app.manyak.core.ui.theme.ManyakTheme
-import app.manyak.feature.chat.ChatRoomScreen
-import app.manyak.feature.create.CreateAdditionalInfoScreen
-import app.manyak.feature.create.CreateKeywordScreen
-import app.manyak.feature.create.CreateStorylineScreen
-import app.manyak.feature.legal.LegalDocumentScreen
-import app.manyak.feature.login.LoginScreen
-import app.manyak.feature.my.CreditChargeScreen
-import app.manyak.feature.my.FeedbackScreen
-import app.manyak.feature.my.InviteOnboardingSheet
-import app.manyak.feature.my.InviteScreen
-import app.manyak.feature.my.OpenSourceLicenseScreen
-import app.manyak.feature.my.WithdrawalScreen
-import app.manyak.feature.story.StoryDetailScreen
+import app.manyak.create.additionalinfo.presentation.CreateAdditionalInfoScreen
+import app.manyak.create.keyword.presentation.CreateKeywordScreen
+import app.manyak.create.storyline.presentation.CreateStorylineScreen
+import app.manyak.designsystem.component.ManyakProgressIndicator
+import app.manyak.designsystem.component.rememberDelayedProgressVisibility
+import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.legal.presentation.LegalDocumentScreen
+import app.manyak.login.presentation.LoginScreen
+import app.manyak.my.credit.presentation.CreditChargeScreen
+import app.manyak.my.feedback.presentation.FeedbackScreen
+import app.manyak.my.invite.presentation.InviteScreen
+import app.manyak.my.invite.presentation.onboarding.InviteOnboardingSheet
+import app.manyak.my.licenses.presentation.OpenSourceLicenseScreen
+import app.manyak.my.withdrawal.presentation.WithdrawalScreen
+import app.manyak.story.detail.presentation.StoryDetailScreen
+import app.manyak.R as AppR
+import app.manyak.designsystem.R as DesignsystemR
 
 /**
  * 세션 상태가 어느 그래프를 띄울지 결정한다. 그래프 안에서 가드로 막지 않는다 —
@@ -96,7 +98,10 @@ fun ManyakApp(
         }
 
     // 이프 수치는 세 기능 모듈의 화면이 함께 쓰므로 화면마다 상태를 늘리지 않고 루트에서 내린다.
-    CompositionLocalProvider(LocalCreditPolicy provides creditPolicy) {
+    CompositionLocalProvider(
+        LocalCreditPolicy provides creditPolicy,
+        LocalAnalytics provides viewModel.analytics,
+    ) {
         ManyakTheme(darkTheme = darkTheme) {
             SystemBarIconAppearance(darkTheme = darkTheme)
             Surface(modifier = modifier.fillMaxSize(), color = ManyakTheme.colors.surface) {
@@ -162,7 +167,7 @@ private fun CleanupFailed(
         }
         Text(
             modifier = Modifier.fillMaxWidth(),
-            text = stringResource(R.string.session_cleanup_failed),
+            text = stringResource(AppR.string.session_cleanup_failed),
             style = ManyakTheme.typography.bodyMedium,
             color = ManyakTheme.colors.textDanger,
             textAlign = TextAlign.Center,
@@ -180,7 +185,7 @@ private fun CleanupFailed(
                     contentColor = ManyakTheme.colors.textInverse,
                 ),
         ) {
-            Text(text = stringResource(R.string.common_retry), style = ManyakTheme.typography.labelLarge)
+            Text(text = stringResource(DesignsystemR.string.common_retry), style = ManyakTheme.typography.labelLarge)
         }
     }
 }
@@ -206,16 +211,17 @@ private fun SessionProgress() {
 @Composable
 private fun AuthNavDisplay() {
     val backStack = rememberNavBackStack(LoginRoute)
-    val screenTransition = rememberScreenTransition()
+    val slide = rememberScreenSlideTransitions()
     NavDisplay(
         backStack = backStack,
         entryDecorators = rememberManyakEntryDecorators(),
-        transitionSpec = screenTransition,
-        popTransitionSpec = screenTransition,
+        transitionSpec = slide.push,
+        popTransitionSpec = slide.pop,
+        predictivePopTransitionSpec = slide.predictivePop,
         entryProvider =
             entryProvider<NavKey> {
                 entry<LoginRoute> {
-                    LoginScreen(onOpenLegalDocument = { document -> backStack.add(LegalRoute(document)) })
+                    LoginScreen(onOpenLegalDocument = { document -> backStack.push(LegalRoute(document)) })
                 }
                 legalEntry()
             },
@@ -231,12 +237,14 @@ private fun MainNavDisplay() {
     val backStack = rememberNavBackStack(MainTabsRoute)
     // 셸 밖에서도 탭을 바꿀 수 있어야 한다 — 채팅을 지우면 방을 걷어내고 채팅 탭을 편다.
     var selectedTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
-    val screenTransition = rememberScreenTransition()
+    val slide = rememberScreenSlideTransitions()
+    val creationFunnelMetadata = rememberCreationFunnelMetadata()
     NavDisplay(
         backStack = backStack,
         entryDecorators = rememberManyakEntryDecorators(),
-        transitionSpec = screenTransition,
-        popTransitionSpec = screenTransition,
+        transitionSpec = slide.push,
+        popTransitionSpec = slide.pop,
+        predictivePopTransitionSpec = slide.predictivePop,
         entryProvider =
             entryProvider<NavKey> {
                 entry<MainTabsRoute> {
@@ -245,37 +253,37 @@ private fun MainNavDisplay() {
                         onSelectTab = { tab -> selectedTab = tab },
                         // 상세는 셸 위에 쌓여 헤더도 하단 탭도 없는 전체 화면이 되고, 뒤로가기는
                         // 셸이 든 선택 탭으로 그대로 돌아온다.
-                        onOpenStory = { storyId -> backStack.add(StoryDetailRoute(storyId)) },
+                        onOpenStory = { storyId -> backStack.push(StoryDetailRoute(storyId)) },
                         // 채팅 목록에서 이어가기 — 상세에서 시작한 채팅과 같은 목적지를 쌓고,
                         // 뒤로가기는 채팅 탭으로 돌아온다.
-                        onOpenChat = { chatId -> backStack.add(ChatRoomRoute(chatId)) },
-                        onCreateStory = { backStack.add(CreateKeywordRoute) },
+                        onOpenChat = { chatId -> backStack.push(ChatRoomRoute(chatId)) },
+                        onCreateStory = { backStack.push(CreateKeywordRoute) },
                         // 재개·복구 진입 — 레코드가 가리키는 단계까지 체인을 쌓는다.
                         onResumeCreation = { resumePoint -> backStack.addCreationResumeChain(resumePoint) },
                         // 마이 하위 목적지들 — 셸 위에 쌓이는 전체 화면이고 뒤로가기는 마이 탭으로 돌아온다.
-                        onOpenInvite = { backStack.add(MyInviteRoute) },
-                        onOpenServiceInfo = { backStack.add(LegalRoute(LegalDocument.ABOUT)) },
-                        onOpenFeedback = { backStack.add(MyFeedbackRoute) },
-                        onOpenOpenSourceLicense = { backStack.add(MyOpenSourceLicenseRoute) },
-                        onOpenWithdrawal = { backStack.add(WithdrawalRoute) },
-                        onOpenCreditCharge = { backStack.add(MyCreditChargeRoute) },
+                        onOpenInvite = { backStack.push(MyInviteRoute) },
+                        onOpenServiceInfo = { backStack.push(LegalRoute(LegalDocument.ABOUT)) },
+                        onOpenFeedback = { backStack.push(MyFeedbackRoute) },
+                        onOpenOpenSourceLicense = { backStack.push(MyOpenSourceLicenseRoute) },
+                        onOpenWithdrawal = { backStack.push(WithdrawalRoute) },
+                        onOpenCreditCharge = { backStack.push(MyCreditChargeRoute) },
                     )
                 }
                 myDestinationEntries(backStack)
                 entry<StoryDetailRoute> { route ->
                     StoryDetailScreen(
                         storyId = route.storyId,
-                        onBack = { backStack.removeLastOrNull() },
+                        onBack = { backStack.pop() },
                         // 상세를 걷어내지 않고 그 위에 쌓는다 — 채팅방 뒤로가기가 방금 보던
                         // 스토리로 돌아온다(웹 `replace` 와 갈리는 앱 전용 차이).
-                        onEnterChat = { chatId -> backStack.add(ChatRoomRoute(chatId)) },
+                        onEnterChat = { chatId -> backStack.push(ChatRoomRoute(chatId)) },
                     )
                 }
-                creationFunnelEntries(backStack)
+                creationFunnelEntries(backStack, creationFunnelMetadata)
                 entry<ChatRoomRoute> { route ->
                     ChatRoomScreen(
                         chatId = route.chatId,
-                        onBack = { backStack.removeLastOrNull() },
+                        onBack = { backStack.pop() },
                         // 지운 방이 뒤로가기로 되살아나면 안 되므로 셸까지 걷어내고 채팅 탭을 편다.
                         // 상세에서 시작한 채팅이면 상세도 함께 걷힌다.
                         onDeleted = {
@@ -292,37 +300,36 @@ private fun MainNavDisplay() {
 /** 마이 탭의 하위 목적지들. 셸 없이 전체 화면으로 열리고 뒤로가기는 마이 탭으로 돌아온다. */
 private fun EntryProviderScope<NavKey>.myDestinationEntries(backStack: MutableList<NavKey>) {
     entry<MyInviteRoute> {
-        InviteScreen(onBack = { backStack.removeLastOrNull() })
+        InviteScreen(onBack = { backStack.pop() })
     }
     entry<MyCreditChargeRoute> {
         CreditChargeScreen(
-            onBack = { backStack.removeLastOrNull() },
+            onBack = { backStack.pop() },
             // 무료 충전 탭의 초대 줄은 마이와 같은 목적지로 간다.
-            onOpenInvite = { backStack.add(MyInviteRoute) },
+            onOpenInvite = { backStack.push(MyInviteRoute) },
         )
     }
     entry<MyFeedbackRoute> {
-        FeedbackScreen(onBack = { backStack.removeLastOrNull() })
+        FeedbackScreen(onBack = { backStack.pop() })
     }
     entry<MyOpenSourceLicenseRoute> {
         OpenSourceLicenseScreen(
-            // 이 파일의 R 은 :core:ui 의 것이다. 빌드가 만든 목록은 :app 자기 리소스라 온전한 이름으로 가리킨다.
-            librariesRes = app.manyak.R.raw.aboutlibraries,
-            onBack = { backStack.removeLastOrNull() },
+            librariesRes = AppR.raw.aboutlibraries,
+            onBack = { backStack.pop() },
         )
     }
     entry<WithdrawalRoute> {
-        WithdrawalScreen(onBack = { backStack.removeLastOrNull() })
+        WithdrawalScreen(onBack = { backStack.pop() })
     }
 }
 
 private fun MutableList<NavKey>.addCreationResumeChain(resumePoint: CreationResumePoint) {
     when (resumePoint) {
-        CreationResumePoint.KeywordStep -> add(CreateKeywordRoute)
-        CreationResumePoint.StorylineStep -> add(CreateStorylineRoute)
+        CreationResumePoint.KeywordStep -> push(CreateKeywordRoute)
+        CreationResumePoint.StorylineStep -> push(CreateStorylineRoute)
         is CreationResumePoint.AdditionalInfoStep -> {
-            add(CreateStorylineRoute)
-            add(CreateAdditionalInfoRoute(resumePoint.storylineIndex))
+            push(CreateStorylineRoute)
+            push(CreateAdditionalInfoRoute(resumePoint.storylineIndex))
         }
     }
 }
@@ -330,46 +337,44 @@ private fun MutableList<NavKey>.addCreationResumeChain(resumePoint: CreationResu
 /**
  * 간편 제작 퍼널 세 단계. 셸을 두르지 않는 전체 화면이며 백스택 구조가 단계 관계를 그대로 드러낸다.
  */
-private fun EntryProviderScope<NavKey>.creationFunnelEntries(backStack: MutableList<NavKey>) {
-    entry<CreateKeywordRoute> {
+private fun EntryProviderScope<NavKey>.creationFunnelEntries(
+    backStack: MutableList<NavKey>,
+    metadata: Map<String, Any>,
+) {
+    entry<CreateKeywordRoute>(metadata = metadata) {
         CreateKeywordScreen(
-            onLeaveFunnel = { backStack.removeLastOrNull() },
+            onLeaveFunnel = { backStack.pop() },
             // 스토리라인 단계는 키워드 목적지를 대체한다 — 그 화면의 뒤로가기가
             // 홈 복귀(퍼널 이탈)가 되도록 한다.
             onOpenStorylineStep = {
-                backStack.removeLastOrNull()
-                backStack.add(CreateStorylineRoute)
+                backStack.pop()
+                backStack.push(CreateStorylineRoute)
             },
         )
     }
-    entry<CreateStorylineRoute> {
+    entry<CreateStorylineRoute>(metadata = metadata) {
         CreateStorylineScreen(
-            onLeaveFunnel = { backStack.removeLastOrNull() },
+            onLeaveFunnel = { backStack.pop() },
             onOpenAdditionalInfoStep = { storylineIndex ->
-                backStack.add(CreateAdditionalInfoRoute(storylineIndex))
+                backStack.push(CreateAdditionalInfoRoute(storylineIndex))
             },
         )
     }
-    entry<CreateAdditionalInfoRoute> { route ->
+    entry<CreateAdditionalInfoRoute>(metadata = metadata) { route ->
         CreateAdditionalInfoScreen(
             storylineIndex = route.storylineIndex,
             // 이탈은 퍼널 단계를 전부 걷어내고 홈으로 돌아간다. 스토리라인 단계만 pop 하면
             // 홈으로 나가려던 조작이 한 단계 뒤로 가기로 보인다.
             onLeaveFunnel = { backStack.popToMainTabs() },
-            onBackToStoryline = { backStack.removeLastOrNull() },
+            onBackToStoryline = { backStack.pop() },
             // 완성 성공 — 퍼널 단계를 모두 걷어내고 생성된 채팅방을 쌓는다(웹의 채팅 화면
             // `replace` 대응). 상세에서 시작한 채팅과 달리 돌아갈 단계가 남지 않는다.
             onEnterChat = { chatId ->
                 backStack.popToMainTabs()
-                backStack.add(ChatRoomRoute(chatId))
+                backStack.push(ChatRoomRoute(chatId))
             },
         )
     }
-}
-
-/** 한 번 쓰고 끝나는 퍼널 단계를 모두 걷어내 셸만 남긴다. */
-private fun MutableList<NavKey>.popToMainTabs() {
-    while (size > 1 && lastOrNull() != MainTabsRoute) removeLastOrNull()
 }
 
 /**

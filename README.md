@@ -16,26 +16,26 @@
 
 ## 폴더 구조
 
-```
+```text
 manyak-android/
-├── app/                  # Navigation 3 백스택 · 메인 탭 셸 · 세션 부트스트랩 · DI 조립
-├── core/
-│   ├── domain/           # 순수 Kotlin. 도메인 모델 · Repository 계약 · DomainError
-│   ├── data/             # Repository 구현 · Retrofit · DataStore · Room · SSE · 소셜 SDK 어댑터
-│   ├── ui/               # ManyakTheme · 공용 컴포저블 · MviViewModel · 문자열 리소스 전량
-│   └── navigation/       # 타입 안전 라우트의 단일 등록처
-└── feature/
-    ├── login/, legal/    # 로그인 · 약관 동의
-    ├── home/, story/     # 스토리 탐색 · 스토리 상세
-    ├── chat/             # 채팅 목록 · 채팅방(SSE 스트리밍)
-    ├── create/, studio/  # 간편 스토리 제작 · 내가 만든 스토리
-    └── my/               # 마이 · 설정 · 이프
+├── build-logic/           # 공통 Gradle convention plugin · 모듈/계층 검사
+├── gradle/                # Wrapper · 버전 카탈로그
+├── app/                   # Navigation 3 백스택 · 메인 탭 · 세션 조율 · DI 조립
+├── auth/                  # 인증 · 토큰 · 세션 · 계정 연동
+├── network/               # HTTP · 직렬화 · 공통 통신 오류 변환
+├── analytics/             # 이벤트 계약 · 분석/크래시 SDK
+├── navigation/            # 라우트 단일 등록처
+├── designsystem/          # ManyakTheme · 시각적 공용 컴포넌트
+├── common/                # 실제 공통 entity/domain/data/presentation
+├── report/                # 공유 신고 업무
+├── home/, studio/, story/ # 오리지널 목록 · 내 목록 · 상세
+├── chat/                  # list/presentation · room/presentation
+├── create/                # keyword · storyline · additionalinfo
+├── my/                    # profile · credit · invite · feedback · withdrawal · licenses
+└── login/, legal/         # 로그인 · 웹 문서 화면
 ```
 
-- `app`이 모든 모듈을 조립하고 `:feature:*`끼리는 서로 참조하지 않습니다. 화면 이동은 `:core:navigation`을 거칩니다.
-- 화면 ViewModel은 `:core:ui`의 `MviViewModel`을 상속합니다. Intent → 부수효과 → Event → `reduce` → State로 흐르고, 일회성 출력은 Effect로 냅니다.
-- 사용자에게 보이는 문자열은 전부 `core/ui/src/main/res/values/strings.xml`에 둡니다.
-- 색·타이포·여백·모서리는 `ManyakTheme` 접근자로만 읽습니다. 규칙은 `DESIGN.md`에 있습니다.
+런타임 모듈은 16개이며 내부 계층·하위 기능은 Kotlin 패키지입니다. 구조·계층·공통 코드의 정본은 [하네스 Android 스펙](../knk-harness/docs/product-specs/3-3-android-app.md), 이동·검증 내역은 [모듈 재구성 기록](docs/plans/module-reorganization.md)을 확인하세요. 디자인 규칙은 [DESIGN.md](DESIGN.md)에 있습니다.
 
 ## 실행하기
 
@@ -68,7 +68,7 @@ cp local.properties.example local.properties
 
 | 명령                           | 설명                                         |
 | ------------------------------ | -------------------------------------------- |
-| `./gradlew check`              | ktlint · detekt · Android Lint · 유닛 테스트 |
+| `./gradlew check`              | 모듈/계층 검사 · ktlint · detekt · Android Lint · 유닛 테스트 |
 | `./gradlew assembleDebug`      | 디버그 APK 빌드                              |
 | `./gradlew installDebug`       | 연결된 기기에 설치                           |
 | `./gradlew ktlintFormat`       | 포맷 자동 수정                               |

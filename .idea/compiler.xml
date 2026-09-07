@@ -1,6 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="CompilerConfiguration">
-    <bytecodeTargetLevel target="11" />
+    <bytecodeTargetLevel target="25">
+      <module name="manyak-android.core.analytics" target="25" />
+      <module name="manyak-android.core.data" target="25" />
+      <module name="manyak-android.core.navigation" target="25" />
+      <module name="manyak-android.core.ui" target="25" />
+      <module name="manyak-android.feature.chat" target="25" />
+      <module name="manyak-android.feature.create" target="25" />
+      <module name="manyak-android.feature.home" target="25" />
+      <module name="manyak-android.feature.legal" target="25" />
+      <module name="manyak-android.feature.login" target="25" />
+      <module name="manyak-android.feature.my" target="25" />
+      <module name="manyak-android.feature.story" target="25" />
+      <module name="manyak-android.feature.studio" target="25" />
+    </bytecodeTargetLevel>
   </component>
 </project>

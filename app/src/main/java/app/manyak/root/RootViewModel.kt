@@ -2,12 +2,13 @@ package app.manyak.root
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import app.manyak.core.domain.credit.CreditPolicy
-import app.manyak.core.domain.credit.CreditPolicyRepository
-import app.manyak.core.domain.session.SessionRepository
-import app.manyak.core.domain.session.SessionState
-import app.manyak.core.domain.settings.ThemeMode
-import app.manyak.core.domain.settings.ThemePreferenceRepository
+import app.manyak.analytics.domain.Analytics
+import app.manyak.auth.domain.SessionRepository
+import app.manyak.auth.entity.SessionState
+import app.manyak.common.domain.credit.CreditPolicyRepository
+import app.manyak.common.domain.settings.ThemePreferenceRepository
+import app.manyak.common.entity.credit.CreditPolicy
+import app.manyak.common.entity.settings.ThemeMode
 import app.manyak.session.SessionTerminationCoordinator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -25,6 +26,8 @@ class RootViewModel
         themePreferenceRepository: ThemePreferenceRepository,
         private val creditPolicyRepository: CreditPolicyRepository,
         private val coordinator: SessionTerminationCoordinator,
+        /** 화면이 직접 보내는 이벤트의 통로. 루트가 CompositionLocal 로 내린다. */
+        val analytics: Analytics,
     ) : ViewModel() {
         val sessionState: StateFlow<SessionState> = sessionRepository.sessionState
 

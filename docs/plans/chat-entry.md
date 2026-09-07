@@ -1,5 +1,7 @@
 # 간편 제작 완성 직후 채팅 진입
 
+> **KNK-1197 구조 이전 안내 (2026-09-05)** — 아래 모듈 경로·코드 예시·검증 명령은 작성 당시 기록입니다. 현재 소유 위치와 검증 결과는 [모듈 재구성 기록](./module-reorganization.md), 현재 계층·의존 규칙은 [하네스 모듈 아키텍처](../../../knk-harness/docs/planning/android-module-architecture.md)를 따릅니다.
+
 - 작성일: 2026-08-25
 - 근거 정본: 하네스 `3-1-client.md §3-1-4 완성(finalize)`·`§3-1-5 턴 모델`, `4-backend.md §4-3-3 POST /chats`, `3-3-android-app.md §3-3-3`
 

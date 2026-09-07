@@ -1,14 +1,15 @@
 package app.manyak.session
 
-import app.manyak.core.data.api.AuthApi
-import app.manyak.core.data.api.dto.LogoutRequestDto
-import app.manyak.core.data.datastore.DeviceIdStore
-import app.manyak.core.data.provider.ProviderCleanupResult
-import app.manyak.core.data.provider.SocialIdTokenProvider
-import app.manyak.core.data.session.TokenReadResult
-import app.manyak.core.data.session.TokenStorage
-import app.manyak.core.data.session.UserScopedStore
-import app.manyak.core.domain.auth.AuthProvider
+import app.manyak.analytics.domain.AnalyticsIdentity
+import app.manyak.auth.data.api.AuthApi
+import app.manyak.auth.data.api.dto.LogoutRequestDto
+import app.manyak.auth.data.provider.ProviderCleanupResult
+import app.manyak.auth.data.provider.SocialIdTokenProvider
+import app.manyak.auth.data.session.TokenReadResult
+import app.manyak.auth.data.session.TokenStorage
+import app.manyak.common.data.datastore.DeviceIdStore
+import app.manyak.common.domain.session.UserScopedStore
+import app.manyak.common.entity.auth.AuthProvider
 import kotlinx.coroutines.delay
 import java.io.IOException
 import javax.inject.Inject
@@ -30,6 +31,7 @@ class SessionCleanupSteps
         private val userScopedStores: Set<@JvmSuppressWildcards UserScopedStore>,
         private val providers: Map<AuthProvider, @JvmSuppressWildcards SocialIdTokenProvider>,
         private val deviceIdStore: DeviceIdStore,
+        private val analyticsIdentity: AnalyticsIdentity,
     ) {
         /** 정리 대상 제공자. 종료를 시작할 때 저널에 대기 목록으로 고정한다. */
         val providerWireNames: List<String> get() = providers.keys.map(AuthProvider::wireName)
@@ -69,8 +71,10 @@ class SessionCleanupSteps
                 }
             }
 
+        /** 저장소와 분석 SDK 가 같은 값을 써야 한다. 저장이 확인된 뒤에만 SDK 에 넘긴다. */
         suspend fun rotateDeviceId(newDeviceId: String): Boolean =
             retryingCleanup { deviceIdStore.replaceWith(newDeviceId) }
+                .also { rotated -> if (rotated) analyticsIdentity.setDeviceId(newDeviceId) }
     }
 
 /**

@@ -16,20 +16,20 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberDecoratedNavEntries
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
-import app.manyak.core.domain.story.CreationResumePoint
+import app.manyak.chat.list.presentation.ChatListScreen
+import app.manyak.common.entity.story.CreationResumePoint
 import app.manyak.core.navigation.ChatListRoute
 import app.manyak.core.navigation.HomeRoute
 import app.manyak.core.navigation.MyRoute
 import app.manyak.core.navigation.StudioRoute
-import app.manyak.core.ui.component.ManyakBrandHeader
-import app.manyak.core.ui.component.ManyakNavigationBar
-import app.manyak.core.ui.component.ManyakNavigationItem
-import app.manyak.core.ui.component.ManyakSectionHeader
-import app.manyak.core.ui.theme.ManyakTheme
-import app.manyak.feature.chat.ChatListScreen
-import app.manyak.feature.home.HomeScreen
-import app.manyak.feature.my.MyScreen
-import app.manyak.feature.studio.StudioScreen
+import app.manyak.designsystem.component.ManyakBrandHeader
+import app.manyak.designsystem.component.ManyakNavigationBar
+import app.manyak.designsystem.component.ManyakNavigationItem
+import app.manyak.designsystem.component.ManyakSectionHeader
+import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.home.presentation.HomeScreen
+import app.manyak.my.profile.presentation.MyScreen
+import app.manyak.studio.presentation.StudioScreen
 
 /**
  * 하단 탭 넷을 두르는 셸. 헤더와 하단 바를 여기서만 그리고, 탭 화면에는 chrome 이 차지한 여백만 넘긴다.
@@ -145,7 +145,7 @@ private fun MainTabsContent(
     // 목적지는 백스택이 바뀔 때만 다시 만들어지므로, 그 사이에 바뀌는 여백을 값으로 붙잡으면 오래된 값이
     // 화면에 남는다. 상태로 넘겨 화면이 그릴 때마다 현재 값을 읽게 한다.
     val padding = rememberUpdatedState(contentPadding)
-    val screenTransition = rememberScreenTransition()
+    val screenTransition = rememberTabCrossfade()
 
     val homeEntries =
         rememberTabEntries(backStacks.getValue(MainTab.HOME)) {
@@ -199,6 +199,8 @@ private fun MainTabsContent(
         entries = entries,
         transitionSpec = screenTransition,
         popTransitionSpec = screenTransition,
+        // 탭 밑으로 떨어지는 예측형 뒤로가기도 탭 전환이므로 같은 페이드다.
+        predictivePopTransitionSpec = { screenTransition() },
         onBack = {
             val backStack = backStacks.getValue(selectedTab)
             if (backStack.size > 1) backStack.removeAt(backStack.lastIndex) else onLeaveTab()
