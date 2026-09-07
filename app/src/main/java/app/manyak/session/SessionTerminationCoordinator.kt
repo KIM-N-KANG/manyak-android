@@ -8,6 +8,7 @@ import app.manyak.auth.domain.SessionEndSignal
 import app.manyak.auth.domain.SessionGate
 import app.manyak.common.data.di.ApplicationScope
 import app.manyak.common.entity.session.SessionEndNotice
+import app.manyak.notification.domain.PushTokenRegistrar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
@@ -39,6 +40,7 @@ class SessionTerminationCoordinator
         private val journalStore: TerminationJournalStore,
         private val stateHolder: SessionStateHolder,
         private val gate: SessionGate,
+        private val pushTokenRegistrar: PushTokenRegistrar,
         @param:ApplicationScope private val applicationScope: CoroutineScope,
     ) : SessionEndSignal {
         private val mutex = Mutex()
@@ -97,11 +99,15 @@ class SessionTerminationCoordinator
             notice: SessionEndNotice,
             serverLogoutToken: String?,
         ) {
+            val pending = journalStore.read()
+            // 사용자가 누른 로그아웃만 이 기기의 푸시 토큰을 지운다. 장벽 **앞**이어야 삭제 호출이 만료된
+            // access 토큰을 재발급할 수 있다. 재개·서버 강제 종료는 세션이 이미 닫혀 시도하지 않는다.
+            if (pending == null && notice == SessionEndNotice.USER_REQUESTED) pushTokenRegistrar.closeAndDeleteToken()
             closeWrites()
             // 이미 정리가 시작됐었다면(재개·재시도) 저널을 새로 만들지 않고 남은 단계를 잇는다.
             // 서버 로그아웃 표식 전에 죽었다면 토큰이 남아 있을 때 호출을 반복한다.
-            journalStore.read()?.let { pending ->
-                execute(pending, serverLogoutToken ?: steps.storedRefreshToken())
+            pending?.let {
+                execute(it, serverLogoutToken ?: steps.storedRefreshToken())
                 return
             }
             // 로컬 토큰을 지우기 전에 서버 세션도 폐기할 기회를 갖기 위해 먼저 스냅숏한다.
