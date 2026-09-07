@@ -81,6 +81,7 @@ fun Response<*>.parseErrorCode(): String? {
 
 const val HEADER_DEVICE_ID = "X-Manyak-Device-Id"
 const val HEADER_REQUEST_ID = "X-Manyak-Request-Id"
+const val HEADER_APP_VERSION = "X-Manyak-App-Version"
 
 const val HTTP_UNAUTHORIZED = 401
 private const val HTTP_FORBIDDEN = 403
