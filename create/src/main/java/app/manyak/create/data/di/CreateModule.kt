@@ -1,9 +1,13 @@
 package app.manyak.create.data.di
 
 import app.manyak.common.domain.story.CreationProgressAccess
+import app.manyak.create.data.completion.StoryCompletionExecutor
 import app.manyak.create.data.database.PendingStoryCreationRoomStore
+import app.manyak.create.data.database.StoryCompletionRequestRoomStore
 import app.manyak.create.data.repository.StoryCreationRepositoryImpl
 import app.manyak.create.domain.PendingStoryCreationStore
+import app.manyak.create.domain.StoryCompletionRequestStore
+import app.manyak.create.domain.StoryCompletionSubmitter
 import app.manyak.create.domain.StoryCreationRepository
 import dagger.Binds
 import dagger.Module
@@ -24,5 +28,13 @@ abstract class CreateModule {
 
     @Binds
     @Singleton
-    abstract fun bindCreationProgressAccess(impl: PendingStoryCreationRoomStore): CreationProgressAccess
+    abstract fun bindStoryCompletionRequestStore(impl: StoryCompletionRequestRoomStore): StoryCompletionRequestStore
+
+    @Binds
+    @Singleton
+    abstract fun bindStoryCompletionSubmitter(impl: StoryCompletionExecutor): StoryCompletionSubmitter
+
+    @Binds
+    @Singleton
+    abstract fun bindCreationProgressAccess(impl: StoryCompletionExecutor): CreationProgressAccess
 }

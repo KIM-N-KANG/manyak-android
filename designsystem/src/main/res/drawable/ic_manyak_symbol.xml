@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    마냑 캐릭터 심벌만 떼어 낸 벡터. ic_logo_manyak 의 심벌 group 과 같은 경로이며 워드마크는 없다.
+    단색이라 놓이는 자리의 tint 로 칠한다 — 회색 표지 위 placeholder 처럼 브랜드 색이 아닌 자리에 쓴다.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="32dp"
+    android:height="32dp"
+    android:viewportWidth="64"
+    android:viewportHeight="64">
+    <path
+        android:pathData="M30,44H24A12,12 0 0 1 12,32V20A12,12 0 0 1 24,8H40A12,12 0 0 1 52,20V44C52,51 50,56 44,56H16"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="7.6"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M21,24a4,4 0 1,0 8,0a4,4 0 1,0 -8,0" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M35,24a4,4 0 1,0 8,0a4,4 0 1,0 -8,0" />
+</vector>

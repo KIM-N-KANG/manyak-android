@@ -91,8 +91,8 @@ internal fun MyStoryCard(
                     .weight(1f)
                     // 글 영역이 표지 높이를 최소치로 삼아야 메타 줄이 표지 아랫변에 맞는다.
                     .heightIn(min = CoverHeight)
-                    // 글줄 상자가 글자에 바짝 붙어 있어, 표지 윗변·아랫변과 같은 줄에서 시작하면 눌려 보인다.
-                    .padding(vertical = ManyakTheme.spacing.hairline),
+                    // 위는 행간 여유가 이미 띄우므로 아랫변만 글줄 상자와 표지 사이를 벌린다.
+                    .padding(bottom = ManyakTheme.spacing.hairline),
         )
     }
 }
@@ -125,7 +125,7 @@ internal fun MyStoryCardPreview(
                 Modifier
                     .weight(1f)
                     .heightIn(min = CompactCoverWidth / STORY_THUMBNAIL_ASPECT_RATIO)
-                    .padding(vertical = ManyakTheme.spacing.hairline),
+                    .padding(bottom = ManyakTheme.spacing.hairline),
         )
     }
 }

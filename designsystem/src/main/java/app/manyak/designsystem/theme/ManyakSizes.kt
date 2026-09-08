@@ -8,7 +8,7 @@ import androidx.compose.ui.unit.dp
  * Semantic — 컨트롤 크기.
  *
  * 토큰 정본에는 높이가 없어 이 레포가 소유하는 값이다(DESIGN.md). 일반 컨트롤은 안드로이드 최소
- * 터치 타깃과 같은 48dp, 밀도 높은 입력·칩은 40dp 로 구분한다.
+ * 터치 타깃과 같은 48dp, 밀도 높은 입력·칩과 카드 안 라벨 버튼의 보이는 높이는 40dp 로 구분한다.
  */
 @Immutable
 data class ManyakSizes(
@@ -16,6 +16,8 @@ data class ManyakSizes(
     val control: Dp,
     /** 40dp — 입력창·칩·셀렉트 앵커·앱 바 액션 버튼처럼 밀도 높은 컨트롤의 최소 높이 */
     val input: Dp,
+    /** 40dp — 카드 안에 놓이는 라벨 버튼의 보이는 높이. 터치 영역은 최소 48dp 를 그대로 유지한다 */
+    val controlCompact: Dp,
     /** 32dp — 라벨 없이 아이콘만 있는 보조 버튼. 본문 옆에 붙어 눈에 덜 띄어야 하는 자리다 */
     val controlSmall: Dp,
     /** 16dp — 밀도 높은 컨트롤 안에서 라벨 옆에 붙는 작은 아이콘 */
@@ -32,6 +34,7 @@ internal val ManyakDefaultSizes =
     ManyakSizes(
         control = 48.dp,
         input = 40.dp,
+        controlCompact = 40.dp,
         controlSmall = 32.dp,
         iconSmall = 16.dp,
         icon = 20.dp,
