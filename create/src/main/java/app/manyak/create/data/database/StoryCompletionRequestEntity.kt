@@ -1,5 +1,6 @@
 package app.manyak.create.data.database
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import app.manyak.create.entity.CompletedStory
@@ -21,16 +22,20 @@ data class StoryCompletionRequestEntity(
     val status: String,
     val storyId: String? = null,
     val storyTitle: String? = null,
+    /** 요청을 제출한 회원의 공개 ID. 로그아웃해도 남기고 같은 회원에게만 보인다. 빈 값은 이전 버전 행이다. */
+    @ColumnInfo(defaultValue = "") val ownerId: String = UNOWNED,
 ) {
     companion object {
         const val STATUS_PENDING: String = "PENDING"
         const val STATUS_COMPLETED: String = "COMPLETED"
         const val STATUS_FAILED: String = "FAILED"
+        const val UNOWNED: String = ""
     }
 }
 
-internal fun StoryCompletionRequest.toEntity(): StoryCompletionRequestEntity =
+internal fun StoryCompletionRequest.toEntity(ownerId: String): StoryCompletionRequestEntity =
     StoryCompletionRequestEntity(
+        ownerId = ownerId,
         requestId = requestId,
         completionCommand = encode(command.toDto()),
         generationCommand = generationCommand?.let { encode(it.toDto()) },

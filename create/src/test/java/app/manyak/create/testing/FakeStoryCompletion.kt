@@ -33,6 +33,8 @@ internal class FakeStoryCompletionRequestStore(
 
     val current: List<StoryCompletionRequest> get() = state.value
 
+    override suspend fun claimUnowned() = Unit
+
     override suspend fun readAll(): List<StoryCompletionRequest> = state.value
 
     override suspend fun submit(request: StoryCompletionRequest): Boolean {

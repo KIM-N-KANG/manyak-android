@@ -71,10 +71,11 @@ class PendingStoryCreationEntityTest {
             )
         val failed = pending.copy(outcome = CompletionOutcome.Failed)
 
-        assertEquals(pending, pending.toEntity().toDomainOrNull())
-        assertEquals(completed, completed.toEntity().toDomainOrNull())
-        assertEquals(failed, failed.toEntity().toDomainOrNull())
-        assertEquals("req-2", pending.toEntity().requestId)
+        assertEquals(pending, pending.toEntity("user-a").toDomainOrNull())
+        assertEquals(completed, completed.toEntity("user-a").toDomainOrNull())
+        assertEquals(failed, failed.toEntity("user-a").toDomainOrNull())
+        assertEquals("req-2", pending.toEntity("user-a").requestId)
+        assertEquals("user-a", pending.toEntity("user-a").ownerId)
     }
 
     @Test

@@ -5,10 +5,13 @@ import app.manyak.create.entity.StoryCompletionRequest
 import kotlinx.coroutines.flow.Flow
 
 /**
- * 제출된 완성 요청의 영속 저장소. 결과 반영과 삭제는 requestId 단위이며, 전량 삭제는
- * 세션 종료 정리만 부른다.
+ * 제출된 완성 요청의 영속 저장소. 결과 반영과 삭제는 requestId 단위이고, 행은 회원별로 격리되어
+ * 로그아웃해도 남는다 — 같은 회원이 돌아오면 완성 중이던 요청이 이어진다.
  */
 interface StoryCompletionRequestStore {
+    /** 소유자를 모르는 이전 버전 행을 지금 회원의 것으로 넘긴다. */
+    suspend fun claimUnowned()
+
     val requests: Flow<List<StoryCompletionRequest>>
 
     suspend fun readAll(): List<StoryCompletionRequest>

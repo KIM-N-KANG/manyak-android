@@ -4,10 +4,12 @@ import app.manyak.create.entity.PendingStoryCreation
 import kotlinx.coroutines.flow.Flow
 
 /**
- * 진행 레코드 단일 슬롯. 로그아웃 시 전량 삭제되는 사용자 귀속 저장소이며,
- * 구현은 세션 종료 정리 계약에 참여해야 한다.
+ * 진행 레코드 단일 슬롯. 회원별로 격리되어 로그인한 회원의 행만 보이고, 로그아웃해도 지우지 않는다.
  */
 interface PendingStoryCreationStore {
+    /** 소유자를 모르는 이전 버전 행을 지금 회원의 것으로 넘긴다. */
+    suspend fun claimUnowned()
+
     /** 홈 배너가 관찰한다. 해석할 수 없는 레코드는 null 로 취급한다. */
     val record: Flow<PendingStoryCreation?>
 

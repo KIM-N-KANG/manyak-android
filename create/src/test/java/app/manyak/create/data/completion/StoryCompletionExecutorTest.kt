@@ -41,7 +41,14 @@ class StoryCompletionExecutorTest {
             repository = repository,
             requestStore = requestStore,
             gate = gate,
-            executor = StoryCompletionExecutor(requestStore, draftStore, repository, gate, this),
+            executor =
+                StoryCompletionExecutor(
+                    requestStore,
+                    draftStore,
+                    repository,
+                    gate,
+                    this,
+                ),
         )
     }
 

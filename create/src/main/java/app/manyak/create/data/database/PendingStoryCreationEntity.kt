@@ -1,5 +1,6 @@
 package app.manyak.create.data.database
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import app.manyak.create.entity.CharacterGender
@@ -27,9 +28,12 @@ data class PendingStoryCreationEntity(
     val generation: String? = null,
     val progress: String? = null,
     val keywordSnapshot: String? = null,
+    /** 행을 만든 회원의 공개 ID. 로그아웃해도 지우지 않고 같은 회원이 돌아올 때만 보이게 한다. 빈 값은 소유자를 모르는 이전 버전 행이다. */
+    @ColumnInfo(defaultValue = "") val ownerId: String = UNOWNED,
 ) {
     companion object {
         const val SINGLE_ROW_ID: Int = 0
+        const val UNOWNED: String = ""
     }
 }
 
@@ -40,16 +44,20 @@ internal inline fun <reified T> encode(value: T): String = json.encodeToString(v
 internal inline fun <reified T> decodeOrNull(raw: String?): T? =
     raw?.let { runCatching { json.decodeFromString<T>(it) }.getOrNull() }
 
-internal fun PendingStoryCreation.toEntity(): PendingStoryCreationEntity =
+internal fun PendingStoryCreation.toEntity(
+    ownerId: String = PendingStoryCreationEntity.UNOWNED,
+): PendingStoryCreationEntity =
     when (this) {
         is PendingStoryCreation.GeneratingStorylines ->
             PendingStoryCreationEntity(
+                ownerId = ownerId,
                 stage = STAGE_STORYLINE_GENERATION,
                 generationCommand = encode(command.toDto()),
             )
 
         is PendingStoryCreation.Draft ->
             PendingStoryCreationEntity(
+                ownerId = ownerId,
                 stage = STAGE_STORY_DRAFT,
                 generationCommand = generationCommand?.let { encode(it.toDto()) },
                 completionCommand = lastCompletionCommand?.let { encode(it.toDto()) },
@@ -59,6 +67,7 @@ internal fun PendingStoryCreation.toEntity(): PendingStoryCreationEntity =
 
         is PendingStoryCreation.KeywordDraft ->
             PendingStoryCreationEntity(
+                ownerId = ownerId,
                 stage = STAGE_KEYWORD_DRAFT,
                 keywordSnapshot = encode(snapshot.toDto()),
             )

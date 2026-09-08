@@ -122,6 +122,8 @@ internal class FakePendingStoryCreationStore(
     val current: PendingStoryCreation? get() = state.value
     val writes = mutableListOf<PendingStoryCreation>()
 
+    override suspend fun claimUnowned() = Unit
+
     override suspend fun read(): PendingStoryCreation? = state.value
 
     override suspend fun write(record: PendingStoryCreation): Boolean {

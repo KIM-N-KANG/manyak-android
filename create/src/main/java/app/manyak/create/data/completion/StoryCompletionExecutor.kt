@@ -133,6 +133,9 @@ class StoryCompletionExecutor
 
         private suspend fun refreshAll() =
             gate.withAuthWork(onBlocked = {}) { work ->
+                // 제작 탭 새로고침이 로그인 뒤 첫 접점이다 — 소유자 없는 이전 버전 행을 지금 회원이 넘겨받는다.
+                draftStore.claimUnowned()
+                requestStore.claimUnowned()
                 val pending =
                     requestStore.readAll().filter { request ->
                         request.outcome == CompletionOutcome.Pending && !isInFlight(request.requestId)

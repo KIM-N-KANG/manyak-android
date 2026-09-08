@@ -56,6 +56,18 @@ internal val MIGRATION_1_2 =
     }
 
 /**
+ * 두 테이블에 소유 회원 ID 를 더한다. 기존 행은 소유자를 모르므로 빈 값으로 두고, 다음 로그인 회원이
+ * 넘겨받는다 — v2 까지는 로그아웃이 행을 전부 지웠으므로 남아 있는 행은 지금 로그인한 회원의 것이다.
+ */
+internal val MIGRATION_2_3 =
+    object : Migration(2, 3) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `pending_story_creation` ADD COLUMN `ownerId` TEXT NOT NULL DEFAULT ''")
+            db.execSQL("ALTER TABLE `story_completion_request` ADD COLUMN `ownerId` TEXT NOT NULL DEFAULT ''")
+        }
+    }
+
+/**
  * v1 완성 행을 요청 행으로 바꾼다. 명령과 생성 결과를 해석할 수 있어야 하며, 서버 처리 여부를 모르므로
  * 상태는 PENDING 으로 두어 다음 새로고침이 복구 조회로 확정한다. 진행 JSON 은 없으면 빈 값으로 채운다.
  */
