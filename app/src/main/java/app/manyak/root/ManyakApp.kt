@@ -92,6 +92,7 @@ fun ManyakApp(
     val sessionState by viewModel.sessionState.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val creditPolicy by viewModel.creditPolicy.collectAsStateWithLifecycle()
+    val entryDestination by viewModel.entryDestination.collectAsStateWithLifecycle()
     val showSessionProgress = rememberDelayedProgressVisibility(sessionState == SessionState.Undetermined)
     val darkTheme =
         when (themeMode) {
@@ -112,7 +113,10 @@ fun ManyakApp(
                     SessionState.Undetermined -> if (showSessionProgress) SessionProgress()
                     is SessionState.SignedOut -> AuthNavDisplay()
                     SessionState.Member -> {
-                        MainNavDisplay()
+                        MainNavDisplay(
+                            entryDestination = entryDestination,
+                            onEntryConsumed = viewModel::onEntryConsumed,
+                        )
                         // 알림 권한은 회원 그래프가 처음 그려질 때 설치당 한 번 묻는다. 거부해도 아무것도 바뀌지 않는다.
                         NotificationPermissionRequest()
                         // 신규 가입 안내는 어느 탭에 있든 회원 그래프 위에 뜬다. 로그인 화면에 두면
@@ -238,8 +242,19 @@ private fun AuthNavDisplay() {
  * 셸 키 위에 쌓여 헤더도 하단 탭도 없이 전체 화면으로 그려진다.
  */
 @Composable
-private fun MainNavDisplay() {
+private fun MainNavDisplay(
+    entryDestination: NavKey?,
+    onEntryConsumed: () -> Unit,
+) {
     val backStack = rememberNavBackStack(MainTabsRoute)
+    // 알림 탭 진입은 셸까지 걷어낸 뒤 목적지 하나만 쌓는다. 홈이면 걷어내기만 한다 — 셸은 이미 있어
+    // push 가 무시된다. 이 그래프는 회원일 때만 그려지므로 미로그인 진입은 로그인 뒤 여기서 소비된다.
+    LaunchedEffect(entryDestination) {
+        val destination = entryDestination ?: return@LaunchedEffect
+        backStack.popToMainTabs()
+        backStack.push(destination)
+        onEntryConsumed()
+    }
     // 셸 밖에서도 탭을 바꿀 수 있어야 한다 — 채팅을 지우면 방을 걷어내고 채팅 탭을 편다.
     var selectedTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
     val slide = rememberScreenSlideTransitions()
