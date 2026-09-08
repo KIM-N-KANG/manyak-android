@@ -67,7 +67,9 @@ class PushNotificationTray
 
         private fun post(message: PushMessage) {
             val (title, body) = resolveText(message) ?: return
-            if (!canPost() || !gate.isMemberNow()) return
+            // 권한이 없으면 OS 가 막을 뿐이지만, `notify` 호출 자체가 같은 함수 안의 권한 검사를 요구한다.
+            val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+            if (granted != PackageManager.PERMISSION_GRANTED || !gate.isMemberNow()) return
             val channelId = if (message.isMarketing) CHANNEL_MARKETING else CHANNEL_SERVICE
             val id = (message.type + message.targetId.orEmpty()).hashCode()
             val notification =
@@ -117,11 +119,6 @@ class PushNotificationTray
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
             )
         }
-
-        /** 권한이 없으면 OS 가 막을 뿐이지만, `notify` 호출 자체가 권한 검사를 요구한다. */
-        private fun canPost(): Boolean =
-            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
-                PackageManager.PERMISSION_GRANTED
 
         private fun channel(
             id: String,
