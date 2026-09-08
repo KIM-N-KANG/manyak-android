@@ -1,6 +1,8 @@
 package app.manyak.create.data.database
 
 import app.manyak.create.entity.CharacterGender
+import app.manyak.create.entity.CompletedStory
+import app.manyak.create.entity.CompletionOutcome
 import app.manyak.create.entity.CreationProgress
 import app.manyak.create.entity.KeywordCharacterSnapshot
 import app.manyak.create.entity.KeywordCustomTagSnapshot
@@ -8,6 +10,7 @@ import app.manyak.create.entity.KeywordDraftSnapshot
 import app.manyak.create.entity.PendingStoryCreation
 import app.manyak.create.entity.StoryCharacterInput
 import app.manyak.create.entity.StoryCompletionCommand
+import app.manyak.create.entity.StoryCompletionRequest
 import app.manyak.create.entity.Storyline
 import app.manyak.create.entity.StorylineGeneration
 import app.manyak.create.entity.StorylineGenerationCommand
@@ -20,19 +23,6 @@ class PendingStoryCreationEntityTest {
     @Test
     fun `생성 진행 레코드는 왕복해도 같다`() {
         val record = PendingStoryCreation.GeneratingStorylines(command = generationCommand())
-
-        assertEquals(record, record.toEntity().toDomainOrNull())
-    }
-
-    @Test
-    fun `완성 진행 레코드는 왕복해도 같다`() {
-        val record =
-            PendingStoryCreation.CompletingStory(
-                generationCommand = generationCommand(),
-                generation = generation(),
-                command = completionCommand(),
-                progress = progress(),
-            )
 
         assertEquals(record, record.toEntity().toDomainOrNull())
     }
@@ -63,6 +53,40 @@ class PendingStoryCreationEntityTest {
             PendingStoryCreationEntity.SINGLE_ROW_ID,
             PendingStoryCreation.KeywordDraft(keywordSnapshot()).toEntity().id,
         )
+    }
+
+    @Test
+    fun `완성 요청은 결과까지 왕복해도 같다`() {
+        val pending =
+            StoryCompletionRequest(
+                command = completionCommand(),
+                generationCommand = generationCommand(),
+                generation = generation(),
+                progress = progress(),
+                submittedAt = 1_700_000_000_000L,
+            )
+        val completed =
+            pending.copy(
+                outcome = CompletionOutcome.Completed(CompletedStory(id = "story-1", title = "제목")),
+            )
+        val failed = pending.copy(outcome = CompletionOutcome.Failed)
+
+        assertEquals(pending, pending.toEntity().toDomainOrNull())
+        assertEquals(completed, completed.toEntity().toDomainOrNull())
+        assertEquals(failed, failed.toEntity().toDomainOrNull())
+        assertEquals("req-2", pending.toEntity().requestId)
+    }
+
+    @Test
+    fun `이전 버전의 완성 행은 요청 테이블로 옮겨진 뒤 무시된다`() {
+        val entity =
+            PendingStoryCreationEntity(
+                stage = STAGE_STORY_COMPLETION,
+                completionCommand = encode(completionCommand().toDto()),
+                generation = encode(generation().toDto()),
+            )
+
+        assertNull(entity.toDomainOrNull())
     }
 
     @Test

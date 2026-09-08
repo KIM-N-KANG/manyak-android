@@ -67,24 +67,6 @@ internal fun StorylineGeneratingContent(modifier: Modifier = Modifier) {
     )
 }
 
-/** 스토리 완성 중 로딩 화면. 완성은 별도 목적지가 아니라 추가 정보 화면의 종료 상태다. */
-@Composable
-internal fun StoryCompletingContent(modifier: Modifier = Modifier) {
-    GeneratingLoadingContent(
-        modifier = modifier,
-        titleRes = CreateR.string.create_completion_loading_title,
-        descriptionRes = CreateR.string.create_completion_loading_description,
-        loadingLabelRes = CreateR.string.create_completion_loading_label,
-        phrasesRes = CreateR.array.create_completion_loading_phrases,
-        hints =
-            listOf(
-                GenerationHint(delayMs = 15_000, textRes = CreateR.string.create_completion_loading_hint_delayed),
-                GenerationHint(delayMs = 30_000, textRes = CreateR.string.create_completion_loading_hint_long),
-                GenerationHint(delayMs = 60_000, textRes = CreateR.string.create_completion_loading_hint_almost),
-            ),
-    )
-}
-
 /** 생성 계열 로딩 화면의 공용 골격. */
 @Composable
 private fun GeneratingLoadingContent(
@@ -293,13 +275,5 @@ private val SeparatorLineWidth = 1.dp
 private fun StorylineGeneratingContentPreview() {
     ManyakTheme(darkTheme = false) {
         StorylineGeneratingContent()
-    }
-}
-
-@Preview(showBackground = true, name = "추가 정보 · 완성 중")
-@Composable
-private fun StoryCompletingContentPreview() {
-    ManyakTheme(darkTheme = false) {
-        StoryCompletingContent()
     }
 }

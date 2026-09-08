@@ -15,8 +15,9 @@ data class CreationProgress(
 )
 
 /**
- * 단일 슬롯에 저장되는 간편 제작 진행 레코드. 응답을 못 받은 생성·완성 요청의 복구 조회와
- * 이탈 시 임시 저장이 같은 슬롯을 쓰므로, 새 생성을 시작하면 이전 레코드는 자연히 덮인다.
+ * 편집 슬롯에 저장되는 간편 제작 진행 레코드. 응답을 못 받은 생성 요청의 복구 조회와 이탈 시
+ * 임시 저장이 같은 슬롯을 쓰므로, 새 생성을 시작하면 이전 레코드는 자연히 덮인다. 제출한 완성
+ * 요청은 이 슬롯이 아니라 [StoryCompletionRequest] 로 따로 보존된다.
  */
 sealed interface PendingStoryCreation {
     /** 스토리라인 생성 요청을 보냈고 결과를 아직 화면에 반영하지 못했다. */
@@ -24,20 +25,12 @@ sealed interface PendingStoryCreation {
         val command: StorylineGenerationCommand,
     ) : PendingStoryCreation
 
-    /** 완성 요청을 보냈고 채팅 진입까지 끝나지 않았다. 재진입 복원을 위해 진행 컨텍스트를 함께 담는다. */
-    data class CompletingStory(
-        val generationCommand: StorylineGenerationCommand?,
-        val generation: StorylineGeneration,
-        val command: StoryCompletionCommand,
-        val progress: CreationProgress,
-    ) : PendingStoryCreation
-
     /** 생성 성공 직후와 이후 편집 변경에 맞춰 갱신되는 임시 저장본. */
     data class Draft(
         val generationCommand: StorylineGenerationCommand?,
         val generation: StorylineGeneration,
         val progress: CreationProgress,
-        /** 같은 페이로드의 완성 재시도가 requestId 를 재사용하도록 남기는 마지막 완성 명령. */
+        /** 같은 페이로드의 완성 재시도가 requestId 를 재사용하도록 남기는 마지막 완성 명령(이전 버전 호환). */
         val lastCompletionCommand: StoryCompletionCommand? = null,
     ) : PendingStoryCreation
 

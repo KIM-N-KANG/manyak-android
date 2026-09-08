@@ -9,6 +9,7 @@ import app.manyak.create.entity.StorylineRating
 import app.manyak.create.presentation.state.FunnelExitWarning
 import app.manyak.create.presentation.state.StorylineGenerationStore
 import app.manyak.create.testing.FakePendingStoryCreationStore
+import app.manyak.create.testing.FakeStoryCompletionSubmitter
 import app.manyak.create.testing.FakeStoryCreationRepository
 import app.manyak.create.testing.sampleGenerationInput
 import app.manyak.create.testing.sampleStorylineGeneration
@@ -64,7 +65,13 @@ class CreateStorylineViewModelTest {
         runTest(dispatcher) {
             val repository = FakeStoryCreationRepository()
             repository.queuedGenerationResults += DomainResult.Failure(DomainError.Network)
-            val store = StorylineGenerationStore(repository, FakePendingStoryCreationStore(), this)
+            val store =
+                StorylineGenerationStore(
+                    repository,
+                    FakePendingStoryCreationStore(),
+                    FakeStoryCompletionSubmitter(),
+                    this,
+                )
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
             val viewModel = CreateStorylineViewModel(store, repository, NoOpAnalytics)
@@ -230,7 +237,7 @@ class CreateStorylineViewModelTest {
         runTest(dispatcher) {
             val repository = FakeStoryCreationRepository()
             val pendingStore = FakePendingStoryCreationStore()
-            val store = StorylineGenerationStore(repository, pendingStore, this)
+            val store = StorylineGenerationStore(repository, pendingStore, FakeStoryCompletionSubmitter(), this)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
             val viewModel = CreateStorylineViewModel(store, repository, NoOpAnalytics)
@@ -256,7 +263,7 @@ class CreateStorylineViewModelTest {
         runTest(dispatcher) {
             val repository = FakeStoryCreationRepository()
             val pendingStore = FakePendingStoryCreationStore()
-            val store = StorylineGenerationStore(repository, pendingStore, this)
+            val store = StorylineGenerationStore(repository, pendingStore, FakeStoryCompletionSubmitter(), this)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
             val viewModel = CreateStorylineViewModel(store, repository, NoOpAnalytics)
@@ -284,7 +291,7 @@ class CreateStorylineViewModelTest {
         runTest(dispatcher) {
             val repository = FakeStoryCreationRepository()
             val pendingStore = FakePendingStoryCreationStore()
-            val store = StorylineGenerationStore(repository, pendingStore, this)
+            val store = StorylineGenerationStore(repository, pendingStore, FakeStoryCompletionSubmitter(), this)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
             val viewModel = CreateStorylineViewModel(store, repository, NoOpAnalytics)
@@ -307,7 +314,7 @@ class CreateStorylineViewModelTest {
             repository.queuedGenerationResults +=
                 DomainResult.Failure(DomainError.Server(status = 502, code = null, requestId = null))
             val pendingStore = FakePendingStoryCreationStore()
-            val store = StorylineGenerationStore(repository, pendingStore, this)
+            val store = StorylineGenerationStore(repository, pendingStore, FakeStoryCompletionSubmitter(), this)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
             val viewModel = CreateStorylineViewModel(store, repository, NoOpAnalytics)
@@ -334,7 +341,7 @@ class CreateStorylineViewModelTest {
             val repository = FakeStoryCreationRepository()
             repository.holdGeneration = true
             val pendingStore = FakePendingStoryCreationStore()
-            val store = StorylineGenerationStore(repository, pendingStore, this)
+            val store = StorylineGenerationStore(repository, pendingStore, FakeStoryCompletionSubmitter(), this)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
             val viewModel = CreateStorylineViewModel(store, repository, NoOpAnalytics)
@@ -358,7 +365,7 @@ class CreateStorylineViewModelTest {
         runTest(dispatcher) {
             val repository = FakeStoryCreationRepository()
             val pendingStore = FakePendingStoryCreationStore()
-            val store = StorylineGenerationStore(repository, pendingStore, this)
+            val store = StorylineGenerationStore(repository, pendingStore, FakeStoryCompletionSubmitter(), this)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
             val viewModel = CreateStorylineViewModel(store, repository, NoOpAnalytics)
@@ -388,7 +395,7 @@ class CreateStorylineViewModelTest {
                             progress = CreationProgress(),
                         ),
                 )
-            val store = StorylineGenerationStore(repository, pendingStore, this)
+            val store = StorylineGenerationStore(repository, pendingStore, FakeStoryCompletionSubmitter(), this)
 
             val viewModel = CreateStorylineViewModel(store, repository, NoOpAnalytics)
 
@@ -404,7 +411,13 @@ class CreateStorylineViewModelTest {
     fun `키워드 단계에서 넘어온 진입은 첫 프레임부터 생성 중이다`() =
         runTest(dispatcher) {
             val repository = FakeStoryCreationRepository()
-            val store = StorylineGenerationStore(repository, FakePendingStoryCreationStore(), this)
+            val store =
+                StorylineGenerationStore(
+                    repository,
+                    FakePendingStoryCreationStore(),
+                    FakeStoryCompletionSubmitter(),
+                    this,
+                )
             // 키워드 화면이 생성을 시작한 직후 — 아직 응답 전이라 스토어는 생성 중이다.
             store.generate(sampleGenerationInput())
 
@@ -420,7 +433,8 @@ class CreateStorylineViewModelTest {
         CreateStorylineViewModel,
     > {
         val repository = FakeStoryCreationRepository()
-        val store = StorylineGenerationStore(repository, FakePendingStoryCreationStore(), this)
+        val store =
+            StorylineGenerationStore(repository, FakePendingStoryCreationStore(), FakeStoryCompletionSubmitter(), this)
         store.generate(sampleGenerationInput())
         advanceUntilIdle()
         val viewModel = CreateStorylineViewModel(store, repository, NoOpAnalytics)

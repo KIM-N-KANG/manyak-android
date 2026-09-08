@@ -1,6 +1,5 @@
 package app.manyak.create.data.database
 
-import app.manyak.common.entity.story.CreationStage
 import app.manyak.create.entity.KeywordCharacterSnapshot
 import app.manyak.create.entity.KeywordDraftSnapshot
 import app.manyak.create.entity.PendingStoryCreation
@@ -27,13 +26,11 @@ class PendingStoryCreationRoomStoreTest {
 
             assertEquals(record, store.read())
             assertEquals(record, store.record.first())
-            assertEquals(CreationStage.KEYWORD_DRAFT, store.progress.first()?.stage)
 
-            assertTrue(store.discard())
+            assertTrue(store.clear())
 
             assertNull(store.read())
             assertNull(store.record.first())
-            assertNull(store.progress.first())
         }
 
     @Test

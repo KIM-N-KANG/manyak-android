@@ -300,7 +300,7 @@ private fun MainNavDisplay(
                         onEnterChat = { chatId -> backStack.push(ChatRoomRoute(chatId)) },
                     )
                 }
-                creationFunnelEntries(backStack, creationFunnelMetadata)
+                creationFunnelEntries(backStack, creationFunnelMetadata) { selectedTab = MainTab.STUDIO }
                 entry<ChatRoomRoute> { route ->
                     ChatRoomScreen(
                         chatId = route.chatId,
@@ -364,6 +364,7 @@ private fun MutableList<NavKey>.addCreationResumeChain(resumePoint: CreationResu
 private fun EntryProviderScope<NavKey>.creationFunnelEntries(
     backStack: MutableList<NavKey>,
     metadata: Map<String, Any>,
+    onSelectStudioTab: () -> Unit,
 ) {
     entry<CreateKeywordRoute>(metadata = metadata) {
         CreateKeywordScreen(
@@ -391,11 +392,11 @@ private fun EntryProviderScope<NavKey>.creationFunnelEntries(
             // 홈으로 나가려던 조작이 한 단계 뒤로 가기로 보인다.
             onLeaveFunnel = { backStack.popToMainTabs() },
             onBackToStoryline = { backStack.pop() },
-            // 완성 성공 — 퍼널 단계를 모두 걷어내고 생성된 채팅방을 쌓는다(웹의 채팅 화면
-            // `replace` 대응). 상세에서 시작한 채팅과 달리 돌아갈 단계가 남지 않는다.
-            onEnterChat = { chatId ->
+            // 완성 제출 — 퍼널을 걷어내고 제작 탭을 편다. 응답은 제작 탭의 카드가 받으므로 뒤로가기로
+            // 제출한 편집 화면이 되살아나지 않는다.
+            onSubmitted = {
                 backStack.popToMainTabs()
-                backStack.push(ChatRoomRoute(chatId))
+                onSelectStudioTab()
             },
         )
     }

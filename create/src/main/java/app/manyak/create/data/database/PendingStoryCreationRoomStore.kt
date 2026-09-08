@@ -2,10 +2,7 @@ package app.manyak.create.data.database
 
 import app.manyak.common.data.di.IoDispatcher
 import app.manyak.common.domain.session.UserScopedStore
-import app.manyak.common.domain.story.CreationProgressAccess
-import app.manyak.common.entity.story.CreationProgressSummary
 import app.manyak.create.domain.PendingStoryCreationStore
-import app.manyak.create.domain.toProgressSummary
 import app.manyak.create.entity.PendingStoryCreation
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
@@ -16,10 +13,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * 간편 제작 진행 레코드의 단일 슬롯.
- *
- * 해석할 수 없는 행은 없는 것으로 취급한다 — 재생성 가능한 진행 스냅숏이라 복구보다 폐기가
- * 안전하다. 사용자 귀속 데이터이므로 [UserScopedStore] 정리 계약에 참여한다.
+ * 간편 제작 편집 슬롯. 해석할 수 없는 행은 없는 것으로 취급하되 지우지는 않는다.
+ * 사용자 귀속 데이터이므로 [UserScopedStore] 정리 계약에 참여한다.
  */
 @Singleton
 class PendingStoryCreationRoomStore
@@ -28,8 +23,7 @@ class PendingStoryCreationRoomStore
         private val dao: PendingStoryCreationDao,
         @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     ) : PendingStoryCreationStore,
-        UserScopedStore,
-        CreationProgressAccess {
+        UserScopedStore {
         override val storeName: String = "pending_story_creation"
 
         override val record: Flow<PendingStoryCreation?> =
@@ -37,10 +31,6 @@ class PendingStoryCreationRoomStore
                 .observe(PendingStoryCreationEntity.SINGLE_ROW_ID)
                 .map { entity -> entity?.toDomainOrNull() }
                 .flowOn(ioDispatcher)
-
-        override val progress: Flow<CreationProgressSummary?> = record.map { it?.toProgressSummary() }
-
-        override suspend fun discard(): Boolean = clear()
 
         override suspend fun read(): PendingStoryCreation? =
             withContext(ioDispatcher) {

@@ -15,6 +15,7 @@ import app.manyak.create.entity.StorylineGenerationCommand
 import app.manyak.create.entity.StorylineRating
 import app.manyak.create.entity.StorylineRecommendedInfo
 import app.manyak.create.presentation.state.StorylineGenerationInput
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -71,9 +72,13 @@ internal open class FakeStoryCreationRepository(
     val completionCommands = mutableListOf<StoryCompletionCommand>()
     val queuedCompletionResults = ArrayDeque<DomainResult<CompletedStory>>()
 
+    /** 설정하면 완성 응답이 이 신호까지 매달린다 — 로그아웃 장벽과 늦은 응답 시나리오용. */
+    var completionGate: CompletableDeferred<Unit>? = null
+
     override suspend fun completeStory(command: StoryCompletionCommand): DomainResult<CompletedStory> {
         yield()
         completionCommands += command
+        completionGate?.await()
         return queuedCompletionResults.removeFirstOrNull()
             ?: DomainResult.Success(CompletedStory(id = "story-1", title = "완성 스토리"))
     }

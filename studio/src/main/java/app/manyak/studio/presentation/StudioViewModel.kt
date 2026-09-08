@@ -8,6 +8,8 @@ import app.manyak.analytics.entity.ReportSource
 import app.manyak.analytics.entity.StoryListSection
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.story.CreationProgressAccess
+import app.manyak.common.entity.story.CompletionRequestStatus
+import app.manyak.common.entity.story.CompletionRequestSummary
 import app.manyak.common.entity.story.CreationProgressSummary
 import app.manyak.common.entity.story.CreationResumePoint
 import app.manyak.common.entity.story.CreationStage
@@ -25,12 +27,20 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/** 이어서 만들기 배너의 표시 정보. 레코드 존재만 확인하며 서버 조회는 하지 않는다(3-1). */
-data class PendingCreationBanner(
-    /** 완성 진행 중이면 "완성 중인 스토리가 있어요", 그 외에는 "만들고 있는 스토리가 있어요". */
-    val isCompleting: Boolean,
-    val resumePoint: CreationResumePoint,
-)
+/** 옵션·삭제 확인의 대상이 되는 카드. 완성 중 요청은 옵션이 없어 여기 오지 않는다. */
+sealed interface StudioCard {
+    data class Story(
+        val story: StorySummary,
+    ) : StudioCard
+
+    /** 편집 중 초안. 삭제는 로컬 초안만 지우고 서버를 부르지 않는다. */
+    data object Draft : StudioCard
+
+    /** 완성에 실패한 요청. 삭제는 그 요청 행만 지운다. */
+    data class FailedRequest(
+        val requestId: String,
+    ) : StudioCard
+}
 
 data class StudioUiState(
     val isLoading: Boolean = true,
@@ -38,33 +48,39 @@ data class StudioUiState(
     val loadFailed: Boolean = false,
     /** 목록을 그린 채로 다시 읽는 중. 골격이 아니라 당김 표시자가 이 상태를 말한다. */
     val isRefreshing: Boolean = false,
-    val pendingBanner: PendingCreationBanner? = null,
-    /** FAB 등 배너가 아닌 경로로 진입하려는데 임시 저장본이 있어 이어서/새로 만들기를 묻는 중. */
+    /** 편집 중 초안. 레코드 존재만 확인하며 서버 조회는 하지 않는다. */
+    val draft: CreationProgressSummary? = null,
+    /** 제출 최신순 완성 요청. 완료된 요청은 목록에 같은 스토리가 실리면 사라진다. */
+    val completionRequests: List<CompletionRequestSummary> = emptyList(),
+    /** FAB 등 카드가 아닌 경로로 진입하려는데 초안이 있어 새로 만들기를 묻는 중. */
     val showResumeChoiceDialog: Boolean = false,
     /** 더보기·길게 누르기로 옵션 시트를 연 카드. null 이면 시트가 없다. */
-    val optionsTarget: StorySummary? = null,
+    val optionsTarget: StudioCard? = null,
     /** 삭제 확인을 묻는 대상. null 이면 다이얼로그가 없다. */
-    val deleteTarget: StorySummary? = null,
+    val deleteTarget: StudioCard? = null,
     val isDeleting: Boolean = false,
     /** 신고 시트. 대상은 옵션 시트를 연 카드다. */
     val report: StoryReportUiState = StoryReportUiState(),
     /** 신고 시트가 열려 있는 동안의 대상. 옵션 시트가 닫혀도 신고가 어느 스토리인지 남아야 한다. */
     val reportStoryId: String? = null,
-)
+) {
+    /** 서버 목록과 무관하게 화면에 올릴 로컬 카드가 있는지. 있으면 빈 목록·실패 화면 대신 목록을 그린다. */
+    val hasLocalCards: Boolean get() = draft != null || completionRequests.isNotEmpty()
+}
 
 sealed interface StudioIntent {
-    /** 제작 퍼널 진입 시도(FAB). 진행 레코드가 있으면 다이얼로그로 묻는다. */
+    /** 제작 퍼널 진입 시도(FAB). 초안이 있으면 다이얼로그로 묻는다. */
     data object CreateStory : StudioIntent
 
-    /** 배너의 "이어서 만들기". */
+    /** 초안 카드의 "이어서 만들기". */
     data object ResumeCreation : StudioIntent
 
-    /** 다이얼로그의 "새로 만들기" — 레코드를 폐기하고 키워드 단계부터 시작한다. */
+    /** 다이얼로그의 "새로 만들기" — 초안만 폐기하고 키워드 단계부터 시작한다. */
     data object StartNewCreation : StudioIntent
 
     data object DismissResumeChoiceDialog : StudioIntent
 
-    /** 화면이 다시 보였다. 떠난 사이 바뀐 목록을 서버와 맞춘다. */
+    /** 화면이 다시 보였다. 떠난 사이 바뀐 목록과 요청 상태를 서버와 맞춘다. */
     data object ScreenShown : StudioIntent
 
     /** 목록 조회 실패 화면의 다시 시도. */
@@ -73,24 +89,29 @@ sealed interface StudioIntent {
     /** 목록을 당겨서 새로고침. */
     data object Refresh : StudioIntent
 
-    /** 카드 더보기·길게 누르기 — 신고·삭제를 담은 옵션 시트를 연다. */
-    data class OpenStoryOptions(
-        val story: StorySummary,
+    /** 카드 더보기·길게 누르기 — 옵션 시트를 연다. */
+    data class OpenCardOptions(
+        val card: StudioCard,
     ) : StudioIntent
 
-    data object CloseStoryOptions : StudioIntent
+    data object CloseCardOptions : StudioIntent
 
     /** 옵션 시트의 "삭제하기" — 바로 지우지 않고 확인을 묻는다. */
-    data object RequestDeleteStory : StudioIntent
+    data object RequestDelete : StudioIntent
 
     /** 옵션 시트의 "신고하기" 이후 신고 시트 안의 동작. */
     data class Report(
         val action: StoryReportAction,
     ) : StudioIntent
 
-    data object ConfirmDeleteStory : StudioIntent
+    data object ConfirmDelete : StudioIntent
 
     data object DismissDeleteDialog : StudioIntent
+
+    /** 실패 카드의 다시 시도 — 같은 requestId 로 재전송한다. */
+    data class RetryCompletion(
+        val requestId: String,
+    ) : StudioIntent
 }
 
 sealed interface StudioEvent {
@@ -107,11 +128,11 @@ sealed interface StudioEvent {
     data object RefreshFailed : StudioEvent
 
     data class OptionsTargetChanged(
-        val story: StorySummary?,
+        val card: StudioCard?,
     ) : StudioEvent
 
     data class DeleteRequested(
-        val story: StorySummary,
+        val card: StudioCard,
     ) : StudioEvent
 
     data class ReportTargetChanged(
@@ -126,14 +147,21 @@ sealed interface StudioEvent {
 
     data object DeleteStarted : StudioEvent
 
-    data class DeleteSucceeded(
+    data class StoryDeleteSucceeded(
         val storyId: String,
     ) : StudioEvent
 
+    /** 로컬 카드 삭제 완료. 카드 자체는 저장소 흐름이 지운다. */
+    data object LocalDeleteFinished : StudioEvent
+
     data object DeleteFailed : StudioEvent
 
-    data class PendingCreationChanged(
-        val banner: PendingCreationBanner?,
+    data class DraftChanged(
+        val draft: CreationProgressSummary?,
+    ) : StudioEvent
+
+    data class CompletionRequestsChanged(
+        val requests: List<CompletionRequestSummary>,
     ) : StudioEvent
 
     data class ResumeChoiceDialogVisibleChanged(
@@ -162,29 +190,38 @@ sealed interface StudioEffect {
 }
 
 /**
- * 제작 탭. 내가 만든 스토리 목록을 화면이 보일 때마다 조회하고, 진행 중인 제작 레코드를 구독한다.
+ * 제작 탭. 내가 만든 스토리 목록을 화면이 보일 때마다 조회하고, 편집 초안과 완성 요청을 구독한다.
+ * 목록·초안·요청·삭제·신고를 한 화면이 조정하므로 함수 수 상한을 넘긴다 — 나누면 상태 소유가 흩어진다.
  *
- * 목록은 서버가 소유하고 제작 완료로 늘어나므로, 화면을 떠났다 돌아오면 다시 읽어 맞춘다 —
- * 스토리를 완성하고 채팅으로 넘어갔다 돌아온 자리가 대표적이다. 이미 그릴 목록이 있는 갱신은
- * 골격 없이 조용히 바꿔 끼우고 실패해도 보고 있던 목록을 지우지 않는다.
+ * 목록은 서버가 소유하고 제작 완료로 늘어나므로, 화면을 떠났다 돌아오면 다시 읽어 맞춘다. 이미 그릴
+ * 목록이 있는 갱신은 골격 없이 조용히 바꿔 끼우고 실패해도 보고 있던 목록을 지우지 않는다. 같은
+ * 시점에 완성 요청의 서버 상태도 조회해, 완료된 요청은 목록에 실린 실제 스토리 카드로 바뀐다.
  *
  * 목록을 보는 중에도 서버와 맞출 수 있게 당겨서 새로고침을 둔다. 화면 복귀 갱신과 달리 사용자가
  * 명시적으로 요청한 것이라 실패를 조용히 넘기지 않고 토스트로 알린다. 주기적 재조회는 두지 않는다.
  */
+@Suppress("TooManyFunctions")
 @HiltViewModel
 class StudioViewModel
     @Inject
     constructor(
-        private val pendingCreationStore: CreationProgressAccess,
+        private val creationProgress: CreationProgressAccess,
         private val storyRepository: StudioRepository,
         private val analytics: Analytics,
         reportRepository: ReportRepository,
     ) : MviViewModel<StudioIntent, StudioUiState, StudioEvent, StudioEffect>(StudioUiState()) {
         private var loadJob: Job? = null
         private var deleteJob: Job? = null
+        private var requestRefreshJob: Job? = null
 
-        /** 배너로 보여 준 레코드 단계. 같은 레코드가 다시 흘러와도 노출을 두 번 세지 않는다. */
-        private var shownBannerStage: PendingCreationStage? = null
+        /** 초안 카드로 보여 준 레코드 단계. 같은 레코드가 다시 흘러와도 노출을 두 번 세지 않는다. */
+        private var shownDraftStage: PendingCreationStage? = null
+
+        /** 완료를 확인하고 목록을 다시 읽은 요청. 목록에 늦게 실려도 한 번만 다시 읽는다. */
+        private val reloadedForRequests = mutableSetOf<String>()
+
+        /** 목록에 실려 지우는 중인 완료 요청. 흐름이 같은 요청을 다시 흘려도 삭제를 두 번 부르지 않는다. */
+        private val dismissingRequests = mutableSetOf<String>()
 
         /** 신고 절차는 상세·채팅방과 같아 공유 신고 컨트롤러가 소유한다. */
         private val report =
@@ -204,13 +241,19 @@ class StudioViewModel
         init {
             analytics.track(AnalyticsEvent.StoryListViewed(StoryListSection.CREATED))
             viewModelScope.launch {
-                pendingCreationStore.progress.collect { record ->
-                    val stage = record?.toStage()
-                    if (stage != null && stage != shownBannerStage) {
+                creationProgress.progress.collect { draft ->
+                    val stage = draft?.toStage()
+                    if (stage != null && stage != shownDraftStage) {
                         analytics.track(AnalyticsEvent.ContinueBannerShown(stage))
                     }
-                    shownBannerStage = stage
-                    dispatchEvent(StudioEvent.PendingCreationChanged(record?.toBanner()))
+                    shownDraftStage = stage
+                    dispatchEvent(StudioEvent.DraftChanged(draft))
+                }
+            }
+            viewModelScope.launch {
+                creationProgress.completionRequests.collect { requests ->
+                    dispatchEvent(StudioEvent.CompletionRequestsChanged(requests))
+                    reconcileCompleted(requests, uiState.value.stories)
                 }
             }
         }
@@ -219,49 +262,59 @@ class StudioViewModel
             val state = uiState.value
             when (intent) {
                 // 이미 그릴 목록이 있으면 갱신이 보이지 않아야 한다 — 골격이 다시 깔리면 복귀가 재진입처럼 보인다.
-                StudioIntent.ScreenShown ->
+                StudioIntent.ScreenShown -> {
+                    refreshRequests()
                     load(if (state.stories.isEmpty()) LoadKind.Blocking else LoadKind.Silent)
+                }
 
-                StudioIntent.Retry -> load(LoadKind.Blocking)
+                StudioIntent.Retry -> {
+                    refreshRequests()
+                    load(LoadKind.Blocking)
+                }
 
-                StudioIntent.Refresh -> load(LoadKind.Refresh)
+                StudioIntent.Refresh -> {
+                    refreshRequests()
+                    load(LoadKind.Refresh)
+                }
 
-                is StudioIntent.OpenStoryOptions,
-                StudioIntent.CloseStoryOptions,
-                StudioIntent.RequestDeleteStory,
-                StudioIntent.ConfirmDeleteStory,
+                is StudioIntent.OpenCardOptions,
+                StudioIntent.CloseCardOptions,
+                StudioIntent.RequestDelete,
+                StudioIntent.ConfirmDelete,
                 StudioIntent.DismissDeleteDialog,
                 is StudioIntent.Report,
                 -> handleCardIntent(intent, state)
 
-                StudioIntent.CreateStory -> startCreation(state.pendingBanner)
+                StudioIntent.CreateStory -> startCreation(state.draft)
 
                 StudioIntent.ResumeCreation ->
-                    state.pendingBanner?.let { banner ->
-                        // 같은 Intent 가 배너와 재개 다이얼로그 두 곳에서 온다. 열려 있던 쪽이 출처다.
+                    state.draft?.let { draft ->
+                        // 같은 Intent 가 카드와 재개 다이얼로그 두 곳에서 온다. 열려 있던 쪽이 출처다.
                         analytics.track(
                             if (state.showResumeChoiceDialog) {
                                 AnalyticsEvent.ResumeDialogContinued
                             } else {
                                 AnalyticsEvent.ContinueBannerClicked(
-                                    shownBannerStage ?: PendingCreationStage.STORY_DRAFT,
+                                    shownDraftStage ?: PendingCreationStage.STORY_DRAFT,
                                 )
                             },
                         )
                         dispatchEvent(StudioEvent.ResumeChoiceDialogVisibleChanged(visible = false))
-                        dispatchEffect(StudioEffect.NavigateToResume(banner.resumePoint))
+                        dispatchEffect(StudioEffect.NavigateToResume(draft.resumePoint))
                     }
 
                 StudioIntent.StartNewCreation -> {
                     analytics.track(AnalyticsEvent.ResumeDialogDiscarded)
-                    // 레코드 폐기가 진입보다 먼저다 — 레코드가 남은 채 들어가면 재개로 복원된다.
-                    pendingCreationStore.discard()
+                    // 초안 폐기가 진입보다 먼저다 — 초안이 남은 채 들어가면 재개로 복원된다. 완성 요청은 남는다.
+                    creationProgress.discard()
                     dispatchEvent(StudioEvent.ResumeChoiceDialogVisibleChanged(visible = false))
                     dispatchEffect(StudioEffect.NavigateToCreate)
                 }
 
                 StudioIntent.DismissResumeChoiceDialog ->
                     dispatchEvent(StudioEvent.ResumeChoiceDialogVisibleChanged(visible = false))
+
+                is StudioIntent.RetryCompletion -> creationProgress.retryCompletionRequest(intent.requestId)
             }
         }
 
@@ -271,21 +324,25 @@ class StudioViewModel
             state: StudioUiState,
         ) {
             when (intent) {
-                is StudioIntent.OpenStoryOptions -> {
-                    analytics.track(AnalyticsEvent.StoryOptionsOpened(intent.story.id))
-                    dispatchEvent(StudioEvent.OptionsTargetChanged(intent.story))
+                is StudioIntent.OpenCardOptions -> {
+                    (intent.card as? StudioCard.Story)?.let {
+                        analytics.track(
+                            AnalyticsEvent.StoryOptionsOpened(it.story.id),
+                        )
+                    }
+                    dispatchEvent(StudioEvent.OptionsTargetChanged(intent.card))
                 }
 
-                StudioIntent.CloseStoryOptions -> dispatchEvent(StudioEvent.OptionsTargetChanged(null))
+                StudioIntent.CloseCardOptions -> dispatchEvent(StudioEvent.OptionsTargetChanged(null))
 
                 // 삭제하기는 시트를 닫고 확인을 묻는다 — 시트 위에 다이얼로그가 겹치지 않는다.
-                StudioIntent.RequestDeleteStory ->
-                    state.optionsTarget?.let { story ->
+                StudioIntent.RequestDelete ->
+                    state.optionsTarget?.let { card ->
                         dispatchEvent(StudioEvent.OptionsTargetChanged(null))
-                        dispatchEvent(StudioEvent.DeleteRequested(story))
+                        dispatchEvent(StudioEvent.DeleteRequested(card))
                     }
 
-                StudioIntent.ConfirmDeleteStory -> confirmDelete(state.deleteTarget)
+                StudioIntent.ConfirmDelete -> confirmDelete(state.deleteTarget)
 
                 StudioIntent.DismissDeleteDialog -> dismissDeleteDialog()
 
@@ -296,8 +353,8 @@ class StudioViewModel
         }
 
         /**
-         * 신고 대상은 옵션 시트를 연 카드다. 열 때 대상을 따로 적어 두는 이유는 옵션 시트가 닫힌 뒤에도
-         * 신고 시트가 어느 스토리를 보내는지 알아야 해서다.
+         * 신고 대상은 옵션 시트를 연 스토리 카드다. 열 때 대상을 따로 적어 두는 이유는 옵션 시트가 닫힌
+         * 뒤에도 신고 시트가 어느 스토리를 보내는지 알아야 해서다.
          */
         private suspend fun handleReport(
             action: StoryReportAction,
@@ -305,7 +362,7 @@ class StudioViewModel
         ) {
             val storyId =
                 if (action == StoryReportAction.Open) {
-                    val target = state.optionsTarget?.id ?: return
+                    val target = (state.optionsTarget as? StudioCard.Story)?.story?.id ?: return
                     dispatchEvent(StudioEvent.OptionsTargetChanged(null))
                     dispatchEvent(StudioEvent.ReportTargetChanged(target))
                     target
@@ -330,8 +387,44 @@ class StudioViewModel
                         LoadKind.Silent -> Unit
                     }
                     when (val result = storyRepository.myStories()) {
-                        is DomainResult.Success -> dispatchEvent(StudioEvent.StoriesLoaded(result.value))
+                        is DomainResult.Success -> {
+                            dispatchEvent(StudioEvent.StoriesLoaded(result.value))
+                            reconcileCompleted(uiState.value.completionRequests, result.value)
+                        }
+
                         is DomainResult.Failure -> reportLoadFailure(kind)
+                    }
+                }
+        }
+
+        /** 요청 상태 조회는 목록 조회와 나란히 돈다. 이미 도는 조회가 있으면 겹쳐 시작하지 않는다. */
+        private fun refreshRequests() {
+            if (requestRefreshJob?.isActive == true) return
+            requestRefreshJob = viewModelScope.launch { creationProgress.refreshCompletionRequests() }
+        }
+
+        /**
+         * 완료된 요청을 실제 스토리 카드로 바꾼다. 목록에 그 스토리가 실렸으면 요청 행을 지우고, 아직
+         * 없으면 목록을 한 번 조용히 다시 읽는다 — 그동안 요청 카드는 완료 상태로 남아 결과를 잃지 않는다.
+         */
+        private fun reconcileCompleted(
+            requests: List<CompletionRequestSummary>,
+            stories: List<StorySummary>,
+        ) {
+            val storyIds = stories.mapTo(mutableSetOf()) { it.id }
+            requests
+                .filter { it.status == CompletionRequestStatus.COMPLETED && it.storyId != null }
+                .forEach { request ->
+                    if (request.storyId in storyIds) {
+                        if (dismissingRequests.add(request.requestId)) {
+                            viewModelScope.launch {
+                                if (!creationProgress.deleteCompletionRequest(request.requestId)) {
+                                    dismissingRequests.remove(request.requestId)
+                                }
+                            }
+                        }
+                    } else if (reloadedForRequests.add(request.requestId)) {
+                        load(LoadKind.Silent)
                     }
                 }
         }
@@ -352,9 +445,9 @@ class StudioViewModel
             }
         }
 
-        /** FAB 등 배너가 아닌 경로의 진입. 임시 저장본이 있으면 바로 들어가지 않고 묻는다. */
-        private suspend fun startCreation(pendingBanner: PendingCreationBanner?) {
-            if (pendingBanner == null) {
+        /** FAB 등 카드가 아닌 경로의 진입. 초안이 있으면 바로 들어가지 않고 묻는다. 완성 중 요청만 있으면 묻지 않는다. */
+        private suspend fun startCreation(draft: CreationProgressSummary?) {
+            if (draft == null) {
                 dispatchEffect(StudioEffect.NavigateToCreate)
             } else {
                 analytics.track(AnalyticsEvent.ResumeDialogShown)
@@ -363,7 +456,7 @@ class StudioViewModel
         }
 
         /** 다이얼로그가 이미 닫힌 뒤 확인이 도착하면 대상이 없다. */
-        private fun confirmDelete(target: StorySummary?) {
+        private fun confirmDelete(target: StudioCard?) {
             if (target != null) delete(target)
         }
 
@@ -372,24 +465,45 @@ class StudioViewModel
             if (deleteJob?.isActive != true) dispatchEvent(StudioEvent.DeleteDialogDismissed)
         }
 
-        private fun delete(target: StorySummary) {
+        private fun delete(target: StudioCard) {
             if (deleteJob?.isActive == true) return
             deleteJob =
                 viewModelScope.launch {
                     dispatchEvent(StudioEvent.DeleteStarted)
-                    when (storyRepository.deleteStory(target.id)) {
-                        is DomainResult.Success -> {
-                            analytics.track(AnalyticsEvent.StoryListStoryDeleted(target.id))
-                            dispatchEvent(StudioEvent.DeleteSucceeded(target.id))
-                            dispatchEffect(StudioEffect.ShowStoryDeleted)
-                        }
+                    when (target) {
+                        is StudioCard.Story -> deleteStory(target.story)
 
-                        is DomainResult.Failure -> {
-                            dispatchEvent(StudioEvent.DeleteFailed)
-                            dispatchEffect(StudioEffect.ShowStoryDeleteFailed)
-                        }
+                        // 로컬 초안·요청은 서버 삭제 API 를 부르지 않는다. 실패하면 카드와 입력이 그대로 남는다.
+                        StudioCard.Draft -> finishLocalDelete(creationProgress.discard())
+
+                        is StudioCard.FailedRequest ->
+                            finishLocalDelete(creationProgress.deleteCompletionRequest(target.requestId))
                     }
                 }
+        }
+
+        private suspend fun deleteStory(story: StorySummary) {
+            when (storyRepository.deleteStory(story.id)) {
+                is DomainResult.Success -> {
+                    analytics.track(AnalyticsEvent.StoryListStoryDeleted(story.id))
+                    dispatchEvent(StudioEvent.StoryDeleteSucceeded(story.id))
+                    dispatchEffect(StudioEffect.ShowStoryDeleted)
+                }
+
+                is DomainResult.Failure -> {
+                    dispatchEvent(StudioEvent.DeleteFailed)
+                    dispatchEffect(StudioEffect.ShowStoryDeleteFailed)
+                }
+            }
+        }
+
+        private suspend fun finishLocalDelete(deleted: Boolean) {
+            if (deleted) {
+                dispatchEvent(StudioEvent.LocalDeleteFinished)
+            } else {
+                dispatchEvent(StudioEvent.DeleteFailed)
+                dispatchEffect(StudioEffect.ShowStoryDeleteFailed)
+            }
         }
 
         override fun reduce(
@@ -421,16 +535,27 @@ class StudioViewModel
                 is StudioEvent.Report,
                 StudioEvent.DeleteDialogDismissed,
                 StudioEvent.DeleteStarted,
-                is StudioEvent.DeleteSucceeded,
+                is StudioEvent.StoryDeleteSucceeded,
+                StudioEvent.LocalDeleteFinished,
                 StudioEvent.DeleteFailed,
                 -> reduceCardEvent(state, event)
 
-                is StudioEvent.PendingCreationChanged ->
+                is StudioEvent.DraftChanged ->
                     state.copy(
-                        pendingBanner = event.banner,
-                        // 다이얼로그가 열린 사이 레코드가 사라졌으면 물을 것도 없다.
-                        showResumeChoiceDialog = state.showResumeChoiceDialog && event.banner != null,
+                        draft = event.draft,
+                        // 다이얼로그가 열린 사이 초안이 사라졌으면 물을 것도 없다.
+                        showResumeChoiceDialog = state.showResumeChoiceDialog && event.draft != null,
+                        optionsTarget =
+                            state.optionsTarget.takeUnless {
+                                it == StudioCard.Draft && event.draft == null
+                            },
+                        deleteTarget =
+                            state.deleteTarget.takeUnless {
+                                it == StudioCard.Draft && event.draft == null
+                            },
                     )
+
+                is StudioEvent.CompletionRequestsChanged -> state.copy(completionRequests = event.requests)
 
                 is StudioEvent.ResumeChoiceDialogVisibleChanged ->
                     state.copy(showResumeChoiceDialog = event.visible)
@@ -443,9 +568,9 @@ private fun reduceCardEvent(
     event: StudioEvent,
 ): StudioUiState =
     when (event) {
-        is StudioEvent.OptionsTargetChanged -> state.copy(optionsTarget = event.story)
+        is StudioEvent.OptionsTargetChanged -> state.copy(optionsTarget = event.card)
 
-        is StudioEvent.DeleteRequested -> state.copy(deleteTarget = event.story)
+        is StudioEvent.DeleteRequested -> state.copy(deleteTarget = event.card)
 
         is StudioEvent.ReportTargetChanged -> state.copy(reportStoryId = event.storyId)
 
@@ -460,12 +585,14 @@ private fun reduceCardEvent(
         StudioEvent.DeleteStarted -> state.copy(isDeleting = true)
 
         // 서버 재조회 대신 로컬 제거로 목록을 맞춘다 — 서버가 지운 것을 다시 물을 이유가 없다.
-        is StudioEvent.DeleteSucceeded ->
+        is StudioEvent.StoryDeleteSucceeded ->
             state.copy(
                 isDeleting = false,
                 deleteTarget = null,
                 stories = state.stories.filterNot { story -> story.id == event.storyId },
             )
+
+        StudioEvent.LocalDeleteFinished -> state.copy(isDeleting = false, deleteTarget = null)
 
         StudioEvent.DeleteFailed -> state.copy(isDeleting = false, deleteTarget = null)
 
@@ -489,12 +616,5 @@ private fun CreationProgressSummary.toStage(): PendingCreationStage =
     when (stage) {
         CreationStage.KEYWORD_DRAFT -> PendingCreationStage.KEYWORD_DRAFT
         CreationStage.STORYLINE_GENERATION -> PendingCreationStage.STORYLINE_GENERATION
-        CreationStage.STORY_COMPLETION -> PendingCreationStage.STORY_COMPLETION
         CreationStage.STORY_DRAFT -> PendingCreationStage.STORY_DRAFT
     }
-
-private fun CreationProgressSummary.toBanner(): PendingCreationBanner =
-    PendingCreationBanner(
-        isCompleting = isCompleting,
-        resumePoint = resumePoint,
-    )

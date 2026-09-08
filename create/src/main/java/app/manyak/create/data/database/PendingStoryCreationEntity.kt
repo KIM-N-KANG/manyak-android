@@ -11,11 +11,12 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 /**
- * 간편 제작 진행 레코드의 단일 행.
+ * 간편 제작 편집 슬롯의 단일 행.
  *
  * 슬롯이 하나라 [id] 는 항상 [SINGLE_ROW_ID] 이고, 새 레코드는 같은 행을 덮어쓴다. 중첩 구조는
  * 조인할 대상이 없어 필드별 JSON 문자열로 담는다. 스테이지에 맞는 페이로드가 없거나 JSON 을
- * 해석할 수 없으면 없는 것으로 취급한다 — 재생성 가능한 스냅숏이라 복구보다 폐기가 안전하다.
+ * 해석할 수 없으면 없는 것으로 취급하되 행은 지우지 않는다. 이전 버전의 `STORY_COMPLETION` 행은
+ * 업그레이드 마이그레이션이 완성 요청 테이블로 옮기며, 옮기지 못한 행만 여기 남아 무시된다.
  */
 @Entity(tableName = "pending_story_creation")
 data class PendingStoryCreationEntity(
@@ -32,11 +33,11 @@ data class PendingStoryCreationEntity(
     }
 }
 
-private val json = Json { ignoreUnknownKeys = true }
+internal val json = Json { ignoreUnknownKeys = true }
 
-private inline fun <reified T> encode(value: T): String = json.encodeToString(value)
+internal inline fun <reified T> encode(value: T): String = json.encodeToString(value)
 
-private inline fun <reified T> decodeOrNull(raw: String?): T? =
+internal inline fun <reified T> decodeOrNull(raw: String?): T? =
     raw?.let { runCatching { json.decodeFromString<T>(it) }.getOrNull() }
 
 internal fun PendingStoryCreation.toEntity(): PendingStoryCreationEntity =
@@ -45,15 +46,6 @@ internal fun PendingStoryCreation.toEntity(): PendingStoryCreationEntity =
             PendingStoryCreationEntity(
                 stage = STAGE_STORYLINE_GENERATION,
                 generationCommand = encode(command.toDto()),
-            )
-
-        is PendingStoryCreation.CompletingStory ->
-            PendingStoryCreationEntity(
-                stage = STAGE_STORY_COMPLETION,
-                generationCommand = generationCommand?.let { encode(it.toDto()) },
-                completionCommand = encode(command.toDto()),
-                generation = encode(generation.toDto()),
-                progress = encode(progress.toDto()),
             )
 
         is PendingStoryCreation.Draft ->
@@ -77,21 +69,6 @@ internal fun PendingStoryCreationEntity.toDomainOrNull(): PendingStoryCreation? 
         STAGE_STORYLINE_GENERATION ->
             decodeOrNull<GenerationCommandDto>(generationCommand)
                 ?.let { PendingStoryCreation.GeneratingStorylines(it.toDomain()) }
-
-        STAGE_STORY_COMPLETION -> {
-            val command = decodeOrNull<CompletionCommandDto>(completionCommand)
-            val snapshot = decodeOrNull<GenerationSnapshotDto>(generation)
-            if (command == null || snapshot == null) {
-                null
-            } else {
-                PendingStoryCreation.CompletingStory(
-                    generationCommand = decodeOrNull<GenerationCommandDto>(generationCommand)?.toDomain(),
-                    generation = snapshot.toDomain(),
-                    command = command.toDomain(),
-                    progress = (decodeOrNull<ProgressDto>(progress) ?: ProgressDto()).toDomain(),
-                )
-            }
-        }
 
         STAGE_STORY_DRAFT ->
             decodeOrNull<GenerationSnapshotDto>(generation)?.let { snapshot ->
@@ -165,6 +142,6 @@ private fun KeywordCharacterDto.toDomain(): KeywordCharacterSnapshot =
     )
 
 private const val STAGE_STORYLINE_GENERATION = "STORYLINE_GENERATION"
-private const val STAGE_STORY_COMPLETION = "STORY_COMPLETION"
+internal const val STAGE_STORY_COMPLETION = "STORY_COMPLETION"
 private const val STAGE_STORY_DRAFT = "STORY_DRAFT"
 private const val STAGE_KEYWORD_DRAFT = "KEYWORD_DRAFT"

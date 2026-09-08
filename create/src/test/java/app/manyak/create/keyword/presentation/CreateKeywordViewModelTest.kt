@@ -18,6 +18,7 @@ import app.manyak.create.presentation.state.DraftSaveStatus
 import app.manyak.create.presentation.state.FunnelExitWarning
 import app.manyak.create.presentation.state.StorylineGenerationStore
 import app.manyak.create.testing.FakePendingStoryCreationStore
+import app.manyak.create.testing.FakeStoryCompletionSubmitter
 import app.manyak.create.testing.FakeStoryCreationRepository
 import app.manyak.create.testing.sampleGenerationInput
 import kotlinx.coroutines.Dispatchers
@@ -60,7 +61,13 @@ class CreateKeywordViewModelTest {
     ): CreateKeywordViewModel =
         CreateKeywordViewModel(
             storyCreationRepository = repository,
-            storylineGenerationStore = StorylineGenerationStore(repository, pending, this),
+            storylineGenerationStore =
+                StorylineGenerationStore(
+                    repository,
+                    pending,
+                    FakeStoryCompletionSubmitter(),
+                    this,
+                ),
             pendingCreationStore = pending,
             analytics = NoOpAnalytics,
         )
@@ -173,7 +180,7 @@ class CreateKeywordViewModelTest {
         runTest(dispatcher) {
             val repository = fixedTagsRepository()
             val pendingStore = FakePendingStoryCreationStore()
-            val store = StorylineGenerationStore(repository, pendingStore, this)
+            val store = StorylineGenerationStore(repository, pendingStore, FakeStoryCompletionSubmitter(), this)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
             val viewModel =

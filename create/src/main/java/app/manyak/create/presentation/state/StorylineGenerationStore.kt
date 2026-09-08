@@ -3,12 +3,14 @@ package app.manyak.create.presentation.state
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.create.domain.PendingStoryCreationStore
+import app.manyak.create.domain.StoryCompletionSubmitter
 import app.manyak.create.domain.StoryCreationRepository
 import app.manyak.create.entity.CreationProgress
 import app.manyak.create.entity.CreationRequestSnapshot
 import app.manyak.create.entity.PendingStoryCreation
 import app.manyak.create.entity.StoryCharacterInput
 import app.manyak.create.entity.StoryCompletionCommand
+import app.manyak.create.entity.StoryCompletionRequest
 import app.manyak.create.entity.StoryTag
 import app.manyak.create.entity.StorylineGeneration
 import app.manyak.create.entity.StorylineGenerationCommand
@@ -67,10 +69,12 @@ fun StorylineGenerationState.resultOrNull(): StorylineGeneration? =
  * 따라 결과 본문은 여기에 둔다. 생성 실행은 퍼널 수명 스코프([FunnelScope])가 담는다 —
  * 스토리라인 단계가 키워드 목적지를 대체해, 요청을 시작한 화면의 ViewModel 은 응답 전에 죽는다.
  *
- * 생성·완성 요청은 시작 전에 진행 레코드로 영속되어, 응답을 못 받은 채 퍼널을 떠나거나 프로세스가
+ * 생성 요청은 시작 전에 진행 레코드로 영속되어, 응답을 못 받은 채 퍼널을 떠나거나 프로세스가
  * 재시작해도 복구 조회로 결과를 되찾는다. 생성 성공도 곧바로 영속한다 — AI 결과를 메모리에만
  * 두는 시간을 없앤다. 그 뒤의 편집(활성 탭·선택 스토리라인·추가 정보)은 [progress] 에 모아 두었다가
  * 사용자가 임시 저장을 누르거나 앱이 백그라운드로 갈 때 한 번에 [saveDraft] 로 내보낸다.
+ * 완성은 [submitCompletion] 이 요청으로 영속해 실행자에 넘기고 이 스토어를 비운다 — 그 뒤의 결과는
+ * 요청 저장소가 받고, 이 스토어는 다음 스토리 편집에 곧바로 쓰인다.
  *
  * 생성 실행·요청 영속·복구 폴링·진행 미러가 한 수명(퍼널)을 공유하는 조정자라 함수 수 상한을
  * 넘는다. 나누면 상태 소유가 흩어져 더 위험하므로 이 클래스만 예외로 둔다.
@@ -82,6 +86,7 @@ class StorylineGenerationStore
     constructor(
         private val storyCreationRepository: StoryCreationRepository,
         private val pendingCreationStore: PendingStoryCreationStore,
+        private val completionSubmitter: StoryCompletionSubmitter,
         @param:FunnelScope private val funnelScope: CoroutineScope,
     ) {
         private val mutableState = MutableStateFlow<StorylineGenerationState>(StorylineGenerationState.Idle)
@@ -101,7 +106,7 @@ class StorylineGenerationStore
         private var cachedTags: List<StoryTag>? = null
         private val tagsMutex = Mutex()
 
-        /** 마지막 완성 명령. 같은 페이로드 재시도의 requestId 재사용과 임시 저장 승계에 쓴다. */
+        /** 마지막 완성 명령. 영속 실패 뒤 같은 페이로드 재시도가 requestId 를 재사용하도록 남긴다. */
         var lastCompletionCommand: StoryCompletionCommand? = null
             private set
 
@@ -132,25 +137,13 @@ class StorylineGenerationStore
         private var draftSaveJob: Job? = null
         private var savedDisplayJob: Job? = null
 
-        /** 초안을 저장해도 되는 구간인지. 진행 중 요청 레코드가 슬롯을 쥐고 있으면 false 다. */
+        /** 초안을 저장해도 되는 구간인지. 진행 중 생성 레코드가 슬롯을 쥐고 있으면 false 다. */
         private var draftSaveEnabled = false
-
-        /**
-         * 슬롯을 쥐고 있는 완성 레코드의 명령. 이 동안의 저장은 초안이 아니라 이 레코드의 진행만
-         * 갈아 끼운다 — 초안으로 덮으면 복구 조회에 쓸 requestId 를 잃는다.
-         */
-        private var slotCompletionCommand: StoryCompletionCommand? = null
 
         private var runJob: Job? = null
 
         /** 스토리라인 단계 복구 폴링 대상. 스토리라인 화면이 STARTED 동안 [runStorylineRecovery] 로 소비한다. */
         private val storylineRecoveryTarget = MutableStateFlow<StorylineGenerationCommand?>(null)
-
-        private val mutableCompletionRecoveryTarget = MutableStateFlow<StoryCompletionCommand?>(null)
-
-        /** 완성 단계 복구 폴링 대상. 추가 정보 화면의 ViewModel 이 STARTED 동안 소비한다. */
-        val completionRecoveryTarget: StateFlow<StoryCompletionCommand?> =
-            mutableCompletionRecoveryTarget.asStateFlow()
 
         /** 키워드 입력으로 새 생성을 시작한다. 이전 퍼널의 결과·진행 레코드는 덮인다. */
         fun generate(input: StorylineGenerationInput) {
@@ -281,16 +274,6 @@ class StorylineGenerationStore
                         storylineRecoveryTarget.value = record.command
                     }
 
-                    is PendingStoryCreation.CompletingStory -> {
-                        lastCommand = record.generationCommand
-                        lastResult = record.generation
-                        lastCompletionCommand = record.command
-                        slotCompletionCommand = record.command
-                        restoreProgress(record.progress)
-                        mutableState.value = StorylineGenerationState.Generated(record.generation)
-                        mutableCompletionRecoveryTarget.value = record.command
-                    }
-
                     is PendingStoryCreation.Draft -> {
                         lastCommand = record.generationCommand
                         lastResult = record.generation
@@ -367,46 +350,34 @@ class StorylineGenerationStore
             storylineRecoveryTarget.value = null
         }
 
-        /** 완성 요청 시작. 레코드를 영속하고 재시도 승계용 마지막 명령을 기억한다. */
-        suspend fun beginCompletion(command: StoryCompletionCommand) {
+        /**
+         * 완성 제출. 생성 결과·입력을 요청으로 영속해 실행자에 넘기고, 성공하면 이 스토어를 비워
+         * 다음 편집에 쓰이게 한다. 영속에 실패하면 아무것도 보내지 않고 편집 상태를 그대로 둔다.
+         *
+         * 임시 저장과 같은 잠금 안에서 제출한다 — 도는 중이던 초안 쓰기가 제출 뒤에 도착해 방금
+         * 내린 초안을 되살리면 안 된다.
+         */
+        suspend fun submitCompletion(command: StoryCompletionCommand): Boolean {
             lastCompletionCommand = command
-            val generation = lastResult ?: return
+            val generation = lastResult ?: return false
             disableDraftSave()
-            persistStage(
-                PendingStoryCreation.CompletingStory(
+            val request =
+                StoryCompletionRequest(
+                    command = command,
                     generationCommand = lastCommand,
                     generation = generation,
-                    command = command,
                     progress = progress,
-                ),
-            )
-        }
-
-        /** 서버가 완성을 확정적으로 거절했으면 생성 결과·입력을 다시 Draft 단계로 보존한다. */
-        suspend fun restoreDraftAfterCompletionFailure() {
-            mutableCompletionRecoveryTarget.value = null
-            slotCompletionCommand = null
-            enableDraftSave()
-            persistDraft()
-        }
-
-        /**
-         * 완성 레코드를 쥔 채로 임시 저장을 다시 연다. 응답을 못 받은 실패는 레코드를 보존해야
-         * 복구 조회가 결과를 되찾는데, 저장까지 잠가 두면 실패 뒤의 편집이 디스크에 닿지 못한다.
-         * 이 구간의 저장은 레코드를 바꾸지 않고 진행만 갈아 끼운다.
-         */
-        fun keepCompletionRecordEditable() {
-            if (slotCompletionCommand == null) return
-            enableDraftSave()
-        }
-
-        /** 완성 재시도가 409 로 거절됐다 — 서버가 진행 중이므로 복구 폴링으로 전환한다. */
-        fun requestCompletionRecovery(command: StoryCompletionCommand) {
-            mutableCompletionRecoveryTarget.value = command
-        }
-
-        fun clearCompletionRecovery() {
-            mutableCompletionRecoveryTarget.value = null
+                    submittedAt = System.currentTimeMillis(),
+                )
+            val submitted = persistenceMutex.withLock { completionSubmitter.submit(request) }
+            if (submitted) {
+                leftFunnel = true
+                resetInMemory()
+            } else {
+                draftPersisted = false
+                enableDraftSave()
+            }
+            return submitted
         }
 
         /** 스토리라인 선택 화면의 활성 탭 미러. */
@@ -494,12 +465,6 @@ class StorylineGenerationStore
                 }
             }
 
-        /** 완성 성공으로 퍼널이 닫혔다. 남은 결과가 다음 이탈에서 임시 저장으로 둔갑하지 않게 비운다. */
-        fun resetAfterCompletion() {
-            leftFunnel = true
-            resetInMemory()
-        }
-
         /**
          * 퍼널 이탈 처리. 저장하지 않은 편집은 사용자가 버리기로 한 것이므로 여기서 저장하지
          * 않는다 — 마지막으로 저장된 스냅숏이 그대로 재개 지점이 된다. 진행 중 레코드는
@@ -584,9 +549,6 @@ class StorylineGenerationStore
 
         private suspend fun persistStage(record: PendingStoryCreation): Boolean {
             val saved = persistenceMutex.withLock { pendingCreationStore.write(record) }
-            // 완성 레코드에는 현재 진행이 그대로 실려 나가 저장하지 않은 변경이 남지 않는다.
-            if (saved && record is PendingStoryCreation.CompletingStory) savedProgress = record.progress
-            slotCompletionCommand = (record as? PendingStoryCreation.CompletingStory)?.command?.takeIf { saved }
             draftPersisted = false
             refreshDraftSave()
             return saved
@@ -594,30 +556,19 @@ class StorylineGenerationStore
 
         private suspend fun clearPendingRecord(): Boolean {
             disableDraftSave()
-            slotCompletionCommand = null
             draftPersisted = false
             return persistenceMutex.withLock { pendingCreationStore.clear() }
         }
 
-        /** 지금 저장하면 슬롯에 들어갈 레코드. 완성 레코드가 슬롯을 쥐고 있으면 진행만 갈아 끼운다. */
+        /** 지금 저장하면 슬롯에 들어갈 초안. */
         private fun currentRecord(): PendingStoryCreation? {
             val result = lastResult ?: return null
-            val completion = slotCompletionCommand
-            return if (completion == null) {
-                PendingStoryCreation.Draft(
-                    generationCommand = lastCommand,
-                    generation = result,
-                    progress = progress,
-                    lastCompletionCommand = lastCompletionCommand,
-                )
-            } else {
-                PendingStoryCreation.CompletingStory(
-                    generationCommand = lastCommand,
-                    generation = result,
-                    command = completion,
-                    progress = progress,
-                )
-            }
+            return PendingStoryCreation.Draft(
+                generationCommand = lastCommand,
+                generation = result,
+                progress = progress,
+                lastCompletionCommand = lastCompletionCommand,
+            )
         }
 
         private fun resetInMemory() {
@@ -627,12 +578,10 @@ class StorylineGenerationStore
             lastCommand = null
             lastResult = null
             lastCompletionCommand = null
-            slotCompletionCommand = null
             progress = CreationProgress()
             savedProgress = CreationProgress()
             draftPersisted = false
             storylineRecoveryTarget.value = null
-            mutableCompletionRecoveryTarget.value = null
             restoreAttempted = false
             disableDraftSave()
         }
@@ -655,8 +604,7 @@ private fun CreationProgress.hasSameContentAs(other: CreationProgress): Boolean 
 internal fun DomainError.isConflict(): Boolean = this is DomainError.Server && status == HTTP_CONFLICT
 
 /** 서버에서 실제로 생성이 돌고 있(었)을 수 있는 복구 대상 레코드인지. 임시 저장본은 아니다. */
-private fun PendingStoryCreation?.isInFlight(): Boolean =
-    this is PendingStoryCreation.GeneratingStorylines || this is PendingStoryCreation.CompletingStory
+private fun PendingStoryCreation?.isInFlight(): Boolean = this is PendingStoryCreation.GeneratingStorylines
 
 private const val HTTP_CONFLICT = 409
 

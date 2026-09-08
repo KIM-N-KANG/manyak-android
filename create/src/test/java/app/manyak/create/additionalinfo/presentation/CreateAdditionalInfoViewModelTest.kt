@@ -1,24 +1,19 @@
 package app.manyak.create.additionalinfo.presentation
 
 import app.manyak.analytics.domain.NoOpAnalytics
-import app.manyak.common.domain.error.DomainError
-import app.manyak.common.domain.error.DomainResult
-import app.manyak.create.entity.CompletedStory
 import app.manyak.create.entity.CreationProgress
-import app.manyak.create.entity.CreationRequestSnapshot
 import app.manyak.create.entity.PendingStoryCreation
-import app.manyak.create.entity.StoryCompletionCommand
 import app.manyak.create.presentation.state.FunnelExitWarning
+import app.manyak.create.presentation.state.StorylineGenerationState
 import app.manyak.create.presentation.state.StorylineGenerationStore
-import app.manyak.create.testing.FakeChatRepository
 import app.manyak.create.testing.FakePendingStoryCreationStore
+import app.manyak.create.testing.FakeStoryCompletionSubmitter
 import app.manyak.create.testing.FakeStoryCreationRepository
 import app.manyak.create.testing.sampleGenerationInput
 import app.manyak.create.testing.sampleStorylineGeneration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -29,7 +24,6 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -53,38 +47,35 @@ class CreateAdditionalInfoViewModelTest {
         val repository = FakeStoryCreationRepository()
         val pendingStore = FakePendingStoryCreationStore()
         return CreateAdditionalInfoViewModel(
-            StorylineGenerationStore(repository, pendingStore, this),
-            repository,
-            FakeChatRepository(),
-            pendingStore,
+            StorylineGenerationStore(repository, pendingStore, FakeStoryCompletionSubmitter(), this),
             NoOpAnalytics,
         )
     }
 
     private class LoadedFixture(
-        val repository: FakeStoryCreationRepository,
-        val chatRepository: FakeChatRepository,
+        val submitter: FakeStoryCompletionSubmitter,
         val pendingStore: FakePendingStoryCreationStore,
         val store: StorylineGenerationStore,
         val viewModel: CreateAdditionalInfoViewModel,
     )
 
     /** 스토리라인 생성 성공 결과를 스냅숏한 ViewModel 을 만든다. */
-    private fun TestScope.loadedViewModel(selectedStorylineIndex: Int? = null): LoadedFixture {
+    private fun TestScope.loadedViewModel(
+        selectedStorylineIndex: Int? = null,
+        submitter: FakeStoryCompletionSubmitter = FakeStoryCompletionSubmitter(),
+    ): LoadedFixture {
         val repository = FakeStoryCreationRepository()
-        val chatRepository = FakeChatRepository()
         val pendingStore = FakePendingStoryCreationStore()
-        val store = StorylineGenerationStore(repository, pendingStore, this)
+        val store = StorylineGenerationStore(repository, pendingStore, submitter, this)
         store.generate(sampleGenerationInput())
         advanceUntilIdle()
         // "선택하기"로 추가 정보 단계에 들어온 상태를 만든다. 재개 지점이 이 값으로 갈린다.
         selectedStorylineIndex?.let(store::markStorylineSelected)
         return LoadedFixture(
-            repository = repository,
-            chatRepository = chatRepository,
+            submitter = submitter,
             pendingStore = pendingStore,
             store = store,
-            viewModel = CreateAdditionalInfoViewModel(store, repository, chatRepository, pendingStore, NoOpAnalytics),
+            viewModel = CreateAdditionalInfoViewModel(store, NoOpAnalytics),
         )
     }
 
@@ -111,7 +102,6 @@ class CreateAdditionalInfoViewModelTest {
     fun `스토리 완성 요청은 추천 채택분을 앞세우고 빈 자유 입력을 뺀다`() =
         runTest(dispatcher) {
             val fixture = loadedViewModel()
-            val repository = fixture.repository
             val viewModel = fixture.viewModel
 
             viewModel.onIntent(CreateAdditionalInfoIntent.ToggleRecommendation("폐허를 자세히 그려줘"))
@@ -125,140 +115,73 @@ class CreateAdditionalInfoViewModelTest {
             viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
             advanceUntilIdle()
 
-            val command = repository.completionCommands.single()
+            val command =
+                fixture.submitter.submitted
+                    .single()
+                    .command
             assertEquals(10L, command.simpleCreationId)
             assertEquals(1L, command.storylineId)
             assertEquals(listOf("폐허를 자세히 그려줘", "배경은 현대의 서울로 해줘"), command.additionalInfos)
-            // 완성 성공은 완성된 스토리로 채팅을 만들어 채팅방 진입 효과를 낸다.
-            assertEquals(listOf("story-1"), fixture.chatRepository.createChatStoryIds)
+            // 영속에 성공하면 서버 응답을 기다리지 않고 제작 탭으로 돌아간다.
             assertEquals(
-                CreateAdditionalInfoEffect.EnterChatAfterCompletion(chatId = "chat-1"),
+                CreateAdditionalInfoEffect.ReturnToStudioAfterSubmission,
                 withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
             )
+            assertEquals(StorylineGenerationState.Idle, fixture.store.state.value)
         }
 
     @Test
-    fun `완성 실패는 입력 화면으로 복귀하고 같은 페이로드 재시도는 요청 ID 를 재사용한다`() =
+    fun `제출 연타는 요청 하나로 처리한다`() =
         runTest(dispatcher) {
             val fixture = loadedViewModel()
-            val repository = fixture.repository
-            val viewModel = fixture.viewModel
-            repository.queuedCompletionResults += DomainResult.Failure(DomainError.Network)
 
-            viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
             advanceUntilIdle()
 
-            assertFalse(viewModel.uiState.value.isCompletingStory)
-            assertEquals(
-                CreateAdditionalInfoEffect.ShowCompletionFailure(CompletionFailure.GENERAL),
-                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
-            )
-
-            viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
-            advanceUntilIdle()
-
-            val (first, second) = repository.completionCommands
-            assertEquals(first.requestId, second.requestId)
-            assertEquals(
-                CreateAdditionalInfoEffect.EnterChatAfterCompletion(chatId = "chat-1"),
-                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
-            )
+            assertEquals(1, fixture.submitter.submitted.size)
         }
 
     @Test
-    fun `채팅 생성 실패 재시도는 스토리 완성을 건너뛰고 채팅 생성만 재호출한다`() =
+    fun `영속 실패는 전송하지 않고 입력을 유지한 채 실패를 알린다`() =
         runTest(dispatcher) {
-            val fixture = loadedViewModel()
+            val fixture = loadedViewModel(submitter = FakeStoryCompletionSubmitter(submitSucceeds = false))
             val viewModel = fixture.viewModel
-            fixture.chatRepository.queuedCreateChatResults += DomainResult.Failure(DomainError.Network)
-
-            viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
-            advanceUntilIdle()
-
-            // 채팅 생성 실패는 완성 실패와 같은 토스트로 안내한다.
-            assertFalse(viewModel.uiState.value.isCompletingStory)
-            assertEquals(
-                CreateAdditionalInfoEffect.ShowCompletionFailure(CompletionFailure.GENERAL),
-                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
-            )
-
-            viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
-            advanceUntilIdle()
-
-            assertEquals(1, fixture.repository.completionCommands.size)
-            assertEquals(listOf("story-1", "story-1"), fixture.chatRepository.createChatStoryIds)
-            assertEquals(
-                CreateAdditionalInfoEffect.EnterChatAfterCompletion(chatId = "chat-1"),
-                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
-            )
-        }
-
-    @Test
-    fun `페이로드가 바뀐 재시도는 새 요청 ID 를 쓴다`() =
-        runTest(dispatcher) {
-            val fixture = loadedViewModel()
-            val repository = fixture.repository
-            val viewModel = fixture.viewModel
-            repository.queuedCompletionResults += DomainResult.Failure(DomainError.Network)
-
-            viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
-            advanceUntilIdle()
             val inputId =
                 viewModel.uiState.value.additionalInfos
                     .first()
                     .id
-            viewModel.onIntent(CreateAdditionalInfoIntent.ChangeInput(inputId, "새로운 정보"))
+            viewModel.onIntent(CreateAdditionalInfoIntent.ChangeInput(inputId, "배경은 서울"))
             advanceUntilIdle()
-            viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
-            advanceUntilIdle()
-
-            val (first, second) = repository.completionCommands
-            assertNotEquals(first.requestId, second.requestId)
-        }
-
-    @Test
-    fun `이프 부족 402 는 실패 사유를 구분한다`() =
-        runTest(dispatcher) {
-            val fixture = loadedViewModel()
-            val repository = fixture.repository
-            val viewModel = fixture.viewModel
-            repository.queuedCompletionResults +=
-                DomainResult.Failure(DomainError.Server(status = 402, code = null, requestId = null))
 
             viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
             advanceUntilIdle()
 
+            assertTrue(fixture.submitter.submitted.isEmpty())
+            assertFalse(viewModel.uiState.value.isSubmitting)
             assertEquals(
-                CreateAdditionalInfoEffect.ShowCompletionFailure(CompletionFailure.CREDIT),
+                "배경은 서울",
+                viewModel.uiState.value.additionalInfos
+                    .first()
+                    .value,
+            )
+            assertEquals(
+                CreateAdditionalInfoEffect.ShowSubmissionFailure,
                 withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
             )
-            assertTrue(fixture.pendingStore.current is PendingStoryCreation.Draft)
-        }
+            assertTrue(fixture.store.state.value is StorylineGenerationState.Generated)
 
-    @Test
-    fun `응답을 못 받은 완성 실패 뒤에도 임시 저장이 완성 레코드를 갱신한다`() =
-        runTest(dispatcher) {
-            // 레코드를 초안으로 덮으면 복구 조회에 쓸 requestId 를 잃는다. 진행만 갈아 끼운다.
-            val fixture = loadedViewModel()
-            fixture.repository.queuedCompletionResults += DomainResult.Failure(DomainError.Network)
-
-            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
+            // 같은 페이로드 재시도는 요청 ID 를 재사용한다.
+            val firstRequestId = fixture.store.lastCompletionCommand?.requestId
+            fixture.submitter.submitSucceeds = true
+            viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
             advanceUntilIdle()
-
-            assertTrue(fixture.store.draftSave.value.canSave)
-
-            val inputId =
-                fixture.viewModel.uiState.value.additionalInfos
-                    .first()
-                    .id
-            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.ChangeInput(inputId, "배경은 서울"))
-            advanceUntilIdle()
-            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.SaveDraft)
-            advanceUntilIdle()
-
-            val record = fixture.pendingStore.current as PendingStoryCreation.CompletingStory
-            assertEquals("배경은 서울", record.progress.additionalInfoInputs.first())
-            assertFalse(fixture.store.draftSave.value.hasUnsavedChanges)
+            assertEquals(
+                firstRequestId,
+                fixture.submitter.submitted
+                    .single()
+                    .requestId,
+            )
         }
 
     @Test
@@ -363,49 +286,6 @@ class CreateAdditionalInfoViewModelTest {
         }
 
     @Test
-    fun `완성 요청은 시작 전에 영속되고 채팅 진입 후 레코드가 지워진다`() =
-        runTest(dispatcher) {
-            val fixture = loadedViewModel()
-            val viewModel = fixture.viewModel
-
-            viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
-            advanceUntilIdle()
-
-            val written = fixture.pendingStore.writes.last() as PendingStoryCreation.CompletingStory
-            val sentCommand = fixture.repository.completionCommands.single()
-            assertEquals(sentCommand.requestId, written.command.requestId)
-            assertEquals(null, fixture.pendingStore.current)
-        }
-
-    @Test
-    fun `완성 재시도 409 는 복구 폴링으로 결과를 되찾아 채팅 생성으로 잇는다`() =
-        runTest(dispatcher) {
-            val fixture = loadedViewModel()
-            val repository = fixture.repository
-            val viewModel = fixture.viewModel
-            repository.queuedCompletionResults +=
-                DomainResult.Failure(DomainError.Server(status = 409, code = null, requestId = null))
-
-            viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
-            advanceUntilIdle()
-            // 409 는 실패 화면이 아니라 로딩을 유지한 채 복구 폴링 대상이 된다.
-            assertTrue(viewModel.uiState.value.isCompletingStory)
-
-            repository.queuedCreationRequestResults +=
-                DomainResult.Success(CreationRequestSnapshot.StoryReady(CompletedStory(id = "story-7", title = "복구")))
-            val recovery = launch { viewModel.driveCompletionRecovery() }
-            advanceUntilIdle()
-
-            assertEquals(listOf("story-7"), fixture.chatRepository.createChatStoryIds)
-            assertEquals(null, fixture.pendingStore.current)
-            assertEquals(
-                CreateAdditionalInfoEffect.EnterChatAfterCompletion(chatId = "chat-1"),
-                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
-            )
-            recovery.cancel()
-        }
-
-    @Test
     fun `임시 저장본 재개는 스토어 복원 스냅숏으로 입력과 추천 선택을 되살린다`() =
         runTest(dispatcher) {
             val repository = FakeStoryCreationRepository()
@@ -424,9 +304,9 @@ class CreateAdditionalInfoViewModelTest {
                                 ),
                         ),
                 )
-            val store = StorylineGenerationStore(repository, pendingStore, this)
+            val store = StorylineGenerationStore(repository, pendingStore, FakeStoryCompletionSubmitter(), this)
             val viewModel =
-                CreateAdditionalInfoViewModel(store, repository, FakeChatRepository(), pendingStore, NoOpAnalytics)
+                CreateAdditionalInfoViewModel(store, NoOpAnalytics)
             advanceUntilIdle()
 
             val state = viewModel.uiState.value
@@ -449,10 +329,10 @@ class CreateAdditionalInfoViewModelTest {
                             progress = CreationProgress(selectedStorylineIndex = 0),
                         ),
                 )
-            val store = StorylineGenerationStore(repository, pendingStore, this)
+            val store = StorylineGenerationStore(repository, pendingStore, FakeStoryCompletionSubmitter(), this)
 
             val viewModel =
-                CreateAdditionalInfoViewModel(store, repository, FakeChatRepository(), pendingStore, NoOpAnalytics)
+                CreateAdditionalInfoViewModel(store, NoOpAnalytics)
 
             // 복원 결과가 오기 전 첫 프레임. 여기서 입력 화면을 그리면 본문 없는 화면이 스쳐 지나간다.
             assertTrue(viewModel.uiState.value.isRestoring)
@@ -468,36 +348,6 @@ class CreateAdditionalInfoViewModelTest {
             val viewModel = loadedViewModel().viewModel
 
             assertFalse(viewModel.uiState.value.isRestoring)
-        }
-
-    @Test
-    fun `완성 진행 레코드 재개는 입력 화면을 거치지 않고 완성 로딩으로 들어간다`() =
-        runTest(dispatcher) {
-            val repository = FakeStoryCreationRepository()
-            val pendingStore =
-                FakePendingStoryCreationStore(
-                    initial =
-                        PendingStoryCreation.CompletingStory(
-                            generationCommand = null,
-                            generation = sampleStorylineGeneration(),
-                            command =
-                                StoryCompletionCommand(
-                                    requestId = "req-1",
-                                    simpleCreationId = 10,
-                                    storylineId = 1,
-                                    additionalInfos = emptyList(),
-                                ),
-                            progress = CreationProgress(selectedStorylineIndex = 0),
-                        ),
-                )
-            val store = StorylineGenerationStore(repository, pendingStore, this)
-            val viewModel =
-                CreateAdditionalInfoViewModel(store, repository, FakeChatRepository(), pendingStore, NoOpAnalytics)
-
-            advanceUntilIdle()
-
-            assertFalse(viewModel.uiState.value.isRestoring)
-            assertTrue(viewModel.uiState.value.isCompletingStory)
         }
 
     @Test
@@ -518,9 +368,9 @@ class CreateAdditionalInfoViewModelTest {
                                 ),
                         ),
                 )
-            val store = StorylineGenerationStore(repository, pendingStore, this)
+            val store = StorylineGenerationStore(repository, pendingStore, FakeStoryCompletionSubmitter(), this)
 
-            CreateAdditionalInfoViewModel(store, repository, FakeChatRepository(), pendingStore, NoOpAnalytics)
+            CreateAdditionalInfoViewModel(store, NoOpAnalytics)
             advanceUntilIdle()
 
             assertEquals(inputs, store.progress.additionalInfoInputs)
