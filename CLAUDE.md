@@ -53,6 +53,8 @@
 
 `app`이 최상위 기능·기반 모듈을 조립합니다. 기능은 필요한 entity/domain/data/presentation 패키지를 소유하고, chat·create·my의 하위 기능도 패키지로 구분합니다. `checkModuleArchitecture`가 프로젝트 의존과 Kotlin PSI 기반 계층 경계를 검사하며 루트 `check`에 연결되어 있습니다. navigation의 기존 Kotlin 패키지는 직렬화 호환을 위해 유지합니다.
 
+- 모듈을 추가·삭제·이름 변경하면 `settings.gradle.kts`와 함께 `.idea/gradle.xml`의 `<option value="$PROJECT_DIR$/<모듈>" />` 목록도 같은 커밋에서 갱신합니다(알파벳 순). 이 파일은 추적 대상이라, 빠뜨리면 사용자가 IDE 싱크할 때 diff가 남습니다. `build-logic`의 `ModuleArchitecture.kt` 모듈 집합도 함께 고치고 `:build-logic:ktlintCheck`까지 로컬 검증에 포함합니다.
+
 ## 명령어
 
 ```bash
