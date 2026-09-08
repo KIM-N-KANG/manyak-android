@@ -4,8 +4,10 @@ import app.manyak.network.data.di.AuthenticatedClient
 import app.manyak.network.data.di.DataLayerConfig
 import app.manyak.network.data.retrofit
 import app.manyak.notification.data.FcmTokenSource
+import app.manyak.notification.data.NotificationPermissionPromptStore
 import app.manyak.notification.data.PushTokenRegistrarImpl
 import app.manyak.notification.data.api.PushTokenApi
+import app.manyak.notification.domain.NotificationPermissionPromptRepository
 import app.manyak.notification.domain.PushTokenRegistrar
 import com.google.firebase.messaging.FirebaseMessaging
 import dagger.Binds
@@ -25,6 +27,12 @@ abstract class NotificationModule {
     @Binds
     @Singleton
     abstract fun bindPushTokenRegistrar(impl: PushTokenRegistrarImpl): PushTokenRegistrar
+
+    @Binds
+    @Singleton
+    abstract fun bindNotificationPermissionPromptRepository(
+        impl: NotificationPermissionPromptStore,
+    ): NotificationPermissionPromptRepository
 
     companion object {
         @Provides

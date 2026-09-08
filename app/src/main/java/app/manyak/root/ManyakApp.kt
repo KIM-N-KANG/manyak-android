@@ -54,6 +54,7 @@ import app.manyak.core.navigation.MyCreditChargeRoute
 import app.manyak.core.navigation.MyFeedbackRoute
 import app.manyak.core.navigation.MyInviteRoute
 import app.manyak.core.navigation.MyOpenSourceLicenseRoute
+import app.manyak.core.navigation.NotificationSettingsRoute
 import app.manyak.core.navigation.StoryDetailRoute
 import app.manyak.core.navigation.WithdrawalRoute
 import app.manyak.create.additionalinfo.presentation.CreateAdditionalInfoScreen
@@ -71,6 +72,7 @@ import app.manyak.my.invite.presentation.onboarding.InviteOnboardingSheet
 import app.manyak.my.licenses.presentation.OpenSourceLicenseScreen
 import app.manyak.my.withdrawal.presentation.WithdrawalScreen
 import app.manyak.notification.presentation.NotificationPermissionRequest
+import app.manyak.notification.settings.presentation.NotificationSettingsScreen
 import app.manyak.story.detail.presentation.StoryDetailScreen
 import app.manyak.R as AppR
 import app.manyak.designsystem.R as DesignsystemR
@@ -111,7 +113,7 @@ fun ManyakApp(
                     is SessionState.SignedOut -> AuthNavDisplay()
                     SessionState.Member -> {
                         MainNavDisplay()
-                        // 알림 권한은 회원 그래프가 처음 그려질 때 한 번 묻는다. 거부해도 아무것도 바뀌지 않는다.
+                        // 알림 권한은 회원 그래프가 처음 그려질 때 설치당 한 번 묻는다. 거부해도 아무것도 바뀌지 않는다.
                         NotificationPermissionRequest()
                         // 신규 가입 안내는 어느 탭에 있든 회원 그래프 위에 뜬다. 로그인 화면에 두면
                         // 로그인 성공과 동시에 인증 백스택이 사라져 안내도 함께 걷힌다.
@@ -270,6 +272,7 @@ private fun MainNavDisplay() {
                         onOpenOpenSourceLicense = { backStack.push(MyOpenSourceLicenseRoute) },
                         onOpenWithdrawal = { backStack.push(WithdrawalRoute) },
                         onOpenCreditCharge = { backStack.push(MyCreditChargeRoute) },
+                        onOpenNotificationSettings = { backStack.push(NotificationSettingsRoute) },
                     )
                 }
                 myDestinationEntries(backStack)
@@ -323,6 +326,9 @@ private fun EntryProviderScope<NavKey>.myDestinationEntries(backStack: MutableLi
     }
     entry<WithdrawalRoute> {
         WithdrawalScreen(onBack = { backStack.pop() })
+    }
+    entry<NotificationSettingsRoute> {
+        NotificationSettingsScreen(onBack = { backStack.pop() })
     }
 }
 

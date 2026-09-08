@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notification_settings_disabled_notice">기기 알림 설정이 꺼져 있어요</string>
+    <string name="notification_settings_enable">알림 켜기</string>
+    <string name="notification_settings_load_failed">알림 설정을 불러오지 못했어요</string>
+    <string name="notification_settings_marketing">광고 알림</string>
+    <string name="notification_settings_marketing_description">이벤트·혜택 소식과 출석 리마인드를 받아요</string>
+    <string name="notification_settings_marketing_night">야간 광고 허용</string>
+    <string name="notification_settings_marketing_night_description">밤 9시부터 아침 8시 사이에도 광고 알림을 받아요</string>
+    <string name="notification_settings_save_failed">알림 설정을 저장하지 못했어요</string>
+    <string name="notification_settings_service">서비스 알림</string>
+    <string name="notification_settings_service_description">스토리 완성처럼 내 활동의 결과를 알려드려요</string>
+    <string name="notification_settings_title">알림 설정</string>
+</resources>

@@ -57,6 +57,7 @@ fun MyScreen(
     onOpenOpenSourceLicense: () -> Unit,
     onOpenWithdrawal: () -> Unit,
     onOpenCreditCharge: () -> Unit,
+    onOpenNotificationSettings: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MyViewModel = hiltViewModel(),
 ) {
@@ -105,6 +106,7 @@ fun MyScreen(
         onOpenOpenSourceLicense = onOpenOpenSourceLicense,
         onOpenWithdrawal = onOpenWithdrawal,
         onOpenCreditCharge = onOpenCreditCharge,
+        onOpenNotificationSettings = onOpenNotificationSettings,
         contentPadding = contentPadding,
         modifier = modifier,
     )
@@ -149,6 +151,7 @@ private fun MyContent(
     onOpenOpenSourceLicense: () -> Unit,
     onOpenWithdrawal: () -> Unit,
     onOpenCreditCharge: () -> Unit,
+    onOpenNotificationSettings: () -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
 ) {
@@ -176,6 +179,14 @@ private fun MyContent(
         }
         MySection(labelRes = MyR.string.my_section_display) {
             ThemeMenuItem(themeMode = state.themeMode, onClick = { onIntent(MyIntent.CycleTheme) })
+        }
+        MySection(labelRes = MyR.string.my_section_notification) {
+            MyMenuItem(
+                iconRes = DesignsystemR.drawable.ic_bell,
+                labelRes = MyR.string.my_notification_settings,
+                onClick = onOpenNotificationSettings,
+                trailing = { MenuTrailingIcon(iconRes = DesignsystemR.drawable.ic_chevron_right) },
+            )
         }
         MySection(labelRes = MyR.string.my_section_etc) {
             MyMenuItem(
@@ -338,6 +349,7 @@ private fun MyScreenPreview() {
             onOpenOpenSourceLicense = {},
             onOpenWithdrawal = {},
             onOpenCreditCharge = {},
+            onOpenNotificationSettings = {},
             contentPadding = PaddingValues(0.dp),
         )
     }

@@ -49,6 +49,7 @@
     <string name="my_link_section">연동된 계정</string>
     <string name="my_link_succeeded">%1$s 계정을 연동했어요</string>
     <string name="my_logout">로그아웃</string>
+    <string name="my_notification_settings">알림 설정</string>
     <string name="my_logout_in_progress">로그아웃하는 중</string>
     <string name="my_open_source_license">오픈소스 라이선스</string>
     <string name="my_provider_google">Google</string>
@@ -56,6 +57,7 @@
     <string name="my_section_account">계정</string>
     <string name="my_section_display">화면</string>
     <string name="my_section_etc">기타</string>
+    <string name="my_section_notification">알림</string>
     <string name="my_section_event">이벤트</string>
     <string name="my_theme">테마 변경</string>
     <string name="my_theme_dark">다크 모드</string>
