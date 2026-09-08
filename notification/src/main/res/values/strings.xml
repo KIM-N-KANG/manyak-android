@@ -11,4 +11,5 @@
     <string name="notification_settings_service">서비스 알림</string>
     <string name="notification_settings_service_description">스토리 완성처럼 내 활동의 결과를 알려드려요</string>
     <string name="notification_settings_title">알림 설정</string>
+    <string name="notification_story_completed_title">스토리가 완성됐어요</string>
 </resources>

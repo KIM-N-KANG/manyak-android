@@ -4,6 +4,14 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application>
+        <!--
+            notification 필드가 있는 메시지(Firebase 콘솔 테스트 등)를 SDK 가 직접 띄울 때 쓰는 채널.
+            서버의 정식 메시지는 data 전용이라 이 값을 타지 않는다.
+        -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="service" />
+
         <service
             android:name="app.manyak.notification.data.ManyakFirebaseMessagingService"
             android:exported="false">

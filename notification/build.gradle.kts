@@ -13,6 +13,7 @@ dependencies {
     implementation(projects.auth)
     implementation(projects.network)
     implementation(projects.designsystem)
+    implementation(projects.navigation)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
     implementation(platform(libs.androidx.compose.bom))

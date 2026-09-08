@@ -4,6 +4,7 @@ import app.manyak.common.domain.session.UserScopedStore
 import app.manyak.create.data.database.PendingStoryCreationRoomStore
 import app.manyak.my.invite.data.datastore.InviteOnboardingStore
 import app.manyak.my.profile.data.datastore.ProfileCacheStore
+import app.manyak.notification.data.PushNotificationTray
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -26,4 +27,9 @@ abstract class UserScopedStoreModule {
     @Binds
     @IntoSet
     abstract fun bindInviteOnboardingAsUserScoped(impl: InviteOnboardingStore): UserScopedStore
+
+    /** 표시된 알림도 이전 회원의 것이다. 정리 단계에서 트레이를 비워 다음 회원에게 남기지 않는다. */
+    @Binds
+    @IntoSet
+    abstract fun bindNotificationTrayAsUserScoped(impl: PushNotificationTray): UserScopedStore
 }
