@@ -98,6 +98,10 @@ data object MyOpenSourceLicenseRoute : NavKey
 @Serializable
 data object WithdrawalRoute : NavKey
 
+/** 알림 수신 동의 설정. 마이 알림 섹션이 진입점이고 `:notification` 이 화면을 소유한다. */
+@Serializable
+data object NotificationSettingsRoute : NavKey
+
 /**
  * 웹이 정본인 공용 문서. **제품 백스택 밖에 두고 양쪽 백스택 모두에 등록해** 인증 상태와 무관하게 연다.
  * 뒤로가기는 진입한 화면으로 돌아가고, 여기서 임의의 메인 목적지로 이동하는 경로는 두지 않는다.
