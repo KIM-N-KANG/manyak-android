@@ -106,6 +106,13 @@ fun StudioScreen(
         }
     }
 
+    // 완성 중 카드가 있는 동안만 요청 상태를 주기 조회한다. STARTED 동안만 돌아 탭을 벗어나면 멈춘다.
+    LaunchedEffect(viewModel, lifecycleOwner) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            viewModel.drivePendingCompletionPolling()
+        }
+    }
+
     // 화면을 떠난 사이 늘어난 목록을 반영한다 — 스토리를 완성하고 채팅으로 넘어갔다 돌아온 자리가 대표적이다.
     LifecycleEventEffect(Lifecycle.Event.ON_START) { viewModel.onIntent(StudioIntent.ScreenShown) }
 

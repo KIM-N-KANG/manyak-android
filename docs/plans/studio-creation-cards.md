@@ -22,6 +22,7 @@ Android의 간편 제작·제작 목록·해당 저장 및 복구 흐름을 변�
 | 경계 | `:common` `CreationProgressAccess` 확장 — `progress`(초안), `completionRequests`, `discard`(초안만), `refreshCompletionRequests`, `retryCompletionRequest`, `deleteCompletionRequest`. `CreationStage.STORY_COMPLETION` 제거, `CompletionRequestSummary/Status` 추가 |
 | 퍼널 | `StorylineGenerationStore.submitCompletion` — 임시 저장과 같은 `persistenceMutex` 안에서 제출, 성공 시 스토어 초기화, 실패 시 편집 유지·`lastCompletionCommand` 승계. `CreateAdditionalInfoViewModel`은 검증·제출만(채팅 생성·폴링·완성 로딩 제거), `ReturnToStudioAfterSubmission` 효과를 앱이 `popToMainTabs()` + 제작 탭 선택으로 처리 |
 | 제작 탭 | `CreationProgressCard`(Draft/Completing/Completed/Failed) — 회색 표지 + `ic_manyak_symbol`(`textDisabled`), 제목 `textSubtle`, 40dp `sizes.controlCompact` 버튼(터치 48dp는 M3 기본 유지), 완성 중은 스피너 + 접근성 문구. 목록 키 `draft`/`completion:<id>`/`story:<id>`. 로컬 카드가 있으면 로딩·실패·빈 목록 대신 목록으로 그려 새로고침 유지, 목록 실패는 목록 끝 재시도 항목. 완료 요청은 목록에 같은 storyId가 있으면 행 삭제, 없으면 목록 1회 재조회 |
+| 폴링 | (2026-09-09 사용자 결정) 완성 중 카드가 보이는 동안만 `StudioViewModel.drivePendingCompletionPolling`이 STARTED 게이트 아래 5초마다 `refreshCompletionRequests()`를 부름. 카드가 없거나 탭을 벗어나면 멈춤 |
 | 정리 | (2026-09-08 사용자 결정으로 변경) 두 스토어를 `UserScopedStoreModule`에서 빼고 DB v3 `ownerId` 컬럼으로 회원별 격리. 스토어가 `UserProfileRepository.profile.id`의 행만 읽고 쓰며, 실행자가 로그인 회원 변경 시 소유자 없는 이전 버전 행을 `claimUnowned`로 넘겨받음. 한계: 편집 슬롯은 기기당 한 행이라 다른 회원의 새 초안이 이전 초안을 덮음, 탈퇴 회원 행은 숨은 채 남음 |
 | 분석 | `client_storyCreate_completed`는 `chat_id` 필수라 수집 중단(가짜 ID 금지). `storyCompletion_requested`·`completeError_shown(story)` 유지 |
 

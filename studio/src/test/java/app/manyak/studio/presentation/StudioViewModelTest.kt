@@ -17,9 +17,12 @@ import app.manyak.studio.testing.sampleStories
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withTimeoutOrNull
@@ -367,6 +370,28 @@ class StudioViewModelTest {
                 StudioEffect.NavigateToCreate,
                 withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
             )
+        }
+
+    @Test
+    fun `완성 중 카드가 있는 동안만 5초마다 요청 상태를 조회한다`() =
+        runTest(dispatcher) {
+            val store = FakeCreationProgressAccess(requests = listOf(pendingRequest("a")))
+            val viewModel = studioViewModel(store, FakeStoryRepository(), NoOpAnalytics)
+            val polling = launch { viewModel.drivePendingCompletionPolling() }
+            // 주기 루프는 끝이 없어 advanceUntilIdle 을 쓰면 가상 시간을 무한히 소비한다.
+            runCurrent()
+            assertEquals(0, store.refreshCount)
+
+            advanceTimeBy(5_001)
+            assertEquals(1, store.refreshCount)
+            advanceTimeBy(5_000)
+            assertEquals(2, store.refreshCount)
+
+            // 미확정 요청이 사라지면 더 조회하지 않는다.
+            store.emitRequests(emptyList())
+            advanceTimeBy(20_000)
+            assertEquals(2, store.refreshCount)
+            polling.cancel()
         }
 
     @Test

@@ -24,6 +24,10 @@ import app.manyak.report.presentation.reduceReport
 import app.manyak.studio.domain.StudioRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -256,6 +260,22 @@ class StudioViewModel
                     reconcileCompleted(requests, uiState.value.stories)
                 }
             }
+        }
+
+        /**
+         * 완성 중 카드가 있는 동안만 요청 상태를 주기적으로 조회한다. 화면이 STARTED 인 동안 수집해
+         * 탭을 벗어나면 멈추고, 미확정 요청이 없어지면 다음 주기를 예약하지 않는다.
+         */
+        suspend fun drivePendingCompletionPolling() {
+            uiState
+                .map { state -> state.completionRequests.any { it.status == CompletionRequestStatus.PENDING } }
+                .distinctUntilChanged()
+                .collectLatest { hasPending ->
+                    while (hasPending) {
+                        delay(PENDING_POLL_INTERVAL_MS)
+                        creationProgress.refreshCompletionRequests()
+                    }
+                }
         }
 
         override suspend fun handleIntent(intent: StudioIntent) {
@@ -598,6 +618,9 @@ private fun reduceCardEvent(
 
         else -> state
     }
+
+/** 완성 중 카드가 보이는 동안의 요청 상태 조회 간격. 완성은 보통 1~4분 걸려 더 촘촘할 이유가 없다. */
+private const val PENDING_POLL_INTERVAL_MS = 5_000L
 
 /** 목록 조회를 부른 자리. 진행을 어떻게 보이고 실패를 어떻게 알릴지가 여기서 갈린다. */
 private enum class LoadKind {
