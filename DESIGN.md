@@ -152,6 +152,7 @@ rounded:
 
 sizes:
   input: 40dp
+  control-compact: 40dp
   control-small: 32dp
   control: 48dp
   icon-small: 16dp
@@ -407,7 +408,7 @@ components:
 | `Type.kt` | `Pretendard`·`MaruBuri` FontFamily와 타이포 롤 13종 |
 | `ManyakSpacing.kt` | 시맨틱 여백 |
 | `ManyakShapes.kt` | 시맨틱 모서리 |
-| `ManyakSizes.kt` | 크기 5종 |
+| `ManyakSizes.kt` | 크기 6종 |
 | `ManyakMotion.kt` | 전환 시간 2종 |
 | `Theme.kt` | `ManyakTheme` 컴포저블·접근자, M3 슬롯 파생 |
 
@@ -566,6 +567,7 @@ components:
 | --- | --- | --- |
 | `{sizes.control-small}` | 32dp | 라벨 없이 아이콘만 있는 보조 버튼 |
 | `{sizes.input}` | 40dp | 입력창·칩·셀렉트 앵커의 최소 높이 |
+| `{sizes.control-compact}` | 40dp | 카드 안에 놓이는 라벨 버튼의 보이는 높이. 터치 영역은 48dp 를 유지한다 |
 | `{sizes.control}` | 48dp | 버튼·탭처럼 탭 가능한 일반 컨트롤의 높이 |
 | `{sizes.icon-small}` | 16dp | 밀도 높은 컨트롤 안의 작은 아이콘 |
 | `{sizes.icon}` | 20dp | 라벨 옆 아이콘·제공자 로고 |
