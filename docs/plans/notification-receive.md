@@ -1,7 +1,7 @@
 # 알림 수신과 딥링크 진입 (KNK-1134)
 
 - 작성일: 2026-09-08
-- 근거 정본: 하네스 `3-3-android-design.md §3-3-4 알림 수신·탭 진입`, `4-backend.md §4-3-5 푸시 발송 모듈`(공통 키 `recipientId`, KNK-1220)
+- 근거 정본: 하네스 `3-3-1-android-design.md §3-3-4 알림 수신·탭 진입`, `4-backend.md §4-3-5 푸시 발송 모듈`(공통 키 `recipientId`, KNK-1220)
 
 ## 목표와 제외 범위
 

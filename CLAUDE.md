@@ -7,8 +7,8 @@
 | 확인할 것 | 위치                                                 |
 | --- |----------------------------------------------------|
 | Android 사용자 계약·플랫폼 예외 | `../knk-harness/docs/product-specs/3-3-android-spec.md` |
-| 현재 구조·상태·인증·내비게이션 | `../knk-harness/docs/product-specs/3-3-android-design.md` |
-| 결정 당시 맥락·선택·이유 | `../knk-harness/docs/product-specs/3-1-client-adr.md` · `3-3-android-adr.md` |
+| 현재 구조·상태·인증·내비게이션 | `../knk-harness/docs/product-specs/3-3-1-android-design.md` |
+| 결정 당시 맥락·선택·이유 | `../knk-harness/docs/product-specs/3-1-1-client-adr.md` · `3-3-2-android-adr.md` |
 | 계약 승인·적용·구현·검증 근거·Jira 연결 | `../knk-harness/docs/planning/client-tracking.md` |
 | 모듈 소유권·내부 계층·의존 방향 상세 규칙 | `../knk-harness/docs/planning/android-module-architecture.md` |
 | 웹·앱 공통 계약(화면·상태·사용자 흐름·API 사용) | `../knk-harness/docs/product-specs/3-1-client-spec.md`  |
@@ -52,7 +52,7 @@
 
 ## 모듈 구조
 
-정본은 하네스 `docs/product-specs/3-3-android-design.md`와 거기서 위임한 `docs/planning/android-module-architecture.md`입니다. 실제 모듈 등록은 `settings.gradle.kts`를 확인하세요.
+정본은 하네스 `docs/product-specs/3-3-1-android-design.md`와 거기서 위임한 `docs/planning/android-module-architecture.md`입니다. 실제 모듈 등록은 `settings.gradle.kts`를 확인하세요.
 
 `app`이 최상위 기능·기반 모듈을 조립합니다. 기능은 필요한 entity/domain/data/presentation 패키지를 소유하고, chat·create·my의 하위 기능도 패키지로 구분합니다. `checkModuleArchitecture`가 프로젝트 의존과 Kotlin PSI 기반 계층 경계를 검사하며 루트 `check`에 연결되어 있습니다. navigation의 기존 Kotlin 패키지는 직렬화 호환을 위해 유지합니다.
 

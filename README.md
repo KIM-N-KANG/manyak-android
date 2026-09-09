@@ -35,7 +35,7 @@ manyak-android/
 └── login/, legal/         # 로그인 · 웹 문서 화면
 ```
 
-런타임 모듈은 16개이며 내부 계층·하위 기능은 Kotlin 패키지입니다. 구조·계층·공통 코드의 정본은 [하네스 Android 설계](../knk-harness/docs/product-specs/3-3-android-design.md), 이동·검증 내역은 [모듈 재구성 기록](docs/plans/module-reorganization.md)을 확인하세요. 디자인 규칙은 [DESIGN.md](DESIGN.md)에 있습니다.
+런타임 모듈은 16개이며 내부 계층·하위 기능은 Kotlin 패키지입니다. 구조·계층·공통 코드의 정본은 [하네스 Android 설계](../knk-harness/docs/product-specs/3-3-1-android-design.md), 이동·검증 내역은 [모듈 재구성 기록](docs/plans/module-reorganization.md)을 확인하세요. 디자인 규칙은 [DESIGN.md](DESIGN.md)에 있습니다.
 
 ## 실행하기
 
@@ -84,6 +84,6 @@ PR에서는 CI(`.github/workflows/android-ci.yml`)가 `check`와 `assembleDebug`
 | `DESIGN.md`                                            | 색·타이포·여백·컴포넌트 규칙                |
 | `CLAUDE.md`                                            | 이 저장소의 작업 규칙                       |
 | `docs/plans/`                                          | 기능별 구현 순서·검증·실행 결과    |
-| `../knk-harness/docs/product-specs/3-3-android-design.md` | 현재 앱 기술 구조·상태 수명·요청 흐름 |
+| `../knk-harness/docs/product-specs/3-3-1-android-design.md` | 현재 앱 기술 구조·상태 수명·요청 흐름 |
 
-문서 역할: [Android spec](../knk-harness/docs/product-specs/3-3-android-spec.md)은 사용자 계약, [Android design](../knk-harness/docs/product-specs/3-3-android-design.md)은 현재 구조, [Android ADR](../knk-harness/docs/product-specs/3-3-android-adr.md)은 결정 이유를 소유합니다. 구현·검증·티켓은 [클라이언트 추적](../knk-harness/docs/planning/client-tracking.md), 변경 순서는 `docs/plans/`에 연결합니다. 공통 계약·결정은 하네스 공통 문서를 참조하고 복사하지 않습니다.
+문서 역할: [Android spec](../knk-harness/docs/product-specs/3-3-android-spec.md)은 사용자 계약, [Android design](../knk-harness/docs/product-specs/3-3-1-android-design.md)은 현재 구조, [Android ADR](../knk-harness/docs/product-specs/3-3-2-android-adr.md)은 결정 이유를 소유합니다. 구현·검증·티켓은 [클라이언트 추적](../knk-harness/docs/planning/client-tracking.md), 변경 순서는 `docs/plans/`에 연결합니다. 공통 계약·결정은 하네스 공통 문서를 참조하고 복사하지 않습니다.

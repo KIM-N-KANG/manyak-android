@@ -60,7 +60,7 @@
 구현이 정본과 어긋난 채로 남지 않도록 스펙을 먼저 고친다. 코드 변경 없음.
 
 **Files:**
-- Modify: `../knk-harness/docs/product-specs/3-3-android-design.md`
+- Modify: `../knk-harness/docs/product-specs/3-3-1-android-design.md`
 - Modify: `docs/plans/create-funnel-recovery.md`
 
 - [ ] **Step 1: 하네스 §3-3-3 퍼널 chrome 문단 갱신**
@@ -133,7 +133,7 @@ git commit -m "[KNK-778] Docs: 퍼널 이탈 개편으로 대체된 결정 표�
 하네스는 별도 레포이므로 그쪽에서 따로 커밋한다.
 
 ```bash
-git -C ../knk-harness add -- docs/product-specs/3-3-android-design.md
+git -C ../knk-harness add -- docs/product-specs/3-3-1-android-design.md
 git -C ../knk-harness commit -m "[KNK-967] Docs: 퍼널 이탈 개편 — arrow-down·수직 전환·전 단계 이탈·Room 영속"
 ```
 
@@ -2375,7 +2375,7 @@ git commit -m "[KNK-778] Design: 퍼널 진입·이탈을 수직 전환으로 �
 ### Task 10: 전체 검증과 매트릭스 갱신
 
 **Files:**
-- Modify: `../knk-harness/docs/product-specs/3-3-android-design.md`
+- Modify: `../knk-harness/docs/product-specs/3-3-1-android-design.md`
 
 - [ ] **Step 1: 전체 게이트 실행**
 
@@ -2402,6 +2402,6 @@ Expected: BUILD SUCCESSFUL. 실패하면 해당 태스크로 돌아가 고친다
 - [ ] **Step 4: 커밋**
 
 ```bash
-git -C ../knk-harness add -- docs/product-specs/3-3-android-design.md
+git -C ../knk-harness add -- docs/product-specs/3-3-1-android-design.md
 git -C ../knk-harness commit -m "[KNK-967] Docs: 퍼널 이탈 개편 구현 상태 매트릭스 갱신"
 ```
