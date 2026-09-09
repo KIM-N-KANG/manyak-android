@@ -1,7 +1,7 @@
 # 푸시 토큰 등록 (KNK-1133)
 
 - 작성일: 2026-09-08
-- 근거 정본: 하네스 `3-7-android-design.md §3-3-4 푸시 토큰 등록`, `docs/planning/android-module-architecture.md §3·§5`
+- 근거 정본: 하네스 `design/1-2-android-design.md §1-2-6 푸시 토큰 등록`, `docs/design/1-2-android-design.md#1-2-2-모듈과-소유권`
 
 ## 목표와 제외 범위
 

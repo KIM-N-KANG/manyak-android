@@ -1,9 +1,9 @@
 # 간편 제작 퍼널 이탈 개편 — 닫기·전 단계 이탈·키워드 임시 저장
 
-> **KNK-1197 구조 이전 안내 (2026-09-05)** — 아래 모듈 경로·코드 예시·검증 명령은 작성 당시 기록입니다. 현재 소유 위치와 검증 결과는 [모듈 재구성 기록](./module-reorganization.md), 현재 계층·의존 규칙은 [하네스 모듈 아키텍처](../../../knk-harness/docs/planning/android-module-architecture.md)를 따릅니다.
+> **KNK-1197 구조 이전 안내 (2026-09-05)** — 아래 구현 순서·모듈 경로·코드 예시·본문의 문서 절 번호와 검수 항목은 작성 당시 기록입니다. 현재 소유 위치와 검증 결과는 [모듈 재구성 기록](./module-reorganization.md), 현재 계층·의존 규칙은 [하네스 모듈 아키텍처](../../../knk-harness/docs/design/1-2-android-design.md#1-2-2-모듈과-소유권)를 따릅니다.
 
-- 공통 계약 정본: `../../../knk-harness/docs/product-specs/3-1-client-spec.md` §3-1-4(이탈 가드·제작 임시 저장)
-- 앱 결정 정본: `../../../knk-harness/docs/product-specs/3-7-android-design.md` §3-3-3(퍼널 구조)·§3-3-5(라이프사이클)
+- 공통 계약 정본: `../../../knk-harness/docs/spec/3-1-client-spec.md` §3-1-4(이탈 가드·제작 임시 저장)
+- 앱 결정 정본: `../../../knk-harness/docs/design/1-2-android-design.md` §1-2-4(퍼널 구조)·§1-2-7(라이프사이클)
 - 선행 계획: `create-funnel-recovery.md` — 이 계획이 그 문서의 D1·D3·D6을 대체한다
 
 ## 목표
@@ -80,7 +80,7 @@
 
 ## 구현 단계
 
-0. 하네스 §3-3-3·§3-3-5 결정 갱신(구현 전 선행)과 `create-funnel-recovery.md` 대체 표기.
+0. 하네스 §1-2-4·§1-2-7 결정 갱신(구현 전 선행)과 `create-funnel-recovery.md` 대체 표기.
 1. `core:domain` — `PendingStoryCreation.KeywordDraft`와 키워드 스냅숏 타입, `CreationResumePoint.KeywordStep`, `resumePoint()` 분기.
 2. `core:data` — Room 도입(버전 카탈로그·의존성·스키마 export), `ManyakDatabase`·엔티티·DAO·TypeConverter, `PendingStoryCreationRoomStore`(+`UserScopedStore` 바인딩), 기존 DataStore 스토어 제거와 파일 정리. (1 이후)
 3. `core:ui` — `create_close_funnel` 문자열.

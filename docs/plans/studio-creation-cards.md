@@ -5,7 +5,7 @@
 - 상태: 구현·에뮬레이터 검증 완료(2026-09-08). 실패 카드 문구·동작과 완료 분석 이벤트는 잠정 구현
 - Android: `feat/KNK-1222-studio-creation-cards` — fetch한 `origin/dev`의 `de51b360`
 - 하네스: `docs/KNK-1222-studio-creation-cards` — fetch한 `origin/dev`의 `24b2d0b`
-- 제품 정본: [하네스 변경 스펙](../../../knk-harness/docs/product-specs/3-7-android-design.md)
+- 제품 정본: [Android Spec](../../../knk-harness/docs/spec/3-3-android-spec.md), [Android Design](../../../knk-harness/docs/design/1-2-android-design.md#제작-카드와-다중-완성-진행)
 
 ## 목표와 범위
 
@@ -52,7 +52,7 @@ Android의 간편 제작·제작 목록·해당 저장 및 복구 흐름을 변�
 | `app/.../root/ManyakApp.kt`, `MainTabs.kt` | 퍼널·메인 탭 조립 | 퍼널 백스택 제거와 제작 탭 선택을 앱에서 처리 |
 | `analytics/.../AnalyticsEvent.kt` | `StoryCreateCompleted`가 필수 `chatId` 요구 | 자동 채팅 제거에 맞는 분석 계약 정리 필요 |
 
-현재 모듈 경계는 하네스 `android-module-architecture.md`를 따릅니다. 해당 문서의 오래된 미병합 안내와 별개로 현재 파일이 fetch한 `origin/dev`에 들어 있음을 확인했습니다.
+현재 모듈 경계는 하네스 `docs/design/1-2-android-design.md` §1-2-2를 따릅니다. 계획 작성 당시 구현 파일이 fetch한 `origin/dev`에 들어 있음을 확인했습니다.
 
 ## API 근거와 한계
 
@@ -115,7 +115,7 @@ Android의 간편 제작·제작 목록·해당 저장 및 복구 흐름을 변�
 | 항목 | 제안과 필요한 확인 | 막는 단계 |
 | --- | --- | --- |
 | A 완성 확정 실패 중 B 초안 존재 | A 입력을 실패 요청에 보존하고 스피너를 멈춘 실패 상태를 표시합니다. 같은 명령 재시도는 A의 requestId를 재사용합니다. 편집 복귀는 슬롯이 비어 있을 때만 옮기고, B가 있으면 먼저 B를 완료하거나 명시적으로 삭제하도록 안내합니다. B 자동 덮어쓰기·복수 편집 초안·실패 입력 자동 폐기를 금지합니다. 실패 카드 문구/버튼 노출은 제품 확인 후 확정합니다. | 실패 상태 UI 완료 판정 |
-| 완료 분석 이벤트의 필수 chatId | `6-analytics.md`는 `client_storyCreate_completed.chat_id`를 필수로 규정합니다. Android에서 실제 스토리 완료를 수집하되 chat_id를 선택으로 바꾸는 안을 제안합니다. 분석 정본·소비 쿼리와 합의 전 임의 이벤트명·가짜 chatId를 만들지 않습니다. | 완료 분석 계약 변경 |
+| 완료 분석 이벤트의 필수 chatId | `spec/6-analytics.md`는 `client_storyCreate_completed.chat_id`를 필수로 규정합니다. Android에서 실제 스토리 완료를 수집하되 chat_id를 선택으로 바꾸는 안을 제안합니다. 분석 정본·소비 쿼리와 합의 전 임의 이벤트명·가짜 chatId를 만들지 않습니다. | 완료 분석 계약 변경 |
 | 저장 DDL·업그레이드 | 위 보존 설계를 기반으로 실제 schema diff와 v1 변환 예시를 구현 전에 검토합니다. 데이터 폐기나 새 외부 계약이 필요한 변경만 별도로 승인받습니다. | 마이그레이션 적용 |
 
 ## 의존 순서와 완료 조건

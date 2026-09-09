@@ -1,8 +1,8 @@
 # 알림 설정 화면 (KNK-1135)
 
 - 작성일: 2026-09-08
-- 근거 정본: 하네스 `3-7-android-design.md §3-3-3 마이 · 알림 설정`, `4-backend.md §4-3-5 푸시 수신 동의`,
-  `docs/planning/android-module-architecture.md §5`
+- 근거 정본: 하네스 [Android Spec의 알림 계약](../../../knk-harness/docs/spec/3-3-android-spec.md#3-3-5-알림) · `design/1-2-android-design.md §1-2-6 푸시와 알림`, `spec/4-backend-server-spec.md §4-3-5 푸시 수신 동의`,
+  `docs/design/1-2-android-design.md#1-2-2-모듈과-소유권`
 
 ## 목표와 제외 범위
 
