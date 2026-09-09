@@ -5,7 +5,7 @@
 - 상태: 구현·에뮬레이터 검증 완료(2026-09-08). 실패 카드 문구·동작과 완료 분석 이벤트는 잠정 구현
 - Android: `feat/KNK-1222-studio-creation-cards` — fetch한 `origin/dev`의 `de51b360`
 - 하네스: `docs/KNK-1222-studio-creation-cards` — fetch한 `origin/dev`의 `24b2d0b`
-- 제품 정본: [하네스 변경 스펙](../../../knk-harness/docs/product-specs/3-3-1-android-design.md)
+- 제품 정본: [하네스 변경 스펙](../../../knk-harness/docs/product-specs/3-7-android-design.md)
 
 ## 목표와 범위
 

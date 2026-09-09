@@ -5,10 +5,10 @@
 | 확인할 것 | 정본 |
 | --- | --- |
 | 공통 화면·동작·API 사용 계약 | [공통 spec](../../../knk-harness/docs/product-specs/3-1-client-spec.md) |
-| Android 사용자 모델·플랫폼 예외·수용 기준 | [Android spec](../../../knk-harness/docs/product-specs/3-3-android-spec.md) |
-| 스택·MVI·내비게이션·세션·저장·라이프사이클·관측 구조 | [Android design](../../../knk-harness/docs/product-specs/3-3-1-android-design.md) |
+| Android 사용자 모델·플랫폼 예외·수용 기준 | [Android spec](../../../knk-harness/docs/product-specs/3-6-android-spec.md) |
+| 스택·MVI·내비게이션·세션·저장·라이프사이클·관측 구조 | [Android design](../../../knk-harness/docs/product-specs/3-7-android-design.md) |
 | 모듈·계층·의존 방향 | [모듈 아키텍처](../../../knk-harness/docs/planning/android-module-architecture.md) |
-| 중요한 선택 이유·대체 관계 | [공통 ADR](../../../knk-harness/docs/product-specs/3-1-1-client-adr.md) · [Android ADR](../../../knk-harness/docs/product-specs/3-3-2-android-adr.md) |
+| 중요한 선택 이유·대체 관계 | [공통 ADR](../../../knk-harness/docs/product-specs/3-2-client-adr.md) · [Android ADR](../../../knk-harness/docs/product-specs/3-8-android-adr.md) |
 | 승인·적용·구현·검증·배포·Jira 연결 | [클라이언트 추적](../../../knk-harness/docs/planning/client-tracking.md) |
 | Phase·일정 | [로드맵](../../../knk-harness/docs/planning/roadmap.md) |
 
