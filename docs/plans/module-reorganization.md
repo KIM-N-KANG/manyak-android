@@ -5,7 +5,7 @@
 - 대응 브랜치: Android `refactor/KNK-1197-improve-folder-structure`, 하네스 `docs/KNK-1197-improve-folder-structure`. 병합·배포 상태와 구분합니다.
 - 후속 구현 요청에 따라 모듈별 이동·검증을 완료하고 모듈 단위 로컬 커밋으로 기록했습니다.
 - 공통 설계 정본: [하네스 Android 모듈 재구성 설계](../../../knk-harness/docs/planning/android-module-architecture.md)
-- 현행 정본: [Android 스펙](../../../knk-harness/docs/product-specs/3-3-android-app.md), 로컬 검증 정책: [_project.md](./_project.md)
+- 현행 정본: [Android 설계](../../../knk-harness/docs/product-specs/3-7-android-design.md), 로컬 검증 정책: [_project.md](./_project.md)
 
 ## 1. 목표와 기준 상태
 
@@ -174,7 +174,7 @@
 
 ## 5. 계획 검토 결과와 외부 합의
 
-가장 큰 위험과 보완된 설계는 [하네스 설계 §9](../../../knk-harness/docs/planning/android-module-architecture.md#9-계획-검토에서-반영한-보완)가 소유합니다. 특히 파일 경로를 먼저 일괄 바꾸고 나중에 순환을 해결하는 방식은 피하고, 계약·구현·provider·소비자·테스트를 이동 단위로 묶습니다.
+가장 큰 위험과 보완된 설계는 [하네스 설계 §9](../../../knk-harness/docs/product-specs/3-8-android-adr.md#a-038)가 소유합니다. 특히 파일 경로를 먼저 일괄 바꾸고 나중에 순환을 해결하는 방식은 피하고, 계약·구현·provider·소비자·테스트를 이동 단위로 묶습니다.
 
 - 현재 범위에서 필요한 새 서버·제품·디자인 합의는 없습니다. 기존 계약 보존을 전제로 하는 구조 계획입니다.
 - report는 코드의 실제 공유 사용을 근거로 계획에 포함한 공유 업무 모듈입니다.
