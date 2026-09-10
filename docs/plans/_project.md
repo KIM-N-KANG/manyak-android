@@ -4,11 +4,11 @@
 
 | 확인할 것 | 정본 |
 | --- | --- |
-| 공통 화면·동작·API 사용 계약 | [공통 spec](../../../knk-harness/docs/product-specs/3-1-client-spec.md) |
-| Android 사용자 모델·플랫폼 예외·수용 기준 | [Android spec](../../../knk-harness/docs/product-specs/3-6-android-spec.md) |
-| 스택·MVI·내비게이션·세션·저장·라이프사이클·관측 구조 | [Android design](../../../knk-harness/docs/product-specs/3-7-android-design.md) |
-| 모듈·계층·의존 방향 | [모듈 아키텍처](../../../knk-harness/docs/planning/android-module-architecture.md) |
-| 중요한 선택 이유·대체 관계 | [공통 ADR](../../../knk-harness/docs/product-specs/3-2-client-adr.md) · [Android ADR](../../../knk-harness/docs/product-specs/3-8-android-adr.md) |
+| 공통 화면·동작·API 사용 계약 | [공통 spec](../../../knk-harness/docs/spec/3-1-client-spec.md) |
+| Android 사용자 모델·플랫폼 예외·수용 기준 | [Android spec](../../../knk-harness/docs/spec/3-3-android-spec.md) |
+| 스택·MVI·내비게이션·세션·저장·라이프사이클·관측 구조 | [Android design](../../../knk-harness/docs/design/1-2-android-design.md) |
+| 모듈·계층·의존 방향 | [모듈 아키텍처](../../../knk-harness/docs/design/1-2-android-design.md#1-2-2-모듈과-소유권) |
+| 중요한 선택 이유·대체 관계 | [공통 ADR](../../../knk-harness/docs/adr/1-1-client-adr.md) · [Android ADR](../../../knk-harness/docs/adr/1-3-android-adr.md) |
 | 승인·적용·구현·검증·배포·Jira 연결 | [클라이언트 추적](../../../knk-harness/docs/planning/client-tracking.md) |
 | Phase·일정 | [로드맵](../../../knk-harness/docs/planning/roadmap.md) |
 
@@ -30,7 +30,7 @@
 | 로컬 검증 | 변경된 모듈의 관련 테스트 또는 가장 작은 컴파일 작업을 우선합니다. | 빠른 피드백 유지 |
 | PR 검증 | CI의 `./gradlew check`와 `./gradlew assembleDebug`가 전체 기본 게이트입니다. 로컬에서 자동으로 중복 실행하지 않습니다. | `.github/workflows/android-ci.yml` |
 | 수동 검증 | 자동화할 수 없는 고위험 경로만 기능 완료 시 확인합니다. 전체 기기·언어·버전 매트릭스는 릴리스 또는 명시적 QA에서 수행합니다. | 검증 비용을 변경 위험에 맞추기 위함 |
-| 서명·단계적 배포 | 하네스 `7-deployment.md`가 소유합니다 — 빌드·서명키 보관은 §7-5, `main` 기준 릴리스 절차와 버전 규칙은 §7-7, 검수·단계적 출시·중단 기준·롤백은 §7-9. 이 레포에는 사본을 두지 않습니다. | `../knk-harness/docs/product-specs/7-deployment.md` |
+| 서명·단계적 배포 | 하네스 `design/4-deployment.md`가 소유합니다 — 빌드·서명키 보관은 §4-5, `main` 기준 릴리스 절차와 버전 규칙은 §4-7, 검수·단계적 출시·중단 기준·롤백은 §4-9. 이 레포에는 사본을 두지 않습니다. | [배포 Design](../../../knk-harness/docs/design/4-deployment.md) |
 
 ## 갱신 규칙
 

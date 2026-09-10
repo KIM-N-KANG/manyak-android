@@ -1,9 +1,9 @@
 # 로그인·계정 관리 (KNK-865)
 
-> **KNK-1197 구조 이전 안내 (2026-09-05)** — 아래 모듈 경로·코드 예시·검증 명령은 작성 당시 기록입니다. 현재 소유 위치와 검증 결과는 [모듈 재구성 기록](./module-reorganization.md), 현재 계층·의존 규칙은 [하네스 모듈 아키텍처](../../../knk-harness/docs/planning/android-module-architecture.md)를 따릅니다.
+> **KNK-1197 구조 이전 안내 (2026-09-05)** — 아래 구현 순서·모듈 경로·코드 예시·본문의 문서 절 번호와 검수 항목은 작성 당시 기록입니다. 현재 소유 위치와 검증 결과는 [모듈 재구성 기록](./module-reorganization.md), 현재 계층·의존 규칙은 [하네스 모듈 아키텍처](../../../knk-harness/docs/design/1-2-android-design.md#1-2-2-모듈과-소유권)를 따릅니다.
 
 - 작성일: 2026-08-22
-- 정본: 하네스 [`3-7-android-design.md`](../../../knk-harness/docs/product-specs/3-7-android-design.md) §3-3-1·§3-3-2·§3-3-3·§3-3-4·§3-3-7. 아래는 그 결정을 **이 레포에서 실행하는 순서**와 **이번에 새로 내린 결정**만 담습니다.
+- 정본: 하네스 [`design/1-2-android-design.md`](../../../knk-harness/docs/design/1-2-android-design.md) §1-2-1·§1-2-4·§1-2-5·§1-2-9. 아래는 그 결정을 **이 레포에서 실행하는 순서**와 **이번에 새로 내린 결정**만 담습니다.
 
 ## 목표
 

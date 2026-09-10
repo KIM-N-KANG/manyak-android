@@ -1,10 +1,10 @@
 # 이프 수치 서버 정책 연동
 
-> **KNK-1197 구조 이전 안내 (2026-09-05)** — 아래 모듈 경로·코드 예시·검증 명령은 작성 당시 기록입니다. 현재 소유 위치와 검증 결과는 [모듈 재구성 기록](./module-reorganization.md), 현재 계층·의존 규칙은 [하네스 모듈 아키텍처](../../../knk-harness/docs/planning/android-module-architecture.md)를 따릅니다.
+> **KNK-1197 구조 이전 안내 (2026-09-05)** — 아래 구현 순서·모듈 경로·코드 예시·본문의 문서 절 번호와 검수 항목은 작성 당시 기록입니다. 현재 소유 위치와 검증 결과는 [모듈 재구성 기록](./module-reorganization.md), 현재 계층·의존 규칙은 [하네스 모듈 아키텍처](../../../knk-harness/docs/design/1-2-android-design.md#1-2-2-모듈과-소유권)를 따릅니다.
 
 - 작성일: 2026-09-01
 - 지라: KNK-1096 (상위 KNK-1089 · 웹 선행 KNK-1095)
-- 근거 정본: 하네스 `3-1-client-spec.md §3-1-7 이프 정책 수치 표시`, `3-7-android-design.md §3-3-4 이프 정책 수치 패칭`
+- 근거 정본: 하네스 `spec/3-1-client-spec.md §3-1-7 이프 정책 수치 표시`, `design/1-2-android-design.md §1-2-5 이프 정책 수치 패칭`
 
 ## 목표와 제외 범위
 

@@ -6,13 +6,13 @@
 
 | 확인할 것 | 위치                                                 |
 | --- |----------------------------------------------------|
-| Android 사용자 계약·플랫폼 예외 | `../knk-harness/docs/product-specs/3-6-android-spec.md` |
-| 현재 구조·상태·인증·내비게이션 | `../knk-harness/docs/product-specs/3-7-android-design.md` |
-| 결정 당시 맥락·선택·이유 | `../knk-harness/docs/product-specs/3-2-client-adr.md` · `3-8-android-adr.md` |
+| Android 사용자 계약·플랫폼 예외 | `../knk-harness/docs/spec/3-3-android-spec.md` |
+| 현재 구조·상태·인증·내비게이션 | `../knk-harness/docs/design/1-2-android-design.md` |
+| 결정 당시 맥락·선택·이유 | `../knk-harness/docs/adr/1-1-client-adr.md` · `../knk-harness/docs/adr/1-3-android-adr.md` |
 | 계약 승인·적용·구현·검증 근거·Jira 연결 | `../knk-harness/docs/planning/client-tracking.md` |
-| 모듈 소유권·내부 계층·의존 방향 상세 규칙 | `../knk-harness/docs/planning/android-module-architecture.md` |
-| 웹·앱 공통 계약(화면·상태·사용자 흐름·API 사용) | `../knk-harness/docs/product-specs/3-1-client-spec.md`  |
-| 릴리스·배포 절차(버전 규칙·서명·트랙 승격·중단 기준) | `../knk-harness/docs/product-specs/7-deployment.md` §7-5·§7-7·§7-9 |
+| 모듈 소유권·내부 계층·의존 방향 상세 규칙 | `../knk-harness/docs/design/1-2-android-design.md#1-2-2-모듈과-소유권` |
+| 웹·앱 공통 계약(화면·상태·사용자 흐름·API 사용) | `../knk-harness/docs/spec/3-1-client-spec.md`  |
+| 릴리스·배포 절차(버전 규칙·서명·트랙 승격·중단 기준) | `../knk-harness/docs/design/4-deployment.md` §4-5·§4-7·§4-9 |
 | 이 레포가 소유하는 값(빌드 주입·검증 정책) | `docs/plans/_project.md`                           |
 | 기술 스택·모듈 폴더 트리·로컬 실행 준비 | `README.md` (이동 내역은 `docs/plans/module-reorganization.md`) |
 | 색·타이포·여백·컴포넌트 규칙 | `DESIGN.md`                                        |
@@ -21,7 +21,7 @@
 
 - 공통 결정은 하네스에 쓰고 이 레포에는 포인터만 둡니다. 같은 결정을 두 곳에 두지 않습니다.
 - 하네스 문서를 읽을 때는 해당 절이 `dev`에 병합됐는지 확인하세요. 미병합 브랜치 내용을 정본으로 오인하면 잘못된 전제 위에서 작업하게 됩니다.
-- **API 관련 확인은 하네스(`4-backend.md`)가 아니라 Swagger를 직접 봅니다.** 하네스의 API 절은 서버 구현보다 뒤처질 수 있어(예: `author`·`isOwner`가 구현됐는데 문서는 "계획"으로 남아 있었음) 응답 필드 유무·타입·상태 코드는 반드시 Swagger 또는 `../manyak-server` 코드로 확인합니다. Swagger·코드는 구현 사실의 근거입니다. 승인된 제품/API 계약과 다르면 차이를 기록하고 실제 오류인지 승인된 변경인지 확인한 뒤 해당 정본을 정정합니다.
+- **API 관련 확인은 하네스(`spec/4-backend-server-spec.md`)가 아니라 Swagger를 직접 봅니다.** 하네스의 API 절은 서버 구현보다 뒤처질 수 있어(예: `author`·`isOwner`가 구현됐는데 문서는 "계획"으로 남아 있었음) 응답 필드 유무·타입·상태 코드는 반드시 Swagger 또는 `../manyak-server` 코드로 확인합니다. Swagger·코드는 구현 사실의 근거입니다. 승인된 제품/API 계약과 다르면 차이를 기록하고 실제 오류인지 승인된 변경인지 확인한 뒤 해당 정본을 정정합니다.
 
 ## 작업 방식
 
@@ -43,7 +43,7 @@
 
 - 색·크기·여백·모서리는 `ManyakTheme` 접근자로만 읽습니다. 팔레트 값(`#05A66B` 등)이나 `MaterialTheme.colorScheme`·`MaterialTheme.typography`를 화면 코드에서 직접 쓰지 않습니다. 토큰에 없는 값이 필요하면 Kotlin 토큰 파일과 `DESIGN.md` 표를 함께 고칩니다(`DESIGN.md` 갱신 지침).
 - 사용자에게 보이는 문자열은 소유 모듈의 `src/main/res/values/strings.xml`에 둡니다. 기능 전용·디자인 공용·공통 오류·앱 셸의 소유 기준은 하네스 모듈 아키텍처를 따릅니다. 화면 코드에 문구를 직접 쓰지 않습니다.
-- 코드 주석에 `하네스 §3-3-3`·`공통 계약`·`FE-SCREEN-008`·`검수 #4` 같은 스펙 참조를 넣지 않습니다. 코드만 보고는 알 수 없는 이유만 남기고, 핵심 결정 근거는 하네스의 영역별 ADR 한 파일에 결정 단위로 추가합니다. 기존 확정 기록은 보존하고 후속 결정에 대체 ID·범위를 남깁니다.
+- 코드 주석에 `하네스 §1-2-4`·`공통 계약`·`FE-SCREEN-008`·`검수 #4` 같은 스펙 참조를 넣지 않습니다. 코드만 보고는 알 수 없는 이유만 남기고, 핵심 결정 근거는 하네스의 영역별 ADR 한 파일에 결정 단위로 추가합니다. 기존 확정 기록은 보존하고 후속 결정에 대체 ID·범위를 남깁니다.
 - 화면 ViewModel은 `:common`의 `MviViewModel`을 상속합니다(Intent → 부수효과 → Event → `reduce` → State, 일회성 출력은 Effect). `reduce`는 순수 함수입니다.
 - 화면 부수효과는 구성 변경(회전·다크 모드·글자 크기)에서 다시 실행되고 `remember` 값은 사라집니다. 되돌리기·초기화·저장을 하는 효과는 `configuration-changes` 스킬 기준으로 점검합니다.
 - 라우트는 `:navigation`의 `Routes.kt` 한 곳에만 등록하고 **복원 가능한 식별자만** 싣습니다. 화면 기능 모듈끼리 직접 참조하지 않습니다.
@@ -52,7 +52,7 @@
 
 ## 모듈 구조
 
-정본은 하네스 `docs/product-specs/3-7-android-design.md`와 거기서 위임한 `docs/planning/android-module-architecture.md`입니다. 실제 모듈 등록은 `settings.gradle.kts`를 확인하세요.
+정본은 하네스 `docs/design/1-2-android-design.md`이며, 모듈 소유권·계층·의존 규칙은 같은 문서의 §1-2-2에 통합되어 있습니다. 실제 모듈 등록은 `settings.gradle.kts`를 확인하세요.
 
 `app`이 최상위 기능·기반 모듈을 조립합니다. 기능은 필요한 entity/domain/data/presentation 패키지를 소유하고, chat·create·my의 하위 기능도 패키지로 구분합니다. `checkModuleArchitecture`가 프로젝트 의존과 Kotlin PSI 기반 계층 경계를 검사하며 루트 `check`에 연결되어 있습니다. navigation의 기존 Kotlin 패키지는 직렬화 호환을 위해 유지합니다.
 
