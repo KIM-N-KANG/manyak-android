@@ -3,6 +3,8 @@ package app.manyak.notification.settings.presentation
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.presentation.mvi.MviViewModel
+import app.manyak.notification.consent.entity.ConsentChange
+import app.manyak.notification.consent.entity.ConsentNotice
 import app.manyak.notification.settings.domain.PushSettingsRepository
 import app.manyak.notification.settings.entity.PushSettings
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,12 +20,16 @@ sealed interface NotificationSettingsIntent {
     data class Toggle(
         val kind: PushSettingKind,
     ) : NotificationSettingsIntent
+
+    data object DismissNotice : NotificationSettingsIntent
 }
 
 data class NotificationSettingsUiState(
     val isLoading: Boolean = true,
     val settings: PushSettings? = null,
     val loadError: DomainError? = null,
+    /** 광고·야간 동의를 바꾼 뒤 띄우는 처리 결과. 서비스 알림은 동의가 아니라 통지하지 않는다. */
+    val notice: ConsentNotice? = null,
 )
 
 sealed interface NotificationSettingsEvent {
@@ -41,6 +47,12 @@ sealed interface NotificationSettingsEvent {
     data class SettingsChanged(
         val settings: PushSettings,
     ) : NotificationSettingsEvent
+
+    data class NoticeShown(
+        val notice: ConsentNotice,
+    ) : NotificationSettingsEvent
+
+    data object NoticeDismissed : NotificationSettingsEvent
 }
 
 sealed interface NotificationSettingsEffect {
@@ -69,6 +81,7 @@ class NotificationSettingsViewModel
                 NotificationSettingsIntent.Load -> if (uiState.value.settings == null) load()
                 NotificationSettingsIntent.Retry -> load()
                 is NotificationSettingsIntent.Toggle -> toggle(intent.kind)
+                NotificationSettingsIntent.DismissNotice -> dispatchEvent(NotificationSettingsEvent.NoticeDismissed)
             }
         }
 
@@ -81,6 +94,8 @@ class NotificationSettingsViewModel
                 is NotificationSettingsEvent.Loaded -> state.copy(isLoading = false, settings = event.settings)
                 is NotificationSettingsEvent.LoadFailed -> state.copy(isLoading = false, loadError = event.error)
                 is NotificationSettingsEvent.SettingsChanged -> state.copy(settings = event.settings)
+                is NotificationSettingsEvent.NoticeShown -> state.copy(notice = event.notice)
+                NotificationSettingsEvent.NoticeDismissed -> state.copy(notice = null)
             }
 
         private suspend fun load() {
@@ -97,7 +112,14 @@ class NotificationSettingsViewModel
             if (requested == current) return
             dispatchEvent(NotificationSettingsEvent.SettingsChanged(requested))
             when (val result = repository.update(requested)) {
-                is DomainResult.Success -> dispatchEvent(NotificationSettingsEvent.SettingsChanged(result.value))
+                is DomainResult.Success -> {
+                    dispatchEvent(NotificationSettingsEvent.SettingsChanged(result.value))
+                    requested.consentChange(kind)?.let { change ->
+                        // 일시는 서버 응답이 아니라 의사를 표시한 시점이다 — 통지가 알려야 하는 값이 그것이다.
+                        val notice = ConsentNotice(change, System.currentTimeMillis())
+                        dispatchEvent(NotificationSettingsEvent.NoticeShown(notice))
+                    }
+                }
                 is DomainResult.Failure -> {
                     dispatchEvent(NotificationSettingsEvent.SettingsChanged(current))
                     dispatchEffect(NotificationSettingsEffect.SaveFailed)
@@ -121,6 +143,14 @@ private fun PushSettings.toggled(kind: PushSettingKind): PushSettings =
 
         PushSettingKind.MARKETING_NIGHT ->
             if (marketingPush) copy(marketingNightPush = !marketingNightPush) else this
+    }
+
+/** 요청한 값이 동의 상태를 어느 쪽으로 바꿨는가. 서비스 알림은 동의가 아니다. */
+private fun PushSettings.consentChange(kind: PushSettingKind): ConsentChange? =
+    when (kind) {
+        PushSettingKind.SERVICE -> null
+        PushSettingKind.MARKETING -> if (marketingPush) ConsentChange.MARKETING_ON else ConsentChange.MARKETING_OFF
+        PushSettingKind.MARKETING_NIGHT -> if (marketingNightPush) ConsentChange.NIGHT_ON else ConsentChange.NIGHT_OFF
     }
 
 private fun DomainError.isNightRequiresMarketing(): Boolean =

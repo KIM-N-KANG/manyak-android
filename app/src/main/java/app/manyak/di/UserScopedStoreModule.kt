@@ -3,6 +3,7 @@ package app.manyak.di
 import app.manyak.common.domain.session.UserScopedStore
 import app.manyak.my.invite.data.datastore.InviteOnboardingStore
 import app.manyak.my.profile.data.datastore.ProfileCacheStore
+import app.manyak.notification.consent.data.MarketingConsentPromptStore
 import app.manyak.notification.data.PushNotificationTray
 import dagger.Binds
 import dagger.Module
@@ -29,4 +30,9 @@ abstract class UserScopedStoreModule {
     @Binds
     @IntoSet
     abstract fun bindNotificationTrayAsUserScoped(impl: PushNotificationTray): UserScopedStore
+
+    /** 광고 동의를 물었다는 표시 — 남으면 다음 회원에게 묻지 않는다. 동의 자체는 서버가 든다. */
+    @Binds
+    @IntoSet
+    abstract fun bindMarketingConsentPromptAsUserScoped(impl: MarketingConsentPromptStore): UserScopedStore
 }

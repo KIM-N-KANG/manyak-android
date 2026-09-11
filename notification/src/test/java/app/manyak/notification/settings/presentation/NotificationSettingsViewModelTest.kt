@@ -2,6 +2,7 @@ package app.manyak.notification.settings.presentation
 
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.notification.consent.entity.ConsentChange
 import app.manyak.notification.settings.domain.PushSettingsRepository
 import app.manyak.notification.settings.entity.PushSettings
 import kotlinx.coroutines.Dispatchers
@@ -15,6 +16,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
@@ -123,6 +125,48 @@ class NotificationSettingsViewModelTest {
 
             assertEquals(fromServer, viewModel.uiState.value.settings)
         }
+
+    @Test
+    fun `광고를 끄면 철회 통지를 띄우고 닫으면 사라진다`() =
+        runTest {
+            val viewModel = loaded(FakeRepository(initial = ALL_ON))
+
+            viewModel.onIntent(NotificationSettingsIntent.Toggle(PushSettingKind.MARKETING))
+            advanceUntilIdle()
+            assertEquals(ConsentChange.MARKETING_OFF, viewModel.noticeChange())
+
+            viewModel.onIntent(NotificationSettingsIntent.DismissNotice)
+            advanceUntilIdle()
+            assertNull(viewModel.uiState.value.notice)
+        }
+
+    @Test
+    fun `야간을 켜면 야간 동의 통지를 띄운다`() =
+        runTest {
+            val viewModel = loaded(FakeRepository(initial = ALL_ON.copy(marketingNightPush = false)))
+
+            viewModel.onIntent(NotificationSettingsIntent.Toggle(PushSettingKind.MARKETING_NIGHT))
+            advanceUntilIdle()
+
+            assertEquals(ConsentChange.NIGHT_ON, viewModel.noticeChange())
+        }
+
+    @Test
+    fun `서비스 알림과 저장 실패는 통지하지 않는다`() =
+        runTest {
+            val ok = loaded(FakeRepository(initial = ALL_ON))
+            ok.onIntent(NotificationSettingsIntent.Toggle(PushSettingKind.SERVICE))
+            advanceUntilIdle()
+            assertNull(ok.uiState.value.notice)
+
+            val failing =
+                loaded(FakeRepository(initial = ALL_ON, updateResult = { DomainResult.Failure(DomainError.Network) }))
+            failing.onIntent(NotificationSettingsIntent.Toggle(PushSettingKind.MARKETING))
+            advanceUntilIdle()
+            assertNull(failing.uiState.value.notice)
+        }
+
+    private fun NotificationSettingsViewModel.noticeChange(): ConsentChange? = uiState.value.notice?.change
 
     private fun TestScope.loaded(repository: FakeRepository): NotificationSettingsViewModel {
         val viewModel = NotificationSettingsViewModel(repository)

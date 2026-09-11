@@ -3,6 +3,8 @@ package app.manyak.notification.data.di
 import app.manyak.network.data.di.AuthenticatedClient
 import app.manyak.network.data.di.DataLayerConfig
 import app.manyak.network.data.retrofit
+import app.manyak.notification.consent.data.MarketingConsentPromptStore
+import app.manyak.notification.consent.domain.MarketingConsentPromptRepository
 import app.manyak.notification.data.FcmTokenSource
 import app.manyak.notification.data.NotificationPermissionPromptStore
 import app.manyak.notification.data.PushTokenRegistrarImpl
@@ -33,6 +35,12 @@ abstract class NotificationModule {
     abstract fun bindNotificationPermissionPromptRepository(
         impl: NotificationPermissionPromptStore,
     ): NotificationPermissionPromptRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindMarketingConsentPromptRepository(
+        impl: MarketingConsentPromptStore,
+    ): MarketingConsentPromptRepository
 
     companion object {
         @Provides
