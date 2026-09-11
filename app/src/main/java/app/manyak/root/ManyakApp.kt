@@ -54,6 +54,7 @@ import app.manyak.core.navigation.MyCreditChargeRoute
 import app.manyak.core.navigation.MyFeedbackRoute
 import app.manyak.core.navigation.MyInviteRoute
 import app.manyak.core.navigation.MyOpenSourceLicenseRoute
+import app.manyak.core.navigation.NotificationSettingsRoute
 import app.manyak.core.navigation.StoryDetailRoute
 import app.manyak.core.navigation.WithdrawalRoute
 import app.manyak.create.additionalinfo.presentation.CreateAdditionalInfoScreen
@@ -70,6 +71,9 @@ import app.manyak.my.invite.presentation.InviteScreen
 import app.manyak.my.invite.presentation.onboarding.InviteOnboardingSheet
 import app.manyak.my.licenses.presentation.OpenSourceLicenseScreen
 import app.manyak.my.withdrawal.presentation.WithdrawalScreen
+import app.manyak.notification.consent.presentation.MarketingConsentSheet
+import app.manyak.notification.presentation.NotificationPermissionRequest
+import app.manyak.notification.settings.presentation.NotificationSettingsScreen
 import app.manyak.story.detail.presentation.StoryDetailScreen
 import app.manyak.R as AppR
 import app.manyak.designsystem.R as DesignsystemR
@@ -89,6 +93,7 @@ fun ManyakApp(
     val sessionState by viewModel.sessionState.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val creditPolicy by viewModel.creditPolicy.collectAsStateWithLifecycle()
+    val entryDestination by viewModel.entryDestination.collectAsStateWithLifecycle()
     val showSessionProgress = rememberDelayedProgressVisibility(sessionState == SessionState.Undetermined)
     val darkTheme =
         when (themeMode) {
@@ -109,10 +114,20 @@ fun ManyakApp(
                     SessionState.Undetermined -> if (showSessionProgress) SessionProgress()
                     is SessionState.SignedOut -> AuthNavDisplay()
                     SessionState.Member -> {
-                        MainNavDisplay()
+                        MainNavDisplay(
+                            entryDestination = entryDestination,
+                            onEntryConsumed = viewModel::onEntryConsumed,
+                        )
+                        // 알림 권한은 회원 그래프가 처음 그려질 때 설치당 한 번 묻는다. 거부해도 아무것도 바뀌지 않는다.
+                        var permissionSettled by rememberSaveable { mutableStateOf(false) }
+                        NotificationPermissionRequest(onSettled = { permissionSettled = true })
                         // 신규 가입 안내는 어느 탭에 있든 회원 그래프 위에 뜬다. 로그인 화면에 두면
                         // 로그인 성공과 동시에 인증 백스택이 사라져 안내도 함께 걷힌다.
                         InviteOnboardingSheet()
+                        // 광고 동의는 권한 응답과 초대 코드 안내가 끝난 뒤에 묻는다 — 시스템 다이얼로그나
+                        // 다른 시트 위에 겹쳐 뜨면 무엇에 답하는지 흐려진다.
+                        val invitePending by viewModel.inviteOnboardingPending.collectAsStateWithLifecycle()
+                        MarketingConsentSheet(enabled = permissionSettled && !invitePending)
                     }
                     // 이전 사용자의 데이터가 남아 있다. 정리가 끝날 때까지 어느 그래프도 열지 않는다.
                     is SessionState.CleanupFailed -> CleanupFailed(state, onRetry = viewModel::onRetryCleanup)
@@ -233,8 +248,19 @@ private fun AuthNavDisplay() {
  * 셸 키 위에 쌓여 헤더도 하단 탭도 없이 전체 화면으로 그려진다.
  */
 @Composable
-private fun MainNavDisplay() {
+private fun MainNavDisplay(
+    entryDestination: NavKey?,
+    onEntryConsumed: () -> Unit,
+) {
     val backStack = rememberNavBackStack(MainTabsRoute)
+    // 알림 탭 진입은 셸까지 걷어낸 뒤 목적지 하나만 쌓는다. 홈이면 걷어내기만 한다 — 셸은 이미 있어
+    // push 가 무시된다. 이 그래프는 회원일 때만 그려지므로 미로그인 진입은 로그인 뒤 여기서 소비된다.
+    LaunchedEffect(entryDestination) {
+        val destination = entryDestination ?: return@LaunchedEffect
+        backStack.popToMainTabs()
+        backStack.push(destination)
+        onEntryConsumed()
+    }
     // 셸 밖에서도 탭을 바꿀 수 있어야 한다 — 채팅을 지우면 방을 걷어내고 채팅 탭을 편다.
     var selectedTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
     val slide = rememberScreenSlideTransitions()
@@ -267,6 +293,7 @@ private fun MainNavDisplay() {
                         onOpenOpenSourceLicense = { backStack.push(MyOpenSourceLicenseRoute) },
                         onOpenWithdrawal = { backStack.push(WithdrawalRoute) },
                         onOpenCreditCharge = { backStack.push(MyCreditChargeRoute) },
+                        onOpenNotificationSettings = { backStack.push(NotificationSettingsRoute) },
                     )
                 }
                 myDestinationEntries(backStack)
@@ -279,7 +306,7 @@ private fun MainNavDisplay() {
                         onEnterChat = { chatId -> backStack.push(ChatRoomRoute(chatId)) },
                     )
                 }
-                creationFunnelEntries(backStack, creationFunnelMetadata)
+                creationFunnelEntries(backStack, creationFunnelMetadata) { selectedTab = MainTab.STUDIO }
                 entry<ChatRoomRoute> { route ->
                     ChatRoomScreen(
                         chatId = route.chatId,
@@ -321,6 +348,12 @@ private fun EntryProviderScope<NavKey>.myDestinationEntries(backStack: MutableLi
     entry<WithdrawalRoute> {
         WithdrawalScreen(onBack = { backStack.pop() })
     }
+    entry<NotificationSettingsRoute> {
+        NotificationSettingsScreen(
+            onBack = { backStack.pop() },
+            onOpenPrivacyPolicy = { backStack.push(LegalRoute(LegalDocument.PRIVACY)) },
+        )
+    }
 }
 
 private fun MutableList<NavKey>.addCreationResumeChain(resumePoint: CreationResumePoint) {
@@ -340,6 +373,7 @@ private fun MutableList<NavKey>.addCreationResumeChain(resumePoint: CreationResu
 private fun EntryProviderScope<NavKey>.creationFunnelEntries(
     backStack: MutableList<NavKey>,
     metadata: Map<String, Any>,
+    onSelectStudioTab: () -> Unit,
 ) {
     entry<CreateKeywordRoute>(metadata = metadata) {
         CreateKeywordScreen(
@@ -367,11 +401,11 @@ private fun EntryProviderScope<NavKey>.creationFunnelEntries(
             // 홈으로 나가려던 조작이 한 단계 뒤로 가기로 보인다.
             onLeaveFunnel = { backStack.popToMainTabs() },
             onBackToStoryline = { backStack.pop() },
-            // 완성 성공 — 퍼널 단계를 모두 걷어내고 생성된 채팅방을 쌓는다(웹의 채팅 화면
-            // `replace` 대응). 상세에서 시작한 채팅과 달리 돌아갈 단계가 남지 않는다.
-            onEnterChat = { chatId ->
+            // 완성 제출 — 퍼널을 걷어내고 제작 탭을 편다. 응답은 제작 탭의 카드가 받으므로 뒤로가기로
+            // 제출한 편집 화면이 되살아나지 않는다.
+            onSubmitted = {
                 backStack.popToMainTabs()
-                backStack.push(ChatRoomRoute(chatId))
+                onSelectStudioTab()
             },
         )
     }

@@ -9,6 +9,7 @@ import app.manyak.create.entity.StoryCharacterInput
 import app.manyak.create.entity.StoryCompletionCommand
 import app.manyak.create.entity.StorylineGenerationCommand
 import app.manyak.create.testing.FakePendingStoryCreationStore
+import app.manyak.create.testing.FakeStoryCompletionSubmitter
 import app.manyak.create.testing.FakeStoryCreationRepository
 import app.manyak.create.testing.sampleGenerationInput
 import app.manyak.create.testing.sampleStorylineGeneration
@@ -31,7 +32,13 @@ class StorylineGenerationStoreTest {
     fun `생성 성공은 결과를 발행하고 최초 생성 필드를 명시한다`() =
         runTest {
             val repository = FakeStoryCreationRepository()
-            val store = StorylineGenerationStore(repository, FakePendingStoryCreationStore(), this)
+            val store =
+                StorylineGenerationStore(
+                    repository,
+                    FakePendingStoryCreationStore(),
+                    FakeStoryCompletionSubmitter(),
+                    this,
+                )
 
             store.generate(sampleGenerationInput())
 
@@ -50,7 +57,13 @@ class StorylineGenerationStoreTest {
     fun `성공 결과의 재생성은 새 요청 ID 에 직전 요청 ID 를 부모로 싣는다`() =
         runTest {
             val repository = FakeStoryCreationRepository()
-            val store = StorylineGenerationStore(repository, FakePendingStoryCreationStore(), this)
+            val store =
+                StorylineGenerationStore(
+                    repository,
+                    FakePendingStoryCreationStore(),
+                    FakeStoryCompletionSubmitter(),
+                    this,
+                )
 
             store.generate(sampleGenerationInput())
 
@@ -70,7 +83,13 @@ class StorylineGenerationStoreTest {
         runTest {
             val repository = FakeStoryCreationRepository()
             repository.queuedGenerationResults += DomainResult.Failure(DomainError.Network)
-            val store = StorylineGenerationStore(repository, FakePendingStoryCreationStore(), this)
+            val store =
+                StorylineGenerationStore(
+                    repository,
+                    FakePendingStoryCreationStore(),
+                    FakeStoryCompletionSubmitter(),
+                    this,
+                )
 
             store.generate(sampleGenerationInput())
 
@@ -91,7 +110,13 @@ class StorylineGenerationStoreTest {
     fun `재생성 실패는 직전 성공 결과를 유지한다`() =
         runTest {
             val repository = FakeStoryCreationRepository()
-            val store = StorylineGenerationStore(repository, FakePendingStoryCreationStore(), this)
+            val store =
+                StorylineGenerationStore(
+                    repository,
+                    FakePendingStoryCreationStore(),
+                    FakeStoryCompletionSubmitter(),
+                    this,
+                )
 
             store.generate(sampleGenerationInput())
 
@@ -110,7 +135,13 @@ class StorylineGenerationStoreTest {
     fun `결과 직후의 재생성 연타는 버리고 잠깐 뒤의 요청만 보낸다`() =
         runTest {
             val repository = FakeStoryCreationRepository()
-            val store = StorylineGenerationStore(repository, FakePendingStoryCreationStore(), this)
+            val store =
+                StorylineGenerationStore(
+                    repository,
+                    FakePendingStoryCreationStore(),
+                    FakeStoryCompletionSubmitter(),
+                    this,
+                )
 
             store.generate(sampleGenerationInput())
             runCurrent()
@@ -131,7 +162,13 @@ class StorylineGenerationStoreTest {
     fun `직전 명령이 없으면 재생성 요청을 보내지 않는다`() =
         runTest {
             val repository = FakeStoryCreationRepository()
-            val store = StorylineGenerationStore(repository, FakePendingStoryCreationStore(), this)
+            val store =
+                StorylineGenerationStore(
+                    repository,
+                    FakePendingStoryCreationStore(),
+                    FakeStoryCompletionSubmitter(),
+                    this,
+                )
 
             store.regenerate()
 
@@ -145,7 +182,13 @@ class StorylineGenerationStoreTest {
     fun `새 생성은 이전 퍼널의 결과를 버린다`() =
         runTest {
             val repository = FakeStoryCreationRepository()
-            val store = StorylineGenerationStore(repository, FakePendingStoryCreationStore(), this)
+            val store =
+                StorylineGenerationStore(
+                    repository,
+                    FakePendingStoryCreationStore(),
+                    FakeStoryCompletionSubmitter(),
+                    this,
+                )
 
             store.generate(sampleGenerationInput())
 
@@ -162,7 +205,7 @@ class StorylineGenerationStoreTest {
         runTest {
             val repository = FakeStoryCreationRepository()
             val pendingStore = FakePendingStoryCreationStore()
-            val store = StorylineGenerationStore(repository, pendingStore, this)
+            val store = StorylineGenerationStore(repository, pendingStore, FakeStoryCompletionSubmitter(), this)
 
             store.generate(sampleGenerationInput())
 
@@ -180,7 +223,7 @@ class StorylineGenerationStoreTest {
         runTest {
             val repository = FakeStoryCreationRepository()
             val pendingStore = FakePendingStoryCreationStore()
-            val store = StorylineGenerationStore(repository, pendingStore, this)
+            val store = StorylineGenerationStore(repository, pendingStore, FakeStoryCompletionSubmitter(), this)
 
             repository.queuedGenerationResults += DomainResult.Failure(DomainError.Network)
             store.generate(sampleGenerationInput())
@@ -199,7 +242,7 @@ class StorylineGenerationStoreTest {
         runTest {
             val repository = FakeStoryCreationRepository()
             val pendingStore = FakePendingStoryCreationStore()
-            val store = StorylineGenerationStore(repository, pendingStore, this)
+            val store = StorylineGenerationStore(repository, pendingStore, FakeStoryCompletionSubmitter(), this)
             repository.queuedGenerationResults += DomainResult.Failure(DomainError.Network)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
@@ -234,7 +277,7 @@ class StorylineGenerationStoreTest {
             val command = sampleGenerationCommand()
             val pendingStore =
                 FakePendingStoryCreationStore(initial = PendingStoryCreation.GeneratingStorylines(command))
-            val store = StorylineGenerationStore(repository, pendingStore, this)
+            val store = StorylineGenerationStore(repository, pendingStore, FakeStoryCompletionSubmitter(), this)
 
             store.ensureRestored()
             assertEquals(StorylineGenerationState.Generating, store.state.value)
@@ -268,7 +311,7 @@ class StorylineGenerationStoreTest {
                             progress = progress,
                         ),
                 )
-            val store = StorylineGenerationStore(repository, pendingStore, this)
+            val store = StorylineGenerationStore(repository, pendingStore, FakeStoryCompletionSubmitter(), this)
 
             store.ensureRestored()
 
@@ -289,7 +332,13 @@ class StorylineGenerationStoreTest {
     fun `스토리라인 진행 변경은 모아 두었다가 임시 저장에서 한 번에 나간다`() =
         runTest {
             val pendingStore = FakePendingStoryCreationStore()
-            val store = StorylineGenerationStore(FakeStoryCreationRepository(), pendingStore, this)
+            val store =
+                StorylineGenerationStore(
+                    FakeStoryCreationRepository(),
+                    pendingStore,
+                    FakeStoryCompletionSubmitter(),
+                    this,
+                )
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
 
@@ -313,7 +362,13 @@ class StorylineGenerationStoreTest {
     fun `임시 저장을 연달아 눌러도 바뀐 것이 없으면 한 번만 쓴다`() =
         runTest {
             val pendingStore = FakePendingStoryCreationStore()
-            val store = StorylineGenerationStore(FakeStoryCreationRepository(), pendingStore, this)
+            val store =
+                StorylineGenerationStore(
+                    FakeStoryCreationRepository(),
+                    pendingStore,
+                    FakeStoryCompletionSubmitter(),
+                    this,
+                )
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
             val writesAfterGeneration = pendingStore.writes.size
@@ -340,7 +395,12 @@ class StorylineGenerationStoreTest {
     fun `저장 완료 표시는 3초 뒤 기본 상태로 돌아간다`() =
         runTest {
             val store =
-                StorylineGenerationStore(FakeStoryCreationRepository(), FakePendingStoryCreationStore(), this)
+                StorylineGenerationStore(
+                    FakeStoryCreationRepository(),
+                    FakePendingStoryCreationStore(),
+                    FakeStoryCompletionSubmitter(),
+                    this,
+                )
             store.generate(sampleGenerationInput())
             advanceTimeBy(DRAFT_SAVED_DISPLAY_MS - 1)
             runCurrent()
@@ -359,7 +419,7 @@ class StorylineGenerationStoreTest {
             val repository = FakeStoryCreationRepository()
             repository.holdGeneration = true
             val pendingStore = FakePendingStoryCreationStore()
-            val store = StorylineGenerationStore(repository, pendingStore, this)
+            val store = StorylineGenerationStore(repository, pendingStore, FakeStoryCompletionSubmitter(), this)
 
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
@@ -377,7 +437,13 @@ class StorylineGenerationStoreTest {
     fun `임시 저장 쓰기가 실패하면 저장 완료로 표시하지 않는다`() =
         runTest {
             val pendingStore = FakePendingStoryCreationStore(writeSucceeds = false)
-            val store = StorylineGenerationStore(FakeStoryCreationRepository(), pendingStore, this)
+            val store =
+                StorylineGenerationStore(
+                    FakeStoryCreationRepository(),
+                    pendingStore,
+                    FakeStoryCompletionSubmitter(),
+                    this,
+                )
 
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
@@ -388,10 +454,11 @@ class StorylineGenerationStoreTest {
         }
 
     @Test
-    fun `대기 중 Draft 저장은 완성 요청 레코드를 덮어쓰지 않는다`() =
+    fun `완성 제출은 초안을 요청으로 옮기고 스토어를 비운다`() =
         runTest {
             val pendingStore = FakePendingStoryCreationStore()
-            val store = StorylineGenerationStore(FakeStoryCreationRepository(), pendingStore, this)
+            val submitter = FakeStoryCompletionSubmitter()
+            val store = StorylineGenerationStore(FakeStoryCreationRepository(), pendingStore, submitter, this)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
             store.updateAdditionalInfoProgress(listOf("배경은 서울"), emptyList())
@@ -404,12 +471,45 @@ class StorylineGenerationStoreTest {
                     storylineId = generation.storylines.first().id,
                     additionalInfos = listOf("배경은 서울"),
                 )
-            store.beginCompletion(command)
+            assertTrue(store.submitCompletion(command))
             advanceUntilIdle()
 
-            val record = pendingStore.current as PendingStoryCreation.CompletingStory
-            assertEquals(command, record.command)
-            assertEquals(listOf("배경은 서울"), record.progress.additionalInfoInputs)
+            val request = submitter.submitted.single()
+            assertEquals(command, request.command)
+            assertEquals(generation, request.generation)
+            assertEquals(listOf("배경은 서울"), request.progress.additionalInfoInputs)
+            // 제출 뒤 스토어는 다음 편집을 위해 비고, 임시 저장도 잠긴다.
+            assertEquals(StorylineGenerationState.Idle, store.state.value)
+            assertFalse(store.draftSave.value.canSave)
+        }
+
+    @Test
+    fun `완성 영속 실패는 아무것도 보내지 않고 편집 상태를 유지한다`() =
+        runTest {
+            val pendingStore = FakePendingStoryCreationStore()
+            val submitter = FakeStoryCompletionSubmitter(submitSucceeds = false)
+            val store = StorylineGenerationStore(FakeStoryCreationRepository(), pendingStore, submitter, this)
+            store.generate(sampleGenerationInput())
+            advanceUntilIdle()
+            store.updateAdditionalInfoProgress(listOf("배경은 서울"), emptyList())
+
+            val generation = sampleStorylineGeneration()
+            val command =
+                StoryCompletionCommand(
+                    requestId = "completion-request",
+                    simpleCreationId = generation.simpleCreationId,
+                    storylineId = generation.storylines.first().id,
+                    additionalInfos = listOf("배경은 서울"),
+                )
+            assertFalse(store.submitCompletion(command))
+
+            assertTrue(submitter.submitted.isEmpty())
+            assertTrue(store.state.value is StorylineGenerationState.Generated)
+            assertEquals(listOf("배경은 서울"), store.progress.additionalInfoInputs)
+            assertTrue(store.draftSave.value.canSave)
+            // 다음 시도는 같은 명령의 requestId 를 승계할 수 있다.
+            assertEquals(command, store.lastCompletionCommand)
+            assertTrue(pendingStore.current is PendingStoryCreation.Draft)
         }
 
     @Test
@@ -417,7 +517,7 @@ class StorylineGenerationStoreTest {
         runTest {
             val repository = FakeStoryCreationRepository()
             val pendingStore = FakePendingStoryCreationStore()
-            val store = StorylineGenerationStore(repository, pendingStore, this)
+            val store = StorylineGenerationStore(repository, pendingStore, FakeStoryCompletionSubmitter(), this)
 
             // 저장하지 않은 탭 변경은 마지막 저장 스냅숏을 덮지 않는다.
             store.generate(sampleGenerationInput())

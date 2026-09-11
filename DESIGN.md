@@ -152,6 +152,7 @@ rounded:
 
 sizes:
   input: 40dp
+  control-compact: 40dp
   control-small: 32dp
   control: 48dp
   icon-small: 16dp
@@ -200,6 +201,13 @@ components:
     backgroundColor: "{colors.brand}"
     borderColor: "{colors.brand}"
     iconColor: "{colors.text-inverse}"
+  switch:
+    trackColor: "{colors.background-neutral}"
+    trackBorderColor: "{colors.border-strong}"
+    thumbColor: "{colors.text-subtlest}"
+  switch-checked:
+    trackColor: "{colors.brand}"
+    thumbColor: "{colors.text-inverse}"
   button-danger:
     backgroundColor: "{colors.background-danger-bold}"
     textColor: "{colors.text-inverse}"
@@ -396,7 +404,7 @@ components:
 | `Type.kt` | `Pretendard`·`MaruBuri` FontFamily와 타이포 롤 13종 |
 | `ManyakSpacing.kt` | 시맨틱 여백 |
 | `ManyakShapes.kt` | 시맨틱 모서리 |
-| `ManyakSizes.kt` | 크기 5종 |
+| `ManyakSizes.kt` | 크기 6종 |
 | `ManyakMotion.kt` | 전환 시간 2종 |
 | `Theme.kt` | `ManyakTheme` 컴포저블·접근자, M3 슬롯 파생 |
 
@@ -555,6 +563,7 @@ components:
 | --- | --- | --- |
 | `{sizes.control-small}` | 32dp | 라벨 없이 아이콘만 있는 보조 버튼 |
 | `{sizes.input}` | 40dp | 입력창·칩·셀렉트 앵커의 최소 높이 |
+| `{sizes.control-compact}` | 40dp | 카드 안에 놓이는 라벨 버튼의 보이는 높이. 터치 영역은 48dp 를 유지한다 |
 | `{sizes.control}` | 48dp | 버튼·탭처럼 탭 가능한 일반 컨트롤의 높이 |
 | `{sizes.icon-small}` | 16dp | 밀도 높은 컨트롤 안의 작은 아이콘 |
 | `{sizes.icon}` | 20dp | 라벨 옆 아이콘·제공자 로고 |
@@ -640,6 +649,8 @@ components:
 **`button-neutral`** — 보조 동작. 배경 `{colors.background-neutral}`, 텍스트 `{colors.text}`. 눌림은 `{component.button-neutral-pressed}`.
 
 **`button-text`** — 다이얼로그·시트의 닫기, 배너의 보조 동작, 인라인 재시도처럼 채움 없이 글자만 있는 버튼. 배경 없음, 텍스트 `{typography.label-large}`에 색은 자리가 정한다(닫기는 `{colors.text-subtle}`, 진입·재시도는 브랜드 색). **모서리는 `{rounded.control}`** — M3 `TextButton` 기본은 완전한 알약이라 눌림 리플이 채움 버튼과 다른 모양으로 돈다. `ManyakTextButton`을 쓴다.
+
+**`switch`** — 설정 한 줄의 켬·끔(알림 설정). M3 `Switch`의 크기·모양은 그대로 두고 색만 얹는다 — 꺼짐은 `{colors.background-neutral}` 트랙에 `{colors.border-strong}` 경계와 `{colors.text-subtlest}` 손잡이, 켜짐은 `{colors.brand}` 트랙에 `{colors.text-inverse}` 손잡이다. 비활성 상태는 두지 않는다 — 켤 수 없는 줄(광고가 꺼진 동안의 야간 광고 허용)은 흐리게 두지 않고 숨긴다(2026-09-11). **체크박스와 달리 스위치 자신이 누르는 대상이고 줄은 눌리지 않는다**(2026-09-11 — 라벨 옆에 문서를 여는 아이콘 버튼이 함께 놓여 줄 전체 토글과 겹친다). 접근성 이름은 스위치에 줄의 라벨을 붙여 읽힌다. 불러오기 전에는 같은 크기의 골격이 자리를 지킨다.
 
 **`icon-button`** — 라벨 없이 아이콘만 있는 버튼. 배경 없음이고 눌림 리플의 모양이 자리에 따라 갈린다. **앱바의 뒤로가기·닫기(`{sizes.control}`)는 원(`{rounded.pill}`)** — 안드로이드 관례라 그대로 둔다. **콘텐츠 안에 놓이는 작은 버튼(입력 칸 옆 삭제·카드 제목 줄 더보기·컴포저 아이콘, `{sizes.control-small}` 이하)은 `{rounded.menu-item}`** — M3 `IconButton` 은 모양을 고를 수 없어 원이 그대로 나오므로 `ManyakIconButton`을 쓴다. 높이가 낮은 글자 토글(추가 정보의 "더보기")도 같은 이유로 컨트롤 곡률 대신 메뉴 항목 곡률을 쓴다. **버튼과 나란히 놓이는 큰 아이콘 버튼(스토리 상세 하단 CTA 의 좋아요, `{sizes.control}`)은 `{rounded.control}`** — 옆 버튼과 같은 곡률로 리플이 돌아야 짝으로 읽힌다.
 

@@ -5,23 +5,13 @@ import app.manyak.analytics.domain.Analytics
 import app.manyak.analytics.entity.AnalyticsEvent
 import app.manyak.analytics.entity.CompletionStage
 import app.manyak.analytics.entity.CreateStep
-import app.manyak.analytics.entity.CreditShortageTrigger
-import app.manyak.common.domain.chat.ChatStarter
-import app.manyak.common.domain.error.DomainError
-import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.presentation.mvi.MviViewModel
-import app.manyak.create.domain.PendingStoryCreationStore
-import app.manyak.create.domain.StoryCreationRepository
-import app.manyak.create.entity.CreationRequestSnapshot
 import app.manyak.create.entity.StoryCompletionCommand
 import app.manyak.create.presentation.state.FunnelExitWarning
 import app.manyak.create.presentation.state.StorylineGenerationState
 import app.manyak.create.presentation.state.StorylineGenerationStore
-import app.manyak.create.presentation.state.isConflict
 import app.manyak.create.presentation.state.resultOrNull
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
@@ -40,15 +30,6 @@ data class AdditionalInfoStoryline(
     val recommendedInfos: List<String>,
 )
 
-/**
- * 완성 실패 사유. 앱은 로그인 필수라 402 는 회원 이프 부족뿐이며, 이프 획득 UI 가
- * 생기기 전까지 토스트 문구만 구분해 안내한다.
- */
-enum class CompletionFailure {
-    GENERAL,
-    CREDIT,
-}
-
 data class CreateAdditionalInfoUiState(
     /**
      * 스토어가 비어 있어 진행 레코드 복원을 기다리는 중. 어떤 스토리라인을 골랐고 무엇을 입력해
@@ -65,8 +46,8 @@ data class CreateAdditionalInfoUiState(
     val additionalInfos: List<AdditionalInfoInput> =
         List(INITIAL_INPUT_COUNT) { index -> AdditionalInfoInput(id = index.toLong()) },
     val nextInputId: Long = INITIAL_INPUT_COUNT.toLong(),
-    /** 완성 요청 진행 중. 입력 화면 대신 완성 로딩을 그린다. */
-    val isCompletingStory: Boolean = false,
+    /** 완성 요청을 영속하는 중. 연타를 요청 하나로 묶고, 성공하면 화면이 제작 탭으로 대체된다. */
+    val isSubmitting: Boolean = false,
     /** 이탈을 막고 띄운 경고. */
     val exitWarning: FunnelExitWarning? = null,
     /** "다시 선택하기"가 추가 정보를 버린다고 알리는 중. */
@@ -143,9 +124,9 @@ sealed interface CreateAdditionalInfoEvent {
         val value: String,
     ) : CreateAdditionalInfoEvent
 
-    data object CompletionStarted : CreateAdditionalInfoEvent
+    data object SubmissionStarted : CreateAdditionalInfoEvent
 
-    data object CompletionFailed : CreateAdditionalInfoEvent
+    data object SubmissionFailed : CreateAdditionalInfoEvent
 
     /** 프로세스 재시작·재개 진입 복원으로 생성 결과·입력 스냅숏이 늦게 도착했다. */
     data class SnapshotRestored(
@@ -162,15 +143,11 @@ sealed interface CreateAdditionalInfoEvent {
 }
 
 sealed interface CreateAdditionalInfoEffect {
-    /** 완성 성공 — 생성된 채팅방으로 진입하며 퍼널을 닫는다(웹의 채팅 화면 `replace` 대응). */
-    data class EnterChatAfterCompletion(
-        val chatId: String,
-    ) : CreateAdditionalInfoEffect
+    /** 완성 요청을 영속했다 — 퍼널을 걷어내고 제작 탭으로 돌아간다. 서버 응답은 기다리지 않는다. */
+    data object ReturnToStudioAfterSubmission : CreateAdditionalInfoEffect
 
-    /** 완성 실패 안내. 사유에 따라 문구만 다르다. */
-    data class ShowCompletionFailure(
-        val failure: CompletionFailure,
-    ) : CreateAdditionalInfoEffect
+    /** 요청을 영속하지 못했다. 입력은 그대로 남고 아무것도 전송되지 않았다. */
+    data object ShowSubmissionFailure : CreateAdditionalInfoEffect
 
     /** 퍼널 이탈 확정. */
     data object ExitFunnel : CreateAdditionalInfoEffect
@@ -184,9 +161,6 @@ class CreateAdditionalInfoViewModel
     @Inject
     constructor(
         private val storylineGenerationStore: StorylineGenerationStore,
-        private val storyCreationRepository: StoryCreationRepository,
-        private val chatRepository: ChatStarter,
-        private val pendingCreationStore: PendingStoryCreationStore,
         private val analytics: Analytics,
     ) : MviViewModel<
             CreateAdditionalInfoIntent,
@@ -196,16 +170,8 @@ class CreateAdditionalInfoViewModel
         >(
             storylineGenerationStore.toInitialAdditionalInfoState(),
         ) {
-        private var completeJob: Job? = null
-
         /**
-         * 스토리 완성은 성공했는데 채팅 생성이 실패한 경우의 스토리 ID.
-         * 재시도는 스토리 완성을 건너뛰고 채팅 생성만 재호출해 스토리를 중복 생성하지 않는다.
-         */
-        private var completedStoryId: String? = null
-
-        /**
-         * 이탈·초기화 처리 중. 이 전이는 스토어의 진행 미러를 비우는데, 그 사이 화면 상태를
+         * 이탈·초기화·제출 처리 중. 이 전이는 스토어의 진행 미러를 비우는데, 그 사이 화면 상태를
          * 미러링하면 방금 저장한 재료를 빈 값으로 덮어쓴다. 이후 미러링을 멈춘다.
          */
         private var isLeaving = false
@@ -218,11 +184,6 @@ class CreateAdditionalInfoViewModel
                 // 프로세스 재시작·재개 진입이면 진행 레코드에서 스토어를 먼저 복원한다.
                 storylineGenerationStore.ensureRestored()
                 if (uiState.value.isRestoring) {
-                    // 완성 진행 중이던 레코드는 입력 화면이 아니라 완성 로딩으로 이어진다. 복구
-                    // 폴링이 같은 전이를 내지만 한 박자 늦어, 입력 화면이 한 프레임 비친다.
-                    if (storylineGenerationStore.completionRecoveryTarget.value != null) {
-                        dispatchEvent(CreateAdditionalInfoEvent.CompletionStarted)
-                    }
                     dispatchEvent(
                         CreateAdditionalInfoEvent.SnapshotRestored(
                             storylineGenerationStore.toAdditionalInfoSnapshot(),
@@ -241,72 +202,6 @@ class CreateAdditionalInfoViewModel
                     )
                 }
             }
-        }
-
-        /**
-         * 응답을 못 받았거나 409 로 거절된 완성 요청의 복구 폴링. 화면이 STARTED 동안 수집해
-         * 백그라운드에서 멈추고 복귀 시 재개된다. 복구 대상이 없으면 아무 일도 하지 않는다.
-         */
-        suspend fun driveCompletionRecovery() {
-            // collectLatest 를 쓰면 블록 안에서 target 을 비우는 순간 채팅 생성 연결이 취소된다.
-            storylineGenerationStore.completionRecoveryTarget.collect { command ->
-                if (command == null) return@collect
-                dispatchEvent(CreateAdditionalInfoEvent.CompletionStarted)
-                pollCompletion(command)
-            }
-        }
-
-        private suspend fun pollCompletion(command: StoryCompletionCommand) {
-            while (true) {
-                when (val result = storyCreationRepository.creationRequest(command.requestId)) {
-                    is DomainResult.Success ->
-                        when (val snapshot = result.value) {
-                            CreationRequestSnapshot.Pending -> Unit
-
-                            is CreationRequestSnapshot.StoryReady -> {
-                                completedStoryId = snapshot.story.id
-                                storylineGenerationStore.clearCompletionRecovery()
-                                // 원 성공 경로의 부수효과 — 채팅 생성으로 이어 붙인다.
-                                startChat(snapshot.story.id)
-                                return
-                            }
-
-                            is CreationRequestSnapshot.StorylinesReady -> {
-                                failCompletion(CompletionFailure.GENERAL, restoreDraft = true)
-                                return
-                            }
-
-                            CreationRequestSnapshot.Failed -> {
-                                failCompletion(CompletionFailure.GENERAL, restoreDraft = true)
-                                return
-                            }
-                        }
-
-                    is DomainResult.Failure ->
-                        // 폴링은 읽기라 네트워크 단절은 다음 주기로 넘기고, 404 를 포함한
-                        // 서버 응답 실패는 기존 완성 실패 처리로 합류한다.
-                        if (result.error !is DomainError.Network) {
-                            failCompletion(CompletionFailure.GENERAL, restoreDraft = true)
-                            return
-                        }
-                }
-                delay(StorylineGenerationStore.RECOVERY_POLL_INTERVAL_MS)
-            }
-        }
-
-        /** 입력 화면으로 되돌리고 실패를 알린다. [restoreDraft] 는 재료를 임시 저장으로 되살린다. */
-        private suspend fun failCompletion(
-            failure: CompletionFailure,
-            restoreDraft: Boolean = false,
-        ) {
-            if (restoreDraft) storylineGenerationStore.restoreDraftAfterCompletionFailure()
-            val stage = if (completedStoryId != null) CompletionStage.CHAT else CompletionStage.STORY
-            analytics.track(AnalyticsEvent.CompleteErrorShown(stage))
-            if (failure == CompletionFailure.CREDIT) {
-                analytics.track(AnalyticsEvent.CreditShortageShown(CreditShortageTrigger.STORY_CREATE))
-            }
-            dispatchEvent(CreateAdditionalInfoEvent.CompletionFailed)
-            dispatchEffect(CreateAdditionalInfoEffect.ShowCompletionFailure(failure))
         }
 
         override suspend fun handleIntent(intent: CreateAdditionalInfoIntent) {
@@ -421,25 +316,18 @@ class CreateAdditionalInfoViewModel
             dispatchEffect(CreateAdditionalInfoEffect.NavigateBackToStoryline)
         }
 
+        /**
+         * 완성 제출. 요청을 영속하는 데 성공해야 실행자가 전송을 시작하고 화면이 제작 탭으로 돌아간다.
+         * 영속 실패는 아무것도 보내지 않은 상태이므로 입력을 그대로 두고 알린다.
+         */
         private suspend fun completeStory(
             state: CreateAdditionalInfoUiState,
             storylineIndex: Int,
         ) {
-            if (state.isCompletingStory || completeJob?.isActive == true) return
-
-            // 스토리는 완성됐고 채팅 생성만 실패한 재시도 — 완성 요청을 건너뛴다(3-1 완성 재시도 분기).
-            val alreadyCompletedStoryId = completedStoryId
-            if (alreadyCompletedStoryId != null) {
-                state.simpleCreationId?.let {
-                    analytics.track(AnalyticsEvent.StoryCompletionRequested(it.toString()))
-                }
-                dispatchEvent(CreateAdditionalInfoEvent.CompletionStarted)
-                completeJob = viewModelScope.launch { startChat(alreadyCompletedStoryId) }
-                return
-            }
-
+            if (state.isSubmitting) return
             val simpleCreationId = state.simpleCreationId ?: return
             val storylineId = state.storylines.getOrNull(storylineIndex)?.id ?: return
+            dispatchEvent(CreateAdditionalInfoEvent.SubmissionStarted)
             val command =
                 buildCompletionCommand(
                     previous = storylineGenerationStore.lastCompletionCommand,
@@ -447,63 +335,21 @@ class CreateAdditionalInfoViewModel
                     storylineId = storylineId,
                     additionalInfos = state.submittedAdditionalInfos(),
                 )
-            // UiState가 이벤트 채널보다 먼저 읽힌 직후에도 완성 레코드에는 최신 입력이 들어가야 한다.
+            // UiState가 이벤트 채널보다 먼저 읽힌 직후에도 요청에는 최신 입력이 들어가야 한다.
             storylineGenerationStore.updateAdditionalInfoProgress(
                 inputs = state.additionalInfos.map(AdditionalInfoInput::value),
                 recommendations = state.selectedRecommendations.toList(),
             )
-            // 요청 전에 영속한다 — 응답을 못 받아도 재진입 복구 조회가 이 requestId 를 쓴다.
-            storylineGenerationStore.beginCompletion(command)
             analytics.track(AnalyticsEvent.StoryCompletionRequested(simpleCreationId.toString()))
-            dispatchEvent(CreateAdditionalInfoEvent.CompletionStarted)
-            completeJob =
-                viewModelScope.launch {
-                    when (val result = storyCreationRepository.completeStory(command)) {
-                        is DomainResult.Success -> {
-                            completedStoryId = result.value.id
-                            startChat(result.value.id)
-                        }
-
-                        is DomainResult.Failure -> onCompletionFailed(command, result.error)
-                    }
-                }
-        }
-
-        private suspend fun onCompletionFailed(
-            command: StoryCompletionCommand,
-            error: DomainError,
-        ) {
-            when {
-                // 같은 requestId 재시도가 서버 PENDING 과 겹쳤다(409). 실패가 아니라 진행 중이라는
-                // 뜻이므로 복구 폴링으로 결과를 되찾는다. 로딩 상태는 폴링 드라이브가 유지한다.
-                error.isConflict() -> storylineGenerationStore.requestCompletionRecovery(command)
-
-                // 상태 코드로 응답한 실패는 복구 대상이 아니라 레코드를 지운다. 응답을 못 받은
-                // 네트워크 오류만 보존한다(3-1 정리 규칙). 레코드는 쥔 채로 임시 저장만 다시 연다.
-                error is DomainError.Network -> {
-                    storylineGenerationStore.keepCompletionRecordEditable()
-                    failCompletion(error.toCompletionFailure())
-                }
-
-                else -> failCompletion(error.toCompletionFailure(), restoreDraft = true)
-            }
-        }
-
-        /**
-         * 완성 흐름의 마지막 단계 — 채팅을 만들어 바로 진입한다. 실패는 완성 실패와 같은 안내이며,
-         * 스토리가 이미 완성됐으므로 레코드는 남겨 재진입 복구가 채팅 생성으로 이어지게 한다.
-         */
-        private suspend fun startChat(storyId: String) {
-            when (val result = chatRepository.createChat(storyId)) {
-                is DomainResult.Success -> {
-                    analytics.track(AnalyticsEvent.StoryCreateCompleted(storyId = storyId, chatId = result.value.id))
-                    pendingCreationStore.clear()
-                    // 스토어를 비워야 다음 퍼널 이탈에서 이미 완성된 결과가 임시 저장으로 둔갑하지 않는다.
-                    storylineGenerationStore.resetAfterCompletion()
-                    dispatchEffect(CreateAdditionalInfoEffect.EnterChatAfterCompletion(result.value.id))
-                }
-
-                is DomainResult.Failure -> failCompletion(CompletionFailure.GENERAL)
+            // 제출이 스토어를 비우므로 그 뒤의 미러링을 먼저 끊는다 — 남은 화면 상태가 빈 스토어를 다시 채우면 안 된다.
+            isLeaving = true
+            if (storylineGenerationStore.submitCompletion(command)) {
+                dispatchEffect(CreateAdditionalInfoEffect.ReturnToStudioAfterSubmission)
+            } else {
+                isLeaving = false
+                analytics.track(AnalyticsEvent.CompleteErrorShown(CompletionStage.STORY))
+                dispatchEvent(CreateAdditionalInfoEvent.SubmissionFailed)
+                dispatchEffect(CreateAdditionalInfoEffect.ShowSubmissionFailure)
             }
         }
 
@@ -539,16 +385,16 @@ class CreateAdditionalInfoViewModel
                             },
                     )
 
-                CreateAdditionalInfoEvent.CompletionStarted -> state.copy(isCompletingStory = true)
+                CreateAdditionalInfoEvent.SubmissionStarted -> state.copy(isSubmitting = true)
 
-                CreateAdditionalInfoEvent.CompletionFailed -> state.copy(isCompletingStory = false)
+                CreateAdditionalInfoEvent.SubmissionFailed -> state.copy(isSubmitting = false)
 
                 is CreateAdditionalInfoEvent.SnapshotRestored ->
                     // 복원 스냅숏이 늦게 도착하는 동안 화면 조작은 불가능했으므로 통째로 대체한다.
                     // 되살릴 레코드가 없었더라도 복원 대기는 여기서 끝난다 — 빈 화면으로 남지 않는다.
                     event.snapshot.copy(
                         isRestoring = false,
-                        isCompletingStory = state.isCompletingStory,
+                        isSubmitting = state.isSubmitting,
                         exitWarning = state.exitWarning,
                         showReselectWarningDialog = state.showReselectWarningDialog,
                     )
@@ -561,9 +407,9 @@ class CreateAdditionalInfoViewModel
     }
 
 /**
- * 같은 페이로드의 재시도는 requestId 를 재사용한다 — 서버가 이미 완성했다면(응답 유실)
- * AI 재호출 없이 저장된 결과를 돌려받아 중복 생성·중복 과금이 없다(멱등 계약).
- * [previous] 는 스토어가 기억한 마지막 명령이라 임시 저장 재개 후의 재시도에도 승계된다.
+ * 같은 페이로드의 재시도는 requestId 를 재사용한다 — 서버가 이미 완성했다면 AI 재호출 없이
+ * 저장된 결과를 돌려받아 중복 생성·중복 과금이 없다(멱등 계약). [previous] 는 영속 실패 뒤의
+ * 재시도와 이전 버전 임시 저장본이 남긴 마지막 명령이다.
  */
 private fun buildCompletionCommand(
     previous: StoryCompletionCommand?,
@@ -639,13 +485,3 @@ internal fun StorylineGenerationStore.toAdditionalInfoSnapshot(): CreateAddition
         nextInputId = inputs.size.toLong(),
     )
 }
-
-// 앱은 로그인 필수라 402 는 게스트 한도가 아니라 회원 이프 부족이다.
-private fun DomainError.toCompletionFailure(): CompletionFailure =
-    if (this is DomainError.Server && status == HTTP_PAYMENT_REQUIRED) {
-        CompletionFailure.CREDIT
-    } else {
-        CompletionFailure.GENERAL
-    }
-
-private const val HTTP_PAYMENT_REQUIRED = 402

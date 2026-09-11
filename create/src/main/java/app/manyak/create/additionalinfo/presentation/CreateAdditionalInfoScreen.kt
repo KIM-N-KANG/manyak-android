@@ -2,7 +2,6 @@ package app.manyak.create.additionalinfo.presentation
 
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
-import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -52,7 +51,6 @@ import app.manyak.create.presentation.component.FunnelNeutralButton
 import app.manyak.create.presentation.component.FunnelPrimaryButton
 import app.manyak.create.presentation.component.ReselectWarningDialog
 import app.manyak.create.presentation.component.SaveDraftWhenBackgrounded
-import app.manyak.create.presentation.component.StoryCompletingContent
 import app.manyak.create.presentation.preview.previewStorylines
 import app.manyak.create.presentation.state.DraftSaveUiState
 import app.manyak.designsystem.component.FocusScrollMargin
@@ -74,13 +72,13 @@ fun CreateAdditionalInfoScreen(
     storylineIndex: Int,
     onLeaveFunnel: () -> Unit,
     onBackToStoryline: () -> Unit,
-    onEnterChat: (chatId: String) -> Unit,
+    onSubmitted: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: CreateAdditionalInfoViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val draftSave by viewModel.draftSave.collectAsStateWithLifecycle()
-    val currentOnEnterChat by rememberUpdatedState(onEnterChat)
+    val currentOnSubmitted by rememberUpdatedState(onSubmitted)
     val currentOnLeaveFunnel by rememberUpdatedState(onLeaveFunnel)
     val currentOnBackToStoryline by rememberUpdatedState(onBackToStoryline)
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -91,28 +89,15 @@ fun CreateAdditionalInfoScreen(
 
     SaveDraftWhenBackgrounded { viewModel.onIntent(CreateAdditionalInfoIntent.SaveDraft) }
 
-    // 응답을 못 받았거나 409 로 거절된 완성 요청의 복구 폴링. STARTED 동안만 돌아 백그라운드에서
-    // 멈추고 복귀 시 재개된다.
-    LaunchedEffect(viewModel, lifecycleOwner) {
-        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            viewModel.driveCompletionRecovery()
-        }
-    }
-
     LaunchedEffect(viewModel, lifecycleOwner) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
             viewModel.uiEffect.collect { effect ->
                 when (effect) {
-                    is CreateAdditionalInfoEffect.EnterChatAfterCompletion -> {
-                        Toast
-                            .makeText(context, CreateR.string.create_story_completed, Toast.LENGTH_SHORT)
-                            .show()
-                        currentOnEnterChat(effect.chatId)
-                    }
+                    CreateAdditionalInfoEffect.ReturnToStudioAfterSubmission -> currentOnSubmitted()
 
-                    is CreateAdditionalInfoEffect.ShowCompletionFailure ->
+                    CreateAdditionalInfoEffect.ShowSubmissionFailure ->
                         Toast
-                            .makeText(context, effect.failure.messageRes(), Toast.LENGTH_SHORT)
+                            .makeText(context, CreateR.string.create_completion_error, Toast.LENGTH_SHORT)
                             .show()
 
                     is CreateAdditionalInfoEffect.ExitFunnel -> currentOnLeaveFunnel()
@@ -180,8 +165,6 @@ private fun CreateAdditionalInfoContent(
                 // 복원 결과를 기다리는 동안은 본문을 비워 둔다 — 고른 스토리라인도 입력도 아직
                 // 모르는 채로 그리면 재개 진입에서 빈 입력 화면이 번쩍인다.
                 state.isRestoring -> Spacer(modifier = Modifier.weight(1f))
-
-                state.isCompletingStory -> StoryCompletingContent(modifier = Modifier.weight(1f))
 
                 else -> {
                     // 스크롤 본문이 푸터 경계에서 딱 잘리므로 바닥에 페이드를 겹친다.
@@ -293,14 +276,6 @@ private fun FollowNewInput(
         }
     }
 }
-
-/** 완성 실패 토스트 문구. 재시도는 "스토리 완성하기"를 다시 누르는 것이다. */
-@StringRes
-private fun CompletionFailure.messageRes(): Int =
-    when (this) {
-        CompletionFailure.CREDIT -> CreateR.string.create_completion_error_credit
-        CompletionFailure.GENERAL -> CreateR.string.create_completion_error
-    }
 
 @Composable
 private fun AdditionalInfoStepTitle(modifier: Modifier = Modifier) {

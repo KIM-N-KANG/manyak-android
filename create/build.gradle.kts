@@ -19,6 +19,7 @@ room {
 
 dependencies {
     implementation(projects.common)
+    implementation(projects.auth)
     implementation(projects.network)
     implementation(projects.designsystem)
     implementation(projects.analytics)
