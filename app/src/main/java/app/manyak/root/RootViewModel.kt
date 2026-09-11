@@ -13,6 +13,7 @@ import app.manyak.common.domain.user.UserProfileRepository
 import app.manyak.common.entity.credit.CreditPolicy
 import app.manyak.common.entity.settings.ThemeMode
 import app.manyak.core.navigation.PushEntry
+import app.manyak.my.invite.domain.InviteOnboardingRepository
 import app.manyak.session.SessionTerminationCoordinator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -30,6 +31,7 @@ class RootViewModel
         sessionRepository: SessionRepository,
         themePreferenceRepository: ThemePreferenceRepository,
         profileRepository: UserProfileRepository,
+        inviteOnboardingRepository: InviteOnboardingRepository,
         private val savedStateHandle: SavedStateHandle,
         private val creditPolicyRepository: CreditPolicyRepository,
         private val coordinator: SessionTerminationCoordinator,
@@ -42,6 +44,13 @@ class RootViewModel
         val themeMode: StateFlow<ThemeMode> =
             themePreferenceRepository.themeMode
                 .stateIn(viewModelScope, SharingStarted.Eagerly, ThemeMode.SYSTEM)
+
+        /**
+         * 신규 가입 초대 코드 안내가 뜰 차례인가. 회원 그래프 위에 얹는 시트들의 순서를 루트가 정하기 위해 본다.
+         * 읽기 전에는 "뜰 수 있다" 로 둔다 — 그 반대면 안내 두 장이 한 프레임에 겹칠 수 있다.
+         */
+        val inviteOnboardingPending: StateFlow<Boolean> =
+            inviteOnboardingRepository.pending.stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
         /** 서버가 정본인 이프 수치. 세 기능 모듈이 같은 값을 보도록 루트가 한 번만 읽는다. */
         val creditPolicy: StateFlow<CreditPolicy?> = creditPolicyRepository.policy

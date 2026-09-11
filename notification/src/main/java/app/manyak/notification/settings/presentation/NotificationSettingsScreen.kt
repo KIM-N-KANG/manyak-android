@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Switch
@@ -42,7 +41,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
@@ -61,6 +61,7 @@ import app.manyak.designsystem.component.ManyakTextButton
 import app.manyak.designsystem.component.SkeletonPlaceholder
 import app.manyak.designsystem.component.rememberSkeletonPulseAlpha
 import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.notification.consent.presentation.ConsentNoticeDialog
 import app.manyak.notification.settings.entity.PushSettings
 import app.manyak.common.R as CommonR
 import app.manyak.designsystem.R as DesignsystemR
@@ -73,6 +74,7 @@ import app.manyak.notification.R as NotificationR
 @Composable
 fun NotificationSettingsScreen(
     onBack: () -> Unit,
+    onOpenPrivacyPolicy: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: NotificationSettingsViewModel = hiltViewModel(),
 ) {
@@ -105,7 +107,14 @@ fun NotificationSettingsScreen(
         NotificationSettingsContent(
             state = state,
             onIntent = viewModel::onIntent,
+            onOpenPrivacyPolicy = onOpenPrivacyPolicy,
             modifier = Modifier.weight(1f),
+        )
+    }
+    state.notice?.let { notice ->
+        ConsentNoticeDialog(
+            notice = notice,
+            onDismiss = { viewModel.onIntent(NotificationSettingsIntent.DismissNotice) },
         )
     }
 }
@@ -146,6 +155,7 @@ private fun NotificationSettingsHeader(
 private fun NotificationSettingsContent(
     state: NotificationSettingsUiState,
     onIntent: (NotificationSettingsIntent) -> Unit,
+    onOpenPrivacyPolicy: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val loadError = state.loadError
@@ -184,15 +194,18 @@ private fun NotificationSettingsContent(
             descriptionRes = NotificationR.string.notification_settings_marketing_description,
             checked = settings?.marketingPush,
             onToggle = { onIntent(NotificationSettingsIntent.Toggle(PushSettingKind.MARKETING)) },
+            // 동의 고지의 정본은 개인정보 처리방침이라 토글 옆에서 바로 열 수 있게 한다.
+            onOpenDetail = onOpenPrivacyPolicy,
         )
-        SettingRow(
-            labelRes = NotificationR.string.notification_settings_marketing_night,
-            descriptionRes = NotificationR.string.notification_settings_marketing_night_description,
-            checked = settings?.marketingNightPush,
-            // 야간은 별도 옵트인이라 광고 동의 없이는 켤 수 없다. 한 탭으로 두 동의를 받지 않는다.
-            enabled = settings?.marketingPush == true,
-            onToggle = { onIntent(NotificationSettingsIntent.Toggle(PushSettingKind.MARKETING_NIGHT)) },
-        )
+        // 야간은 광고 동의의 확장이라 광고가 꺼져 있으면 줄 자체를 두지 않는다 — 켤 수 없는 스위치를 보여 주지 않는다.
+        if (settings?.marketingPush == true) {
+            SettingRow(
+                labelRes = NotificationR.string.notification_settings_marketing_night,
+                descriptionRes = NotificationR.string.notification_settings_marketing_night_description,
+                checked = settings.marketingNightPush,
+                onToggle = { onIntent(NotificationSettingsIntent.Toggle(PushSettingKind.MARKETING_NIGHT)) },
+            )
+        }
     }
 }
 
@@ -206,9 +219,11 @@ private fun DomainError.loadFailedMessageRes(): Int =
     }
 
 /**
- * 토글 한 줄. 행 전체가 토글 대상이고 스위치는 따로 누르는 대상이 아니다 — 접근성 이름과 상태도 행이 읽힌다.
+ * 토글 한 줄. 스위치만 누르는 대상이고 줄은 눌리지 않는다 — 라벨 옆에 문서를 여는 아이콘이 있어 줄 전체를
+ * 토글로 두면 두 눌림이 한 줄에 겹친다. 접근성 이름은 스위치에 라벨을 붙여 읽힌다.
  *
  * @param checked 아직 불러오지 않았으면 null 이고, 라벨은 그대로 둔 채 스위치 자리에만 골격을 깐다.
+ * @param onOpenDetail 라벨 옆 외부 링크 아이콘. 줄 토글과 별개의 눌림 대상이라 아이콘 버튼으로 둔다.
  */
 @Composable
 private fun SettingRow(
@@ -217,36 +232,47 @@ private fun SettingRow(
     checked: Boolean?,
     onToggle: () -> Unit,
     modifier: Modifier = Modifier,
-    enabled: Boolean = true,
+    onOpenDetail: (() -> Unit)? = null,
 ) {
-    val toggleable =
-        if (checked == null) {
-            Modifier
-        } else {
-            Modifier.toggleable(value = checked, enabled = enabled, role = Role.Switch, onValueChange = { onToggle() })
-        }
     Row(
         modifier =
             modifier
                 .fillMaxWidth()
                 .heightIn(min = ManyakTheme.sizes.control)
-                .then(toggleable)
                 // 위아래 12dp 씩이라 행 사이가 24dp 로 읽힌다.
                 .padding(horizontal = ManyakTheme.spacing.gutter, vertical = ManyakTheme.spacing.component),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
     ) {
+        val label = stringResource(labelRes)
         // 라벨·설명 사이는 마이 메뉴 줄과 같이 줄 높이에만 맡긴다 — 두 화면의 보조 문구 간격이 갈리지 않게 한다.
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = stringResource(labelRes),
-                style = ManyakTheme.typography.bodyLarge,
-                color = if (enabled) ManyakTheme.colors.text else ManyakTheme.colors.textDisabled,
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
+            ) {
+                Text(
+                    text = label,
+                    style = ManyakTheme.typography.bodyLarge,
+                    color = ManyakTheme.colors.text,
+                )
+                if (onOpenDetail != null) {
+                    ManyakIconButton(
+                        iconRes = DesignsystemR.drawable.ic_external_link,
+                        contentDescription =
+                            stringResource(NotificationR.string.notification_settings_marketing_privacy_policy),
+                        onClick = onOpenDetail,
+                        size = ManyakTheme.sizes.controlSmall,
+                        iconSize = ManyakTheme.sizes.iconSmall,
+                        shape = ManyakTheme.shapes.menuItem,
+                        tint = ManyakTheme.colors.textSubtle,
+                    )
+                }
+            }
             Text(
                 text = stringResource(descriptionRes),
                 style = ManyakTheme.typography.bodySmall,
-                color = if (enabled) ManyakTheme.colors.textSubtle else ManyakTheme.colors.textDisabled,
+                color = ManyakTheme.colors.textSubtle,
             )
         }
         if (checked == null) {
@@ -255,23 +281,26 @@ private fun SettingRow(
                 modifier = Modifier.size(width = SwitchTrackWidth, height = SwitchTrackHeight),
             )
         } else {
-            PushSwitch(checked = checked, enabled = enabled)
+            PushSwitch(
+                modifier = Modifier.semantics { contentDescription = label },
+                checked = checked,
+                onCheckedChange = { onToggle() },
+            )
         }
     }
 }
 
-/** 클릭을 받지 않는 표시용 스위치. 조작은 행이 맡는다. */
+/** 앱 색을 얹은 M3 스위치. 조작은 스위치 자신이 받는다. */
 @Composable
 private fun PushSwitch(
     checked: Boolean,
-    enabled: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Switch(
         modifier = modifier,
         checked = checked,
-        onCheckedChange = null,
-        enabled = enabled,
+        onCheckedChange = onCheckedChange,
         colors =
             SwitchDefaults.colors(
                 checkedThumbColor = ManyakTheme.colors.textInverse,
@@ -279,11 +308,6 @@ private fun PushSwitch(
                 uncheckedThumbColor = ManyakTheme.colors.textSubtlest,
                 uncheckedTrackColor = ManyakTheme.colors.backgroundNeutral,
                 uncheckedBorderColor = ManyakTheme.colors.borderStrong,
-                disabledCheckedThumbColor = ManyakTheme.colors.textDisabled,
-                disabledCheckedTrackColor = ManyakTheme.colors.backgroundDisabled,
-                disabledUncheckedThumbColor = ManyakTheme.colors.textDisabled,
-                disabledUncheckedTrackColor = ManyakTheme.colors.backgroundDisabled,
-                disabledUncheckedBorderColor = ManyakTheme.colors.backgroundDisabled,
             ),
     )
 }
@@ -378,6 +402,7 @@ private fun NotificationSettingsPreview() {
                     settings = PushSettings(servicePush = true, marketingPush = false, marketingNightPush = false),
                 ),
             onIntent = {},
+            onOpenPrivacyPolicy = {},
         )
     }
 }

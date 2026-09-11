@@ -1,5 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="notification_consent_accept">광고 알림 받기</string>
+    <string name="notification_consent_decline">닫기</string>
+    <string name="notification_consent_description">새로운 이벤트와 혜택 소식, 출석 리마인드를 광고 알림으로 보내드려요</string>
+    <string name="notification_consent_notice_at">일시: %1$s</string>
+    <string name="notification_consent_notice_confirm">확인</string>
+    <string name="notification_consent_notice_result">처리 내용: %1$s</string>
+    <string name="notification_consent_notice_result_marketing_off">광고 알림 수신 동의 철회 완료</string>
+    <string name="notification_consent_notice_result_marketing_on">광고 알림 수신 동의 완료</string>
+    <string name="notification_consent_notice_result_night_off">야간 광고 알림 수신 동의 철회 완료</string>
+    <string name="notification_consent_notice_result_night_on">야간 광고 알림 수신 동의 완료</string>
+    <string name="notification_consent_notice_title">알림 수신 동의 처리 안내</string>
+    <string name="notification_consent_sender">마냑 운영자 강동우</string>
+    <string name="notification_consent_sender_line">전송자: %1$s</string>
+    <string name="notification_consent_title">이벤트·혜택 소식을 알림으로 받아 볼까요?</string>
     <string name="notification_settings_disabled_notice">기기 알림 설정이 꺼져 있어요</string>
     <string name="notification_settings_enable">알림 켜기</string>
     <string name="notification_settings_load_failed">알림 설정을 불러오지 못했어요</string>
@@ -7,6 +21,7 @@
     <string name="notification_settings_marketing_description">이벤트·혜택 소식과 출석 리마인드를 받아요</string>
     <string name="notification_settings_marketing_night">야간 광고 허용</string>
     <string name="notification_settings_marketing_night_description">밤 9시부터 아침 8시 사이에도 광고 알림을 받아요</string>
+    <string name="notification_settings_marketing_privacy_policy">개인정보 처리방침 보기</string>
     <string name="notification_settings_save_failed">알림 설정을 저장하지 못했어요</string>
     <string name="notification_settings_service">서비스 알림</string>
     <string name="notification_settings_service_description">스토리 완성처럼 내 활동의 결과를 알려드려요</string>

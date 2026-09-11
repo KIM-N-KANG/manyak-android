@@ -208,10 +208,6 @@ components:
   switch-checked:
     trackColor: "{colors.brand}"
     thumbColor: "{colors.text-inverse}"
-  switch-disabled:
-    trackColor: "{colors.background-disabled}"
-    trackBorderColor: "{colors.background-disabled}"
-    thumbColor: "{colors.text-disabled}"
   button-danger:
     backgroundColor: "{colors.background-danger-bold}"
     textColor: "{colors.text-inverse}"
@@ -654,7 +650,7 @@ components:
 
 **`button-text`** — 다이얼로그·시트의 닫기, 배너의 보조 동작, 인라인 재시도처럼 채움 없이 글자만 있는 버튼. 배경 없음, 텍스트 `{typography.label-large}`에 색은 자리가 정한다(닫기는 `{colors.text-subtle}`, 진입·재시도는 브랜드 색). **모서리는 `{rounded.control}`** — M3 `TextButton` 기본은 완전한 알약이라 눌림 리플이 채움 버튼과 다른 모양으로 돈다. `ManyakTextButton`을 쓴다.
 
-**`switch`** — 설정 한 줄의 켬·끔(알림 설정). M3 `Switch`의 크기·모양은 그대로 두고 색만 얹는다 — 꺼짐은 `{colors.background-neutral}` 트랙에 `{colors.border-strong}` 경계와 `{colors.text-subtlest}` 손잡이, 켜짐은 `{colors.brand}` 트랙에 `{colors.text-inverse}` 손잡이, 비활성은 트랙·경계 `{colors.background-disabled}`에 `{colors.text-disabled}` 손잡이다. **체크박스와 같은 규칙으로 스위치 자체는 누르는 대상이 아니다** — 줄 전체가 토글을 맡고 접근성 이름·상태도 줄이 읽힌다. 불러오기 전에는 같은 크기의 골격이 자리를 지킨다.
+**`switch`** — 설정 한 줄의 켬·끔(알림 설정). M3 `Switch`의 크기·모양은 그대로 두고 색만 얹는다 — 꺼짐은 `{colors.background-neutral}` 트랙에 `{colors.border-strong}` 경계와 `{colors.text-subtlest}` 손잡이, 켜짐은 `{colors.brand}` 트랙에 `{colors.text-inverse}` 손잡이다. 비활성 상태는 두지 않는다 — 켤 수 없는 줄(광고가 꺼진 동안의 야간 광고 허용)은 흐리게 두지 않고 숨긴다(2026-09-11). **체크박스와 달리 스위치 자신이 누르는 대상이고 줄은 눌리지 않는다**(2026-09-11 — 라벨 옆에 문서를 여는 아이콘 버튼이 함께 놓여 줄 전체 토글과 겹친다). 접근성 이름은 스위치에 줄의 라벨을 붙여 읽힌다. 불러오기 전에는 같은 크기의 골격이 자리를 지킨다.
 
 **`icon-button`** — 라벨 없이 아이콘만 있는 버튼. 배경 없음이고 눌림 리플의 모양이 자리에 따라 갈린다. **앱바의 뒤로가기·닫기(`{sizes.control}`)는 원(`{rounded.pill}`)** — 안드로이드 관례라 그대로 둔다. **콘텐츠 안에 놓이는 작은 버튼(입력 칸 옆 삭제·카드 제목 줄 더보기·컴포저 아이콘, `{sizes.control-small}` 이하)은 `{rounded.menu-item}`** — M3 `IconButton` 은 모양을 고를 수 없어 원이 그대로 나오므로 `ManyakIconButton`을 쓴다. 높이가 낮은 글자 토글(추가 정보의 "더보기")도 같은 이유로 컨트롤 곡률 대신 메뉴 항목 곡률을 쓴다. **버튼과 나란히 놓이는 큰 아이콘 버튼(스토리 상세 하단 CTA 의 좋아요, `{sizes.control}`)은 `{rounded.control}`** — 옆 버튼과 같은 곡률로 리플이 돌아야 짝으로 읽힌다.
 
