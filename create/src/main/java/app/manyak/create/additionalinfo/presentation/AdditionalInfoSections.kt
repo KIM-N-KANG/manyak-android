@@ -26,6 +26,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -38,6 +41,7 @@ import app.manyak.designsystem.component.ManyakIconButton
 import app.manyak.designsystem.component.ManyakInputCounter
 import app.manyak.designsystem.component.ManyakMultilineTextField
 import app.manyak.designsystem.component.RowRevealTransition
+import app.manyak.designsystem.component.keepKeyboardOnTap
 import app.manyak.designsystem.text.storyAnnotatedString
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.create.R as CreateR
@@ -85,6 +89,7 @@ private fun SelectedStorylineToggle(
     Row(
         modifier =
             modifier
+                .keepKeyboardOnTap()
                 // 높이가 낮은 글자 버튼이라 컨트롤 곡률이면 알약으로 보인다 — 아이콘 버튼과 같은 곡률을 쓴다.
                 .clip(ManyakTheme.shapes.menuItem)
                 .clickable(onClick = onClick)
@@ -149,6 +154,7 @@ private fun RecommendationChip(
     Box(
         modifier =
             modifier
+                .keepKeyboardOnTap()
                 .fillMaxWidth()
                 .heightIn(min = ManyakTheme.sizes.input)
                 .clip(ManyakTheme.shapes.control)
@@ -213,6 +219,20 @@ internal fun AdditionalInfoRows(
     val placeholders = stringArrayResource(CreateR.array.create_additional_placeholders)
     // 지우는 중인 칸. 구성 변경으로 이 표시를 잃으면 칸은 그대로 남는다(지워지지 않는 쪽이 안전하다).
     var exitingIds by remember { mutableStateOf(emptySet<Long>()) }
+    var focusedId by remember { mutableStateOf<Long?>(null) }
+    val inputIds = inputs.map { it.id }
+    val focusRequesters = remember(inputIds) { inputIds.associateWith { FocusRequester() } }
+    val remove: (Long) -> Unit = { id ->
+        if (focusedId == id) {
+            // 퇴장할 입력을 비활성화하기 전에 남은 입력으로 옮긴다.
+            val index = inputs.indexOfFirst { it.id == id }
+            val next =
+                inputs.drop(index + 1).firstOrNull { it.id !in exitingIds }
+                    ?: inputs.take(index).lastOrNull { it.id !in exitingIds }
+            next?.let { focusRequesters.getValue(it.id).requestFocus() }
+        }
+        exitingIds = exitingIds + id
+    }
     // 들어올 때 이미 있던 칸은 그대로 그린다 — 화면에 닿자마자 칸들이 자라 오르면 안 된다.
     val initialIds = remember { inputs.map(AdditionalInfoInput::id).toSet() }
     Column(modifier = modifier.fillMaxWidth()) {
@@ -230,9 +250,18 @@ internal fun AdditionalInfoRows(
                         modifier = Modifier.padding(bottom = ManyakTheme.spacing.compact),
                         index = index,
                         input = input,
+                        enabled = input.id !in exitingIds,
+                        fieldModifier =
+                            Modifier.focusRequester(focusRequesters.getValue(input.id)).onFocusChanged {
+                                if (it.isFocused) {
+                                    focusedId = input.id
+                                } else if (focusedId == input.id) {
+                                    focusedId = null
+                                }
+                            },
                         placeholder = placeholders[index % placeholders.size],
                         onValueChange = { value -> onValueChange(input.id, value) },
-                        onRemove = { exitingIds = exitingIds + input.id },
+                        onRemove = { remove(input.id) },
                     )
                 }
             }
@@ -244,6 +273,8 @@ internal fun AdditionalInfoRows(
 private fun AdditionalInfoRow(
     index: Int,
     input: AdditionalInfoInput,
+    enabled: Boolean,
+    fieldModifier: Modifier,
     placeholder: String,
     onValueChange: (String) -> Unit,
     onRemove: () -> Unit,
@@ -255,7 +286,8 @@ private fun AdditionalInfoRow(
         horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
     ) {
         ManyakMultilineTextField(
-            modifier = Modifier.weight(1f),
+            modifier = fieldModifier.weight(1f),
+            enabled = enabled,
             value = input.value,
             onValueChange = onValueChange,
             placeholder = placeholder,
@@ -268,6 +300,8 @@ private fun AdditionalInfoRow(
             },
         )
         ManyakIconButton(
+            modifier = Modifier.keepKeyboardOnTap(),
+            enabled = enabled,
             iconRes = DesignsystemR.drawable.ic_close,
             contentDescription = stringResource(CreateR.string.create_additional_delete_description, index + 1),
             onClick = onRemove,

@@ -159,6 +159,10 @@ sizes:
   icon: 20dp
   tab-icon: 24dp
   logo: 24dp
+  shimmer-band-half-width: 60dp
+  generation-dot-gap: 10dp
+  generation-dot-radius: 1dp
+  generation-dot-displacement: 9dp
 
 spacing:
   hairline: 2dp
@@ -175,6 +179,19 @@ spacing:
   screen-bottom: 32dp
 
 components:
+  image-generation-loading:
+    backgroundColor: "{colors.background-neutral}"
+    borderColor: "{colors.border}"
+    dotColor: "{colors.text}"
+    dotGap: "{sizes.generation-dot-gap}"
+    dotRadius: "{sizes.generation-dot-radius}"
+    dotDisplacement: "{sizes.generation-dot-displacement}"
+    borderWidth: "{sizes.generation-dot-radius}"
+    rounded: "{rounded.thumbnail}"
+  text-shimmer:
+    color: "{colors.text-subtle}"
+    highlightColor: "{colors.text}"
+    bandHalfWidth: "{sizes.shimmer-band-half-width}"
   screen:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.text}"
@@ -195,9 +212,10 @@ components:
     size: "{sizes.icon}"
     backgroundColor: "{colors.surface}"
     borderColor: "{colors.border}"
-    borderWidth: 1dp
+    borderWidth: "{sizes.selection-border-width}"
     rounded: "{rounded.checkbox}"
   checkbox-checked:
+    borderWidth: 1dp
     backgroundColor: "{colors.brand}"
     borderColor: "{colors.brand}"
     iconColor: "{colors.text-inverse}"
@@ -569,6 +587,11 @@ components:
 | `{sizes.icon}` | 20dp | 라벨 옆 아이콘·제공자 로고 |
 | `{sizes.tab-icon}` | 24dp | 하단 탭 아이콘 |
 | `{sizes.logo}` | 24dp | 마냑 로고 락업의 높이. 폭은 원본 비율(89:32)로 따라간다 |
+| `{sizes.shimmer-band-half-width}` | 60dp | 텍스트 시머 띠의 반폭 |
+| `{sizes.selection-border-width}` | 2dp | 미선택 체크박스 경계·M3 라디오 버튼과 동일 |
+| `{sizes.generation-dot-gap}` | 10dp | 이미지 생성 로딩 점 간격 |
+| `{sizes.generation-dot-radius}` | 1dp | 이미지 생성 로딩 점 반지름 기준·테두리 |
+| `{sizes.generation-dot-displacement}` | 9dp | 이미지 생성 로딩 점 최대 변위 |
 
 `{sizes.tab-icon}`이 `{sizes.icon}`보다 큰 이유는 놓이는 자리가 다르기 때문이다. `{sizes.icon}`은 같은 줄의
 라벨 옆에 붙어 글자 크기에 맞추지만, 탭 아이콘은 라벨 위에 놓인 탭의 주된 시각 요소다. 웹 하단
@@ -646,7 +669,7 @@ components:
 
 **`button-danger`** — 파괴적 동작(탈퇴·삭제). 같은 형태에 배경만 `{colors.background-danger-bold}`. 눌림은 `{component.button-danger-pressed}`.
 
-**`checkbox`** — 동의·확인 항목의 체크 표시. `{sizes.icon}` 정사각에 `{rounded.checkbox}` 모서리이고, 기본은 `{colors.surface}` 채움 + `{colors.border}` 1dp, 체크되면 `{colors.brand}` 채움에 같은 색 경계와 `{colors.text-inverse}` 체크 아이콘(16dp)이다. **체크박스 자체는 누르는 대상이 아니다** — 줄 전체가 토글을 맡아 문구를 눌러도 켜지고, 최소 터치 타깃도 그 줄이 확보한다. 체크박스에 따로 접근성 이름을 붙이지 않는다(줄이 이미 이름과 상태를 읽힌다).
+**`checkbox`** — 동의·확인 항목의 체크 표시. `{sizes.icon}` 정사각에 `{rounded.checkbox}` 모서리이고, 기본은 `{colors.surface}` 채움 + `{colors.border}` 경계이며 두께는 `{sizes.selection-border-width}`(2dp)로 미선택 M3 라디오 버튼과 같습니다. 체크되면 `{colors.brand}` 채움에 같은 색 경계와 `{colors.text-inverse}` 체크 아이콘(16dp)이다. **체크박스 자체는 누르는 대상이 아니다** — 줄 전체가 토글을 맡아 문구를 눌러도 켜지고, 최소 터치 타깃도 그 줄이 확보한다. 체크박스에 따로 접근성 이름을 붙이지 않는다(줄이 이미 이름과 상태를 읽힌다).
 
 **`button-neutral`** — 보조 동작. 배경 `{colors.background-neutral}`, 텍스트 `{colors.text}`. 눌림은 `{component.button-neutral-pressed}`.
 
@@ -666,7 +689,7 @@ components:
 
 **`text-field-focused`** — 경계를 한 단계 진한 회색 `{colors.border-input}`으로 바꿉니다. 포커스에 브랜드 색을 쓰지 않습니다(2026-08-24 결정 — 입력 경계는 무채색 사다리로만 말합니다).
 
-입력란 사이 이동과 같은 입력란 재터치(라벨·여백 포함)에서는 키보드를 유지합니다. 입력란 밖의 빈 영역·버튼·칩을 탭하면 포커스와 키보드를 닫으며, 버튼·칩의 동작도 그대로 실행합니다. 스크롤·드래그·다중 터치는 포커스를 해제하지 않습니다. 앱 루트·공통 시트·입력 다이얼로그에 `clearFocusOnTap`을 적용하고, 공통 입력 컴포넌트와 직접 사용하는 `BasicTextField`는 `keepKeyboardOnTap`으로 입력 영역을 구분합니다. 두 modifier 모두 터치 이벤트를 소비하지 않습니다.
+입력란 사이 이동과 같은 입력란 재터치(라벨·여백 포함)에서는 키보드를 유지합니다. 입력란 밖의 빈 영역·버튼·칩을 탭하면 포커스와 키보드를 닫으며, 버튼·칩의 동작도 그대로 실행합니다. 채팅 작성 버튼과 추가 정보 편집 버튼의 예외는 [Android 계약](../knk-harness/docs/spec/3-3-android-spec.md)을 따르며, 해당 버튼에도 `keepKeyboardOnTap`을 적용합니다. 스크롤·드래그·다중 터치는 포커스를 해제하지 않습니다. 앱 루트·공통 시트·입력 다이얼로그에 `clearFocusOnTap`을 적용하고, 공통 입력 컴포넌트와 직접 사용하는 `BasicTextField`는 `keepKeyboardOnTap`으로 입력 영역을 구분합니다. 두 modifier 모두 터치 이벤트를 소비하지 않습니다.
 
 **`text-field-error`** — 경계를 `{colors.border-danger}`로 바꾸고, 오류 문구를 `{colors.text-danger}` + `{typography.body-small}`로 아래에 둡니다. 색만으로 오류를 알리지 않습니다.
 
@@ -709,6 +732,10 @@ components:
 **`pull-to-refresh`** — 목록을 당겨서 새로고침할 때의 표시자. M3 `PullToRefreshBox` 기본 표시자 위에 배경 `{colors.surface-raised}`와 스피너 색 `{colors.progress-indicator}`를 얹는다. 목록은 셸 헤더 아래로 흘러 들어가도 되지만 표시자는 그 자리에서 헤더에 완전히 가리므로, 셸이 넘긴 콘텐츠 여백의 **상단만큼 내려** 헤더 뒤에서 나오게 한다. 목록이 그려진 상태에만 두고 골격·조회 실패·빈 목록에는 두지 않는다.
 
 ### 퍼널
+
+스토리라인 대기 문구는 4초마다 글자별 25ms 시차로 교차하며, 전체 문구 위에 4초 시머가 지나갑니다. 문구 앞의 점 3개는 1초 주기로 160ms씩 늦게 떠올랐다 내려옵니다. 이전·다음 문구를 별도 레이아웃으로 교차해 서로 다른 글자 폭 때문에 위치가 흔들리지 않도록 합니다. 기존 3종 문구와 15·30초 지연 힌트를 유지합니다. 주변 인물이 0명이면 인물 추가 버튼 위에 랜덤 생성 안내를 표시합니다.
+
+완성 중 카드에는 `ImageGenerationLoading`의 3:4 점 패턴과 제목 시머를 사용합니다. 이미지 로딩은 4:3 비율도 받을 수 있으며, 중심이 가로 약 9.7초·세로 약 12초 주기로 이동하며 주변 점의 위치·반지름·밝기를 함께 바꿉니다. 약 7.3초 주기의 작은 보조 움직임(가로 폭의 2%, 세로 높이의 1.6%)을 섞어 경로에 부드러운 불규칙성을 더합니다. 반지름은 기준 토큰의 0.65~1.5배, 변위는 최대 `{sizes.generation-dot-displacement}`입니다. 앱의 완성 알림 안내 문구를 유지합니다. 채팅 대기 문구는 공용 시머 브러시를 사용하되 기존 2초 주기·색을 유지합니다.
 
 > 간편 제작 퍼널은 셸을 두르지 않는 전체 화면이라 chrome 을 화면이 직접 그린다. 아래 세 컴포넌트는
 > 지금 `:create`(FAB은 `:studio`)가 소유하고, 두 번째 모듈 사용처가 생기면 `:designsystem`로 올린다.

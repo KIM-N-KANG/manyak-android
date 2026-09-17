@@ -54,6 +54,7 @@ import app.manyak.create.presentation.preview.previewStorylines
 import app.manyak.create.presentation.state.DraftSaveUiState
 import app.manyak.designsystem.component.FocusScrollMargin
 import app.manyak.designsystem.component.ScrollEdgeFade
+import app.manyak.designsystem.component.keepKeyboardOnTap
 import app.manyak.designsystem.credit.creditAmountAlpha
 import app.manyak.designsystem.theme.ManyakTheme
 import kotlinx.coroutines.isActive
@@ -187,7 +188,7 @@ private fun CreateAdditionalInfoContent(
 }
 
 @Composable
-private fun AdditionalInfoList(
+internal fun AdditionalInfoList(
     storylineIndex: Int,
     state: CreateAdditionalInfoUiState,
     onIntent: (CreateAdditionalInfoIntent) -> Unit,
@@ -228,7 +229,7 @@ private fun AdditionalInfoList(
         item {
             Box(modifier = Modifier.fillMaxWidth()) {
                 AddTrigger(
-                    modifier = Modifier.align(Alignment.Center),
+                    modifier = Modifier.align(Alignment.Center).keepKeyboardOnTap(),
                     label = stringResource(CreateR.string.create_add_info),
                     enabled = state.canAddInput,
                     onClick = { onIntent(CreateAdditionalInfoIntent.AddInput) },
