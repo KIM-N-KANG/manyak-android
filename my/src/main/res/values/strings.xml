@@ -11,7 +11,6 @@
     <string name="my_attendance_in_progress">출석 체크 중</string>
     <string name="my_attendance_note_expiry">보상으로 받은 이프는 적립일로부터 30일 동안 사용할 수 있어요</string>
     <string name="my_attendance_note_reset">매일 오전 00시에 초기화돼요</string>
-    <string name="my_credit_charge">충전</string>
     <string name="my_credit_charge_tab_free">무료 충전</string>
     <string name="my_credit_charge_title">이프 충전</string>
     <string name="my_credit_history">내역</string>
@@ -22,7 +21,6 @@
     <string name="my_credit_history_expires">%1$s 만료</string>
     <string name="my_credit_history_load_failed">이프 내역을 불러오지 못했어요</string>
     <string name="my_credit_history_loading">이프 내역을 불러오는 중</string>
-    <string name="my_credit_label">내 이프</string>
     <string name="my_credit_reason_attendance">출석 체크 보상</string>
     <string name="my_credit_reason_chat_image">채팅 실시간 이미지 생성</string>
     <string name="my_credit_reason_chat_turn">채팅 전송</string>

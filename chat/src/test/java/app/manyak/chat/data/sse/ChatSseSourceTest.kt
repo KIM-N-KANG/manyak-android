@@ -175,6 +175,7 @@ class ChatSseSourceTest {
                     apiBaseUrl = "https://example.com/api/v1/",
                     isDebugBuild = true,
                     appVersion = "1.0",
+                    webBaseUrl = "https://example.com",
                 ),
             json = Json { explicitNulls = false },
             ioDispatcher = dispatcher(),

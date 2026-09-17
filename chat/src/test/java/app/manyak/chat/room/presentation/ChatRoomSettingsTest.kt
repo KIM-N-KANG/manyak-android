@@ -7,6 +7,7 @@ import app.manyak.chat.testing.FakeChatPreferencesRepository
 import app.manyak.chat.testing.FakeChatRepository
 import app.manyak.chat.testing.FakeReportRepository
 import app.manyak.chat.testing.FakeTrialsRepository
+import app.manyak.chat.testing.FakeUserProfileRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -143,6 +144,7 @@ class ChatRoomSettingsTest {
         reportRepository = FakeReportRepository(),
         preferences = preferences,
         trialsRepository = FakeTrialsRepository(),
+        profileRepository = FakeUserProfileRepository(),
         analytics = NoOpAnalytics,
     )
 

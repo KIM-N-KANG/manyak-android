@@ -229,6 +229,69 @@ class ChatListViewModelTest {
         }
 
     @Test
+    fun `시트의 공유하기는 그 카드의 링크를 발급하고 시트를 닫는다`() =
+        runTest(dispatcher) {
+            val repository = FakeChatRepository()
+            val viewModel = ChatListViewModel(repository, FakeReportRepository(), NoOpAnalytics)
+            viewModel.onIntent(ChatListIntent.ScreenShown)
+            advanceUntilIdle()
+            val effects = mutableListOf<ChatListEffect>()
+            val collection = launch { viewModel.uiEffect.collect { effect -> effects += effect } }
+            val target =
+                viewModel.uiState.value.chats
+                    .first()
+
+            viewModel.onIntent(ChatListIntent.OpenOptions(target))
+            advanceUntilIdle()
+            viewModel.onIntent(ChatListIntent.Share)
+            viewModel.onIntent(ChatListIntent.Share)
+            advanceUntilIdle()
+
+            // 발급은 멱등이지만 연타로 요청을 두 번 보내지는 않는다.
+            assertEquals(listOf(target.id), repository.sharedChatIds)
+            assertNull(viewModel.uiState.value.optionsTarget)
+            assertFalse(viewModel.uiState.value.isSharing)
+            assertEquals(
+                listOf(
+                    ChatListEffect.ShareLink(
+                        url = "https://example.com/share/share-1",
+                        storyTitle = target.storyTitle,
+                        turnCount = target.turnCount.toInt(),
+                    ),
+                ),
+                effects,
+            )
+
+            collection.cancel()
+        }
+
+    @Test
+    fun `공유 발급에 실패하면 시트를 두고 안내한다`() =
+        runTest(dispatcher) {
+            val repository = FakeChatRepository()
+            repository.queuedShareResults += DomainResult.Failure(DomainError.Network)
+            val viewModel = ChatListViewModel(repository, FakeReportRepository(), NoOpAnalytics)
+            viewModel.onIntent(ChatListIntent.ScreenShown)
+            advanceUntilIdle()
+            val effects = mutableListOf<ChatListEffect>()
+            val collection = launch { viewModel.uiEffect.collect { effect -> effects += effect } }
+            val target =
+                viewModel.uiState.value.chats
+                    .first()
+
+            viewModel.onIntent(ChatListIntent.OpenOptions(target))
+            advanceUntilIdle()
+            viewModel.onIntent(ChatListIntent.Share)
+            advanceUntilIdle()
+
+            assertEquals(target, viewModel.uiState.value.optionsTarget)
+            assertFalse(viewModel.uiState.value.isSharing)
+            assertEquals(listOf(ChatListEffect.ShowShareFailed), effects)
+
+            collection.cancel()
+        }
+
+    @Test
     fun `시트에서 연 신고는 그 카드가 참조하는 스토리로 나간다`() =
         runTest(dispatcher) {
             val storyRepository = FakeReportRepository()

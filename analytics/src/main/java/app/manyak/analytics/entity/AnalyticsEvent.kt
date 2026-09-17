@@ -240,6 +240,15 @@ sealed class AnalyticsEvent(
         val chatId: String,
     ) : AnalyticsEvent("client_chat_characterImage_clicked", mapOf("chat_id" to chatId))
 
+    /** 채팅 메뉴의 공유하기(발급 시도). [turnNumber] 는 발급 시점의 진행 턴 수다. */
+    data class ChatShareButtonClicked(
+        val chatId: String,
+        val turnNumber: Int,
+    ) : AnalyticsEvent(
+            "client_chat_shareButton_clicked",
+            mapOf("chat_id" to chatId, "turn_number" to turnNumber),
+        )
+
     data class ChatInputModeSelected(
         val chatId: String,
         val mode: String,

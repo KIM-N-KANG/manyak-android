@@ -208,9 +208,11 @@ private fun StoryDetailContent(
             surfaceAlpha = { headerSurfaceAlpha },
             onBack = onBack,
             // 신고할 대상이 아직 없으면 진입점을 두지 않는다.
-            onReport = { onIntent(StoryDetailIntent.Report(StoryReportAction.Open)) }.takeIf { state.story != null },
+            showsMenu = state.story != null,
             // 삭제는 서버가 내 것이라고 한 스토리에만 — 소유 판정은 응답의 몫이다.
-            onDelete = { onIntent(StoryDetailIntent.RequestDelete) }.takeIf { state.story?.isOwner == true },
+            isOwner = state.story?.isOwner == true,
+            onReport = { onIntent(StoryDetailIntent.Report(StoryReportAction.Open)) },
+            onDelete = { onIntent(StoryDetailIntent.RequestDelete) },
         )
 
         StoryDetailOverlays(state = state, onIntent = onIntent)
@@ -244,6 +246,7 @@ private fun StoryDetailOverlays(
             onConfirm = { onIntent(StoryDetailIntent.ConfirmDelete) },
             onDismiss = { onIntent(StoryDetailIntent.DismissDeleteDialog) },
             inProgress = state.isDeleting,
+            inProgressLabel = stringResource(DesignsystemR.string.delete_in_progress),
         )
     }
 }
@@ -358,8 +361,10 @@ private fun StoryDetailHeader(
     showTitle: Boolean,
     surfaceAlpha: () -> Float,
     onBack: () -> Unit,
-    onReport: (() -> Unit)?,
-    onDelete: (() -> Unit)?,
+    showsMenu: Boolean,
+    isOwner: Boolean,
+    onReport: () -> Unit,
+    onDelete: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val alpha = surfaceAlpha()
@@ -396,8 +401,14 @@ private fun StoryDetailHeader(
                 )
             },
             actions = {
-                if (onReport != null) {
-                    StoryDetailHeaderMenu(onReport = onReport, onDelete = onDelete, tint = contentColor)
+                if (showsMenu) {
+                    StoryDetailHeaderMenu(
+                        title = title,
+                        isOwner = isOwner,
+                        onReport = onReport,
+                        onDelete = onDelete,
+                        tint = contentColor,
+                    )
                 }
             },
             // 표지가 상태바 뒤까지 올라가므로 상태바 자리는 앱바가 직접 낀다.

@@ -3,7 +3,6 @@ package app.manyak.my.invite.presentation
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.content.Intent
 import android.os.Build
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -49,6 +48,7 @@ import app.manyak.analytics.entity.AnalyticsEvent
 import app.manyak.analytics.presentation.LocalAnalytics
 import app.manyak.common.presentation.credit.LocalCreditPolicy
 import app.manyak.common.presentation.credit.creditAmountText
+import app.manyak.common.presentation.share.shareText
 import app.manyak.designsystem.component.FocusScrollMargin
 import app.manyak.designsystem.component.ManyakTextField
 import app.manyak.designsystem.component.SkeletonPlaceholder
@@ -377,28 +377,6 @@ private fun Context.copyToClipboard(code: String): Boolean {
     val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager ?: return false
     clipboard.setPrimaryClip(ClipData.newPlainText(getString(MyR.string.invite_my_code), code))
     return true
-}
-
-/**
- * 시스템 공유 시트로 초대 문구를 보낸다.
- *
- * 웹은 카카오 SDK 로 공유 카드를 띄우지만 앱은 안드로이드 공유 시트를 쓴다 — 카카오톡을 포함해
- * 기기에 있는 앱을 사용자가 고르고, 공유 SDK 를 따로 싣지 않는다.
- *
- * @return 시트를 열었으면 true.
- */
-private fun Context.shareText(
-    subject: String,
-    message: String,
-): Boolean {
-    val intent =
-        Intent(Intent.ACTION_SEND).apply {
-            type = "text/plain"
-            putExtra(Intent.EXTRA_SUBJECT, subject)
-            putExtra(Intent.EXTRA_TEXT, message)
-        }
-    val chooser = Intent.createChooser(intent, subject)
-    return runCatching { startActivity(chooser) }.isSuccess
 }
 
 /** 이용 안내의 글머리 기호. 목록 마크업이 없는 Compose 에서는 문자로 그린다. */

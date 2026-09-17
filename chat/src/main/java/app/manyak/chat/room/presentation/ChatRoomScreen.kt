@@ -1,6 +1,5 @@
 package app.manyak.chat.room.presentation
 
-import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -19,24 +18,17 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.chat.list.presentation.label
 import app.manyak.chat.room.presentation.composer.ChatComposer
 import app.manyak.chat.room.presentation.composer.ChatComposerActions
@@ -44,28 +36,25 @@ import app.manyak.chat.room.presentation.composer.ChatSettingsSheet
 import app.manyak.designsystem.component.FullscreenImageViewer
 import app.manyak.designsystem.component.ManyakDestructiveDialog
 import app.manyak.designsystem.component.ManyakIconButton
-import app.manyak.designsystem.component.ManyakOptionsMenu
-import app.manyak.designsystem.component.ManyakOptionsMenuItem
 import app.manyak.designsystem.component.ManyakProgressIndicator
 import app.manyak.designsystem.component.rememberDelayedProgressVisibility
 import app.manyak.designsystem.theme.ManyakTheme
-import app.manyak.report.presentation.StoryReportAction
-import app.manyak.report.presentation.StoryReportUiState
-import app.manyak.report.presentation.component.StoryReportSheet
 import app.manyak.chat.R as ChatR
 import app.manyak.common.R as CommonR
 import app.manyak.designsystem.R as DesignsystemR
-import app.manyak.report.R as ReportR
 
 /**
- * 채팅방. 셸 없는 전체 화면이며 상세 조회 렌더와 턴 진행, 추천 입력·선택지를 담는다.
- * 재생성·삭제는 다음 단계에서 붙는다.
+ * 채팅방. 셸 없는 전체 화면이며 상세 조회 렌더와 턴 진행, 추천 입력·선택지, 헤더 메뉴(새 채팅·신고·삭제)를 담는다.
+ *
+ * @param onReplaceChat 메뉴에서 새 채팅을 만들었다. 지금 방을 걷어내고 그 자리에 새 방을 연다.
  */
 @Composable
 fun ChatRoomScreen(
     chatId: String,
     onBack: () -> Unit,
     onDeleted: () -> Unit,
+    onReplaceChat: (String) -> Unit,
+    onOpenCreditCharge: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ChatRoomViewModel =
         hiltViewModel<ChatRoomViewModel, ChatRoomViewModel.Factory>(
@@ -73,85 +62,49 @@ fun ChatRoomScreen(
         ),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val context = LocalContext.current
-    val defaultFailure = stringResource(ChatR.string.chat_room_stream_error)
-    val currentOnDeleted by rememberUpdatedState(onDeleted)
-    // 확인 다이얼로그 노출 여부. 구성 변경에서 되돌아가면 안 되는 진행 상태다.
+    // 메뉴 시트·확인 다이얼로그 노출 여부. 구성 변경에서 되돌아가면 안 되는 진행 상태다.
+    var menuOpen by rememberSaveable { mutableStateOf(false) }
     var confirmingDelete by rememberSaveable { mutableStateOf(false) }
-    val lockedToast = remember { ReplacingToast(context, ChatR.string.chat_composer_locked_streaming) }
 
-    LaunchedEffect(viewModel, lifecycleOwner) {
-        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            viewModel.uiEffect.collect { effect ->
-                when (effect) {
-                    is ChatRoomEffect.ShowStreamFailure ->
-                        Toast.makeText(context, effect.message ?: defaultFailure, Toast.LENGTH_SHORT).show()
-
-                    ChatRoomEffect.ShowCreditRequired ->
-                        Toast
-                            .makeText(context, ChatR.string.chat_room_credit_required, Toast.LENGTH_SHORT)
-                            .show()
-
-                    ChatRoomEffect.ChatDeleted -> {
-                        confirmingDelete = false
-                        Toast.makeText(context, ChatR.string.chat_room_deleted, Toast.LENGTH_SHORT).show()
-                        currentOnDeleted()
-                    }
-
-                    ChatRoomEffect.ShowDeleteFailed -> {
-                        confirmingDelete = false
-                        Toast
-                            .makeText(context, ChatR.string.chat_room_delete_failed, Toast.LENGTH_SHORT)
-                            .show()
-                    }
-
-                    ChatRoomEffect.ShowReportSubmitted ->
-                        Toast.makeText(context, ReportR.string.story_report_submitted, Toast.LENGTH_SHORT).show()
-
-                    ChatRoomEffect.ShowReportFailed ->
-                        Toast.makeText(context, ReportR.string.story_report_failed, Toast.LENGTH_SHORT).show()
-
-                    ChatRoomEffect.ShowComposerLocked -> lockedToast.show()
-                }
-            }
-        }
-    }
+    ChatRoomEffects(
+        viewModel = viewModel,
+        storyTitle = state.storyTitle,
+        onDeleted = onDeleted,
+        onReplaceChat = onReplaceChat,
+        onCloseMenu = { menuOpen = false },
+        onCloseDeleteDialog = { confirmingDelete = false },
+    )
 
     ChatRoomContent(
         state = state,
         onBack = onBack,
         onIntent = viewModel::onIntent,
-        onDeleteClick = { confirmingDelete = true },
+        onOpenMenu = {
+            menuOpen = true
+            viewModel.onIntent(ChatRoomIntent.MenuOpened)
+        },
         modifier = modifier,
     )
 
+    if (menuOpen) {
+        ChatMenuSheet(
+            state = state,
+            onIntent = viewModel::onIntent,
+            onDelete = { confirmingDelete = true },
+            onOpenCreditCharge = onOpenCreditCharge,
+            onDismiss = { menuOpen = false },
+        )
+    }
+
     if (confirmingDelete) {
-        ManyakDestructiveDialog(
-            title = stringResource(ChatR.string.chat_room_delete_dialog_title),
-            description = stringResource(ChatR.string.chat_room_delete_dialog_description),
-            confirmLabel = stringResource(ChatR.string.chat_room_delete),
-            cancelLabel = stringResource(ChatR.string.chat_room_delete_dialog_cancel),
+        ChatRoomDeleteDialog(
+            isDeleting = state.isDeleting,
             onConfirm = { viewModel.onIntent(ChatRoomIntent.DeleteConfirmed) },
             onDismiss = { if (!state.isDeleting) confirmingDelete = false },
-            inProgress = state.isDeleting,
         )
     }
 
     ChatRoomReportSheet(state = state.report, onIntent = viewModel::onIntent)
-}
-
-/** 신고 시트. 화면 본체가 길어지지 않게 따로 둔다. */
-@Composable
-private fun ChatRoomReportSheet(
-    state: StoryReportUiState,
-    onIntent: (ChatRoomIntent) -> Unit,
-) {
-    if (!state.isSheetOpen) return
-    StoryReportSheet(
-        state = state,
-        onAction = { action -> onIntent(ChatRoomIntent.Report(action)) },
-    )
 }
 
 @Composable
@@ -159,7 +112,7 @@ private fun ChatRoomContent(
     state: ChatRoomUiState,
     onBack: () -> Unit,
     onIntent: (ChatRoomIntent) -> Unit,
-    onDeleteClick: () -> Unit,
+    onOpenMenu: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val showProgress = rememberDelayedProgressVisibility(state.isLoading)
@@ -175,15 +128,14 @@ private fun ChatRoomContent(
         ) {
             val phase = chatRoomPhase(state)
             // 헤더는 어느 상태에서나 남는다 — 실패 화면에서도 뒤로 나갈 곳이 있어야 한다. 다만 방을 아직
-            // 열지 못한 상태에서는 삭제를 권하지 않는다.
+            // 열지 못한 상태에서는 메뉴를 두지 않는다.
             ChatRoomHeader(
                 title = state.storyTitle,
                 // 방을 연 뒤에도 제목이 비어 있으면 참조 스토리가 삭제된 것이다 — 목록 카드와 같은 문구로 알린다.
                 isStoryDeleted = phase == ChatRoomPhase.CONTENT && state.storyTitle.isBlank(),
-                showsOptions = phase == ChatRoomPhase.CONTENT,
+                showsMenu = phase == ChatRoomPhase.CONTENT,
                 onBack = onBack,
-                onDeleteClick = onDeleteClick,
-                onReportClick = { onIntent(ChatRoomIntent.Report(StoryReportAction.Open)) },
+                onOpenMenu = onOpenMenu,
             )
             val millis = ManyakTheme.motion.screenTransitionMillis
             AnimatedContent(
@@ -324,10 +276,9 @@ private fun ReplaceDraftDialog(
 private fun ChatRoomHeader(
     title: String,
     isStoryDeleted: Boolean,
-    showsOptions: Boolean,
+    showsMenu: Boolean,
     onBack: () -> Unit,
-    onDeleteClick: () -> Unit,
-    onReportClick: () -> Unit,
+    onOpenMenu: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     TopAppBar(
@@ -348,28 +299,14 @@ private fun ChatRoomHeader(
                 onClick = onBack,
             )
         },
-        // 오른쪽에는 옵션 메뉴 하나만 둔다 — 웹 헤더의 공유 버튼은 앱 범위 밖이다.
+        // 오른쪽에는 메뉴 버튼 하나만 둔다 — 웹 헤더의 공유 버튼은 앱 범위 밖이다.
         actions = {
-            if (showsOptions) {
-                ManyakOptionsMenu(contentDescription = stringResource(ChatR.string.chat_room_options)) { dismiss ->
-                    ManyakOptionsMenuItem(
-                        iconRes = DesignsystemR.drawable.ic_info,
-                        label = stringResource(ReportR.string.story_report_action),
-                        onClick = {
-                            dismiss()
-                            onReportClick()
-                        },
-                    )
-                    ManyakOptionsMenuItem(
-                        iconRes = DesignsystemR.drawable.ic_delete,
-                        label = stringResource(ChatR.string.chat_room_delete),
-                        onClick = {
-                            dismiss()
-                            onDeleteClick()
-                        },
-                        isDanger = true,
-                    )
-                }
+            if (showsMenu) {
+                ManyakIconButton(
+                    iconRes = DesignsystemR.drawable.ic_more_horizontal,
+                    contentDescription = stringResource(ChatR.string.chat_room_menu),
+                    onClick = onOpenMenu,
+                )
             }
         },
         // 화면 루트에서 적용한 safeDrawing 인셋이 중복되지 않게 한다.
@@ -408,7 +345,7 @@ private fun previewChatRoomState(): ChatRoomUiState =
 @Composable
 private fun ChatRoomScreenPreview() {
     ManyakTheme(darkTheme = false) {
-        ChatRoomContent(state = previewChatRoomState(), onBack = {}, onIntent = {}, onDeleteClick = {})
+        ChatRoomContent(state = previewChatRoomState(), onBack = {}, onIntent = {}, onOpenMenu = {})
     }
 }
 
@@ -416,6 +353,6 @@ private fun ChatRoomScreenPreview() {
 @Composable
 private fun ChatRoomScreenDarkPreview() {
     ManyakTheme(darkTheme = true) {
-        ChatRoomContent(state = previewChatRoomState(), onBack = {}, onIntent = {}, onDeleteClick = {})
+        ChatRoomContent(state = previewChatRoomState(), onBack = {}, onIntent = {}, onOpenMenu = {})
     }
 }

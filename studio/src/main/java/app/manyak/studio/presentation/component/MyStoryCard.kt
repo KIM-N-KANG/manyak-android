@@ -57,7 +57,7 @@ internal fun MyStoryCard(
 ) {
     val haptic = LocalHapticFeedback.current
     Row(
-        // 카드 전체가 상세로 가는 링크다. 길게 누르기와 제목 줄 더보기 버튼은 같은 옵션 다이얼로그를 연다 —
+        // 카드 전체가 상세로 가는 링크다. 길게 누르기와 제목 줄 더보기 버튼은 같은 옵션 시트를 연다 —
         // 더보기 버튼은 자기 클릭을 먹어 상세로 가지 않는다.
         modifier =
             modifier
@@ -66,7 +66,7 @@ internal fun MyStoryCard(
                     role = Role.Button,
                     onLongClickLabel = stringResource(StudioR.string.studio_story_options),
                     onClick = onClick,
-                    // 길게 누르기는 화면에 드러나지 않는 제스처라 다이얼로그가 열리는 순간 손으로도 알린다.
+                    // 길게 누르기는 화면에 드러나지 않는 제스처라 시트가 열리는 순간 손으로도 알린다.
                     onLongClick = {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         onOptionsClick()
@@ -85,46 +85,12 @@ internal fun MyStoryCard(
         StoryInfo(
             story = story,
             onOptionsClick = onOptionsClick,
-            compact = false,
             modifier =
                 Modifier
                     .weight(1f)
                     // 글 영역이 표지 높이를 최소치로 삼아야 메타 줄이 표지 아랫변에 맞는다.
                     .heightIn(min = CoverHeight)
                     // 위는 행간 여유가 이미 띄우므로 아랫변만 글줄 상자와 표지 사이를 벌린다.
-                    .padding(bottom = ManyakTheme.spacing.hairline),
-        )
-    }
-}
-
-/**
- * 옵션 다이얼로그 상단에 놓는 카드 미리보기. 목록 카드와 같은 정보를 한 단계씩 작게 그려, 어느 스토리의
- * 옵션인지 다이얼로그 안에서 확인하게 한다. 눌리지 않고 더보기 버튼도 없다 — 다이얼로그 자체가 그 메뉴다.
- */
-@Composable
-internal fun MyStoryCardPreview(
-    story: StorySummary,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
-        verticalAlignment = Alignment.Top,
-    ) {
-        StoryCover(
-            thumbnailUrl = story.thumbnailUrl,
-            modifier = Modifier.width(CompactCoverWidth),
-            shape = ManyakTheme.shapes.thumbnailSmall,
-            showBorder = true,
-        )
-        StoryInfo(
-            story = story,
-            onOptionsClick = null,
-            compact = true,
-            modifier =
-                Modifier
-                    .weight(1f)
-                    .heightIn(min = CompactCoverWidth / STORY_THUMBNAIL_ASPECT_RATIO)
                     .padding(bottom = ManyakTheme.spacing.hairline),
         )
     }
@@ -138,27 +104,25 @@ internal fun MyStoryCardPreview(
 @Composable
 private fun StoryInfo(
     story: StorySummary,
-    onOptionsClick: (() -> Unit)?,
-    compact: Boolean,
+    onOptionsClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // 미리보기는 표지·서체·간격이 한 단계씩 작다.
-    val lineGap = if (compact) ManyakTheme.spacing.hairline else ManyakTheme.spacing.inline
-    val groupGap = if (compact) ManyakTheme.spacing.inline else ManyakTheme.spacing.compact
+    val lineGap = ManyakTheme.spacing.inline
+    val groupGap = ManyakTheme.spacing.compact
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
         // 줄 간격이 줄마다 다르므로 묶음 간격(spacedBy) 대신 각 줄이 자기 위 여백을 갖는다.
         Column {
-            TitleRow(title = story.title, onOptionsClick = onOptionsClick, compact = compact)
+            TitleRow(title = story.title, onOptionsClick = onOptionsClick)
             // 서버가 없는 소개를 빈 문자열로 주므로, 비면 줄 자체를 그리지 않는다.
             if (story.oneLineIntro.isNotBlank()) {
                 Text(
                     modifier = Modifier.padding(top = lineGap),
                     text = story.oneLineIntro,
                     style =
-                        (if (compact) ManyakTheme.typography.bodySmall else ManyakTheme.typography.bodyMedium).copy(
+                        ManyakTheme.typography.bodyMedium.copy(
                             lineBreak = PhraseLineBreak,
                             localeList = KoreanLocale,
                         ),
@@ -171,17 +135,14 @@ private fun StoryInfo(
                 StoryGenreBadges(
                     genres = story.genres,
                     modifier = Modifier.fillMaxWidth().padding(top = groupGap),
-                    scale = if (compact) StoryBadgeScale.Compact else StoryBadgeScale.Large,
-                    // 미리보기는 회색 상자 위라 뱃지 바탕이 묻히지 않게 밝은 색을 쓴다.
-                    containerColor =
-                        if (compact) ManyakTheme.colors.surfaceRaised else ManyakTheme.colors.backgroundNeutral,
+                    scale = StoryBadgeScale.Large,
+                    containerColor = ManyakTheme.colors.backgroundNeutral,
                 )
             }
         }
         StoryMeta(
             turnCount = story.turnCount,
             createdDate = story.createdDate,
-            compact = compact,
             // 글이 길어 남는 자리가 없을 때도 뱃지와 붙지 않을 만큼은 띄운다.
             modifier = Modifier.padding(top = lineGap),
         )
@@ -198,7 +159,6 @@ private fun StoryInfo(
 private fun StoryMeta(
     turnCount: Long,
     createdDate: String?,
-    compact: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val formattedTurnCount = remember(turnCount) { NumberFormat.getIntegerInstance().format(turnCount) }
@@ -212,14 +172,12 @@ private fun StoryMeta(
             iconRes = DesignsystemR.drawable.ic_dialog,
             text = formattedTurnCount,
             description = stringResource(DesignsystemR.string.story_turn_count_description, formattedTurnCount),
-            compact = compact,
         )
         createdDate?.let { date ->
             MetaChip(
                 iconRes = DesignsystemR.drawable.ic_calendar,
                 text = date,
                 description = stringResource(StudioR.string.studio_story_created_date_description, date),
-                compact = compact,
             )
         }
     }
@@ -232,12 +190,11 @@ private fun StoryMeta(
 @Composable
 private fun TitleRow(
     title: String,
-    onOptionsClick: (() -> Unit)?,
-    compact: Boolean,
+    onOptionsClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val titleStyle =
-        (if (compact) ManyakTheme.typography.bodyMediumStrong else ManyakTheme.typography.bodyLargeStrong).copy(
+        ManyakTheme.typography.bodyLargeStrong.copy(
             lineBreak = PhraseLineBreak,
             localeList = KoreanLocale,
         )
@@ -254,13 +211,11 @@ private fun TitleRow(
             maxLines = TITLE_MAX_LINES,
             overflow = TextOverflow.Ellipsis,
         )
-        if (onOptionsClick != null) {
-            ManyakMoreButton(
-                contentDescription = stringResource(StudioR.string.studio_story_more),
-                onClick = onOptionsClick,
-                modifier = moreButtonTitleAlignment(titleStyle),
-            )
-        }
+        ManyakMoreButton(
+            contentDescription = stringResource(StudioR.string.studio_story_more),
+            onClick = onOptionsClick,
+            modifier = moreButtonTitleAlignment(titleStyle),
+        )
     }
 }
 
@@ -274,9 +229,6 @@ internal val CoverWidth = 128.dp
 
 /** 표지 높이. 3:4 라 폭에서 따라온다. 글 영역이 이 높이를 최소치로 삼는다. */
 internal val CoverHeight = CoverWidth / STORY_THUMBNAIL_ASPECT_RATIO
-
-/** 다이얼로그 미리보기의 표지 폭. 목록보다 한 단계 작다. */
-private val CompactCoverWidth = 96.dp
 
 /**
  * 제목·한 줄 소개의 줄바꿈. 한글은 기본값이 글자 단위로 끊어 "선행만 한 / 다" 처럼 어절 가운데가

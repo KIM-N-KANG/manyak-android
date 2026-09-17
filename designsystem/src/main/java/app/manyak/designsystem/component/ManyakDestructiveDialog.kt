@@ -14,6 +14,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import app.manyak.designsystem.theme.ManyakTheme
 
 /**
@@ -25,6 +27,8 @@ import app.manyak.designsystem.theme.ManyakTheme
  *
  * [inProgress] 동안 두 버튼을 잠근다 — 결과가 나오기 전에 조작이 겹치면 어떤 요청이 무엇이 됐는지
  * 알 수 없다. 바깥 탭·뒤로가기의 닫힘 무시는 부르는 쪽이 판정한다.
+ *
+ * @param inProgressLabel 진행 중 스피너가 대신 읽히는 이름(예: "삭제 중"). 라벨은 자리만 남고 보이지 않는다.
  */
 @Composable
 fun ManyakDestructiveDialog(
@@ -36,6 +40,7 @@ fun ManyakDestructiveDialog(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
     inProgress: Boolean = false,
+    inProgressLabel: String? = null,
 ) {
     ManyakDialog(modifier = modifier, onDismissRequest = onDismiss) {
         ManyakDestructiveDialogContent(
@@ -46,26 +51,23 @@ fun ManyakDestructiveDialog(
             onConfirm = onConfirm,
             onDismiss = onDismiss,
             inProgress = inProgress,
+            inProgressLabel = inProgressLabel,
         )
     }
 }
 
-/**
- * 확인 다이얼로그의 내용. 다른 내용을 보여 주던 [ManyakDialog] 창 안에서 갈아 끼울 때 쓴다 —
- * 옵션 목록에서 "삭제하기"를 고른 뒤 같은 창이 확인으로 바뀌는 자리다.
- */
 @Composable
-fun ManyakDestructiveDialogContent(
+private fun ManyakDestructiveDialogContent(
     title: String,
     description: String,
     confirmLabel: String,
     cancelLabel: String,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier,
-    inProgress: Boolean = false,
+    inProgress: Boolean,
+    inProgressLabel: String?,
 ) {
-    Column(modifier = modifier.fillMaxWidth().padding(ManyakTheme.spacing.section)) {
+    Column(modifier = Modifier.fillMaxWidth().padding(ManyakTheme.spacing.section)) {
         Text(
             text = title,
             style = ManyakTheme.typography.titleMedium,
@@ -89,32 +91,56 @@ fun ManyakDestructiveDialogContent(
                     color = ManyakTheme.colors.textSubtle,
                 )
             }
-            Button(
+            DestructiveConfirmButton(
+                label = confirmLabel,
                 onClick = onConfirm,
-                enabled = !inProgress,
-                shape = ManyakTheme.shapes.control,
-                colors =
-                    ButtonDefaults.buttonColors(
-                        containerColor = ManyakTheme.colors.backgroundDangerSubtle,
-                        contentColor = ManyakTheme.colors.textDanger,
-                        disabledContainerColor = ManyakTheme.colors.backgroundDangerSubtle,
-                        disabledContentColor = ManyakTheme.colors.textDanger,
-                    ),
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    // 진행 중에도 라벨 자리를 유지해 버튼 폭이 스피너 폭으로 줄지 않게 한다.
-                    Text(
-                        modifier = Modifier.alpha(if (inProgress) 0f else 1f),
-                        text = confirmLabel,
-                        style = ManyakTheme.typography.labelLarge,
-                    )
-                    if (inProgress) {
-                        ManyakProgressIndicator(
-                            modifier = Modifier.size(ManyakTheme.sizes.icon),
-                            color = ManyakTheme.colors.textDanger,
-                        )
-                    }
-                }
+                inProgress = inProgress,
+                inProgressLabel = inProgressLabel,
+            )
+        }
+    }
+}
+
+@Composable
+private fun DestructiveConfirmButton(
+    label: String,
+    onClick: () -> Unit,
+    inProgress: Boolean,
+    inProgressLabel: String?,
+) {
+    Button(
+        onClick = onClick,
+        enabled = !inProgress,
+        shape = ManyakTheme.shapes.control,
+        colors =
+            ButtonDefaults.buttonColors(
+                containerColor = ManyakTheme.colors.backgroundDangerSubtle,
+                contentColor = ManyakTheme.colors.textDanger,
+                disabledContainerColor = ManyakTheme.colors.backgroundDangerSubtle,
+                disabledContentColor = ManyakTheme.colors.textDanger,
+            ),
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            // 진행 중에도 라벨 자리를 유지해 버튼 폭이 스피너 폭으로 줄지 않게 한다.
+            Text(
+                modifier = Modifier.alpha(if (inProgress) 0f else 1f),
+                text = label,
+                style = ManyakTheme.typography.labelLarge,
+            )
+            if (inProgress) {
+                ManyakProgressIndicator(
+                    modifier =
+                        Modifier
+                            .size(ManyakTheme.sizes.icon)
+                            .then(
+                                if (inProgressLabel != null) {
+                                    Modifier.semantics { contentDescription = inProgressLabel }
+                                } else {
+                                    Modifier
+                                },
+                            ),
+                    color = ManyakTheme.colors.textDanger,
+                )
             }
         }
     }
