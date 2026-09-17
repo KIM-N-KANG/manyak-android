@@ -38,7 +38,7 @@ import app.manyak.designsystem.R as DesignsystemR
  * 표지가 아니라 "어디까지 읽었는지"이기 때문이다 — 같은 스토리로 채팅을 여럿 만들 수 있어 표지만으로는
  * 구분되지 않는다.
  *
- * 카드 전체가 채팅방 진입이고, 제목 줄 오른쪽 더보기 버튼과 길게 누르기가 같은 옵션 다이얼로그를
+ * 카드 전체가 채팅방 진입이고, 제목 줄 오른쪽 더보기 버튼과 길게 누르기가 같은 옵션 시트를
  * 연다 — 내 스토리 카드와 같은 문법이다.
  *
  * 제목·미리보기가 **1줄 고정**이라 텍스트 길이와 무관하게 카드 높이가 같다. 표지가 3:4 라 폭을
@@ -55,7 +55,6 @@ internal fun ChatCard(
     val haptic = LocalHapticFeedback.current
     ChatCardContent(
         chat = chat,
-        compact = false,
         onOptionsClick = onLongClick,
         modifier =
             modifier
@@ -65,7 +64,7 @@ internal fun ChatCard(
                     onClickLabel = stringResource(ChatR.string.chat_list_card_action),
                     onLongClickLabel = stringResource(ChatR.string.chat_list_card_options),
                     onClick = onClick,
-                    // 길게 누르기는 화면에 드러나지 않는 제스처라 다이얼로그가 열리는 순간 손으로도 알린다.
+                    // 길게 누르기는 화면에 드러나지 않는 제스처라 시트가 열리는 순간 손으로도 알린다.
                     onLongClick = {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         onLongClick()
@@ -77,65 +76,42 @@ internal fun ChatCard(
     )
 }
 
-/**
- * 옵션 다이얼로그 상단에 놓는 카드 미리보기. 목록 카드와 같은 정보를 한 단계씩 작게 그려, 어느 채팅의
- * 옵션인지 다이얼로그 안에서 확인하게 한다. 눌리지 않는다.
- */
-@Composable
-internal fun ChatCardPreview(
-    chat: ChatSummary,
-    modifier: Modifier = Modifier,
-) {
-    ChatCardContent(chat = chat, compact = true, onOptionsClick = null, modifier = modifier.fillMaxWidth())
-}
-
-/**
- * @param compact 다이얼로그 미리보기용. 표지·서체·간격이 목록 카드보다 한 단계 작다.
- */
 @Composable
 private fun ChatCardContent(
     chat: ChatSummary,
-    compact: Boolean,
-    onOptionsClick: (() -> Unit)?,
+    onOptionsClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
         modifier = modifier,
-        horizontalArrangement =
-            Arrangement.spacedBy(if (compact) ManyakTheme.spacing.compact else ManyakTheme.spacing.gutter),
+        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         StoryCover(
             thumbnailUrl = chat.thumbnailUrl,
             // 표지는 카드의 텍스트 줄이 이미 말하는 것을 되풀이하므로 낭독 대상이 아니다.
-            modifier = Modifier.width(if (compact) CompactCoverWidth else CoverWidth).clearAndSetSemantics { },
-            shape = if (compact) ManyakTheme.shapes.thumbnailSmall else ManyakTheme.shapes.thumbnail,
+            modifier = Modifier.width(CoverWidth).clearAndSetSemantics { },
             showBorder = true,
         )
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement =
-                Arrangement.spacedBy(if (compact) ManyakTheme.spacing.hairline else ManyakTheme.spacing.inline),
+            verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
         ) {
-            val titleStyle =
-                if (compact) ManyakTheme.typography.bodyMediumStrong else ManyakTheme.typography.bodyLargeStrong
+            val titleStyle = ManyakTheme.typography.bodyLargeStrong
             Row(horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact)) {
                 StoryTitle(
                     title = chat.storyTitle,
                     style = titleStyle,
                     modifier = Modifier.weight(1f).alignBy(FirstBaseline),
                 )
-                // 더보기 버튼은 목록 카드에만 — 미리보기는 다이얼로그 안이라 열 것이 없다.
-                if (onOptionsClick != null) {
-                    ManyakMoreButton(
-                        contentDescription = stringResource(ChatR.string.chat_list_card_options),
-                        onClick = onOptionsClick,
-                        modifier = moreButtonTitleAlignment(titleStyle),
-                    )
-                }
+                ManyakMoreButton(
+                    contentDescription = stringResource(ChatR.string.chat_list_card_options),
+                    onClick = onOptionsClick,
+                    modifier = moreButtonTitleAlignment(titleStyle),
+                )
             }
-            LastStoryPreview(preview = chat.lastStoryPreview, compact = compact)
-            ChatMeta(turnCount = chat.turnCount, updatedAtEpochMillis = chat.updatedAtEpochMillis, compact = compact)
+            LastStoryPreview(preview = chat.lastStoryPreview)
+            ChatMeta(turnCount = chat.turnCount, updatedAtEpochMillis = chat.updatedAtEpochMillis)
         }
     }
 }
@@ -168,14 +144,13 @@ private fun StoryTitle(
 @Composable
 private fun LastStoryPreview(
     preview: String,
-    compact: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val isEmpty = preview.isBlank()
     Text(
         modifier = modifier,
         text = if (isEmpty) stringResource(ChatR.string.chat_list_preview_empty) else preview,
-        style = if (compact) ManyakTheme.typography.bodySmall else ManyakTheme.typography.bodyMedium,
+        style = ManyakTheme.typography.bodyMedium,
         color = if (isEmpty) ManyakTheme.colors.textSubtlest else ManyakTheme.colors.textSubtle,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
@@ -187,7 +162,6 @@ private fun LastStoryPreview(
 private fun ChatMeta(
     turnCount: Long,
     updatedAtEpochMillis: Long?,
-    compact: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val formattedTurnCount = remember(turnCount) { NumberFormat.getIntegerInstance().format(turnCount) }
@@ -206,7 +180,6 @@ private fun ChatMeta(
             iconRes = DesignsystemR.drawable.ic_comment_dots,
             text = formattedTurnCount,
             description = stringResource(ChatR.string.chat_list_turn_count_description, formattedTurnCount),
-            compact = compact,
         )
         relativeTime?.let { time ->
             val label = time.label()
@@ -214,7 +187,6 @@ private fun ChatMeta(
                 iconRes = DesignsystemR.drawable.ic_calendar,
                 text = label,
                 description = stringResource(ChatR.string.chat_list_updated_at_description, label),
-                compact = compact,
             )
         }
     }
@@ -222,6 +194,3 @@ private fun ChatMeta(
 
 /** 카드에서 표지가 차지하는 폭. 3:4 라 높이는 약 69dp 가 된다. */
 internal val CoverWidth: Dp = 52.dp
-
-/** 다이얼로그 미리보기의 표지 폭. 목록보다 한 단계 작아 3:4 높이가 약 53dp 다. */
-private val CompactCoverWidth: Dp = 40.dp

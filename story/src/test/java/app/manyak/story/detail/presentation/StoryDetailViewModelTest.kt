@@ -1,11 +1,14 @@
 package app.manyak.story.detail.presentation
 
+import app.manyak.analytics.domain.Analytics
 import app.manyak.analytics.domain.NoOpAnalytics
+import app.manyak.analytics.entity.AnalyticsEvent
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.entity.chat.CreatedChat
 import app.manyak.report.entity.StoryReportReason
 import app.manyak.report.presentation.StoryReportAction
+import app.manyak.story.entity.StoryCharacter
 import app.manyak.story.testing.FakeChatRepository
 import app.manyak.story.testing.FakeStoryRepository
 import app.manyak.story.testing.STORY_ID
@@ -294,7 +297,7 @@ class StoryDetailViewModelTest {
             viewModel.onIntent(StoryDetailIntent.OpenImageViewer)
             advanceUntilIdle()
 
-            assertFalse(viewModel.uiState.value.isImageViewerOpen)
+            assertNull(viewModel.uiState.value.imageViewerUrl)
         }
 
     @Test
@@ -306,11 +309,62 @@ class StoryDetailViewModelTest {
             advanceUntilIdle()
             viewModel.onIntent(StoryDetailIntent.OpenImageViewer)
             advanceUntilIdle()
-            assertTrue(viewModel.uiState.value.isImageViewerOpen)
+            assertEquals(sampleStoryDetail().thumbnailUrl, viewModel.uiState.value.imageViewerUrl)
 
             viewModel.onIntent(StoryDetailIntent.CloseImageViewer)
             advanceUntilIdle()
-            assertFalse(viewModel.uiState.value.isImageViewerOpen)
+            assertNull(viewModel.uiState.value.imageViewerUrl)
+        }
+
+    @Test
+    fun `인물 뷰어는 갱신에도 같은 이미지를 유지하고 이미지가 사라지면 닫힌다`() =
+        runTest(dispatcher) {
+            val url = "https://cdn.manyak.app/characters/originals/clockmaker.png"
+            val story = sampleStoryDetail().copy(characters = listOf(StoryCharacter(name = "시계공", imageUrl = url)))
+            val repository = FakeStoryRepository()
+            repository.queuedDetailResults += DomainResult.Success(story)
+            repository.queuedDetailResults += DomainResult.Success(story.copy(thumbnailUrl = null))
+            val events = mutableListOf<AnalyticsEvent>()
+            val analytics =
+                object : Analytics {
+                    override fun track(event: AnalyticsEvent) {
+                        events += event
+                    }
+                }
+            val viewModel =
+                StoryDetailViewModel(STORY_ID, repository, FakeChatRepository(), analytics, repository, repository)
+            viewModel.onIntent(StoryDetailIntent.ScreenShown)
+            advanceUntilIdle()
+            viewModel.onIntent(StoryDetailIntent.OpenCharacterImage(url))
+            advanceUntilIdle()
+            assertEquals(url, viewModel.uiState.value.imageViewerUrl)
+
+            viewModel.onIntent(StoryDetailIntent.ScreenShown)
+            advanceUntilIdle()
+            assertEquals(url, viewModel.uiState.value.imageViewerUrl)
+            assertEquals(
+                listOf(AnalyticsEvent.StoryDetailCharacterImageClicked(STORY_ID)),
+                events.filterIsInstance<AnalyticsEvent.StoryDetailCharacterImageClicked>(),
+            )
+
+            viewModel.onIntent(StoryDetailIntent.ScreenShown)
+            advanceUntilIdle()
+            assertNull(viewModel.uiState.value.imageViewerUrl)
+        }
+
+    @Test
+    fun `현재 인물에 없는 이미지와 허용하지 않은 주소는 열지 않는다`() =
+        runTest(dispatcher) {
+            val viewModel = viewModel()
+            viewModel.onIntent(StoryDetailIntent.ScreenShown)
+            advanceUntilIdle()
+            val urls =
+                listOf("https://cdn.manyak.app/characters/originals/absent.png", "https://evil.example/a.png", "")
+            urls.forEach { url ->
+                viewModel.onIntent(StoryDetailIntent.OpenCharacterImage(url))
+                advanceUntilIdle()
+                assertNull(viewModel.uiState.value.imageViewerUrl)
+            }
         }
 
     @Test
@@ -415,6 +469,32 @@ class StoryDetailViewModelTest {
                 StoryDetailEffect.ShowDeleteFailed,
                 withTimeoutOrNull(TIMEOUT_MILLIS) { viewModel.uiEffect.first() },
             )
+        }
+
+    @Test
+    fun `상세 조회와 복귀는 서버 좋아요 값을 보존하고 토글을 보내지 않는다`() =
+        runTest(dispatcher) {
+            val storyRepository = FakeStoryRepository()
+            storyRepository.queuedDetailResults +=
+                DomainResult.Success(sampleStoryDetail(likeCount = 12, isLiked = true, isOwner = false))
+            val viewModel = viewModel(storyRepository = storyRepository)
+
+            viewModel.onIntent(StoryDetailIntent.ScreenShown)
+            advanceUntilIdle()
+
+            val loaded = viewModel.uiState.value
+            assertEquals(12L, loaded.story?.likeCount)
+            assertTrue(loaded.story?.isLiked == true)
+
+            storyRepository.queuedDetailResults +=
+                DomainResult.Success(sampleStoryDetail(likeCount = 15, isLiked = false, isOwner = false))
+            viewModel.onIntent(StoryDetailIntent.ScreenShown)
+            advanceUntilIdle()
+
+            val refreshed = viewModel.uiState.value
+            assertEquals(15L, refreshed.story?.likeCount)
+            assertFalse(refreshed.story?.isLiked == true)
+            assertTrue(storyRepository.likeRequests.isEmpty())
         }
 
     @Test

@@ -1,7 +1,6 @@
 package app.manyak.notification.consent.presentation
 
 import android.widget.Toast
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,10 +16,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.app.NotificationManagerCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -30,6 +27,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.designsystem.component.ManyakBottomSheet
 import app.manyak.designsystem.component.ManyakProgressIndicator
+import app.manyak.designsystem.component.ManyakTextButton
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.notification.settings.entity.PushSettings
 import app.manyak.notification.R as NotificationR
@@ -119,7 +117,7 @@ private fun MarketingConsentContent(
     }
 }
 
-/** 초대 코드 안내와 같은 배치 — 주 동작은 전체 폭, 닫기는 그 아래 한 단 작게. */
+/** 초대 코드 안내와 같이 주 동작 아래에 보조색 텍스트 닫기를 둔다. */
 @Composable
 private fun MarketingConsentActions(
     isSubmitting: Boolean,
@@ -129,7 +127,7 @@ private fun MarketingConsentActions(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
         Button(
             modifier = Modifier.fillMaxWidth().heightIn(min = ManyakTheme.sizes.control),
@@ -159,19 +157,14 @@ private fun MarketingConsentActions(
                 }
             }
         }
-        // M3 `TextButton` 은 최소 터치 타깃 48dp 를 레이아웃 높이로 밀어 올려 32dp 가 나오지 않는다.
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = ManyakTheme.sizes.controlSmall)
-                    .clip(ManyakTheme.shapes.control)
-                    .clickable(enabled = !isSubmitting, role = Role.Button, onClick = onDecline),
-            contentAlignment = Alignment.Center,
+        ManyakTextButton(
+            modifier = Modifier.fillMaxWidth().heightIn(min = ManyakTheme.sizes.control),
+            onClick = onDecline,
+            enabled = !isSubmitting,
         ) {
             Text(
                 text = stringResource(NotificationR.string.notification_consent_decline),
-                style = ManyakTheme.typography.labelSmall,
+                style = ManyakTheme.typography.labelLarge,
                 color = if (isSubmitting) ManyakTheme.colors.textDisabled else ManyakTheme.colors.textSubtle,
             )
         }

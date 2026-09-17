@@ -46,6 +46,7 @@ internal fun LazyListScope.storyDetailBody(
     selectedStartSettingId: String?,
     selectedStartSetting: StoryStartSetting?,
     onThumbnailClick: () -> Unit,
+    onCharacterImageClick: (String) -> Unit,
     onSelectStartSetting: (String) -> Unit,
     onTitleBottomChanged: (Float) -> Unit,
 ) {
@@ -76,7 +77,7 @@ internal fun LazyListScope.storyDetailBody(
                 labelRes = StoryR.string.story_detail_characters,
                 modifier = Modifier.padding(horizontal = ManyakTheme.spacing.gutter),
             ) {
-                CharacterSection(characters = story.characters)
+                CharacterSection(characters = story.characters, onImageClick = onCharacterImageClick)
             }
         }
     }
@@ -146,7 +147,6 @@ private fun StoryHero(
                     Modifier.clickable(role = Role.Button, onClickLabel = openLabel, onClick = onClick)
                 },
             thumbnailUrl = story.thumbnailUrl,
-            likeCount = story.likeCount,
             turnCount = story.turnCount,
             badgeScale = StoryBadgeScale.Large,
             shape = RectangleShape,

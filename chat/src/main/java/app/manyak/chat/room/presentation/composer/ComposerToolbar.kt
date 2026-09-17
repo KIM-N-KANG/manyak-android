@@ -4,28 +4,27 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
 import app.manyak.chat.entity.ChatInputMode
 import app.manyak.common.presentation.credit.LocalCreditPolicy
+import app.manyak.common.presentation.credit.LocalTrials
 import app.manyak.common.presentation.credit.creditAmountText
 import app.manyak.designsystem.component.ManyakDestructiveDialog
-import app.manyak.designsystem.credit.creditAmountAlpha
+import app.manyak.designsystem.credit.CreditAmountText
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.chat.R as ChatR
 import app.manyak.designsystem.R as DesignsystemR
 
-/** 컴포저 아래 줄. 왼쪽부터 추가 버튼·설정 메뉴이고 턴 비용과 전송만 오른쪽 끝이다. */
+/** 컴포저 아래 줄. 왼쪽부터 추가 버튼·설정 버튼이고 턴 비용과 전송만 오른쪽 끝이다. */
 @Composable
 internal fun ComposerToolbar(
     mode: ChatInputMode,
-    choicesEnabled: Boolean,
     canAddBlock: Boolean,
     enabled: Boolean,
+    realtimeImageEnabled: Boolean,
     sendState: SendButtonState,
     actions: ChatComposerActions,
     onInsertEmphasis: () -> Unit,
@@ -58,22 +57,10 @@ internal fun ComposerToolbar(
                 onClick = { actions.onAddBlock(InputBlockType.DIALOGUE) },
             )
         }
-        ComposerMenu(
-            iconRes = DesignsystemR.drawable.ic_pen_sparkle,
-            contentDescription = stringResource(ChatR.string.chat_composer_choices_menu),
-            options = choicesOptions(),
-            selected = choicesEnabled,
-            onSelect = actions.onChoicesEnabledChange,
-            // 켜져 있음을 아이콘 색으로 알린다 — 메뉴를 열지 않아도 지금 상태가 보인다.
-            tint = if (choicesEnabled) ManyakTheme.colors.textBrand else ManyakTheme.colors.textSubtle,
-            enabled = enabled,
-        )
-        ComposerMenu(
+        ComposerIconButton(
             iconRes = DesignsystemR.drawable.ic_gear,
-            contentDescription = stringResource(ChatR.string.chat_composer_input_mode_menu),
-            options = inputModeOptions(),
-            selected = mode,
-            onSelect = actions.onModeChange,
+            contentDescription = stringResource(ChatR.string.chat_settings_open),
+            onClick = actions.onOpenSettings,
             enabled = enabled,
         )
         // 남은 자리를 밀어내 비용과 전송만 오른쪽 끝에 세운다.
@@ -83,10 +70,11 @@ internal fun ComposerToolbar(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             // 전송 버튼 상태(전송·랜덤·대기)가 바뀌어도 자리가 그대로다.
-            val chatTurnCost = LocalCreditPolicy.current?.chatTurnCost
-            Text(
-                modifier = Modifier.alpha(creditAmountAlpha(chatTurnCost == null)),
-                text = stringResource(ChatR.string.chat_composer_turn_credit_cost, creditAmountText(chatTurnCost)),
+            val cost = chatTurnCost(LocalCreditPolicy.current, LocalTrials.current, realtimeImageEnabled)
+            CreditAmountText(
+                amount = stringResource(ChatR.string.chat_composer_turn_credit_cost, creditAmountText(cost.discounted)),
+                fullAmount = cost.full?.takeIf { cost.isDiscounted }?.let(::creditAmountText),
+                pending = cost.discounted == null,
                 style = ManyakTheme.typography.bodySmall,
                 color = ManyakTheme.colors.textSubtle,
             )
@@ -94,36 +82,6 @@ internal fun ComposerToolbar(
         }
     }
 }
-
-@Composable
-private fun choicesOptions(): List<ComposerMenuOption<Boolean>> =
-    listOf(
-        ComposerMenuOption(
-            value = true,
-            label = stringResource(ChatR.string.chat_composer_choices_on),
-            description = stringResource(ChatR.string.chat_composer_choices_on_description),
-        ),
-        ComposerMenuOption(
-            value = false,
-            label = stringResource(ChatR.string.chat_composer_choices_off),
-            description = stringResource(ChatR.string.chat_composer_choices_off_description),
-        ),
-    )
-
-@Composable
-private fun inputModeOptions(): List<ComposerMenuOption<ChatInputMode>> =
-    listOf(
-        ComposerMenuOption(
-            value = ChatInputMode.BLOCK,
-            label = stringResource(ChatR.string.chat_composer_input_mode_block),
-            description = stringResource(ChatR.string.chat_composer_input_mode_block_description),
-        ),
-        ComposerMenuOption(
-            value = ChatInputMode.PLAIN,
-            label = stringResource(ChatR.string.chat_composer_input_mode_plain),
-            description = stringResource(ChatR.string.chat_composer_input_mode_plain_description),
-        ),
-    )
 
 /** 내용이 있는 블럭을 지울 때만 뜬다. 빈 블럭은 묻지 않고 바로 지운다. */
 @Composable

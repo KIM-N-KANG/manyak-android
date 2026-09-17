@@ -19,6 +19,7 @@ import app.manyak.story.entity.StoryCharacter
 @Composable
 internal fun CharacterSection(
     characters: List<StoryCharacter>,
+    onImageClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -29,7 +30,7 @@ internal fun CharacterSection(
         characters.forEach { character ->
             SubLabeledBlock(label = character.name) {
                 character.imageUrl?.let { imageUrl ->
-                    CharacterImage(name = character.name, imageUrl = imageUrl)
+                    CharacterImage(name = character.name, imageUrl = imageUrl, onClick = { onImageClick(imageUrl) })
                 }
             }
         }

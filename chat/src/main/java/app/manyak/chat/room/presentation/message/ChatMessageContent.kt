@@ -42,11 +42,13 @@ internal fun ChatUserBand(
 @Composable
 internal fun ChatAiOutput(
     content: String,
+    onCharacterImageClick: (String) -> Unit,
     modifier: Modifier = Modifier,
     endingName: String? = null,
 ) {
     ChatAiOutput(
         segments = remember(content) { parseChatMessageSegments(content) },
+        onCharacterImageClick = onCharacterImageClick,
         modifier = modifier,
         endingName = endingName,
     )
@@ -62,6 +64,7 @@ internal fun ChatAiOutput(
 @Composable
 internal fun ChatAiOutput(
     segments: List<ChatMessageSegment>,
+    onCharacterImageClick: (String) -> Unit,
     modifier: Modifier = Modifier,
     endingName: String? = null,
 ) {
@@ -76,7 +79,7 @@ internal fun ChatAiOutput(
                 name = endingName,
             )
         }
-        SegmentColumn(segments = segments)
+        SegmentColumn(segments = segments, onCharacterImageClick = onCharacterImageClick)
     }
 }
 
@@ -84,6 +87,7 @@ internal fun ChatAiOutput(
 @Composable
 private fun SegmentColumn(
     segments: List<ChatMessageSegment>,
+    onCharacterImageClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -104,6 +108,7 @@ private fun SegmentColumn(
                                 .padding(horizontal = ManyakTheme.spacing.gutter),
                         name = segment.name,
                         imageUrl = segment.imageUrl,
+                        onClick = { onCharacterImageClick(segment.imageUrl) },
                     )
             }
         }

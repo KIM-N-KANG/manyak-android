@@ -41,6 +41,7 @@ import app.manyak.chat.room.presentation.ChatRoomScreen
 import app.manyak.common.entity.settings.ThemeMode
 import app.manyak.common.entity.story.CreationResumePoint
 import app.manyak.common.presentation.credit.LocalCreditPolicy
+import app.manyak.common.presentation.credit.LocalTrials
 import app.manyak.common.presentation.error.messageResOrNull
 import app.manyak.core.navigation.ChatRoomRoute
 import app.manyak.core.navigation.CreateAdditionalInfoRoute
@@ -61,6 +62,7 @@ import app.manyak.create.additionalinfo.presentation.CreateAdditionalInfoScreen
 import app.manyak.create.keyword.presentation.CreateKeywordScreen
 import app.manyak.create.storyline.presentation.CreateStorylineScreen
 import app.manyak.designsystem.component.ManyakProgressIndicator
+import app.manyak.designsystem.component.clearFocusOnTap
 import app.manyak.designsystem.component.rememberDelayedProgressVisibility
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.legal.presentation.LegalDocumentScreen
@@ -93,6 +95,7 @@ fun ManyakApp(
     val sessionState by viewModel.sessionState.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val creditPolicy by viewModel.creditPolicy.collectAsStateWithLifecycle()
+    val trials by viewModel.trials.collectAsStateWithLifecycle()
     val entryDestination by viewModel.entryDestination.collectAsStateWithLifecycle()
     val showSessionProgress = rememberDelayedProgressVisibility(sessionState == SessionState.Undetermined)
     val darkTheme =
@@ -105,11 +108,12 @@ fun ManyakApp(
     // 이프 수치는 세 기능 모듈의 화면이 함께 쓰므로 화면마다 상태를 늘리지 않고 루트에서 내린다.
     CompositionLocalProvider(
         LocalCreditPolicy provides creditPolicy,
+        LocalTrials provides trials,
         LocalAnalytics provides viewModel.analytics,
     ) {
         ManyakTheme(darkTheme = darkTheme) {
             SystemBarIconAppearance(darkTheme = darkTheme)
-            Surface(modifier = modifier.fillMaxSize(), color = ManyakTheme.colors.surface) {
+            Surface(modifier = modifier.fillMaxSize().clearFocusOnTap(), color = ManyakTheme.colors.surface) {
                 when (val state = sessionState) {
                     SessionState.Undetermined -> if (showSessionProgress) SessionProgress()
                     is SessionState.SignedOut -> AuthNavDisplay()
@@ -307,21 +311,31 @@ private fun MainNavDisplay(
                     )
                 }
                 creationFunnelEntries(backStack, creationFunnelMetadata) { selectedTab = MainTab.STUDIO }
-                entry<ChatRoomRoute> { route ->
-                    ChatRoomScreen(
-                        chatId = route.chatId,
-                        onBack = { backStack.pop() },
-                        // 지운 방이 뒤로가기로 되살아나면 안 되므로 셸까지 걷어내고 채팅 탭을 편다.
-                        // 상세에서 시작한 채팅이면 상세도 함께 걷힌다.
-                        onDeleted = {
-                            backStack.popToMainTabs()
-                            selectedTab = MainTab.CHAT
-                        },
-                    )
-                }
+                chatRoomEntry(backStack) { selectedTab = MainTab.CHAT }
                 legalEntry()
             },
     )
+}
+
+/** 채팅방. 셸 없이 전체 화면으로 열리고, 메뉴의 새 채팅은 지금 방을 걷어내고 그 자리에 선다. */
+private fun EntryProviderScope<NavKey>.chatRoomEntry(
+    backStack: MutableList<NavKey>,
+    onSelectChatTab: () -> Unit,
+) {
+    entry<ChatRoomRoute> { route ->
+        ChatRoomScreen(
+            chatId = route.chatId,
+            onBack = { backStack.pop() },
+            // 지운 방이 뒤로가기로 되살아나면 안 되므로 셸까지 걷어내고 채팅 탭을 편다.
+            // 상세에서 시작한 채팅이면 상세도 함께 걷힌다.
+            onDeleted = {
+                backStack.popToMainTabs()
+                onSelectChatTab()
+            },
+            onReplaceChat = { chatId -> backStack.replaceTop(ChatRoomRoute(chatId)) },
+            onOpenCreditCharge = { backStack.push(MyCreditChargeRoute) },
+        )
+    }
 }
 
 /** 마이 탭의 하위 목적지들. 셸 없이 전체 화면으로 열리고 뒤로가기는 마이 탭으로 돌아온다. */

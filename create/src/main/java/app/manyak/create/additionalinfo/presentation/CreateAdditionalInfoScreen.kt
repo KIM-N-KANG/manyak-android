@@ -31,9 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -42,6 +40,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.common.presentation.credit.LocalCreditPolicy
+import app.manyak.common.presentation.credit.LocalTrials
 import app.manyak.common.presentation.credit.creditAmountText
 import app.manyak.create.presentation.component.AddTrigger
 import app.manyak.create.presentation.component.CreateFunnelHeader
@@ -55,8 +54,8 @@ import app.manyak.create.presentation.preview.previewStorylines
 import app.manyak.create.presentation.state.DraftSaveUiState
 import app.manyak.designsystem.component.FocusScrollMargin
 import app.manyak.designsystem.component.ScrollEdgeFade
-import app.manyak.designsystem.component.clearFocusOnTap
-import app.manyak.designsystem.credit.creditAmountAlpha
+import app.manyak.designsystem.component.keepKeyboardOnTap
+import app.manyak.designsystem.credit.CreditAmountText
 import app.manyak.designsystem.theme.ManyakTheme
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withTimeoutOrNull
@@ -142,15 +141,13 @@ private fun CreateAdditionalInfoContent(
     draftSave: DraftSaveUiState = DraftSaveUiState(),
 ) {
     val imeVisible = WindowInsets.isImeVisible
-    val focusManager = LocalFocusManager.current
 
     FocusScrollMargin {
         Column(
             modifier =
                 modifier
                     .fillMaxSize()
-                    .windowInsetsPadding(WindowInsets.safeDrawing)
-                    .clearFocusOnTap(focusManager),
+                    .windowInsetsPadding(WindowInsets.safeDrawing),
         ) {
             CreateFunnelHeader(
                 draftSave = draftSave,
@@ -191,7 +188,7 @@ private fun CreateAdditionalInfoContent(
 }
 
 @Composable
-private fun AdditionalInfoList(
+internal fun AdditionalInfoList(
     storylineIndex: Int,
     state: CreateAdditionalInfoUiState,
     onIntent: (CreateAdditionalInfoIntent) -> Unit,
@@ -232,7 +229,7 @@ private fun AdditionalInfoList(
         item {
             Box(modifier = Modifier.fillMaxWidth()) {
                 AddTrigger(
-                    modifier = Modifier.align(Alignment.Center),
+                    modifier = Modifier.align(Alignment.Center).keepKeyboardOnTap(),
                     label = stringResource(CreateR.string.create_add_info),
                     enabled = state.canAddInput,
                     onClick = { onIntent(CreateAdditionalInfoIntent.AddInput) },
@@ -338,6 +335,8 @@ private fun CreateAdditionalInfoFooter(
 @Composable
 private fun StoryCompletionCostRow(modifier: Modifier = Modifier) {
     val storyCreationCost = LocalCreditPolicy.current?.storyCreationCost
+    // 제작 체험이 남아 있으면 이번 완성은 무료다 — 정가에 취소선을 긋고 0 을 보인다.
+    val isFree = LocalTrials.current?.storyCreation?.isFree == true
     Row(
         modifier =
             modifier
@@ -353,13 +352,14 @@ private fun StoryCompletionCostRow(modifier: Modifier = Modifier) {
             style = ManyakTheme.typography.bodyMedium,
             color = ManyakTheme.colors.textSubtle,
         )
-        Text(
-            modifier = Modifier.alpha(creditAmountAlpha(storyCreationCost == null)),
-            text =
+        CreditAmountText(
+            amount =
                 stringResource(
                     CreateR.string.create_completion_credit_cost_amount,
-                    creditAmountText(storyCreationCost),
+                    creditAmountText(if (isFree) 0 else storyCreationCost),
                 ),
+            fullAmount = storyCreationCost?.takeIf { isFree }?.let(::creditAmountText),
+            pending = storyCreationCost == null,
             style = ManyakTheme.typography.bodyMediumStrong,
             color = ManyakTheme.colors.text,
         )

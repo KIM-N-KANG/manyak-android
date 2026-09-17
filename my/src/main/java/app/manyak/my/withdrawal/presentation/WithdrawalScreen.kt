@@ -163,6 +163,8 @@ private fun ConfirmationRow(
                     value = isChecked,
                     enabled = enabled,
                     role = Role.Checkbox,
+                    interactionSource = null,
+                    indication = null,
                     onValueChange = { onToggle() },
                 ),
         horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
@@ -193,6 +195,7 @@ private fun ConfirmationCheckbox(
     isChecked: Boolean,
     modifier: Modifier = Modifier,
 ) {
+    val borderWidth = if (isChecked) 1.dp else ManyakTheme.sizes.selectionBorderWidth
     val borderColor = if (isChecked) ManyakTheme.colors.brand else ManyakTheme.colors.border
     Box(
         modifier =
@@ -201,7 +204,7 @@ private fun ConfirmationCheckbox(
                 .size(ManyakTheme.sizes.icon)
                 .clip(ManyakTheme.shapes.checkbox)
                 .background(if (isChecked) ManyakTheme.colors.brand else ManyakTheme.colors.surface)
-                .border(1.dp, borderColor, ManyakTheme.shapes.checkbox),
+                .border(borderWidth, borderColor, ManyakTheme.shapes.checkbox),
         contentAlignment = Alignment.Center,
     ) {
         if (isChecked) {

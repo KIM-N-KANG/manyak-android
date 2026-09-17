@@ -28,7 +28,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -48,7 +47,6 @@ import app.manyak.create.presentation.component.labelRes
 import app.manyak.create.presentation.preview.previewKeywordState
 import app.manyak.designsystem.component.FocusScrollMargin
 import app.manyak.designsystem.component.ScrollEdgeFade
-import app.manyak.designsystem.component.clearFocusOnTap
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.create.R as CreateR
 
@@ -110,15 +108,13 @@ private fun CreateKeywordContent(
 ) {
     var addKeywordTarget by rememberSaveable(stateSaver = KeywordTargetSaver) { mutableStateOf<KeywordTarget?>(null) }
     val imeVisible = WindowInsets.isImeVisible
-    val focusManager = LocalFocusManager.current
 
     FocusScrollMargin {
         Column(
             modifier =
                 modifier
                     .fillMaxSize()
-                    .windowInsetsPadding(WindowInsets.safeDrawing)
-                    .clearFocusOnTap(focusManager),
+                    .windowInsetsPadding(WindowInsets.safeDrawing),
         ) {
             CreateFunnelHeader(
                 draftSave = state.draftSave,

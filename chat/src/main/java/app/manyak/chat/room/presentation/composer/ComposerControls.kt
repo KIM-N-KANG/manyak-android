@@ -33,6 +33,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import app.manyak.designsystem.component.ManyakIconButton
 import app.manyak.designsystem.component.ManyakProgressIndicator
+import app.manyak.designsystem.component.keepKeyboardOnTap
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.chat.R as ChatR
 import app.manyak.designsystem.R as DesignsystemR
@@ -48,7 +49,7 @@ internal fun ComposerIconButton(
     enabled: Boolean = true,
 ) {
     ManyakIconButton(
-        modifier = modifier,
+        modifier = modifier.keepKeyboardOnTap(),
         iconRes = iconRes,
         contentDescription = contentDescription,
         onClick = onClick,
@@ -71,6 +72,7 @@ internal fun ComposerChipButton(
     Box(
         modifier =
             modifier
+                .keepKeyboardOnTap()
                 .heightIn(min = ManyakTheme.sizes.controlSmall)
                 .clip(ManyakTheme.shapes.menuItem)
                 .background(
@@ -109,6 +111,7 @@ internal fun ComposerSendButton(
     Box(
         modifier =
             modifier
+                .keepKeyboardOnTap()
                 .size(ManyakTheme.sizes.controlSmall)
                 .clip(ManyakTheme.shapes.menuItem)
                 .background(if (state.enabled) ManyakTheme.colors.brand else ManyakTheme.colors.backgroundDisabled)
@@ -215,7 +218,7 @@ private fun ComposerTextFieldBody(
     leading: (@Composable () -> Unit)?,
 ) {
     BasicTextField(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().keepKeyboardOnTap(enabled),
         state = state,
         enabled = enabled,
         lineLimits = TextFieldLineLimits.MultiLine(maxHeightInLines = maxLines),

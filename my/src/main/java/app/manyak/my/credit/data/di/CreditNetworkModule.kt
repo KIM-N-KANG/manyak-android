@@ -2,6 +2,7 @@ package app.manyak.my.credit.data.di
 
 import app.manyak.my.credit.data.api.CreditApi
 import app.manyak.my.credit.data.api.CreditPolicyApi
+import app.manyak.my.credit.data.api.TrialsApi
 import app.manyak.network.data.di.AuthenticatedClient
 import app.manyak.network.data.di.DataLayerConfig
 import app.manyak.network.data.di.PlainClient
@@ -33,4 +34,12 @@ object CreditNetworkModule {
         config: DataLayerConfig,
         json: Json,
     ): CreditPolicyApi = retrofit(client, config, json).create(CreditPolicyApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideTrialsApi(
+        @AuthenticatedClient client: OkHttpClient,
+        config: DataLayerConfig,
+        json: Json,
+    ): TrialsApi = retrofit(client, config, json).create(TrialsApi::class.java)
 }

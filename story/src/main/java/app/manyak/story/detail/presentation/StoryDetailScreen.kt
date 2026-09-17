@@ -22,7 +22,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -43,20 +42,20 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.core.view.ViewCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
+import app.manyak.designsystem.component.FullscreenImageViewer
+import app.manyak.designsystem.component.LightSystemBarIcons
 import app.manyak.designsystem.component.LoadFailedContent
 import app.manyak.designsystem.component.ManyakDestructiveDialog
 import app.manyak.designsystem.component.ManyakIconButton
@@ -70,7 +69,6 @@ import app.manyak.report.presentation.component.StoryReportSheet
 import app.manyak.story.detail.presentation.component.StartChatCta
 import app.manyak.story.detail.presentation.component.StoryDetailHeaderMenu
 import app.manyak.story.detail.presentation.component.StoryDetailSkeleton
-import app.manyak.story.detail.presentation.component.StoryImageViewer
 import app.manyak.story.detail.presentation.component.storyDetailBody
 import app.manyak.story.detail.presentation.preview.previewStartSettings
 import app.manyak.story.detail.presentation.preview.previewStory
@@ -183,7 +181,7 @@ private fun StoryDetailContent(
         derivedStateOf { headerSurfaceAlpha < SYSTEM_BAR_FLIP_ALPHA }
     }
 
-    if (overHeroImage || state.isImageViewerOpen) {
+    if (overHeroImage) {
         LightSystemBarIcons()
     }
 
@@ -210,12 +208,14 @@ private fun StoryDetailContent(
             surfaceAlpha = { headerSurfaceAlpha },
             onBack = onBack,
             // 신고할 대상이 아직 없으면 진입점을 두지 않는다.
-            onReport = { onIntent(StoryDetailIntent.Report(StoryReportAction.Open)) }.takeIf { state.story != null },
+            showsMenu = state.story != null,
             // 삭제는 서버가 내 것이라고 한 스토리에만 — 소유 판정은 응답의 몫이다.
-            onDelete = { onIntent(StoryDetailIntent.RequestDelete) }.takeIf { state.story?.isOwner == true },
+            isOwner = state.story?.isOwner == true,
+            onReport = { onIntent(StoryDetailIntent.Report(StoryReportAction.Open)) },
+            onDelete = { onIntent(StoryDetailIntent.RequestDelete) },
         )
 
-        StoryDetailOverlays(state = state, thumbnailUrl = thumbnailUrl, onIntent = onIntent)
+        StoryDetailOverlays(state = state, onIntent = onIntent)
     }
 }
 
@@ -223,15 +223,12 @@ private fun StoryDetailContent(
 @Composable
 private fun StoryDetailOverlays(
     state: StoryDetailUiState,
-    thumbnailUrl: String?,
     onIntent: (StoryDetailIntent) -> Unit,
 ) {
-    if (state.isImageViewerOpen && thumbnailUrl != null) {
-        StoryImageViewer(
-            imageUrl = thumbnailUrl,
-            onClose = { onIntent(StoryDetailIntent.CloseImageViewer) },
-        )
-    }
+    FullscreenImageViewer(
+        imageUrl = state.imageViewerUrl,
+        onClose = { onIntent(StoryDetailIntent.CloseImageViewer) },
+    )
 
     if (state.report.isSheetOpen) {
         StoryReportSheet(
@@ -249,6 +246,7 @@ private fun StoryDetailOverlays(
             onConfirm = { onIntent(StoryDetailIntent.ConfirmDelete) },
             onDismiss = { onIntent(StoryDetailIntent.DismissDeleteDialog) },
             inProgress = state.isDeleting,
+            inProgressLabel = stringResource(DesignsystemR.string.delete_in_progress),
         )
     }
 }
@@ -338,6 +336,7 @@ private fun StoryDetailLoaded(
                 selectedStartSettingId = state.selectedStartSettingId,
                 selectedStartSetting = state.selectedStartSetting,
                 onThumbnailClick = { onIntent(StoryDetailIntent.OpenImageViewer) },
+                onCharacterImageClick = { url -> onIntent(StoryDetailIntent.OpenCharacterImage(url)) },
                 onSelectStartSetting = { id -> onIntent(StoryDetailIntent.SelectStartSetting(id)) },
                 onTitleBottomChanged = onTitleBottomChanged,
             )
@@ -350,11 +349,7 @@ private fun StoryDetailLoaded(
                     .onSizeChanged { size -> ctaHeight = with(density) { size.height.toDp() } },
             isStarting = state.isStartingChat,
             failed = state.startChatFailed,
-            canLike = state.canLike,
-            isLiked = story.isLiked,
-            isTogglingLike = state.isTogglingLike,
             onClick = { onIntent(StoryDetailIntent.StartChat) },
-            onToggleLike = { onIntent(StoryDetailIntent.ToggleLike) },
         )
     }
 }
@@ -366,8 +361,10 @@ private fun StoryDetailHeader(
     showTitle: Boolean,
     surfaceAlpha: () -> Float,
     onBack: () -> Unit,
-    onReport: (() -> Unit)?,
-    onDelete: (() -> Unit)?,
+    showsMenu: Boolean,
+    isOwner: Boolean,
+    onReport: () -> Unit,
+    onDelete: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val alpha = surfaceAlpha()
@@ -404,8 +401,14 @@ private fun StoryDetailHeader(
                 )
             },
             actions = {
-                if (onReport != null) {
-                    StoryDetailHeaderMenu(onReport = onReport, onDelete = onDelete, tint = contentColor)
+                if (showsMenu) {
+                    StoryDetailHeaderMenu(
+                        title = title,
+                        isOwner = isOwner,
+                        onReport = onReport,
+                        onDelete = onDelete,
+                        tint = contentColor,
+                    )
                 }
             },
             // 표지가 상태바 뒤까지 올라가므로 상태바 자리는 앱바가 직접 낀다.
@@ -417,24 +420,6 @@ private fun StoryDetailHeader(
                     titleContentColor = contentColor,
                 ),
         )
-    }
-}
-
-/**
- * 어두운 표지·뷰어 위에서는 시스템 바 아이콘도 밝은 쪽이라야 읽힌다 — 앱바 아이콘만 희게 하면
- * 바로 위의 시계·배터리가 표지에 묻힌다. 걷히면 원래 값으로 돌려놓는다: 반대로 덮어쓰면
- * 다크 테마에서 밝아야 할 아이콘까지 어둡게 만든다.
- */
-@Composable
-private fun LightSystemBarIcons() {
-    val view = LocalView.current
-    DisposableEffect(view) {
-        val controller = ViewCompat.getWindowInsetsController(view)
-        val wasLightStatusBars = controller?.isAppearanceLightStatusBars
-        controller?.isAppearanceLightStatusBars = false
-        onDispose {
-            wasLightStatusBars?.let { controller.isAppearanceLightStatusBars = it }
-        }
     }
 }
 

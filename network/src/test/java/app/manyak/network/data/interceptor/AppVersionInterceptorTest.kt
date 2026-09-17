@@ -57,6 +57,7 @@ class AppVersionInterceptorTest {
             apiBaseUrl = "https://fixture.invalid/",
             isDebugBuild = false,
             appVersion = appVersion,
+            webBaseUrl = "https://fixture.invalid",
         )
 
     private fun respondOk(request: Request): Response =

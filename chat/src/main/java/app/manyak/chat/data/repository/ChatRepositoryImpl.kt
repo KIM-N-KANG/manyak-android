@@ -18,6 +18,7 @@ import app.manyak.common.domain.error.map
 import app.manyak.common.entity.chat.CreatedChat
 import app.manyak.network.data.api.apiCall
 import app.manyak.network.data.api.emptyBodyApiCall
+import app.manyak.network.data.di.DataLayerConfig
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -30,6 +31,7 @@ class ChatRepositoryImpl
         // 목록 경로는 본인 소유 자원이라 UserApi 에 있다. 내 스토리 목록과 같은 배치다.
         private val userApi: ChatUserApi,
         private val sseSource: ChatSseSource,
+        private val config: DataLayerConfig,
     ) : ChatRepository {
         override suspend fun createChat(
             storyId: String,
@@ -52,6 +54,7 @@ class ChatRepositoryImpl
             userSource: UserSource,
             sourceTurnId: Long?,
             choiceOrder: Int?,
+            realtimeImage: Boolean,
         ): Flow<ChatStreamEvent> =
             sseSource.streamTurn(
                 chatId = chatId,
@@ -62,13 +65,16 @@ class ChatRepositoryImpl
                         // 원본 턴이 없으면 순번도 뜻이 없다. 한쪽만 실어 보내지 않는다.
                         sourceTurnId = sourceTurnId,
                         choiceOrder = choiceOrder.takeIf { sourceTurnId != null },
+                        realtimeImage = realtimeImage,
                     ),
             )
 
         override fun regenerateTurn(
             chatId: String,
             turnId: Long,
-        ): Flow<ChatStreamEvent> = sseSource.regenerateTurn(chatId, ChatRegenerateRequestDto(turnId = turnId))
+            realtimeImage: Boolean,
+        ): Flow<ChatStreamEvent> =
+            sseSource.regenerateTurn(chatId, ChatRegenerateRequestDto(turnId = turnId, realtimeImage = realtimeImage))
 
         override suspend fun generateChoices(
             chatId: String,
@@ -76,6 +82,9 @@ class ChatRepositoryImpl
         ): DomainResult<Unit> = apiCall { chatApi.generateChoices(chatId, turnId) }.map { }
 
         /** 없는 채팅을 지우려 한 것은 사용자가 할 일이 없는 상태라 성공으로 접는다. */
+        override suspend fun createShareLink(chatId: String): DomainResult<String> =
+            apiCall { chatApi.createShare(chatId) }.map { share -> "${config.webBaseUrl}/share/${share.shareId}" }
+
         override suspend fun deleteChat(chatId: String): DomainResult<Unit> {
             val result = emptyBodyApiCall { chatApi.deleteChat(chatId) }
             val status = (result as? DomainResult.Failure)?.let { (it.error as? DomainError.Server)?.status }

@@ -9,6 +9,7 @@ import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.story.StoryDeletion
 import app.manyak.common.presentation.mvi.MviViewModel
+import app.manyak.designsystem.component.isAllowedCharacterImageUrl
 import app.manyak.report.domain.ReportRepository
 import app.manyak.report.presentation.StoryReportAction
 import app.manyak.report.presentation.StoryReportChange
@@ -40,7 +41,7 @@ data class StoryDetailUiState(
     val loadError: StoryDetailLoadError? = null,
     /** 시작 설정이 둘 이상일 때 고른 것. 시작 설정이 없으면 null 이고 채팅 시작이 서버 폴백을 쓴다. */
     val selectedStartSettingId: String? = null,
-    val isImageViewerOpen: Boolean = false,
+    val imageViewerUrl: String? = null,
     val isStartingChat: Boolean = false,
     val startChatFailed: Boolean = false,
     val report: StoryReportUiState = StoryReportUiState(),
@@ -64,6 +65,10 @@ sealed interface StoryDetailIntent {
     data object Retry : StoryDetailIntent
 
     data object OpenImageViewer : StoryDetailIntent
+
+    data class OpenCharacterImage(
+        val imageUrl: String,
+    ) : StoryDetailIntent
 
     data object CloseImageViewer : StoryDetailIntent
 
@@ -100,8 +105,8 @@ sealed interface StoryDetailEvent {
         val error: StoryDetailLoadError,
     ) : StoryDetailEvent
 
-    data class ImageViewerVisibleChanged(
-        val visible: Boolean,
+    data class ImageViewerChanged(
+        val imageUrl: String?,
     ) : StoryDetailEvent
 
     data class StartSettingSelected(
@@ -235,15 +240,12 @@ class StoryDetailViewModel
 
                 StoryDetailIntent.Retry -> load(showProgress = true)
 
-                StoryDetailIntent.OpenImageViewer ->
-                    // 열 이미지가 없으면 빈 화면이 뜬다.
-                    if (state.story?.thumbnailUrl != null) {
-                        analytics.track(AnalyticsEvent.ThumbnailClicked(storyId))
-                        dispatchEvent(StoryDetailEvent.ImageViewerVisibleChanged(visible = true))
-                    }
+                StoryDetailIntent.OpenImageViewer -> openThumbnail(state.story?.thumbnailUrl)
+
+                is StoryDetailIntent.OpenCharacterImage -> openCharacterImage(intent.imageUrl, state)
 
                 StoryDetailIntent.CloseImageViewer ->
-                    dispatchEvent(StoryDetailEvent.ImageViewerVisibleChanged(visible = false))
+                    dispatchEvent(StoryDetailEvent.ImageViewerChanged(null))
 
                 is StoryDetailIntent.SelectStartSetting -> {
                     analytics.track(AnalyticsEvent.StartSettingSelected(storyId, intent.startSettingId))
@@ -264,6 +266,22 @@ class StoryDetailViewModel
 
                 StoryDetailIntent.DismissDeleteDialog -> dismissDeleteDialog()
             }
+        }
+
+        private suspend fun openThumbnail(imageUrl: String?) {
+            if (imageUrl == null) return
+            analytics.track(AnalyticsEvent.ThumbnailClicked(storyId))
+            dispatchEvent(StoryDetailEvent.ImageViewerChanged(imageUrl))
+        }
+
+        private suspend fun openCharacterImage(
+            imageUrl: String,
+            state: StoryDetailUiState,
+        ) {
+            val exists = state.story?.characters?.any { it.imageUrl == imageUrl } == true
+            if (!exists || !isAllowedCharacterImageUrl(imageUrl)) return
+            analytics.track(AnalyticsEvent.StoryDetailCharacterImageClicked(storyId))
+            dispatchEvent(StoryDetailEvent.ImageViewerChanged(imageUrl))
         }
 
         /**
@@ -370,13 +388,13 @@ class StoryDetailViewModel
                         story = event.story,
                         loadError = null,
                         selectedStartSettingId = event.selectedStartSettingId,
-                        isImageViewerOpen = state.keepsImageViewerOpen(event.story),
+                        imageViewerUrl = state.imageViewerUrl?.takeIf(event.story::containsImage),
                     )
 
                 is StoryDetailEvent.LoadFailed ->
-                    state.copy(isLoading = false, story = null, loadError = event.error)
+                    state.copy(isLoading = false, story = null, loadError = event.error, imageViewerUrl = null)
 
-                is StoryDetailEvent.ImageViewerVisibleChanged -> state.copy(isImageViewerOpen = event.visible)
+                is StoryDetailEvent.ImageViewerChanged -> state.copy(imageViewerUrl = event.imageUrl)
 
                 is StoryDetailEvent.StartSettingSelected ->
                     state.copy(selectedStartSettingId = event.startSettingId)
@@ -419,10 +437,6 @@ private fun StoryDetailUiState.reduceLike(change: LikeChange): StoryDetailUiStat
         LikeChange.Failed -> copy(isTogglingLike = false)
     }
 
-/** 갱신으로 썸네일이 사라졌으면 열려 있던 뷰어도 닫는다. */
-private fun StoryDetailUiState.keepsImageViewerOpen(story: StoryDetail): Boolean =
-    isImageViewerOpen && story.thumbnailUrl != null
-
 /**
  * 갱신 전에 고른 시작 설정이 아직 있으면 그대로 두고, 사라졌거나 처음이면 첫 번째를 고른다.
  * 서버가 시작 설정을 주지 않으면 null 이고 채팅 시작이 서버 폴백을 쓴다.
@@ -440,3 +454,6 @@ private fun DomainError.toLoadError(): StoryDetailLoadError =
 private const val HTTP_NOT_FOUND = 404
 
 private const val LIKE_COOLDOWN_MILLIS = 500L
+
+private fun StoryDetail.containsImage(url: String): Boolean =
+    url == thumbnailUrl || characters.any { it.imageUrl == url }

@@ -11,8 +11,8 @@
 채팅방을 조회 전용 화면에서 **턴을 진행할 수 있는 화면**으로 만듭니다. 입력 컴포저, SSE 턴 진행,
 추천 입력·선택지, 응답 재생성, 엔딩 배지, 채팅 삭제, 이프 부족 처리까지가 범위입니다.
 
-**제외** — 채팅 배경 이미지 마커(`[[image:<imageKey>]]`, 서버·AI·웹 모두 미구현), **채팅 공유 발급·열람**
-(2026-08-29 결정으로 앱 비적용 — 헤더에 공유 버튼을 두지 않습니다), 이프 잔액·보상 표시(KNK-870),
+**제외** — 채팅 배경 이미지 마커(`[[image:<imageKey>]]`, 서버·AI·웹 모두 미구현), **채팅 공유 열람**(웹 소유.
+발급은 2026-08-29 앱 비적용 결정이었으나 KNK-1320에서 메뉴 시트의 "공유하기"로 적용 — 아래), 이프 잔액·보상 표시(KNK-870),
 첫 진입 오버레이 투어(추천 입력 위 1회성 힌트만 옮기고 투어는 컴포저 확정 이후 판단).
 
 ## 새로 내린 결정
@@ -269,7 +269,7 @@ turnId에 귀속**시키고 최신 요청 turnId를 들고 있어, 늦게 끝난
    판정, 선택지 생성 요청과 골격·실패 상태.
    *완료 조건* — `userSource` 네 갈래와 `choiceOrder` 1-base 변환이 단위 테스트로 고정됩니다.
 7. **재생성·엔딩 배지** (KNK-904·1034) — 표시 조건 넷, 네 실패 분기, `reachedEnding` 배지.
-8. **삭제** (KNK-1035) — 헤더 옵션 메뉴·확인 다이얼로그·204·404·복귀 백스택. 헤더 오른쪽에는 이 메뉴 하나만 둡니다(공유 버튼 비적용).
+8. **삭제** (KNK-1035) — 헤더 옵션 메뉴·확인 다이얼로그·204·404·복귀 백스택. 헤더 오른쪽에는 이 메뉴 하나만 둡니다(공유 버튼 비적용). 메뉴는 KNK-1320에서 바텀 시트로 바뀌었습니다(아래).
 9. **이프 402** (KNK-906) — 스트림 열기 전 동기 402 처리와 낙관적 밴드 제거.
 10. **하네스 갱신** — §3-3-3 매트릭스 FE-SCREEN-005 행과 FLOW-002·004·006을 구현 상태로 옮깁니다.
 
@@ -295,3 +295,124 @@ turnId에 귀속**시키고 최신 요청 turnId를 들고 있어, 늦게 끝난
 - 회전 중 스트림 유지와 컴포저 초안 보존
 - 키보드가 올라온 상태의 블럭 목록, 큰 글자에서의 컴포저 높이 상한
 - **같은 채팅을 웹과 나란히 놓고 확정 턴 렌더 비교** — 4단계의 "웹과 같은 값"은 캡처 대조로만 확인됩니다
+
+## KNK-1317 실시간 이미지 수신 경로·토글·설정 시트 (2026-09-17)
+
+- 티켓: [KNK-1317](https://kimandkang.atlassian.net/browse/KNK-1317) (부모 KNK-1315)
+- 브랜치: Android·하네스 모두 `feat/KNK-1317-chat-realtime-image-settings-sheet`, 분기 기준 fetch한 `origin/dev` — Android `ecf50831`, 하네스 `4b34221`
+- 계약: [채팅 설정 시트와 메뉴 시트](../../../knk-harness/docs/spec/3-1-client-spec.md#채팅-설정-시트와-메뉴-시트), [인물 이미지 렌더](../../../knk-harness/docs/spec/3-1-client-spec.md#응답-재생성과-채팅-이미지), Swagger `ContinueChatRequest`·`RegenerateChatRequest`의 `realtimeImage`
+- 제외: 로딩 표현·스크롤 높이 유지(KNK-1318), 이프 비용 배지·안내 팝오버(KNK-1319), 채팅 메뉴 시트(KNK-1320)
+
+### 변경
+
+1. `CharacterImage`의 허용 경로에 `/chat-images/`를 더했습니다. 서버가 보내던 실시간 인물 이미지가 그동안 허용 검사에서 버려져 저장 마커가 평문으로 남던 것이 이 한 줄의 원인이었습니다.
+2. `ChatTurnStreamRequestDto`·`ChatRegenerateRequestDto`에 `realtimeImage: Boolean`을 **기본값 없이** 두었습니다. 서버 기본이 켬이라 빠뜨리면 끈 사용자에게도 이미지가 만들어지므로 컴파일러가 명시를 강제하게 했습니다. `ChatRepository.streamTurn/regenerateTurn`과 `ChatSseSource` 본문 테스트까지 같은 값을 실어 보냅니다.
+3. `ChatPreferencesRepository`에 `realtimeImageEnabled`(기기 단위, 기본 켬, 키 `chat_realtime_image_enabled`)를 더했습니다. 결정 7 그대로 `UserScopedStore`에 참여하지 않습니다.
+4. `ChatRoomViewModel`은 `startTurn`에서 지금 값을 한 번 읽어 스트림 람다와 `StreamingTurn.realtimeImage`에 같이 넘깁니다. 응답을 받는 중에 토글을 바꿔도 진행 중 턴은 전송 시점 값을 유지하고 다음 턴부터 새 값을 씁니다(KNK-1318의 로딩 표현이 이 스냅샷을 읽습니다).
+5. 컴포저 툴바의 드롭다운 둘(`ComposerMenu`)을 설정 아이콘 버튼 하나("채팅 설정")로 바꾸고 `ManyakBottomSheet` 기반 `ChatSettingsSheet`를 만들었습니다. 마이 메뉴 행 배치(아이콘 20dp · 라벨 · 설명 · 오른쪽 스위치)로 "채팅 기능"(실시간 이미지, AI 추천 입력)·"입력 모드"(블럭 입력) 두 그룹이고, 행 전체가 `Role.Switch` `toggleable`(`indication = null`)이며 스위치는 표시만 맡습니다. 닫기 버튼은 두지 않습니다 — 확정할 것이 없는 시트라 스크림·끌어내리기·뒤로가기로만 닫습니다(2026-09-17 사용자 결정, 티켓의 닫기 버튼 서술을 대체). 열림 상태는 `ChatRoomLoaded`의 `rememberSaveable`이 들어 입력 모드가 바뀌어 컴포저가 갈려도 시트가 남습니다.
+6. 두 번째 사용처가 생겨 알림 설정의 `PushSwitch`를 `designsystem/ManyakSwitch`로 올렸습니다. 시트 아이콘 `ic_ai_image`·`ic_ai_chat`·`ic_form`(hugeicons `ai-image`·`ai-chat-02`·`form`, 웹과 동일)을 추가하고 쓰임이 없어진 `ic_pen_sparkle`과 드롭다운 문자열 10개를 지웠습니다.
+7. 실시간 이미지 행의 이프 비용 배지·안내 팝오버 자리는 비워 두었습니다(KNK-1319).
+
+### 검증
+
+```bash
+./gradlew :chat:ktlintCheck :chat:detekt :chat:testDebugUnitTest \
+  :designsystem:ktlintCheck :designsystem:detekt :designsystem:testDebugUnitTest \
+  :notification:ktlintCheck :notification:detekt :chat:compileDebugAndroidTestKotlin installDebug
+```
+
+- 단위 테스트 통과(chat 145, designsystem 5). 새 `ChatRoomSettingsTest` 5개 — 저장값 진입 반영, 끔 → 요청 `false`·기기 저장, 기본 켬 → 요청 `true` 명시, 스트리밍 중 토글 변경에도 `StreamingTurn.realtimeImage` 유지·다음 턴부터 새 값, 재생성 요청의 값. `ChatSseSourceTest` 본문 기대값에 `realtimeImage`를 더했고 `ChatMessageSegmentsTest`에 `/chat-images/` 허용·빈 경로 거부 케이스를 더했습니다.
+- `ChatComposerKeyboardTest`(androidTest)에서 드롭다운 단계를 뺐습니다. 설정 버튼은 모달 시트를 열므로 키보드 유지 대상이 아닙니다. 컴파일만 확인했고 실행하지 않았습니다.
+- 에뮬레이터(Pixel, emulator-5554, 회원 로그인) 캡처 — `always_finish_activities`는 기본(null)이었습니다.
+  - 저장 마커 `[[…/chat-images/…]]`가 있던 방 "0호선"에서 이전에 평문으로 남던 자리에 차민재 인물 이미지가 그려집니다: [stored-chat-image.png](../../../captures/knk-1317/stored-chat-image.png)
+  - 설정 시트 열림·세 스위치 켬: [settings-sheet-open.png](../../../captures/knk-1317/settings-sheet-open.png) → 블럭 입력·실시간 이미지 끔(시트 유지): [settings-sheet-toggled.png](../../../captures/knk-1317/settings-sheet-toggled.png) → 닫은 뒤 컴포저가 일반 입력: [composer-plain-after-toggle.png](../../../captures/knk-1317/composer-plain-after-toggle.png)
+  - 시트를 연 채 회전·다크 모드 전환에서 시트와 스위치 값 유지: [settings-sheet-rotated.png](../../../captures/knk-1317/settings-sheet-rotated.png), [settings-sheet-dark.png](../../../captures/knk-1317/settings-sheet-dark.png). 회전·야간 모드는 검사 후 원래대로 되돌렸습니다.
+  - 방을 나갔다 다시 들어와도 끔 값이 유지되고(uiautomator `checked` false/true/false), 다시 켠 뒤 추천 입력 랜덤 전송으로 실제 턴 하나를 보냈습니다. 약 20초 뒤 새 턴의 본문 위치에 실시간 인물 이미지(차민재, 새 표정)가 그려지고 확정 후 재생성 버튼·선택지 3개가 나타났습니다: [realtime-turn-image.png](../../../captures/knk-1317/realtime-turn-image.png), [realtime-turn-confirmed.png](../../../captures/knk-1317/realtime-turn-confirmed.png). 이 턴은 dev 서버에 저장됐고 이프가 차감됐습니다.
+- 코드로만 판단한 것: 요청 본문의 `realtimeImage` 값(SSE 로깅 인터셉터가 없어 기기에서는 보지 못했고 `ChatSseSourceTest`·`ChatRoomSettingsTest`가 고정), 실시간 이미지 끈 채 보낸 턴에 이미지가 오지 않는지(이프를 더 쓰지 않으려 보내지 않음), 글자 크기 변경.
+
+### 복구
+
+되돌리면 허용 경로·요청 필드·설정 키·시트가 함께 빠지고 드롭다운 둘로 돌아갑니다. `chat_realtime_image_enabled` 키는 남아도 읽는 곳이 없어 무해합니다. 서버 계약·저장 스키마 변경은 없습니다.
+
+## KNK-1318 실시간 이미지 로딩 표현과 스트리밍 블록 높이 유지 (2026-09-18)
+
+- 티켓: [KNK-1318](https://kimandkang.atlassian.net/browse/KNK-1318) (부모 KNK-1315)
+- 브랜치: `feat/KNK-1318-chat-stream-loading-height`, 분기 기준 fetch한 `origin/dev` `b61d3704`
+- 계약: [렌더와 스크롤](../../../knk-harness/docs/spec/3-1-client-spec.md#렌더와-스크롤)(부분 렌더·새 턴 앵커), 메뉴 시트 AI 안내 문구(`CHAT_AI_NOTICE`)
+- 제외: 앵커·패드 회수·진입 위치·하단 이동 버튼(현재 구현 유지), 토글·설정 시트(KNK-1317), 비용 배지(KNK-1319)
+
+### 변경
+
+1. `StreamingBlock`을 `ChatStreamingBlock.kt`로 떼어내고(파일당 함수 수 제한) 로딩과 본문이 **같은 `Box` 자리**를 쓰게 했습니다. 첫 조각(글자든 이미지든)이 오면 로딩은 `AnimatedVisibility` `fadeOut`(150ms)으로 그 자리에서 빠지고 본문이 그 아래에서 드러납니다. 이미지가 토큰보다 먼저 오면 `revealed`에 이미지 조각이 먼저 들어와 같은 경로로 교체됩니다.
+2. **로딩 높이를 최소 높이로 유지합니다.** 로딩이 그려지는 동안 `onSizeChanged`로 잰 높이를 `rememberSaveable`에 두고, 본문이 보이는 동안 `heightIn(min)`으로 겁니다. 웹의 `useLayoutEffect` minHeight와 같은 시점(로딩이 흐름에 있는 동안 측정)입니다. 목록이 같은 키(`streaming`·턴 id)의 저장 상태를 다음 전송에도 돌려주지만 새 스트림은 늘 로딩부터 그려 값을 다시 잽니다. 재생성은 같은 `StreamingBlock`이라 동일합니다.
+3. 실시간 이미지가 켜진 채 보낸 턴(`StreamingTurn.realtimeImage`, KNK-1317 스냅샷)은 `ScenePlaceholder` — 순환 문구 4개(4초 주기, `chat_room_scene_phrases`, 본문과 같은 `bodyReading` 서체 — `CyclingPhrases`에 `style` 파라미터를 더해 제작 퍼널은 기본 `bodyMedium` 유지) 아래 `spacing.passage`(20dp) 간격으로 `ImageGenerationLoading`(4:3, `shapes.overlay` — `CharacterImage`와 같은 실루엣)을 둡니다. 보조기술에는 `clearAndSetSemantics`로 "다음 장면을 만들고 있어요" 하나만 읽힙니다. 꺼진 턴은 기존 `WritingPlaceholder`(MaruBuri 2초 시머) 그대로이고 문구만 `chat_room_writing` "다음 내용 준비 중"으로 바꿨습니다(라벨 "답변을 작성하고 있어요" 유지).
+4. 순환 문구는 `create`의 `CyclingPhrases`(점 3개 + 글자 단위 교차 + 4초 시머)를 두 번째 사용처가 생겨 `designsystem/CyclingPhrases.kt`로 올렸습니다. `create`는 import만 바뀝니다. `CharacterImage`의 `CHARACTER_IMAGE_ASPECT_RATIO`(4:3)를 공개해 로딩 자리가 같은 값을 읽습니다. KNK-1323이 만든 `ImageGenerationLoading`을 그대로 재사용했으며 새 4:3 컴포넌트는 만들지 않았습니다.
+5. 대화 최상단(프롤로그 위)에 `chat_room_ai_notice` "이 채팅은 AI로 생성된 가상의 내용이에요"를 `bodySmall`·`textSubtle`·가운데 정렬로 추가했습니다(항목 키 `ai-notice`, 위 여백 `passage`). 항목이 하나 늘어 `AnchorStreamingTurn`의 `prologueCount`를 `headerCount`(안내 + 프롤로그)로 바꿔 재생성 앵커 인덱스가 맞게 했습니다. 앵커·패드 로직 자체는 손대지 않았습니다.
+
+### 검증
+
+```bash
+./gradlew :designsystem:ktlintCheck :designsystem:detekt :create:ktlintCheck :create:detekt \
+  :chat:ktlintCheck :chat:detekt :chat:compileDebugKotlin :create:compileDebugKotlin \
+  :chat:testDebugUnitTest :designsystem:testDebugUnitTest :create:testDebugUnitTest installDebug
+```
+
+- 단위 테스트 통과(chat 153, designsystem 5, create 114). 새 테스트는 없습니다 — 바뀐 것이 모두 Compose 레이아웃·애니메이션이라 순수 함수로 뗄 로직이 없었습니다.
+- 에뮬레이터(Pixel, emulator-5554, 방 "0호선", `always_finish_activities` null) — `adb exec-out screencap`을 초당 약 8장으로 연속 캡처해 **사용자 밴드 영역(y 250–650)의 픽셀 해시가 전송부터 확정까지 한 번도 바뀌지 않는 것**으로 앵커 유지를 판정했습니다.
+  - AI 안내 문구(최상단, 프롤로그 위): [ai-notice-top.png](../../../captures/knk-1318/ai-notice-top.png)
+  - 실시간 이미지 켬(80 이프): 순환 문구 + 4:3 점 패턴 [realtime-on-loading.png](../../../captures/knk-1318/realtime-on-loading.png) → 로딩이 반투명으로 빠지며 본문 첫 줄이 비치는 프레임 [realtime-on-fade.png](../../../captures/knk-1318/realtime-on-fade.png) → 본문 타자기 [realtime-on-body.png](../../../captures/knk-1318/realtime-on-body.png) → 확정 [realtime-on-done.png](../../../captures/knk-1318/realtime-on-done.png). 400프레임(45초) 동안 밴드 영역 해시 1종. 문구가 6초 시점에 "다음 내용 준비 중"으로 바뀐 것도 확인.
+  - 실시간 이미지 끔(20 이프): "다음 내용 준비 중" 시머 [realtime-off-loading.png](../../../captures/knk-1318/realtime-off-loading.png) → 본문 [realtime-off-body.png](../../../captures/knk-1318/realtime-off-body.png) → 확정 [realtime-off-done.png](../../../captures/knk-1318/realtime-off-done.png). 250프레임 동안 밴드 영역 해시 1종.
+  - 응답 재생성(끔, 20 이프): 대상 턴이 상단에 앵커된 채 로딩 → 본문 [regenerate-loading.png](../../../captures/knk-1318/regenerate-loading.png), [regenerate-body.png](../../../captures/knk-1318/regenerate-body.png). 200프레임 동안 밴드 영역 해시 1종 — 안내 문구 추가 뒤 `headerCount` 보정이 맞습니다.
+  - 구성 변경(켬, 80 이프): 로딩 3초 시점 다크 모드 → 8초 시점 가로 회전 → 본문 도착 뒤 다크 해제. 세 번 재생성돼도 밴드는 상단에 남고 로딩 상태(순환 문구·점 패턴)가 이어졌습니다: [config-dark-loading.png](../../../captures/knk-1318/config-dark-loading.png), [config-landscape-loading.png](../../../captures/knk-1318/config-landscape-loading.png), [config-light-after-body.png](../../../captures/knk-1318/config-light-after-body.png), 세로 복귀 뒤 실시간 인물 이미지가 본문 자리에 그려진 상태 [config-restored-portrait.png](../../../captures/knk-1318/config-restored-portrait.png). 회전·야간 모드·`accelerometer_rotation`은 검사 후 원래 값(세로·no·1)으로 되돌렸습니다.
+- `configuration-changes` 점검(코드): 로딩 높이는 `rememberSaveable`이라 본문이 보이는 중 재생성돼도 복원된 `padPx`와 어긋나지 않습니다. 회전은 폭이 바뀌어 저장한 높이가 새 폭의 로딩 높이와 다를 수 있지만, 뷰포트 높이가 바뀌면 `AnchorStreamingTurn`이 한 화면을 통째로 다시 깔아 되잡으므로 내려앉지 않습니다. `CyclingPhrases`의 문구 인덱스도 `rememberSaveable`입니다. 재생성마다 다시 도는 효과는 순환 타이머(4초부터 다시 셈)뿐이고 값을 초기화하는 효과는 없습니다.
+- 코드로만 판단한 것: 이미지 조각이 토큰보다 먼저 오는 경우(이번 네 턴은 모두 텍스트가 먼저 왔음), 본문이 로딩보다 짧아 최소 높이가 실제로 작동하는 경우(dev 응답이 모두 로딩보다 길어 최소 높이 없이도 내려앉지 않는 상황이었음), 가로에서의 로딩→본문 전환 화면(컴포저가 뷰포트를 거의 다 차지해 밴드만 보임), 큰 글자, TalkBack 읽기.
+- 이 검증으로 dev 서버의 "0호선" 방에 턴 4개(재생성 1회 포함)가 저장됐고 이프 260이 차감됐습니다.
+
+### 복구
+
+되돌리면 로딩 자리·최소 높이·안내 문구·문자열이 함께 빠지고 `CyclingPhrases`는 `create` 전용으로 돌아갑니다. 서버 계약·저장 스키마·DataStore 키 변경은 없습니다.
+
+## KNK-1320 카드 옵션·상세 헤더·채팅 메뉴 시트 전환 (2026-09-18)
+
+- 티켓: [KNK-1320](https://kimandkang.atlassian.net/browse/KNK-1320) (부모 KNK-1315)
+- 브랜치: Android·하네스 모두 `feat/KNK-1320-options-bottom-sheets`, 분기 기준 fetch한 `origin/dev` — Android `cddd12df`, 하네스 `105b313`
+- 계약: [카드 옵션 시트](../../../knk-harness/docs/spec/3-1-client-spec.md#fe-screen-013-제작--내-스토리-목록)(FE-SCREEN-013), [채팅 설정 시트와 메뉴 시트](../../../knk-harness/docs/spec/3-1-client-spec.md#채팅-설정-시트와-메뉴-시트), Swagger `POST /chats`(`startSettingId` 생략 시 첫 시작 설정). 결정: [A-042](../../../knk-harness/docs/adr/1-3-android-adr.md#a-042)
+- 제외: 공유 열람 화면(웹 소유). 삭제 확인은 다이얼로그 그대로.
+
+### 변경
+
+1. `designsystem`에 `ManyakOptionItem`(48dp · 아이콘 20dp · 간격 12dp · destructive · 오른쪽 스피너)과 `ManyakOptionsSheet`(`ManyakBottomSheet` 위에 머리글 → 항목. 주 동작 버튼이 없는 시트라 닫기 버튼은 두지 않음 — 2026-09-18 사용자 결정, 티켓·`DESIGN.md`의 옵션 시트 닫기 서술을 대체)·`ManyakOptionsSheetHeader`(종류 소문 + 제목 한 줄)를 만들고, `ManyakOptionsDialog`·`ManyakOptionsMenu`와 카드 축소판(`MyStoryCardPreview`·`CreationProgressCardPreview`·`ChatCardPreview`, 카드의 `compact` 분기)을 지웠습니다. 축소판만 쓰던 `shapes.thumbnailSmall` 토큰도 함께 지웠습니다. `ManyakMoreButton`·`moreButtonTitleAlignment`은 `ManyakMoreButton.kt`로 옮겼습니다. `ManyakDestructiveDialog`에 `inProgressLabel`("삭제 중")을 더해 확정 스피너가 보조기술에 그 이름으로 읽히게 했고, 옵션→확인이 한 창을 나눠 쓰던 `ManyakDestructiveDialogContent`는 private 으로 접었습니다.
+2. 제작 카드(`StudioDialogs`)·채팅 카드(`ChatListScreen`)는 `optionsTarget`이 있으면 시트, `deleteTarget`이 있으면 다이얼로그를 띄웁니다. ViewModel의 "삭제하기는 시트를 닫고 확인을 요청" 흐름은 이미 그대로라 상태·의도는 바꾸지 않았습니다. 머리글 종류는 "내가 만든 스토리" / "만들던 스토리"(초안·실패 요청) / "채팅"이고, 삭제된 스토리의 채팅은 제목 자리에 "삭제된 스토리"를 씁니다. 더보기·길게 누르기 진입은 유지합니다.
+3. 스토리 상세 `StoryDetailHeaderMenu`는 더보기 아이콘 버튼 + 같은 시트("내가 만든 스토리" / "스토리")입니다. 열림은 컴포넌트 안 `rememberSaveable`입니다.
+4. 채팅방 헤더는 더보기 버튼 하나(접근 이름 "채팅 메뉴", 아이콘은 `DESIGN.md` 규칙대로 가로 점 `ic_more_horizontal`)이고 `ChatMenuSheet`("채팅 메뉴")를 엽니다 — 내 이프 카드 → "새 채팅 시작하기"(`ic_comment_plus`) → "공유하기"(`ic_share`) → "신고하기"(`ic_alert_triangle`, 옵션 시트 4곳의 신고 항목 공통) → destructive "삭제하기". 참조 스토리가 삭제된 방(`storyId` 빈 문자열, 서버가 `orEmpty()`로 보냄)은 새 채팅·신고를 두지 않습니다. 신고·삭제·충전은 시트를 닫고 엽니다 — 시트는 별도 창이라 닫지 않고 이동하면 다음 화면 위에 남습니다.
+   - **공유하기**(2026-09-18 사용자 결정으로 앱 비적용을 뒤집음, [A-043](../../../knk-harness/docs/adr/1-3-android-adr.md#a-043); 채팅 목록 카드 옵션 시트에도 같은 항목을 신고하기 앞에 둠 — `ChatListViewModel.share`, 성공 시 시트를 닫고 실패 시 유지): `POST /chats/{id}/shares`로 `shareId`를 받아 `ChatRepositoryImpl`이 `DataLayerConfig.webBaseUrl`(`BuildConfig.WEB_BASE_URL`)로 `{웹 origin}/share/{shareId}`를 완성합니다. 앱은 클립보드 복사 대신 초대 코드와 같은 **Android 공유 시트**(`ACTION_SEND`, 제목은 스토리 제목, 본문은 `chat_room_share_message` — "「{제목}」에 제 선택을 좀 섞어봤어요. / (빈 줄) / {N}턴 뒤에 어떻게 됐냐면요… 👀 / (빈 줄) / 링크: {링크}", N 은 발급 시점 확정 턴 수. 턴이 0이면 `chat_room_share_message_prologue` "「{제목}」에 들어와 봤어요. / (빈 줄) / 어떤 이야기냐면요… 👀 / (빈 줄) / 링크: {링크}". 삭제된 스토리는 제목 자리에 "삭제된 스토리")로 바로 보냅니다 — `my/InviteScreen`의 `shareText`를 두 번째 사용처가 생겨 `common/presentation/share/ShareText.kt`로 올렸습니다. `ShareRequested` → `shareJob` single-flight·`isSharing` 스피너 → 성공 `ShareLink(url, turnCount)` 효과(시트 닫고 공유 시트), 실패 토스트 "공유 링크 생성에 실패했어요"(시트 유지). 문구 조립은 `chat/presentation/ChatShareMessage.kt`를 채팅방·목록이 함께 씁니다. 분석 `client_chat_shareButton_clicked`(`chat_id`, `turn_number`)를 발급 시도에 기록합니다. 디버그 빌드는 API 가 dev, `WEB_BASE_URL` 기본이 운영 웹이라 발급된 링크를 운영 웹이 못 찾습니다 — dev 웹은 Vercel SSO 뒤라 공개 origin 이 없고, 릴리스는 API·웹 모두 운영이라 맞습니다.
+5. 내 이프 카드는 두 번째 사용처가 생겨 `my/MyCreditCard.kt`의 `CreditBalanceCard`를 `designsystem/credit/CreditBalanceCard.kt`로 올렸습니다(`balance: Long?`만 받고 바깥 여백은 호출부가). 문자열 `my_credit_label`·`my_credit_charge`는 `credit_balance_label`·`credit_balance_charge`로 옮겼습니다.
+6. `ChatRoomViewModel`에 `UserProfileRepository`를 주입해 `profile` 흐름을 `creditBalance`로 내리고, `MenuOpened`(메뉴 버튼 탭)에 `refresh()`를 띄워 방금 턴에서 차감된 잔액이 낡게 보이지 않게 했습니다(웹 카드의 `refetchOnMount: 'always'`와 같은 의도). `NewChatRequested`는 `chatRepository.createChat(storyId)`(`ChatStarter` 계약, 시작 설정 생략)를 `newChatJob` single-flight로 부르고 `isStartingNewChat`으로 항목 스피너·시트 닫기 잠금을 겁니다. 성공은 `NavigateToChat(chatId)` 효과이고 잠금은 풀지 않습니다(화면이 교체되므로). 실패는 잠금 해제 + 토스트 "채팅을 시작하지 못했어요".
+7. 교체 이동은 `app`의 `NavBackStackOps.replaceTop`이 맡습니다 — `ChatRoomRoute(new)`로 맨 위를 바꿔 끼워 뒤로가기가 이전 방으로 돌아가지 않습니다. `ChatRoomScreen`은 `onReplaceChat`·`onOpenCreditCharge`(→ `MyCreditChargeRoute`)를 받습니다. detekt 한도 때문에 채팅방 항목 등록은 `chatRoomEntry`, 삭제 다이얼로그·신고 시트는 `ChatRoomOverlays.kt`, 토스트 문구는 `ChatRoomEffect.toastText`로 뗐습니다.
+8. 채팅 삭제 확인 문구를 "채팅을 삭제할까요?" / "삭제하면 목록에서 사라지며 되돌릴 수 없어요" / "남겨두기"·"삭제하기"로 맞췄습니다. 스토리·초안 삭제 확인의 취소도 공통 카드 옵션 시트 계약(FE-SCREEN-013)대로 "닫기" → "남겨두기"로 바꿨습니다(`common` `studio_delete_dialog_cancel`).
+
+### 검증
+
+```bash
+./gradlew :designsystem:ktlintCheck :designsystem:detekt :designsystem:testDebugUnitTest \
+  :studio:ktlintCheck :studio:detekt :studio:testDebugUnitTest \
+  :chat:ktlintCheck :chat:detekt :chat:testDebugUnitTest \
+  :story:ktlintCheck :story:detekt :story:testDebugUnitTest \
+  :my:ktlintCheck :my:detekt :my:testDebugUnitTest \
+  :app:ktlintCheck :app:detekt :app:compileDebugAndroidTestKotlin checkModuleArchitecture installDebug
+```
+
+- 단위 테스트 통과(designsystem 5, studio 24, chat 162, story 27, my 27, network). `ChatListViewModelTest`에 카드 공유 2개(발급 → `ShareLink`·시트 닫힘·연타 1회, 실패 → 시트 유지 + `ShowShareFailed`), 새 `ChatRoomMenuTest` 7개 — 새 채팅이 이 방의 `storyId`로 생성되고 `NavigateToChat`, 연타 시 하나만, 실패 시 잠금 해제 + `ShowNewChatFailed`, 삭제된 스토리(`storyId` 빈 값)는 요청 없음, 공유 발급 → `ShareLink(url)`(연타 시 요청 하나), 공유 실패 → 잠금 해제 + `ShowShareFailed`, `MenuOpened`가 프로필을 다시 읽어 `creditBalance`를 채움. 기존 채팅방 테스트 6개 파일은 `FakeUserProfileRepository`만 더했고 `DataLayerConfig` 픽스처에 `webBaseUrl`을 더했습니다.
+- 에뮬레이터(Pixel, emulator-5554, 회원 로그인, `always_finish_activities` null) 캡처는 `captures/knk-1320/`:
+  - 제작 스토리 카드 시트 [studio-story-options.png](../../../captures/knk-1320/studio-story-options.png) → 가로 회전에도 시트 유지 [studio-story-options-rotated.png](../../../captures/knk-1320/studio-story-options-rotated.png) → 삭제하기로 시트가 닫히고 확인 다이얼로그 [studio-story-delete-dialog.png](../../../captures/knk-1320/studio-story-delete-dialog.png)("남겨두기"). 초안 카드 "만들던 스토리" [studio-draft-options.png](../../../captures/knk-1320/studio-draft-options.png).
+  - 채팅 카드 시트(공유·신고·삭제) [chat-card-options.png](../../../captures/knk-1320/chat-card-options.png) → 삭제 확인("남겨두기") [chat-card-delete-dialog.png](../../../captures/knk-1320/chat-card-delete-dialog.png), 카드 공유하기 → 그 카드의 제목·턴 수를 실은 공유 시트 [chat-card-share-sheet.png](../../../captures/knk-1320/chat-card-share-sheet.png). 검증 중 만든 채팅 4개를 이 흐름으로 지웠습니다(카드 제거·목록 유지 확인).
+  - 상세 헤더: 내 스토리 [story-detail-options-owner.png](../../../captures/knk-1320/story-detail-options-owner.png), 오리지널(신고만) [story-detail-options-original.png](../../../captures/knk-1320/story-detail-options-original.png).
+  - 채팅방 메뉴(내 이프 카드·새 채팅·공유·신고·삭제) [chat-room-menu.png](../../../captures/knk-1320/chat-room-menu.png), 다크 모드 전환에도 시트 유지 [chat-room-menu-dark.png](../../../captures/knk-1320/chat-room-menu-dark.png). "공유하기" → dev 서버가 발급한 `https://manyak.app/share/{shareId}`를 실은 Android 공유 시트가 뜨고 메뉴 시트는 닫힘 [chat-room-share-sheet.png](../../../captures/knk-1320/chat-room-share-sheet.png)(4턴 문구), 턴 0 새 방에서는 프롤로그 문구 [chat-room-share-sheet-prologue.png](../../../captures/knk-1320/chat-room-share-sheet-prologue.png). "새 채팅 시작하기" → 같은 스토리("0호선")의 턴 0 새 방으로 교체됨 [chat-room-new-chat-result.png](../../../captures/knk-1320/chat-room-new-chat-result.png), 뒤로가기가 이전 방이 아니라 채팅 목록으로 감(목록 맨 위에 턴 0회 새 방). 비행기 모드에서 실패 토스트와 항목 복구 [chat-room-new-chat-failed.png](../../../captures/knk-1320/chat-room-new-chat-failed.png). "충전"은 시트를 닫고 이프 충전 화면을 엽니다(뒤로가기로 방 복귀, 시트 없음).
+  - 회전·야간 모드·`accelerometer_rotation`·비행기 모드·프록시는 검사 후 원래 값으로 되돌렸습니다.
+- `configuration-changes` 점검: 시트 열림은 제작·채팅 목록이 ViewModel 상태(`optionsTarget`), 채팅방·상세가 `rememberSaveable`이라 회전·다크 모드에서 유지됩니다(기기 확인 위). 진행 중 표시(`isStartingNewChat`·`isDeleting`)는 ViewModel이 들고, `MenuOpened`의 프로필 갱신은 탭에서만 나가므로 재생성에서 다시 돌지 않습니다. 재생성에서 값을 초기화하는 효과는 없습니다.
+- 코드로만 판단한 것: 새 채팅 항목의 오른쪽 스피너와 그 상태의 회전 유지 — dev 서버 `POST /chats`가 0.5초 안에 끝나 캡처하지 못했고(에뮬레이터 네트워크 지연·프록시 설정은 이미 풀린 연결에 먹지 않음), `ChatRoomMenuTest`의 `isStartingNewChat` 단정과 `ManyakOptionItem(inProgress)` 코드로 판단했습니다. 삭제 확정 스피너의 "삭제 중" 낭독, TalkBack, 큰 글자도 실행하지 않았습니다.
+- 이 검증으로 dev 서버에 "0호선" 채팅 4개가 만들어졌다가 삭제됐습니다(이프 변동 없음).
+
+### 복구
+
+되돌리면 시트·항목 컴포넌트·아이콘·문자열·`replaceTop`·`UserProfileRepository` 주입·공유 발급 API 배선(`ChatApi.createShare`·`DataLayerConfig.webBaseUrl`)이 함께 빠지고 다이얼로그·드롭다운으로 돌아갑니다. 서버 계약·저장 스키마·DataStore 키 변경은 없습니다.

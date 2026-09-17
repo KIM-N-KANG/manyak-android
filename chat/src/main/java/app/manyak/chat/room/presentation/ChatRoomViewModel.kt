@@ -28,9 +28,12 @@ import app.manyak.chat.room.presentation.suggestion.composerOrigin
 import app.manyak.chat.room.presentation.suggestion.normalizeSuggestion
 import app.manyak.chat.room.presentation.suggestion.randomSuggestionPosition
 import app.manyak.chat.room.presentation.suggestion.shouldGenerateChoices
+import app.manyak.common.domain.credit.TrialsRepository
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.user.UserProfileRepository
 import app.manyak.common.presentation.mvi.MviViewModel
+import app.manyak.designsystem.component.isAllowedCharacterImageUrl
 import app.manyak.report.domain.ReportRepository
 import app.manyak.report.presentation.StoryReportAction
 import app.manyak.report.presentation.StoryReportChange
@@ -58,9 +61,15 @@ data class ChatRoomTurn(
     val reachedEnding: String? = null,
 )
 
-/** 진행 중인 턴. 확정되면 확정 턴 목록과 **한 번에** 교체된다. */
+/**
+ * 진행 중인 턴. 확정되면 확정 턴 목록과 **한 번에** 교체된다.
+ *
+ * [realtimeImage] 는 **전송 시점의 스냅샷**이다 — 응답을 받는 중에 설정을 바꿔도 이미 보낸 요청은
+ * 그대로라, 진행 블록의 표현도 요청과 같은 값을 따라야 한다.
+ */
 data class StreamingTurn(
     val userInput: String,
+    val realtimeImage: Boolean,
     val segments: List<ChatMessageSegment> = emptyList(),
 )
 
@@ -70,8 +79,10 @@ data class ChatRoomUiState(
     val prologue: String = "",
     val turns: List<ChatRoomTurn> = emptyList(),
     val loadFailed: Boolean = false,
+    val imageViewerUrl: String? = null,
     val composer: ChatComposerState = ChatComposerState(),
     val choicesEnabled: Boolean = true,
+    val realtimeImageEnabled: Boolean = true,
     /** 턴이 0개인 방의 첫 입력 후보. */
     val suggestedInputs: List<String> = emptyList(),
     /** 선택지 생성의 진행 상태. 대상 턴이 마지막 턴일 때만 그린다. */
@@ -86,10 +97,20 @@ data class ChatRoomUiState(
     val regeneratingTurnId: Long? = null,
     /** 삭제 요청 중. 확인 다이얼로그의 버튼을 잠근다. */
     val isDeleting: Boolean = false,
-    /** 이 방이 참조하는 스토리. 신고 대상이라 조회 전에는 진입점을 두지 않는다. */
+    /** 이 방이 참조하는 스토리. 신고·새 채팅의 대상이라 조회 전에는 진입점을 두지 않는다. 삭제된 스토리는 빈 문자열이다. */
     val storyId: String? = null,
     val report: StoryReportUiState = StoryReportUiState(),
+    /** 채팅 메뉴의 내 이프 카드에 보이는 잔액. 프로필을 아직 읽지 못했으면 null 이다. */
+    val creditBalance: Long? = null,
+    /** 같은 스토리로 새 채팅을 만드는 중. 메뉴 항목을 잠그고 시트 닫기를 막는다. */
+    val isStartingNewChat: Boolean = false,
+    /** 공유 링크를 발급하는 중. 메뉴 항목을 잠그고 시트 닫기를 막는다. */
+    val isSharing: Boolean = false,
 ) {
+    /** 참조 스토리가 남아 있어야 신고·새 채팅을 둘 수 있다. */
+    val hasStory: Boolean
+        get() = !storyId.isNullOrBlank()
+
     /** 컴포저와 메시지 목록이 함께 쓰는 추천 목록. */
     val suggestions: ChatSuggestions
         get() = chatSuggestions(turns.lastOrNull(), suggestedInputs, choicesEnabled)
@@ -97,6 +118,12 @@ data class ChatRoomUiState(
 
 sealed interface ChatRoomIntent {
     data object Retry : ChatRoomIntent
+
+    data class OpenCharacterImage(
+        val imageUrl: String,
+    ) : ChatRoomIntent
+
+    data object CloseImageViewer : ChatRoomIntent
 
     data class PlainTextChanged(
         val text: String,
@@ -120,6 +147,10 @@ sealed interface ChatRoomIntent {
     ) : ChatRoomIntent
 
     data class ChoicesEnabledChanged(
+        val enabled: Boolean,
+    ) : ChatRoomIntent
+
+    data class RealtimeImageEnabledChanged(
         val enabled: Boolean,
     ) : ChatRoomIntent
 
@@ -150,6 +181,15 @@ sealed interface ChatRoomIntent {
     /** 확인 다이얼로그에서 삭제를 확정했다. */
     data object DeleteConfirmed : ChatRoomIntent
 
+    /** 헤더의 채팅 메뉴를 열었다. 이프 카드가 낡은 잔액을 보이지 않게 프로필을 다시 읽는다. */
+    data object MenuOpened : ChatRoomIntent
+
+    /** 채팅 메뉴의 새 채팅 시작하기. 이 방이 참조하는 스토리로 채팅을 하나 더 만든다. */
+    data object NewChatRequested : ChatRoomIntent
+
+    /** 채팅 메뉴의 공유하기. 지금까지의 채팅을 읽기 전용 웹 링크로 발급해 공유 시트로 보낸다. */
+    data object ShareRequested : ChatRoomIntent
+
     data class Report(
         val action: StoryReportAction,
     ) : ChatRoomIntent
@@ -157,6 +197,10 @@ sealed interface ChatRoomIntent {
 
 sealed interface ChatRoomEvent {
     data object LoadStarted : ChatRoomEvent
+
+    data class ImageViewerChanged(
+        val imageUrl: String?,
+    ) : ChatRoomEvent
 
     data class Loaded(
         val storyId: String,
@@ -171,6 +215,7 @@ sealed interface ChatRoomEvent {
     data class PreferencesLoaded(
         val composer: ChatComposerState,
         val choicesEnabled: Boolean,
+        val realtimeImageEnabled: Boolean,
         val hintUnseen: Boolean,
     ) : ChatRoomEvent
 
@@ -182,15 +227,21 @@ sealed interface ChatRoomEvent {
         val enabled: Boolean,
     ) : ChatRoomEvent
 
+    data class RealtimeImageEnabledChanged(
+        val enabled: Boolean,
+    ) : ChatRoomEvent
+
     data class SendStarted(
         val userInput: String,
         val composer: ChatComposerState,
+        val realtimeImage: Boolean,
     ) : ChatRoomEvent
 
     /** 대상 턴을 진행 블록으로 **대체한다**. 사용자 입력은 그 턴의 것을 그대로 쓴다. */
     data class RegenerateStarted(
         val turnId: Long,
         val userInput: String,
+        val realtimeImage: Boolean,
     ) : ChatRoomEvent
 
     data class TokensAppended(
@@ -229,6 +280,18 @@ sealed interface ChatRoomEvent {
 
     data object DeleteFailed : ChatRoomEvent
 
+    data class CreditBalanceChanged(
+        val balance: Long?,
+    ) : ChatRoomEvent
+
+    data class NewChatStartChanged(
+        val inProgress: Boolean,
+    ) : ChatRoomEvent
+
+    data class ShareChanged(
+        val inProgress: Boolean,
+    ) : ChatRoomEvent
+
     data class Report(
         val change: StoryReportChange,
     ) : ChatRoomEvent
@@ -246,6 +309,21 @@ sealed interface ChatRoomEffect {
     /** 삭제가 끝났다. 화면이 안내하고 채팅 탭으로 돌아간다. */
     data object ChatDeleted : ChatRoomEffect
 
+    /** 새 채팅이 만들어졌다. 화면이 지금 방을 새 방으로 바꿔 연다. */
+    data class NavigateToChat(
+        val chatId: String,
+    ) : ChatRoomEffect
+
+    data object ShowNewChatFailed : ChatRoomEffect
+
+    /** 공유 링크가 발급됐다. 화면이 시트를 닫고 [turnCount] 를 넣은 문구와 함께 시스템 공유 시트로 보낸다. */
+    data class ShareLink(
+        val url: String,
+        val turnCount: Int,
+    ) : ChatRoomEffect
+
+    data object ShowShareFailed : ChatRoomEffect
+
     data object ShowDeleteFailed : ChatRoomEffect
 
     /** 응답 생성 중에 입력창을 눌렀다. 끝나면 입력할 수 있다고 알린다. */
@@ -261,6 +339,7 @@ sealed interface ChatRoomEffect {
  *
  * 재생성·삭제는 다음 단계에서 붙는다.
  */
+@Suppress("TooManyFunctions")
 @HiltViewModel(assistedFactory = ChatRoomViewModel.Factory::class)
 class ChatRoomViewModel
     @AssistedInject
@@ -269,6 +348,8 @@ class ChatRoomViewModel
         private val chatRepository: ChatRepository,
         private val reportRepository: ReportRepository,
         private val preferences: ChatPreferencesRepository,
+        private val trialsRepository: TrialsRepository,
+        private val profileRepository: UserProfileRepository,
         private val analytics: Analytics,
     ) : MviViewModel<ChatRoomIntent, ChatRoomUiState, ChatRoomEvent, ChatRoomEffect>(ChatRoomUiState()) {
         private var preferencesJob: Job? = null
@@ -293,6 +374,8 @@ class ChatRoomViewModel
         private var choicesToggleJob: Job? = null
         private var regenerateCooldownJob: Job? = null
         private var deleteJob: Job? = null
+        private var newChatJob: Job? = null
+        private var shareJob: Job? = null
 
         /**
          * 의도 처리기가 읽는 정본.
@@ -305,6 +388,7 @@ class ChatRoomViewModel
         private var turns: List<ChatRoomTurn> = emptyList()
         private var suggestedInputs: List<String> = emptyList()
         private var choicesEnabled = true
+        private var realtimeImageEnabled = true
         private var hintUnseen = false
 
         /**
@@ -333,15 +417,22 @@ class ChatRoomViewModel
                 viewModelScope.launch {
                     composer = composer.convertTo(preferences.inputMode())
                     choicesEnabled = preferences.choicesEnabled()
+                    realtimeImageEnabled = preferences.realtimeImageEnabled()
                     hintUnseen = !preferences.isChoicesHintSeen()
                     dispatchEvent(
                         ChatRoomEvent.PreferencesLoaded(
                             composer = composer,
                             choicesEnabled = choicesEnabled,
+                            realtimeImageEnabled = realtimeImageEnabled,
                             hintUnseen = hintUnseen,
                         ),
                     )
                 }
+            viewModelScope.launch {
+                profileRepository.profile.collect { profile ->
+                    dispatchEvent(ChatRoomEvent.CreditBalanceChanged(profile?.creditBalance))
+                }
+            }
             load()
         }
 
@@ -382,15 +473,42 @@ class ChatRoomViewModel
                         }
                 }
 
+                is ChatRoomIntent.RealtimeImageEnabledChanged -> {
+                    realtimeImageEnabled = intent.enabled
+                    dispatchEvent(ChatRoomEvent.RealtimeImageEnabledChanged(intent.enabled))
+                    preferences.setRealtimeImageEnabled(intent.enabled)
+                }
+
                 ChatRoomIntent.Sent -> {
                     val userInput = composer.toUserInput()
                     val origin = composerOrigin(userInput, filled)
-                    startTurn(userInput, inputMode = composer.mode.messageInputMode) {
-                        chatRepository.turnStream(chatId, userInput, origin)
+                    startTurn(userInput, inputMode = composer.mode.messageInputMode) { realtimeImage ->
+                        chatRepository.turnStream(chatId, userInput, origin, realtimeImage)
                     }
                 }
 
+                else -> handleRoomAction(intent)
+            }
+        }
+
+        private suspend fun handleRoomAction(intent: ChatRoomIntent) {
+            when (intent) {
+                is ChatRoomIntent.OpenCharacterImage ->
+                    if (isAllowedCharacterImageUrl(intent.imageUrl)) {
+                        analytics.track(AnalyticsEvent.ChatCharacterImageClicked(chatId))
+                        dispatchEvent(ChatRoomEvent.ImageViewerChanged(intent.imageUrl))
+                    }
+
+                ChatRoomIntent.CloseImageViewer -> dispatchEvent(ChatRoomEvent.ImageViewerChanged(null))
+
                 ChatRoomIntent.DeleteConfirmed -> delete()
+
+                // 실패는 캐시된 잔액을 그대로 두는 것으로 흡수한다.
+                ChatRoomIntent.MenuOpened -> viewModelScope.launch { profileRepository.refresh() }
+
+                ChatRoomIntent.NewChatRequested -> startNewChat()
+
+                ChatRoomIntent.ShareRequested -> share()
 
                 is ChatRoomIntent.Report ->
                     report.handle(intent.action, uiState.value.storyId, uiState.value.report)
@@ -399,8 +517,8 @@ class ChatRoomViewModel
                     // 화면이 본 마지막 턴과 지금 마지막 턴이 다르면 낡은 클릭이다.
                     val turn = turns.lastOrNull()?.takeIf { last -> last.id == intent.turnId } ?: return
                     analytics.track(AnalyticsEvent.RegenerateTurnButtonClicked(chatId, turnNumber = turns.size))
-                    startTurn(userInput = turn.userInput, regeneratedTurnId = turn.id) {
-                        chatRepository.regenerateTurn(chatId, turn.id)
+                    startTurn(userInput = turn.userInput, regeneratedTurnId = turn.id) { realtimeImage ->
+                        chatRepository.regenerateTurn(chatId, turn.id, realtimeImage)
                     }
                 }
 
@@ -471,6 +589,45 @@ class ChatRoomViewModel
                 }
         }
 
+        /**
+         * 같은 스토리로 채팅을 하나 더 만든다. 성공하면 화면이 지금 방을 새 방으로 바꿔 열므로 잠금은 풀지
+         * 않는다 — 이동 중에 항목이 되살아나 두 번째 방이 만들어지면 안 된다.
+         */
+        private suspend fun startNewChat() {
+            val storyId = uiState.value.storyId?.takeIf { id -> id.isNotBlank() } ?: return
+            if (newChatJob?.isActive == true) return
+            dispatchEvent(ChatRoomEvent.NewChatStartChanged(inProgress = true))
+            newChatJob =
+                viewModelScope.launch {
+                    when (val result = chatRepository.createChat(storyId)) {
+                        is DomainResult.Success -> dispatchEffect(ChatRoomEffect.NavigateToChat(result.value.id))
+
+                        is DomainResult.Failure -> {
+                            dispatchEvent(ChatRoomEvent.NewChatStartChanged(inProgress = false))
+                            dispatchEffect(ChatRoomEffect.ShowNewChatFailed)
+                        }
+                    }
+                }
+        }
+
+        /** 발급은 서버가 멱등이라 연타를 막는 것은 요청을 아끼기 위해서다. 실패해도 시트는 남아 다시 누를 수 있다. */
+        private suspend fun share() {
+            if (shareJob?.isActive == true) return
+            val turnCount = turns.size
+            analytics.track(AnalyticsEvent.ChatShareButtonClicked(chatId, turnNumber = turnCount))
+            dispatchEvent(ChatRoomEvent.ShareChanged(inProgress = true))
+            shareJob =
+                viewModelScope.launch {
+                    val result = chatRepository.createShareLink(chatId)
+                    dispatchEvent(ChatRoomEvent.ShareChanged(inProgress = false))
+                    when (result) {
+                        is DomainResult.Success -> dispatchEffect(ChatRoomEffect.ShareLink(result.value, turnCount))
+
+                        is DomainResult.Failure -> dispatchEffect(ChatRoomEffect.ShowShareFailed)
+                    }
+                }
+        }
+
         private suspend fun handleSuggestion(intent: ChatRoomIntent) {
             when (intent) {
                 // 추천 문장은 입력창을 거치지 않고 바로 보낸다.
@@ -487,8 +644,8 @@ class ChatRoomViewModel
                     analytics.track(
                         AnalyticsEvent.ChoiceOptionSelected(chatId, turns.nextTurnNumber(), intent.position),
                     )
-                    startTurn(userInput, inputMode = MessageInputMode.CHOICE) {
-                        chatRepository.turnStream(chatId, userInput, origin)
+                    startTurn(userInput, inputMode = MessageInputMode.CHOICE) { realtimeImage ->
+                        chatRepository.turnStream(chatId, userInput, origin, realtimeImage)
                     }
                 }
 
@@ -526,12 +683,15 @@ class ChatRoomViewModel
          *
          * **진행 중인 작업을 직접 확인해 두 번째 요청을 버린다** — 버튼을 잠그는 것만으로는 연타와
          * 접근성 서비스의 반복 클릭을 막지 못하고, 턴은 되돌릴 수 없는 쓰기다.
+         *
+         * [stream] 은 지금 설정의 실시간 이미지 값을 받는다. 요청과 진행 블록이 같은 스냅샷을 쓰게 하려고
+         * 여기서 한 번만 읽는다.
          */
         private fun startTurn(
             userInput: String,
             regeneratedTurnId: Long? = null,
             inputMode: MessageInputMode? = null,
-            stream: () -> Flow<ChatStreamEvent>,
+            stream: (realtimeImage: Boolean) -> Flow<ChatStreamEvent>,
         ) {
             // 스트림을 만들기 전에 막는다 — 진행 중에 또 만들면 버린 요청이 서버 기록에 남는다.
             if (streamJob?.isActive == true) return
@@ -544,7 +704,8 @@ class ChatRoomViewModel
             }
 
             // 상태를 바꾸기 전에 만든다 — 출처 판정이 아직 비우지 않은 채우기 기억을 봐야 한다.
-            val events = stream()
+            val realtimeImage = realtimeImageEnabled
+            val events = stream(realtimeImage)
             if (regeneratedTurnId == null) {
                 // 이어쓰기만 컴포저를 비운다 — 재생성은 쓰던 초안을 건드리지 않는다.
                 // 다음 턴의 입력이 앞 턴에서 채운 문장과 대조되면 안 된다.
@@ -561,9 +722,17 @@ class ChatRoomViewModel
                 viewModelScope.launch {
                     dispatchEvent(
                         if (regeneratedTurnId == null) {
-                            ChatRoomEvent.SendStarted(userInput = userInput, composer = composer)
+                            ChatRoomEvent.SendStarted(
+                                userInput = userInput,
+                                composer = composer,
+                                realtimeImage = realtimeImage,
+                            )
                         } else {
-                            ChatRoomEvent.RegenerateStarted(turnId = regeneratedTurnId, userInput = userInput)
+                            ChatRoomEvent.RegenerateStarted(
+                                turnId = regeneratedTurnId,
+                                userInput = userInput,
+                                realtimeImage = realtimeImage,
+                            )
                         },
                     )
                     events.collectBatched { event -> handleStreamEvent(event) }
@@ -582,6 +751,8 @@ class ChatRoomViewModel
 
                 ChatStreamEvent.Completed -> {
                     isStreaming = false
+                    // 완료된 턴이 체험 한 회를 썼을 수 있다. 다음 턴의 배지가 낡은 잔여로 그려지지 않게 다시 읽는다.
+                    viewModelScope.launch { trialsRepository.refresh() }
                     refreshTurns(confirmed = true)
                     regeneratingTurnId = null
                 }
@@ -721,6 +892,8 @@ private fun reduceChatRoom(
     event: ChatRoomEvent,
 ): ChatRoomUiState =
     when (event) {
+        is ChatRoomEvent.ImageViewerChanged -> state.copy(imageViewerUrl = event.imageUrl)
+
         ChatRoomEvent.LoadStarted -> state.copy(isLoading = true, loadFailed = false)
 
         is ChatRoomEvent.Loaded ->
@@ -741,6 +914,7 @@ private fun reduceChatRoom(
             state.copy(
                 composer = event.composer,
                 choicesEnabled = event.choicesEnabled,
+                realtimeImageEnabled = event.realtimeImageEnabled,
                 choicesHintUnseen = event.hintUnseen,
             )
 
@@ -748,11 +922,35 @@ private fun reduceChatRoom(
 
         is ChatRoomEvent.ChoicesEnabledChanged -> state.copy(choicesEnabled = event.enabled)
 
+        is ChatRoomEvent.RealtimeImageEnabledChanged -> state.copy(realtimeImageEnabled = event.enabled)
+
+        ChatRoomEvent.DeleteStarted,
+        ChatRoomEvent.DeleteFailed,
+        is ChatRoomEvent.CreditBalanceChanged,
+        is ChatRoomEvent.NewChatStartChanged,
+        is ChatRoomEvent.ShareChanged,
+        -> reduceMenu(state, event)
+
+        else -> reduceTurn(state, event)
+    }
+
+/** 헤더 메뉴에서 갈라지는 상태 전이 — 삭제·새 채팅·공유·이프 잔액. */
+private fun reduceMenu(
+    state: ChatRoomUiState,
+    event: ChatRoomEvent,
+): ChatRoomUiState =
+    when (event) {
         ChatRoomEvent.DeleteStarted -> state.copy(isDeleting = true)
 
         ChatRoomEvent.DeleteFailed -> state.copy(isDeleting = false)
 
-        else -> reduceTurn(state, event)
+        is ChatRoomEvent.CreditBalanceChanged -> state.copy(creditBalance = event.balance)
+
+        is ChatRoomEvent.NewChatStartChanged -> state.copy(isStartingNewChat = event.inProgress)
+
+        is ChatRoomEvent.ShareChanged -> state.copy(isSharing = event.inProgress)
+
+        else -> state
     }
 
 /** 전송하며 비운 컴포저와 채우기 기억. 되돌릴 때 둘이 함께 돌아가야 출처 판정이 어긋나지 않는다. */
@@ -770,14 +968,14 @@ private fun reduceTurn(
         is ChatRoomEvent.SendStarted ->
             state.copy(
                 composer = event.composer,
-                streaming = StreamingTurn(userInput = event.userInput),
+                streaming = StreamingTurn(userInput = event.userInput, realtimeImage = event.realtimeImage),
                 isStreaming = true,
                 choicesProgress = null,
             )
 
         is ChatRoomEvent.RegenerateStarted ->
             state.copy(
-                streaming = StreamingTurn(userInput = event.userInput),
+                streaming = StreamingTurn(userInput = event.userInput, realtimeImage = event.realtimeImage),
                 isStreaming = true,
                 regeneratingTurnId = event.turnId,
                 choicesProgress = null,
@@ -832,6 +1030,7 @@ private fun ChatRepository.turnStream(
     chatId: String,
     userInput: String,
     origin: SuggestionOrigin,
+    realtimeImage: Boolean,
 ): Flow<ChatStreamEvent> =
     streamTurn(
         chatId = chatId,
@@ -839,6 +1038,7 @@ private fun ChatRepository.turnStream(
         userSource = origin.userSource,
         sourceTurnId = origin.sourceTurnId,
         choiceOrder = origin.choiceOrder,
+        realtimeImage = realtimeImage,
     )
 
 private fun app.manyak.chat.entity.ChatTurn.toUi(): ChatRoomTurn =

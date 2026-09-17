@@ -132,6 +132,7 @@ class ChatSseSourceTest {
                                 userSource = "choice",
                                 sourceTurnId = 7,
                                 choiceOrder = 2,
+                                realtimeImage = false,
                             ),
                         ).collect { }
                 }
@@ -140,7 +141,8 @@ class ChatSseSourceTest {
             assertEquals("https://example.com/api/v1/chats/chat-1/turns/stream", request.url.toString())
             assertEquals("text/event-stream, application/json", request.header("Accept"))
             assertEquals(
-                """{"userInput":"문을 연다","userSource":"choice","sourceTurnId":7,"choiceOrder":2}""",
+                """{"userInput":"문을 연다","userSource":"choice","sourceTurnId":7,"choiceOrder":2,""" +
+                    """"realtimeImage":false}""",
                 request.bodyText(),
             )
 
@@ -155,7 +157,10 @@ class ChatSseSourceTest {
 
             val job = launch(dispatcher()) { source.streamTurn(CHAT_ID, request()).collect { } }
 
-            assertEquals("""{"userInput":"문을 연다","userSource":"typed"}""", factory.request.bodyText())
+            assertEquals(
+                """{"userInput":"문을 연다","userSource":"typed","realtimeImage":true}""",
+                factory.request.bodyText(),
+            )
 
             job.cancelAndJoin()
         }
@@ -170,12 +175,13 @@ class ChatSseSourceTest {
                     apiBaseUrl = "https://example.com/api/v1/",
                     isDebugBuild = true,
                     appVersion = "1.0",
+                    webBaseUrl = "https://example.com",
                 ),
             json = Json { explicitNulls = false },
             ioDispatcher = dispatcher(),
         )
 
-    private fun request() = ChatTurnStreamRequestDto(userInput = "문을 연다", userSource = "typed")
+    private fun request() = ChatTurnStreamRequestDto(userInput = "문을 연다", userSource = "typed", realtimeImage = true)
 
     private fun Request.bodyText(): String = Buffer().also { buffer -> body?.writeTo(buffer) }.readUtf8()
 

@@ -125,4 +125,5 @@
         <item>두 번째</item>
         <item>세 번째</item>
     </string-array>
+    <string name="create_supporting_empty_description">주변 인물이 랜덤으로 생성돼요</string>
 </resources>

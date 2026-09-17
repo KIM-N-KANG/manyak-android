@@ -39,6 +39,7 @@ import app.manyak.chat.R as ChatR
 internal fun ChatComposer(
     state: ChatComposerState,
     choicesEnabled: Boolean,
+    realtimeImageEnabled: Boolean,
     hasSuggestions: Boolean,
     isStreaming: Boolean,
     actions: ChatComposerActions,
@@ -61,9 +62,9 @@ internal fun ChatComposer(
         ComposerToolbar(
             modifier = toolbarModifier,
             mode = state.mode,
-            choicesEnabled = choicesEnabled,
             canAddBlock = state.blocks.canAddBlock(),
             enabled = !isStreaming,
+            realtimeImageEnabled = realtimeImageEnabled,
             sendState = sendState,
             actions = actions,
             onInsertEmphasis = { plainState.wrapSelectionWithEmphasis() },
@@ -243,8 +244,7 @@ private fun previewActions(): ChatComposerActions =
         onBlockValueChange = { _, _ -> },
         onAddBlock = {},
         onRemoveBlock = {},
-        onModeChange = {},
-        onChoicesEnabledChange = {},
+        onOpenSettings = {},
         onSend = {},
         onSendRandomSuggestion = {},
         onLockedTap = {},
@@ -265,6 +265,7 @@ private fun ChatComposerBlockPreview() {
                         ),
                 ),
             choicesEnabled = true,
+            realtimeImageEnabled = true,
             hasSuggestions = true,
             isStreaming = false,
             actions = previewActions(),
@@ -279,6 +280,7 @@ private fun ChatComposerPlainPreview() {
         ChatComposer(
             state = ChatComposerState(mode = ChatInputMode.PLAIN, plainText = ""),
             choicesEnabled = true,
+            realtimeImageEnabled = true,
             hasSuggestions = true,
             isStreaming = false,
             actions = previewActions(),
@@ -293,6 +295,7 @@ private fun ChatComposerStreamingPreview() {
         ChatComposer(
             state = ChatComposerState(mode = ChatInputMode.PLAIN, plainText = "문을 연다"),
             choicesEnabled = true,
+            realtimeImageEnabled = true,
             hasSuggestions = true,
             isStreaming = true,
             actions = previewActions(),

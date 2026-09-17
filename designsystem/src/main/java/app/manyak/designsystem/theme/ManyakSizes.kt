@@ -28,6 +28,16 @@ data class ManyakSizes(
     val tabIcon: Dp,
     /** 24dp — 마냑 로고 락업의 높이. 폭은 원본 비율(89:32)로 따라간다 */
     val logo: Dp,
+    /** 2dp — 미선택 체크박스 경계. Material 3 라디오 버튼의 선 두께와 동일 */
+    val selectionBorderWidth: Dp,
+    /** 60dp — 텍스트 시머 띠의 반폭 */
+    val shimmerBandHalfWidth: Dp,
+    /** 10dp — 이미지 생성 로딩의 점 간격 */
+    val generationDotGap: Dp,
+    /** 1dp — 이미지 생성 로딩의 점 반지름과 테두리 */
+    val generationDotRadius: Dp,
+    /** 9dp — 이미지 생성 로딩의 점 최대 변위 */
+    val generationDotDisplacement: Dp,
 )
 
 internal val ManyakDefaultSizes =
@@ -40,4 +50,9 @@ internal val ManyakDefaultSizes =
         icon = 20.dp,
         tabIcon = 24.dp,
         logo = 24.dp,
+        selectionBorderWidth = 2.dp,
+        shimmerBandHalfWidth = 60.dp,
+        generationDotGap = 10.dp,
+        generationDotRadius = 1.dp,
+        generationDotDisplacement = 9.dp,
     )

@@ -19,6 +19,9 @@ data class ChatCreateRequestDto(
  *
  * [sourceTurnId]·[choiceOrder] 는 고른 선택지를 서버가 기록하는 데만 쓰이고, 값이 낡았거나 범위를
  * 벗어나도 서버가 거절하지 않고 기록만 생략한다.
+ *
+ * [realtimeImage] 는 기본값을 두지 않는다 — 서버 기본이 켬이라 빠뜨리면 끈 사용자에게도 이미지가
+ * 만들어지고 이프가 빠져나간다. 항상 명시해 보낸다.
  */
 @Serializable
 data class ChatTurnStreamRequestDto(
@@ -26,12 +29,14 @@ data class ChatTurnStreamRequestDto(
     val userSource: String? = null,
     val sourceTurnId: Long? = null,
     val choiceOrder: Int? = null,
+    val realtimeImage: Boolean,
 )
 
-/** 재생성 요청. 서버가 보는 마지막 턴과 다르면 409 다. */
+/** 재생성 요청. 서버가 보는 마지막 턴과 다르면 409 다. [realtimeImage] 규칙은 턴 진행과 같다. */
 @Serializable
 data class ChatRegenerateRequestDto(
     val turnId: Long,
+    val realtimeImage: Boolean,
 )
 
 /**
@@ -50,6 +55,12 @@ data class ChatCreateResponseDto(
 )
 
 fun ChatCreateResponseDto.toDomain(): CreatedChat = CreatedChat(id = id)
+
+/** 공유 발급 응답. 링크에 들어가는 토큰만 쓰고 커트라인 턴 수·발급 시각은 역직렬화하지 않는다. */
+@Serializable
+data class ChatShareResponseDto(
+    val shareId: String,
+)
 
 /**
  * 채팅 목록 한 건. 카드가 쓰지 않는 참조 스토리 ID·도달 엔딩은 역직렬화하지 않는다.

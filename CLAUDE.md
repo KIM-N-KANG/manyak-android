@@ -9,7 +9,6 @@
 | Android 사용자 계약·플랫폼 예외 | `../knk-harness/docs/spec/3-3-android-spec.md` |
 | 현재 구조·상태·인증·내비게이션 | `../knk-harness/docs/design/1-2-android-design.md` |
 | 결정 당시 맥락·선택·이유 | `../knk-harness/docs/adr/1-1-client-adr.md` · `../knk-harness/docs/adr/1-3-android-adr.md` |
-| 계약 승인·적용·구현·검증 근거·Jira 연결 | `../knk-harness/docs/planning/client-tracking.md` |
 | 모듈 소유권·내부 계층·의존 방향 상세 규칙 | `../knk-harness/docs/design/1-2-android-design.md#1-2-2-모듈과-소유권` |
 | 웹·앱 공통 계약(화면·상태·사용자 흐름·API 사용) | `../knk-harness/docs/spec/3-1-client-spec.md`  |
 | 릴리스·배포 절차(버전 규칙·서명·트랙 승격·중단 기준) | `../knk-harness/docs/design/4-deployment.md` §4-5·§4-7·§4-9 |
@@ -25,7 +24,7 @@
 
 ## 작업 방식
 
-- 기능 작업은 관련 spec/design을 전체로 읽고 목표·계약·적용 범위를 확인합니다. 승인된 계약은 spec, 중요한 선택 이유는 ADR, 변경 순서·검증·복구는 기능 계획에 둡니다. 구현 후 현재 design을 맞추고 client-tracking에 코드·검증·배포 근거를 연결합니다. spec에는 Phase·구현 상태·Jira·작업 순서를 넣지 않습니다.
+- 기능 작업은 관련 spec/design을 전체로 읽고 목표·계약·적용 범위를 확인합니다. 승인된 계약은 spec, 중요한 선택 이유는 ADR, 변경 순서·검증·복구는 기능 계획에 둡니다. 구현 후 현재 design을 맞추고 해당 기능 계획·PR에 코드·검증·배포 근거를 남깁니다. spec에는 Phase·구현 상태·Jira·작업 순서를 넣지 않습니다.
 - 지라 티켓을 임의로 새로 만들지 않습니다. 브랜치 준비를 요청받으면 하네스와 구현 저장소에 같은 Jira 키를 사용합니다. 별도 브랜치 요청이 없으면 각 저장소의 현재 브랜치에서 작업합니다.
 - 구현을 요청받았으면 중간에 되묻지 말고 판단해서 끝까지 진행합니다. 되돌리기 비싼 결정(새 API 계약·저장 스키마·인증·권한)만 확인을 받습니다.
 - 문제를 찾아 달라고 한 작업은 고치지 말고 먼저 정리해 보고합니다.

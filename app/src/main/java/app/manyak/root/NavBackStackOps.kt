@@ -17,3 +17,8 @@ internal fun MutableList<NavKey>.pop() {
 internal fun MutableList<NavKey>.popToMainTabs() {
     while (size > 1 && lastOrNull() != MainTabsRoute) removeLastOrNull()
 }
+
+/** 맨 위 목적지를 바꿔 끼운다 — 채팅방에서 새 채팅을 만들면 지운 방처럼 뒤로가기로 되돌아가지 않는다. */
+internal fun MutableList<NavKey>.replaceTop(key: NavKey) {
+    if (isNotEmpty()) this[lastIndex] = key
+}

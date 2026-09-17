@@ -24,8 +24,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -39,6 +37,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import app.manyak.designsystem.component.CyclingPhrases
 import app.manyak.designsystem.theme.ManyakTheme
 import kotlinx.coroutines.delay
 import kotlin.random.Random
@@ -50,7 +49,7 @@ internal data class GenerationHint(
     @param:StringRes val textRes: Int,
 )
 
-/** 스토리라인 생성 중 로딩 화면 — 로딩 제목, 타자기형 문구, 지연 힌트. */
+/** 스토리라인 생성 중 로딩 화면 — 로딩 제목, 순환 시머 문구, 지연 힌트. */
 @Composable
 internal fun StorylineGeneratingContent(modifier: Modifier = Modifier) {
     GeneratingLoadingContent(
@@ -102,45 +101,10 @@ private fun GeneratingLoadingContent(
                     .padding(horizontal = ManyakTheme.spacing.gutter)
                     .padding(top = ManyakTheme.spacing.block),
         ) {
-            TypewriterPhrases(phrases = stringArrayResource(phrasesRes).toList())
+            CyclingPhrases(phrases = stringArrayResource(phrasesRes).toList())
             GenerationHints(hints = hints)
         }
     }
-}
-
-/** 문구를 한 글자씩 쓰고, 잠시 머문 뒤 한 글자씩 지우고 다음 문구로 순환한다. */
-@Composable
-private fun TypewriterPhrases(
-    phrases: List<String>,
-    modifier: Modifier = Modifier,
-) {
-    var text by remember { mutableStateOf("") }
-
-    LaunchedEffect(phrases) {
-        if (phrases.isEmpty()) return@LaunchedEffect
-        var index = 0
-        while (true) {
-            val phrase = phrases[index]
-            for (length in 1..phrase.length) {
-                text = phrase.take(length)
-                delay(TYPEWRITER_CHAR_DELAY_MS)
-            }
-            delay(TYPEWRITER_PHRASE_HOLD_MS)
-            for (length in phrase.length - 1 downTo 0) {
-                text = phrase.take(length)
-                delay(TYPEWRITER_DELETE_DELAY_MS)
-            }
-            index = (index + 1) % phrases.size
-        }
-    }
-
-    // 빈 순간에도 줄 높이를 유지해 아래 힌트가 흔들리지 않게 한다.
-    Text(
-        modifier = modifier,
-        text = text.ifEmpty { " " },
-        style = ManyakTheme.typography.bodyMedium,
-        color = ManyakTheme.colors.textSubtle,
-    )
 }
 
 /**
@@ -259,9 +223,6 @@ private fun SeparatorLine(modifier: Modifier = Modifier) {
     )
 }
 
-private const val TYPEWRITER_CHAR_DELAY_MS = 90L
-private const val TYPEWRITER_DELETE_DELAY_MS = 50L
-private const val TYPEWRITER_PHRASE_HOLD_MS = 1_200L
 private const val TEXT_REVEAL_MIN_OFFSET_MS = 1_000L
 private const val TEXT_REVEAL_MAX_OFFSET_MS = 2_000L
 private const val MILLIS_PER_SECOND = 1_000L
@@ -273,7 +234,7 @@ private val SeparatorLineWidth = 1.dp
 @Preview(showBackground = true, name = "스토리라인 선택 · 생성 중")
 @Composable
 private fun StorylineGeneratingContentPreview() {
-    ManyakTheme(darkTheme = false) {
+    ManyakTheme {
         StorylineGeneratingContent()
     }
 }

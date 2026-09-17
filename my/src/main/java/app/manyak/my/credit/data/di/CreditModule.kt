@@ -1,8 +1,10 @@
 package app.manyak.my.credit.data.di
 
 import app.manyak.common.domain.credit.CreditPolicyRepository
+import app.manyak.common.domain.credit.TrialsRepository
 import app.manyak.my.credit.data.repository.CreditPolicyRepositoryImpl
 import app.manyak.my.credit.data.repository.CreditRepositoryImpl
+import app.manyak.my.credit.data.repository.TrialsRepositoryImpl
 import app.manyak.my.credit.domain.CreditRepository
 import dagger.Binds
 import dagger.Module
@@ -20,4 +22,8 @@ abstract class CreditModule {
     @Binds
     @Singleton
     abstract fun bindCreditPolicyRepository(impl: CreditPolicyRepositoryImpl): CreditPolicyRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindTrialsRepository(impl: TrialsRepositoryImpl): TrialsRepository
 }

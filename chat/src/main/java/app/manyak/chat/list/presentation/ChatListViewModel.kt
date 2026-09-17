@@ -30,6 +30,8 @@ data class ChatListUiState(
     /** 삭제 확인을 묻는 대상. null 이면 다이얼로그가 없다. */
     val deleteTarget: ChatSummary? = null,
     val isDeleting: Boolean = false,
+    /** 옵션 시트의 공유 링크를 발급하는 중. 항목을 잠그고 시트 닫기를 막는다. */
+    val isSharing: Boolean = false,
     /** 신고 시트. 대상은 옵션 시트를 연 카드가 참조하는 스토리다. */
     val report: StoryReportUiState = StoryReportUiState(),
     /** 신고 시트가 열려 있는 동안의 대상 스토리. 옵션 시트가 닫혀도 신고가 어느 스토리인지 남아야 한다. */
@@ -55,6 +57,9 @@ sealed interface ChatListIntent {
 
     /** 옵션 시트의 "삭제하기" — 바로 지우지 않고 확인을 묻는다. */
     data object RequestDelete : ChatListIntent
+
+    /** 옵션 시트의 공유하기. 그 카드의 채팅을 읽기 전용 웹 링크로 발급해 공유 시트로 보낸다. */
+    data object Share : ChatListIntent
 
     data object ConfirmDelete : ChatListIntent
 
@@ -97,6 +102,10 @@ sealed interface ChatListEvent {
 
     data object DeleteFailed : ChatListEvent
 
+    data class ShareChanged(
+        val inProgress: Boolean,
+    ) : ChatListEvent
+
     data class ReportTargetChanged(
         val storyId: String?,
     ) : ChatListEvent
@@ -112,6 +121,15 @@ sealed interface ChatListEffect {
     data object ShowChatDeleted : ChatListEffect
 
     data object ShowChatDeleteFailed : ChatListEffect
+
+    /** 공유 링크가 발급됐다. 화면이 문구와 함께 시스템 공유 시트로 보낸다. 시트는 ViewModel 이 닫는다. */
+    data class ShareLink(
+        val url: String,
+        val storyTitle: String,
+        val turnCount: Int,
+    ) : ChatListEffect
+
+    data object ShowShareFailed : ChatListEffect
 
     data object ShowReportSubmitted : ChatListEffect
 
@@ -142,6 +160,7 @@ class ChatListViewModel
     ) : MviViewModel<ChatListIntent, ChatListUiState, ChatListEvent, ChatListEffect>(ChatListUiState()) {
         private var loadJob: Job? = null
         private var deleteJob: Job? = null
+        private var shareJob: Job? = null
 
         init {
             analytics.track(AnalyticsEvent.ChatListViewed)
@@ -173,6 +192,16 @@ class ChatListViewModel
 
                 ChatListIntent.Refresh -> load(LoadKind.Refresh)
 
+                else -> handleCardIntent(intent, state)
+            }
+        }
+
+        /** 카드 옵션 시트에서 갈라지는 동작 — 공유·신고·삭제. */
+        private suspend fun handleCardIntent(
+            intent: ChatListIntent,
+            state: ChatListUiState,
+        ) {
+            when (intent) {
                 is ChatListIntent.OpenOptions -> {
                     analytics.track(AnalyticsEvent.ChatOptionsOpened(intent.chat.id))
                     dispatchEvent(ChatListEvent.OptionsTargetChanged(intent.chat))
@@ -188,11 +217,15 @@ class ChatListViewModel
 
                 ChatListIntent.ConfirmDelete -> state.deleteTarget?.let { chat -> delete(chat) }
 
+                ChatListIntent.Share -> state.optionsTarget?.let { chat -> share(chat) }
+
                 // 삭제가 진행 중이면 닫지 않는다 — 결과가 정해진 뒤 상태 전이가 닫는다.
                 ChatListIntent.DismissDeleteDialog ->
                     if (deleteJob?.isActive != true) dispatchEvent(ChatListEvent.DeleteDialogDismissed)
 
                 is ChatListIntent.Report -> handleReport(intent.action, state)
+
+                else -> Unit
             }
         }
 
@@ -273,6 +306,28 @@ class ChatListViewModel
                 }
         }
 
+        /** 발급은 서버가 멱등이라 연타를 막는 것은 요청을 아끼기 위해서다. 실패해도 시트는 남아 다시 누를 수 있다. */
+        private suspend fun share(target: ChatSummary) {
+            if (shareJob?.isActive == true) return
+            analytics.track(AnalyticsEvent.ChatShareButtonClicked(target.id, turnNumber = target.turnCount.toInt()))
+            dispatchEvent(ChatListEvent.ShareChanged(inProgress = true))
+            shareJob =
+                viewModelScope.launch {
+                    val result = chatRepository.createShareLink(target.id)
+                    dispatchEvent(ChatListEvent.ShareChanged(inProgress = false))
+                    when (result) {
+                        is DomainResult.Success -> {
+                            dispatchEvent(ChatListEvent.OptionsTargetChanged(null))
+                            dispatchEffect(
+                                ChatListEffect.ShareLink(result.value, target.storyTitle, target.turnCount.toInt()),
+                            )
+                        }
+
+                        is DomainResult.Failure -> dispatchEffect(ChatListEffect.ShowShareFailed)
+                    }
+                }
+        }
+
         override fun reduce(
             state: ChatListUiState,
             event: ChatListEvent,
@@ -297,32 +352,45 @@ class ChatListViewModel
                 // 새로고침 실패는 보고 있던 목록을 건드리지 않는다 — 알림은 토스트가 맡는다.
                 ChatListEvent.RefreshFailed -> state.copy(isRefreshing = false)
 
-                is ChatListEvent.OptionsTargetChanged -> state.copy(optionsTarget = event.chat)
-
-                is ChatListEvent.DeleteRequested -> state.copy(deleteTarget = event.chat)
-
-                ChatListEvent.DeleteDialogDismissed -> state.copy(deleteTarget = null)
-
-                ChatListEvent.DeleteStarted -> state.copy(isDeleting = true)
-
-                // 서버 재조회 대신 로컬 제거로 목록을 맞춘다 — 서버가 지운 것을 다시 물을 이유가 없다.
-                is ChatListEvent.DeleteSucceeded ->
-                    state.copy(
-                        isDeleting = false,
-                        deleteTarget = null,
-                        chats = state.chats.filterNot { chat -> chat.id == event.chatId },
-                    )
-
-                ChatListEvent.DeleteFailed -> state.copy(isDeleting = false, deleteTarget = null)
-
-                is ChatListEvent.ReportTargetChanged -> state.copy(reportStoryId = event.storyId)
-
-                is ChatListEvent.Report -> {
-                    val report = state.report.reduceReport(event.change)
-                    // 시트가 닫히면 대상도 함께 지운다 — 다음 신고가 지난 대상으로 나가면 안 된다.
-                    state.copy(report = report, reportStoryId = state.reportStoryId.takeIf { report.isSheetOpen })
-                }
+                else -> reduceCardEvent(state, event)
             }
+    }
+
+/** 카드 옵션 시트에서 갈라지는 상태 전이 — 공유·신고·삭제. 순수 함수라 [MviViewModel.reduce] 와 같은 규칙을 따른다. */
+private fun reduceCardEvent(
+    state: ChatListUiState,
+    event: ChatListEvent,
+): ChatListUiState =
+    when (event) {
+        is ChatListEvent.OptionsTargetChanged -> state.copy(optionsTarget = event.chat)
+
+        is ChatListEvent.DeleteRequested -> state.copy(deleteTarget = event.chat)
+
+        ChatListEvent.DeleteDialogDismissed -> state.copy(deleteTarget = null)
+
+        ChatListEvent.DeleteStarted -> state.copy(isDeleting = true)
+
+        // 서버 재조회 대신 로컬 제거로 목록을 맞춘다 — 서버가 지운 것을 다시 물을 이유가 없다.
+        is ChatListEvent.DeleteSucceeded ->
+            state.copy(
+                isDeleting = false,
+                deleteTarget = null,
+                chats = state.chats.filterNot { chat -> chat.id == event.chatId },
+            )
+
+        ChatListEvent.DeleteFailed -> state.copy(isDeleting = false, deleteTarget = null)
+
+        is ChatListEvent.ShareChanged -> state.copy(isSharing = event.inProgress)
+
+        is ChatListEvent.ReportTargetChanged -> state.copy(reportStoryId = event.storyId)
+
+        is ChatListEvent.Report -> {
+            val report = state.report.reduceReport(event.change)
+            // 시트가 닫히면 대상도 함께 지운다 — 다음 신고가 지난 대상으로 나가면 안 된다.
+            state.copy(report = report, reportStoryId = state.reportStoryId.takeIf { report.isSheetOpen })
+        }
+
+        else -> state
     }
 
 /** 목록 조회를 부른 자리. 진행을 어떻게 보이고 실패를 어떻게 알릴지가 여기서 갈린다. */
