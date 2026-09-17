@@ -22,19 +22,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.FirstBaseline
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import app.manyak.designsystem.component.ImageGenerationLoading
 import app.manyak.designsystem.component.ManyakMoreButton
-import app.manyak.designsystem.component.ManyakProgressIndicator
 import app.manyak.designsystem.component.STORY_THUMBNAIL_ASPECT_RATIO
 import app.manyak.designsystem.component.moreButtonTitleAlignment
+import app.manyak.designsystem.component.rememberTextShimmerBrush
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.designsystem.theme.insetForBorder
 import app.manyak.designsystem.R as DesignsystemR
@@ -97,7 +98,7 @@ sealed interface CreationProgressCardKind {
     /** 편집 중 초안 — 이어서 만들기와 삭제만 있다. */
     data object Draft : CreationProgressCardKind
 
-    /** 완성 중 — 스피너만 있고 아무 동작도 없다. */
+    /** 완성 중 — 이미지 생성 로딩만 있고 아무 동작도 없다. */
     data object Completing : CreationProgressCardKind
 
     /** 완료됐지만 아직 목록에 실리지 않은 스토리. 실제 제목으로 상세에 들어갈 수 있다. */
@@ -140,7 +141,7 @@ internal fun CreationProgressCardPreview(
 }
 
 /**
- * 회색 3:4 표지. 초안·실패는 가운데에 더 진한 회색 캐릭터 심벌을, 완성 중에는 스피너를 둔다.
+ * 회색 3:4 표지. 초안·실패는 가운데에 더 진한 회색 캐릭터 심벌을, 완성 중에는 이미지 생성 로딩을 둔다.
  * 테두리 처리는 목록 표지와 같다 — 밝은 표지의 가장자리가 배경에 묻히지 않게 바탕으로 그린다.
  */
 @Composable
@@ -150,7 +151,15 @@ private fun ProgressCover(
     compact: Boolean = false,
 ) {
     val shape = if (compact) ManyakTheme.shapes.thumbnailSmall else ManyakTheme.shapes.thumbnail
-    val completingDescription = stringResource(StudioR.string.studio_progress_completing_state)
+    if (kind == CreationProgressCardKind.Completing) {
+        ImageGenerationLoading(
+            modifier = modifier,
+            aspectRatio = STORY_THUMBNAIL_ASPECT_RATIO,
+            shape = shape,
+            label = stringResource(StudioR.string.studio_progress_completing_state),
+        )
+        return
+    }
     Box(
         modifier =
             modifier
@@ -162,25 +171,12 @@ private fun ProgressCover(
                 .background(ManyakTheme.colors.backgroundNeutral),
         contentAlignment = Alignment.Center,
     ) {
-        when (kind) {
-            CreationProgressCardKind.Completing ->
-                ManyakProgressIndicator(
-                    modifier =
-                        Modifier
-                            .size(if (compact) CompactSymbolSize else SymbolSize)
-                            // 회전만으로는 읽히지 않으므로 상태를 접근성 이름으로도 알린다.
-                            .semantics { contentDescription = completingDescription },
-                )
-
-            // 심벌은 제목 줄이 이미 말하는 상태를 되풀이하는 장식이라 낭독 대상이 아니다.
-            else ->
-                Icon(
-                    modifier = Modifier.size(if (compact) CompactSymbolSize else SymbolSize),
-                    painter = painterResource(DesignsystemR.drawable.ic_manyak_symbol),
-                    contentDescription = null,
-                    tint = ManyakTheme.colors.textDisabled,
-                )
-        }
+        Icon(
+            modifier = Modifier.size(if (compact) CompactSymbolSize else SymbolSize),
+            painter = painterResource(DesignsystemR.drawable.ic_manyak_symbol),
+            contentDescription = null,
+            tint = ManyakTheme.colors.textDisabled,
+        )
     }
 }
 
@@ -191,6 +187,7 @@ private fun ProgressTitleRow(
     modifier: Modifier = Modifier,
 ) {
     val titleStyle = ManyakTheme.typography.bodyLargeStrong
+    val shimmer = if (kind == CreationProgressCardKind.Completing) rememberTextShimmerBrush() else null
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
@@ -198,8 +195,8 @@ private fun ProgressTitleRow(
         Text(
             modifier = Modifier.weight(1f).alignBy(FirstBaseline),
             text = stringResource(kind.titleRes()),
-            style = titleStyle,
-            color = kind.titleColor(),
+            style = titleStyle.merge(TextStyle(brush = shimmer)),
+            color = if (shimmer == null) kind.titleColor() else Color.Unspecified,
             maxLines = TITLE_MAX_LINES,
             overflow = TextOverflow.Ellipsis,
         )
@@ -281,7 +278,7 @@ private const val TITLE_MAX_LINES = 2
 @Preview(showBackground = true, name = "제작 · 진행 카드")
 @Composable
 private fun CreationProgressCardPreviews() {
-    ManyakTheme(darkTheme = false) {
+    ManyakTheme {
         Column {
             CreationProgressCard(kind = CreationProgressCardKind.Draft, onPrimaryAction = {}, onOptionsClick = {})
             CreationProgressCard(kind = CreationProgressCardKind.Completing)

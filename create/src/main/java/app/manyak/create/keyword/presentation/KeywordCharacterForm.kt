@@ -34,6 +34,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import app.manyak.create.presentation.component.AddTrigger
 import app.manyak.create.presentation.component.KeywordSectionLabel
@@ -305,13 +306,16 @@ internal fun SupportingCharacterList(
                     },
             )
         }
+        if (state.supportingCharacters.isEmpty()) {
+            Text(
+                modifier = Modifier.fillMaxWidth().padding(top = ManyakTheme.spacing.gutter),
+                text = stringResource(CreateR.string.create_supporting_empty_description),
+                style = ManyakTheme.typography.bodyMedium,
+                color = ManyakTheme.colors.textSubtlest,
+                textAlign = TextAlign.Center,
+            )
+        }
         AddCharacterTrigger(
-            modifier =
-                if (state.supportingCharacters.isEmpty()) {
-                    Modifier.padding(top = ManyakTheme.spacing.gutter)
-                } else {
-                    Modifier
-                },
             enabled = state.supportingCharacters.size < CreateKeywordUiState.SUPPORTING_CHARACTER_MAX,
             onClick = { onIntent(CreateKeywordIntent.AddSupportingCharacter) },
         )
@@ -434,5 +438,17 @@ private fun SupportingCharacterHeader(
                 textAlign = TextAlign.End,
             )
         }
+    }
+}
+
+@Preview(showBackground = true, name = "주변 인물 없음")
+@Composable
+private fun EmptySupportingCharactersPreview() {
+    ManyakTheme {
+        SupportingCharacterList(
+            state = CreateKeywordUiState(supportingCharacters = emptyList()),
+            onIntent = {},
+            onOpenAddKeyword = {},
+        )
     }
 }

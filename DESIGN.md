@@ -159,6 +159,10 @@ sizes:
   icon: 20dp
   tab-icon: 24dp
   logo: 24dp
+  shimmer-band-half-width: 60dp
+  generation-dot-gap: 10dp
+  generation-dot-radius: 1dp
+  generation-dot-displacement: 9dp
 
 spacing:
   hairline: 2dp
@@ -175,6 +179,19 @@ spacing:
   screen-bottom: 32dp
 
 components:
+  image-generation-loading:
+    backgroundColor: "{colors.background-neutral}"
+    borderColor: "{colors.border}"
+    dotColor: "{colors.text}"
+    dotGap: "{sizes.generation-dot-gap}"
+    dotRadius: "{sizes.generation-dot-radius}"
+    dotDisplacement: "{sizes.generation-dot-displacement}"
+    borderWidth: "{sizes.generation-dot-radius}"
+    rounded: "{rounded.thumbnail}"
+  text-shimmer:
+    color: "{colors.text-subtle}"
+    highlightColor: "{colors.text}"
+    bandHalfWidth: "{sizes.shimmer-band-half-width}"
   screen:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.text}"
@@ -569,6 +586,10 @@ components:
 | `{sizes.icon}` | 20dp | 라벨 옆 아이콘·제공자 로고 |
 | `{sizes.tab-icon}` | 24dp | 하단 탭 아이콘 |
 | `{sizes.logo}` | 24dp | 마냑 로고 락업의 높이. 폭은 원본 비율(89:32)로 따라간다 |
+| `{sizes.shimmer-band-half-width}` | 60dp | 텍스트 시머 띠의 반폭 |
+| `{sizes.generation-dot-gap}` | 10dp | 이미지 생성 로딩 점 간격 |
+| `{sizes.generation-dot-radius}` | 1dp | 이미지 생성 로딩 점 반지름 기준·테두리 |
+| `{sizes.generation-dot-displacement}` | 9dp | 이미지 생성 로딩 점 최대 변위 |
 
 `{sizes.tab-icon}`이 `{sizes.icon}`보다 큰 이유는 놓이는 자리가 다르기 때문이다. `{sizes.icon}`은 같은 줄의
 라벨 옆에 붙어 글자 크기에 맞추지만, 탭 아이콘은 라벨 위에 놓인 탭의 주된 시각 요소다. 웹 하단
@@ -709,6 +730,10 @@ components:
 **`pull-to-refresh`** — 목록을 당겨서 새로고침할 때의 표시자. M3 `PullToRefreshBox` 기본 표시자 위에 배경 `{colors.surface-raised}`와 스피너 색 `{colors.progress-indicator}`를 얹는다. 목록은 셸 헤더 아래로 흘러 들어가도 되지만 표시자는 그 자리에서 헤더에 완전히 가리므로, 셸이 넘긴 콘텐츠 여백의 **상단만큼 내려** 헤더 뒤에서 나오게 한다. 목록이 그려진 상태에만 두고 골격·조회 실패·빈 목록에는 두지 않는다.
 
 ### 퍼널
+
+스토리라인 대기 문구는 4초마다 글자별 25ms 시차로 교차하며, 전체 문구 위에 4초 시머가 지나갑니다. 문구 앞의 점 3개는 1초 주기로 160ms씩 늦게 떠올랐다 내려옵니다. 이전·다음 문구를 별도 레이아웃으로 교차해 서로 다른 글자 폭 때문에 위치가 흔들리지 않도록 합니다. 기존 3종 문구와 15·30초 지연 힌트를 유지합니다. 주변 인물이 0명이면 인물 추가 버튼 위에 랜덤 생성 안내를 표시합니다.
+
+완성 중 카드에는 `ImageGenerationLoading`의 3:4 점 패턴과 제목 시머를 사용합니다. 이미지 로딩은 4:3 비율도 받을 수 있으며, 중심이 가로 약 10.7초·세로 약 13.2초 주기로 이동하며 주변 점의 위치·반지름·밝기를 함께 바꿉니다. 반지름은 기준 토큰의 0.65~1.5배, 변위는 최대 `{sizes.generation-dot-displacement}`입니다. 앱의 완성 알림 안내 문구를 유지합니다. 채팅 대기 문구는 공용 시머 브러시를 사용하되 기존 2초 주기·색을 유지합니다.
 
 > 간편 제작 퍼널은 셸을 두르지 않는 전체 화면이라 chrome 을 화면이 직접 그린다. 아래 세 컴포넌트는
 > 지금 `:create`(FAB은 `:studio`)가 소유하고, 두 번째 모듈 사용처가 생기면 `:designsystem`로 올린다.
