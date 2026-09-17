@@ -63,7 +63,7 @@ internal fun ChatSettingsSheet(
                 onCheckedChange = onRealtimeImageEnabledChange,
             )
             ChatSettingRow(
-                iconRes = DesignsystemR.drawable.ic_pen_sparkle,
+                iconRes = DesignsystemR.drawable.ic_ai_chat,
                 labelRes = ChatR.string.chat_settings_choices,
                 descriptionRes = ChatR.string.chat_settings_choices_description,
                 checked = choicesEnabled,
