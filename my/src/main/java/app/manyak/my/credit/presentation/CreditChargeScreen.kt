@@ -45,6 +45,7 @@ import app.manyak.designsystem.component.LoadFailedContent
 import app.manyak.designsystem.component.ManyakPullToRefreshBox
 import app.manyak.designsystem.component.SkeletonPlaceholder
 import app.manyak.designsystem.component.rememberSkeletonPulseAlpha
+import app.manyak.designsystem.credit.CreditAmountText
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.my.credit.entity.CreditTransaction
 import app.manyak.my.credit.entity.CreditTransactionReason
@@ -261,9 +262,9 @@ private fun CreditBalanceBox(
                         .heightIn(min = balanceHeight),
             )
         } else {
-            Text(
+            CreditAmountText(
                 modifier = Modifier.align(Alignment.End),
-                text = remember(balance) { NumberFormat.getInstance().format(balance) },
+                amount = remember(balance) { NumberFormat.getInstance().format(balance) },
                 style = ManyakTheme.typography.headlineSmall.copy(fontFeatureSettings = "tnum"),
                 color = ManyakTheme.colors.text,
             )

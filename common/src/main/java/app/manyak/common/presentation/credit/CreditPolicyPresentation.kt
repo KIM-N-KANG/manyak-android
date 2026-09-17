@@ -2,6 +2,7 @@ package app.manyak.common.presentation.credit
 
 import androidx.compose.runtime.compositionLocalOf
 import app.manyak.common.entity.credit.CreditPolicy
+import app.manyak.common.entity.credit.Trials
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -12,6 +13,9 @@ import java.util.Locale
  * 화면은 조회를 시작하지 않고 "지금 값이 무엇인가"만 읽는다.
  */
 val LocalCreditPolicy = compositionLocalOf<CreditPolicy?> { null }
+
+/** 서버가 내려준 무료 체험 잔여. 아직 받지 못했으면 null 이라 적용가를 확정하지 않는다. */
+val LocalTrials = compositionLocalOf<Trials?> { null }
 
 /** 값을 아직 모를 때 문구의 숫자 자리를 채우는 표시. 대체 수치가 아니다. */
 const val CREDIT_AMOUNT_PLACEHOLDER = "000"

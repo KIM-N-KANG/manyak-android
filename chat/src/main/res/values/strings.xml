@@ -60,6 +60,8 @@
     <string name="chat_settings_open">채팅 설정</string>
     <string name="chat_settings_realtime_image">실시간 이미지</string>
     <string name="chat_settings_realtime_image_description">대화에 따라 인물 한 명의 표정과 모습이 달라져요</string>
+    <string name="chat_settings_realtime_image_notice">실시간 이미지 안내</string>
+    <string name="chat_settings_realtime_image_notice_message">이미지를 만들지 못한 경우 사용된 이프가 자동으로 취소돼요</string>
     <string name="chat_settings_title">채팅 설정</string>
     <string name="relative_time_days">%1$d일 전</string>
     <string name="relative_time_hours">%1$d시간 전</string>

@@ -26,7 +26,6 @@ import app.manyak.create.presentation.component.SelectedKeywordChip
 import app.manyak.create.presentation.component.labelRes
 import app.manyak.designsystem.component.ManyakBottomSheet
 import app.manyak.designsystem.component.ManyakProgressIndicator
-import app.manyak.designsystem.component.ManyakTextButton
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.create.R as CreateR
 import app.manyak.designsystem.R as DesignsystemR
@@ -61,7 +60,8 @@ internal fun SelectedKeywordsTrigger(
  * 스토리라인 단계에서 되짚어 보는 선택 키워드.
  *
  * 이 단계는 키워드 목적지를 대체해 뒤로 돌아가 확인할 수 없다 — 무엇으로 만든 결과인지 보려면
- * 이 시트뿐이라 읽기 전용이고, 고치려면 처음부터 다시 만들어야 한다.
+ * 이 시트뿐이라 읽기 전용이고, 고치려면 처음부터 다시 만들어야 한다. 확정할 것이 없어 닫기 버튼을
+ * 두지 않고 스크림·끌어내리기·뒤로가기로만 닫는다.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -83,16 +83,6 @@ internal fun SelectedKeywordsSheet(
             is SelectedKeywords.Loaded -> SelectedKeywordGroups(groups = keywords.groups)
             SelectedKeywords.Failed -> SelectedKeywordsFailure(onRetry = onRetry)
             else -> SelectedKeywordsLoading()
-        }
-        ManyakTextButton(
-            modifier = Modifier.fillMaxWidth().heightIn(min = ManyakTheme.sizes.control),
-            onClick = onDismiss,
-        ) {
-            Text(
-                text = stringResource(CreateR.string.create_selected_keywords_close),
-                style = ManyakTheme.typography.labelLarge,
-                color = ManyakTheme.colors.textSubtle,
-            )
         }
     }
 }

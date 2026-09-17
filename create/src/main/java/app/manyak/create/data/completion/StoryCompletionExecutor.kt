@@ -3,6 +3,7 @@ package app.manyak.create.data.completion
 import app.manyak.auth.domain.AuthWork
 import app.manyak.auth.domain.SessionGate
 import app.manyak.common.data.di.ApplicationScope
+import app.manyak.common.domain.credit.TrialsRepository
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.story.CreationProgressAccess
@@ -14,6 +15,7 @@ import app.manyak.create.domain.StoryCompletionSubmitter
 import app.manyak.create.domain.StoryCreationRepository
 import app.manyak.create.domain.toProgressSummary
 import app.manyak.create.domain.toSummary
+import app.manyak.create.entity.CompletedStory
 import app.manyak.create.entity.CompletionOutcome
 import app.manyak.create.entity.CreationRequestSnapshot
 import app.manyak.create.entity.StoryCompletionCommand
@@ -47,6 +49,7 @@ class StoryCompletionExecutor
         private val repository: StoryCreationRepository,
         private val gate: SessionGate,
         @param:ApplicationScope private val applicationScope: CoroutineScope,
+        private val trialsRepository: TrialsRepository,
     ) : StoryCompletionSubmitter,
         CreationProgressAccess {
         private val inFlightLock = Any()
@@ -111,10 +114,7 @@ class StoryCompletionExecutor
         private suspend fun post(command: StoryCompletionCommand) =
             gate.withAuthWork(onBlocked = {}) { work ->
                 when (val result = repository.completeStory(command)) {
-                    is DomainResult.Success ->
-                        gate.commit(
-                            work,
-                        ) { requestStore.markCompleted(command.requestId, result.value) }
+                    is DomainResult.Success -> markCompleted(work, command.requestId, result.value)
 
                     is DomainResult.Failure ->
                         when (result.error) {
@@ -130,6 +130,16 @@ class StoryCompletionExecutor
                         }
                 }
             }
+
+        /** 완성 한 건이 제작 체험 한 회를 썼을 수 있다. 다음 완성 비용이 낡은 잔여로 그려지지 않게 다시 읽는다. */
+        private suspend fun markCompleted(
+            work: AuthWork,
+            requestId: String,
+            story: CompletedStory,
+        ) {
+            gate.commit(work) { requestStore.markCompleted(requestId, story) } ?: return
+            trialsRepository.refresh()
+        }
 
         private suspend fun refreshAll() =
             gate.withAuthWork(onBlocked = {}) { work ->
@@ -164,8 +174,7 @@ class StoryCompletionExecutor
                     when (val snapshot = result.value) {
                         CreationRequestSnapshot.Pending -> Unit
 
-                        is CreationRequestSnapshot.StoryReady ->
-                            gate.commit(work) { requestStore.markCompleted(requestId, snapshot.story) }
+                        is CreationRequestSnapshot.StoryReady -> markCompleted(work, requestId, snapshot.story)
 
                         // 단계가 어긋난 결과는 계약 위반이라 실패로 합류한다.
                         is CreationRequestSnapshot.StorylinesReady,

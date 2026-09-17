@@ -269,6 +269,7 @@ private fun ColumnScope.ChatRoomLoaded(
     ChatComposer(
         state = state.composer,
         choicesEnabled = state.choicesEnabled,
+        realtimeImageEnabled = state.realtimeImageEnabled,
         hasSuggestions = state.suggestions.hasCandidate,
         isStreaming = state.isStreaming,
         actions = composerActions(onIntent, onOpenSettings = { settingsOpen = true }),

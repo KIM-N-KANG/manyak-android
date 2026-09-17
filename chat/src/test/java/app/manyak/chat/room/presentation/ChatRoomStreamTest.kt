@@ -10,6 +10,7 @@ import app.manyak.chat.room.presentation.message.ChatMessageSegment
 import app.manyak.chat.testing.FakeChatPreferencesRepository
 import app.manyak.chat.testing.FakeChatRepository
 import app.manyak.chat.testing.FakeReportRepository
+import app.manyak.chat.testing.FakeTrialsRepository
 import app.manyak.chat.testing.sampleChatDetail
 import app.manyak.common.domain.error.DomainResult
 import kotlinx.coroutines.Dispatchers
@@ -98,6 +99,26 @@ class ChatRoomStreamTest {
             assertNull(state.streaming)
             assertFalse(state.isStreaming)
             assertEquals(2, state.turns.size)
+        }
+
+    @Test
+    fun `완료되면 체험 잔여를 다시 읽는다`() =
+        runTest(dispatcher) {
+            val repository = FakeChatRepository()
+            val trials = FakeTrialsRepository()
+            val viewModel = viewModel(repository, trials = trials)
+            advanceUntilIdle()
+            viewModel.type("문을 연다")
+            advanceUntilIdle()
+            viewModel.onIntent(ChatRoomIntent.Sent)
+            advanceUntilIdle()
+            assertEquals(0, trials.refreshCount)
+
+            repository.queuedChatDetailResults += DomainResult.Success(detailWithTwoTurns())
+            repository.streamEvents.send(ChatStreamEvent.Completed)
+            advanceUntilIdle()
+
+            assertEquals(1, trials.refreshCount)
         }
 
     @Test
@@ -262,11 +283,13 @@ class ChatRoomStreamTest {
     private fun viewModel(
         repository: FakeChatRepository,
         preferences: FakeChatPreferencesRepository = FakeChatPreferencesRepository(),
+        trials: FakeTrialsRepository = FakeTrialsRepository(),
     ) = ChatRoomViewModel(
         chatId = "chat-1",
         chatRepository = repository,
         reportRepository = FakeReportRepository(),
         preferences = preferences,
+        trialsRepository = trials,
         analytics = NoOpAnalytics,
     )
 

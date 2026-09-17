@@ -63,7 +63,6 @@
     <string name="create_section_genre">장르 (최대 3개)</string>
     <string name="create_selected_keywords_description">이 키워드들을 이용해서 스토리라인 세 개를 만들었어요</string>
     <string name="create_selected_keywords_title">선택한 키워드들이에요</string>
-    <string name="create_selected_keywords_close">닫기</string>
     <string name="create_step_additional_info">추가 정보 입력</string>
     <string name="create_step_keyword">키워드 선택</string>
     <string name="create_step_progress">%1$s 단계 (%2$d/%3$d)</string>
