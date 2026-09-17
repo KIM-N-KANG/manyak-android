@@ -656,6 +656,8 @@ components:
 
 **`icon-button`** — 라벨 없이 아이콘만 있는 버튼. 배경 없음이고 눌림 리플의 모양이 자리에 따라 갈린다. **앱바의 뒤로가기·닫기(`{sizes.control}`)는 원(`{rounded.pill}`)** — 안드로이드 관례라 그대로 둔다. **콘텐츠 안에 놓이는 작은 버튼(입력 칸 옆 삭제·카드 제목 줄 더보기·컴포저 아이콘, `{sizes.control-small}` 이하)은 `{rounded.menu-item}`** — M3 `IconButton` 은 모양을 고를 수 없어 원이 그대로 나오므로 `ManyakIconButton`을 쓴다. 높이가 낮은 글자 토글(추가 정보의 "더보기")도 같은 이유로 컨트롤 곡률 대신 메뉴 항목 곡률을 쓴다.
 
+헤더 메뉴와 카드의 더보기 아이콘은 채워진 가로 점 셋의 `more-h-filled`(`ic_more_horizontal`)을 사용합니다.
+
 **`button-disabled`** — 배경 `{colors.background-disabled}`, 텍스트 `{colors.text-disabled}`. 비활성은 색만으로 전달하지 않고 상태 안내를 함께 둡니다.
 
 ### 입력

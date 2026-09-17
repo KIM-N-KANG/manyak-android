@@ -72,7 +72,7 @@ fun ManyakOptionsMenu(
         ) {
             Icon(
                 modifier = Modifier.size(ManyakTheme.sizes.icon),
-                painter = painterResource(DesignsystemR.drawable.ic_more),
+                painter = painterResource(DesignsystemR.drawable.ic_more_horizontal),
                 contentDescription = contentDescription,
                 tint = tint,
             )

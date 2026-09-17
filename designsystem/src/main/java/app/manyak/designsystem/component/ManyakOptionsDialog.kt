@@ -115,7 +115,7 @@ fun ManyakMoreButton(
 ) {
     ManyakIconButton(
         modifier = modifier,
-        iconRes = DesignsystemR.drawable.ic_more,
+        iconRes = DesignsystemR.drawable.ic_more_horizontal,
         contentDescription = contentDescription,
         onClick = onClick,
         size = MoreButtonSize,
