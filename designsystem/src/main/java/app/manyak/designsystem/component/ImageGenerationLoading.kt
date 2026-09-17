@@ -36,8 +36,9 @@ fun ImageGenerationLoading(
 ) {
     require(aspectRatio.isFinite() && aspectRatio > 0f)
     val transition = rememberInfiniteTransition(label = "image-generation")
-    val horizontalPhase by transition.generationPhase(durationMillis = 10_681)
-    val verticalPhase by transition.generationPhase(durationMillis = 13_195)
+    val horizontalPhase by transition.generationPhase(durationMillis = 9_710)
+    val verticalPhase by transition.generationPhase(durationMillis = 11_995)
+    val variationPhase by transition.generationPhase(durationMillis = 7_319)
     val color = ManyakTheme.colors.text
     val gap = ManyakTheme.sizes.generationDotGap
     val radius = ManyakTheme.sizes.generationDotRadius
@@ -59,8 +60,8 @@ fun ImageGenerationLoading(
         val displacementPx = displacement.toPx()
         val focus =
             Offset(
-                size.width * (0.5f + sin(horizontalPhase) * 0.12f),
-                size.height * (0.5f + cos(verticalPhase) * 0.1f),
+                size.width * (0.5f + sin(horizontalPhase) * 0.12f + sin(variationPhase) * 0.02f),
+                size.height * (0.5f + cos(verticalPhase) * 0.1f + cos(variationPhase + horizontalPhase) * 0.016f),
             )
         val influenceRadius = size.minDimension * 0.38f
         val columns = (size.width / gapPx).toInt()
