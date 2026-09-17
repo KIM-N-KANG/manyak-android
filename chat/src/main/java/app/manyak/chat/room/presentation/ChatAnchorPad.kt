@@ -65,10 +65,10 @@ internal fun AnchorStreamingTurn(
     listState: LazyListState,
     state: ChatRoomUiState,
     itemCount: Int,
-    prologueCount: Int,
+    headerCount: Int,
     padPx: MutableIntState,
 ) {
-    val anchorIndex = anchorIndexOf(state = state, itemCount = itemCount, prologueCount = prologueCount)
+    val anchorIndex = anchorIndexOf(state = state, itemCount = itemCount, headerCount = headerCount)
     val anchor = rememberSaveable(saver = AnchorState.Saver) { AnchorState() }
 
     // 첫 앵커는 **전송이 그려지는 프레임 안**이어야 한다. LaunchedEffect 코루틴은 다음 프레임에 돌아
@@ -168,15 +168,18 @@ private class AnchorState(
     }
 }
 
-/** 스트리밍 블록이 놓인 자리. 이어쓰기는 목록 끝(패드 앞), 재생성은 대상 턴 자리다. */
+/**
+ * 스트리밍 블록이 놓인 자리. 이어쓰기는 목록 끝(패드 앞), 재생성은 대상 턴 자리다.
+ * [headerCount] 는 첫 턴 앞에 놓인 항목 수(안내 문구·프롤로그)다.
+ */
 private fun anchorIndexOf(
     state: ChatRoomUiState,
     itemCount: Int,
-    prologueCount: Int,
+    headerCount: Int,
 ): Int {
     val regenerating = state.regeneratingTurnId ?: return (itemCount - 2).coerceAtLeast(0)
     val turnIndex = state.turns.indexOfFirst { turn -> turn.id == regenerating }
-    return (prologueCount + turnIndex).coerceAtLeast(0)
+    return (headerCount + turnIndex).coerceAtLeast(0)
 }
 
 private fun LazyListLayoutInfo.viewportHeight(): Int = viewportEndOffset - viewportStartOffset

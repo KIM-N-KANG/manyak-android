@@ -39,17 +39,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.manyak.chat.list.presentation.label
 import app.manyak.chat.room.presentation.message.ChatAiOutput
 import app.manyak.chat.room.presentation.message.ChatUserBand
-import app.manyak.chat.room.presentation.message.rememberTypewriterSegments
 import app.manyak.chat.room.presentation.suggestion.ChatSuggestionArea
 import app.manyak.chat.room.presentation.suggestion.ChatSuggestions
 import app.manyak.chat.room.presentation.suggestion.hasSuggestionArea
@@ -60,7 +55,7 @@ import app.manyak.chat.R as ChatR
 import app.manyak.designsystem.R as DesignsystemR
 
 /**
- * 렌더 순서는 프롤로그 → 각 턴(사용자 밴드 → AI 출력)이다.
+ * 렌더 순서는 AI 생성 안내 → 프롤로그 → 각 턴(사용자 밴드 → AI 출력)이다.
  *
  * **항목 사이에 간격을 두지 않는다** — 각 덩이가 스스로 위아래 여백을 갖고, 사용자 밴드의 배경이
  * 시작과 끝을 말한다. 여기에 목록 간격을 더하면 배경 밴드가 본문에서 떠 버린다.
@@ -77,14 +72,15 @@ internal fun ChatTranscript(
     // 보낸 턴이 상단까지 올라갈 자리. 목록 끝 항목이 이 값을 높이로 읽는다. 구성 변경에서 잃으면
     // 목록만 (인덱스, 오프셋)으로 복원돼 자리가 사라지고, 복원한 위치가 콘텐츠 끝에 걸린다.
     val padPx = rememberSaveable { mutableIntStateOf(0) }
-    val prologueCount = if (state.prologue.isNotBlank()) 1 else 0
+    // 첫 턴 앞의 항목 수 — 안내 문구 하나와 프롤로그. 재생성 앵커가 턴 인덱스에 더한다.
+    val headerCount = 1 + (if (state.prologue.isNotBlank()) 1 else 0)
     val streaming = state.streaming
     // 재생성은 대상 턴 자리에서 진행하므로 목록 끝에 블록을 더하지 않는다.
     val appendsStreaming = streaming != null && state.regeneratingTurnId == null
     // 진행 중에는 추천을 그리지 않는다 — 이미 보낸 뒤라 고를 것이 아니다.
     val showsSuggestions = streaming == null && hasSuggestionArea(state)
     val itemCount =
-        prologueCount + state.turns.size + (if (appendsStreaming) 1 else 0) +
+        headerCount + state.turns.size + (if (appendsStreaming) 1 else 0) +
             (if (showsSuggestions) 1 else 0) + 1
 
     EnterAtLastMessage(listState = listState, itemCount = itemCount, hasTurns = state.turns.isNotEmpty())
@@ -92,7 +88,7 @@ internal fun ChatTranscript(
         listState = listState,
         state = state,
         itemCount = itemCount,
-        prologueCount = prologueCount,
+        headerCount = headerCount,
         padPx = padPx,
     )
     ReclaimAnchorPad(listState = listState, isStreaming = state.isStreaming, padPx = padPx)
@@ -102,7 +98,8 @@ internal fun ChatTranscript(
         modifier = modifier.fillMaxWidth(),
     ) {
         LazyColumn(modifier = Modifier.fillMaxWidth(), state = listState) {
-            if (prologueCount > 0) {
+            item(key = "ai-notice") { AiNotice() }
+            if (state.prologue.isNotBlank()) {
                 item(
                     key = "prologue",
                 ) { ChatAiOutput(content = state.prologue, onCharacterImageClick = onCharacterImageClick) }
@@ -155,27 +152,6 @@ private fun TurnBlock(
             )
         }
         if (isLast && canRegenerate(turn)) RegenerateButton(onClick = onRegenerate)
-    }
-}
-
-/**
- * 진행 중인 턴. 이어쓰기면 목록 끝에, 재생성이면 대상 턴 자리에 놓인다.
- *
- * 본문은 도착한 그대로가 아니라 타자기 공개를 거친다 — 배칭된 덩이가 아니라 글자가 이어서 나타난다.
- */
-@Composable
-private fun StreamingBlock(
-    streaming: StreamingTurn,
-    onCharacterImageClick: (String) -> Unit,
-) {
-    val revealed = rememberTypewriterSegments(streaming.segments)
-    Column {
-        ChatUserBand(text = streaming.userInput)
-        if (revealed.isEmpty()) {
-            WritingPlaceholder()
-        } else {
-            ChatAiOutput(segments = revealed, onCharacterImageClick = onCharacterImageClick)
-        }
     }
 }
 
@@ -254,21 +230,19 @@ private fun KeepReadingPosition(
     }
 }
 
-/** 첫 표시 가능 사건이 오기 전의 자리. 빈 화면으로 두면 보냈는지 알 수 없어, 옅은 띠를 흘려 진행 중임을 말한다. */
+/** 대화 맨 위의 AI 생성 안내. 프롤로그가 없는 방에도 남는다 — 무엇을 읽고 있는지 알리는 표지다. */
 @Composable
-private fun WritingPlaceholder(modifier: Modifier = Modifier) {
-    val statusLabel = stringResource(ChatR.string.chat_room_writing_status)
+private fun AiNotice(modifier: Modifier = Modifier) {
     Text(
         modifier =
             modifier
                 .fillMaxWidth()
-                .padding(horizontal = ManyakTheme.spacing.gutter, vertical = ManyakTheme.spacing.passage)
-                .semantics {
-                    liveRegion = LiveRegionMode.Polite
-                    contentDescription = statusLabel
-                },
-        text = stringResource(ChatR.string.chat_room_writing),
-        style = ManyakTheme.typography.bodyReading.merge(TextStyle(brush = rememberWritingShimmerBrush())),
+                .padding(horizontal = ManyakTheme.spacing.gutter)
+                .padding(top = ManyakTheme.spacing.passage),
+        text = stringResource(ChatR.string.chat_room_ai_notice),
+        style = ManyakTheme.typography.bodySmall,
+        color = ManyakTheme.colors.textSubtle,
+        textAlign = TextAlign.Center,
     )
 }
 

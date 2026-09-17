@@ -90,7 +90,7 @@ fun isAllowedCharacterImageUrl(imageUrl: String): Boolean =
     }
 
 /** 인물 이미지의 가로세로 비율. */
-private const val CHARACTER_IMAGE_ASPECT_RATIO = 4f / 3f
+const val CHARACTER_IMAGE_ASPECT_RATIO = 4f / 3f
 
 private val ImageBorderWidth = 1.dp
 
