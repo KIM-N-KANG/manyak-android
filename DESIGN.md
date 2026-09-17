@@ -616,7 +616,9 @@ components:
 출발해도 앞 항목이 아직 움직이고 있어 목록 전체가 하나의 흐름으로 읽히게 한다. 값은 웹과 같다 —
 추천 입력처럼 두 플랫폼에 같은 목록이 있는 자리에서 리듬이 갈리면 안 된다.
 
-**눌림은 리플 하나로 말한다**(2026-09-03 — 2026-08-24 의 "리플 전역 끄기"를 대체). `ManyakTheme`이 `LocalRippleConfiguration`으로 색과 농도를 내린다 — 색·눌림 농도는 `{colors.overlay-pressed}`(라이트 검정 6% / 다크 흰 8%)이고 호버·포커스·드래그 농도는 0 이다. 그래서 `clickable`을 쓰는 카드·행·메뉴 항목·다이얼로그 항목과 M3 버튼이 같은 리플을 받고, 탭 바처럼 눌림을 두지 않는 자리(`tab-bar`·이미지 뷰어 닫기 영역)만 하위 트리에서 리플을 끄거나 `indication = null`로 둔다. 홈 오리지널 카드는 둥글게 클립하지 않아 리플이 사각형으로 돈다 — 카드 곡률로 깎으면 맨 아래 제작자 줄이 깎이고, 표지 곡률로 깎으면 표지 테두리 위에 클립 경계가 겹친다. 눌림 표시를 색 변화 없이 다른 애니메이션(축소 등)으로 더하지 않는다. **길게 누르기는 열리는 순간 `LongPress` 햅틱을 한 번 울린다** — 화면에 드러나지 않는 제스처라 손으로도 확인을 준다.
+**눌림은 리플 하나로 말한다**(2026-09-03 — 2026-08-24 의 "리플 전역 끄기"를 대체). `ManyakTheme`이 `LocalRippleConfiguration`으로 색과 농도를 내린다 — 색·눌림 농도는 `{colors.overlay-pressed}`(라이트 검정 6% / 다크 흰 8%)이고 호버·포커스·드래그 농도는 0 이다. 그래서 `clickable`을 쓰는 카드·행·메뉴 항목·다이얼로그 항목과 M3 버튼이 같은 리플을 받고, 탭 바처럼 눌림을 두지 않는 자리(`tab-bar`·이미지 뷰어 닫기 영역·선택 컨트롤이 있는 행)만 하위 트리에서 리플을 끄거나 `indication = null`로 둔다. 홈 오리지널 카드는 둥글게 클립하지 않아 리플이 사각형으로 돈다 — 카드 곡률로 깎으면 맨 아래 제작자 줄이 깎이고, 표지 곡률로 깎으면 표지 테두리 위에 클립 경계가 겹친다. 눌림 표시를 색 변화 없이 다른 애니메이션(축소 등)으로 더하지 않는다. **길게 누르기는 열리는 순간 `LongPress` 햅틱을 한 번 울린다** — 화면에 드러나지 않는 제스처라 손으로도 확인을 준다.
+
+**선택 컨트롤이 있는 행은 리플을 두지 않는다.** 라디오·체크박스·행 전체로 토글하는 스위치는 선택 표시가 피드백을 맡는다. 행의 `selectable`·`toggleable`에 `interactionSource = null`, `indication = null`을 지정하되 행 전체 터치 영역·접근성 역할·선택 상태는 유지한다. 컨트롤 자체에는 별도 클릭을 연결하지 않아 한 번만 토글되고 읽히게 한다.
 
 ## 모양
 
@@ -648,9 +650,9 @@ components:
 
 **`button-neutral`** — 보조 동작. 배경 `{colors.background-neutral}`, 텍스트 `{colors.text}`. 눌림은 `{component.button-neutral-pressed}`.
 
-**`button-text`** — 다이얼로그·시트의 닫기, 배너의 보조 동작, 인라인 재시도처럼 채움 없이 글자만 있는 버튼. 배경 없음, 텍스트 `{typography.label-large}`에 색은 자리가 정한다(닫기는 `{colors.text-subtle}`, 진입·재시도는 브랜드 색). **모서리는 `{rounded.control}`** — M3 `TextButton` 기본은 완전한 알약이라 눌림 리플이 채움 버튼과 다른 모양으로 돈다. `ManyakTextButton`을 쓴다.
+**`button-text`** — 다이얼로그·시트의 닫기, 배너의 보조 동작, 인라인 재시도처럼 채움 없이 글자만 있는 버튼. 배경 없음, 텍스트 `{typography.label-large}`에 색은 자리가 정한다(닫기는 `{colors.text-subtle}`, 진입·재시도는 브랜드 색). **모서리는 `{rounded.control}`** — M3 `TextButton` 기본은 완전한 알약이라 눌림 리플이 채움 버튼과 다른 모양으로 돈다. `ManyakTextButton`을 쓴다. **시트의 닫기는 전체 폭·최소 높이 `{sizes.control}`(48dp)·`{typography.label-large}`·`{colors.text-subtle}`로 통일한다. 글자 크기·굵기·행간은 위의 주 동작 버튼과 같고, 두 버튼 사이는 `{spacing.compact}`(8dp)로 띄운다.** 큰 글자에서는 높이가 늘어날 수 있고, 제출 중에는 비활성화하며 글자는 `{colors.text-disabled}`로 표시한다.
 
-**`switch`** — 설정 한 줄의 켬·끔(알림 설정). M3 `Switch`의 크기·모양은 그대로 두고 색만 얹는다 — 꺼짐은 `{colors.background-neutral}` 트랙에 `{colors.border-strong}` 경계와 `{colors.text-subtlest}` 손잡이, 켜짐은 `{colors.brand}` 트랙에 `{colors.text-inverse}` 손잡이다. 비활성 상태는 두지 않는다 — 켤 수 없는 줄(광고가 꺼진 동안의 야간 광고 허용)은 흐리게 두지 않고 숨긴다(2026-09-11). **체크박스와 달리 스위치 자신이 누르는 대상이고 줄은 눌리지 않는다**(2026-09-11 — 라벨 옆에 문서를 여는 아이콘 버튼이 함께 놓여 줄 전체 토글과 겹친다). 접근성 이름은 스위치에 줄의 라벨을 붙여 읽힌다. 불러오기 전에는 같은 크기의 골격이 자리를 지킨다.
+**`switch`** — 설정 한 줄의 켬·끔. **알림 설정에서는** M3 `Switch`의 크기·모양은 그대로 두고 색만 얹는다 — 꺼짐은 `{colors.background-neutral}` 트랙에 `{colors.border-strong}` 경계와 `{colors.text-subtlest}` 손잡이, 켜짐은 `{colors.brand}` 트랙에 `{colors.text-inverse}` 손잡이다. 비활성 상태는 두지 않는다 — 켤 수 없는 줄(광고가 꺼진 동안의 야간 광고 허용)은 흐리게 두지 않고 숨긴다(2026-09-11). **체크박스와 달리 스위치 자신이 누르는 대상이고 줄은 눌리지 않는다**(2026-09-11 — 라벨 옆에 문서를 여는 아이콘 버튼이 함께 놓여 줄 전체 토글과 겹친다). 접근성 이름은 스위치에 줄의 라벨을 붙여 읽힌다. 불러오기 전에는 같은 크기의 골격이 자리를 지킨다. **채팅 설정 시트는 행 전체를 `Role.Switch`로 토글하고 리플을 두지 않는다.** 스위치는 표시만 맡고 선택 상태·접근성 이름은 행이 소유한다.
 
 **`icon-button`** — 라벨 없이 아이콘만 있는 버튼. 배경 없음이고 눌림 리플의 모양이 자리에 따라 갈린다. **앱바의 뒤로가기·닫기(`{sizes.control}`)는 원(`{rounded.pill}`)** — 안드로이드 관례라 그대로 둔다. **콘텐츠 안에 놓이는 작은 버튼(입력 칸 옆 삭제·카드 제목 줄 더보기·컴포저 아이콘, `{sizes.control-small}` 이하)은 `{rounded.menu-item}`** — M3 `IconButton` 은 모양을 고를 수 없어 원이 그대로 나오므로 `ManyakIconButton`을 쓴다. 높이가 낮은 글자 토글(추가 정보의 "더보기")도 같은 이유로 컨트롤 곡률 대신 메뉴 항목 곡률을 쓴다.
 
@@ -672,13 +674,15 @@ components:
 
 **`overlay`** — 다이얼로그. 배경 `{colors.surface-raised}`, 모서리 `{rounded.overlay}`, 내부 여백 `{spacing.gutter}`.
 
-**`sheet`** — 바텀시트. 배경 `{colors.surface-raised}`, 모서리는 `{rounded.sheet}`로 위쪽 두 곳만 깎습니다 — 아래쪽은 화면 끝에 붙어 있어 깎으면 그 틈으로 스크림이 비칩니다. 내부 여백은 좌·우·아래 `{spacing.gutter}`이고 **위쪽은 두지 않습니다** — 드래그 핸들이 자체 여백을 갖고 있어 겹칩니다. 하단 안전 영역과 키보드 높이는 그 아래로 시트가 직접 낍니다.
+**`sheet`** — 바텀시트. 배경 `{colors.surface-raised}`, 모서리는 `{rounded.sheet}`로 위쪽 두 곳만 깎습니다 — 아래쪽은 화면 끝에 붙어 있어 깎으면 그 틈으로 스크림이 비칩니다. 내부 여백은 좌·우·아래 `{spacing.gutter}`이고 **위쪽은 두지 않습니다** — 드래그 핸들이 자체 여백을 갖고 있어 겹칩니다. 하단 안전 영역과 키보드 높이는 그 아래로 시트가 직접 낍니다. **하단 닫기는 `button-text` 규칙의 전체 폭·최소 높이 `{sizes.control}`(48dp)·주 동작 버튼과 같은 글자 스타일(`{typography.label-large}`)·보조색 텍스트 버튼입니다.** 신고·초대 코드 온보딩·광고 알림 동의·선택한 키워드·채팅 설정·채팅 메뉴·카드 옵션 시트에 같은 규칙을 적용합니다.
 
 **`badge`** — 배경 `{colors.background-brand-subtle}`, 텍스트 `{colors.text-brand}` + `{typography.body-small}`, 모서리 `{rounded.pill}`, 여백 세로 `{spacing.hairline}` · 가로 `{spacing.compact}`.
 
 **`provider-chip` / `provider-chip-link`** — 마이 프로필 헤더의 연동 계정 표시. 웹 배지와 같은 치수를 씁니다(높이 24dp, 로고 12dp) — 같은 정보를 두 플랫폼에서 나란히 보게 되는 자리라 크기가 다르면 다른 것으로 읽힙니다. 로고와 이름 사이는 `{spacing.dense}`, 가로 여백은 `{spacing.compact}`이고 세로 여백은 두지 않습니다(높이가 고정). 로고는 이 시스템에서 가장 작게 쓰이므로 `{sizes.icon-small}`(16dp)보다 한 단계 아래인 12dp 를 이 컴포넌트 안에서만 씁니다. **연동된 제공자는 `{colors.border}` 실선, 아직 아닌 제공자는 같은 모양의 `{colors.border-strong}` 점선(3dp 대시·3dp 간격) 버튼**입니다 — 점선을 실선과 같은 색으로 두면 잉크가 절반만 닿아 나란히 놓인 칩보다 눈에 띄게 연해집니다 — 미연동을 색이 아니라 선의 모양으로 말하고, 누를 수 있다는 것은 같은 자리에 놓인 형태가 전달합니다. 둘 다 연동되면 점선 버튼이 사라져 칩만 남습니다.
 
 **`banner-danger` / `banner-warning` / `banner-information`** — 배경은 각 `subtle`, 텍스트는 같은 계열의 텍스트 색, 모서리 `{rounded.control}`, 내부 여백 `{spacing.component}`. 배너 자체가 상태를 말하므로 아이콘 없이도 성립하지만, 색만으로 구분되지 않도록 문구를 명시합니다.
+
+**`menu-row`** — 마이 메뉴와 채팅 설정 시트의 행. 왼쪽 아이콘은 `{sizes.icon}`(20dp), 아이콘·라벨 사이 간격은 `{spacing.component}`(12dp), 오른쪽 이동 아이콘은 `{sizes.icon-small}`(16dp)입니다. 행의 최소 높이는 `{sizes.control}`(48dp)이고, 스위치는 위 `switch` 규칙을 따릅니다.
 
 ### 스토리
 

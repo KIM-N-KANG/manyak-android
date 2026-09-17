@@ -86,4 +86,4 @@ PR에서는 CI(`.github/workflows/android-ci.yml`)가 `check`와 `assembleDebug`
 | `docs/plans/`                                          | 기능별 구현 순서·검증·실행 결과    |
 | `../knk-harness/docs/design/1-2-android-design.md` | 현재 앱 기술 구조·상태 수명·요청 흐름 |
 
-문서 역할: [Android spec](../knk-harness/docs/spec/3-3-android-spec.md)은 사용자 계약, [Android design](../knk-harness/docs/design/1-2-android-design.md)은 현재 구조, [Android ADR](../knk-harness/docs/adr/1-3-android-adr.md)은 결정 이유를 소유합니다. 구현·검증·티켓은 [클라이언트 추적](../knk-harness/docs/planning/client-tracking.md), 변경 순서는 `docs/plans/`에 연결합니다. 공통 계약·결정은 하네스 공통 문서를 참조하고 복사하지 않습니다.
+문서 역할: [Android spec](../knk-harness/docs/spec/3-3-android-spec.md)은 사용자 계약, [Android design](../knk-harness/docs/design/1-2-android-design.md)은 현재 구조, [Android ADR](../knk-harness/docs/adr/1-3-android-adr.md)은 결정 이유를 소유합니다. 변경 순서·실행 결과는 `docs/plans/`, 관련 티켓·검증 근거는 해당 PR에 남깁니다. 공통 계약·결정은 하네스 공통 문서를 참조하고 복사하지 않습니다.

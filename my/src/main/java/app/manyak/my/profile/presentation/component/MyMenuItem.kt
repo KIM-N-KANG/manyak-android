@@ -19,7 +19,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import app.manyak.common.presentation.credit.LocalCreditPolicy
 import app.manyak.common.presentation.credit.creditAmountText
 import app.manyak.designsystem.credit.creditAmountAlpha
@@ -60,12 +59,12 @@ internal fun MyMenuItem(
                     vertical = ManyakTheme.spacing.compact,
                 ),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
+        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.component),
     ) {
         Icon(
             painter = painterResource(iconRes),
             contentDescription = null,
-            modifier = Modifier.size(MenuIconSize),
+            modifier = Modifier.size(ManyakTheme.sizes.icon),
             tint = contentColor,
         )
         Column(modifier = Modifier.weight(1f)) {
@@ -120,6 +119,3 @@ internal fun InviteMenuItem(
         trailing = { MenuTrailingIcon(iconRes = DesignsystemR.drawable.ic_chevron_right) },
     )
 }
-
-/** 메뉴 항목의 왼쪽 아이콘. 라벨 옆이지만 목록의 주된 시각 요소라 [ManyakTheme.sizes.icon]보다 크다. */
-private val MenuIconSize = 24.dp
