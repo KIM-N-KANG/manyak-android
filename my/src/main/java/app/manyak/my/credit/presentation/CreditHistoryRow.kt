@@ -121,6 +121,9 @@ private fun CreditTransactionReason.labelRes(): Int =
         CreditTransactionReason.REFUND -> MyR.string.my_credit_reason_refund
         CreditTransactionReason.STORY_CREATION -> MyR.string.my_credit_reason_story_creation
         CreditTransactionReason.CHAT_TURN -> MyR.string.my_credit_reason_chat_turn
+        CreditTransactionReason.CHAT_IMAGE -> MyR.string.my_credit_reason_chat_image
+        CreditTransactionReason.PURCHASE -> MyR.string.my_credit_reason_purchase
+        CreditTransactionReason.PURCHASE_REVERSAL -> MyR.string.my_credit_reason_purchase_reversal
         CreditTransactionReason.EXPIRE -> MyR.string.my_credit_reason_expire
         CreditTransactionReason.UNKNOWN -> MyR.string.my_credit_reason_unknown
     }

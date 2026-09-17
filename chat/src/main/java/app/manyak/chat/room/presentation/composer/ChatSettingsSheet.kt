@@ -47,7 +47,7 @@ internal fun ChatSettingsSheet(
     ManyakBottomSheet(
         modifier = modifier,
         onDismissRequest = onDismiss,
-        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.block),
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.section),
     ) {
         Text(
             text = stringResource(ChatR.string.chat_settings_title),
