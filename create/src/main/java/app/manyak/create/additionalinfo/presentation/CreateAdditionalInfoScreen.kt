@@ -33,7 +33,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -55,7 +54,6 @@ import app.manyak.create.presentation.preview.previewStorylines
 import app.manyak.create.presentation.state.DraftSaveUiState
 import app.manyak.designsystem.component.FocusScrollMargin
 import app.manyak.designsystem.component.ScrollEdgeFade
-import app.manyak.designsystem.component.clearFocusOnTap
 import app.manyak.designsystem.credit.creditAmountAlpha
 import app.manyak.designsystem.theme.ManyakTheme
 import kotlinx.coroutines.isActive
@@ -142,15 +140,13 @@ private fun CreateAdditionalInfoContent(
     draftSave: DraftSaveUiState = DraftSaveUiState(),
 ) {
     val imeVisible = WindowInsets.isImeVisible
-    val focusManager = LocalFocusManager.current
 
     FocusScrollMargin {
         Column(
             modifier =
                 modifier
                     .fillMaxSize()
-                    .windowInsetsPadding(WindowInsets.safeDrawing)
-                    .clearFocusOnTap(focusManager),
+                    .windowInsetsPadding(WindowInsets.safeDrawing),
         ) {
             CreateFunnelHeader(
                 draftSave = draftSave,

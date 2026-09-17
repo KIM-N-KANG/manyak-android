@@ -9,37 +9,103 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.SuspendingPointerInputModifierNode
+import androidx.compose.ui.node.CompositionLocalConsumerModifierNode
+import androidx.compose.ui.node.DelegatingNode
+import androidx.compose.ui.node.ModifierNodeElement
+import androidx.compose.ui.node.TraversableNode
+import androidx.compose.ui.node.currentValueOf
+import androidx.compose.ui.node.traverseAncestors
+import androidx.compose.ui.platform.InspectorInfo
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import app.manyak.designsystem.theme.ManyakTheme
 
-/**
- * 클릭 가능한 자식이 이벤트를 소비하기 전에 기존 입력 포커스를 해제한다.
- *
- * 손가락이 슬롭 안에 머문 채 떨어진 제스처만 탭으로 본다. 눌림만 보고 지우면 목록을 넘기려는
- * 첫 접촉에도 포커스가 풀려 입력 중에 스크롤을 할 수 없다.
- *
- * **Initial 패스에서 보기만 하고 소비하지 않는다** — 스크롤과 항목 클릭이 그대로 동작한다.
- */
-fun Modifier.clearFocusOnTap(focusManager: FocusManager): Modifier =
-    pointerInput(focusManager) {
-        awaitEachGesture {
-            val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
-            var dragged = false
-            var pressed = true
-            while (pressed) {
-                val event = awaitPointerEvent(PointerEventPass.Initial)
-                val change = event.changes.firstOrNull { it.id == down.id }
-                if (change != null && (change.position - down.position).getDistance() > viewConfiguration.touchSlop) {
-                    dragged = true
-                }
-                pressed = change?.pressed == true
-            }
-            if (!dragged) focusManager.clearFocus()
-        }
+/** 입력란 밖의 탭은 포커스를 해제하고, 입력란 이동·재터치·드래그는 그대로 둔다. */
+fun Modifier.clearFocusOnTap(): Modifier = this then OutsideFocusTapElement
+
+/** 입력란의 라벨·여백까지 바깥 탭 판정에서 제외한다. 터치 이벤트는 소비하지 않는다. */
+fun Modifier.keepKeyboardOnTap(enabled: Boolean = true): Modifier = if (enabled) this then InputTapElement else this
+
+private object OutsideFocusTapKey
+
+private object InputTapElement : ModifierNodeElement<InputTapNode>() {
+    override fun create() = InputTapNode()
+
+    override fun update(node: InputTapNode) = Unit
+
+    override fun InspectorInfo.inspectableProperties() {
+        name = "keepKeyboardOnTap"
     }
+
+    override fun hashCode() = javaClass.hashCode()
+
+    override fun equals(other: Any?) = other === this
+}
+
+private class InputTapNode : DelegatingNode() {
+    init {
+        delegate(
+            SuspendingPointerInputModifierNode {
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                    traverseAncestors(OutsideFocusTapKey) {
+                        (it as OutsideFocusTapNode).inputTapped = true
+                        true
+                    }
+                }
+            },
+        )
+    }
+}
+
+private object OutsideFocusTapElement : ModifierNodeElement<OutsideFocusTapNode>() {
+    override fun create() = OutsideFocusTapNode()
+
+    override fun update(node: OutsideFocusTapNode) = Unit
+
+    override fun InspectorInfo.inspectableProperties() {
+        name = "clearFocusOnTap"
+    }
+
+    override fun hashCode() = javaClass.hashCode()
+
+    override fun equals(other: Any?) = other === this
+}
+
+private class OutsideFocusTapNode :
+    DelegatingNode(),
+    CompositionLocalConsumerModifierNode,
+    TraversableNode {
+    override val traverseKey: Any = OutsideFocusTapKey
+    var inputTapped = false
+
+    init {
+        delegate(
+            SuspendingPointerInputModifierNode {
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                    inputTapped = false
+                    var dragged = false
+                    var pressed = true
+                    while (pressed) {
+                        // 자식 입력란의 포커스 이동과 버튼 동작이 끝난 뒤 판정한다. 이벤트는 소비하지 않는다.
+                        val event = awaitPointerEvent(PointerEventPass.Final)
+                        val change = event.changes.firstOrNull { it.id == down.id } ?: return@awaitEachGesture
+                        dragged = dragged ||
+                            event.changes.size > 1 ||
+                            (change.position - down.position).getDistance() > viewConfiguration.touchSlop
+                        pressed = change.pressed
+                    }
+                    if (!dragged && !inputTapped) {
+                        currentValueOf(LocalFocusManager).clearFocus()
+                    }
+                }
+            },
+        )
+    }
+}
 
 /**
  * 포커스가 들어온 요소를 끌어올릴 때 그 아래로 남길 여백.

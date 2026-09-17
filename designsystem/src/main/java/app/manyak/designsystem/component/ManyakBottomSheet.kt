@@ -60,12 +60,15 @@ fun ManyakBottomSheet(
         shape = ManyakTheme.shapes.sheet,
         // 하단 안전 영역과 키보드 높이는 아래 본문이 직접 낀다.
         contentWindowInsets = { WindowInsets(0, 0, 0, 0) },
-        dragHandle = { BottomSheetDefaults.DragHandle(color = ManyakTheme.colors.border) },
+        dragHandle = {
+            BottomSheetDefaults.DragHandle(modifier = Modifier.clearFocusOnTap(), color = ManyakTheme.colors.border)
+        },
     ) {
         Column(
             modifier =
                 Modifier
                     .fillMaxWidth()
+                    .clearFocusOnTap()
                     .imePadding()
                     .navigationBarsPadding()
                     .padding(horizontal = ManyakTheme.spacing.gutter)

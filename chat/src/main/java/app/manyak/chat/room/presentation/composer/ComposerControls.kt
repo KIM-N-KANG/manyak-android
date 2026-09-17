@@ -33,6 +33,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import app.manyak.designsystem.component.ManyakIconButton
 import app.manyak.designsystem.component.ManyakProgressIndicator
+import app.manyak.designsystem.component.keepKeyboardOnTap
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.chat.R as ChatR
 import app.manyak.designsystem.R as DesignsystemR
@@ -215,7 +216,7 @@ private fun ComposerTextFieldBody(
     leading: (@Composable () -> Unit)?,
 ) {
     BasicTextField(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().keepKeyboardOnTap(enabled),
         state = state,
         enabled = enabled,
         lineLimits = TextFieldLineLimits.MultiLine(maxHeightInLines = maxLines),

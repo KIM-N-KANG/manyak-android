@@ -20,7 +20,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -34,7 +33,6 @@ import app.manyak.designsystem.component.FocusScrollMargin
 import app.manyak.designsystem.component.ManyakInputCounter
 import app.manyak.designsystem.component.ManyakMultilineTextField
 import app.manyak.designsystem.component.ManyakTextField
-import app.manyak.designsystem.component.clearFocusOnTap
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.my.presentation.component.MyDetailHeader
 import app.manyak.my.presentation.component.MyFieldLabel
@@ -54,7 +52,6 @@ fun FeedbackScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
-    val focusManager = LocalFocusManager.current
 
     LaunchedEffect(viewModel, lifecycleOwner) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -74,8 +71,7 @@ fun FeedbackScreen(
             modifier =
                 modifier
                     .fillMaxSize()
-                    .windowInsetsPadding(WindowInsets.safeDrawing)
-                    .clearFocusOnTap(focusManager),
+                    .windowInsetsPadding(WindowInsets.safeDrawing),
         ) {
             MyDetailHeader(titleRes = MyR.string.my_feedback, onBack = onBack)
             FeedbackContent(

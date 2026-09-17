@@ -664,6 +664,8 @@ components:
 
 **`text-field-focused`** — 경계를 한 단계 진한 회색 `{colors.border-input}`으로 바꿉니다. 포커스에 브랜드 색을 쓰지 않습니다(2026-08-24 결정 — 입력 경계는 무채색 사다리로만 말합니다).
 
+입력란 사이 이동과 같은 입력란 재터치(라벨·여백 포함)에서는 키보드를 유지합니다. 입력란 밖의 빈 영역·버튼·칩을 탭하면 포커스와 키보드를 닫으며, 버튼·칩의 동작도 그대로 실행합니다. 스크롤·드래그·다중 터치는 포커스를 해제하지 않습니다. 앱 루트·공통 시트·입력 다이얼로그에 `clearFocusOnTap`을 적용하고, 공통 입력 컴포넌트와 직접 사용하는 `BasicTextField`는 `keepKeyboardOnTap`으로 입력 영역을 구분합니다. 두 modifier 모두 터치 이벤트를 소비하지 않습니다.
+
 **`text-field-error`** — 경계를 `{colors.border-danger}`로 바꾸고, 오류 문구를 `{colors.text-danger}` + `{typography.body-small}`로 아래에 둡니다. 색만으로 오류를 알리지 않습니다.
 
 **셀렉트 메뉴**(성별 등) — 앵커는 text-field 와 같은 형태이고, 미선택(랜덤) 값은 placeholder 색(`{colors.text-disabled}`)으로 낮춥니다. 메뉴는 앵커와 같은 폭으로 항상 앵커 아래에 `{spacing.inline}` 떨어져 열리며, 배경 `{colors.surface-raised}` + 경계 `{colors.border}` + **연한 그림자**를 쓰고, 각 항목은 `{rounded.menu-item}` 모서리와 세로 `{spacing.control-vertical}` · 가로 `{spacing.control-horizontal}` 여백을 사용합니다. 선택된 항목은 `{colors.background-neutral}` 채움과 체크 표시로 드러냅니다 — 그림자 금지 규칙의 예외로, 떠 있는 흰 메뉴가 흰 앵커·표면과 겹쳐 경계만으로는 층이 드러나지 않기 때문입니다.

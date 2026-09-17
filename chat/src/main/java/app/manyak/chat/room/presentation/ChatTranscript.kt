@@ -37,7 +37,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -55,7 +54,6 @@ import app.manyak.chat.room.presentation.suggestion.ChatSuggestionArea
 import app.manyak.chat.room.presentation.suggestion.ChatSuggestions
 import app.manyak.chat.room.presentation.suggestion.hasSuggestionArea
 import app.manyak.designsystem.component.ScrollEdgeFade
-import app.manyak.designsystem.component.clearFocusOnTap
 import app.manyak.designsystem.theme.ManyakTheme
 import kotlinx.coroutines.launch
 import app.manyak.chat.R as ChatR
@@ -99,13 +97,8 @@ internal fun ChatTranscript(
     ReclaimAnchorPad(listState = listState, isStreaming = state.isStreaming, padPx = padPx)
     KeepReadingPosition(listState = listState, anchored = state.isStreaming)
 
-    val focusManager = LocalFocusManager.current
-
     Box(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .clearFocusOnTap(focusManager),
+        modifier = modifier.fillMaxWidth(),
     ) {
         LazyColumn(modifier = Modifier.fillMaxWidth(), state = listState) {
             if (prologueCount > 0) {

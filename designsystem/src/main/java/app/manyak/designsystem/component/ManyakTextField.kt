@@ -50,7 +50,7 @@ fun ManyakTextField(
     val interactionSource = remember { MutableInteractionSource() }
     val focused by interactionSource.collectIsFocusedAsState()
     BasicTextField(
-        modifier = modifier,
+        modifier = modifier.keepKeyboardOnTap(enabled),
         value = value,
         onValueChange = onValueChange,
         enabled = enabled,
@@ -103,7 +103,7 @@ fun ManyakMultilineTextField(
     val focused by interactionSource.collectIsFocusedAsState()
     BasicTextField(
         modifier =
-            modifier.then(
+            modifier.keepKeyboardOnTap(enabled).then(
                 if (contentDescription == null) {
                     Modifier
                 } else {

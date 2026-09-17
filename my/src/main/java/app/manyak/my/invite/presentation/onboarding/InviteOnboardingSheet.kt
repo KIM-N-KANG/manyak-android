@@ -47,6 +47,7 @@ import app.manyak.common.presentation.credit.creditAmountText
 import app.manyak.designsystem.component.ManyakBottomSheet
 import app.manyak.designsystem.component.ManyakProgressIndicator
 import app.manyak.designsystem.component.ManyakTextButton
+import app.manyak.designsystem.component.keepKeyboardOnTap
 import app.manyak.designsystem.credit.creditAmountAlpha
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.my.R as MyR
@@ -243,7 +244,7 @@ private fun InviteCodeField(
             else -> ManyakTheme.colors.border
         }
     BasicTextField(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().keepKeyboardOnTap(enabled),
         value = code,
         onValueChange = onCodeChange,
         enabled = enabled,

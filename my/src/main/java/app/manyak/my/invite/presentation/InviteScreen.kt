@@ -31,7 +31,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -53,7 +52,6 @@ import app.manyak.common.presentation.credit.creditAmountText
 import app.manyak.designsystem.component.FocusScrollMargin
 import app.manyak.designsystem.component.ManyakTextField
 import app.manyak.designsystem.component.SkeletonPlaceholder
-import app.manyak.designsystem.component.clearFocusOnTap
 import app.manyak.designsystem.component.rememberSkeletonPulseAlpha
 import app.manyak.designsystem.credit.creditAmountAlpha
 import app.manyak.designsystem.theme.ManyakTheme
@@ -78,7 +76,6 @@ fun InviteScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
-    val focusManager = LocalFocusManager.current
 
     LaunchedEffect(viewModel) { viewModel.onIntent(InviteIntent.Load) }
 
@@ -108,8 +105,7 @@ fun InviteScreen(
             modifier =
                 modifier
                     .fillMaxSize()
-                    .windowInsetsPadding(WindowInsets.safeDrawing)
-                    .clearFocusOnTap(focusManager),
+                    .windowInsetsPadding(WindowInsets.safeDrawing),
         ) {
             MyDetailHeader(titleRes = MyR.string.my_invite, onBack = onBack)
             InviteContent(

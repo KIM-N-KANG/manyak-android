@@ -61,6 +61,7 @@ import app.manyak.create.additionalinfo.presentation.CreateAdditionalInfoScreen
 import app.manyak.create.keyword.presentation.CreateKeywordScreen
 import app.manyak.create.storyline.presentation.CreateStorylineScreen
 import app.manyak.designsystem.component.ManyakProgressIndicator
+import app.manyak.designsystem.component.clearFocusOnTap
 import app.manyak.designsystem.component.rememberDelayedProgressVisibility
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.legal.presentation.LegalDocumentScreen
@@ -109,7 +110,7 @@ fun ManyakApp(
     ) {
         ManyakTheme(darkTheme = darkTheme) {
             SystemBarIconAppearance(darkTheme = darkTheme)
-            Surface(modifier = modifier.fillMaxSize(), color = ManyakTheme.colors.surface) {
+            Surface(modifier = modifier.fillMaxSize().clearFocusOnTap(), color = ManyakTheme.colors.surface) {
                 when (val state = sessionState) {
                     SessionState.Undetermined -> if (showSessionProgress) SessionProgress()
                     is SessionState.SignedOut -> AuthNavDisplay()
