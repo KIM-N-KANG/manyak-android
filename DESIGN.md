@@ -212,9 +212,10 @@ components:
     size: "{sizes.icon}"
     backgroundColor: "{colors.surface}"
     borderColor: "{colors.border}"
-    borderWidth: 1dp
+    borderWidth: "{sizes.selection-border-width}"
     rounded: "{rounded.checkbox}"
   checkbox-checked:
+    borderWidth: 1dp
     backgroundColor: "{colors.brand}"
     borderColor: "{colors.brand}"
     iconColor: "{colors.text-inverse}"
@@ -587,6 +588,7 @@ components:
 | `{sizes.tab-icon}` | 24dp | 하단 탭 아이콘 |
 | `{sizes.logo}` | 24dp | 마냑 로고 락업의 높이. 폭은 원본 비율(89:32)로 따라간다 |
 | `{sizes.shimmer-band-half-width}` | 60dp | 텍스트 시머 띠의 반폭 |
+| `{sizes.selection-border-width}` | 2dp | 미선택 체크박스 경계·M3 라디오 버튼과 동일 |
 | `{sizes.generation-dot-gap}` | 10dp | 이미지 생성 로딩 점 간격 |
 | `{sizes.generation-dot-radius}` | 1dp | 이미지 생성 로딩 점 반지름 기준·테두리 |
 | `{sizes.generation-dot-displacement}` | 9dp | 이미지 생성 로딩 점 최대 변위 |
@@ -667,7 +669,7 @@ components:
 
 **`button-danger`** — 파괴적 동작(탈퇴·삭제). 같은 형태에 배경만 `{colors.background-danger-bold}`. 눌림은 `{component.button-danger-pressed}`.
 
-**`checkbox`** — 동의·확인 항목의 체크 표시. `{sizes.icon}` 정사각에 `{rounded.checkbox}` 모서리이고, 기본은 `{colors.surface}` 채움 + `{colors.border}` 1dp, 체크되면 `{colors.brand}` 채움에 같은 색 경계와 `{colors.text-inverse}` 체크 아이콘(16dp)이다. **체크박스 자체는 누르는 대상이 아니다** — 줄 전체가 토글을 맡아 문구를 눌러도 켜지고, 최소 터치 타깃도 그 줄이 확보한다. 체크박스에 따로 접근성 이름을 붙이지 않는다(줄이 이미 이름과 상태를 읽힌다).
+**`checkbox`** — 동의·확인 항목의 체크 표시. `{sizes.icon}` 정사각에 `{rounded.checkbox}` 모서리이고, 기본은 `{colors.surface}` 채움 + `{colors.border}` 경계이며 두께는 `{sizes.selection-border-width}`(2dp)로 미선택 M3 라디오 버튼과 같습니다. 체크되면 `{colors.brand}` 채움에 같은 색 경계와 `{colors.text-inverse}` 체크 아이콘(16dp)이다. **체크박스 자체는 누르는 대상이 아니다** — 줄 전체가 토글을 맡아 문구를 눌러도 켜지고, 최소 터치 타깃도 그 줄이 확보한다. 체크박스에 따로 접근성 이름을 붙이지 않는다(줄이 이미 이름과 상태를 읽힌다).
 
 **`button-neutral`** — 보조 동작. 배경 `{colors.background-neutral}`, 텍스트 `{colors.text}`. 눌림은 `{component.button-neutral-pressed}`.
 
