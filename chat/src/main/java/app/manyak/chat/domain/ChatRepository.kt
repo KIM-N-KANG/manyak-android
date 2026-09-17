@@ -28,6 +28,7 @@ interface ChatRepository : ChatStarter {
      *
      * @param sourceTurnId 고른 선택지가 달린 턴. 시작 추천처럼 원본 턴이 없으면 `null`
      * @param choiceOrder 고른 선택지의 순번(1부터). [sourceTurnId] 와 짝이다
+     * @param realtimeImage 이 턴에서 인물 이미지를 실시간으로 만들지. 서버 기본이 켬이라 항상 보낸다
      */
     fun streamTurn(
         chatId: String,
@@ -35,6 +36,7 @@ interface ChatRepository : ChatStarter {
         userSource: UserSource,
         sourceTurnId: Long? = null,
         choiceOrder: Int? = null,
+        realtimeImage: Boolean,
     ): Flow<ChatStreamEvent>
 
     /**
@@ -45,6 +47,7 @@ interface ChatRepository : ChatStarter {
     fun regenerateTurn(
         chatId: String,
         turnId: Long,
+        realtimeImage: Boolean,
     ): Flow<ChatStreamEvent>
 
     /**

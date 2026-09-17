@@ -61,7 +61,6 @@ internal fun ChatComposer(
         ComposerToolbar(
             modifier = toolbarModifier,
             mode = state.mode,
-            choicesEnabled = choicesEnabled,
             canAddBlock = state.blocks.canAddBlock(),
             enabled = !isStreaming,
             sendState = sendState,
@@ -243,8 +242,7 @@ private fun previewActions(): ChatComposerActions =
         onBlockValueChange = { _, _ -> },
         onAddBlock = {},
         onRemoveBlock = {},
-        onModeChange = {},
-        onChoicesEnabledChange = {},
+        onOpenSettings = {},
         onSend = {},
         onSendRandomSuggestion = {},
         onLockedTap = {},

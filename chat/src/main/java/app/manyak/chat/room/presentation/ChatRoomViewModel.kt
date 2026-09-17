@@ -59,9 +59,15 @@ data class ChatRoomTurn(
     val reachedEnding: String? = null,
 )
 
-/** 진행 중인 턴. 확정되면 확정 턴 목록과 **한 번에** 교체된다. */
+/**
+ * 진행 중인 턴. 확정되면 확정 턴 목록과 **한 번에** 교체된다.
+ *
+ * [realtimeImage] 는 **전송 시점의 스냅샷**이다 — 응답을 받는 중에 설정을 바꿔도 이미 보낸 요청은
+ * 그대로라, 진행 블록의 표현도 요청과 같은 값을 따라야 한다.
+ */
 data class StreamingTurn(
     val userInput: String,
+    val realtimeImage: Boolean,
     val segments: List<ChatMessageSegment> = emptyList(),
 )
 
@@ -74,6 +80,7 @@ data class ChatRoomUiState(
     val imageViewerUrl: String? = null,
     val composer: ChatComposerState = ChatComposerState(),
     val choicesEnabled: Boolean = true,
+    val realtimeImageEnabled: Boolean = true,
     /** 턴이 0개인 방의 첫 입력 후보. */
     val suggestedInputs: List<String> = emptyList(),
     /** 선택지 생성의 진행 상태. 대상 턴이 마지막 턴일 때만 그린다. */
@@ -131,6 +138,10 @@ sealed interface ChatRoomIntent {
         val enabled: Boolean,
     ) : ChatRoomIntent
 
+    data class RealtimeImageEnabledChanged(
+        val enabled: Boolean,
+    ) : ChatRoomIntent
+
     data object Sent : ChatRoomIntent
 
     /** 추천 문장을 눌렀다. 입력창을 거치지 않고 바로 보낸다. */
@@ -183,6 +194,7 @@ sealed interface ChatRoomEvent {
     data class PreferencesLoaded(
         val composer: ChatComposerState,
         val choicesEnabled: Boolean,
+        val realtimeImageEnabled: Boolean,
         val hintUnseen: Boolean,
     ) : ChatRoomEvent
 
@@ -194,15 +206,21 @@ sealed interface ChatRoomEvent {
         val enabled: Boolean,
     ) : ChatRoomEvent
 
+    data class RealtimeImageEnabledChanged(
+        val enabled: Boolean,
+    ) : ChatRoomEvent
+
     data class SendStarted(
         val userInput: String,
         val composer: ChatComposerState,
+        val realtimeImage: Boolean,
     ) : ChatRoomEvent
 
     /** 대상 턴을 진행 블록으로 **대체한다**. 사용자 입력은 그 턴의 것을 그대로 쓴다. */
     data class RegenerateStarted(
         val turnId: Long,
         val userInput: String,
+        val realtimeImage: Boolean,
     ) : ChatRoomEvent
 
     data class TokensAppended(
@@ -318,6 +336,7 @@ class ChatRoomViewModel
         private var turns: List<ChatRoomTurn> = emptyList()
         private var suggestedInputs: List<String> = emptyList()
         private var choicesEnabled = true
+        private var realtimeImageEnabled = true
         private var hintUnseen = false
 
         /**
@@ -346,11 +365,13 @@ class ChatRoomViewModel
                 viewModelScope.launch {
                     composer = composer.convertTo(preferences.inputMode())
                     choicesEnabled = preferences.choicesEnabled()
+                    realtimeImageEnabled = preferences.realtimeImageEnabled()
                     hintUnseen = !preferences.isChoicesHintSeen()
                     dispatchEvent(
                         ChatRoomEvent.PreferencesLoaded(
                             composer = composer,
                             choicesEnabled = choicesEnabled,
+                            realtimeImageEnabled = realtimeImageEnabled,
                             hintUnseen = hintUnseen,
                         ),
                     )
@@ -395,11 +416,17 @@ class ChatRoomViewModel
                         }
                 }
 
+                is ChatRoomIntent.RealtimeImageEnabledChanged -> {
+                    realtimeImageEnabled = intent.enabled
+                    dispatchEvent(ChatRoomEvent.RealtimeImageEnabledChanged(intent.enabled))
+                    preferences.setRealtimeImageEnabled(intent.enabled)
+                }
+
                 ChatRoomIntent.Sent -> {
                     val userInput = composer.toUserInput()
                     val origin = composerOrigin(userInput, filled)
-                    startTurn(userInput, inputMode = composer.mode.messageInputMode) {
-                        chatRepository.turnStream(chatId, userInput, origin)
+                    startTurn(userInput, inputMode = composer.mode.messageInputMode) { realtimeImage ->
+                        chatRepository.turnStream(chatId, userInput, origin, realtimeImage)
                     }
                 }
 
@@ -426,8 +453,8 @@ class ChatRoomViewModel
                     // 화면이 본 마지막 턴과 지금 마지막 턴이 다르면 낡은 클릭이다.
                     val turn = turns.lastOrNull()?.takeIf { last -> last.id == intent.turnId } ?: return
                     analytics.track(AnalyticsEvent.RegenerateTurnButtonClicked(chatId, turnNumber = turns.size))
-                    startTurn(userInput = turn.userInput, regeneratedTurnId = turn.id) {
-                        chatRepository.regenerateTurn(chatId, turn.id)
+                    startTurn(userInput = turn.userInput, regeneratedTurnId = turn.id) { realtimeImage ->
+                        chatRepository.regenerateTurn(chatId, turn.id, realtimeImage)
                     }
                 }
 
@@ -514,8 +541,8 @@ class ChatRoomViewModel
                     analytics.track(
                         AnalyticsEvent.ChoiceOptionSelected(chatId, turns.nextTurnNumber(), intent.position),
                     )
-                    startTurn(userInput, inputMode = MessageInputMode.CHOICE) {
-                        chatRepository.turnStream(chatId, userInput, origin)
+                    startTurn(userInput, inputMode = MessageInputMode.CHOICE) { realtimeImage ->
+                        chatRepository.turnStream(chatId, userInput, origin, realtimeImage)
                     }
                 }
 
@@ -553,12 +580,15 @@ class ChatRoomViewModel
          *
          * **진행 중인 작업을 직접 확인해 두 번째 요청을 버린다** — 버튼을 잠그는 것만으로는 연타와
          * 접근성 서비스의 반복 클릭을 막지 못하고, 턴은 되돌릴 수 없는 쓰기다.
+         *
+         * [stream] 은 지금 설정의 실시간 이미지 값을 받는다. 요청과 진행 블록이 같은 스냅샷을 쓰게 하려고
+         * 여기서 한 번만 읽는다.
          */
         private fun startTurn(
             userInput: String,
             regeneratedTurnId: Long? = null,
             inputMode: MessageInputMode? = null,
-            stream: () -> Flow<ChatStreamEvent>,
+            stream: (realtimeImage: Boolean) -> Flow<ChatStreamEvent>,
         ) {
             // 스트림을 만들기 전에 막는다 — 진행 중에 또 만들면 버린 요청이 서버 기록에 남는다.
             if (streamJob?.isActive == true) return
@@ -571,7 +601,8 @@ class ChatRoomViewModel
             }
 
             // 상태를 바꾸기 전에 만든다 — 출처 판정이 아직 비우지 않은 채우기 기억을 봐야 한다.
-            val events = stream()
+            val realtimeImage = realtimeImageEnabled
+            val events = stream(realtimeImage)
             if (regeneratedTurnId == null) {
                 // 이어쓰기만 컴포저를 비운다 — 재생성은 쓰던 초안을 건드리지 않는다.
                 // 다음 턴의 입력이 앞 턴에서 채운 문장과 대조되면 안 된다.
@@ -588,9 +619,17 @@ class ChatRoomViewModel
                 viewModelScope.launch {
                     dispatchEvent(
                         if (regeneratedTurnId == null) {
-                            ChatRoomEvent.SendStarted(userInput = userInput, composer = composer)
+                            ChatRoomEvent.SendStarted(
+                                userInput = userInput,
+                                composer = composer,
+                                realtimeImage = realtimeImage,
+                            )
                         } else {
-                            ChatRoomEvent.RegenerateStarted(turnId = regeneratedTurnId, userInput = userInput)
+                            ChatRoomEvent.RegenerateStarted(
+                                turnId = regeneratedTurnId,
+                                userInput = userInput,
+                                realtimeImage = realtimeImage,
+                            )
                         },
                     )
                     events.collectBatched { event -> handleStreamEvent(event) }
@@ -770,12 +809,15 @@ private fun reduceChatRoom(
             state.copy(
                 composer = event.composer,
                 choicesEnabled = event.choicesEnabled,
+                realtimeImageEnabled = event.realtimeImageEnabled,
                 choicesHintUnseen = event.hintUnseen,
             )
 
         is ChatRoomEvent.ComposerChanged -> state.copy(composer = event.composer)
 
         is ChatRoomEvent.ChoicesEnabledChanged -> state.copy(choicesEnabled = event.enabled)
+
+        is ChatRoomEvent.RealtimeImageEnabledChanged -> state.copy(realtimeImageEnabled = event.enabled)
 
         ChatRoomEvent.DeleteStarted -> state.copy(isDeleting = true)
 
@@ -799,14 +841,14 @@ private fun reduceTurn(
         is ChatRoomEvent.SendStarted ->
             state.copy(
                 composer = event.composer,
-                streaming = StreamingTurn(userInput = event.userInput),
+                streaming = StreamingTurn(userInput = event.userInput, realtimeImage = event.realtimeImage),
                 isStreaming = true,
                 choicesProgress = null,
             )
 
         is ChatRoomEvent.RegenerateStarted ->
             state.copy(
-                streaming = StreamingTurn(userInput = event.userInput),
+                streaming = StreamingTurn(userInput = event.userInput, realtimeImage = event.realtimeImage),
                 isStreaming = true,
                 regeneratingTurnId = event.turnId,
                 choicesProgress = null,
@@ -861,6 +903,7 @@ private fun ChatRepository.turnStream(
     chatId: String,
     userInput: String,
     origin: SuggestionOrigin,
+    realtimeImage: Boolean,
 ): Flow<ChatStreamEvent> =
     streamTurn(
         chatId = chatId,
@@ -868,6 +911,7 @@ private fun ChatRepository.turnStream(
         userSource = origin.userSource,
         sourceTurnId = origin.sourceTurnId,
         choiceOrder = origin.choiceOrder,
+        realtimeImage = realtimeImage,
     )
 
 private fun app.manyak.chat.entity.ChatTurn.toUi(): ChatRoomTurn =

@@ -24,9 +24,12 @@
     <string name="my_credit_history_loading">이프 내역을 불러오는 중</string>
     <string name="my_credit_label">내 이프</string>
     <string name="my_credit_reason_attendance">출석 체크 보상</string>
+    <string name="my_credit_reason_chat_image">채팅 실시간 이미지 생성</string>
     <string name="my_credit_reason_chat_turn">채팅 전송</string>
     <string name="my_credit_reason_expire">기간 만료</string>
     <string name="my_credit_reason_invite">친구 초대 보상</string>
+    <string name="my_credit_reason_purchase">이프 구매</string>
+    <string name="my_credit_reason_purchase_reversal">구매 환불</string>
     <string name="my_credit_reason_refund">사용 취소</string>
     <string name="my_credit_reason_signup">가입 보상</string>
     <string name="my_credit_reason_story_creation">스토리 완성</string>

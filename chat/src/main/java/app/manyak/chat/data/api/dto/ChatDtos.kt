@@ -19,6 +19,9 @@ data class ChatCreateRequestDto(
  *
  * [sourceTurnId]·[choiceOrder] 는 고른 선택지를 서버가 기록하는 데만 쓰이고, 값이 낡았거나 범위를
  * 벗어나도 서버가 거절하지 않고 기록만 생략한다.
+ *
+ * [realtimeImage] 는 기본값을 두지 않는다 — 서버 기본이 켬이라 빠뜨리면 끈 사용자에게도 이미지가
+ * 만들어지고 이프가 빠져나간다. 항상 명시해 보낸다.
  */
 @Serializable
 data class ChatTurnStreamRequestDto(
@@ -26,12 +29,14 @@ data class ChatTurnStreamRequestDto(
     val userSource: String? = null,
     val sourceTurnId: Long? = null,
     val choiceOrder: Int? = null,
+    val realtimeImage: Boolean,
 )
 
-/** 재생성 요청. 서버가 보는 마지막 턴과 다르면 409 다. */
+/** 재생성 요청. 서버가 보는 마지막 턴과 다르면 409 다. [realtimeImage] 규칙은 턴 진행과 같다. */
 @Serializable
 data class ChatRegenerateRequestDto(
     val turnId: Long,
+    val realtimeImage: Boolean,
 )
 
 /**

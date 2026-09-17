@@ -11,6 +11,9 @@ private const val IMAGE_URL = "https://cdn.manyak.app/characters/generated/watch
 private const val ORIGINAL_IMAGE_URL =
     "https://dev-cdn.manyak.app/characters/originals/cca6358a-0ef3-4709-88d1-100b9faeeca8/오만수_561c77ff.webp"
 
+private const val REALTIME_IMAGE_URL =
+    "https://dev-cdn.manyak.app/chat-images/2f1c9a8e-7b3d-4c1a-9e2f-5d6a7b8c9d0e/3-1c2d3e4f-5a6b-7c8d-9e0f-1a2b3c4d5e6f.webp"
+
 class ChatMessageSegmentsTest {
     @Test
     fun `마커가 없으면 본문 전체가 텍스트 한 조각이다`() {
@@ -94,11 +97,12 @@ class ChatMessageSegmentsTest {
     }
 
     @Test
-    fun `운영과 개발 CDN 의 생성 · 오리지널 인물 경로만 허용한다`() {
+    fun `운영과 개발 CDN 의 생성 · 오리지널 · 채팅 실시간 인물 경로만 허용한다`() {
         assertTrue(isAllowedCharacterImageUrl(IMAGE_URL))
         assertTrue(isAllowedCharacterImageUrl("https://dev-cdn.manyak.app/characters/generated/a.png"))
         assertTrue(isAllowedCharacterImageUrl(ORIGINAL_IMAGE_URL))
         assertTrue(isAllowedCharacterImageUrl("https://cdn.manyak.app/characters/originals/a.png"))
+        assertTrue(isAllowedCharacterImageUrl(REALTIME_IMAGE_URL))
 
         // 다른 호스트·평문·포트·자격 증명·다른 경로는 모두 막는다.
         assertFalse(isAllowedCharacterImageUrl("https://cdn.manyak.app.evil.example/characters/generated/a.png"))
@@ -108,6 +112,7 @@ class ChatMessageSegmentsTest {
         assertFalse(isAllowedCharacterImageUrl("https://cdn.manyak.app/covers/a.png"))
         assertFalse(isAllowedCharacterImageUrl("https://cdn.manyak.app/characters/generated/"))
         assertFalse(isAllowedCharacterImageUrl("https://cdn.manyak.app/characters/originals/"))
+        assertFalse(isAllowedCharacterImageUrl("https://cdn.manyak.app/chat-images/"))
         assertFalse(isAllowedCharacterImageUrl("주소가 아님"))
     }
 

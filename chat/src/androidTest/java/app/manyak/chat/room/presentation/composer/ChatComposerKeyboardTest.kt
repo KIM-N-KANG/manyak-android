@@ -22,7 +22,6 @@ import androidx.compose.ui.test.click
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performTouchInput
@@ -62,8 +61,7 @@ class ChatComposerKeyboardTest {
                                 },
                                 onAddBlock = { state = state.copy(blocks = state.blocks.addBlock(it)) },
                                 onRemoveBlock = { state = state.copy(blocks = state.blocks.removeBlock(it)) },
-                                onModeChange = { state = state.convertTo(it) },
-                                onChoicesEnabledChange = {},
+                                onOpenSettings = {},
                                 onSend = {},
                                 onSendRandomSuggestion = {},
                                 onLockedTap = {},
@@ -88,12 +86,6 @@ class ChatComposerKeyboardTest {
         fields()[0].assertIsFocused()
         assertTrue(keyboardVisible())
         compose.onAllNodesWithContentDescription("입력 삭제")[0].performTouchInput { click() }
-        compose.waitForIdle()
-        fields()[0].assertIsFocused()
-        assertTrue(keyboardVisible())
-        compose.onNodeWithContentDescription("추천 입력 설정").performTouchInput { click() }
-        compose.waitForIdle()
-        compose.onNodeWithText("추천 입력 끔").performTouchInput { click() }
         compose.waitForIdle()
         fields()[0].assertIsFocused()
         assertTrue(keyboardVisible())

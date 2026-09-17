@@ -1,0 +1,34 @@
+package app.manyak.designsystem.component
+
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import app.manyak.designsystem.theme.ManyakTheme
+
+/**
+ * 앱 색을 얹은 M3 스위치. 크기·모양은 M3 기본 그대로다.
+ *
+ * [onCheckedChange] 가 null 이면 표시만 맡는다 — 행 전체가 토글을 받는 자리(채팅 설정 시트)에서
+ * 스위치에도 클릭을 달면 한 번의 탭이 두 번 토글되고 접근성 노드도 둘로 읽힌다.
+ */
+@Composable
+fun ManyakSwitch(
+    checked: Boolean,
+    onCheckedChange: ((Boolean) -> Unit)?,
+    modifier: Modifier = Modifier,
+) {
+    Switch(
+        modifier = modifier,
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+        colors =
+            SwitchDefaults.colors(
+                checkedThumbColor = ManyakTheme.colors.textInverse,
+                checkedTrackColor = ManyakTheme.colors.brand,
+                uncheckedThumbColor = ManyakTheme.colors.textSubtlest,
+                uncheckedTrackColor = ManyakTheme.colors.backgroundNeutral,
+                uncheckedBorderColor = ManyakTheme.colors.borderStrong,
+            ),
+    )
+}

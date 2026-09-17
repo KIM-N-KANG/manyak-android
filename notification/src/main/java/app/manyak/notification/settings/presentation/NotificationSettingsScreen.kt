@@ -26,8 +26,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -57,6 +55,7 @@ import app.manyak.common.domain.error.DomainError
 import app.manyak.common.presentation.error.messageResOrNull
 import app.manyak.designsystem.component.LoadFailedContent
 import app.manyak.designsystem.component.ManyakIconButton
+import app.manyak.designsystem.component.ManyakSwitch
 import app.manyak.designsystem.component.ManyakTextButton
 import app.manyak.designsystem.component.SkeletonPlaceholder
 import app.manyak.designsystem.component.rememberSkeletonPulseAlpha
@@ -281,35 +280,14 @@ private fun SettingRow(
                 modifier = Modifier.size(width = SwitchTrackWidth, height = SwitchTrackHeight),
             )
         } else {
-            PushSwitch(
+            // 조작은 스위치 자신이 받는다.
+            ManyakSwitch(
                 modifier = Modifier.semantics { contentDescription = label },
                 checked = checked,
                 onCheckedChange = { onToggle() },
             )
         }
     }
-}
-
-/** 앱 색을 얹은 M3 스위치. 조작은 스위치 자신이 받는다. */
-@Composable
-private fun PushSwitch(
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Switch(
-        modifier = modifier,
-        checked = checked,
-        onCheckedChange = onCheckedChange,
-        colors =
-            SwitchDefaults.colors(
-                checkedThumbColor = ManyakTheme.colors.textInverse,
-                checkedTrackColor = ManyakTheme.colors.brand,
-                uncheckedThumbColor = ManyakTheme.colors.textSubtlest,
-                uncheckedTrackColor = ManyakTheme.colors.backgroundNeutral,
-                uncheckedBorderColor = ManyakTheme.colors.borderStrong,
-            ),
-    )
 }
 
 /**

@@ -295,3 +295,41 @@ turnId에 귀속**시키고 최신 요청 turnId를 들고 있어, 늦게 끝난
 - 회전 중 스트림 유지와 컴포저 초안 보존
 - 키보드가 올라온 상태의 블럭 목록, 큰 글자에서의 컴포저 높이 상한
 - **같은 채팅을 웹과 나란히 놓고 확정 턴 렌더 비교** — 4단계의 "웹과 같은 값"은 캡처 대조로만 확인됩니다
+
+## KNK-1317 실시간 이미지 수신 경로·토글·설정 시트 (2026-09-17)
+
+- 티켓: [KNK-1317](https://kimandkang.atlassian.net/browse/KNK-1317) (부모 KNK-1315)
+- 브랜치: Android·하네스 모두 `feat/KNK-1317-chat-realtime-image-settings-sheet`, 분기 기준 fetch한 `origin/dev` — Android `ecf50831`, 하네스 `4b34221`
+- 계약: [채팅 설정 시트와 메뉴 시트](../../../knk-harness/docs/spec/3-1-client-spec.md#채팅-설정-시트와-메뉴-시트), [인물 이미지 렌더](../../../knk-harness/docs/spec/3-1-client-spec.md#응답-재생성과-채팅-이미지), Swagger `ContinueChatRequest`·`RegenerateChatRequest`의 `realtimeImage`
+- 제외: 로딩 표현·스크롤 높이 유지(KNK-1318), 이프 비용 배지·안내 팝오버(KNK-1319), 채팅 메뉴 시트(KNK-1320)
+
+### 변경
+
+1. `CharacterImage`의 허용 경로에 `/chat-images/`를 더했습니다. 서버가 보내던 실시간 인물 이미지가 그동안 허용 검사에서 버려져 저장 마커가 평문으로 남던 것이 이 한 줄의 원인이었습니다.
+2. `ChatTurnStreamRequestDto`·`ChatRegenerateRequestDto`에 `realtimeImage: Boolean`을 **기본값 없이** 두었습니다. 서버 기본이 켬이라 빠뜨리면 끈 사용자에게도 이미지가 만들어지므로 컴파일러가 명시를 강제하게 했습니다. `ChatRepository.streamTurn/regenerateTurn`과 `ChatSseSource` 본문 테스트까지 같은 값을 실어 보냅니다.
+3. `ChatPreferencesRepository`에 `realtimeImageEnabled`(기기 단위, 기본 켬, 키 `chat_realtime_image_enabled`)를 더했습니다. 결정 7 그대로 `UserScopedStore`에 참여하지 않습니다.
+4. `ChatRoomViewModel`은 `startTurn`에서 지금 값을 한 번 읽어 스트림 람다와 `StreamingTurn.realtimeImage`에 같이 넘깁니다. 응답을 받는 중에 토글을 바꿔도 진행 중 턴은 전송 시점 값을 유지하고 다음 턴부터 새 값을 씁니다(KNK-1318의 로딩 표현이 이 스냅샷을 읽습니다).
+5. 컴포저 툴바의 드롭다운 둘(`ComposerMenu`)을 설정 아이콘 버튼 하나("채팅 설정")로 바꾸고 `ManyakBottomSheet` 기반 `ChatSettingsSheet`를 만들었습니다. 마이 메뉴 행 배치(아이콘 20dp · 라벨 · 설명 · 오른쪽 스위치)로 "채팅 기능"(실시간 이미지, AI 추천 입력)·"입력 모드"(블럭 입력) 두 그룹이고, 행 전체가 `Role.Switch` `toggleable`(`indication = null`)이며 스위치는 표시만 맡습니다. 닫기 버튼은 두지 않습니다 — 확정할 것이 없는 시트라 스크림·끌어내리기·뒤로가기로만 닫습니다(2026-09-17 사용자 결정, 티켓의 닫기 버튼 서술을 대체). 열림 상태는 `ChatRoomLoaded`의 `rememberSaveable`이 들어 입력 모드가 바뀌어 컴포저가 갈려도 시트가 남습니다.
+6. 두 번째 사용처가 생겨 알림 설정의 `PushSwitch`를 `designsystem/ManyakSwitch`로 올렸습니다. 시트 아이콘 `ic_ai_image`·`ic_ai_chat`·`ic_form`(hugeicons `ai-image`·`ai-chat-02`·`form`, 웹과 동일)을 추가하고 쓰임이 없어진 `ic_pen_sparkle`과 드롭다운 문자열 10개를 지웠습니다.
+7. 실시간 이미지 행의 이프 비용 배지·안내 팝오버 자리는 비워 두었습니다(KNK-1319).
+
+### 검증
+
+```bash
+./gradlew :chat:ktlintCheck :chat:detekt :chat:testDebugUnitTest \
+  :designsystem:ktlintCheck :designsystem:detekt :designsystem:testDebugUnitTest \
+  :notification:ktlintCheck :notification:detekt :chat:compileDebugAndroidTestKotlin installDebug
+```
+
+- 단위 테스트 통과(chat 145, designsystem 5). 새 `ChatRoomSettingsTest` 5개 — 저장값 진입 반영, 끔 → 요청 `false`·기기 저장, 기본 켬 → 요청 `true` 명시, 스트리밍 중 토글 변경에도 `StreamingTurn.realtimeImage` 유지·다음 턴부터 새 값, 재생성 요청의 값. `ChatSseSourceTest` 본문 기대값에 `realtimeImage`를 더했고 `ChatMessageSegmentsTest`에 `/chat-images/` 허용·빈 경로 거부 케이스를 더했습니다.
+- `ChatComposerKeyboardTest`(androidTest)에서 드롭다운 단계를 뺐습니다. 설정 버튼은 모달 시트를 열므로 키보드 유지 대상이 아닙니다. 컴파일만 확인했고 실행하지 않았습니다.
+- 에뮬레이터(Pixel, emulator-5554, 회원 로그인) 캡처 — `always_finish_activities`는 기본(null)이었습니다.
+  - 저장 마커 `[[…/chat-images/…]]`가 있던 방 "0호선"에서 이전에 평문으로 남던 자리에 차민재 인물 이미지가 그려집니다: [stored-chat-image.png](../../../captures/knk-1317/stored-chat-image.png)
+  - 설정 시트 열림·세 스위치 켬: [settings-sheet-open.png](../../../captures/knk-1317/settings-sheet-open.png) → 블럭 입력·실시간 이미지 끔(시트 유지): [settings-sheet-toggled.png](../../../captures/knk-1317/settings-sheet-toggled.png) → 닫은 뒤 컴포저가 일반 입력: [composer-plain-after-toggle.png](../../../captures/knk-1317/composer-plain-after-toggle.png)
+  - 시트를 연 채 회전·다크 모드 전환에서 시트와 스위치 값 유지: [settings-sheet-rotated.png](../../../captures/knk-1317/settings-sheet-rotated.png), [settings-sheet-dark.png](../../../captures/knk-1317/settings-sheet-dark.png). 회전·야간 모드는 검사 후 원래대로 되돌렸습니다.
+  - 방을 나갔다 다시 들어와도 끔 값이 유지되고(uiautomator `checked` false/true/false), 다시 켠 뒤 추천 입력 랜덤 전송으로 실제 턴 하나를 보냈습니다. 약 20초 뒤 새 턴의 본문 위치에 실시간 인물 이미지(차민재, 새 표정)가 그려지고 확정 후 재생성 버튼·선택지 3개가 나타났습니다: [realtime-turn-image.png](../../../captures/knk-1317/realtime-turn-image.png), [realtime-turn-confirmed.png](../../../captures/knk-1317/realtime-turn-confirmed.png). 이 턴은 dev 서버에 저장됐고 이프가 차감됐습니다.
+- 코드로만 판단한 것: 요청 본문의 `realtimeImage` 값(SSE 로깅 인터셉터가 없어 기기에서는 보지 못했고 `ChatSseSourceTest`·`ChatRoomSettingsTest`가 고정), 실시간 이미지 끈 채 보낸 턴에 이미지가 오지 않는지(이프를 더 쓰지 않으려 보내지 않음), 글자 크기 변경.
+
+### 복구
+
+되돌리면 허용 경로·요청 필드·설정 키·시트가 함께 빠지고 드롭다운 둘로 돌아갑니다. `chat_realtime_image_enabled` 키는 남아도 읽는 곳이 없어 무해합니다. 서버 계약·저장 스키마 변경은 없습니다.

@@ -35,6 +35,9 @@ enum class CreditTransactionReason {
     REFUND,
     STORY_CREATION,
     CHAT_TURN,
+    CHAT_IMAGE,
+    PURCHASE,
+    PURCHASE_REVERSAL,
     EXPIRE,
     UNKNOWN,
 }
