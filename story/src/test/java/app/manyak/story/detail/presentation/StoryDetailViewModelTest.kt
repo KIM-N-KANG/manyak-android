@@ -418,6 +418,32 @@ class StoryDetailViewModelTest {
         }
 
     @Test
+    fun `상세 조회와 복귀는 서버 좋아요 값을 보존하고 토글을 보내지 않는다`() =
+        runTest(dispatcher) {
+            val storyRepository = FakeStoryRepository()
+            storyRepository.queuedDetailResults +=
+                DomainResult.Success(sampleStoryDetail(likeCount = 12, isLiked = true, isOwner = false))
+            val viewModel = viewModel(storyRepository = storyRepository)
+
+            viewModel.onIntent(StoryDetailIntent.ScreenShown)
+            advanceUntilIdle()
+
+            val loaded = viewModel.uiState.value
+            assertEquals(12L, loaded.story?.likeCount)
+            assertTrue(loaded.story?.isLiked == true)
+
+            storyRepository.queuedDetailResults +=
+                DomainResult.Success(sampleStoryDetail(likeCount = 15, isLiked = false, isOwner = false))
+            viewModel.onIntent(StoryDetailIntent.ScreenShown)
+            advanceUntilIdle()
+
+            val refreshed = viewModel.uiState.value
+            assertEquals(15L, refreshed.story?.likeCount)
+            assertFalse(refreshed.story?.isLiked == true)
+            assertTrue(storyRepository.likeRequests.isEmpty())
+        }
+
+    @Test
     fun `좋아요를 누르면 등록을 보내고 성공 뒤 상태와 수를 한 칸 옮긴다`() =
         runTest(dispatcher) {
             val storyRepository = FakeStoryRepository()
