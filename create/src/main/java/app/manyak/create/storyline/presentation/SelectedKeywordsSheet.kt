@@ -26,6 +26,7 @@ import app.manyak.create.presentation.component.SelectedKeywordChip
 import app.manyak.create.presentation.component.labelRes
 import app.manyak.designsystem.component.ManyakBottomSheet
 import app.manyak.designsystem.component.ManyakProgressIndicator
+import app.manyak.designsystem.component.ManyakTextButton
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.create.R as CreateR
 import app.manyak.designsystem.R as DesignsystemR
@@ -82,6 +83,16 @@ internal fun SelectedKeywordsSheet(
             is SelectedKeywords.Loaded -> SelectedKeywordGroups(groups = keywords.groups)
             SelectedKeywords.Failed -> SelectedKeywordsFailure(onRetry = onRetry)
             else -> SelectedKeywordsLoading()
+        }
+        ManyakTextButton(
+            modifier = Modifier.fillMaxWidth().heightIn(min = ManyakTheme.sizes.control),
+            onClick = onDismiss,
+        ) {
+            Text(
+                text = stringResource(CreateR.string.create_selected_keywords_close),
+                style = ManyakTheme.typography.labelLarge,
+                color = ManyakTheme.colors.textSubtle,
+            )
         }
     }
 }

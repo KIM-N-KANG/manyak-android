@@ -163,6 +163,8 @@ private fun ConfirmationRow(
                     value = isChecked,
                     enabled = enabled,
                     role = Role.Checkbox,
+                    interactionSource = null,
+                    indication = null,
                     onValueChange = { onToggle() },
                 ),
         horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),

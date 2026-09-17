@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import app.manyak.designsystem.component.ManyakInputCounter
 import app.manyak.designsystem.component.ManyakTextButton
 import app.manyak.designsystem.component.ManyakTextField
+import app.manyak.designsystem.component.clearFocusOnTap
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.create.R as CreateR
 
@@ -106,11 +107,10 @@ internal fun AddKeywordDialog(
 ) {
     var input by rememberSaveable { mutableStateOf("") }
     var showEmptyError by rememberSaveable { mutableStateOf(false) }
-    val submit = {
-        if (input.isBlank()) showEmptyError = true else onSubmit(input.trim())
-    }
+    val submit = { if (input.isBlank()) showEmptyError = true else onSubmit(input.trim()) }
 
     AlertDialog(
+        modifier = Modifier.clearFocusOnTap(),
         onDismissRequest = onDismiss,
         containerColor = ManyakTheme.colors.surfaceRaised,
         shape = ManyakTheme.shapes.overlay,

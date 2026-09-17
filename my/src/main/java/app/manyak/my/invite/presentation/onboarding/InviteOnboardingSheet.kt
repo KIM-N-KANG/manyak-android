@@ -3,7 +3,6 @@ package app.manyak.my.invite.presentation.onboarding
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -33,7 +32,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -48,6 +46,8 @@ import app.manyak.common.presentation.credit.LocalCreditPolicy
 import app.manyak.common.presentation.credit.creditAmountText
 import app.manyak.designsystem.component.ManyakBottomSheet
 import app.manyak.designsystem.component.ManyakProgressIndicator
+import app.manyak.designsystem.component.ManyakTextButton
+import app.manyak.designsystem.component.keepKeyboardOnTap
 import app.manyak.designsystem.credit.creditAmountAlpha
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.my.R as MyR
@@ -166,10 +166,7 @@ private fun InviteOnboardingHeadline(modifier: Modifier = Modifier) {
     }
 }
 
-/**
- * 주 동작은 전체 폭으로 두고 닫기는 그 아래 한 단 작게 둔다 — 같은 폭으로 나란히 두면 둘의 무게가
- * 같아 보여, 이 시트에서 무엇이 다음 행동인지 흐려진다.
- */
+/** 주 동작 아래에 보조색 텍스트 닫기를 둔다. */
 @Composable
 private fun InviteOnboardingActions(
     isSubmitting: Boolean,
@@ -179,7 +176,7 @@ private fun InviteOnboardingActions(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
         Button(
             modifier = Modifier.fillMaxWidth().heightIn(min = ManyakTheme.sizes.control),
@@ -209,20 +206,14 @@ private fun InviteOnboardingActions(
                 }
             }
         }
-        // M3 `TextButton` 은 최소 터치 타깃 48dp 를 레이아웃 높이로 밀어 올려 32dp 가 나오지 않는다.
-        // 다른 작은 버튼들과 같이 Box + clickable 로 그린다.
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = ManyakTheme.sizes.controlSmall)
-                    .clip(ManyakTheme.shapes.control)
-                    .clickable(enabled = !isSubmitting, role = Role.Button, onClick = onSkip),
-            contentAlignment = Alignment.Center,
+        ManyakTextButton(
+            modifier = Modifier.fillMaxWidth().heightIn(min = ManyakTheme.sizes.control),
+            onClick = onSkip,
+            enabled = !isSubmitting,
         ) {
             Text(
                 text = stringResource(MyR.string.invite_onboarding_skip),
-                style = ManyakTheme.typography.labelSmall,
+                style = ManyakTheme.typography.labelLarge,
                 color = if (isSubmitting) ManyakTheme.colors.textDisabled else ManyakTheme.colors.textSubtle,
             )
         }
@@ -253,7 +244,7 @@ private fun InviteCodeField(
             else -> ManyakTheme.colors.border
         }
     BasicTextField(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().keepKeyboardOnTap(enabled),
         value = code,
         onValueChange = onCodeChange,
         enabled = enabled,

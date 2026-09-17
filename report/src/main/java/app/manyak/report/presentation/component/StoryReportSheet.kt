@@ -69,15 +69,16 @@ fun StoryReportSheet(
             isSubmitting = state.isSubmitting,
             onSubmit = { onAction(StoryReportAction.Submit) },
         )
+        Spacer(Modifier.height(ManyakTheme.spacing.compact))
         ManyakTextButton(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().heightIn(min = ManyakTheme.sizes.control),
             onClick = { onAction(StoryReportAction.Close) },
             enabled = !state.isSubmitting,
         ) {
             Text(
                 text = stringResource(ReportR.string.story_report_close),
                 style = ManyakTheme.typography.labelLarge,
-                color = ManyakTheme.colors.textSubtle,
+                color = if (state.isSubmitting) ManyakTheme.colors.textDisabled else ManyakTheme.colors.textSubtle,
             )
         }
     }
@@ -121,6 +122,8 @@ private fun StoryReportReasons(
                             selected = selected,
                             enabled = enabled,
                             role = Role.RadioButton,
+                            interactionSource = null,
+                            indication = null,
                             onClick = { onReasonSelect(reason) },
                         ),
                 verticalAlignment = Alignment.CenterVertically,
