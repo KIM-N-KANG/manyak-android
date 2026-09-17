@@ -55,7 +55,6 @@
     <string name="chat_settings_block_input_description">상황과 대사를 나눠서 입력해요</string>
     <string name="chat_settings_choices">AI 추천 입력</string>
     <string name="chat_settings_choices_description">AI가 다음 전개를 추천해줘요</string>
-    <string name="chat_settings_close">닫기</string>
     <string name="chat_settings_group_features">채팅 기능</string>
     <string name="chat_settings_group_input_mode">입력 모드</string>
     <string name="chat_settings_open">채팅 설정</string>

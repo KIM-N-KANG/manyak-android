@@ -22,14 +22,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import app.manyak.chat.entity.ChatInputMode
 import app.manyak.designsystem.component.ManyakBottomSheet
 import app.manyak.designsystem.component.ManyakSwitch
-import app.manyak.designsystem.component.ManyakTextButton
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.chat.R as ChatR
 import app.manyak.designsystem.R as DesignsystemR
 
 /**
  * 채팅 설정 시트. 스위치를 바꾸면 곧바로 반영되고 시트는 열린 채 남는다 — 블럭 입력을 끄면 시트 뒤의
- * 입력창이 일반 입력으로 바뀌는 것이 보인다.
+ * 입력창이 일반 입력으로 바뀌는 것이 보인다. 확정할 것이 없어 닫기 버튼을 두지 않고 스크림·끌어내리기·
+ * 뒤로가기로만 닫는다.
  *
  * 열림 상태는 화면이 든다. 컴포저 안에 두면 입력 모드가 바뀌어 컴포저가 갈릴 때 시트도 같이 사라진다.
  */
@@ -79,16 +79,6 @@ internal fun ChatSettingsSheet(
                 onCheckedChange = { checked ->
                     onModeChange(if (checked) ChatInputMode.BLOCK else ChatInputMode.PLAIN)
                 },
-            )
-        }
-        ManyakTextButton(
-            modifier = Modifier.fillMaxWidth().heightIn(min = ManyakTheme.sizes.control),
-            onClick = onDismiss,
-        ) {
-            Text(
-                text = stringResource(ChatR.string.chat_settings_close),
-                style = ManyakTheme.typography.labelLarge,
-                color = ManyakTheme.colors.textSubtle,
             )
         }
     }

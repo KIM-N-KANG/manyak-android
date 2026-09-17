@@ -309,7 +309,7 @@ turnId에 귀속**시키고 최신 요청 turnId를 들고 있어, 늦게 끝난
 2. `ChatTurnStreamRequestDto`·`ChatRegenerateRequestDto`에 `realtimeImage: Boolean`을 **기본값 없이** 두었습니다. 서버 기본이 켬이라 빠뜨리면 끈 사용자에게도 이미지가 만들어지므로 컴파일러가 명시를 강제하게 했습니다. `ChatRepository.streamTurn/regenerateTurn`과 `ChatSseSource` 본문 테스트까지 같은 값을 실어 보냅니다.
 3. `ChatPreferencesRepository`에 `realtimeImageEnabled`(기기 단위, 기본 켬, 키 `chat_realtime_image_enabled`)를 더했습니다. 결정 7 그대로 `UserScopedStore`에 참여하지 않습니다.
 4. `ChatRoomViewModel`은 `startTurn`에서 지금 값을 한 번 읽어 스트림 람다와 `StreamingTurn.realtimeImage`에 같이 넘깁니다. 응답을 받는 중에 토글을 바꿔도 진행 중 턴은 전송 시점 값을 유지하고 다음 턴부터 새 값을 씁니다(KNK-1318의 로딩 표현이 이 스냅샷을 읽습니다).
-5. 컴포저 툴바의 드롭다운 둘(`ComposerMenu`)을 설정 아이콘 버튼 하나("채팅 설정")로 바꾸고 `ManyakBottomSheet` 기반 `ChatSettingsSheet`를 만들었습니다. 마이 메뉴 행 배치(아이콘 20dp · 라벨 · 설명 · 오른쪽 스위치)로 "채팅 기능"(실시간 이미지, AI 추천 입력)·"입력 모드"(블럭 입력) 두 그룹이고, 행 전체가 `Role.Switch` `toggleable`(`indication = null`)이며 스위치는 표시만 맡습니다. 닫기는 48dp 전체 폭 `ManyakTextButton`입니다. 열림 상태는 `ChatRoomLoaded`의 `rememberSaveable`이 들어 입력 모드가 바뀌어 컴포저가 갈려도 시트가 남습니다.
+5. 컴포저 툴바의 드롭다운 둘(`ComposerMenu`)을 설정 아이콘 버튼 하나("채팅 설정")로 바꾸고 `ManyakBottomSheet` 기반 `ChatSettingsSheet`를 만들었습니다. 마이 메뉴 행 배치(아이콘 20dp · 라벨 · 설명 · 오른쪽 스위치)로 "채팅 기능"(실시간 이미지, AI 추천 입력)·"입력 모드"(블럭 입력) 두 그룹이고, 행 전체가 `Role.Switch` `toggleable`(`indication = null`)이며 스위치는 표시만 맡습니다. 닫기 버튼은 두지 않습니다 — 확정할 것이 없는 시트라 스크림·끌어내리기·뒤로가기로만 닫습니다(2026-09-17 사용자 결정, 티켓의 닫기 버튼 서술을 대체). 열림 상태는 `ChatRoomLoaded`의 `rememberSaveable`이 들어 입력 모드가 바뀌어 컴포저가 갈려도 시트가 남습니다.
 6. 두 번째 사용처가 생겨 알림 설정의 `PushSwitch`를 `designsystem/ManyakSwitch`로 올렸습니다. 시트 아이콘 `ic_ai_image`·`ic_form`(hugeicons `ai-image`·`form`)을 추가했고, 쓰지 않게 된 드롭다운 문자열 10개를 지웠습니다.
 7. 실시간 이미지 행의 이프 비용 배지·안내 팝오버 자리는 비워 두었습니다(KNK-1319).
 
