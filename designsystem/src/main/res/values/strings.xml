@@ -7,4 +7,6 @@
     <string name="story_thumbnail_placeholder">썸네일 없음</string>
     <string name="story_turn_count_description">누적 턴 수 %1$s</string>
     <string name="designsystem_preview_label">메뉴</string>
+    <string name="image_viewer_close">닫기</string>
+    <string name="character_image_open">%1$s 인물 이미지 크게 보기</string>
 </resources>

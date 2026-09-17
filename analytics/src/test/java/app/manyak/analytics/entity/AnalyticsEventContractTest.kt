@@ -38,6 +38,20 @@ class AnalyticsEventContractTest {
         )
     }
 
+    @Test
+    fun `character image events contain only their screen identifier`() {
+        assertEvent(
+            AnalyticsEvent.StoryDetailCharacterImageClicked("story-fixture"),
+            "client_storyDetail_characterImage_clicked",
+            mapOf("story_id" to "story-fixture"),
+        )
+        assertEvent(
+            AnalyticsEvent.ChatCharacterImageClicked("chat-fixture"),
+            "client_chat_characterImage_clicked",
+            mapOf("chat_id" to "chat-fixture"),
+        )
+    }
+
     private fun assertEvent(
         event: AnalyticsEvent,
         name: String,

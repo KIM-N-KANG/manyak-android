@@ -40,6 +40,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.chat.list.presentation.label
 import app.manyak.chat.room.presentation.composer.ChatComposer
 import app.manyak.chat.room.presentation.composer.ChatComposerActions
+import app.manyak.designsystem.component.FullscreenImageViewer
 import app.manyak.designsystem.component.ManyakDestructiveDialog
 import app.manyak.designsystem.component.ManyakIconButton
 import app.manyak.designsystem.component.ManyakOptionsMenu
@@ -164,54 +165,57 @@ private fun ChatRoomContent(
     // 덮어쓰기 확인 대상. 구성 변경에서 되돌아가면 안 되는 진행 상태다.
     var pendingFill by rememberSaveable { mutableStateOf<Int?>(null) }
 
-    Column(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.safeDrawing),
-    ) {
-        val phase = chatRoomPhase(state)
-        // 헤더는 어느 상태에서나 남는다 — 실패 화면에서도 뒤로 나갈 곳이 있어야 한다. 다만 방을 아직
-        // 열지 못한 상태에서는 삭제를 권하지 않는다.
-        ChatRoomHeader(
-            title = state.storyTitle,
-            // 방을 연 뒤에도 제목이 비어 있으면 참조 스토리가 삭제된 것이다 — 목록 카드와 같은 문구로 알린다.
-            isStoryDeleted = phase == ChatRoomPhase.CONTENT && state.storyTitle.isBlank(),
-            showsOptions = phase == ChatRoomPhase.CONTENT,
-            onBack = onBack,
-            onDeleteClick = onDeleteClick,
-            onReportClick = { onIntent(ChatRoomIntent.Report(StoryReportAction.Open)) },
-        )
-        val millis = ManyakTheme.motion.screenTransitionMillis
-        AnimatedContent(
-            modifier = Modifier.weight(1f),
-            targetState = phase,
-            // 앞 화면이 다 빠진 뒤에 다음 화면이 든다 — 둘이 겹쳐 보이면 어느 쪽이 지금인지 흐려진다.
-            transitionSpec = { fadeIn(tween(millis, delayMillis = millis)) togetherWith fadeOut(tween(millis)) },
-            label = "chat-room-phase",
-        ) { phase ->
-            Column(modifier = Modifier.fillMaxSize()) {
-                when (phase) {
-                    ChatRoomPhase.LOADING ->
-                        Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                            if (showProgress) ManyakProgressIndicator()
-                        }
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .windowInsetsPadding(WindowInsets.safeDrawing),
+        ) {
+            val phase = chatRoomPhase(state)
+            // 헤더는 어느 상태에서나 남는다 — 실패 화면에서도 뒤로 나갈 곳이 있어야 한다. 다만 방을 아직
+            // 열지 못한 상태에서는 삭제를 권하지 않는다.
+            ChatRoomHeader(
+                title = state.storyTitle,
+                // 방을 연 뒤에도 제목이 비어 있으면 참조 스토리가 삭제된 것이다 — 목록 카드와 같은 문구로 알린다.
+                isStoryDeleted = phase == ChatRoomPhase.CONTENT && state.storyTitle.isBlank(),
+                showsOptions = phase == ChatRoomPhase.CONTENT,
+                onBack = onBack,
+                onDeleteClick = onDeleteClick,
+                onReportClick = { onIntent(ChatRoomIntent.Report(StoryReportAction.Open)) },
+            )
+            val millis = ManyakTheme.motion.screenTransitionMillis
+            AnimatedContent(
+                modifier = Modifier.weight(1f),
+                targetState = phase,
+                // 앞 화면이 다 빠진 뒤에 다음 화면이 든다 — 둘이 겹쳐 보이면 어느 쪽이 지금인지 흐려진다.
+                transitionSpec = { fadeIn(tween(millis, delayMillis = millis)) togetherWith fadeOut(tween(millis)) },
+                label = "chat-room-phase",
+            ) { phase ->
+                Column(modifier = Modifier.fillMaxSize()) {
+                    when (phase) {
+                        ChatRoomPhase.LOADING ->
+                            Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                                if (showProgress) ManyakProgressIndicator()
+                            }
 
-                    ChatRoomPhase.FAILED ->
-                        ChatRoomLoadFailed(
-                            modifier = Modifier.weight(1f),
-                            onRetry = { onIntent(ChatRoomIntent.Retry) },
-                        )
+                        ChatRoomPhase.FAILED ->
+                            ChatRoomLoadFailed(
+                                modifier = Modifier.weight(1f),
+                                onRetry = { onIntent(ChatRoomIntent.Retry) },
+                            )
 
-                    ChatRoomPhase.CONTENT ->
-                        ChatRoomLoaded(
-                            state = state,
-                            onIntent = onIntent,
-                            onFillRequested = { position -> pendingFill = position },
-                        )
+                        ChatRoomPhase.CONTENT ->
+                            ChatRoomLoaded(
+                                state = state,
+                                onIntent = onIntent,
+                                onFillRequested = { position -> pendingFill = position },
+                            )
+                    }
                 }
             }
         }
+        FullscreenImageViewer(state.imageViewerUrl, onClose = { onIntent(ChatRoomIntent.CloseImageViewer) })
     }
 
     val fillPosition = pendingFill

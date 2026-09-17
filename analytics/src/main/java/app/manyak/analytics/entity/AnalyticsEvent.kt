@@ -192,6 +192,10 @@ sealed class AnalyticsEvent(
         val storyId: String,
     ) : AnalyticsEvent("client_storyDetail_thumbnail_clicked", mapOf("story_id" to storyId))
 
+    data class StoryDetailCharacterImageClicked(
+        val storyId: String,
+    ) : AnalyticsEvent("client_storyDetail_characterImage_clicked", mapOf("story_id" to storyId))
+
     data class StartSettingSelected(
         val storyId: String,
         val startSettingId: String,
@@ -231,6 +235,10 @@ sealed class AnalyticsEvent(
     data class ChatViewed(
         val chatId: String,
     ) : AnalyticsEvent("client_chat_viewed", mapOf("chat_id" to chatId))
+
+    data class ChatCharacterImageClicked(
+        val chatId: String,
+    ) : AnalyticsEvent("client_chat_characterImage_clicked", mapOf("chat_id" to chatId))
 
     data class ChatInputModeSelected(
         val chatId: String,

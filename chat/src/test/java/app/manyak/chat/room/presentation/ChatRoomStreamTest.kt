@@ -231,6 +231,34 @@ class ChatRoomStreamTest {
             assertNull(withTimeoutOrNull(100) { viewModel.uiEffect() })
         }
 
+    @Test
+    fun `인물 뷰어를 열고 닫아도 진행 중 응답은 계속 쌓인다`() =
+        runTest(dispatcher) {
+            val repository = FakeChatRepository()
+            val viewModel = startStreaming(repository)
+            val url = "https://cdn.manyak.app/characters/originals/clockmaker.png"
+            repository.streamEvents.send(ChatStreamEvent.CharacterImage("시계공", url))
+            advanceUntilIdle()
+            viewModel.onIntent(ChatRoomIntent.OpenCharacterImage(url))
+            advanceUntilIdle()
+            repository.streamEvents.send(ChatStreamEvent.Token("문이 열린다"))
+            advanceUntilIdle()
+            assertEquals(url, viewModel.uiState.value.imageViewerUrl)
+            assertTrue(viewModel.uiState.value.isStreaming)
+            val streaming = viewModel.uiState.value.streaming
+            assertEquals(
+                listOf(ChatMessageSegment.CharacterImage("시계공", url), ChatMessageSegment.Text("문이 열린다")),
+                streaming?.segments,
+            )
+            viewModel.onIntent(ChatRoomIntent.CloseImageViewer)
+            advanceUntilIdle()
+            assertNull(viewModel.uiState.value.imageViewerUrl)
+            assertEquals(streaming, viewModel.uiState.value.streaming)
+            assertTrue(viewModel.uiState.value.isStreaming)
+            repository.streamEvents.close()
+            advanceUntilIdle()
+        }
+
     private fun viewModel(
         repository: FakeChatRepository,
         preferences: FakeChatPreferencesRepository = FakeChatPreferencesRepository(),

@@ -71,6 +71,7 @@ internal fun ChatTranscript(
     onIntent: (ChatRoomIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val onCharacterImageClick: (String) -> Unit = { url -> onIntent(ChatRoomIntent.OpenCharacterImage(url)) }
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
     // 보낸 턴이 상단까지 올라갈 자리. 목록 끝 항목이 이 값을 높이로 읽는다. 구성 변경에서 잃으면
@@ -102,21 +103,26 @@ internal fun ChatTranscript(
     ) {
         LazyColumn(modifier = Modifier.fillMaxWidth(), state = listState) {
             if (prologueCount > 0) {
-                item(key = "prologue") { ChatAiOutput(content = state.prologue) }
+                item(
+                    key = "prologue",
+                ) { ChatAiOutput(content = state.prologue, onCharacterImageClick = onCharacterImageClick) }
             }
             itemsIndexed(state.turns, key = { _, turn -> turn.id }) { index, turn ->
                 if (streaming != null && turn.id == state.regeneratingTurnId) {
-                    StreamingBlock(streaming = streaming)
+                    StreamingBlock(streaming = streaming, onCharacterImageClick = onCharacterImageClick)
                 } else {
                     TurnBlock(
                         turn = turn,
+                        onCharacterImageClick = onCharacterImageClick,
                         isLast = streaming == null && index == state.turns.lastIndex,
                         onRegenerate = { onIntent(ChatRoomIntent.RegenerateRequested(turn.id)) },
                     )
                 }
             }
             if (appendsStreaming && streaming != null) {
-                item(key = "streaming") { StreamingBlock(streaming = streaming) }
+                item(
+                    key = "streaming",
+                ) { StreamingBlock(streaming = streaming, onCharacterImageClick = onCharacterImageClick) }
             }
             if (showsSuggestions) suggestionItem(state, state.suggestions, state.turns.lastOrNull()?.id, onIntent)
             item(key = ANCHOR_PAD_KEY) { AnchorPad(padPx = padPx) }
@@ -135,13 +141,18 @@ internal fun ChatTranscript(
 @Composable
 private fun TurnBlock(
     turn: ChatRoomTurn,
+    onCharacterImageClick: (String) -> Unit,
     isLast: Boolean,
     onRegenerate: () -> Unit,
 ) {
     Column {
         if (turn.userInput.isNotBlank()) ChatUserBand(text = turn.userInput)
         if (turn.aiOutput.isNotBlank()) {
-            ChatAiOutput(content = turn.aiOutput, endingName = turn.reachedEnding)
+            ChatAiOutput(
+                content = turn.aiOutput,
+                endingName = turn.reachedEnding,
+                onCharacterImageClick = onCharacterImageClick,
+            )
         }
         if (isLast && canRegenerate(turn)) RegenerateButton(onClick = onRegenerate)
     }
@@ -153,14 +164,17 @@ private fun TurnBlock(
  * 본문은 도착한 그대로가 아니라 타자기 공개를 거친다 — 배칭된 덩이가 아니라 글자가 이어서 나타난다.
  */
 @Composable
-private fun StreamingBlock(streaming: StreamingTurn) {
+private fun StreamingBlock(
+    streaming: StreamingTurn,
+    onCharacterImageClick: (String) -> Unit,
+) {
     val revealed = rememberTypewriterSegments(streaming.segments)
     Column {
         ChatUserBand(text = streaming.userInput)
         if (revealed.isEmpty()) {
             WritingPlaceholder()
         } else {
-            ChatAiOutput(segments = revealed)
+            ChatAiOutput(segments = revealed, onCharacterImageClick = onCharacterImageClick)
         }
     }
 }
