@@ -34,7 +34,7 @@ import java.text.NumberFormat
 import app.manyak.designsystem.R as DesignsystemR
 
 /**
- * 목록 카드의 3:4 표지에 좋아요 수·누적 턴 수 뱃지를 얹은 것. 카드 종류별 표시(예: 홈의
+ * 목록 카드의 3:4 표지에 누적 턴 수 뱃지를 얹은 것. 카드 종류별 표시(예: 홈의
  * ORIGINAL 태그)는 [overlay] 로 표지 위에 더한다.
  *
  * 뱃지를 얹을 수 없는 자리 — 채팅 목록 카드처럼 표지가 작거나, 턴 수를 카드의 다른 자리가 이미
@@ -43,7 +43,6 @@ import app.manyak.designsystem.R as DesignsystemR
 @Composable
 fun StoryThumbnail(
     thumbnailUrl: String?,
-    likeCount: Long,
     turnCount: Long,
     modifier: Modifier = Modifier,
     badgeScale: StoryBadgeScale = StoryBadgeScale.Compact,
@@ -58,24 +57,13 @@ fun StoryThumbnail(
         showBorder = showBorder,
     ) {
         overlay()
-        Row(
+        CountBadge(
             modifier = Modifier.align(Alignment.BottomEnd).padding(ManyakTheme.spacing.compact),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
-        ) {
-            CountBadge(
-                iconRes = DesignsystemR.drawable.ic_heart_outline,
-                count = likeCount,
-                descriptionRes = DesignsystemR.string.story_like_count_description,
-                scale = badgeScale,
-            )
-            CountBadge(
-                iconRes = DesignsystemR.drawable.ic_dialog,
-                count = turnCount,
-                descriptionRes = DesignsystemR.string.story_turn_count_description,
-                scale = badgeScale,
-            )
-        }
+            iconRes = DesignsystemR.drawable.ic_dialog,
+            count = turnCount,
+            descriptionRes = DesignsystemR.string.story_turn_count_description,
+            scale = badgeScale,
+        )
     }
 }
 
@@ -151,7 +139,7 @@ fun StoryCover(
 }
 
 /**
- * 표지 위 지표 뱃지 하나. 좋아요 수와 누적 턴 수가 같은 모양을 쓰므로 아이콘과 문구만 갈린다.
+ * 표지 위 지표 뱃지 하나.
  * 표지 위에 놓이므로 색은 테마가 아니라 표지 대비로 정한다.
  */
 @Composable

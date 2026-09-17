@@ -652,7 +652,7 @@ components:
 
 **`switch`** — 설정 한 줄의 켬·끔(알림 설정). M3 `Switch`의 크기·모양은 그대로 두고 색만 얹는다 — 꺼짐은 `{colors.background-neutral}` 트랙에 `{colors.border-strong}` 경계와 `{colors.text-subtlest}` 손잡이, 켜짐은 `{colors.brand}` 트랙에 `{colors.text-inverse}` 손잡이다. 비활성 상태는 두지 않는다 — 켤 수 없는 줄(광고가 꺼진 동안의 야간 광고 허용)은 흐리게 두지 않고 숨긴다(2026-09-11). **체크박스와 달리 스위치 자신이 누르는 대상이고 줄은 눌리지 않는다**(2026-09-11 — 라벨 옆에 문서를 여는 아이콘 버튼이 함께 놓여 줄 전체 토글과 겹친다). 접근성 이름은 스위치에 줄의 라벨을 붙여 읽힌다. 불러오기 전에는 같은 크기의 골격이 자리를 지킨다.
 
-**`icon-button`** — 라벨 없이 아이콘만 있는 버튼. 배경 없음이고 눌림 리플의 모양이 자리에 따라 갈린다. **앱바의 뒤로가기·닫기(`{sizes.control}`)는 원(`{rounded.pill}`)** — 안드로이드 관례라 그대로 둔다. **콘텐츠 안에 놓이는 작은 버튼(입력 칸 옆 삭제·카드 제목 줄 더보기·컴포저 아이콘, `{sizes.control-small}` 이하)은 `{rounded.menu-item}`** — M3 `IconButton` 은 모양을 고를 수 없어 원이 그대로 나오므로 `ManyakIconButton`을 쓴다. 높이가 낮은 글자 토글(추가 정보의 "더보기")도 같은 이유로 컨트롤 곡률 대신 메뉴 항목 곡률을 쓴다. **버튼과 나란히 놓이는 큰 아이콘 버튼(스토리 상세 하단 CTA 의 좋아요, `{sizes.control}`)은 `{rounded.control}`** — 옆 버튼과 같은 곡률로 리플이 돌아야 짝으로 읽힌다.
+**`icon-button`** — 라벨 없이 아이콘만 있는 버튼. 배경 없음이고 눌림 리플의 모양이 자리에 따라 갈린다. **앱바의 뒤로가기·닫기(`{sizes.control}`)는 원(`{rounded.pill}`)** — 안드로이드 관례라 그대로 둔다. **콘텐츠 안에 놓이는 작은 버튼(입력 칸 옆 삭제·카드 제목 줄 더보기·컴포저 아이콘, `{sizes.control-small}` 이하)은 `{rounded.menu-item}`** — M3 `IconButton` 은 모양을 고를 수 없어 원이 그대로 나오므로 `ManyakIconButton`을 쓴다. 높이가 낮은 글자 토글(추가 정보의 "더보기")도 같은 이유로 컨트롤 곡률 대신 메뉴 항목 곡률을 쓴다.
 
 **`button-disabled`** — 배경 `{colors.background-disabled}`, 텍스트 `{colors.text-disabled}`. 비활성은 색만으로 전달하지 않고 상태 안내를 함께 둡니다.
 
