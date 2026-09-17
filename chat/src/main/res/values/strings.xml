@@ -27,6 +27,7 @@
     <string name="chat_list_preview_empty">채팅을 시작하고 이야기를 이어가 보세요</string>
     <string name="chat_list_turn_count_description">턴 %1$s회</string>
     <string name="chat_list_updated_at_description">마지막 진행 %1$s</string>
+    <string name="chat_room_ai_notice">이 채팅은 AI로 생성된 가상의 내용이에요</string>
     <string name="chat_room_choices_error">선택지를 만들지 못했어요</string>
     <string name="chat_room_choices_loading">선택지를 만드는 중</string>
     <string name="chat_room_credit_required">이프가 부족해요</string>
@@ -44,12 +45,19 @@
     <string name="chat_room_load_error">채팅을 불러오지 못했어요</string>
     <string name="chat_room_options">채팅 옵션</string>
     <string name="chat_room_regenerate">다시 생성</string>
+    <string name="chat_room_scene_status">다음 장면을 만들고 있어요</string>
+    <string-array name="chat_room_scene_phrases">
+        <item>어울리는 표정 찾는 중</item>
+        <item>다음 내용 준비 중</item>
+        <item>장면 완성 중</item>
+        <item>다음 대사 고민 중</item>
+    </string-array>
     <string name="chat_room_scroll_to_bottom">맨 아래로 이동</string>
     <string name="chat_room_stream_error">응답 생성에 실패했어요</string>
     <string name="chat_room_suggestion_fill">입력창에 넣어 수정</string>
     <string name="chat_room_suggestion_hint_action">탭하면 바로 전송되고, %1$s 버튼으로 고쳐서 보낼 수 있어요</string>
     <string name="chat_room_suggestion_hint_title">AI가 추천하는 입력이에요</string>
-    <string name="chat_room_writing">작성 중</string>
+    <string name="chat_room_writing">다음 내용 준비 중</string>
     <string name="chat_room_writing_status">답변을 작성하고 있어요</string>
     <string name="chat_settings_block_input">블럭 입력</string>
     <string name="chat_settings_block_input_description">상황과 대사를 나눠서 입력해요</string>

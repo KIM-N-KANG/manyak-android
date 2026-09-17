@@ -333,3 +333,41 @@ turnId에 귀속**시키고 최신 요청 turnId를 들고 있어, 늦게 끝난
 ### 복구
 
 되돌리면 허용 경로·요청 필드·설정 키·시트가 함께 빠지고 드롭다운 둘로 돌아갑니다. `chat_realtime_image_enabled` 키는 남아도 읽는 곳이 없어 무해합니다. 서버 계약·저장 스키마 변경은 없습니다.
+
+## KNK-1318 실시간 이미지 로딩 표현과 스트리밍 블록 높이 유지 (2026-09-18)
+
+- 티켓: [KNK-1318](https://kimandkang.atlassian.net/browse/KNK-1318) (부모 KNK-1315)
+- 브랜치: `feat/KNK-1318-chat-stream-loading-height`, 분기 기준 fetch한 `origin/dev` `b61d3704`
+- 계약: [렌더와 스크롤](../../../knk-harness/docs/spec/3-1-client-spec.md#렌더와-스크롤)(부분 렌더·새 턴 앵커), 메뉴 시트 AI 안내 문구(`CHAT_AI_NOTICE`)
+- 제외: 앵커·패드 회수·진입 위치·하단 이동 버튼(현재 구현 유지), 토글·설정 시트(KNK-1317), 비용 배지(KNK-1319)
+
+### 변경
+
+1. `StreamingBlock`을 `ChatStreamingBlock.kt`로 떼어내고(파일당 함수 수 제한) 로딩과 본문이 **같은 `Box` 자리**를 쓰게 했습니다. 첫 조각(글자든 이미지든)이 오면 로딩은 `AnimatedVisibility` `fadeOut`(150ms)으로 그 자리에서 빠지고 본문이 그 아래에서 드러납니다. 이미지가 토큰보다 먼저 오면 `revealed`에 이미지 조각이 먼저 들어와 같은 경로로 교체됩니다.
+2. **로딩 높이를 최소 높이로 유지합니다.** 로딩이 그려지는 동안 `onSizeChanged`로 잰 높이를 `rememberSaveable`에 두고, 본문이 보이는 동안 `heightIn(min)`으로 겁니다. 웹의 `useLayoutEffect` minHeight와 같은 시점(로딩이 흐름에 있는 동안 측정)입니다. 목록이 같은 키(`streaming`·턴 id)의 저장 상태를 다음 전송에도 돌려주지만 새 스트림은 늘 로딩부터 그려 값을 다시 잽니다. 재생성은 같은 `StreamingBlock`이라 동일합니다.
+3. 실시간 이미지가 켜진 채 보낸 턴(`StreamingTurn.realtimeImage`, KNK-1317 스냅샷)은 `ScenePlaceholder` — 순환 문구 4개(4초 주기, `chat_room_scene_phrases`, 본문과 같은 `bodyReading` 서체 — `CyclingPhrases`에 `style` 파라미터를 더해 제작 퍼널은 기본 `bodyMedium` 유지) 아래 `spacing.passage`(20dp) 간격으로 `ImageGenerationLoading`(4:3, `shapes.overlay` — `CharacterImage`와 같은 실루엣)을 둡니다. 보조기술에는 `clearAndSetSemantics`로 "다음 장면을 만들고 있어요" 하나만 읽힙니다. 꺼진 턴은 기존 `WritingPlaceholder`(MaruBuri 2초 시머) 그대로이고 문구만 `chat_room_writing` "다음 내용 준비 중"으로 바꿨습니다(라벨 "답변을 작성하고 있어요" 유지).
+4. 순환 문구는 `create`의 `CyclingPhrases`(점 3개 + 글자 단위 교차 + 4초 시머)를 두 번째 사용처가 생겨 `designsystem/CyclingPhrases.kt`로 올렸습니다. `create`는 import만 바뀝니다. `CharacterImage`의 `CHARACTER_IMAGE_ASPECT_RATIO`(4:3)를 공개해 로딩 자리가 같은 값을 읽습니다. KNK-1323이 만든 `ImageGenerationLoading`을 그대로 재사용했으며 새 4:3 컴포넌트는 만들지 않았습니다.
+5. 대화 최상단(프롤로그 위)에 `chat_room_ai_notice` "이 채팅은 AI로 생성된 가상의 내용이에요"를 `bodySmall`·`textSubtle`·가운데 정렬로 추가했습니다(항목 키 `ai-notice`, 위 여백 `passage`). 항목이 하나 늘어 `AnchorStreamingTurn`의 `prologueCount`를 `headerCount`(안내 + 프롤로그)로 바꿔 재생성 앵커 인덱스가 맞게 했습니다. 앵커·패드 로직 자체는 손대지 않았습니다.
+
+### 검증
+
+```bash
+./gradlew :designsystem:ktlintCheck :designsystem:detekt :create:ktlintCheck :create:detekt \
+  :chat:ktlintCheck :chat:detekt :chat:compileDebugKotlin :create:compileDebugKotlin \
+  :chat:testDebugUnitTest :designsystem:testDebugUnitTest :create:testDebugUnitTest installDebug
+```
+
+- 단위 테스트 통과(chat 153, designsystem 5, create 114). 새 테스트는 없습니다 — 바뀐 것이 모두 Compose 레이아웃·애니메이션이라 순수 함수로 뗄 로직이 없었습니다.
+- 에뮬레이터(Pixel, emulator-5554, 방 "0호선", `always_finish_activities` null) — `adb exec-out screencap`을 초당 약 8장으로 연속 캡처해 **사용자 밴드 영역(y 250–650)의 픽셀 해시가 전송부터 확정까지 한 번도 바뀌지 않는 것**으로 앵커 유지를 판정했습니다.
+  - AI 안내 문구(최상단, 프롤로그 위): [ai-notice-top.png](../../../captures/knk-1318/ai-notice-top.png)
+  - 실시간 이미지 켬(80 이프): 순환 문구 + 4:3 점 패턴 [realtime-on-loading.png](../../../captures/knk-1318/realtime-on-loading.png) → 로딩이 반투명으로 빠지며 본문 첫 줄이 비치는 프레임 [realtime-on-fade.png](../../../captures/knk-1318/realtime-on-fade.png) → 본문 타자기 [realtime-on-body.png](../../../captures/knk-1318/realtime-on-body.png) → 확정 [realtime-on-done.png](../../../captures/knk-1318/realtime-on-done.png). 400프레임(45초) 동안 밴드 영역 해시 1종. 문구가 6초 시점에 "다음 내용 준비 중"으로 바뀐 것도 확인.
+  - 실시간 이미지 끔(20 이프): "다음 내용 준비 중" 시머 [realtime-off-loading.png](../../../captures/knk-1318/realtime-off-loading.png) → 본문 [realtime-off-body.png](../../../captures/knk-1318/realtime-off-body.png) → 확정 [realtime-off-done.png](../../../captures/knk-1318/realtime-off-done.png). 250프레임 동안 밴드 영역 해시 1종.
+  - 응답 재생성(끔, 20 이프): 대상 턴이 상단에 앵커된 채 로딩 → 본문 [regenerate-loading.png](../../../captures/knk-1318/regenerate-loading.png), [regenerate-body.png](../../../captures/knk-1318/regenerate-body.png). 200프레임 동안 밴드 영역 해시 1종 — 안내 문구 추가 뒤 `headerCount` 보정이 맞습니다.
+  - 구성 변경(켬, 80 이프): 로딩 3초 시점 다크 모드 → 8초 시점 가로 회전 → 본문 도착 뒤 다크 해제. 세 번 재생성돼도 밴드는 상단에 남고 로딩 상태(순환 문구·점 패턴)가 이어졌습니다: [config-dark-loading.png](../../../captures/knk-1318/config-dark-loading.png), [config-landscape-loading.png](../../../captures/knk-1318/config-landscape-loading.png), [config-light-after-body.png](../../../captures/knk-1318/config-light-after-body.png), 세로 복귀 뒤 실시간 인물 이미지가 본문 자리에 그려진 상태 [config-restored-portrait.png](../../../captures/knk-1318/config-restored-portrait.png). 회전·야간 모드·`accelerometer_rotation`은 검사 후 원래 값(세로·no·1)으로 되돌렸습니다.
+- `configuration-changes` 점검(코드): 로딩 높이는 `rememberSaveable`이라 본문이 보이는 중 재생성돼도 복원된 `padPx`와 어긋나지 않습니다. 회전은 폭이 바뀌어 저장한 높이가 새 폭의 로딩 높이와 다를 수 있지만, 뷰포트 높이가 바뀌면 `AnchorStreamingTurn`이 한 화면을 통째로 다시 깔아 되잡으므로 내려앉지 않습니다. `CyclingPhrases`의 문구 인덱스도 `rememberSaveable`입니다. 재생성마다 다시 도는 효과는 순환 타이머(4초부터 다시 셈)뿐이고 값을 초기화하는 효과는 없습니다.
+- 코드로만 판단한 것: 이미지 조각이 토큰보다 먼저 오는 경우(이번 네 턴은 모두 텍스트가 먼저 왔음), 본문이 로딩보다 짧아 최소 높이가 실제로 작동하는 경우(dev 응답이 모두 로딩보다 길어 최소 높이 없이도 내려앉지 않는 상황이었음), 가로에서의 로딩→본문 전환 화면(컴포저가 뷰포트를 거의 다 차지해 밴드만 보임), 큰 글자, TalkBack 읽기.
+- 이 검증으로 dev 서버의 "0호선" 방에 턴 4개(재생성 1회 포함)가 저장됐고 이프 260이 차감됐습니다.
+
+### 복구
+
+되돌리면 로딩 자리·최소 높이·안내 문구·문자열이 함께 빠지고 `CyclingPhrases`는 `create` 전용으로 돌아갑니다. 서버 계약·저장 스키마·DataStore 키 변경은 없습니다.
