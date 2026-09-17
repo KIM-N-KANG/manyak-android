@@ -56,6 +56,12 @@ data class ChatCreateResponseDto(
 
 fun ChatCreateResponseDto.toDomain(): CreatedChat = CreatedChat(id = id)
 
+/** 공유 발급 응답. 링크에 들어가는 토큰만 쓰고 커트라인 턴 수·발급 시각은 역직렬화하지 않는다. */
+@Serializable
+data class ChatShareResponseDto(
+    val shareId: String,
+)
+
 /**
  * 채팅 목록 한 건. 카드가 쓰지 않는 참조 스토리 ID·도달 엔딩은 역직렬화하지 않는다.
  *

@@ -54,6 +54,7 @@ import app.manyak.my.presentation.component.MyDetailHeader
 import kotlinx.coroutines.flow.distinctUntilChanged
 import java.text.NumberFormat
 import app.manyak.common.R as CommonR
+import app.manyak.designsystem.R as DesignsystemR
 import app.manyak.my.R as MyR
 
 /**
@@ -248,7 +249,7 @@ private fun CreditBalanceBox(
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
     ) {
         Text(
-            text = stringResource(MyR.string.my_credit_label),
+            text = stringResource(DesignsystemR.string.credit_balance_label),
             style = ManyakTheme.typography.bodyMediumStrong,
             color = ManyakTheme.colors.textSubtle,
         )

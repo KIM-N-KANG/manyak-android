@@ -62,6 +62,12 @@ interface ChatRepository : ChatStarter {
     ): DomainResult<Unit>
 
     /**
+     * 공유 열람 링크를 발급한다. 돌려주는 값은 웹 열람 화면의 절대 URL 이다 — 링크를 받는 쪽은 앱이
+     * 아니라 누구든 열 수 있는 웹이라, 웹 origin 을 아는 데이터 계층이 완성해 준다.
+     */
+    suspend fun createShareLink(chatId: String): DomainResult<String>
+
+    /**
      * 채팅을 삭제한다.
      *
      * **없는 채팅(404)은 성공으로 돌려준다** — 이미 지워진 것을 지우려 한 것이라 사용자가 할 일이 없다.

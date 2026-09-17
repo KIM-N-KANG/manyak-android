@@ -7,6 +7,7 @@ import app.manyak.chat.testing.FakeChatPreferencesRepository
 import app.manyak.chat.testing.FakeChatRepository
 import app.manyak.chat.testing.FakeReportRepository
 import app.manyak.chat.testing.FakeTrialsRepository
+import app.manyak.chat.testing.FakeUserProfileRepository
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import kotlinx.coroutines.Dispatchers
@@ -49,6 +50,7 @@ class ChatRoomViewModelTest {
                     reportRepository = FakeReportRepository(),
                     preferences = FakeChatPreferencesRepository(),
                     trialsRepository = FakeTrialsRepository(),
+                    profileRepository = FakeUserProfileRepository(),
                     analytics = NoOpAnalytics,
                 )
             advanceUntilIdle()
@@ -76,6 +78,7 @@ class ChatRoomViewModelTest {
                     reportRepository = FakeReportRepository(),
                     preferences = FakeChatPreferencesRepository(),
                     trialsRepository = FakeTrialsRepository(),
+                    profileRepository = FakeUserProfileRepository(),
                     analytics = NoOpAnalytics,
                 )
             advanceUntilIdle()
@@ -109,6 +112,7 @@ class ChatRoomViewModelTest {
                     reportRepository = FakeReportRepository(),
                     preferences = FakeChatPreferencesRepository(),
                     trialsRepository = FakeTrialsRepository(),
+                    profileRepository = FakeUserProfileRepository(),
                     analytics = analytics,
                 )
             advanceUntilIdle()

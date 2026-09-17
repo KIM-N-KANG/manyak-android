@@ -1,8 +1,6 @@
 package app.manyak.chat.list.presentation
 
 import android.widget.Toast
-import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,11 +35,14 @@ import app.manyak.analytics.presentation.LocalAnalytics
 import app.manyak.analytics.presentation.rememberImpressionTracker
 import app.manyak.analytics.presentation.trackImpression
 import app.manyak.chat.entity.ChatSummary
+import app.manyak.chat.presentation.chatShareMessage
+import app.manyak.chat.presentation.chatShareSubject
+import app.manyak.common.presentation.share.shareText
 import app.manyak.designsystem.component.LoadFailedContent
-import app.manyak.designsystem.component.ManyakDestructiveDialogContent
-import app.manyak.designsystem.component.ManyakDialog
-import app.manyak.designsystem.component.ManyakOptionsDialogContent
-import app.manyak.designsystem.component.ManyakOptionsDialogItem
+import app.manyak.designsystem.component.ManyakDestructiveDialog
+import app.manyak.designsystem.component.ManyakOptionItem
+import app.manyak.designsystem.component.ManyakOptionsSheet
+import app.manyak.designsystem.component.ManyakOptionsSheetHeader
 import app.manyak.designsystem.component.ManyakPullToRefreshBox
 import app.manyak.designsystem.component.rememberDelayedProgressVisibility
 import app.manyak.designsystem.component.withRowListMargins
@@ -92,6 +93,15 @@ fun ChatListScreen(
 
                     ChatListEffect.ShowReportFailed ->
                         Toast.makeText(context, ReportR.string.story_report_failed, Toast.LENGTH_SHORT).show()
+
+                    is ChatListEffect.ShareLink ->
+                        context.shareText(
+                            subject = context.chatShareSubject(effect.storyTitle),
+                            message = context.chatShareMessage(effect.storyTitle, effect.turnCount, effect.url),
+                        )
+
+                    ChatListEffect.ShowShareFailed ->
+                        Toast.makeText(context, ChatR.string.chat_room_share_failed, Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -168,35 +178,19 @@ private fun ChatListOverlays(
     state: ChatListUiState,
     onIntent: (ChatListIntent) -> Unit,
 ) {
-    // 옵션과 삭제 확인은 한 창을 나눠 쓴다 — 창을 닫고 새로 열면 스크림이 두 번 페이드돼 번쩍인다.
-    val deleteTarget = state.deleteTarget
-    val optionsTarget = state.optionsTarget
-    if (optionsTarget != null || deleteTarget != null) {
-        ManyakDialog(
-            onDismissRequest = {
-                onIntent(if (deleteTarget != null) ChatListIntent.DismissDeleteDialog else ChatListIntent.CloseOptions)
-            },
-        ) {
-            Crossfade(
-                targetState = deleteTarget,
-                animationSpec = tween(ManyakTheme.motion.elementEnterMillis),
-                label = "chatCardDialog",
-            ) { target ->
-                if (target != null) {
-                    ManyakDestructiveDialogContent(
-                        title = stringResource(ChatR.string.chat_room_delete_dialog_title),
-                        description = stringResource(ChatR.string.chat_room_delete_dialog_description),
-                        confirmLabel = stringResource(ChatR.string.chat_room_delete),
-                        cancelLabel = stringResource(ChatR.string.chat_room_delete_dialog_cancel),
-                        onConfirm = { onIntent(ChatListIntent.ConfirmDelete) },
-                        onDismiss = { onIntent(ChatListIntent.DismissDeleteDialog) },
-                        inProgress = state.isDeleting,
-                    )
-                } else if (optionsTarget != null) {
-                    ChatOptions(chat = optionsTarget, onIntent = onIntent)
-                }
-            }
-        }
+    state.optionsTarget?.let { chat -> ChatOptionsSheet(chat = chat, isSharing = state.isSharing, onIntent = onIntent) }
+
+    if (state.deleteTarget != null) {
+        ManyakDestructiveDialog(
+            title = stringResource(ChatR.string.chat_room_delete_dialog_title),
+            description = stringResource(ChatR.string.chat_room_delete_dialog_description),
+            confirmLabel = stringResource(ChatR.string.chat_room_delete),
+            cancelLabel = stringResource(ChatR.string.chat_room_delete_dialog_cancel),
+            onConfirm = { onIntent(ChatListIntent.ConfirmDelete) },
+            onDismiss = { onIntent(ChatListIntent.DismissDeleteDialog) },
+            inProgress = state.isDeleting,
+            inProgressLabel = stringResource(DesignsystemR.string.delete_in_progress),
+        )
     }
 
     if (state.report.isSheetOpen) {
@@ -207,25 +201,43 @@ private fun ChatListOverlays(
     }
 }
 
+/** 공유는 발급이 끝날 때까지 시트가 남아 진행을 보이고, 그동안은 끌어내려도 닫히지 않는다. */
 @Composable
-private fun ChatOptions(
+private fun ChatOptionsSheet(
     chat: ChatSummary,
+    isSharing: Boolean,
     onIntent: (ChatListIntent) -> Unit,
 ) {
-    ManyakOptionsDialogContent(preview = { ChatCardPreview(chat = chat) }) {
+    ManyakOptionsSheet(
+        onDismissRequest = { onIntent(ChatListIntent.CloseOptions) },
+        dismissEnabled = !isSharing,
+        header = {
+            ManyakOptionsSheetHeader(
+                kind = stringResource(ChatR.string.chat_list_card_kind),
+                // 참조 스토리가 삭제되면 제목이 비어 오므로 카드와 같은 문구로 알린다.
+                title = chat.storyTitle.ifBlank { stringResource(ChatR.string.chat_list_deleted_story) },
+            )
+        },
+    ) {
+        ManyakOptionItem(
+            iconRes = DesignsystemR.drawable.ic_share,
+            label = stringResource(ChatR.string.chat_room_share),
+            onClick = { onIntent(ChatListIntent.Share) },
+            inProgress = isSharing,
+        )
         // 참조 스토리가 없으면 신고할 대상도 없다.
         if (chat.storyId.isNotBlank()) {
-            ManyakOptionsDialogItem(
-                iconRes = DesignsystemR.drawable.ic_info,
+            ManyakOptionItem(
+                iconRes = DesignsystemR.drawable.ic_alert_triangle,
                 label = stringResource(ReportR.string.story_report_action),
                 onClick = { onIntent(ChatListIntent.Report(StoryReportAction.Open)) },
             )
         }
-        ManyakOptionsDialogItem(
+        ManyakOptionItem(
             iconRes = DesignsystemR.drawable.ic_delete,
             label = stringResource(ChatR.string.chat_room_delete),
             onClick = { onIntent(ChatListIntent.RequestDelete) },
-            isDanger = true,
+            isDestructive = true,
         )
     }
 }

@@ -32,10 +32,10 @@ import app.manyak.common.entity.settings.ThemeMode
 import app.manyak.common.entity.user.AccountStatus
 import app.manyak.common.entity.user.UserProfile
 import app.manyak.designsystem.component.ManyakProgressIndicator
+import app.manyak.designsystem.credit.CreditBalanceCard
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.my.presentation.component.labelRes
 import app.manyak.my.profile.presentation.component.AccountLinkConfirmDialog
-import app.manyak.my.profile.presentation.component.CreditBalanceCard
 import app.manyak.my.profile.presentation.component.InviteMenuItem
 import app.manyak.my.profile.presentation.component.LinkedToOtherUserDialog
 import app.manyak.my.profile.presentation.component.MenuTrailingIcon
@@ -166,14 +166,7 @@ private fun MyContent(
             profile = state.profile,
             onLinkAccount = { provider -> onIntent(MyIntent.RequestAccountLink(provider)) },
         )
-        val analytics = LocalAnalytics.current
-        CreditBalanceCard(
-            profile = state.profile,
-            onOpenCharge = {
-                analytics.track(AnalyticsEvent.CreditChargeButtonClicked)
-                onOpenCreditCharge()
-            },
-        )
+        MyCreditBalanceCard(balance = state.profile?.creditBalance, onOpenCreditCharge = onOpenCreditCharge)
         MySection(labelRes = MyR.string.my_section_event) {
             InviteMenuItem(onClick = onOpenInvite)
         }
@@ -211,6 +204,27 @@ private fun MyContent(
         }
         AccountSection(state = state, onIntent = onIntent, onOpenWithdrawal = onOpenWithdrawal)
     }
+}
+
+/** 마이의 이프 카드. 공용 카드에 화면 여백과 충전 진입 이벤트를 얹는다. */
+@Composable
+private fun MyCreditBalanceCard(
+    balance: Long?,
+    onOpenCreditCharge: () -> Unit,
+) {
+    val analytics = LocalAnalytics.current
+    CreditBalanceCard(
+        balance = balance,
+        onOpenCharge = {
+            analytics.track(AnalyticsEvent.CreditChargeButtonClicked)
+            onOpenCreditCharge()
+        },
+        modifier =
+            Modifier
+                .padding(
+                    horizontal = ManyakTheme.spacing.gutter,
+                ).padding(bottom = ManyakTheme.spacing.gutter),
+    )
 }
 
 @Composable

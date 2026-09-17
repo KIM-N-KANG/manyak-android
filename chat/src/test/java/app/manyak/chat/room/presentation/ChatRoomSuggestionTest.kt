@@ -10,6 +10,7 @@ import app.manyak.chat.testing.FakeChatPreferencesRepository
 import app.manyak.chat.testing.FakeChatRepository
 import app.manyak.chat.testing.FakeReportRepository
 import app.manyak.chat.testing.FakeTrialsRepository
+import app.manyak.chat.testing.FakeUserProfileRepository
 import app.manyak.chat.testing.sampleChatDetail
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
@@ -258,6 +259,7 @@ class ChatRoomSuggestionTest {
         reportRepository = FakeReportRepository(),
         preferences = preferences,
         trialsRepository = FakeTrialsRepository(),
+        profileRepository = FakeUserProfileRepository(),
         analytics = NoOpAnalytics,
     )
 

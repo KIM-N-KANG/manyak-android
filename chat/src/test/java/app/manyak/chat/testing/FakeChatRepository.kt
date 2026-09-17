@@ -75,12 +75,16 @@ internal class FakeChatRepository : ChatRepository {
         return queuedMyChatsResults.removeFirstOrNull() ?: DomainResult.Success(sampleChats())
     }
 
+    val createdStoryIds = mutableListOf<String>()
+    val queuedCreateResults = ArrayDeque<DomainResult<CreatedChat>>()
+
     override suspend fun createChat(
         storyId: String,
         startSettingId: String?,
     ): DomainResult<CreatedChat> {
         yield()
-        return DomainResult.Success(CreatedChat(id = "chat-1"))
+        createdStoryIds += storyId
+        return queuedCreateResults.removeFirstOrNull() ?: DomainResult.Success(CreatedChat(id = "chat-2"))
     }
 
     private var lastChatDetail: ChatDetail? = null
@@ -150,6 +154,15 @@ internal class FakeChatRepository : ChatRepository {
         generatedChoiceTurnIds += turnId
         choicesGate?.await()
         return queuedChoicesResults.removeFirstOrNull() ?: DomainResult.Success(Unit)
+    }
+
+    val sharedChatIds = mutableListOf<String>()
+    val queuedShareResults = ArrayDeque<DomainResult<String>>()
+
+    override suspend fun createShareLink(chatId: String): DomainResult<String> {
+        yield()
+        sharedChatIds += chatId
+        return queuedShareResults.removeFirstOrNull() ?: DomainResult.Success("https://example.com/share/share-1")
     }
 
     val deletedChatIds = mutableListOf<String>()

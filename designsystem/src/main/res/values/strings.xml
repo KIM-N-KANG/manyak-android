@@ -9,4 +9,7 @@
     <string name="designsystem_preview_label">메뉴</string>
     <string name="image_viewer_close">닫기</string>
     <string name="character_image_open">%1$s 인물 이미지 크게 보기</string>
+    <string name="credit_balance_label">내 이프</string>
+    <string name="credit_balance_charge">충전</string>
+    <string name="delete_in_progress">삭제 중</string>
 </resources>

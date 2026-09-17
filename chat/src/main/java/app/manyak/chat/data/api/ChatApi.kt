@@ -4,6 +4,7 @@ import app.manyak.chat.data.api.dto.ChatChoicesResponseDto
 import app.manyak.chat.data.api.dto.ChatCreateRequestDto
 import app.manyak.chat.data.api.dto.ChatCreateResponseDto
 import app.manyak.chat.data.api.dto.ChatDetailResponseDto
+import app.manyak.chat.data.api.dto.ChatShareResponseDto
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -35,6 +36,12 @@ interface ChatApi {
         @Path("chatId") chatId: String,
         @Path("turnId") turnId: Long,
     ): Response<ChatChoicesResponseDto>
+
+    /** 공유 열람 토큰 발급. 같은 진행 시점이면 멱등이라 다시 불러도 같은 토큰이 온다. */
+    @POST("chats/{chatId}/shares")
+    suspend fun createShare(
+        @Path("chatId") chatId: String,
+    ): Response<ChatShareResponseDto>
 
     /** 소프트 삭제. 성공은 본문 없는 204 다. */
     @DELETE("chats/{chatId}")

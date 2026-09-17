@@ -110,36 +110,6 @@ sealed interface CreationProgressCardKind {
     data object Failed : CreationProgressCardKind
 }
 
-/** 옵션 다이얼로그 상단의 미리보기. 목록 카드보다 한 단계 작고 눌리지 않는다. */
-@Composable
-internal fun CreationProgressCardPreview(
-    kind: CreationProgressCardKind,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
-        verticalAlignment = Alignment.Top,
-    ) {
-        ProgressCover(kind = kind, modifier = Modifier.width(CompactCoverWidth), compact = true)
-        Column(
-            modifier =
-                Modifier
-                    .weight(1f)
-                    .heightIn(min = CompactCoverWidth / STORY_THUMBNAIL_ASPECT_RATIO)
-                    .padding(bottom = ManyakTheme.spacing.hairline),
-        ) {
-            Text(
-                text = stringResource(kind.titleRes()),
-                style = ManyakTheme.typography.bodyMediumStrong,
-                color = kind.titleColor(),
-                maxLines = TITLE_MAX_LINES,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-    }
-}
-
 /**
  * 회색 3:4 표지. 초안·실패는 가운데에 더 진한 회색 캐릭터 심벌을, 완성 중에는 이미지 생성 로딩을 둔다.
  * 테두리 처리는 목록 표지와 같다 — 밝은 표지의 가장자리가 배경에 묻히지 않게 바탕으로 그린다.
@@ -148,9 +118,8 @@ internal fun CreationProgressCardPreview(
 private fun ProgressCover(
     kind: CreationProgressCardKind,
     modifier: Modifier = Modifier,
-    compact: Boolean = false,
 ) {
-    val shape = if (compact) ManyakTheme.shapes.thumbnailSmall else ManyakTheme.shapes.thumbnail
+    val shape = ManyakTheme.shapes.thumbnail
     if (kind == CreationProgressCardKind.Completing) {
         ImageGenerationLoading(
             modifier = modifier,
@@ -172,7 +141,7 @@ private fun ProgressCover(
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            modifier = Modifier.size(if (compact) CompactSymbolSize else SymbolSize),
+            modifier = Modifier.size(SymbolSize),
             painter = painterResource(DesignsystemR.drawable.ic_manyak_symbol),
             contentDescription = null,
             tint = ManyakTheme.colors.textDisabled,
@@ -263,15 +232,10 @@ private fun CreationProgressCardKind.primaryActionRes(): Int? =
 private fun CreationProgressCardKind.titleColor() =
     if (this is CreationProgressCardKind.Completed) ManyakTheme.colors.text else ManyakTheme.colors.textSubtle
 
-/** 다이얼로그 미리보기의 표지 폭. 목록보다 한 단계 작다. */
-private val CompactCoverWidth = 96.dp
-
 private val CoverBorderWidth: Dp = 1.dp
 
 /** 표지 가운데 심벌·스피너 크기. 표지 placeholder 아이콘과 같은 값이다. */
 private val SymbolSize = 32.dp
-
-private val CompactSymbolSize = 24.dp
 
 private const val TITLE_MAX_LINES = 2
 

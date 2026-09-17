@@ -144,7 +144,6 @@ typography:
 rounded:
   checkbox: 6dp
   menu-item: 10dp
-  thumbnail-small: 8dp
   thumbnail: 12dp
   control: 14dp
   card: 16dp
@@ -448,6 +447,8 @@ components:
 | `ProgressIndicator.kt` | 로딩 스피너와 지연 표시 헬퍼 |
 | `PullToRefresh.kt` | 당겨서 새로고침 컨테이너. 표시자를 셸 헤더 아래로 내린다 |
 | `credit/CreditAmountText.kt` | 이프 마크 + (취소선 정가) + 수치. 마크는 글자 크기를 따른다 |
+| `credit/CreditBalanceCard.kt` | 내 이프 카드(라벨·잔액·충전 버튼). 마이와 채팅 메뉴 시트가 같이 쓴다 |
+| `ManyakOptionsSheet.kt` · `ManyakOptionItem.kt` | 카드 옵션·상세 옵션·채팅 메뉴의 바텀 시트 틀과 항목 버튼 |
 
 이름은 세 표기가 1:1로 대응합니다 — 이 문서 `{colors.text-subtle}` ↔ Kotlin `ManyakTheme.colors.textSubtle` ↔ 토큰 JSON `color.text.subtle`.
 
@@ -662,7 +663,6 @@ components:
 | --- | --- | --- |
 | `{rounded.checkbox}` | 6dp | 체크박스처럼 한 변이 20dp 남짓인 작은 네모 |
 | `{rounded.menu-item}` | 10dp | 셀렉트 메뉴 항목 · 라벨 없는 아이콘 버튼 |
-| `{rounded.thumbnail-small}` | 8dp | 회색 상자 안에 한 단계 작게 그린 카드 미리보기의 썸네일 — 상자(`card`)보다 작아야 동심으로 읽힌다 |
 | `{rounded.thumbnail}` | 12dp | 썸네일·작은 아이콘 컨테이너 |
 | `{rounded.control}` | 14dp | 버튼·입력창·탭 |
 | `{rounded.card}` | 16dp | 카드·리스트 항목 |
@@ -714,7 +714,7 @@ components:
 
 **`overlay`** — 다이얼로그. 배경 `{colors.surface-raised}`, 모서리 `{rounded.overlay}`, 내부 여백 `{spacing.gutter}`.
 
-**`sheet`** — 바텀시트. 배경 `{colors.surface-raised}`, 모서리는 `{rounded.sheet}`로 위쪽 두 곳만 깎습니다 — 아래쪽은 화면 끝에 붙어 있어 깎으면 그 틈으로 스크림이 비칩니다. 내부 여백은 좌·우·아래 `{spacing.gutter}`이고 **위쪽은 두지 않습니다** — 드래그 핸들이 자체 여백을 갖고 있어 겹칩니다. 하단 안전 영역과 키보드 높이는 그 아래로 시트가 직접 낍니다. **하단 닫기는 `button-text` 규칙의 전체 폭·최소 높이 `{sizes.control}`(48dp)·주 동작 버튼과 같은 글자 스타일(`{typography.label-large}`)·보조색 텍스트 버튼입니다.** 신고·초대 코드 온보딩·광고 알림 동의·채팅 메뉴·카드 옵션 시트에 같은 규칙을 적용합니다. **확정할 동작이 없는 읽기 전용 시트(선택한 키워드·채팅 설정)는 닫기 버튼을 두지 않고** 스크림·끌어내리기·뒤로가기로만 닫습니다 — 버튼 하나뿐인 줄은 자리만 차지합니다.
+**`sheet`** — 바텀시트. 배경 `{colors.surface-raised}`, 모서리는 `{rounded.sheet}`로 위쪽 두 곳만 깎습니다 — 아래쪽은 화면 끝에 붙어 있어 깎으면 그 틈으로 스크림이 비칩니다. 내부 여백은 좌·우·아래 `{spacing.gutter}`이고 **위쪽은 두지 않습니다** — 드래그 핸들이 자체 여백을 갖고 있어 겹칩니다. 하단 안전 영역과 키보드 높이는 그 아래로 시트가 직접 낍니다. **하단 닫기는 `button-text` 규칙의 전체 폭·최소 높이 `{sizes.control}`(48dp)·주 동작 버튼과 같은 글자 스타일(`{typography.label-large}`)·보조색 텍스트 버튼이며, 위에 주 동작 버튼이 있을 때만 그 짝으로 둡니다.** 신고·초대 코드 온보딩·광고 알림 동의 시트가 그렇습니다. **주 동작 버튼이 없는 시트 — 읽기 전용(선택한 키워드·채팅 설정)과 항목을 고르는 옵션 시트(카드 옵션·상세 옵션·채팅 메뉴) — 에는 닫기 버튼을 두지 않고** 스크림·끌어내리기·뒤로가기로만 닫습니다(2026-09-18) — 닫기 하나뿐인 줄은 자리만 차지합니다.
 
 **`badge`** — 배경 `{colors.background-brand-subtle}`, 텍스트 `{colors.text-brand}` + `{typography.body-small}`, 모서리 `{rounded.pill}`, 여백 세로 `{spacing.hairline}` · 가로 `{spacing.compact}`.
 
@@ -723,6 +723,8 @@ components:
 **`banner-danger` / `banner-warning` / `banner-information`** — 배경은 각 `subtle`, 텍스트는 같은 계열의 텍스트 색, 모서리 `{rounded.control}`, 내부 여백 `{spacing.component}`. 배너 자체가 상태를 말하므로 아이콘 없이도 성립하지만, 색만으로 구분되지 않도록 문구를 명시합니다.
 
 **`menu-row`** — 마이 메뉴와 채팅 설정 시트의 행. 왼쪽 아이콘은 `{sizes.icon}`(20dp), 아이콘·라벨 사이 간격은 `{spacing.component}`(12dp), 오른쪽 이동 아이콘은 `{sizes.icon-small}`(16dp)입니다. 행의 최소 높이는 `{sizes.control}`(48dp)이고, 스위치는 위 `switch` 규칙을 따릅니다.
+
+**`option-item`** — 카드 옵션·상세 옵션·채팅 메뉴 시트의 항목 버튼(`ManyakOptionItem`, 2026-09-18 — 가운데 다이얼로그 `ManyakOptionsDialog`와 앵커 드롭다운 `ManyakOptionsMenu`를 대체). `menu-row`와 같은 아이콘 `{sizes.icon}`(20dp)·간격 `{spacing.component}`(12dp)·최소 높이 `{sizes.control}`(48dp)이고, 가로 여백은 `{spacing.compact}`, 모서리는 `{rounded.menu-item}`, 라벨은 `{typography.body-large}`입니다. 파괴적 항목(삭제하기)은 아이콘·라벨을 `{colors.text-danger}`로 칠하고 맨 아래에 둡니다. 진행 중(새 채팅 시작하기)에는 라벨·크기를 유지한 채 오른쪽에 `{sizes.icon}` 스피너를 두고 탭을 막습니다. 눌림은 리플 하나로 말하며, 시트(`ManyakOptionsSheet`)는 머리글(카드 종류를 `{typography.body-medium}` + `{colors.text-subtle}`로 작게, 제목을 `{typography.title-large}` 한 줄) 아래 `{spacing.gutter}` 띄우고 항목을 쌓으며 닫기 버튼은 두지 않습니다(위 `sheet` 규칙). 카드 축소판 미리보기는 두지 않습니다 — 머리글의 종류·제목이 어느 카드인지 말합니다.
 
 ### 스토리
 
