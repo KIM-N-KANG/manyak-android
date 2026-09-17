@@ -6,6 +6,7 @@ plugins {
 
 android {
     namespace = "app.manyak.chat"
+    defaultConfig { testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
 }
 
 dependencies {
@@ -31,6 +32,12 @@ dependencies {
     implementation(platform(libs.okhttp.bom))
     implementation(libs.okhttp.logging.interceptor)
     debugImplementation(libs.androidx.compose.ui.tooling)
+
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.androidx.junit)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

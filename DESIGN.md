@@ -687,7 +687,7 @@ components:
 
 **`text-field-focused`** — 경계를 한 단계 진한 회색 `{colors.border-input}`으로 바꿉니다. 포커스에 브랜드 색을 쓰지 않습니다(2026-08-24 결정 — 입력 경계는 무채색 사다리로만 말합니다).
 
-입력란 사이 이동과 같은 입력란 재터치(라벨·여백 포함)에서는 키보드를 유지합니다. 입력란 밖의 빈 영역·버튼·칩을 탭하면 포커스와 키보드를 닫으며, 버튼·칩의 동작도 그대로 실행합니다. 스크롤·드래그·다중 터치는 포커스를 해제하지 않습니다. 앱 루트·공통 시트·입력 다이얼로그에 `clearFocusOnTap`을 적용하고, 공통 입력 컴포넌트와 직접 사용하는 `BasicTextField`는 `keepKeyboardOnTap`으로 입력 영역을 구분합니다. 두 modifier 모두 터치 이벤트를 소비하지 않습니다.
+입력란 사이 이동과 같은 입력란 재터치(라벨·여백 포함)에서는 키보드를 유지합니다. 입력란 밖의 빈 영역·버튼·칩을 탭하면 포커스와 키보드를 닫으며, 버튼·칩의 동작도 그대로 실행합니다. 채팅 작성 버튼과 추가 정보 편집 버튼의 예외는 [Android 계약](../knk-harness/docs/spec/3-3-android-spec.md)을 따르며, 해당 버튼에도 `keepKeyboardOnTap`을 적용합니다. 스크롤·드래그·다중 터치는 포커스를 해제하지 않습니다. 앱 루트·공통 시트·입력 다이얼로그에 `clearFocusOnTap`을 적용하고, 공통 입력 컴포넌트와 직접 사용하는 `BasicTextField`는 `keepKeyboardOnTap`으로 입력 영역을 구분합니다. 두 modifier 모두 터치 이벤트를 소비하지 않습니다.
 
 **`text-field-error`** — 경계를 `{colors.border-danger}`로 바꾸고, 오류 문구를 `{colors.text-danger}` + `{typography.body-small}`로 아래에 둡니다. 색만으로 오류를 알리지 않습니다.
 

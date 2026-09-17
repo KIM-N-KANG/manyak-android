@@ -23,7 +23,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -71,6 +74,7 @@ internal fun BlockComposer(
  * 먼저 걸린다.
  */
 @Composable
+@Suppress("LongMethod")
 private fun BlockInputList(
     blocks: List<InputBlock>,
     enabled: Boolean,
@@ -84,6 +88,20 @@ private fun BlockInputList(
     // 지우는 중인 칸. 퇴장이 끝난 뒤에야 목록에서 뺀다 — 먼저 빼면 컴포저블이 사라져 애니메이션이
     // 나오지 않는다. 구성 변경으로 이 표시를 잃으면 칸은 그대로 남는다(지워지지 않는 쪽이 안전하다).
     var exitingIds by remember { mutableStateOf(emptySet<Long>()) }
+    var focusedId by remember { mutableStateOf<Long?>(null) }
+    val blockIds = blocks.map { it.id }
+    val focusRequesters = remember(blockIds) { blockIds.associateWith { FocusRequester() } }
+    val remove: (Long) -> Unit = { id ->
+        if (focusedId == id) {
+            // 사라질 입력을 비활성화하기 전에 살아 있는 입력으로 옮긴다.
+            val index = blocks.indexOfFirst { it.id == id }
+            val next =
+                blocks.drop(index + 1).firstOrNull { it.id !in exitingIds }
+                    ?: blocks.take(index).lastOrNull { it.id !in exitingIds }
+            next?.let { focusRequesters.getValue(it.id).requestFocus() }
+        }
+        exitingIds = exitingIds + id
+    }
     val maxHeight = LocalConfiguration.current.screenHeightDp.dp * BLOCK_LIST_HEIGHT_FRACTION
     val scrollState = rememberScrollState()
     FollowNewBlock(blocks.size, scrollState)
@@ -116,6 +134,16 @@ private fun BlockInputList(
                 ) {
                     BlockInputRow(
                         block = block,
+                        fieldModifier =
+                            Modifier
+                                .focusRequester(focusRequesters.getValue(block.id))
+                                .onFocusChanged {
+                                    if (it.isFocused) {
+                                        focusedId = block.id
+                                    } else if (focusedId == block.id) {
+                                        focusedId = null
+                                    }
+                                },
                         ordinal = ordinals[block.id] ?: 1,
                         ordinalWidth = ordinalWidth,
                         // 접히는 동안에는 손대지 못하게 한다 — 사라지는 칸에 글자를 넣을 수는 없다.
@@ -123,7 +151,7 @@ private fun BlockInputList(
                         onValueChange = { value -> onValueChange(block.id, value) },
                         onRemove = {
                             if (block.value.isBlank()) {
-                                exitingIds = exitingIds + block.id
+                                remove(block.id)
                             } else {
                                 pendingRemoveId = block.id
                             }
@@ -140,7 +168,7 @@ private fun BlockInputList(
         onDismiss = { pendingRemoveId = null },
         onConfirm = { id ->
             pendingRemoveId = null
-            exitingIds = exitingIds + id
+            remove(id)
         },
     )
 }
@@ -159,6 +187,7 @@ private fun PendingRemoveDialog(
 @Composable
 private fun BlockInputRow(
     block: InputBlock,
+    fieldModifier: Modifier,
     ordinal: Int,
     ordinalWidth: Dp,
     enabled: Boolean,
@@ -179,7 +208,7 @@ private fun BlockInputRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         SyncedTextField(
-            modifier = Modifier.weight(1f),
+            modifier = fieldModifier.weight(1f),
             text = block.value,
             onTextChange = onValueChange,
             placeholder = placeholder,

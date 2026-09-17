@@ -25,3 +25,20 @@
 ## 복구
 
 이번 입력 규칙 변경(공통 modifier와 연결부)과 BOM 변경을 함께 되돌립니다. 저장 데이터나 API 변경은 없습니다. 이전 시트 UI 커밋은 그대로 유지합니다.
+
+## 채팅 작성 버튼 예외
+
+- 채팅의 `ComposerIconButton`·`ComposerChipButton`·`ComposerSendButton`에 기존 `keepKeyboardOnTap`을 적용합니다. 버튼 주변의 빈 여백에는 적용하지 않습니다. 사용자 동작 계약은 [Android 채팅 계약](../../../knk-harness/docs/spec/3-3-android-spec.md#채팅-목록과-채팅방)을 따릅니다.
+- `BlockInputList`가 현재 포커스와 블럭별 `FocusRequester`를 관리합니다. 현재 입력칸 삭제 시 비활성화·퇴장 전에 남은 다음 칸, 없으면 이전 칸으로 이동합니다. 다른 입력칸 삭제는 현재 포커스를 유지합니다. 마지막 칸 삭제는 키보드를 닫고, 구성 변경 후 강제 포커스 복원은 하지 않습니다.
+- `ChatComposerKeyboardTest`는 실제 컴포저와 상태 갱신 콜백으로 상황·대사 추가, 비포커스 칸 삭제, 현재 칸 삭제 후 다음·이전 칸 이동, 추천 설정 선택, 바깥 영역 탭, 마지막 칸 삭제를 검사합니다. Pixel_10(Android 17)에서 통과했습니다. 서버 전송 성공·입력 모드 교체·내용이 있는 칸의 확인 다이얼로그는 이번 자동화 검증 범위에 포함하지 않았습니다.
+- `:chat:testDebugUnitTest`, `:chat:detekt`, `:chat:assembleDebugAndroidTest`, `:app:installDebug`를 통과했습니다. 테스트 APK는 `adb install -r chat/build/outputs/apk/androidTest/debug/chat-debug-androidTest.apk`로 설치하고 `adb shell am instrument -w -e class app.manyak.chat.room.presentation.composer.ChatComposerKeyboardTest app.manyak.chat.test/androidx.test.runner.AndroidJUnitRunner`로 실행했습니다. 기존 앱 데이터는 제거하지 않았습니다.
+- 설치 후 테스트 실행 중 `adb exec-out screencap -p`로 [입력 전](../../captures/chat-keyboard/frame-03.png), [추가·삭제 후 키보드 유지](../../captures/chat-keyboard/frame-05.png), [추천 메뉴와 키보드](../../captures/chat-keyboard/frame-06.png), [마지막 칸 삭제 후](../../captures/chat-keyboard/frame-08.png)를 확인했습니다. 캡처는 기존 ignore 규칙으로 로컬에만 보관합니다.
+- 이 예외만 복구하려면 채팅 작성 버튼 modifier와 삭제 전 포커스 이동 변경을 되돌립니다. 공통 입력 규칙과 Compose BOM은 유지합니다.
+
+## 추가 정보 편집 버튼 확장
+
+- 추가 정보의 정보 추가·삭제, 추천 선택·해제, 스토리라인 더보기·접기에 `keepKeyboardOnTap`을 적용합니다. `AddTrigger` 공용 정의 대신 추가 정보 화면의 호출부에 적용해 다른 제작 단계의 동작은 유지합니다.
+- `AdditionalInfoRows`는 채팅과 동일하게 삭제 전 다음 입력칸, 없으면 이전 칸으로 포커스를 이동합니다. 퇴장 중인 입력과 삭제 버튼은 비활성화하고, 마지막 입력칸 삭제는 키보드를 닫습니다. 입력 값·선택·저장·완성 요청의 계약은 바꾸지 않습니다.
+- `AdditionalInfoKeyboardTest`는 실제 `AdditionalInfoList`를 사용해 추천 선택, 더보기·접기, 정보 추가, 현재 입력 삭제 후 포커스 이동, 빈 영역 탭과 마지막 입력 삭제를 검사합니다. Pixel_10(Android 17)에서 통과했습니다. 콜백으로 화면 상태를 갱신하는 테스트이며 서버 완성·저장 성공과 구성 변경은 이번 검증 범위에 포함하지 않습니다.
+- `:create:ktlintCheck :create:detekt :create:testDebugUnitTest :create:assembleDebugAndroidTest :app:installDebug`를 통과했습니다. 테스트 APK를 `adb install -r create/build/outputs/apk/androidTest/debug/create-debug-androidTest.apk`로 설치한 뒤 `adb shell am instrument -w -e class app.manyak.create.additionalinfo.presentation.AdditionalInfoKeyboardTest app.manyak.create.test/androidx.test.runner.AndroidJUnitRunner`로 실행했습니다.
+- 설치 후 `adb exec-out screencap -p`로 [입력 포커스](../../captures/additional-keyboard/frame-03.png), [추천 선택·더보기 후 키보드 유지](../../captures/additional-keyboard/frame-04.png), [정보 추가 후](../../captures/additional-keyboard/frame-05.png)를 확인했습니다. 캡처는 로컬에만 보관합니다.

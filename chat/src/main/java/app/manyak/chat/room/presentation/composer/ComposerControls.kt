@@ -49,7 +49,7 @@ internal fun ComposerIconButton(
     enabled: Boolean = true,
 ) {
     ManyakIconButton(
-        modifier = modifier,
+        modifier = modifier.keepKeyboardOnTap(),
         iconRes = iconRes,
         contentDescription = contentDescription,
         onClick = onClick,
@@ -72,6 +72,7 @@ internal fun ComposerChipButton(
     Box(
         modifier =
             modifier
+                .keepKeyboardOnTap()
                 .heightIn(min = ManyakTheme.sizes.controlSmall)
                 .clip(ManyakTheme.shapes.menuItem)
                 .background(
@@ -110,6 +111,7 @@ internal fun ComposerSendButton(
     Box(
         modifier =
             modifier
+                .keepKeyboardOnTap()
                 .size(ManyakTheme.sizes.controlSmall)
                 .clip(ManyakTheme.shapes.menuItem)
                 .background(if (state.enabled) ManyakTheme.colors.brand else ManyakTheme.colors.backgroundDisabled)
