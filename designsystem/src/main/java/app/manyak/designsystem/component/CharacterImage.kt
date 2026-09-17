@@ -1,6 +1,7 @@
 package app.manyak.designsystem.component
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,7 +14,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import app.manyak.designsystem.R
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.designsystem.theme.insetForBorder
 import coil3.compose.AsyncImage
@@ -31,11 +37,13 @@ import java.net.URISyntaxException
 fun CharacterImage(
     name: String,
     imageUrl: String,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var failed by rememberSaveable(imageUrl) { mutableStateOf(false) }
     if (failed || !isAllowedCharacterImageUrl(imageUrl)) return
 
+    val openLabel = stringResource(R.string.character_image_open, name)
     Box(
         modifier =
             modifier
@@ -43,7 +51,9 @@ fun CharacterImage(
                 .aspectRatio(CHARACTER_IMAGE_ASPECT_RATIO)
                 .clip(ManyakTheme.shapes.overlay)
                 // 테두리는 선을 얹지 않고 바탕으로 그린다 — 표지 썸네일과 같은 이유다.
-                .background(ManyakTheme.colors.border),
+                .background(ManyakTheme.colors.border)
+                .clickable(role = Role.Button, onClick = onClick)
+                .semantics { contentDescription = openLabel },
     ) {
         AsyncImage(
             modifier =
@@ -53,7 +63,7 @@ fun CharacterImage(
                     .clip(ManyakTheme.shapes.overlay.insetForBorder(ImageBorderWidth))
                     .background(ManyakTheme.colors.backgroundNeutral),
             model = imageUrl,
-            contentDescription = name,
+            contentDescription = null,
             contentScale = ContentScale.Fit,
             onError = { failed = true },
         )

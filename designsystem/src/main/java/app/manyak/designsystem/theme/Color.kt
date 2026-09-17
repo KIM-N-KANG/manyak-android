@@ -89,6 +89,7 @@ data class ManyakColors(
      * 어두워지고 표지 위에서는 옅은 스크림이 된다.
      */
     val overlayPressed: Color,
+    val imageViewerScrim: Color,
     val backgroundBrandBold: Color,
     val backgroundBrandBoldPressed: Color,
     val backgroundBrandSubtle: Color,
@@ -128,6 +129,7 @@ internal val ManyakLightColors =
         backgroundNeutral = Gray100,
         backgroundNeutralPressed = Gray150,
         overlayPressed = PressedOverlayLight,
+        imageViewerScrim = Color.Black.copy(alpha = 0.92f),
         backgroundBrandBold = Green800,
         backgroundBrandBoldPressed = Green900,
         backgroundBrandSubtle = Green50,
@@ -167,6 +169,7 @@ internal val ManyakDarkColors =
         backgroundNeutral = Gray900,
         backgroundNeutralPressed = Gray750,
         overlayPressed = PressedOverlayDark,
+        imageViewerScrim = Color.Black.copy(alpha = 0.92f),
         backgroundBrandBold = Green800,
         backgroundBrandBoldPressed = Green900,
         backgroundBrandSubtle = Green950,

@@ -22,6 +22,7 @@ colors:
   background-neutral: "#F5F5F5"
   background-neutral-pressed: "#EEEEEE"
   overlay-pressed: "#0F000000"
+  image-viewer-scrim: "#EB000000"
   background-brand-bold: "#00804B"
   background-brand-bold-pressed: "#006034"
   background-brand-subtle: "#E8F8EE"
@@ -59,6 +60,7 @@ colors-dark:
   background-neutral: "#1F1F1F"
   background-neutral-pressed: "#575757"
   overlay-pressed: "#14FFFFFF"
+  image-viewer-scrim: "#EB000000"
   background-brand-bold: "#00804B"
   background-brand-bold-pressed: "#006034"
   background-brand-subtle: "#00411F"
@@ -811,3 +813,5 @@ components:
 - **컨트롤 높이(`sizes.*`)는 토큰 정본이 아니라 이 레포가 정한 값입니다.** 웹과 맞추려면 디자인 토큰 쪽에 크기 층을 추가해야 합니다.
 - **토큰 값이 웹과 같은지 자동으로 확인할 방법이 없습니다.** 생성기가 레포 밖에 있고 웹은 자체 CSS 변수를 쓰므로, 두 클라이언트의 값이 갈리는지는 사람이 봐야 합니다. 다크 보조 텍스트 두 단계는 지금 앱이 웹보다 밝습니다(2026-08-29).
 - **모션 토큰이 탭 전환·화면 밀기·요소 등장·퇴장·목록 등장 여섯 단계뿐입니다.** 눌림 상태는 여전히 색 변화로만 정의되어 있고, 스켈레톤 같은 나머지 모션은 정의되지 않았습니다. 필요해지는 시점에 `{motion.*}`에 단계를 추가합니다.
+
+**`FullscreenImageViewer`** — 상세 썸네일·주변 인물과 채팅 인물 이미지에 공용으로 사용합니다. 바탕은 `{colors.image-viewer-scrim}`(검정 92%), 닫기 아이콘은 `{colors.text-inverse}`입니다. 핀치 1~5배·팬·더블탭 2.5배 토글을 제공하며 X·화면 탭·시스템 뒤로가기로 닫습니다. `CharacterImage`는 4:3 원본 전체 표시와 실패 시 영역 제거를 유지하며, 버튼 접근성 이름은 “{이름} 인물 이미지 크게 보기”입니다.

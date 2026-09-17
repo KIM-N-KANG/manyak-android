@@ -31,6 +31,7 @@ import app.manyak.chat.room.presentation.suggestion.shouldGenerateChoices
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.presentation.mvi.MviViewModel
+import app.manyak.designsystem.component.isAllowedCharacterImageUrl
 import app.manyak.report.domain.ReportRepository
 import app.manyak.report.presentation.StoryReportAction
 import app.manyak.report.presentation.StoryReportChange
@@ -70,6 +71,7 @@ data class ChatRoomUiState(
     val prologue: String = "",
     val turns: List<ChatRoomTurn> = emptyList(),
     val loadFailed: Boolean = false,
+    val imageViewerUrl: String? = null,
     val composer: ChatComposerState = ChatComposerState(),
     val choicesEnabled: Boolean = true,
     /** 턴이 0개인 방의 첫 입력 후보. */
@@ -97,6 +99,12 @@ data class ChatRoomUiState(
 
 sealed interface ChatRoomIntent {
     data object Retry : ChatRoomIntent
+
+    data class OpenCharacterImage(
+        val imageUrl: String,
+    ) : ChatRoomIntent
+
+    data object CloseImageViewer : ChatRoomIntent
 
     data class PlainTextChanged(
         val text: String,
@@ -157,6 +165,10 @@ sealed interface ChatRoomIntent {
 
 sealed interface ChatRoomEvent {
     data object LoadStarted : ChatRoomEvent
+
+    data class ImageViewerChanged(
+        val imageUrl: String?,
+    ) : ChatRoomEvent
 
     data class Loaded(
         val storyId: String,
@@ -261,6 +273,7 @@ sealed interface ChatRoomEffect {
  *
  * 재생성·삭제는 다음 단계에서 붙는다.
  */
+@Suppress("TooManyFunctions")
 @HiltViewModel(assistedFactory = ChatRoomViewModel.Factory::class)
 class ChatRoomViewModel
     @AssistedInject
@@ -389,6 +402,20 @@ class ChatRoomViewModel
                         chatRepository.turnStream(chatId, userInput, origin)
                     }
                 }
+
+                else -> handleRoomAction(intent)
+            }
+        }
+
+        private suspend fun handleRoomAction(intent: ChatRoomIntent) {
+            when (intent) {
+                is ChatRoomIntent.OpenCharacterImage ->
+                    if (isAllowedCharacterImageUrl(intent.imageUrl)) {
+                        analytics.track(AnalyticsEvent.ChatCharacterImageClicked(chatId))
+                        dispatchEvent(ChatRoomEvent.ImageViewerChanged(intent.imageUrl))
+                    }
+
+                ChatRoomIntent.CloseImageViewer -> dispatchEvent(ChatRoomEvent.ImageViewerChanged(null))
 
                 ChatRoomIntent.DeleteConfirmed -> delete()
 
@@ -721,6 +748,8 @@ private fun reduceChatRoom(
     event: ChatRoomEvent,
 ): ChatRoomUiState =
     when (event) {
+        is ChatRoomEvent.ImageViewerChanged -> state.copy(imageViewerUrl = event.imageUrl)
+
         ChatRoomEvent.LoadStarted -> state.copy(isLoading = true, loadFailed = false)
 
         is ChatRoomEvent.Loaded ->

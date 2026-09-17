@@ -18,7 +18,6 @@
     <string name="story_detail_start_setting_select">시작 상황 선택</string>
     <string name="story_detail_start_setting_situation">상황 설명</string>
     <string name="story_detail_start_settings">채팅 시작 상황</string>
-    <string name="story_detail_thumbnail_close">닫기</string>
     <string name="story_detail_thumbnail_open">썸네일 크게 보기</string>
     <string name="story_detail_unlike">좋아요 취소</string>
 </resources>
