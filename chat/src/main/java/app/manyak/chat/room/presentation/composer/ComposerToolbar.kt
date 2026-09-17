@@ -4,17 +4,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
 import app.manyak.chat.entity.ChatInputMode
 import app.manyak.common.presentation.credit.LocalCreditPolicy
+import app.manyak.common.presentation.credit.LocalTrials
 import app.manyak.common.presentation.credit.creditAmountText
 import app.manyak.designsystem.component.ManyakDestructiveDialog
-import app.manyak.designsystem.credit.creditAmountAlpha
+import app.manyak.designsystem.credit.CreditAmountText
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.chat.R as ChatR
 import app.manyak.designsystem.R as DesignsystemR
@@ -25,6 +24,7 @@ internal fun ComposerToolbar(
     mode: ChatInputMode,
     canAddBlock: Boolean,
     enabled: Boolean,
+    realtimeImageEnabled: Boolean,
     sendState: SendButtonState,
     actions: ChatComposerActions,
     onInsertEmphasis: () -> Unit,
@@ -70,10 +70,11 @@ internal fun ComposerToolbar(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             // 전송 버튼 상태(전송·랜덤·대기)가 바뀌어도 자리가 그대로다.
-            val chatTurnCost = LocalCreditPolicy.current?.chatTurnCost
-            Text(
-                modifier = Modifier.alpha(creditAmountAlpha(chatTurnCost == null)),
-                text = stringResource(ChatR.string.chat_composer_turn_credit_cost, creditAmountText(chatTurnCost)),
+            val cost = chatTurnCost(LocalCreditPolicy.current, LocalTrials.current, realtimeImageEnabled)
+            CreditAmountText(
+                amount = stringResource(ChatR.string.chat_composer_turn_credit_cost, creditAmountText(cost.discounted)),
+                fullAmount = cost.full?.takeIf { cost.isDiscounted }?.let(::creditAmountText),
+                pending = cost.discounted == null,
                 style = ManyakTheme.typography.bodySmall,
                 color = ManyakTheme.colors.textSubtle,
             )

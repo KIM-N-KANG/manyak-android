@@ -41,6 +41,7 @@ import app.manyak.chat.room.presentation.ChatRoomScreen
 import app.manyak.common.entity.settings.ThemeMode
 import app.manyak.common.entity.story.CreationResumePoint
 import app.manyak.common.presentation.credit.LocalCreditPolicy
+import app.manyak.common.presentation.credit.LocalTrials
 import app.manyak.common.presentation.error.messageResOrNull
 import app.manyak.core.navigation.ChatRoomRoute
 import app.manyak.core.navigation.CreateAdditionalInfoRoute
@@ -94,6 +95,7 @@ fun ManyakApp(
     val sessionState by viewModel.sessionState.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val creditPolicy by viewModel.creditPolicy.collectAsStateWithLifecycle()
+    val trials by viewModel.trials.collectAsStateWithLifecycle()
     val entryDestination by viewModel.entryDestination.collectAsStateWithLifecycle()
     val showSessionProgress = rememberDelayedProgressVisibility(sessionState == SessionState.Undetermined)
     val darkTheme =
@@ -106,6 +108,7 @@ fun ManyakApp(
     // 이프 수치는 세 기능 모듈의 화면이 함께 쓰므로 화면마다 상태를 늘리지 않고 루트에서 내린다.
     CompositionLocalProvider(
         LocalCreditPolicy provides creditPolicy,
+        LocalTrials provides trials,
         LocalAnalytics provides viewModel.analytics,
     ) {
         ManyakTheme(darkTheme = darkTheme) {

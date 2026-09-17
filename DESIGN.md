@@ -287,6 +287,16 @@ components:
     typography: "{typography.body-small}"
     rounded: "{rounded.pill}"
     padding: "{spacing.hairline} {spacing.compact}"
+  badge-neutral:
+    backgroundColor: "{colors.background-neutral}"
+    textColor: "{colors.text-subtle}"
+    typography: "{typography.body-small}"
+    rounded: "{rounded.pill}"
+    padding: "{spacing.hairline} {spacing.compact}"
+  credit-amount:
+    markAsset: "res/drawable-nodpi/if_credit_mark.png"
+    markSize: "옆 글자의 fontSize"
+    gap: "{spacing.inline}"
   banner-danger:
     backgroundColor: "{colors.background-danger-subtle}"
     textColor: "{colors.text-danger}"
@@ -437,6 +447,7 @@ components:
 | `ManyakNavigationBar.kt` · `ManyakNavigationItem.kt` | 하단 탭 바와 그 항목 |
 | `ProgressIndicator.kt` | 로딩 스피너와 지연 표시 헬퍼 |
 | `PullToRefresh.kt` | 당겨서 새로고침 컨테이너. 표시자를 셸 헤더 아래로 내린다 |
+| `credit/CreditAmountText.kt` | 이프 마크 + (취소선 정가) + 수치. 마크는 글자 크기를 따른다 |
 
 이름은 세 표기가 1:1로 대응합니다 — 이 문서 `{colors.text-subtle}` ↔ Kotlin `ManyakTheme.colors.textSubtle` ↔ 토큰 JSON `color.text.subtle`.
 
@@ -763,6 +774,10 @@ components:
 ### 로고
 
 **`logo-google`** — `res/drawable/ic_logo_google.xml`. 공식 4색 G를 그대로 씁니다. **tint·변형·재색칠 금지.**
+
+**`credit-amount`** — `res/drawable-nodpi/if_credit_mark.png`(웹 `if-credit-mark.png` 원본 128px). 이프 수치(잔액·채팅 턴 비용·완성 비용·실시간 이미지 비용) 앞에 `{spacing.inline}` 간격으로 붙이고, 크기는 옆 글자의 `fontSize`를 dp로 바꾼 값이라 큰 글자에서 같이 커진다. 장식이라 접근성 이름을 두지 않는다 — 글자가 수치를 읽는다. 체험이 남아 깎인 비용은 정가에 취소선을 긋고 오른쪽에 적용가를 둔다(~~80~~ 0 이프). 정책·잔여를 못 받은 동안은 자리표시 숫자에 골격 맥박을 얹는다. `CreditAmountText`를 쓴다.
+
+**`badge-neutral`** — 채팅 설정 시트의 실시간 이미지 비용처럼 상태가 아니라 정보인 배지. `badge`의 초록 대신 `{colors.background-neutral}` 위에 `{colors.text-subtle}`로, 모양·여백은 같다.
 
 **`logo-kakao`** — `res/drawable/ic_logo_kakao.xml`. 카카오 말풍선 심벌은 노란 컨테이너 `#FEE500` 위에 검정으로 올립니다(로그인 버튼). 이 노랑은 카카오가 정한 값이라 토큰 팔레트에 넣지 않았습니다. **컨테이너 없이 놓을 때는 `{colors.text}` 단색으로 칠합니다**(`{component.provider-chip}`) — 검정 그대로 두면 다크 모드에서 배경에 묻힙니다. 구글 로고와 달리 카카오는 단색 사용을 허용하므로 이 자리에서만 재색칠합니다.
 

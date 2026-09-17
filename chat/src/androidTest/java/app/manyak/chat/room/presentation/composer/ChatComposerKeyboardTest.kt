@@ -50,6 +50,7 @@ class ChatComposerKeyboardTest {
                     ChatComposer(
                         state = state,
                         choicesEnabled = true,
+                        realtimeImageEnabled = true,
                         hasSuggestions = false,
                         isStreaming = false,
                         actions =

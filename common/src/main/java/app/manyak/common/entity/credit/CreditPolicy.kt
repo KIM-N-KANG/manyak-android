@@ -19,4 +19,6 @@ data class CreditPolicy(
     val storyCreationCost: Long? = null,
     /** 채팅 턴에 드는 이프. 재생성도 같은 값이다. */
     val chatTurnCost: Long? = null,
+    /** 실시간 이미지 한 장에 드는 이프. 턴 비용에 더해진다. */
+    val chatImageCost: Long? = null,
 )

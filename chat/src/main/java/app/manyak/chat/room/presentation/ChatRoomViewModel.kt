@@ -28,6 +28,7 @@ import app.manyak.chat.room.presentation.suggestion.composerOrigin
 import app.manyak.chat.room.presentation.suggestion.normalizeSuggestion
 import app.manyak.chat.room.presentation.suggestion.randomSuggestionPosition
 import app.manyak.chat.room.presentation.suggestion.shouldGenerateChoices
+import app.manyak.common.domain.credit.TrialsRepository
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.presentation.mvi.MviViewModel
@@ -300,6 +301,7 @@ class ChatRoomViewModel
         private val chatRepository: ChatRepository,
         private val reportRepository: ReportRepository,
         private val preferences: ChatPreferencesRepository,
+        private val trialsRepository: TrialsRepository,
         private val analytics: Analytics,
     ) : MviViewModel<ChatRoomIntent, ChatRoomUiState, ChatRoomEvent, ChatRoomEffect>(ChatRoomUiState()) {
         private var preferencesJob: Job? = null
@@ -648,6 +650,8 @@ class ChatRoomViewModel
 
                 ChatStreamEvent.Completed -> {
                     isStreaming = false
+                    // 완료된 턴이 체험 한 회를 썼을 수 있다. 다음 턴의 배지가 낡은 잔여로 그려지지 않게 다시 읽는다.
+                    viewModelScope.launch { trialsRepository.refresh() }
                     refreshTurns(confirmed = true)
                     regeneratingTurnId = null
                 }

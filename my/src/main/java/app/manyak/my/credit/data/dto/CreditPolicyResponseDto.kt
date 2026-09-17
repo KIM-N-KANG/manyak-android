@@ -12,6 +12,7 @@ data class CreditPolicyResponseDto(
     val attendanceReward: Long? = null,
     val storyCreationCost: Long? = null,
     val chatTurnCost: Long? = null,
+    val chatImageCost: Long? = null,
 )
 
 fun CreditPolicyResponseDto.toDomain(): CreditPolicy =
@@ -22,4 +23,5 @@ fun CreditPolicyResponseDto.toDomain(): CreditPolicy =
         attendanceReward = attendanceReward,
         storyCreationCost = storyCreationCost,
         chatTurnCost = chatTurnCost,
+        chatImageCost = chatImageCost,
     )
