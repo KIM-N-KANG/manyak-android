@@ -52,6 +52,7 @@ class ChatRepositoryImpl
             userSource: UserSource,
             sourceTurnId: Long?,
             choiceOrder: Int?,
+            realtimeImage: Boolean,
         ): Flow<ChatStreamEvent> =
             sseSource.streamTurn(
                 chatId = chatId,
@@ -62,13 +63,16 @@ class ChatRepositoryImpl
                         // 원본 턴이 없으면 순번도 뜻이 없다. 한쪽만 실어 보내지 않는다.
                         sourceTurnId = sourceTurnId,
                         choiceOrder = choiceOrder.takeIf { sourceTurnId != null },
+                        realtimeImage = realtimeImage,
                     ),
             )
 
         override fun regenerateTurn(
             chatId: String,
             turnId: Long,
-        ): Flow<ChatStreamEvent> = sseSource.regenerateTurn(chatId, ChatRegenerateRequestDto(turnId = turnId))
+            realtimeImage: Boolean,
+        ): Flow<ChatStreamEvent> =
+            sseSource.regenerateTurn(chatId, ChatRegenerateRequestDto(turnId = turnId, realtimeImage = realtimeImage))
 
         override suspend fun generateChoices(
             chatId: String,

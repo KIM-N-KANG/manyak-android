@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    채팅 설정의 블럭 입력. 색은 사용처에서 tint 하므로 자산 자체는 단색으로 둔다.
+    원본: form-outline.svg (24×24).
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <path
+        android:pathData="M18,8H6C5.53501,8 5.30252,8 5.11177,8.05111C4.59413,8.18981 4.18981,8.59413 4.05111,9.11177C4,9.30252 4,9.53501 4,10C4,10.465 4,10.6975 4.05111,10.8882C4.18981,11.4059 4.59413,11.8102 5.11177,11.9489C5.30252,12 5.53501,12 6,12H18C18.465,12 18.6975,12 18.8882,11.9489C19.4059,11.8102 19.8102,11.4059 19.9489,10.8882C20,10.6975 20,10.465 20,10C20,9.53501 20,9.30252 19.9489,9.11177C19.8102,8.59413 19.4059,8.18981 18.8882,8.05111C18.6975,8 18.465,8 18,8Z"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <path
+        android:pathData="M4,4H14"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <path
+        android:pathData="M4,16H10"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <path
+        android:pathData="M4,20H20"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

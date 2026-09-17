@@ -43,6 +43,12 @@ class ChatPreferencesStore
 
         override suspend fun setChoicesEnabled(enabled: Boolean) = write { it[CHOICES_ENABLED_KEY] = enabled }
 
+        override suspend fun realtimeImageEnabled(): Boolean =
+            read(REALTIME_IMAGE_ENABLED_KEY) ?: DEFAULT_REALTIME_IMAGE_ENABLED
+
+        override suspend fun setRealtimeImageEnabled(enabled: Boolean) =
+            write { it[REALTIME_IMAGE_ENABLED_KEY] = enabled }
+
         override suspend fun isChoicesHintSeen(): Boolean = read(CHOICES_HINT_SEEN_KEY) ?: false
 
         override suspend fun markChoicesHintSeen() = write { it[CHOICES_HINT_SEEN_KEY] = true }
@@ -62,9 +68,11 @@ class ChatPreferencesStore
             val INPUT_MODE_KEY = stringPreferencesKey("chat_input_mode")
             val CHOICES_ENABLED_KEY = booleanPreferencesKey("chat_choices_enabled")
             val CHOICES_HINT_SEEN_KEY = booleanPreferencesKey("chat_choices_hint_seen")
+            val REALTIME_IMAGE_ENABLED_KEY = booleanPreferencesKey("chat_realtime_image_enabled")
 
             /** 웹과 같은 기본값이다. 처음 들어온 사용자가 두 클라이언트에서 다른 화면을 보면 안 된다. */
             val DEFAULT_INPUT_MODE = ChatInputMode.BLOCK
             const val DEFAULT_CHOICES_ENABLED = true
+            const val DEFAULT_REALTIME_IMAGE_ENABLED = true
         }
     }

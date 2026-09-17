@@ -23,6 +23,11 @@ interface ChatPreferencesRepository {
 
     suspend fun setChoicesEnabled(enabled: Boolean)
 
+    /** 턴마다 인물 이미지를 실시간으로 만들지. 읽지 못하면 켬. */
+    suspend fun realtimeImageEnabled(): Boolean
+
+    suspend fun setRealtimeImageEnabled(enabled: Boolean)
+
     /**
      * 추천 입력 사용법 힌트를 이미 봤는지. 읽지 못하면 보지 않은 것으로 본다.
      *

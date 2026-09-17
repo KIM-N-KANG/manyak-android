@@ -40,6 +40,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.chat.list.presentation.label
 import app.manyak.chat.room.presentation.composer.ChatComposer
 import app.manyak.chat.room.presentation.composer.ChatComposerActions
+import app.manyak.chat.room.presentation.composer.ChatSettingsSheet
 import app.manyak.designsystem.component.FullscreenImageViewer
 import app.manyak.designsystem.component.ManyakDestructiveDialog
 import app.manyak.designsystem.component.ManyakIconButton
@@ -251,6 +252,8 @@ private fun ColumnScope.ChatRoomLoaded(
     onIntent: (ChatRoomIntent) -> Unit,
     onFillRequested: (Int) -> Unit,
 ) {
+    // 설정 시트 열림. 회전·다크 모드 전환에서 닫히면 사용자가 다시 열어야 한다.
+    var settingsOpen by rememberSaveable { mutableStateOf(false) }
     ChatTranscript(
         modifier = Modifier.weight(1f),
         state = state,
@@ -268,18 +271,32 @@ private fun ColumnScope.ChatRoomLoaded(
         choicesEnabled = state.choicesEnabled,
         hasSuggestions = state.suggestions.hasCandidate,
         isStreaming = state.isStreaming,
-        actions = composerActions(onIntent),
+        actions = composerActions(onIntent, onOpenSettings = { settingsOpen = true }),
     )
+    if (settingsOpen) {
+        // 스위치는 의도로 바로 올라가고 시트는 닫기 전까지 남는다 — 블럭 입력을 끄면 뒤의 컴포저가 바뀐다.
+        ChatSettingsSheet(
+            realtimeImageEnabled = state.realtimeImageEnabled,
+            choicesEnabled = state.choicesEnabled,
+            mode = state.composer.mode,
+            onRealtimeImageEnabledChange = { enabled -> onIntent(ChatRoomIntent.RealtimeImageEnabledChanged(enabled)) },
+            onChoicesEnabledChange = { enabled -> onIntent(ChatRoomIntent.ChoicesEnabledChanged(enabled)) },
+            onModeChange = { mode -> onIntent(ChatRoomIntent.InputModeChanged(mode)) },
+            onDismiss = { settingsOpen = false },
+        )
+    }
 }
 
-private fun composerActions(onIntent: (ChatRoomIntent) -> Unit): ChatComposerActions =
+private fun composerActions(
+    onIntent: (ChatRoomIntent) -> Unit,
+    onOpenSettings: () -> Unit,
+): ChatComposerActions =
     ChatComposerActions(
         onPlainTextChange = { text -> onIntent(ChatRoomIntent.PlainTextChanged(text)) },
         onBlockValueChange = { id, value -> onIntent(ChatRoomIntent.BlockValueChanged(id, value)) },
         onAddBlock = { type -> onIntent(ChatRoomIntent.BlockAdded(type)) },
         onRemoveBlock = { id -> onIntent(ChatRoomIntent.BlockRemoved(id)) },
-        onModeChange = { mode -> onIntent(ChatRoomIntent.InputModeChanged(mode)) },
-        onChoicesEnabledChange = { enabled -> onIntent(ChatRoomIntent.ChoicesEnabledChanged(enabled)) },
+        onOpenSettings = onOpenSettings,
         onSend = { onIntent(ChatRoomIntent.Sent) },
         onSendRandomSuggestion = { onIntent(ChatRoomIntent.RandomSuggestionSent) },
         onLockedTap = { onIntent(ChatRoomIntent.LockedComposerTapped) },

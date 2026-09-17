@@ -2,18 +2,8 @@
 <resources>
     <string name="chat_composer_add_dialogue">대사 추가</string>
     <string name="chat_composer_add_situation">상황 추가</string>
-    <string name="chat_composer_choices_menu">추천 입력 설정</string>
-    <string name="chat_composer_choices_off">추천 입력 끔</string>
-    <string name="chat_composer_choices_off_description">추천 없이 직접 입력해요</string>
-    <string name="chat_composer_choices_on">추천 입력 켬</string>
-    <string name="chat_composer_choices_on_description">AI가 다음 전개를 추천해줘요</string>
     <string name="chat_composer_dialogue_label">대사</string>
     <string name="chat_composer_dialogue_placeholder">어떤 대사를 건넬까요?</string>
-    <string name="chat_composer_input_mode_block">블럭 입력</string>
-    <string name="chat_composer_input_mode_block_description">상황과 대사를 나눠서 입력해요</string>
-    <string name="chat_composer_input_mode_menu">입력 모드 변경</string>
-    <string name="chat_composer_input_mode_plain">일반 입력</string>
-    <string name="chat_composer_input_mode_plain_description">한 입력창에 자유롭게 입력해요</string>
     <string name="chat_composer_locked_streaming">응답을 만드는 중이에요. 끝나면 입력할 수 있어요</string>
     <string name="chat_composer_plain_placeholder">이야기를 어떻게 이어갈까요?</string>
     <string name="chat_composer_remove_block">입력 삭제</string>
@@ -61,6 +51,17 @@
     <string name="chat_room_suggestion_hint_title">AI가 추천하는 입력이에요</string>
     <string name="chat_room_writing">작성 중</string>
     <string name="chat_room_writing_status">답변을 작성하고 있어요</string>
+    <string name="chat_settings_block_input">블럭 입력</string>
+    <string name="chat_settings_block_input_description">상황과 대사를 나눠서 입력해요</string>
+    <string name="chat_settings_choices">AI 추천 입력</string>
+    <string name="chat_settings_choices_description">AI가 다음 전개를 추천해줘요</string>
+    <string name="chat_settings_close">닫기</string>
+    <string name="chat_settings_group_features">채팅 기능</string>
+    <string name="chat_settings_group_input_mode">입력 모드</string>
+    <string name="chat_settings_open">채팅 설정</string>
+    <string name="chat_settings_realtime_image">실시간 이미지</string>
+    <string name="chat_settings_realtime_image_description">대화에 따라 인물 한 명의 표정과 모습이 달라져요</string>
+    <string name="chat_settings_title">채팅 설정</string>
     <string name="relative_time_days">%1$d일 전</string>
     <string name="relative_time_hours">%1$d시간 전</string>
     <string name="relative_time_just_now">방금 전</string>
