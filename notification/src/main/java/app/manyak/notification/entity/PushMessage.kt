@@ -10,8 +10,11 @@ data class PushMessage(
     val recipientId: String?,
     val title: String?,
     val body: String?,
+    /** 서버가 실은 이동 주소. 없는 페이로드(프로모션·구버전 발송)는 `type` 매핑으로 간다. */
+    val deepLink: String?,
 ) {
-    val entry: PushEntry get() = PushEntry(type = type, targetId = targetId, recipientId = recipientId)
+    val entry: PushEntry
+        get() = PushEntry(type = type, targetId = targetId, recipientId = recipientId, deepLink = deepLink)
 
     val isMarketing: Boolean
         get() = type == PushEntry.TYPE_ATTENDANCE_REMINDER || type == PushEntry.TYPE_PROMOTION
@@ -33,6 +36,7 @@ data class PushMessage(
                 recipientId = data["recipientId"]?.takeIf { it.isNotBlank() },
                 title = data["title"],
                 body = data["body"],
+                deepLink = data["deepLink"]?.takeIf { it.isNotBlank() },
             )
         }
     }

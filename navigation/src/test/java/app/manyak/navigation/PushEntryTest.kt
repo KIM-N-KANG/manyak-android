@@ -31,5 +31,25 @@ class PushEntryTest {
     fun `수신자가 현재 회원과 다르면 홈이다`() {
         assertEquals(MainTabsRoute, PushEntry(PushEntry.TYPE_STORY_COMPLETED, "s1", "other").routeFor("me"))
         assertEquals(MainTabsRoute, PushEntry(PushEntry.TYPE_STORY_COMPLETED, "s1", null).routeFor("me"))
+        assertEquals(
+            MainTabsRoute,
+            PushEntry(PushEntry.TYPE_STORY_COMPLETED, "s1", "other", "https://manyak.app/stories/s1").routeFor("me"),
+        )
+    }
+
+    @Test
+    fun `deepLink가 있으면 type보다 우선하고 해석에 실패하면 홈이다`() {
+        assertEquals(
+            StoryDetailRoute("from-url"),
+            PushEntry(PushEntry.TYPE_STORY_COMPLETED, "s1", "me", "https://manyak.app/stories/from-url").routeFor("me"),
+        )
+        assertEquals(
+            MyCreditChargeRoute,
+            PushEntry("SOMETHING_NEW", null, "me", "https://manyak.app/my/credits?tab=free").routeFor("me"),
+        )
+        assertEquals(
+            MainTabsRoute,
+            PushEntry(PushEntry.TYPE_STORY_COMPLETED, "s1", "me", "https://evil.example/stories/s1").routeFor("me"),
+        )
     }
 }
