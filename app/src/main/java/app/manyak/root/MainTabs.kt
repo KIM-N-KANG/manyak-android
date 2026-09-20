@@ -86,9 +86,6 @@ internal fun MainTabsScreen(
             onLeaveTab = { onSelectTab(MainTab.HOME) },
             onOpenStory = onOpenStory,
             onOpenChat = onOpenChat,
-            // 빈 채팅 목록의 안내가 제작으로 보내는 자리. 목적지를 쌓지 않고 탭을 바꾸는 것이 핵심이다 —
-            // push 하면 뒤로가기가 채팅 탭으로 되돌아와, 탭 전환이 이력에 쌓이지 않는다는 규칙이 깨진다.
-            onGoToStudio = { onSelectTab(MainTab.STUDIO) },
             onCreateStory = onCreateStory,
             onResumeCreation = onResumeCreation,
             onOpenInvite = onOpenInvite,
@@ -134,7 +131,6 @@ private fun MainTabsContent(
     onLeaveTab: () -> Unit,
     onOpenStory: (String) -> Unit,
     onOpenChat: (String) -> Unit,
-    onGoToStudio: () -> Unit,
     onCreateStory: () -> Unit,
     onResumeCreation: (CreationResumePoint) -> Unit,
     onOpenInvite: () -> Unit,
@@ -157,7 +153,7 @@ private fun MainTabsContent(
     val chatEntries =
         rememberTabEntries(backStacks.getValue(MainTab.CHAT)) {
             entry<ChatListRoute> {
-                ChatListScreen(contentPadding = padding.value, onOpenChat = onOpenChat, onGoToStudio = onGoToStudio)
+                ChatListScreen(contentPadding = padding.value, onOpenChat = onOpenChat)
             }
         }
     val studioEntries =

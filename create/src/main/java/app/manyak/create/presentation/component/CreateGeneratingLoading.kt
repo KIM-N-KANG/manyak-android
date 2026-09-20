@@ -101,7 +101,10 @@ private fun GeneratingLoadingContent(
                     .padding(horizontal = ManyakTheme.spacing.gutter)
                     .padding(top = ManyakTheme.spacing.block),
         ) {
-            CyclingPhrases(phrases = stringArrayResource(phrasesRes).toList())
+            CyclingPhrases(
+                phrases = stringArrayResource(phrasesRes).toList(),
+                style = ManyakTheme.typography.bodyLarge,
+            )
             GenerationHints(hints = hints)
         }
     }

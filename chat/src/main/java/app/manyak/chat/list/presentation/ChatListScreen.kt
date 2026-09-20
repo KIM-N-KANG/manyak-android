@@ -1,18 +1,12 @@
 package app.manyak.chat.list.presentation
 
 import android.widget.Toast
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -21,7 +15,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -67,7 +60,6 @@ import app.manyak.report.R as ReportR
 fun ChatListScreen(
     contentPadding: PaddingValues,
     onOpenChat: (String) -> Unit,
-    onGoToStudio: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ChatListViewModel = hiltViewModel(),
 ) {
@@ -114,7 +106,6 @@ fun ChatListScreen(
         state = state,
         contentPadding = contentPadding,
         onOpenChat = onOpenChat,
-        onGoToStudio = onGoToStudio,
         onIntent = viewModel::onIntent,
         modifier = modifier,
     )
@@ -125,7 +116,6 @@ private fun ChatListContent(
     state: ChatListUiState,
     contentPadding: PaddingValues,
     onOpenChat: (String) -> Unit,
-    onGoToStudio: () -> Unit,
     onIntent: (ChatListIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -149,14 +139,7 @@ private fun ChatListContent(
                 )
 
             state.chats.isEmpty() ->
-                EmptyChats(
-                    onGoToStudio = onGoToStudio,
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .padding(contentPadding)
-                            .padding(horizontal = ManyakTheme.spacing.gutter),
-                )
+                EmptyChats(modifier = Modifier.fillMaxSize().padding(contentPadding))
 
             else ->
                 Chats(
@@ -283,50 +266,15 @@ private fun Chats(
     }
 }
 
-/**
- * 빈 목록. 웹은 저장한 스토리 유무로 안내를 가르지만, 앱에서 두 갈래의 종착지는 제작 탭 하나다 —
- * 스토리가 없으면 그 탭이 이미 빈 안내와 FAB 으로 만들기를 유도한다. 버튼은 목적지를 쌓지 않고
- * 탭을 바꾼다.
- */
+/** 빈 목록은 안내 문구만 둔다 — 제작 탭과 같은 한 줄이다. */
 @Composable
-private fun EmptyChats(
-    onGoToStudio: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact, Alignment.CenterVertically),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
+private fun EmptyChats(modifier: Modifier = Modifier) {
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
         Text(
-            modifier = Modifier.fillMaxWidth(),
             text = stringResource(ChatR.string.chat_list_empty_title),
-            style = ManyakTheme.typography.bodyLargeStrong,
-            color = ManyakTheme.colors.text,
-            textAlign = TextAlign.Center,
-        )
-        Text(
-            modifier = Modifier.fillMaxWidth().padding(bottom = ManyakTheme.spacing.inline),
-            text = stringResource(ChatR.string.chat_list_empty_description),
             style = ManyakTheme.typography.bodyMedium,
             color = ManyakTheme.colors.textSubtle,
-            textAlign = TextAlign.Center,
         )
-        Button(
-            modifier = Modifier.heightIn(min = ManyakTheme.sizes.control),
-            onClick = onGoToStudio,
-            shape = ManyakTheme.shapes.control,
-            colors =
-                ButtonDefaults.buttonColors(
-                    containerColor = ManyakTheme.colors.brand,
-                    contentColor = ManyakTheme.colors.textInverse,
-                ),
-        ) {
-            Text(
-                text = stringResource(ChatR.string.chat_list_empty_action),
-                style = ManyakTheme.typography.labelLarge,
-            )
-        }
     }
 }
 
@@ -338,7 +286,6 @@ private fun ChatListScreenPreview() {
             state = ChatListUiState(isLoading = false, chats = previewChats()),
             contentPadding = PaddingValues(0.dp),
             onOpenChat = {},
-            onGoToStudio = {},
             onIntent = {},
         )
     }
@@ -352,7 +299,6 @@ private fun ChatListScreenEmptyPreview() {
             state = ChatListUiState(isLoading = false),
             contentPadding = PaddingValues(0.dp),
             onOpenChat = {},
-            onGoToStudio = {},
             onIntent = {},
         )
     }
