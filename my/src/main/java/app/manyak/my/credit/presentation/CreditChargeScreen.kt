@@ -42,6 +42,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.designsystem.component.LoadFailedContent
+import app.manyak.designsystem.component.ManyakInfoTooltipButton
 import app.manyak.designsystem.component.ManyakPullToRefreshBox
 import app.manyak.designsystem.component.SkeletonPlaceholder
 import app.manyak.designsystem.component.rememberSkeletonPulseAlpha
@@ -107,7 +108,7 @@ fun CreditChargeScreen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.safeDrawing),
     ) {
-        MyDetailHeader(titleRes = MyR.string.my_credit_charge_title, onBack = onBack)
+        CreditChargeHeader(onBack = onBack)
         CreditBalanceBox(
             balance = state.balance,
             modifier = Modifier.padding(horizontal = ManyakTheme.spacing.gutter),
@@ -134,6 +135,21 @@ fun CreditChargeScreen(
                 )
         }
     }
+}
+
+/** 제목 옆 안내는 앱 안 구매가 아직 없다는 사실을 알린다 — 충전하러 들어와 구매 탭을 찾는 사람이 있다. */
+@Composable
+private fun CreditChargeHeader(onBack: () -> Unit) {
+    MyDetailHeader(
+        titleRes = MyR.string.my_credit_charge_title,
+        onBack = onBack,
+        titleTrailing = {
+            ManyakInfoTooltipButton(
+                text = stringResource(MyR.string.my_credit_purchase_notice_tooltip),
+                contentDescription = stringResource(MyR.string.my_credit_purchase_notice),
+            )
+        },
+    )
 }
 
 /** 내역 탭. 원장 목록만 담고 잔액은 화면 위 상자가 이미 말한다. */

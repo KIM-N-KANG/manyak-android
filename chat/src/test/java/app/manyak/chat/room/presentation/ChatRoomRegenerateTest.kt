@@ -7,6 +7,7 @@ import app.manyak.chat.entity.ChatTurn
 import app.manyak.chat.room.presentation.composer.InputBlockType
 import app.manyak.chat.testing.FakeChatPreferencesRepository
 import app.manyak.chat.testing.FakeChatRepository
+import app.manyak.chat.testing.FakeCreditPolicyRepository
 import app.manyak.chat.testing.FakeReportRepository
 import app.manyak.chat.testing.FakeTrialsRepository
 import app.manyak.chat.testing.FakeUserProfileRepository
@@ -227,6 +228,7 @@ class ChatRoomRegenerateTest {
             reportRepository = FakeReportRepository(),
             preferences = FakeChatPreferencesRepository(),
             trialsRepository = FakeTrialsRepository(),
+            creditPolicyRepository = FakeCreditPolicyRepository(),
             profileRepository = FakeUserProfileRepository(),
             analytics = NoOpAnalytics,
         )

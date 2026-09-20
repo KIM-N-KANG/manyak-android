@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="studio_create_story">스토리 만들기</string>
+    <string name="studio_create_story_short">만들기</string>
     <string name="studio_genre_overflow">+%1$d</string>
     <string name="studio_loading">내가 만든 스토리 불러오는 중</string>
     <string name="studio_pending_dialog_close">닫기</string>

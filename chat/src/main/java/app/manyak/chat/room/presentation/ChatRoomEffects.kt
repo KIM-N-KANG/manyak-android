@@ -1,7 +1,6 @@
 package app.manyak.chat.room.presentation
 
 import android.content.Context
-import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -40,7 +39,8 @@ internal fun ChatRoomEffects(
     val currentOnReplaceChat by rememberUpdatedState(onReplaceChat)
     val currentOnCloseMenu by rememberUpdatedState(onCloseMenu)
     val currentOnCloseDeleteDialog by rememberUpdatedState(onCloseDeleteDialog)
-    val lockedToast = remember { ReplacingToast(context, ChatR.string.chat_composer_locked_streaming) }
+    // 채팅방의 토스트는 한 자리에서 띄운다 — 앞 문구가 남아 있으면 지우고 새 문구만 보인다.
+    val toast = remember { ReplacingToast(context) }
 
     LaunchedEffect(viewModel, lifecycleOwner) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -66,11 +66,9 @@ internal fun ChatRoomEffects(
                         )
                     }
 
-                    ChatRoomEffect.ShowComposerLocked -> lockedToast.show()
-
                     else -> Unit
                 }
-                effect.toastText(context)?.let { text -> Toast.makeText(context, text, Toast.LENGTH_SHORT).show() }
+                effect.toastText(context)?.let(toast::show)
             }
         }
     }
@@ -87,5 +85,6 @@ private fun ChatRoomEffect.toastText(context: Context): String? =
         ChatRoomEffect.ShowReportFailed -> context.getString(ReportR.string.story_report_failed)
         ChatRoomEffect.ShowNewChatFailed -> context.getString(ChatR.string.chat_room_new_chat_failed)
         ChatRoomEffect.ShowShareFailed -> context.getString(ChatR.string.chat_room_share_failed)
-        is ChatRoomEffect.NavigateToChat, is ChatRoomEffect.ShareLink, ChatRoomEffect.ShowComposerLocked -> null
+        ChatRoomEffect.ShowComposerLocked -> context.getString(ChatR.string.chat_composer_locked_streaming)
+        is ChatRoomEffect.NavigateToChat, is ChatRoomEffect.ShareLink -> null
     }
