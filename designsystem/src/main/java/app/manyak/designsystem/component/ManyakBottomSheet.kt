@@ -13,6 +13,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -20,6 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import app.manyak.designsystem.theme.ManyakTheme
 
 /**
@@ -31,7 +33,12 @@ import app.manyak.designsystem.theme.ManyakTheme
  *
  * 내용은 항상 스크롤된다. 큰 글자·작은 화면에서 내용이 시트 높이를 넘겨도 닿을 수 있어야 한다.
  *
- * @param dismissEnabled false 면 끌어내려 닫기를 막는다(예: 전송 중 — 결과를 못 본 채 사라지지 않게).
+ * @param dismissEnabled false 면 끌어내리기·스크림 탭으로 닫는 것을 막고 핸들 드래그 자체도 잠근다(예: 전송 중 —
+ * 결과를 못 본 채 사라지지 않게). 닫히지 않는 시트가 끌리기만 하면 튕기는 움직임이 "닫을 수 있다" 는 신호가 된다.
+ * @param dismissOnBackPress false 면 뒤로가기도 막는다. 기본은 [dismissEnabled] 와 같다 — 뒤로가기는
+ * 끌어내리기 판정을 거치지 않고 [onDismissRequest] 를 부르므로 따로 잠가야 한다.
+ * @param dragHandleVisible false 면 핸들을 두지 않는다. 끌어내릴 수 없는 시트(필수 동의)에 핸들이 있으면 닫을 수
+ * 있다는 신호가 되어서다. 전송 중처럼 잠깐 잠그는 시트는 핸들이 사라졌다 나타나지 않게 그대로 둔다.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,6 +46,8 @@ fun ManyakBottomSheet(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
     dismissEnabled: Boolean = true,
+    dismissOnBackPress: Boolean = dismissEnabled,
+    dragHandleVisible: Boolean = true,
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
     content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -60,9 +69,23 @@ fun ManyakBottomSheet(
         shape = ManyakTheme.shapes.sheet,
         // 하단 안전 영역과 키보드 높이는 아래 본문이 직접 낀다.
         contentWindowInsets = { WindowInsets(0, 0, 0, 0) },
-        dragHandle = {
-            BottomSheetDefaults.DragHandle(modifier = Modifier.clearFocusOnTap(), color = ManyakTheme.colors.border)
-        },
+        sheetGesturesEnabled = dismissEnabled,
+        properties =
+            ModalBottomSheetProperties(
+                shouldDismissOnBackPress = dismissOnBackPress,
+                shouldDismissOnClickOutside = dismissEnabled,
+            ),
+        dragHandle =
+            if (dragHandleVisible) {
+                {
+                    BottomSheetDefaults.DragHandle(
+                        modifier = Modifier.clearFocusOnTap(),
+                        color = ManyakTheme.colors.border,
+                    )
+                }
+            } else {
+                null
+            },
     ) {
         Column(
             modifier =
@@ -73,8 +96,11 @@ fun ManyakBottomSheet(
                     .navigationBarsPadding()
                     .padding(horizontal = ManyakTheme.spacing.gutter)
                     .verticalScroll(rememberScrollState())
-                    // 위쪽은 드래그 핸들이 자체 여백을 갖고 있어 더 두지 않는다.
-                    .padding(bottom = ManyakTheme.spacing.gutter),
+                    // 위쪽은 드래그 핸들이 자체 여백을 갖고 있어 핸들이 없을 때만 둔다.
+                    .padding(
+                        top = if (dragHandleVisible) 0.dp else ManyakTheme.spacing.gutter,
+                        bottom = ManyakTheme.spacing.gutter,
+                    ),
             verticalArrangement = verticalArrangement,
             content = content,
         )

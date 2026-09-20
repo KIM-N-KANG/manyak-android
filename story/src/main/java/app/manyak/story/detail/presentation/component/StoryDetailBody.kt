@@ -24,6 +24,7 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import app.manyak.designsystem.component.ManyakInfoTooltipButton
 import app.manyak.designsystem.component.StoryBadgeScale
 import app.manyak.designsystem.component.StoryGenreBadge
 import app.manyak.designsystem.component.StoryThumbnail
@@ -251,7 +252,12 @@ private fun StartSettingSection(
         if (selected.endings.isNotEmpty()) {
             SubLabeledBlock(
                 label = stringResource(StoryR.string.story_detail_start_setting_endings),
-                labelTrailing = { EndingInfoButton() },
+                labelTrailing = {
+                    ManyakInfoTooltipButton(
+                        text = stringResource(StoryR.string.story_detail_endings_info_tooltip),
+                        contentDescription = stringResource(StoryR.string.story_detail_endings_info),
+                    )
+                },
             ) {
                 EndingList(endings = selected.endings)
             }

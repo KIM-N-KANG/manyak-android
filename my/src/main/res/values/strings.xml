@@ -21,6 +21,8 @@
     <string name="my_credit_history_expires">%1$s 만료</string>
     <string name="my_credit_history_load_failed">이프 내역을 불러오지 못했어요</string>
     <string name="my_credit_history_loading">이프 내역을 불러오는 중</string>
+    <string name="my_credit_purchase_notice">이프 구매 안내</string>
+    <string name="my_credit_purchase_notice_tooltip">이프 구매는 웹에서 할 수 있어요.\n앱 구매 기능도 준비하고 있어요.</string>
     <string name="my_credit_reason_attendance">출석 체크 보상</string>
     <string name="my_credit_reason_chat_image">채팅 실시간 이미지 생성</string>
     <string name="my_credit_reason_chat_turn">채팅 전송</string>
@@ -51,7 +53,6 @@
     <string name="my_link_succeeded">%1$s 계정을 연동했어요</string>
     <string name="my_logout">로그아웃</string>
     <string name="my_notification_settings">알림 설정</string>
-    <string name="my_logout_in_progress">로그아웃하는 중</string>
     <string name="my_open_source_license">오픈소스 라이선스</string>
     <string name="my_provider_google">Google</string>
     <string name="my_provider_kakao">카카오</string>

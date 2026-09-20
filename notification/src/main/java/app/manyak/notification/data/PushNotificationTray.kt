@@ -75,7 +75,7 @@ class PushNotificationTray
             val notification =
                 NotificationCompat
                     .Builder(context, channelId)
-                    .setSmallIcon(DesignsystemR.drawable.ic_bell)
+                    .setSmallIcon(DesignsystemR.drawable.ic_manyak_symbol)
                     .setContentTitle(title)
                     .setContentText(body)
                     .setAutoCancel(true)
@@ -87,7 +87,7 @@ class PushNotificationTray
                             setPublicVersion(
                                 NotificationCompat
                                     .Builder(context, channelId)
-                                    .setSmallIcon(DesignsystemR.drawable.ic_bell)
+                                    .setSmallIcon(DesignsystemR.drawable.ic_manyak_symbol)
                                     .setContentTitle(title)
                                     .build(),
                             )

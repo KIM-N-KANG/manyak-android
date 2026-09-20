@@ -1,5 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="consent_agree_all">전체 동의</string>
+    <string name="consent_error_retryable">동의를 저장하지 못했어요. 잠시 후 다시 시도해주세요</string>
+    <string name="consent_error_version_mismatch">약관이 갱신되어 최신 내용으로 다시 확인해주세요</string>
+    <string name="consent_item_age14">[필수] 만 14세 이상입니다</string>
+    <string name="consent_item_marketing">[선택] 광고성 알림 수신 동의</string>
+    <string name="consent_item_marketing_description">이벤트·혜택 소식과 출석 리마인드를 알림으로 받아요</string>
+    <string name="consent_item_privacy">[필수] 개인정보 처리방침 동의</string>
+    <string name="consent_item_terms">[필수] 서비스 이용약관 동의</string>
+    <string name="consent_load_failed_description">잠시 후 다시 시도해주세요</string>
+    <string name="consent_load_failed_title">동의 상태를 확인하지 못했어요</string>
+    <string name="consent_submit">동의하기</string>
+    <string name="consent_title">서비스 이용을 위해 동의가 필요해요</string>
+    <string name="consent_view_document">보기</string>
+    <string name="consent_view_document_description">%1$s 보기</string>
     <string name="legal_load_failed">문서를 불러오지 못했어요. 네트워크 상태를 확인해주세요</string>
     <string name="legal_privacy_title">개인정보 처리방침</string>
     <string name="legal_terms_title">서비스 이용약관</string>

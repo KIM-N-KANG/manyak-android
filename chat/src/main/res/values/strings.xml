@@ -21,8 +21,6 @@
     <string name="chat_list_card_kind">채팅</string>
     <string name="chat_list_card_options">채팅 옵션</string>
     <string name="chat_list_deleted_story">삭제된 스토리</string>
-    <string name="chat_list_empty_action">제작 탭으로 가기</string>
-    <string name="chat_list_empty_description">스토리를 만든 후 채팅으로 이야기를 이어가보세요</string>
     <string name="chat_list_empty_title">아직 진행중인 채팅이 없어요</string>
     <string name="chat_list_loading">채팅 불러오는 중</string>
     <string name="chat_list_preview_empty">채팅을 시작하고 이야기를 이어가 보세요</string>

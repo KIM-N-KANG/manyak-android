@@ -1,5 +1,8 @@
 # 광고 알림 수신 동의 시트와 처리 결과 통지 (KNK-1254)
 
+> **KNK-1347 대체 안내 (2026-09-20)** — 첫 질문은 약관 동의 시트의 선택 항목으로 옮겼고 "물었음" 단일 플래그는 거절 횟수·재진입 횟수 단계로
+> 바뀌었습니다(결정 1·5 대체). 현재 규칙은 [legal-consent.md](./legal-consent.md)와 [A-044](../../../knk-harness/docs/adr/1-3-android-adr.md#a-044)를 따릅니다.
+
 - 작성일: 2026-09-11
 - 근거 정본: 하네스 [Android Spec의 알림 계약](../../../knk-harness/docs/spec/3-3-android-spec.md#3-3-5-알림) ·
   `design/1-2-android-design.md §1-2-6 알림 진입과 권한`, `spec/4-backend-server-spec.md §4-3-5 푸시 수신 동의`,

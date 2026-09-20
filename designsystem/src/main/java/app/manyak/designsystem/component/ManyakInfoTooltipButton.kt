@@ -1,4 +1,4 @@
-package app.manyak.story.detail.presentation.component
+package app.manyak.designsystem.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -21,33 +21,37 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import app.manyak.designsystem.R
 import app.manyak.designsystem.theme.ManyakTheme
 import kotlinx.coroutines.launch
-import app.manyak.designsystem.R as DesignsystemR
-import app.manyak.story.R as StoryR
 
 /**
- * 엔딩 라벨 옆 안내 버튼. 엔딩이 스토리가 아니라 고른 시작 상황에 딸린다는 사실은 목록만 봐서는
- * 드러나지 않는데, 그렇다고 늘 떠 있는 문장으로 두면 한 번 읽고 나면 자리만 차지한다.
+ * 라벨 옆 안내 버튼. 늘 떠 있는 문장으로 두면 한 번 읽고 나면 자리만 차지하는 안내를 탭할 때만 말풍선으로
+ * 보인다.
  *
- * 띄우고 내리는 일은 M3 [TooltipBox] 가 맡는다 — 화면 가장자리 회피, 바깥 탭·뒤로가기 닫기,
- * 접근성 계약이 이미 들어 있다. 다만 [TooltipDefaults] 의 기본 말풍선은 쓰지 않는다: 이 앱에서
- * 떠 있는 판의 모양은 시작 상황 셀렉트 메뉴가 이미 정해 놨다.
+ * 띄우고 내리는 일은 M3 [TooltipBox] 가 맡는다 — 화면 가장자리 회피, 바깥 탭·뒤로가기 닫기, 접근성
+ * 계약이 이미 들어 있다. 다만 [TooltipDefaults] 의 기본 말풍선은 쓰지 않는다: 이 앱에서 떠 있는 판의
+ * 모양은 셀렉트 메뉴가 이미 정해 놨다.
  *
  * 길게 누르기(기본 제스처)는 끄고 탭으로만 연다. 손가락을 떼면 사라지는 안내는 문장을 다 읽기 전에
  * 닫히고, 이 자리에는 길게 눌러 볼 다른 동작도 없다.
+ *
+ * @param text 말풍선 문구.
+ * @param contentDescription 버튼의 접근성 라벨. 말풍선 문구가 아니라 "무엇에 대한 안내인지"를 적는다.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun EndingInfoButton(modifier: Modifier = Modifier) {
+fun ManyakInfoTooltipButton(
+    text: String,
+    contentDescription: String,
+    modifier: Modifier = Modifier,
+) {
     val scope = rememberCoroutineScope()
     // 기본값(false)은 잠깐 떴다 스스로 사라진다 — 한 문장이라도 읽을 시간은 사용자가 정한다.
     val state = rememberTooltipState(isPersistent = true)
-    val label = stringResource(StoryR.string.story_detail_endings_info)
 
     TooltipBox(
         modifier = modifier,
@@ -56,7 +60,7 @@ internal fun EndingInfoButton(modifier: Modifier = Modifier) {
                 positioning = TooltipAnchorPosition.Below,
                 spacingBetweenTooltipAndAnchor = ManyakTheme.spacing.inline,
             ),
-        tooltip = { EndingInfoTooltip() },
+        tooltip = { InfoTooltip(text = text) },
         state = state,
         enableUserInput = false,
     ) {
@@ -65,15 +69,15 @@ internal fun EndingInfoButton(modifier: Modifier = Modifier) {
                 Modifier
                     .size(ButtonSize)
                     .clip(ManyakTheme.shapes.pill)
-                    .clickable(role = Role.Button, onClickLabel = label) {
+                    .clickable(role = Role.Button, onClickLabel = contentDescription) {
                         if (state.isVisible) state.dismiss() else scope.launch { state.show() }
                     },
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 modifier = Modifier.size(ManyakTheme.sizes.iconSmall),
-                painter = painterResource(DesignsystemR.drawable.ic_info),
-                contentDescription = label,
+                painter = painterResource(R.drawable.ic_info),
+                contentDescription = contentDescription,
                 tint = ManyakTheme.colors.textSubtle,
             )
         }
@@ -86,7 +90,10 @@ internal fun EndingInfoButton(modifier: Modifier = Modifier) {
  * 것이라 셀렉트 메뉴와 같은 무그림자 원칙의 예외다.
  */
 @Composable
-private fun EndingInfoTooltip(modifier: Modifier = Modifier) {
+private fun InfoTooltip(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
     Text(
         modifier =
             modifier
@@ -99,23 +106,23 @@ private fun EndingInfoTooltip(modifier: Modifier = Modifier) {
                     horizontal = ManyakTheme.spacing.component,
                     vertical = ManyakTheme.spacing.compact,
                 ),
-        text = stringResource(StoryR.string.story_detail_endings_info_tooltip),
+        text = text,
         style = ManyakTheme.typography.bodyMedium,
         color = ManyakTheme.colors.text,
     )
 }
 
-/** 라벨 글줄과 같은 높이. 더 키우면 안내 하나 때문에 섹션 라벨 줄만 두꺼워진다. */
+/** 라벨 글줄과 같은 높이. 더 키우면 안내 하나 때문에 라벨 줄만 두꺼워진다. */
 private val ButtonSize = 24.dp
 
 private val TooltipMaxWidth = 240.dp
 private val TooltipShadowElevation = 4.dp
 private val TooltipBorderWidth = 1.dp
 
-@Preview(showBackground = true, name = "엔딩 안내 버튼")
+@Preview(showBackground = true, name = "안내 툴팁 버튼")
 @Composable
-private fun EndingInfoButtonPreview() {
+private fun ManyakInfoTooltipButtonPreview() {
     ManyakTheme(darkTheme = false) {
-        EndingInfoButton()
+        ManyakInfoTooltipButton(text = "엔딩은 시작 상황마다 달라져요", contentDescription = "엔딩 안내")
     }
 }

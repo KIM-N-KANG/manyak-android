@@ -9,11 +9,13 @@ import app.manyak.chat.room.presentation.composer.InputBlockType
 import app.manyak.chat.room.presentation.message.ChatMessageSegment
 import app.manyak.chat.testing.FakeChatPreferencesRepository
 import app.manyak.chat.testing.FakeChatRepository
+import app.manyak.chat.testing.FakeCreditPolicyRepository
 import app.manyak.chat.testing.FakeReportRepository
 import app.manyak.chat.testing.FakeTrialsRepository
 import app.manyak.chat.testing.FakeUserProfileRepository
 import app.manyak.chat.testing.sampleChatDetail
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.entity.credit.CreditPolicy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -198,6 +200,34 @@ class ChatRoomStreamTest {
         }
 
     @Test
+    fun `아는 잔액이 비용에 못 미치면 턴을 열지 않고 이프 안내만 올린다`() =
+        runTest(dispatcher) {
+            val repository = FakeChatRepository()
+            val profiles = FakeUserProfileRepository(refreshedBalance = 10)
+            val viewModel =
+                viewModel(
+                    repository,
+                    policy = FakeCreditPolicyRepository(CreditPolicy(chatTurnCost = 20, chatImageCost = 0)),
+                    profiles = profiles,
+                )
+            advanceUntilIdle()
+            // 프로필은 메뉴를 열 때 읽힌다.
+            viewModel.onIntent(ChatRoomIntent.MenuOpened)
+            advanceUntilIdle()
+
+            viewModel.type("문을 연다")
+            advanceUntilIdle()
+            viewModel.onIntent(ChatRoomIntent.Sent)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertEquals(emptyList<String>(), repository.streamedInputs)
+            assertFalse(state.isStreaming)
+            assertTrue(state.composer.hasInput)
+            assertEquals(ChatRoomEffect.ShowCreditRequired, viewModel.uiEffect())
+        }
+
+    @Test
     fun `보내는 중에 다시 보내도 요청이 하나다`() =
         runTest(dispatcher) {
             // 버튼 잠금에만 기대면 연타와 접근성 서비스의 반복 클릭을 막지 못한다.
@@ -285,13 +315,16 @@ class ChatRoomStreamTest {
         repository: FakeChatRepository,
         preferences: FakeChatPreferencesRepository = FakeChatPreferencesRepository(),
         trials: FakeTrialsRepository = FakeTrialsRepository(),
+        policy: FakeCreditPolicyRepository = FakeCreditPolicyRepository(),
+        profiles: FakeUserProfileRepository = FakeUserProfileRepository(),
     ) = ChatRoomViewModel(
         chatId = "chat-1",
         chatRepository = repository,
         reportRepository = FakeReportRepository(),
         preferences = preferences,
         trialsRepository = trials,
-        profileRepository = FakeUserProfileRepository(),
+        creditPolicyRepository = policy,
+        profileRepository = profiles,
         analytics = NoOpAnalytics,
     )
 

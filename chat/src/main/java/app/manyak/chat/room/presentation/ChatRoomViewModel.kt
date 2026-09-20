@@ -13,6 +13,7 @@ import app.manyak.chat.entity.ChatStreamEvent
 import app.manyak.chat.room.presentation.composer.ChatComposerState
 import app.manyak.chat.room.presentation.composer.InputBlockType
 import app.manyak.chat.room.presentation.composer.addBlock
+import app.manyak.chat.room.presentation.composer.chatTurnCost
 import app.manyak.chat.room.presentation.composer.removeBlock
 import app.manyak.chat.room.presentation.composer.updateBlock
 import app.manyak.chat.room.presentation.message.ChatMessageSegment
@@ -28,6 +29,7 @@ import app.manyak.chat.room.presentation.suggestion.composerOrigin
 import app.manyak.chat.room.presentation.suggestion.normalizeSuggestion
 import app.manyak.chat.room.presentation.suggestion.randomSuggestionPosition
 import app.manyak.chat.room.presentation.suggestion.shouldGenerateChoices
+import app.manyak.common.domain.credit.CreditPolicyRepository
 import app.manyak.common.domain.credit.TrialsRepository
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
@@ -349,6 +351,7 @@ class ChatRoomViewModel
         private val reportRepository: ReportRepository,
         private val preferences: ChatPreferencesRepository,
         private val trialsRepository: TrialsRepository,
+        private val creditPolicyRepository: CreditPolicyRepository,
         private val profileRepository: UserProfileRepository,
         private val analytics: Analytics,
     ) : MviViewModel<ChatRoomIntent, ChatRoomUiState, ChatRoomEvent, ChatRoomEffect>(ChatRoomUiState()) {
@@ -687,7 +690,7 @@ class ChatRoomViewModel
          * [stream] 은 지금 설정의 실시간 이미지 값을 받는다. 요청과 진행 블록이 같은 스냅샷을 쓰게 하려고
          * 여기서 한 번만 읽는다.
          */
-        private fun startTurn(
+        private suspend fun startTurn(
             userInput: String,
             regeneratedTurnId: Long? = null,
             inputMode: MessageInputMode? = null,
@@ -698,6 +701,14 @@ class ChatRoomViewModel
             // 스트림이 끝난 직후의 재생성 연타는 곧바로 또 보낸다. 이어쓰기는 새 입력이라 막지 않는다.
             if (regeneratedTurnId != null && regenerateCooldownJob?.isActive == true) return
             if (userInput.isBlank()) return
+            if (isCreditShort()) {
+                // 서버도 402 로 막지만, 그 뒤에 되돌리면 보낸 모습이 잠깐 보였다 사라진다. 아는 잔액으로
+                // 먼저 걸러 컴포저를 건드리지 않는다. 잔액은 화면이 서버와 어긋났을 수 있어 다시 읽는다.
+                analytics.track(AnalyticsEvent.CreditShortageShown(CreditShortageTrigger.CHAT_TURN))
+                dispatchEffect(ChatRoomEffect.ShowCreditRequired)
+                viewModelScope.launch { profileRepository.refresh() }
+                return
+            }
             // 실제로 열리는 턴만 센다 — 잠금·빈 입력으로 걸러진 탭은 전송이 아니다.
             if (inputMode != null) {
                 analytics.track(AnalyticsEvent.MessageInputSubmitted(chatId, turns.nextTurnNumber(), inputMode))
@@ -740,6 +751,18 @@ class ChatRoomViewModel
                 }
         }
 
+        /**
+         * 아는 잔액이 이번 턴 비용에 못 미치는지. 잔액·정책·체험 중 하나라도 모르면 막지 않는다 — 판단은
+         * 서버 몫이고, 여기서 막는 것은 확실히 모자랄 때 왕복을 줄이는 것뿐이다.
+         */
+        private fun isCreditShort(): Boolean {
+            val balance = profileRepository.profile.value?.creditBalance ?: return false
+            val cost =
+                chatTurnCost(creditPolicyRepository.policy.value, trialsRepository.trials.value, realtimeImageEnabled)
+            val required = cost.discounted ?: cost.full ?: return false
+            return balance < required
+        }
+
         private suspend fun handleStreamEvent(event: ChatStreamEvent) {
             when (event) {
                 ChatStreamEvent.Started -> Unit
@@ -751,8 +774,10 @@ class ChatRoomViewModel
 
                 ChatStreamEvent.Completed -> {
                     isStreaming = false
-                    // 완료된 턴이 체험 한 회를 썼을 수 있다. 다음 턴의 배지가 낡은 잔여로 그려지지 않게 다시 읽는다.
+                    // 완료된 턴이 체험 한 회와 이프를 썼을 수 있다. 다음 턴의 배지와 잔액 선검사가 낡은 값을
+                    // 보지 않게 둘 다 다시 읽는다.
                     viewModelScope.launch { trialsRepository.refresh() }
+                    viewModelScope.launch { profileRepository.refresh() }
                     refreshTurns(confirmed = true)
                     regeneratingTurnId = null
                 }

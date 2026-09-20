@@ -5,6 +5,7 @@ import app.manyak.analytics.domain.NoOpAnalytics
 import app.manyak.analytics.entity.AnalyticsEvent
 import app.manyak.chat.testing.FakeChatPreferencesRepository
 import app.manyak.chat.testing.FakeChatRepository
+import app.manyak.chat.testing.FakeCreditPolicyRepository
 import app.manyak.chat.testing.FakeReportRepository
 import app.manyak.chat.testing.FakeTrialsRepository
 import app.manyak.chat.testing.FakeUserProfileRepository
@@ -50,6 +51,7 @@ class ChatRoomViewModelTest {
                     reportRepository = FakeReportRepository(),
                     preferences = FakeChatPreferencesRepository(),
                     trialsRepository = FakeTrialsRepository(),
+                    creditPolicyRepository = FakeCreditPolicyRepository(),
                     profileRepository = FakeUserProfileRepository(),
                     analytics = NoOpAnalytics,
                 )
@@ -78,6 +80,7 @@ class ChatRoomViewModelTest {
                     reportRepository = FakeReportRepository(),
                     preferences = FakeChatPreferencesRepository(),
                     trialsRepository = FakeTrialsRepository(),
+                    creditPolicyRepository = FakeCreditPolicyRepository(),
                     profileRepository = FakeUserProfileRepository(),
                     analytics = NoOpAnalytics,
                 )
@@ -112,6 +115,7 @@ class ChatRoomViewModelTest {
                     reportRepository = FakeReportRepository(),
                     preferences = FakeChatPreferencesRepository(),
                     trialsRepository = FakeTrialsRepository(),
+                    creditPolicyRepository = FakeCreditPolicyRepository(),
                     profileRepository = FakeUserProfileRepository(),
                     analytics = analytics,
                 )

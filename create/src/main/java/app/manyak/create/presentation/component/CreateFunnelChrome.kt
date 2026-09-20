@@ -41,6 +41,7 @@ import app.manyak.create.presentation.state.DraftSaveStatus
 import app.manyak.create.presentation.state.DraftSaveUiState
 import app.manyak.create.presentation.state.FunnelExitWarning
 import app.manyak.designsystem.component.ManyakIconButton
+import app.manyak.designsystem.component.ManyakNeutralButton
 import app.manyak.designsystem.component.ManyakTextButton
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.create.R as CreateR
@@ -272,22 +273,7 @@ internal fun FunnelNeutralButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Button(
-        modifier = modifier.heightIn(min = ManyakTheme.sizes.control),
-        enabled = enabled,
-        onClick = onClick,
-        shape = ManyakTheme.shapes.control,
-        border = BorderStroke(1.dp, ManyakTheme.colors.border),
-        colors =
-            ButtonDefaults.buttonColors(
-                containerColor = ManyakTheme.colors.backgroundNeutral,
-                contentColor = ManyakTheme.colors.text,
-                disabledContainerColor = ManyakTheme.colors.backgroundDisabled,
-                disabledContentColor = ManyakTheme.colors.textDisabled,
-            ),
-    ) {
-        Text(text = label, style = ManyakTheme.typography.labelLarge)
-    }
+    ManyakNeutralButton(label = label, onClick = onClick, modifier = modifier, enabled = enabled)
 }
 
 /** 퍼널을 떠나면 무엇이 사라지는지 알리고 되돌아갈 길을 먼저 주는 이탈 경고. */

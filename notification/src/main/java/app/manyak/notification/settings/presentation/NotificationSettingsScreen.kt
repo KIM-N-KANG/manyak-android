@@ -31,6 +31,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -167,6 +168,8 @@ private fun NotificationSettingsContent(
         return
     }
     val settings = state.settings
+    // 기기 알림이 꺼져 있으면 행의 값은 살아 있어도 실제로 받지 못하므로, 배너와 함께 행 전체를 비활성으로 그린다.
+    val notificationsEnabled = rememberNotificationsEnabled()
     Column(
         modifier =
             modifier
@@ -176,6 +179,7 @@ private fun NotificationSettingsContent(
                 .padding(bottom = ManyakTheme.spacing.compact),
     ) {
         NotificationsDisabledBanner(
+            enabledState = notificationsEnabled,
             // 행이 위쪽 여백 12dp 를 스스로 갖고 있어, 4dp 를 더하면 제작 탭처럼 배너와 첫 항목 사이가 gutter 가 된다.
             modifier =
                 Modifier
@@ -187,12 +191,14 @@ private fun NotificationSettingsContent(
             descriptionRes = NotificationR.string.notification_settings_service_description,
             checked = settings?.servicePush,
             onToggle = { onIntent(NotificationSettingsIntent.Toggle(PushSettingKind.SERVICE)) },
+            enabled = notificationsEnabled.value,
         )
         SettingRow(
             labelRes = NotificationR.string.notification_settings_marketing,
             descriptionRes = NotificationR.string.notification_settings_marketing_description,
             checked = settings?.marketingPush,
             onToggle = { onIntent(NotificationSettingsIntent.Toggle(PushSettingKind.MARKETING)) },
+            enabled = notificationsEnabled.value,
             // 동의 고지의 정본은 개인정보 처리방침이라 토글 옆에서 바로 열 수 있게 한다.
             onOpenDetail = onOpenPrivacyPolicy,
         )
@@ -203,6 +209,7 @@ private fun NotificationSettingsContent(
                 descriptionRes = NotificationR.string.notification_settings_marketing_night_description,
                 checked = settings.marketingNightPush,
                 onToggle = { onIntent(NotificationSettingsIntent.Toggle(PushSettingKind.MARKETING_NIGHT)) },
+                enabled = notificationsEnabled.value,
             )
         }
     }
@@ -223,6 +230,7 @@ private fun DomainError.loadFailedMessageRes(): Int =
  *
  * @param checked 아직 불러오지 않았으면 null 이고, 라벨은 그대로 둔 채 스위치 자리에만 골격을 깐다.
  * @param onOpenDetail 라벨 옆 외부 링크 아이콘. 줄 토글과 별개의 눌림 대상이라 아이콘 버튼으로 둔다.
+ * @param enabled 거짓이면 글자를 비활성 색으로 누르고 스위치를 잠근다. 문서 링크는 알림과 무관하니 그대로 둔다.
  */
 @Composable
 private fun SettingRow(
@@ -232,6 +240,7 @@ private fun SettingRow(
     onToggle: () -> Unit,
     modifier: Modifier = Modifier,
     onOpenDetail: (() -> Unit)? = null,
+    enabled: Boolean = true,
 ) {
     Row(
         modifier =
@@ -253,7 +262,7 @@ private fun SettingRow(
                 Text(
                     text = label,
                     style = ManyakTheme.typography.bodyLarge,
-                    color = ManyakTheme.colors.text,
+                    color = if (enabled) ManyakTheme.colors.text else ManyakTheme.colors.textDisabled,
                 )
                 if (onOpenDetail != null) {
                     ManyakIconButton(
@@ -271,7 +280,7 @@ private fun SettingRow(
             Text(
                 text = stringResource(descriptionRes),
                 style = ManyakTheme.typography.bodySmall,
-                color = ManyakTheme.colors.textSubtle,
+                color = if (enabled) ManyakTheme.colors.textSubtle else ManyakTheme.colors.textDisabled,
             )
         }
         if (checked == null) {
@@ -285,6 +294,7 @@ private fun SettingRow(
                 modifier = Modifier.semantics { contentDescription = label },
                 checked = checked,
                 onCheckedChange = { onToggle() },
+                enabled = enabled,
             )
         }
     }
@@ -300,13 +310,13 @@ private fun SettingRow(
  * 설정으로 간다. 설정에서 돌아오면 다시 판정해 사라진다.
  */
 @Composable
-private fun NotificationsDisabledBanner(modifier: Modifier = Modifier) {
+private fun NotificationsDisabledBanner(
+    enabledState: MutableState<Boolean>,
+    modifier: Modifier = Modifier,
+) {
     val context = LocalContext.current
     val activity = LocalActivity.current
-    var notificationsEnabled by remember { mutableStateOf(context.areNotificationsEnabled()) }
-    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
-        notificationsEnabled = context.areNotificationsEnabled()
-    }
+    var notificationsEnabled by enabledState
     // 요청 직전의 "다시 물을 수 있음" 판정. 거부 뒤에도 그대로 거짓이면 시스템이 다이얼로그를 띄우지 않은 것이다.
     var couldAskBefore by remember { mutableStateOf(false) }
     val launcher =
@@ -356,6 +366,20 @@ private fun android.app.Activity.canAskNotificationPermission(): Boolean =
     ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.POST_NOTIFICATIONS)
 
 private fun Context.areNotificationsEnabled(): Boolean = NotificationManagerCompat.from(this).areNotificationsEnabled()
+
+/**
+ * 기기 알림 여부. 정본이 OS 라 ViewModel 에 복제하지 않고 화면이 `ON_RESUME` 마다 다시 읽는다 — 시스템 설정에서
+ * 돌아오는 복귀가 곧 재판정 시점이다. 배너의 권한 요청 결과가 곧바로 값을 바꿀 수 있게 상태 자체를 돌려준다.
+ */
+@Composable
+private fun rememberNotificationsEnabled(): MutableState<Boolean> {
+    val context = LocalContext.current
+    val state = remember { mutableStateOf(context.areNotificationsEnabled()) }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        state.value = context.areNotificationsEnabled()
+    }
+    return state
+}
 
 /** 앱 알림 설정 화면. 전용 액션은 API 26 부터라 그 아래는 앱 정보 화면으로 보낸다. */
 private fun appNotificationSettingsIntent(packageName: String): Intent =

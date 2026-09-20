@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -135,6 +137,8 @@ private fun StudioContent(
 ) {
     val showSkeleton = rememberDelayedProgressVisibility(state.isLoading)
     val analytics = LocalAnalytics.current
+    // 목록이 맨 위에 있는 동안만 FAB 이 라벨을 펼친다. 상태 화면(조회 중·실패·빈 목록)은 스크롤이 없어 늘 펼친다.
+    val listState = rememberLazyListState()
 
     Box(modifier = modifier.fillMaxSize()) {
         when {
@@ -143,6 +147,7 @@ private fun StudioContent(
             state.hasLocalCards ->
                 MyStories(
                     state = state,
+                    listState = listState,
                     contentPadding = contentPadding,
                     onOpenStory = onOpenStory,
                     onIntent = onIntent,
@@ -173,6 +178,7 @@ private fun StudioContent(
             else ->
                 MyStories(
                     state = state,
+                    listState = listState,
                     contentPadding = contentPadding,
                     onOpenStory = onOpenStory,
                     onIntent = onIntent,
@@ -180,6 +186,7 @@ private fun StudioContent(
         }
 
         CreateStoryFab(
+            expanded = !listState.canScrollBackward,
             onClick = {
                 // 앱은 빈 목록에도 FAB 하나만 두므로 출처는 늘 fab 이다.
                 analytics.track(AnalyticsEvent.StoryListCreateButtonClicked(CreateButtonSource.FAB))
@@ -215,6 +222,7 @@ private fun StoriesStatus(
 @Composable
 private fun MyStories(
     state: StudioUiState,
+    listState: LazyListState,
     contentPadding: PaddingValues,
     onOpenStory: (String) -> Unit,
     onIntent: (StudioIntent) -> Unit,
@@ -230,6 +238,7 @@ private fun MyStories(
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
+            state = listState,
             // 좌우 여백은 카드가 스스로 갖는다 — 채팅 목록과 같은 리듬이다.
             contentPadding = contentPadding.withRowListMargins(),
         ) {

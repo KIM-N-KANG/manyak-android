@@ -1,10 +1,7 @@
 package app.manyak.my.withdrawal.presentation
 
 import android.widget.Toast
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -12,21 +9,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
@@ -36,10 +28,10 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
+import app.manyak.designsystem.component.ManyakCheckbox
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.my.presentation.component.MyDetailHeader
 import app.manyak.my.presentation.component.MyPrimaryButton
-import app.manyak.designsystem.R as DesignsystemR
 import app.manyak.my.R as MyR
 
 /**
@@ -169,7 +161,8 @@ private fun ConfirmationRow(
                 ),
         horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
     ) {
-        ConfirmationCheckbox(isChecked = isChecked)
+        // 첫 줄 글자와 눈높이를 맞추려고 위로 조금 내린다 — 20dp 네모를 줄 맨 위에 붙이면 글자보다 높이 뜬다.
+        ManyakCheckbox(isChecked = isChecked, modifier = Modifier.padding(top = CheckboxTopAlignment))
         Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline)) {
             Text(
                 text = stringResource(confirmation.titleRes),
@@ -180,39 +173,6 @@ private fun ConfirmationRow(
                 text = stringResource(confirmation.descriptionRes),
                 style = ManyakTheme.typography.bodyMedium,
                 color = ManyakTheme.colors.textSubtle,
-            )
-        }
-    }
-}
-
-/**
- * 체크 표시. 줄 전체가 토글을 맡으므로 여기에는 클릭도 접근성 이름도 붙이지 않는다.
- *
- * 첫 줄 글자와 눈높이를 맞추려고 위로 조금 내린다 — 20dp 네모를 줄 맨 위에 붙이면 글자보다 높이 뜬다.
- */
-@Composable
-private fun ConfirmationCheckbox(
-    isChecked: Boolean,
-    modifier: Modifier = Modifier,
-) {
-    val borderWidth = if (isChecked) 1.dp else ManyakTheme.sizes.selectionBorderWidth
-    val borderColor = if (isChecked) ManyakTheme.colors.brand else ManyakTheme.colors.border
-    Box(
-        modifier =
-            modifier
-                .padding(top = CheckboxTopAlignment)
-                .size(ManyakTheme.sizes.icon)
-                .clip(ManyakTheme.shapes.checkbox)
-                .background(if (isChecked) ManyakTheme.colors.brand else ManyakTheme.colors.surface)
-                .border(borderWidth, borderColor, ManyakTheme.shapes.checkbox),
-        contentAlignment = Alignment.Center,
-    ) {
-        if (isChecked) {
-            Icon(
-                painter = painterResource(DesignsystemR.drawable.ic_check),
-                contentDescription = null,
-                modifier = Modifier.size(ManyakTheme.sizes.iconSmall),
-                tint = ManyakTheme.colors.textInverse,
             )
         }
     }

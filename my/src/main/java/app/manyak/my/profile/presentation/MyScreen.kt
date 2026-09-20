@@ -237,7 +237,7 @@ private fun AccountSection(
     MySection(labelRes = MyR.string.my_section_account, modifier = modifier) {
         MyMenuItem(
             iconRes = DesignsystemR.drawable.ic_logout,
-            labelRes = if (state.isLoggingOut) MyR.string.my_logout_in_progress else MyR.string.my_logout,
+            labelRes = MyR.string.my_logout,
             onClick = { onIntent(MyIntent.LogOut) },
             enabled = !state.isLoggingOut,
             trailing =

@@ -32,7 +32,7 @@ manyak-android/
 ├── chat/                  # list/presentation · room/presentation
 ├── create/                # keyword · storyline · additionalinfo
 ├── my/                    # profile · credit · invite · feedback · withdrawal · licenses
-└── login/, legal/         # 로그인 · 웹 문서 화면
+└── login/, legal/         # 로그인 · 웹 문서 화면 · 약관 동의 시트
 ```
 
 런타임 모듈은 16개이며 내부 계층·하위 기능은 Kotlin 패키지입니다. 구조·계층·공통 코드의 정본은 [하네스 Android 설계](../knk-harness/docs/design/1-2-android-design.md), 이동·검증 내역은 [모듈 재구성 기록](docs/plans/module-reorganization.md)을 확인하세요. 디자인 규칙은 [DESIGN.md](DESIGN.md)에 있습니다.
