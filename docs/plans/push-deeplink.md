@@ -34,13 +34,14 @@
    PendingIntent 도 읽힌다. `routeFor` 순서: 수신자 불일치 → 홈, `deepLink` 있음 → 파서 결과 또는 홈, 없음 → 기존
    `type` 매핑.
 4. **`PushMessage.from` 이 `data["deepLink"]` 를 읽어 `entry` 에 싣는다.** 표시(제목·채널·알림 ID)는 바꾸지 않는다.
+5. **스몰 아이콘은 `ic_manyak_symbol` 이다.** 슬랙 요청에서 "스몰 아이콘은 Android 작업" 으로 남겨 둔 항목이다. 흰색 단색
+   심벌 벡터가 이미 디자인 시스템에 있어 트레이의 `ic_bell` 두 곳만 바꿨다(`notification-receive.md` 결정 7 갱신).
 
 `ponytail:` 호스트 허용 목록은 상수 두 개다. 환경별 origin 이 생기면 `BuildConfig` 로 올린다.
 
 ## 합의·확인이 필요한 항목
 
-- **Jira 키.** Android 쪽 서브태스크가 없다(서버는 KNK-1335, 부모 스토리 KNK-1113 진행 중). 브랜치·커밋에 쓸 키를
-  사용자가 정한다. 막는 단계: 1번(브랜치 생성).
+- **Jira 키.** KNK-1113 아래 서브태스크 [KNK-1348](https://kimandkang.atlassian.net/browse/KNK-1348) 로 진행한다.
 - **웹 `tab=free`.** 웹 `credit-charge-screen.tsx` 는 `PURCHASE` 탭이 기본이고 `?tab=` 쿼리를 읽지 않는다. 앱과 무관하며
   웹 담당에게 전달만 한다.
 
@@ -65,5 +66,8 @@
   - ② 종료 상태, `deepLink=https://manyak.app/my/credits?tab=free` → 이프 충전 무료 탭 출석 카드.
   - ③ 종료 상태, `deepLink=https://evil.example/stories/{id}` + 유효한 `type`·`storyId` → 홈(`type` 으로 되돌아가지 않음).
   - ④ 실행 중, `deepLink` 없이 `type`+`storyId` → 상세(하위 호환).
-- 하지 않은 것: dev 서버가 실제로 보낸 푸시의 `deepLink` 값 확인. 서버 코드(`0005fec`)로만 판단했다. 스토리 완성
-  푸시를 한 번 받아 data 에 `https://manyak.app/stories/…` 가 실려 오는지 보면 끝난다.
+- 실제 푸시(`notification-delivery`·`external-entry`): dev 서버에서 무협·회귀 키워드로 스토리 완성을 요청하고 앱을
+  백그라운드로 보낸 뒤 약 80초 만에 `service` 채널 알림 수신("스토리가 완성됐어요 / 회귀무사의 스승 지키기").
+  셰이드에 마냑 심벌 스몰 아이콘 표시, 탭 → 그 스토리 상세 진입(`05_push_shade.png`·`06_push_tap_detail.png`).
+- 하지 않은 것: 실제 푸시 data 의 `deepLink` 문자열 자체는 기기에서 읽지 않았다(앱이 payload 를 로그에 남기지 않고
+  `dumpsys` 도 PendingIntent extra 를 보여 주지 않는다). 값은 서버 코드(`0005fec`)로 확인했고, 탭 경로는 위 ①·③ 이 덮는다.
