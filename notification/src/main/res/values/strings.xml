@@ -2,6 +2,7 @@
 <resources>
     <string name="notification_consent_accept">광고 알림 받기</string>
     <string name="notification_consent_decline">닫기</string>
+    <string name="notification_consent_device_disabled_hint">기기 알림이 꺼져 있어 알림 설정에서 켜야 받을 수 있어요</string>
     <string name="notification_consent_description">새로운 이벤트와 혜택 소식, 출석 리마인드를 광고 알림으로 보내드려요</string>
     <string name="notification_consent_notice_at">일시: %1$s</string>
     <string name="notification_consent_notice_confirm">확인</string>

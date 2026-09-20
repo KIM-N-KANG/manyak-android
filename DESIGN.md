@@ -449,6 +449,7 @@ components:
 | `credit/CreditAmountText.kt` | 이프 마크 + (취소선 정가) + 수치. 마크는 글자 크기를 따른다 |
 | `credit/CreditBalanceCard.kt` | 내 이프 카드(라벨·잔액·충전 버튼). 마이와 채팅 메뉴 시트가 같이 쓴다 |
 | `ManyakOptionsSheet.kt` · `ManyakOptionItem.kt` | 카드 옵션·상세 옵션·채팅 메뉴의 바텀 시트 틀과 항목 버튼 |
+| `ManyakCheckbox.kt` | 동의·확인 항목의 체크 표시. 줄이 토글을 맡고 상자는 그리기만 한다 |
 
 이름은 세 표기가 1:1로 대응합니다 — 이 문서 `{colors.text-subtle}` ↔ Kotlin `ManyakTheme.colors.textSubtle` ↔ 토큰 JSON `color.text.subtle`.
 
