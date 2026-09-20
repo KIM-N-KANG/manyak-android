@@ -32,8 +32,8 @@ import app.manyak.designsystem.theme.ManyakTheme
  *
  * 내용은 항상 스크롤된다. 큰 글자·작은 화면에서 내용이 시트 높이를 넘겨도 닿을 수 있어야 한다.
  *
- * @param dismissEnabled false 면 끌어내리기·스크림 탭으로 닫는 것을 막는다(예: 전송 중 — 결과를 못 본 채
- * 사라지지 않게).
+ * @param dismissEnabled false 면 끌어내리기·스크림 탭으로 닫는 것을 막고 핸들 드래그 자체도 잠근다(예: 전송 중 —
+ * 결과를 못 본 채 사라지지 않게). 닫히지 않는 시트가 끌리기만 하면 튕기는 움직임이 "닫을 수 있다" 는 신호가 된다.
  * @param dismissOnBackPress false 면 뒤로가기도 막는다. 기본은 [dismissEnabled] 와 같다 — 뒤로가기는
  * 끌어내리기 판정을 거치지 않고 [onDismissRequest] 를 부르므로 따로 잠가야 한다.
  */
@@ -65,6 +65,7 @@ fun ManyakBottomSheet(
         shape = ManyakTheme.shapes.sheet,
         // 하단 안전 영역과 키보드 높이는 아래 본문이 직접 낀다.
         contentWindowInsets = { WindowInsets(0, 0, 0, 0) },
+        sheetGesturesEnabled = dismissEnabled,
         properties =
             ModalBottomSheetProperties(
                 shouldDismissOnBackPress = dismissOnBackPress,
