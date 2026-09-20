@@ -21,6 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import app.manyak.designsystem.theme.ManyakTheme
 
 /**
@@ -36,6 +37,8 @@ import app.manyak.designsystem.theme.ManyakTheme
  * 결과를 못 본 채 사라지지 않게). 닫히지 않는 시트가 끌리기만 하면 튕기는 움직임이 "닫을 수 있다" 는 신호가 된다.
  * @param dismissOnBackPress false 면 뒤로가기도 막는다. 기본은 [dismissEnabled] 와 같다 — 뒤로가기는
  * 끌어내리기 판정을 거치지 않고 [onDismissRequest] 를 부르므로 따로 잠가야 한다.
+ * @param dragHandleVisible false 면 핸들을 두지 않는다. 끌어내릴 수 없는 시트(필수 동의)에 핸들이 있으면 닫을 수
+ * 있다는 신호가 되어서다. 전송 중처럼 잠깐 잠그는 시트는 핸들이 사라졌다 나타나지 않게 그대로 둔다.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,6 +47,7 @@ fun ManyakBottomSheet(
     modifier: Modifier = Modifier,
     dismissEnabled: Boolean = true,
     dismissOnBackPress: Boolean = dismissEnabled,
+    dragHandleVisible: Boolean = true,
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
     content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -71,9 +75,17 @@ fun ManyakBottomSheet(
                 shouldDismissOnBackPress = dismissOnBackPress,
                 shouldDismissOnClickOutside = dismissEnabled,
             ),
-        dragHandle = {
-            BottomSheetDefaults.DragHandle(modifier = Modifier.clearFocusOnTap(), color = ManyakTheme.colors.border)
-        },
+        dragHandle =
+            if (dragHandleVisible) {
+                {
+                    BottomSheetDefaults.DragHandle(
+                        modifier = Modifier.clearFocusOnTap(),
+                        color = ManyakTheme.colors.border,
+                    )
+                }
+            } else {
+                null
+            },
     ) {
         Column(
             modifier =
@@ -84,8 +96,11 @@ fun ManyakBottomSheet(
                     .navigationBarsPadding()
                     .padding(horizontal = ManyakTheme.spacing.gutter)
                     .verticalScroll(rememberScrollState())
-                    // 위쪽은 드래그 핸들이 자체 여백을 갖고 있어 더 두지 않는다.
-                    .padding(bottom = ManyakTheme.spacing.gutter),
+                    // 위쪽은 드래그 핸들이 자체 여백을 갖고 있어 핸들이 없을 때만 둔다.
+                    .padding(
+                        top = if (dragHandleVisible) 0.dp else ManyakTheme.spacing.gutter,
+                        bottom = ManyakTheme.spacing.gutter,
+                    ),
             verticalArrangement = verticalArrangement,
             content = content,
         )

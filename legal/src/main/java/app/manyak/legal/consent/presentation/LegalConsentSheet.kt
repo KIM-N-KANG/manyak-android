@@ -77,6 +77,8 @@ private fun LegalConsentContent(
         dismissEnabled = false,
         // 저장·로그아웃 중에는 뒤로가기도 받지 않는다 — 결과가 나오기 전에 두 번째 종료를 시작하지 않는다.
         dismissOnBackPress = !state.isLocked,
+        // 끌어내려 닫을 수 없는 시트라 핸들을 두지 않는다.
+        dragHandleVisible = false,
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.block),
     ) {
         when (state.phase) {
