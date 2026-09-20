@@ -4,10 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -15,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import app.manyak.designsystem.component.ManyakNeutralButton
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.chat.R as ChatR
 import app.manyak.designsystem.R as DesignsystemR
@@ -39,18 +37,7 @@ internal fun ChatRoomLoadFailed(
             color = ManyakTheme.colors.text,
             textAlign = TextAlign.Center,
         )
-        Button(
-            modifier = Modifier.heightIn(min = ManyakTheme.sizes.control),
-            onClick = onRetry,
-            shape = ManyakTheme.shapes.control,
-            colors =
-                ButtonDefaults.buttonColors(
-                    containerColor = ManyakTheme.colors.brand,
-                    contentColor = ManyakTheme.colors.textInverse,
-                ),
-        ) {
-            Text(text = stringResource(DesignsystemR.string.common_retry), style = ManyakTheme.typography.labelLarge)
-        }
+        ManyakNeutralButton(label = stringResource(DesignsystemR.string.common_retry), onClick = onRetry)
     }
 }
 

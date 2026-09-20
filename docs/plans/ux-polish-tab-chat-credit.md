@@ -23,9 +23,14 @@
 7. **안내 툴팁 버튼을 `designsystem/ManyakInfoTooltipButton` 으로 올렸다.** 스토리 상세 엔딩 안내(첫 사용처)와 이프 충전
    헤더(둘째 사용처)가 같은 버튼을 쓴다. `MyDetailHeader` 에 `titleTrailing` 슬롯을 더했다.
 
+8. **조회 실패의 다시 시도는 `ManyakNeutralButton`(회색 배경·경계)이다.** 홈·제작·채팅 목록(`LoadFailedContent`),
+   채팅방 로드 실패, 세션 정리 실패가 같은 버튼을 쓰고, 퍼널의 이전·다시 만들기(`FunnelNeutralButton`)도 이 버튼에 위임한다.
+   실패로 멈춘 자리에 브랜드 색 버튼을 두면 새로 시작하라는 권유처럼 읽힌다. 제작 실패 카드의 "다시 시도하기"와 동의 시트의
+   다시 시도는 카드·시트의 주 동작이라 그대로 둔다.
+
 ## 검증
 
 - `:chat` `ktlintCheck`·`detekt`·`testDebugUnitTest`(신규: 잔액이 비용에 못 미치면 턴을 열지 않고 안내만 올린다),
   `:studio`·`:my`·`:story`·`:designsystem`·`:create`·`:app` `ktlintCheck`·`detekt`·`compileDebugKotlin` 통과.
-- 에뮬레이터(`captures/knk-1350/`): 제작 탭 빈 목록에서 "+ 만들기" 펼침, 이프 충전 헤더 툴팁 표시. 스크롤 접힘·채팅 빈
+- 에뮬레이터(`captures/knk-1350/`): 제작 탭 빈 목록에서 "+ 만들기" 펼침, 이프 충전 헤더 툴팁 표시, 홈 조회 실패의 회색 다시 시도. 스크롤 접힘·채팅 빈
   목록·이프 부족 선처리·로그아웃 라벨·로딩 문구 크기는 이 계정에서 재현 조건이 없어 코드·유닛 테스트로만 확인했다.

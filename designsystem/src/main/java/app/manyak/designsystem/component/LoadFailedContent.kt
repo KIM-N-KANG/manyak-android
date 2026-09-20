@@ -3,9 +3,6 @@ package app.manyak.designsystem.component
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -34,17 +31,6 @@ fun LoadFailedContent(
             color = ManyakTheme.colors.text,
             textAlign = TextAlign.Center,
         )
-        Button(
-            modifier = Modifier.heightIn(min = ManyakTheme.sizes.control),
-            onClick = onRetry,
-            shape = ManyakTheme.shapes.control,
-            colors =
-                ButtonDefaults.buttonColors(
-                    containerColor = ManyakTheme.colors.brand,
-                    contentColor = ManyakTheme.colors.textInverse,
-                ),
-        ) {
-            Text(text = stringResource(DesignsystemR.string.common_retry), style = ManyakTheme.typography.labelLarge)
-        }
+        ManyakNeutralButton(label = stringResource(DesignsystemR.string.common_retry), onClick = onRetry)
     }
 }

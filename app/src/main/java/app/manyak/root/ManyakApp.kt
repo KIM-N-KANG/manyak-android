@@ -7,12 +7,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -61,6 +58,7 @@ import app.manyak.core.navigation.WithdrawalRoute
 import app.manyak.create.additionalinfo.presentation.CreateAdditionalInfoScreen
 import app.manyak.create.keyword.presentation.CreateKeywordScreen
 import app.manyak.create.storyline.presentation.CreateStorylineScreen
+import app.manyak.designsystem.component.ManyakNeutralButton
 import app.manyak.designsystem.component.ManyakProgressIndicator
 import app.manyak.designsystem.component.clearFocusOnTap
 import app.manyak.designsystem.component.rememberDelayedProgressVisibility
@@ -179,21 +177,11 @@ private fun CleanupFailed(
             color = ManyakTheme.colors.textDanger,
             textAlign = TextAlign.Center,
         )
-        Button(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = ManyakTheme.sizes.control),
+        ManyakNeutralButton(
+            label = stringResource(DesignsystemR.string.common_retry),
             onClick = onRetry,
-            shape = ManyakTheme.shapes.control,
-            colors =
-                ButtonDefaults.buttonColors(
-                    containerColor = ManyakTheme.colors.brand,
-                    contentColor = ManyakTheme.colors.textInverse,
-                ),
-        ) {
-            Text(text = stringResource(DesignsystemR.string.common_retry), style = ManyakTheme.typography.labelLarge)
-        }
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 

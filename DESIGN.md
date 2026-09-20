@@ -685,7 +685,7 @@ components:
 
 **`checkbox`** — 동의·확인 항목의 체크 표시. `{sizes.icon}` 정사각에 `{rounded.checkbox}` 모서리이고, 기본은 `{colors.surface}` 채움 + `{colors.border}` 경계이며 두께는 `{sizes.selection-border-width}`(2dp)로 미선택 M3 라디오 버튼과 같습니다. 체크되면 `{colors.brand}` 채움에 같은 색 경계와 `{colors.text-inverse}` 체크 아이콘(16dp)이다. **체크박스 자체는 누르는 대상이 아니다** — 줄 전체가 토글을 맡아 문구를 눌러도 켜지고, 최소 터치 타깃도 그 줄이 확보한다. 체크박스에 따로 접근성 이름을 붙이지 않는다(줄이 이미 이름과 상태를 읽힌다).
 
-**`button-neutral`** — 보조 동작. 배경 `{colors.background-neutral}`, 텍스트 `{colors.text}`. 눌림은 `{component.button-neutral-pressed}`.
+**`button-neutral`** — 보조 동작. 배경 `{colors.background-neutral}`, 텍스트 `{colors.text}`, `{colors.border}` 1dp 경계. 눌림은 `{component.button-neutral-pressed}`. 퍼널의 이전·다시 만들기와 **조회 실패 자리의 다시 시도**(2026-09-20)가 쓴다 — 실패로 멈춘 자리에 브랜드 색 버튼을 두면 새로 시작하라는 권유처럼 읽힌다. `ManyakNeutralButton`을 쓴다.
 
 **`button-text`** — 다이얼로그·시트의 닫기, 배너의 보조 동작, 인라인 재시도처럼 채움 없이 글자만 있는 버튼. 배경 없음, 텍스트 `{typography.label-large}`에 색은 자리가 정한다(닫기는 `{colors.text-subtle}`, 진입·재시도는 브랜드 색). **모서리는 `{rounded.control}`** — M3 `TextButton` 기본은 완전한 알약이라 눌림 리플이 채움 버튼과 다른 모양으로 돈다. `ManyakTextButton`을 쓴다. **시트의 닫기는 전체 폭·최소 높이 `{sizes.control}`(48dp)·`{typography.label-large}`·`{colors.text-subtle}`로 통일한다. 글자 크기·굵기·행간은 위의 주 동작 버튼과 같고, 두 버튼 사이는 `{spacing.compact}`(8dp)로 띄운다.** 큰 글자에서는 높이가 늘어날 수 있고, 제출 중에는 비활성화하며 글자는 `{colors.text-disabled}`로 표시한다.
 
