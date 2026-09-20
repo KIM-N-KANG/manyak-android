@@ -16,11 +16,15 @@ data class PushEntry(
     val targetId: String?,
     /** 서버가 실은 수신 회원 공개 ID. 탭 시점에 현재 회원과 다시 비교한다. */
     val recipientId: String?,
+    /** 서버가 실은 이동 주소. 있으면 이 값이 목적지의 정본이고 [type] 매핑은 없을 때만 쓴다. */
+    val deepLink: String? = null,
 ) : Serializable {
     /** 현재 회원 기준의 도착지. 홈은 [MainTabsRoute] 로 돌려줘 호출부가 "없음" 과 구분하지 않아도 된다. */
     fun routeFor(currentUserId: String): NavKey =
         when {
             recipientId != currentUserId -> MainTabsRoute
+            // 해석 실패를 type 매핑으로 되돌리지 않는다 — 서버가 목적지를 바꾼 뒤에도 구 매핑으로 가게 된다.
+            deepLink != null -> DeepLink.routeOf(deepLink) ?: MainTabsRoute
             type == TYPE_STORY_COMPLETED && !targetId.isNullOrBlank() -> StoryDetailRoute(targetId)
             type == TYPE_ATTENDANCE_REMINDER -> MyCreditChargeRoute
             else -> MainTabsRoute
@@ -31,6 +35,7 @@ data class PushEntry(
             .putExtra(EXTRA_TYPE, type)
             .putExtra(EXTRA_TARGET_ID, targetId)
             .putExtra(EXTRA_RECIPIENT_ID, recipientId)
+            .putExtra(EXTRA_DEEP_LINK, deepLink)
 
     companion object {
         private const val serialVersionUID = 1L
@@ -43,6 +48,7 @@ data class PushEntry(
         private const val EXTRA_TYPE = "app.manyak.push.type"
         private const val EXTRA_TARGET_ID = "app.manyak.push.targetId"
         private const val EXTRA_RECIPIENT_ID = "app.manyak.push.recipientId"
+        private const val EXTRA_DEEP_LINK = "app.manyak.push.deepLink"
 
         /** 푸시 진입이 아닌 보통 실행이면 null. */
         fun readFrom(intent: Intent?): PushEntry? {
@@ -51,6 +57,7 @@ data class PushEntry(
                 type = type,
                 targetId = intent.getStringExtra(EXTRA_TARGET_ID),
                 recipientId = intent.getStringExtra(EXTRA_RECIPIENT_ID),
+                deepLink = intent.getStringExtra(EXTRA_DEEP_LINK),
             )
         }
     }
