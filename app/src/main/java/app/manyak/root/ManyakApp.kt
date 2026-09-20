@@ -70,11 +70,8 @@ import app.manyak.login.presentation.LoginScreen
 import app.manyak.my.credit.presentation.CreditChargeScreen
 import app.manyak.my.feedback.presentation.FeedbackScreen
 import app.manyak.my.invite.presentation.InviteScreen
-import app.manyak.my.invite.presentation.onboarding.InviteOnboardingSheet
 import app.manyak.my.licenses.presentation.OpenSourceLicenseScreen
 import app.manyak.my.withdrawal.presentation.WithdrawalScreen
-import app.manyak.notification.consent.presentation.MarketingConsentSheet
-import app.manyak.notification.presentation.NotificationPermissionRequest
 import app.manyak.notification.settings.presentation.NotificationSettingsScreen
 import app.manyak.story.detail.presentation.StoryDetailScreen
 import app.manyak.R as AppR
@@ -122,16 +119,7 @@ fun ManyakApp(
                             entryDestination = entryDestination,
                             onEntryConsumed = viewModel::onEntryConsumed,
                         )
-                        // 알림 권한은 회원 그래프가 처음 그려질 때 설치당 한 번 묻는다. 거부해도 아무것도 바뀌지 않는다.
-                        var permissionSettled by rememberSaveable { mutableStateOf(false) }
-                        NotificationPermissionRequest(onSettled = { permissionSettled = true })
-                        // 신규 가입 안내는 어느 탭에 있든 회원 그래프 위에 뜬다. 로그인 화면에 두면
-                        // 로그인 성공과 동시에 인증 백스택이 사라져 안내도 함께 걷힌다.
-                        InviteOnboardingSheet()
-                        // 광고 동의는 권한 응답과 초대 코드 안내가 끝난 뒤에 묻는다 — 시스템 다이얼로그나
-                        // 다른 시트 위에 겹쳐 뜨면 무엇에 답하는지 흐려진다.
-                        val invitePending by viewModel.inviteOnboardingPending.collectAsStateWithLifecycle()
-                        MarketingConsentSheet(enabled = permissionSettled && !invitePending)
+                        MemberOverlays(viewModel = viewModel)
                     }
                     // 이전 사용자의 데이터가 남아 있다. 정리가 끝날 때까지 어느 그래프도 열지 않는다.
                     is SessionState.CleanupFailed -> CleanupFailed(state, onRetry = viewModel::onRetryCleanup)
@@ -242,7 +230,7 @@ private fun AuthNavDisplay() {
                 entry<LoginRoute> {
                     LoginScreen(onOpenLegalDocument = { document -> backStack.push(LegalRoute(document)) })
                 }
-                legalEntry()
+                legalEntry(backStack)
             },
     )
 }
@@ -312,7 +300,7 @@ private fun MainNavDisplay(
                 }
                 creationFunnelEntries(backStack, creationFunnelMetadata) { selectedTab = MainTab.STUDIO }
                 chatRoomEntry(backStack) { selectedTab = MainTab.CHAT }
-                legalEntry()
+                legalEntry(backStack)
             },
     )
 }
@@ -429,8 +417,8 @@ private fun EntryProviderScope<NavKey>.creationFunnelEntries(
  * 웹이 정본인 공용 문서. 제품 백스택 양쪽에 등록해 뒤로가기가 진입한 화면으로 돌아간다.
  * 여기서 임의의 메인 목적지로 이동하는 경로는 두지 않는다.
  */
-private fun EntryProviderScope<NavKey>.legalEntry() {
+private fun EntryProviderScope<NavKey>.legalEntry(backStack: MutableList<NavKey>) {
     entry<LegalRoute> { route ->
-        LegalDocumentScreen(document = route.document)
+        LegalDocumentScreen(document = route.document, onBack = { backStack.pop() })
     }
 }

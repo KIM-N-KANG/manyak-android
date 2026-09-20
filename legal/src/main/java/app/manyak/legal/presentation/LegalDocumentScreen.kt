@@ -7,13 +7,20 @@ import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.saveable.Saver
@@ -25,6 +32,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.manyak.core.navigation.LegalDocument
+import app.manyak.designsystem.component.ManyakIconButton
 import app.manyak.designsystem.component.ManyakProgressIndicator
 import app.manyak.designsystem.component.ManyakTextButton
 import app.manyak.designsystem.component.rememberDelayedProgressVisibility
@@ -34,13 +42,15 @@ import app.manyak.designsystem.R as DesignsystemR
 import app.manyak.legal.R as LegalR
 
 /**
- * 약관·개인정보처리방침·서비스 안내를 웹 페이지 그대로 보여 준다.
+ * 약관·개인정보처리방침·서비스 안내를 웹 페이지 그대로 보여 준다. 앱바의 뒤로가기와 시스템 뒤로가기는 같은 [onBack] 이다.
  *
  * 같은 호스트 밖으로는 이동하지 않는다 — 문서 화면에서 임의의 목적지로 새는 경로를 만들지 않는다
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LegalDocumentScreen(
     document: LegalDocument,
+    onBack: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: LegalViewModel =
         hiltViewModel<LegalViewModel, LegalViewModel.Factory>(
@@ -50,11 +60,37 @@ fun LegalDocumentScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val showLoadingIndicator = rememberDelayedProgressVisibility(inProgress = state.isLoading)
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = ManyakTheme.colors.surface,
-    ) { innerPadding ->
-        Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
+    Column(
+        modifier =
+            modifier
+                .fillMaxSize()
+                .background(ManyakTheme.colors.surface)
+                .windowInsetsPadding(WindowInsets.safeDrawing),
+    ) {
+        TopAppBar(
+            title = {
+                Text(
+                    text = stringResource(document.titleRes()),
+                    style = ManyakTheme.typography.bodyLargeStrong,
+                    color = ManyakTheme.colors.text,
+                )
+            },
+            navigationIcon = {
+                ManyakIconButton(
+                    iconRes = DesignsystemR.drawable.ic_arrow_back,
+                    contentDescription = stringResource(CommonR.string.common_back),
+                    onClick = onBack,
+                )
+            },
+            // 화면 루트에서 적용한 safeDrawing 인셋이 중복되지 않게 한다.
+            windowInsets = WindowInsets(0, 0, 0, 0),
+            colors =
+                TopAppBarDefaults.topAppBarColors(
+                    containerColor = ManyakTheme.colors.surface,
+                    titleContentColor = ManyakTheme.colors.text,
+                ),
+        )
+        Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
             LegalWebView(
                 url = state.url,
                 allowedHost = state.allowedHost,

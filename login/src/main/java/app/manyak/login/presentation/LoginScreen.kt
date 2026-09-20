@@ -144,7 +144,7 @@ private fun LoginContent(
 
                         ProviderButtons(state = state, onSignIn = onSignIn)
 
-                        LegalConsent(
+                        LegalLinks(
                             modifier = Modifier.padding(top = ManyakTheme.spacing.component),
                             onOpenLegalDocument = onOpenLegalDocument,
                         )
@@ -296,14 +296,15 @@ private fun ProviderButton(
     }
 }
 
+/** 로그인 전에도 여는 문서 링크. 동의는 로그인 뒤 시트에서 명시적으로 받으므로 여기서는 간주 문구를 두지 않는다. */
 @Composable
-private fun LegalConsent(
+private fun LegalLinks(
     onOpenLegalDocument: (LegalDocument) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val termsLabel = stringResource(LoginR.string.login_consent_terms)
-    val privacyLabel = stringResource(LoginR.string.login_consent_privacy)
-    val sentence = stringResource(LoginR.string.login_consent, termsLabel, privacyLabel)
+    val termsLabel = stringResource(LoginR.string.login_legal_terms)
+    val privacyLabel = stringResource(LoginR.string.login_legal_privacy)
+    val sentence = stringResource(LoginR.string.login_legal_links, termsLabel, privacyLabel)
     val linkStyles = TextLinkStyles(style = SpanStyle(textDecoration = TextDecoration.Underline))
 
     val annotated =

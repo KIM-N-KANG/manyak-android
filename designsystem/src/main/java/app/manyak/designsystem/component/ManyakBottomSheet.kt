@@ -13,6 +13,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -31,7 +32,10 @@ import app.manyak.designsystem.theme.ManyakTheme
  *
  * 내용은 항상 스크롤된다. 큰 글자·작은 화면에서 내용이 시트 높이를 넘겨도 닿을 수 있어야 한다.
  *
- * @param dismissEnabled false 면 끌어내려 닫기를 막는다(예: 전송 중 — 결과를 못 본 채 사라지지 않게).
+ * @param dismissEnabled false 면 끌어내리기·스크림 탭으로 닫는 것을 막는다(예: 전송 중 — 결과를 못 본 채
+ * 사라지지 않게).
+ * @param dismissOnBackPress false 면 뒤로가기도 막는다. 기본은 [dismissEnabled] 와 같다 — 뒤로가기는
+ * 끌어내리기 판정을 거치지 않고 [onDismissRequest] 를 부르므로 따로 잠가야 한다.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,6 +43,7 @@ fun ManyakBottomSheet(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
     dismissEnabled: Boolean = true,
+    dismissOnBackPress: Boolean = dismissEnabled,
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
     content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -60,6 +65,11 @@ fun ManyakBottomSheet(
         shape = ManyakTheme.shapes.sheet,
         // 하단 안전 영역과 키보드 높이는 아래 본문이 직접 낀다.
         contentWindowInsets = { WindowInsets(0, 0, 0, 0) },
+        properties =
+            ModalBottomSheetProperties(
+                shouldDismissOnBackPress = dismissOnBackPress,
+                shouldDismissOnClickOutside = dismissEnabled,
+            ),
         dragHandle = {
             BottomSheetDefaults.DragHandle(modifier = Modifier.clearFocusOnTap(), color = ManyakTheme.colors.border)
         },

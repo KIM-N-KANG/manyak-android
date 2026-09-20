@@ -33,7 +33,8 @@ import app.manyak.notification.settings.entity.PushSettings
 import app.manyak.notification.R as NotificationR
 
 /**
- * 첫 진입에서 광고 알림 수신 동의를 묻는 시트. 회원 그래프 위에 얹는다.
+ * 약관 동의 시트에서 광고 알림을 거절한 회원에게 세 번째 재진입에서 한 번 더 묻는 시트. 회원 그래프 위에 얹는다.
+ * 약관 시트의 선택 항목 답을 넘겨받아 저장·통지하는 것도 이 ViewModel 이라, 루트가 같은 인스턴스를 넘긴다.
  *
  * OS 알림 권한과 별개의 동의라 시트를 따로 띄운다. 야간 수신은 별도 동의라 시트에서 받지 않고 알림 설정에 맡긴다.
  * 전송자·이용 항목 같은 고지는 개인정보 처리방침이 정본이라 시트에는 싣지 않는다 — 설정 화면의 광고 행이 문서를 연다.
@@ -77,7 +78,14 @@ fun MarketingConsentSheet(
     state.notice?.let { notice ->
         ConsentNoticeDialog(
             notice = notice,
-            onDismiss = { viewModel.onIntent(MarketingConsentIntent.DismissNotice) },
+            onDismiss = {
+                viewModel.onIntent(MarketingConsentIntent.DismissNotice)
+                // 동의는 서버에 남았지만 OS 권한이 없으면 표시되지 않는다 — 통지를 닫는 순간 어디서 켜는지 알려 준다.
+                if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) {
+                    val hintRes = NotificationR.string.notification_consent_device_disabled_hint
+                    Toast.makeText(context, hintRes, Toast.LENGTH_LONG).show()
+                }
+            },
         )
     }
 }
