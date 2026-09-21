@@ -1,5 +1,7 @@
 package app.manyak.create.data.completion
 
+import app.manyak.analytics.domain.Analytics
+import app.manyak.analytics.entity.AnalyticsEvent
 import app.manyak.auth.domain.AuthWork
 import app.manyak.auth.domain.SessionGate
 import app.manyak.common.data.di.ApplicationScope
@@ -50,6 +52,7 @@ class StoryCompletionExecutor
         private val gate: SessionGate,
         @param:ApplicationScope private val applicationScope: CoroutineScope,
         private val trialsRepository: TrialsRepository,
+        private val analytics: Analytics,
     ) : StoryCompletionSubmitter,
         CreationProgressAccess {
         private val inFlightLock = Any()
@@ -131,13 +134,17 @@ class StoryCompletionExecutor
                 }
             }
 
-        /** 완성 한 건이 제작 체험 한 회를 썼을 수 있다. 다음 완성 비용이 낡은 잔여로 그려지지 않게 다시 읽는다. */
+        /**
+         * 완성 한 건이 제작 체험 한 회를 썼을 수 있다. 다음 완성 비용이 낡은 잔여로 그려지지 않게 다시 읽는다.
+         * 원 응답과 새로고침 판정이 모두 여기로 모이므로 완성 분석 이벤트도 여기서 한 번 낸다.
+         */
         private suspend fun markCompleted(
             work: AuthWork,
             requestId: String,
             story: CompletedStory,
         ) {
-            gate.commit(work) { requestStore.markCompleted(requestId, story) } ?: return
+            val marked = gate.commit(work) { requestStore.markCompleted(requestId, story) } ?: return
+            if (marked) analytics.track(AnalyticsEvent.StoryCreateCompleted(story.id))
             trialsRepository.refresh()
         }
 

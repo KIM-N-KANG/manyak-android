@@ -176,8 +176,7 @@ sealed class AnalyticsEvent(
 
     data class StoryCreateCompleted(
         val storyId: String,
-        val chatId: String,
-    ) : AnalyticsEvent("client_storyCreate_completed", mapOf("story_id" to storyId, "chat_id" to chatId))
+    ) : AnalyticsEvent("client_storyCreate_completed", mapOf("story_id" to storyId))
 
     // storyDetail
     data class StoryDetailViewed(
