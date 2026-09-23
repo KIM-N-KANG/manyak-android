@@ -68,6 +68,37 @@ internal val MIGRATION_2_3 =
     }
 
 /**
+ * 편집 초안을 한 행 슬롯에서 draftId 별 여러 행으로 넓히고, 두 테이블에 처음 임시 저장 시각을 더한다.
+ *
+ * 기본 키가 바뀌어 테이블을 새로 만들어 옮긴다. 남아 있던 초안은 [LEGACY_DRAFT_ID_PREFIX] 로 시작하는
+ * ID 를 받아 그대로 이어 만들 수 있고, 처음 저장 시각은 알 수 없어 비워 둔다 — 카드는 날짜 없이 맨 뒤에 온다.
+ */
+internal val MIGRATION_3_4 =
+    object : Migration(3, 4) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `pending_story_creation_new` (" +
+                    "`draftId` TEXT NOT NULL, `stage` TEXT NOT NULL, `generationCommand` TEXT, " +
+                    "`completionCommand` TEXT, `generation` TEXT, `progress` TEXT, `keywordSnapshot` TEXT, " +
+                    "`ownerId` TEXT NOT NULL DEFAULT '', `createdAt` INTEGER, PRIMARY KEY(`draftId`))",
+            )
+            db.execSQL(
+                "INSERT INTO pending_story_creation_new " +
+                    "(draftId, stage, generationCommand, completionCommand, generation, progress, keywordSnapshot, " +
+                    "ownerId, createdAt) " +
+                    "SELECT '$LEGACY_DRAFT_ID_PREFIX' || id, stage, generationCommand, completionCommand, " +
+                    "generation, progress, keywordSnapshot, ownerId, NULL FROM pending_story_creation",
+            )
+            db.execSQL("DROP TABLE pending_story_creation")
+            db.execSQL("ALTER TABLE pending_story_creation_new RENAME TO pending_story_creation")
+            db.execSQL("ALTER TABLE `story_completion_request` ADD COLUMN `createdAt` INTEGER")
+        }
+    }
+
+/** 여러 초안 이전에 남아 있던 초안 행이 받는 ID 의 머리. 새 초안의 UUID 와 겹치지 않는다. */
+internal const val LEGACY_DRAFT_ID_PREFIX = "legacy-"
+
+/**
  * v1 완성 행을 요청 행으로 바꾼다. 명령과 생성 결과를 해석할 수 있어야 하며, 서버 처리 여부를 모르므로
  * 상태는 PENDING 으로 두어 다음 새로고침이 복구 조회로 확정한다. 진행 JSON 은 없으면 빈 값으로 채운다.
  */

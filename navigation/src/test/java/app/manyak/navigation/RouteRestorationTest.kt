@@ -40,7 +40,7 @@ class RouteRestorationTest {
                 MainTabsRoute,
                 StoryDetailRoute("story-fixture"),
                 ChatRoomRoute("chat-fixture"),
-                CreateAdditionalInfoRoute(2),
+                CreateAdditionalInfoRoute("draft-fixture", 2),
                 LegalRoute(LegalDocument.PRIVACY),
             )
 

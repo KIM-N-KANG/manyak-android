@@ -22,13 +22,15 @@ import app.manyak.create.presentation.state.DraftSaveUiState
 import app.manyak.create.presentation.state.FunnelExitWarning
 import app.manyak.create.presentation.state.StorylineGenerationInput
 import app.manyak.create.presentation.state.StorylineGenerationStore
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.text.Normalizer
-import javax.inject.Inject
 
 /** 직접 추가한 키워드는 선택 해제해도 목록에 남는다. */
 data class CustomTag(
@@ -342,10 +344,11 @@ sealed interface CreateKeywordEffect {
     data object ExitFunnel : CreateKeywordEffect
 }
 
-@HiltViewModel
+@HiltViewModel(assistedFactory = CreateKeywordViewModel.Factory::class)
 class CreateKeywordViewModel
-    @Inject
+    @AssistedInject
     constructor(
+        @Assisted private val draftId: String,
         private val storyCreationRepository: StoryCreationRepository,
         private val storylineGenerationStore: StorylineGenerationStore,
         private val pendingCreationStore: PendingStoryCreationStore,
@@ -364,12 +367,13 @@ class CreateKeywordViewModel
         private var persistedSnapshot: KeywordDraftSnapshot? = null
 
         init {
+            storylineGenerationStore.bind(draftId)
             analytics.track(AnalyticsEvent.StoryCreateViewed)
             analytics.track(AnalyticsEvent.StoryCreateStepViewed(CreateStep.KEYWORD))
             startTagsLoad()
             viewModelScope.launch {
-                // 레코드가 남아 있는 진입은 곧 재개다. 재개 의도를 따로 저장하지 않는다.
-                val record = pendingCreationStore.read()
+                // 라우트의 초안에 키워드 입력이 있으면 재개다. 새 제작은 새 ID 라 읽을 것이 없다.
+                val record = pendingCreationStore.read(draftId)
                 if (record is PendingStoryCreation.KeywordDraft) {
                     persistedSnapshot = record.snapshot
                     dispatchEvent(CreateKeywordEvent.SnapshotRestored(record.snapshot))
@@ -430,7 +434,7 @@ class CreateKeywordViewModel
                         CreateKeywordEvent.ExitWarningChanged(
                             when {
                                 state.hasUnsavedChanges -> FunnelExitWarning.UNSAVED_CHANGES
-                                pendingCreationStore.read() != null -> FunnelExitWarning.SAVED_DRAFT
+                                pendingCreationStore.read(draftId) != null -> FunnelExitWarning.SAVED_DRAFT
                                 else -> FunnelExitWarning.NOTHING_TO_PRESERVE
                             },
                         ),
@@ -531,7 +535,7 @@ class CreateKeywordViewModel
                     // 눌러도 디스크는 건드리지 않고, 버튼이 죽은 것처럼 보이지도 않는다.
                     if (snapshot != persistedSnapshot) {
                         dispatchEvent(CreateKeywordEvent.DraftSaveStarted)
-                        if (!pendingCreationStore.persistKeywordSnapshot(snapshot)) {
+                        if (!pendingCreationStore.persistKeywordSnapshot(draftId, snapshot)) {
                             dispatchEvent(CreateKeywordEvent.DraftSaveFinished(snapshot, saved = false))
                             return@launch
                         }
@@ -555,7 +559,7 @@ class CreateKeywordViewModel
         /**
          * 키워드 단계 이탈. 저장하지 않은 입력은 사용자가 버리기로 한 것이라 여기서 저장하지 않는다.
          *
-         * 뒤 단계의 진행 중 레코드가 슬롯에 있으면 건드리지 않는다 — 서버에서 실제로 돌고 있는
+         * 뒤 단계의 진행 중 레코드가 이 초안에 있으면 건드리지 않는다 — 서버에서 실제로 돌고 있는
          * 복구 대상이 우선한다. 그 판정과 정리는 스토어가 소유하므로 여기서는 넘기기만 한다.
          */
         private suspend fun leaveFunnel() {
@@ -586,6 +590,11 @@ class CreateKeywordViewModel
             state: CreateKeywordUiState,
             event: CreateKeywordEvent,
         ): CreateKeywordUiState = reduceKeywordState(state, event)
+
+        @AssistedFactory
+        interface Factory {
+            fun create(draftId: String): CreateKeywordViewModel
+        }
     }
 
 /** 선택 상한에 걸리면 이벤트를 내지 않는다. 판정 재료가 모두 상태라 상태 옆에 둔다. */
@@ -621,15 +630,18 @@ private fun CreateKeywordUiState.customTagAddEvent(intent: CreateKeywordIntent.A
     return CreateKeywordEvent.CustomTagAdded(intent.target, name)
 }
 
-/** 뒤 단계의 생성·완성·결과 레코드는 키워드 편집본보다 우선한다. */
-private suspend fun PendingStoryCreationStore.persistKeywordSnapshot(snapshot: KeywordDraftSnapshot): Boolean {
-    val current = read()
+/** 같은 초안의 뒤 단계 생성·결과 레코드는 키워드 편집본보다 우선한다. */
+private suspend fun PendingStoryCreationStore.persistKeywordSnapshot(
+    draftId: String,
+    snapshot: KeywordDraftSnapshot,
+): Boolean {
+    val current = read(draftId)
     if (current != null && current !is PendingStoryCreation.KeywordDraft) return false
     // 입력을 모두 지운 상태를 저장하면 남아 있던 저장본도 함께 사라져야 한다.
     if (!snapshot.hasInput) {
-        return if (current is PendingStoryCreation.KeywordDraft) clear() else true
+        return if (current is PendingStoryCreation.KeywordDraft) clear(draftId) else true
     }
-    return write(PendingStoryCreation.KeywordDraft(snapshot))
+    return write(draftId, PendingStoryCreation.KeywordDraft(snapshot))
 }
 
 /** 자동 저장할 편집 상태. 선택 해제된 커스텀 키워드도 그대로 담는다. */

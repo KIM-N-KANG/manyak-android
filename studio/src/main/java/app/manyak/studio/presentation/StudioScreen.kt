@@ -61,8 +61,8 @@ import app.manyak.studio.R as StudioR
  * [contentPadding] 은 셸의 chrome 이 차지한 만큼이므로 목록에는 `Modifier.padding` 이 아니라
  * 목록의 `contentPadding` 으로 넘긴다 — 그래야 콘텐츠가 헤더 아래로 흘러 들어간다.
  *
- * 제작 퍼널 진입 FAB 과 초안·완성 요청 카드는 셸이 아니라 이 화면이 소유한다. 초안이 있으면
- * 목록 맨 위에 초안 카드를 두고, FAB 등 카드가 아닌 경로의 진입은 새로 만들기 다이얼로그로 묻는다.
+ * 제작 퍼널 진입 FAB 과 초안·완성 요청 카드는 셸이 아니라 이 화면이 소유한다. 초안은 여러 개를 둘 수
+ * 있어 FAB 은 늘 새 초안으로 들어가고, 이어 만들기는 목록 맨 위의 초안 카드가 맡는다.
  *
  * 목록 조회는 화면이 보일 때 시작한다. 퍼널·채팅방은 이 화면 위가 아니라 셸 위에 쌓여 돌아와도
  * ViewModel 이 그대로 살아 있으므로, 조회 시점을 화면 수명에 맞춰야 떠난 사이의 변화가 반영된다.
@@ -72,7 +72,7 @@ fun StudioScreen(
     contentPadding: PaddingValues,
     onOpenStory: (String) -> Unit,
     onCreateStory: () -> Unit,
-    onResumeCreation: (CreationResumePoint) -> Unit,
+    onResumeCreation: (draftId: String, CreationResumePoint) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: StudioViewModel = hiltViewModel(),
 ) {
@@ -87,7 +87,7 @@ fun StudioScreen(
             viewModel.uiEffect.collect { effect ->
                 when (effect) {
                     StudioEffect.NavigateToCreate -> currentOnCreateStory()
-                    is StudioEffect.NavigateToResume -> currentOnResumeCreation(effect.resumePoint)
+                    is StudioEffect.NavigateToResume -> currentOnResumeCreation(effect.draftId, effect.resumePoint)
 
                     StudioEffect.ShowStoryDeleted ->
                         Toast.makeText(context, CommonR.string.studio_story_deleted, Toast.LENGTH_SHORT).show()
@@ -216,7 +216,7 @@ private fun StoriesStatus(
 }
 
 /**
- * 초안 → 완성 요청(제출 최신순) → 완성된 스토리 순의 한 목록. 키는 종류별 접두사로 나눠 로컬 카드와
+ * 초안 → 완성 요청 → 완성된 스토리 순의 한 목록. 초안과 완성 요청은 각각 처음 임시 저장 최신순이다. 키는 종류별 접두사로 나눠 로컬 카드와
  * 서버 스토리가 겹치지 않는다. 서버 목록 조회가 실패했으면 로컬 카드 아래에 재시도를 둔다.
  */
 @Composable
@@ -242,14 +242,13 @@ private fun MyStories(
             // 좌우 여백은 카드가 스스로 갖는다 — 채팅 목록과 같은 리듬이다.
             contentPadding = contentPadding.withRowListMargins(),
         ) {
-            state.draft?.let {
-                item(key = DRAFT_KEY) {
-                    CreationProgressCard(
-                        kind = CreationProgressCardKind.Draft,
-                        onPrimaryAction = { onIntent(StudioIntent.ResumeCreation) },
-                        onOptionsClick = { onIntent(StudioIntent.OpenCardOptions(StudioCard.Draft)) },
-                    )
-                }
+            items(state.drafts, key = { draft -> "$DRAFT_KEY_PREFIX${draft.draftId}" }) { draft ->
+                CreationProgressCard(
+                    kind = CreationProgressCardKind.Draft(draft.stage, draft.resumePoint),
+                    savedAt = draft.createdAt,
+                    onPrimaryAction = { onIntent(StudioIntent.ResumeCreation(draft.draftId)) },
+                    onOptionsClick = { onIntent(StudioIntent.OpenCardOptions(StudioCard.Draft(draft.draftId))) },
+                )
             }
             items(state.completionRequests, key = { request ->
                 "$COMPLETION_KEY_PREFIX${request.requestId}"
@@ -296,7 +295,8 @@ private fun CompletionRequestRow(
     onIntent: (StudioIntent) -> Unit,
 ) {
     when (request.status) {
-        CompletionRequestStatus.PENDING -> CreationProgressCard(kind = CreationProgressCardKind.Completing)
+        CompletionRequestStatus.PENDING ->
+            CreationProgressCard(kind = CreationProgressCardKind.Completing, savedAt = request.createdAt)
 
         CompletionRequestStatus.COMPLETED ->
             CreationProgressCard(
@@ -307,6 +307,7 @@ private fun CompletionRequestRow(
         CompletionRequestStatus.FAILED ->
             CreationProgressCard(
                 kind = CreationProgressCardKind.Failed,
+                savedAt = request.createdAt,
                 onPrimaryAction = { onIntent(StudioIntent.RetryCompletion(request.requestId)) },
                 onOptionsClick = {
                     onIntent(StudioIntent.OpenCardOptions(StudioCard.FailedRequest(request.requestId)))
@@ -327,7 +328,7 @@ private fun EmptyStories(modifier: Modifier = Modifier) {
     }
 }
 
-private const val DRAFT_KEY = "draft"
+private const val DRAFT_KEY_PREFIX = "draft:"
 private const val COMPLETION_KEY_PREFIX = "completion:"
 private const val STORY_KEY_PREFIX = "story:"
 private const val LOAD_FAILED_KEY = "load-failed"
@@ -367,7 +368,20 @@ private fun StudioScreenProgressCardsPreview() {
                 StudioUiState(
                     isLoading = false,
                     stories = previewStories(),
-                    draft = CreationProgressSummary(CreationStage.STORY_DRAFT, CreationResumePoint.StorylineStep),
+                    drafts =
+                        listOf(
+                            CreationProgressSummary(
+                                draftId = "draft-1",
+                                stage = CreationStage.KEYWORD_DRAFT,
+                                resumePoint = CreationResumePoint.KeywordStep,
+                                createdAt = 1_790_139_900_000L,
+                            ),
+                            CreationProgressSummary(
+                                draftId = "draft-2",
+                                stage = CreationStage.STORY_DRAFT,
+                                resumePoint = CreationResumePoint.StorylineStep,
+                            ),
+                        ),
                     completionRequests =
                         listOf(
                             CompletionRequestSummary(

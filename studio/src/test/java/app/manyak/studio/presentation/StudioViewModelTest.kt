@@ -55,7 +55,10 @@ class StudioViewModelTest {
             viewModel.onIntent(StudioIntent.ScreenShown)
             advanceUntilIdle()
 
-            assertNull(viewModel.uiState.value.draft)
+            assertTrue(
+                viewModel.uiState.value.drafts
+                    .isEmpty(),
+            )
 
             viewModel.onIntent(StudioIntent.CreateStory)
             advanceUntilIdle()
@@ -69,55 +72,52 @@ class StudioViewModelTest {
     @Test
     fun `추가 정보 단계 초안은 그 단계의 재개 지점이 된다`() =
         runTest(dispatcher) {
-            val store = FakeCreationProgressAccess(draft = draftRecord(selectedIndex = 2))
+            val store = FakeCreationProgressAccess(drafts = listOf(draftRecord(selectedIndex = 2)))
             val viewModel = studioViewModel(store, FakeStoryRepository(), NoOpAnalytics)
             viewModel.onIntent(StudioIntent.ScreenShown)
             advanceUntilIdle()
 
             assertEquals(
                 CreationResumePoint.AdditionalInfoStep(storylineIndex = 2),
-                viewModel.uiState.value.draft
-                    ?.resumePoint,
+                viewModel.uiState.value.drafts
+                    .single()
+                    .resumePoint,
             )
         }
 
     @Test
-    fun `초안이 있는 FAB 진입은 다이얼로그로 묻고 새로 만들기는 초안만 폐기 후 진입한다`() =
+    fun `초안이 있어도 FAB 진입은 묻지 않고 초안과 완성 요청을 그대로 둔 채 새로 시작한다`() =
         runTest(dispatcher) {
-            val store = FakeCreationProgressAccess(draft = generatingRecord(), requests = listOf(pendingRequest("a")))
+            val store =
+                FakeCreationProgressAccess(drafts = listOf(generatingRecord()), requests = listOf(pendingRequest("a")))
             val viewModel = studioViewModel(store, FakeStoryRepository(), NoOpAnalytics)
             viewModel.onIntent(StudioIntent.ScreenShown)
             advanceUntilIdle()
 
             viewModel.onIntent(StudioIntent.CreateStory)
             advanceUntilIdle()
-            assertTrue(viewModel.uiState.value.showResumeChoiceDialog)
 
-            viewModel.onIntent(StudioIntent.StartNewCreation)
-            advanceUntilIdle()
-
-            assertNull(store.currentDraft)
-            assertEquals(listOf(pendingRequest("a")), store.currentRequests)
-            assertFalse(viewModel.uiState.value.showResumeChoiceDialog)
             assertEquals(
                 StudioEffect.NavigateToCreate,
                 withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
             )
+            assertEquals(listOf(generatingRecord()), store.currentDrafts)
+            assertEquals(listOf(pendingRequest("a")), store.currentRequests)
         }
 
     @Test
-    fun `이어서 만들기는 레코드 단계의 재개 지점으로 진입한다`() =
+    fun `이어서 만들기는 누른 초안의 재개 지점으로 진입한다`() =
         runTest(dispatcher) {
-            val store = FakeCreationProgressAccess(draft = generatingRecord())
+            val store = FakeCreationProgressAccess(drafts = listOf(draftRecord(selectedIndex = 1), generatingRecord()))
             val viewModel = studioViewModel(store, FakeStoryRepository(), NoOpAnalytics)
             viewModel.onIntent(StudioIntent.ScreenShown)
             advanceUntilIdle()
 
-            viewModel.onIntent(StudioIntent.ResumeCreation)
+            viewModel.onIntent(StudioIntent.ResumeCreation(GENERATING_DRAFT_ID))
             advanceUntilIdle()
 
             assertEquals(
-                StudioEffect.NavigateToResume(CreationResumePoint.StorylineStep),
+                StudioEffect.NavigateToResume(GENERATING_DRAFT_ID, CreationResumePoint.StorylineStep),
                 withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
             )
         }
@@ -365,7 +365,6 @@ class StudioViewModelTest {
 
             viewModel.onIntent(StudioIntent.CreateStory)
             advanceUntilIdle()
-            assertFalse(viewModel.uiState.value.showResumeChoiceDialog)
             assertEquals(
                 StudioEffect.NavigateToCreate,
                 withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
@@ -421,35 +420,39 @@ class StudioViewModelTest {
         }
 
     @Test
-    fun `초안 카드 삭제는 확인 뒤 초안만 지우고 실패하면 카드를 남긴다`() =
+    fun `초안 카드 삭제는 확인 뒤 그 초안만 지우고 실패하면 카드를 남긴다`() =
         runTest(dispatcher) {
-            val store = FakeCreationProgressAccess(draft = generatingRecord(), requests = listOf(pendingRequest("a")))
+            val store =
+                FakeCreationProgressAccess(
+                    drafts = listOf(draftRecord(selectedIndex = 0), generatingRecord()),
+                    requests = listOf(pendingRequest("a")),
+                )
             val viewModel = studioViewModel(store, FakeStoryRepository(), NoOpAnalytics)
             viewModel.onIntent(StudioIntent.ScreenShown)
             advanceUntilIdle()
 
             store.discardSucceeds = false
-            viewModel.onIntent(StudioIntent.OpenCardOptions(StudioCard.Draft))
+            viewModel.onIntent(StudioIntent.OpenCardOptions(StudioCard.Draft(GENERATING_DRAFT_ID)))
             advanceUntilIdle()
             viewModel.onIntent(StudioIntent.RequestDelete)
             advanceUntilIdle()
-            assertEquals(StudioCard.Draft, viewModel.uiState.value.deleteTarget)
+            assertEquals(StudioCard.Draft(GENERATING_DRAFT_ID), viewModel.uiState.value.deleteTarget)
             viewModel.onIntent(StudioIntent.ConfirmDelete)
             advanceUntilIdle()
-            assertEquals(generatingRecord(), viewModel.uiState.value.draft)
+            assertEquals(2, viewModel.uiState.value.drafts.size)
             assertEquals(
                 StudioEffect.ShowStoryDeleteFailed,
                 withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
             )
 
             store.discardSucceeds = true
-            viewModel.onIntent(StudioIntent.OpenCardOptions(StudioCard.Draft))
+            viewModel.onIntent(StudioIntent.OpenCardOptions(StudioCard.Draft(GENERATING_DRAFT_ID)))
             advanceUntilIdle()
             viewModel.onIntent(StudioIntent.RequestDelete)
             advanceUntilIdle()
             viewModel.onIntent(StudioIntent.ConfirmDelete)
             advanceUntilIdle()
-            assertNull(viewModel.uiState.value.draft)
+            assertEquals(listOf(draftRecord(selectedIndex = 0)), viewModel.uiState.value.drafts)
             assertNull(viewModel.uiState.value.deleteTarget)
             assertEquals(listOf(pendingRequest("a")), store.currentRequests)
         }
@@ -478,11 +481,17 @@ class StudioViewModelTest {
         }
 }
 
+private const val GENERATING_DRAFT_ID = "draft-generating"
+
 private fun generatingRecord(): CreationProgressSummary =
-    CreationProgressSummary(CreationStage.STORYLINE_GENERATION, CreationResumePoint.StorylineStep)
+    CreationProgressSummary(GENERATING_DRAFT_ID, CreationStage.STORYLINE_GENERATION, CreationResumePoint.StorylineStep)
 
 private fun draftRecord(selectedIndex: Int): CreationProgressSummary =
-    CreationProgressSummary(CreationStage.STORY_DRAFT, CreationResumePoint.AdditionalInfoStep(selectedIndex))
+    CreationProgressSummary(
+        "draft-$selectedIndex",
+        CreationStage.STORY_DRAFT,
+        CreationResumePoint.AdditionalInfoStep(selectedIndex),
+    )
 
 private fun pendingRequest(id: String): CompletionRequestSummary =
     CompletionRequestSummary(requestId = id, submittedAt = 1L, status = CompletionRequestStatus.PENDING)

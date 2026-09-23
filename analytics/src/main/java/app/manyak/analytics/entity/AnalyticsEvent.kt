@@ -153,12 +153,6 @@ sealed class AnalyticsEvent(
         val step: CreateStep,
     ) : AnalyticsEvent("client_storyCreate_draftSaved", mapOf("step" to step.draftName))
 
-    data object ResumeDialogShown : AnalyticsEvent("client_storyCreate_resumeDialog_shown")
-
-    data object ResumeDialogContinued : AnalyticsEvent("client_storyCreate_resumeDialog_continued")
-
-    data object ResumeDialogDiscarded : AnalyticsEvent("client_storyCreate_resumeDialog_discarded")
-
     data class ContinueBannerShown(
         val stage: PendingCreationStage,
     ) : AnalyticsEvent("client_storyCreate_continueBanner_shown", mapOf("stage" to stage.name))

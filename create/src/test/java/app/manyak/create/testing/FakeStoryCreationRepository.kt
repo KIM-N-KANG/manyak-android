@@ -6,6 +6,7 @@ import app.manyak.create.domain.StoryCreationRepository
 import app.manyak.create.entity.CompletedStory
 import app.manyak.create.entity.CreationRequestSnapshot
 import app.manyak.create.entity.PendingStoryCreation
+import app.manyak.create.entity.StoredCreationDraft
 import app.manyak.create.entity.StoryCharacterInput
 import app.manyak.create.entity.StoryCompletionCommand
 import app.manyak.create.entity.StoryTag
@@ -109,33 +110,47 @@ internal open class FakeStoryCreationRepository(
     }
 }
 
-/** 진행 레코드 단일 슬롯의 인메모리 구현. 기록 이력으로 영속 시점을 검증한다. */
+/** 퍼널 테스트가 맡기는 초안 ID. 단일 초안 시나리오의 [FakePendingStoryCreationStore.current] 가 이 행이다. */
+internal const val TEST_DRAFT_ID = "draft-test"
+
+/** 편집 초안의 인메모리 구현. 기록 이력으로 영속 시점을 검증한다. [initial] 은 [TEST_DRAFT_ID] 초안이다. */
 internal class FakePendingStoryCreationStore(
     initial: PendingStoryCreation? = null,
     var writeSucceeds: Boolean = true,
     var clearSucceeds: Boolean = true,
 ) : PendingStoryCreationStore {
-    private val state = MutableStateFlow(initial)
+    private val state =
+        MutableStateFlow(
+            initial?.let { listOf(StoredCreationDraft(TEST_DRAFT_ID, createdAt = null, record = it)) }.orEmpty(),
+        )
 
-    override val record: Flow<PendingStoryCreation?> = state
+    override val drafts: Flow<List<StoredCreationDraft>> = state
 
-    val current: PendingStoryCreation? get() = state.value
+    val current: PendingStoryCreation? get() = record(TEST_DRAFT_ID)
+    val all: List<StoredCreationDraft> get() = state.value
     val writes = mutableListOf<PendingStoryCreation>()
+
+    fun record(draftId: String): PendingStoryCreation? = state.value.firstOrNull { it.draftId == draftId }?.record
 
     override suspend fun claimUnowned() = Unit
 
-    override suspend fun read(): PendingStoryCreation? = state.value
+    override suspend fun read(draftId: String): PendingStoryCreation? = record(draftId)
 
-    override suspend fun write(record: PendingStoryCreation): Boolean {
+    override suspend fun write(
+        draftId: String,
+        record: PendingStoryCreation,
+    ): Boolean {
         if (!writeSucceeds) return false
         writes += record
-        state.value = record
+        val existing = state.value.firstOrNull { it.draftId == draftId }
+        val createdAt = if (existing == null) writes.size.toLong() else existing.createdAt
+        state.value = state.value.filterNot { it.draftId == draftId } + StoredCreationDraft(draftId, createdAt, record)
         return true
     }
 
-    override suspend fun clear(): Boolean {
+    override suspend fun clear(draftId: String): Boolean {
         if (!clearSucceeds) return false
-        state.value = null
+        state.value = state.value.filterNot { it.draftId == draftId }
         return true
     }
 }

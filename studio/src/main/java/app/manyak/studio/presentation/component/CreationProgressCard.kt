@@ -19,6 +19,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,13 +32,20 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import app.manyak.common.entity.story.CreationResumePoint
+import app.manyak.common.entity.story.CreationStage
 import app.manyak.designsystem.component.ImageGenerationLoading
 import app.manyak.designsystem.component.ManyakMoreButton
+import app.manyak.designsystem.component.MetaChip
 import app.manyak.designsystem.component.STORY_THUMBNAIL_ASPECT_RATIO
 import app.manyak.designsystem.component.moreButtonTitleAlignment
 import app.manyak.designsystem.component.rememberTextShimmerBrush
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.designsystem.theme.insetForBorder
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 import app.manyak.designsystem.R as DesignsystemR
 import app.manyak.studio.R as StudioR
 
@@ -45,11 +53,15 @@ import app.manyak.studio.R as StudioR
  * 초안·완성 요청 카드. 내 스토리 카드와 같은 가로 행이고 표지 폭·행 여백·정보 배치를 그대로 따라
  * 목록에서 한 종류로 읽힌다. 실제 스토리가 없으므로 [MyStoryCard] 를 가짜 요약으로 재사용하지 않고
  * 상태별로 필요한 줄만 그린다.
+ *
+ * [savedAt] 은 처음 임시 저장한 시각이다. 내 스토리 카드의 제작일 줄 자리에 두어 버튼이 있으면 그 위,
+ * 없으면 글 영역 맨 아래에 온다. 여러 초안 이전에 저장한 카드는 시각이 없어 줄을 두지 않는다.
  */
 @Composable
 internal fun CreationProgressCard(
     kind: CreationProgressCardKind,
     modifier: Modifier = Modifier,
+    savedAt: Long? = null,
     onPrimaryAction: (() -> Unit)? = null,
     onOptionsClick: (() -> Unit)? = null,
     onClick: (() -> Unit)? = null,
@@ -81,13 +93,17 @@ internal fun CreationProgressCard(
                     color = ManyakTheme.colors.textSubtle,
                 )
             }
-            val actionRes = kind.primaryActionRes()
-            if (actionRes != null && onPrimaryAction != null) {
-                ProgressActionButton(
-                    label = stringResource(actionRes),
-                    onClick = onPrimaryAction,
+            val actionRes = kind.primaryActionRes()?.takeIf { onPrimaryAction != null }
+            if (savedAt != null || actionRes != null) {
+                Column(
                     modifier = Modifier.padding(top = ManyakTheme.spacing.inline),
-                )
+                    verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+                ) {
+                    savedAt?.let { SavedAtRow(savedAt = it) }
+                    if (actionRes != null && onPrimaryAction != null) {
+                        ProgressActionButton(label = stringResource(actionRes), onClick = onPrimaryAction)
+                    }
+                }
             }
         }
     }
@@ -95,8 +111,11 @@ internal fun CreationProgressCard(
 
 /** 진행 카드가 그리는 상태. 문구·표지·버튼·옵션이 상태마다 갈린다. */
 sealed interface CreationProgressCardKind {
-    /** 편집 중 초안 — 이어서 만들기와 삭제만 있다. */
-    data object Draft : CreationProgressCardKind
+    /** 편집 중 초안 — 이어서 만들기와 삭제만 있다. 설명은 초안이 멈춘 단계를 알린다. */
+    data class Draft(
+        val stage: CreationStage,
+        val resumePoint: CreationResumePoint,
+    ) : CreationProgressCardKind
 
     /** 완성 중 — 이미지 생성 로딩만 있고 아무 동작도 없다. */
     data object Completing : CreationProgressCardKind
@@ -179,6 +198,31 @@ private fun ProgressTitleRow(
     }
 }
 
+/** 처음 임시 저장한 시각. 내 스토리 카드의 제작일 줄과 같은 칩으로 오른쪽 끝에 붙는다. */
+@Composable
+private fun SavedAtRow(
+    savedAt: Long,
+    modifier: Modifier = Modifier,
+) {
+    val text = remember(savedAt) { savedAt.toSavedAtText() }
+    Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+        MetaChip(
+            iconRes = DesignsystemR.drawable.ic_calendar,
+            text = text,
+            description = stringResource(StudioR.string.studio_progress_saved_at_description, text),
+        )
+    }
+}
+
+/**
+ * 기기에 기록한 시각을 KST `yyyy-MM-dd HH:mm` 로 옮긴다. 내 스토리 제작일처럼 기기 시간대가 아니라
+ * KST 로 고정해, 같은 초안을 웹에서 보든 해외에서 보든 같은 시각이 찍힌다.
+ */
+internal fun Long.toSavedAtText(): String =
+    SimpleDateFormat(SAVED_AT_PATTERN, Locale.US)
+        .apply { timeZone = TimeZone.getTimeZone(DISPLAY_TIME_ZONE) }
+        .format(Date(this))
+
 /**
  * 기존 지표 줄 자리의 주 버튼. 보이는 높이는 40dp 로 카드 안에서 낮게 앉히되, 눌리는 영역은
  * 버튼이 기본으로 확보하는 최소 48dp 그대로다.
@@ -206,7 +250,7 @@ private fun ProgressActionButton(
 
 private fun CreationProgressCardKind.titleRes(): Int =
     when (this) {
-        CreationProgressCardKind.Draft -> StudioR.string.studio_progress_draft_title
+        is CreationProgressCardKind.Draft -> StudioR.string.studio_progress_draft_title
         CreationProgressCardKind.Completing -> StudioR.string.studio_progress_completing_title
         is CreationProgressCardKind.Completed -> StudioR.string.studio_progress_completed_title
         CreationProgressCardKind.Failed -> StudioR.string.studio_progress_failed_title
@@ -217,12 +261,23 @@ private fun CreationProgressCardKind.descriptionRes(): Int =
         CreationProgressCardKind.Completing -> StudioR.string.studio_progress_completing_description
         is CreationProgressCardKind.Completed -> StudioR.string.studio_progress_completed_description
         CreationProgressCardKind.Failed -> StudioR.string.studio_progress_failed_description
-        CreationProgressCardKind.Draft -> StudioR.string.studio_progress_draft_description
+        // 초안이 멈춘 단계를 알린다. 스토리라인 생성은 서버에서 실제로 도는 중이라 현재형이다.
+        is CreationProgressCardKind.Draft ->
+            when (stage) {
+                CreationStage.KEYWORD_DRAFT -> StudioR.string.studio_progress_draft_description_keyword
+                CreationStage.STORYLINE_GENERATION -> StudioR.string.studio_progress_draft_description_generating
+                CreationStage.STORY_DRAFT ->
+                    if (resumePoint is CreationResumePoint.AdditionalInfoStep) {
+                        StudioR.string.studio_progress_draft_description_additional_info
+                    } else {
+                        StudioR.string.studio_progress_draft_description_storyline
+                    }
+            }
     }
 
 private fun CreationProgressCardKind.primaryActionRes(): Int? =
     when (this) {
-        CreationProgressCardKind.Draft -> StudioR.string.studio_progress_resume
+        is CreationProgressCardKind.Draft -> StudioR.string.studio_progress_resume
         CreationProgressCardKind.Failed -> StudioR.string.studio_progress_retry
         CreationProgressCardKind.Completing, is CreationProgressCardKind.Completed -> null
     }
@@ -239,15 +294,31 @@ private val SymbolSize = 32.dp
 
 private const val TITLE_MAX_LINES = 2
 
+private const val SAVED_AT_PATTERN = "yyyy-MM-dd HH:mm"
+
+private const val DISPLAY_TIME_ZONE = "Asia/Seoul"
+
 @Preview(showBackground = true, name = "제작 · 진행 카드")
 @Composable
 private fun CreationProgressCardPreviews() {
     ManyakTheme {
         Column {
-            CreationProgressCard(kind = CreationProgressCardKind.Draft, onPrimaryAction = {}, onOptionsClick = {})
-            CreationProgressCard(kind = CreationProgressCardKind.Completing)
+            CreationProgressCard(
+                kind =
+                    CreationProgressCardKind.Draft(
+                        CreationStage.STORY_DRAFT,
+                        CreationResumePoint.AdditionalInfoStep(0),
+                    ),
+                savedAt = PREVIEW_SAVED_AT,
+                onPrimaryAction = {},
+                onOptionsClick = {},
+            )
+            CreationProgressCard(kind = CreationProgressCardKind.Completing, savedAt = PREVIEW_SAVED_AT)
             CreationProgressCard(kind = CreationProgressCardKind.Completed("잿빛 왕관"), onClick = {})
             CreationProgressCard(kind = CreationProgressCardKind.Failed, onPrimaryAction = {}, onOptionsClick = {})
         }
     }
 }
+
+/** 2026-09-23 14:05 KST. */
+private const val PREVIEW_SAVED_AT = 1_790_139_900_000L

@@ -13,10 +13,15 @@ internal class FakeStoryCompletionSubmitter(
     var submitSucceeds: Boolean = true,
 ) : StoryCompletionSubmitter {
     val submitted = mutableListOf<StoryCompletionRequest>()
+    val submittedDraftIds = mutableListOf<String>()
 
-    override suspend fun submit(request: StoryCompletionRequest): Boolean {
+    override suspend fun submit(
+        request: StoryCompletionRequest,
+        draftId: String,
+    ): Boolean {
         if (!submitSucceeds) return false
         submitted += request
+        submittedDraftIds += draftId
         return true
     }
 }
@@ -37,9 +42,12 @@ internal class FakeStoryCompletionRequestStore(
 
     override suspend fun readAll(): List<StoryCompletionRequest> = state.value
 
-    override suspend fun submit(request: StoryCompletionRequest): Boolean {
+    override suspend fun submit(
+        request: StoryCompletionRequest,
+        draftId: String,
+    ): Boolean {
         if (!submitSucceeds) return false
-        draftStore?.clear()
+        draftStore?.clear(draftId)
         state.value = state.value.filterNot { it.requestId == request.requestId } + request
         return true
     }

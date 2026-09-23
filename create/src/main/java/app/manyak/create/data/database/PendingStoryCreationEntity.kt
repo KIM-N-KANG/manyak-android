@@ -8,20 +8,22 @@ import app.manyak.create.entity.KeywordCharacterSnapshot
 import app.manyak.create.entity.KeywordCustomTagSnapshot
 import app.manyak.create.entity.KeywordDraftSnapshot
 import app.manyak.create.entity.PendingStoryCreation
+import app.manyak.create.entity.StoredCreationDraft
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 /**
- * 간편 제작 편집 슬롯의 단일 행.
+ * 간편 제작 편집 초안 한 행.
  *
- * 슬롯이 하나라 [id] 는 항상 [SINGLE_ROW_ID] 이고, 새 레코드는 같은 행을 덮어쓴다. 중첩 구조는
- * 조인할 대상이 없어 필드별 JSON 문자열로 담는다. 스테이지에 맞는 페이로드가 없거나 JSON 을
- * 해석할 수 없으면 없는 것으로 취급하되 행은 지우지 않는다. 이전 버전의 `STORY_COMPLETION` 행은
- * 업그레이드 마이그레이션이 완성 요청 테이블로 옮기며, 옮기지 못한 행만 여기 남아 무시된다.
+ * 퍼널 세션마다 [draftId] 로 한 행을 가진다 — 키워드 초안 → 생성 요청 → 생성 결과로 단계가 바뀌어도
+ * 같은 행을 덮어쓰고, 새 제작은 새 행을 만든다. 중첩 구조는 조인할 대상이 없어 필드별 JSON 문자열로
+ * 담는다. 스테이지에 맞는 페이로드가 없거나 JSON 을 해석할 수 없으면 없는 것으로 취급하되 행은 지우지
+ * 않는다. 이전 버전의 `STORY_COMPLETION` 행은 업그레이드 마이그레이션이 완성 요청 테이블로 옮기며,
+ * 옮기지 못한 행만 여기 남아 무시된다.
  */
 @Entity(tableName = "pending_story_creation")
 data class PendingStoryCreationEntity(
-    @PrimaryKey val id: Int = SINGLE_ROW_ID,
+    @PrimaryKey val draftId: String,
     val stage: String,
     val generationCommand: String? = null,
     val completionCommand: String? = null,
@@ -30,9 +32,10 @@ data class PendingStoryCreationEntity(
     val keywordSnapshot: String? = null,
     /** 행을 만든 회원의 공개 ID. 로그아웃해도 지우지 않고 같은 회원이 돌아올 때만 보이게 한다. 빈 값은 소유자를 모르는 이전 버전 행이다. */
     @ColumnInfo(defaultValue = "") val ownerId: String = UNOWNED,
+    /** 처음 임시 저장한 시각(epoch millis). 행이 생길 때 한 번 정하고, 여러 초안 이전에 저장한 행은 null 이다. */
+    val createdAt: Long? = null,
 ) {
     companion object {
-        const val SINGLE_ROW_ID: Int = 0
         const val UNOWNED: String = ""
     }
 }
@@ -45,19 +48,25 @@ internal inline fun <reified T> decodeOrNull(raw: String?): T? =
     raw?.let { runCatching { json.decodeFromString<T>(it) }.getOrNull() }
 
 internal fun PendingStoryCreation.toEntity(
+    draftId: String,
     ownerId: String = PendingStoryCreationEntity.UNOWNED,
+    createdAt: Long? = null,
 ): PendingStoryCreationEntity =
     when (this) {
         is PendingStoryCreation.GeneratingStorylines ->
             PendingStoryCreationEntity(
+                draftId = draftId,
                 ownerId = ownerId,
+                createdAt = createdAt,
                 stage = STAGE_STORYLINE_GENERATION,
                 generationCommand = encode(command.toDto()),
             )
 
         is PendingStoryCreation.Draft ->
             PendingStoryCreationEntity(
+                draftId = draftId,
                 ownerId = ownerId,
+                createdAt = createdAt,
                 stage = STAGE_STORY_DRAFT,
                 generationCommand = generationCommand?.let { encode(it.toDto()) },
                 completionCommand = lastCompletionCommand?.let { encode(it.toDto()) },
@@ -67,7 +76,9 @@ internal fun PendingStoryCreation.toEntity(
 
         is PendingStoryCreation.KeywordDraft ->
             PendingStoryCreationEntity(
+                draftId = draftId,
                 ownerId = ownerId,
+                createdAt = createdAt,
                 stage = STAGE_KEYWORD_DRAFT,
                 keywordSnapshot = encode(snapshot.toDto()),
             )
@@ -95,6 +106,9 @@ internal fun PendingStoryCreationEntity.toDomainOrNull(): PendingStoryCreation? 
 
         else -> null
     }
+
+internal fun PendingStoryCreationEntity.toStoredDraftOrNull(): StoredCreationDraft? =
+    toDomainOrNull()?.let { record -> StoredCreationDraft(draftId = draftId, createdAt = createdAt, record = record) }
 
 @Serializable
 private data class KeywordSnapshotDto(

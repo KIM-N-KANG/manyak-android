@@ -57,10 +57,14 @@ import app.manyak.create.R as CreateR
  */
 @Composable
 fun CreateKeywordScreen(
+    draftId: String,
     onLeaveFunnel: () -> Unit,
     onOpenStorylineStep: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: CreateKeywordViewModel = hiltViewModel(),
+    viewModel: CreateKeywordViewModel =
+        hiltViewModel<CreateKeywordViewModel, CreateKeywordViewModel.Factory>(
+            creationCallback = { factory -> factory.create(draftId) },
+        ),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val currentOnOpenStorylineStep by rememberUpdatedState(onOpenStorylineStep)
