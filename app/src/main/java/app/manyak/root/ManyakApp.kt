@@ -72,6 +72,7 @@ import app.manyak.my.licenses.presentation.OpenSourceLicenseScreen
 import app.manyak.my.withdrawal.presentation.WithdrawalScreen
 import app.manyak.notification.settings.presentation.NotificationSettingsScreen
 import app.manyak.story.detail.presentation.StoryDetailScreen
+import java.util.UUID
 import app.manyak.R as AppR
 import app.manyak.designsystem.R as DesignsystemR
 
@@ -263,9 +264,12 @@ private fun MainNavDisplay(
                         // 채팅 목록에서 이어가기 — 상세에서 시작한 채팅과 같은 목적지를 쌓고,
                         // 뒤로가기는 채팅 탭으로 돌아온다.
                         onOpenChat = { chatId -> backStack.push(ChatRoomRoute(chatId)) },
-                        onCreateStory = { backStack.push(CreateKeywordRoute) },
+                        // 새 제작은 새 초안이다 — 진입할 때 ID 를 정해 라우트에 실어야 프로세스 재시작 뒤에도 같은 초안을 잇는다.
+                        onCreateStory = { backStack.push(CreateKeywordRoute(UUID.randomUUID().toString())) },
                         // 재개·복구 진입 — 레코드가 가리키는 단계까지 체인을 쌓는다.
-                        onResumeCreation = { resumePoint -> backStack.addCreationResumeChain(resumePoint) },
+                        onResumeCreation = { draftId, resumePoint ->
+                            backStack.addCreationResumeChain(draftId, resumePoint)
+                        },
                         // 마이 하위 목적지들 — 셸 위에 쌓이는 전체 화면이고 뒤로가기는 마이 탭으로 돌아온다.
                         onOpenInvite = { backStack.push(MyInviteRoute) },
                         onOpenServiceInfo = { backStack.push(LegalRoute(LegalDocument.ABOUT)) },
@@ -346,13 +350,16 @@ private fun EntryProviderScope<NavKey>.myDestinationEntries(backStack: MutableLi
     }
 }
 
-private fun MutableList<NavKey>.addCreationResumeChain(resumePoint: CreationResumePoint) {
+private fun MutableList<NavKey>.addCreationResumeChain(
+    draftId: String,
+    resumePoint: CreationResumePoint,
+) {
     when (resumePoint) {
-        CreationResumePoint.KeywordStep -> push(CreateKeywordRoute)
-        CreationResumePoint.StorylineStep -> push(CreateStorylineRoute)
+        CreationResumePoint.KeywordStep -> push(CreateKeywordRoute(draftId))
+        CreationResumePoint.StorylineStep -> push(CreateStorylineRoute(draftId))
         is CreationResumePoint.AdditionalInfoStep -> {
-            push(CreateStorylineRoute)
-            push(CreateAdditionalInfoRoute(resumePoint.storylineIndex))
+            push(CreateStorylineRoute(draftId))
+            push(CreateAdditionalInfoRoute(draftId, resumePoint.storylineIndex))
         }
     }
 }
@@ -365,27 +372,30 @@ private fun EntryProviderScope<NavKey>.creationFunnelEntries(
     metadata: Map<String, Any>,
     onSelectStudioTab: () -> Unit,
 ) {
-    entry<CreateKeywordRoute>(metadata = metadata) {
+    entry<CreateKeywordRoute>(metadata = metadata) { route ->
         CreateKeywordScreen(
+            draftId = route.draftId,
             onLeaveFunnel = { backStack.pop() },
             // 스토리라인 단계는 키워드 목적지를 대체한다 — 그 화면의 뒤로가기가
             // 홈 복귀(퍼널 이탈)가 되도록 한다.
             onOpenStorylineStep = {
                 backStack.pop()
-                backStack.push(CreateStorylineRoute)
+                backStack.push(CreateStorylineRoute(route.draftId))
             },
         )
     }
-    entry<CreateStorylineRoute>(metadata = metadata) {
+    entry<CreateStorylineRoute>(metadata = metadata) { route ->
         CreateStorylineScreen(
+            draftId = route.draftId,
             onLeaveFunnel = { backStack.pop() },
             onOpenAdditionalInfoStep = { storylineIndex ->
-                backStack.push(CreateAdditionalInfoRoute(storylineIndex))
+                backStack.push(CreateAdditionalInfoRoute(route.draftId, storylineIndex))
             },
         )
     }
     entry<CreateAdditionalInfoRoute>(metadata = metadata) { route ->
         CreateAdditionalInfoScreen(
+            draftId = route.draftId,
             storylineIndex = route.storylineIndex,
             // 이탈은 퍼널 단계를 전부 걷어내고 홈으로 돌아간다. 스토리라인 단계만 pop 하면
             // 홈으로 나가려던 조작이 한 단계 뒤로 가기로 보인다.

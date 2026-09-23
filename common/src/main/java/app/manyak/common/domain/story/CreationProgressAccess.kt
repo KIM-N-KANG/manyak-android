@@ -4,16 +4,16 @@ import app.manyak.common.entity.story.CompletionRequestSummary
 import app.manyak.common.entity.story.CreationProgressSummary
 import kotlinx.coroutines.flow.Flow
 
-/** 제작 기능이 제작 탭에 여는 최소 계약. 편집 초안 하나와 완성 요청 여러 개를 따로 전달한다. */
+/** 제작 기능이 제작 탭에 여는 최소 계약. 편집 초안 여러 개와 완성 요청 여러 개를 따로 전달한다. */
 interface CreationProgressAccess {
-    /** 편집 슬롯의 초안. 없으면 null. */
-    val progress: Flow<CreationProgressSummary?>
+    /** 편집 초안. 처음 임시 저장한 시각 최신순이고, 시각이 없는 이전 초안은 맨 뒤다. */
+    val drafts: Flow<List<CreationProgressSummary>>
 
-    /** 제출 최신순 완성 요청. */
+    /** 완성 요청. 처음 임시 저장한 시각 최신순이고, 시각이 없는 이전 요청은 제출 최신순으로 맨 뒤다. */
     val completionRequests: Flow<List<CompletionRequestSummary>>
 
-    /** 편집 초안만 폐기한다. 완성 요청은 건드리지 않는다. */
-    suspend fun discard(): Boolean
+    /** 편집 초안 하나만 폐기한다. 다른 초안과 완성 요청은 건드리지 않는다. */
+    suspend fun discard(draftId: String): Boolean
 
     /** 미확정 요청의 서버 상태를 조회하고 미접수 요청을 재전송한다. 요청별 실패는 서로 격리된다. */
     suspend fun refreshCompletionRequests()

@@ -11,10 +11,12 @@ import app.manyak.create.presentation.state.FunnelExitWarning
 import app.manyak.create.presentation.state.StorylineGenerationState
 import app.manyak.create.presentation.state.StorylineGenerationStore
 import app.manyak.create.presentation.state.resultOrNull
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import java.util.UUID
-import javax.inject.Inject
 
 /** [id]는 서버 ID가 아닌 화면 로컬 식별자다. 입력 삭제·변경의 대상 지정에 쓴다. */
 data class AdditionalInfoInput(
@@ -156,10 +158,11 @@ sealed interface CreateAdditionalInfoEffect {
     data object NavigateBackToStoryline : CreateAdditionalInfoEffect
 }
 
-@HiltViewModel
+@HiltViewModel(assistedFactory = CreateAdditionalInfoViewModel.Factory::class)
 class CreateAdditionalInfoViewModel
-    @Inject
+    @AssistedInject
     constructor(
+        @Assisted draftId: String,
         private val storylineGenerationStore: StorylineGenerationStore,
         private val analytics: Analytics,
     ) : MviViewModel<
@@ -168,7 +171,7 @@ class CreateAdditionalInfoViewModel
             CreateAdditionalInfoEvent,
             CreateAdditionalInfoEffect,
         >(
-            storylineGenerationStore.toInitialAdditionalInfoState(),
+            storylineGenerationStore.bind(draftId).toInitialAdditionalInfoState(),
         ) {
         /**
          * 이탈·초기화·제출 처리 중. 이 전이는 스토어의 진행 미러를 비우는데, 그 사이 화면 상태를
@@ -351,6 +354,11 @@ class CreateAdditionalInfoViewModel
                 dispatchEvent(CreateAdditionalInfoEvent.SubmissionFailed)
                 dispatchEffect(CreateAdditionalInfoEffect.ShowSubmissionFailure)
             }
+        }
+
+        @AssistedFactory
+        interface Factory {
+            fun create(draftId: String): CreateAdditionalInfoViewModel
         }
 
         override fun reduce(

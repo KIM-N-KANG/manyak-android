@@ -50,16 +50,22 @@ data class StoryDetailRoute(
     val storyId: String,
 ) : NavKey
 
-/** 퍼널 단계는 각각 목적지이며, 이 화면은 셸 없이 [MainTabsRoute] 위에 쌓인다. */
-@Serializable
-data object CreateKeywordRoute : NavKey
-
 /**
- * 스토리라인 선택 단계. [CreateKeywordRoute] 위에 쌓여 뒤로가기가 곧 키워드 단계 복귀이고,
- * 백스택이 살아 있어 키워드 입력은 그대로 유지된다.
+ * 퍼널 단계는 각각 목적지이며, 이 화면은 셸 없이 [MainTabsRoute] 위에 쌓인다.
+ *
+ * 세 단계 모두 [draftId] 를 싣는다 — 초안이 여러 개라 프로세스 재시작 뒤 어느 초안을 복원할지
+ * 라우트가 알아야 한다. 새 제작은 진입할 때 새 ID 를, 초안 카드는 그 초안의 ID 를 싣는다.
  */
 @Serializable
-data object CreateStorylineRoute : NavKey
+data class CreateKeywordRoute(
+    val draftId: String,
+) : NavKey
+
+/** 스토리라인 선택 단계. 키워드 목적지를 대체해 뒤로가기가 곧 퍼널 이탈이다. */
+@Serializable
+data class CreateStorylineRoute(
+    val draftId: String,
+) : NavKey
 
 /**
  * 추가 정보 단계. 라우트에 식별자만 싣는 규칙에 따라 선택한 스토리라인의 순번만 담고,
@@ -67,6 +73,7 @@ data object CreateStorylineRoute : NavKey
  */
 @Serializable
 data class CreateAdditionalInfoRoute(
+    val draftId: String,
     val storylineIndex: Int,
 ) : NavKey
 

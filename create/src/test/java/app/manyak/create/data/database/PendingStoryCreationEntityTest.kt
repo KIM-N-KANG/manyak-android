@@ -24,7 +24,7 @@ class PendingStoryCreationEntityTest {
     fun `생성 진행 레코드는 왕복해도 같다`() {
         val record = PendingStoryCreation.GeneratingStorylines(command = generationCommand())
 
-        assertEquals(record, record.toEntity().toDomainOrNull())
+        assertEquals(record, record.toEntity("draft-1").toDomainOrNull())
     }
 
     @Test
@@ -37,22 +37,23 @@ class PendingStoryCreationEntityTest {
                 lastCompletionCommand = completionCommand(),
             )
 
-        assertEquals(record, record.toEntity().toDomainOrNull())
+        assertEquals(record, record.toEntity("draft-1").toDomainOrNull())
     }
 
     @Test
     fun `키워드 임시 저장본은 선택 해제된 커스텀 키워드까지 왕복한다`() {
         val record = PendingStoryCreation.KeywordDraft(snapshot = keywordSnapshot())
 
-        assertEquals(record, record.toEntity().toDomainOrNull())
+        assertEquals(record, record.toEntity("draft-1").toDomainOrNull())
     }
 
     @Test
-    fun `모든 레코드는 단일 행 식별자를 쓴다`() {
-        assertEquals(
-            PendingStoryCreationEntity.SINGLE_ROW_ID,
-            PendingStoryCreation.KeywordDraft(keywordSnapshot()).toEntity().id,
-        )
+    fun `레코드는 맡은 초안 ID 와 처음 저장 시각을 행에 싣는다`() {
+        val entity = PendingStoryCreation.KeywordDraft(keywordSnapshot()).toEntity("draft-1", "user-a", createdAt = 7L)
+
+        assertEquals("draft-1", entity.draftId)
+        assertEquals(7L, entity.createdAt)
+        assertEquals(7L, entity.toStoredDraftOrNull()?.createdAt)
     }
 
     @Test
@@ -82,6 +83,7 @@ class PendingStoryCreationEntityTest {
     fun `이전 버전의 완성 행은 요청 테이블로 옮겨진 뒤 무시된다`() {
         val entity =
             PendingStoryCreationEntity(
+                draftId = "legacy-0",
                 stage = STAGE_STORY_COMPLETION,
                 completionCommand = encode(completionCommand().toDto()),
                 generation = encode(generation().toDto()),
@@ -92,21 +94,22 @@ class PendingStoryCreationEntityTest {
 
     @Test
     fun `모르는 스테이지는 없는 것으로 취급한다`() {
-        val entity = PendingStoryCreationEntity(stage = "SOMETHING_ELSE")
+        val entity = PendingStoryCreationEntity(draftId = "draft-1", stage = "SOMETHING_ELSE")
 
         assertNull(entity.toDomainOrNull())
     }
 
     @Test
     fun `필수 페이로드가 빠진 행은 없는 것으로 취급한다`() {
-        val entity = PendingStoryCreationEntity(stage = "STORY_DRAFT", generation = null)
+        val entity = PendingStoryCreationEntity(draftId = "draft-1", stage = "STORY_DRAFT", generation = null)
 
         assertNull(entity.toDomainOrNull())
     }
 
     @Test
     fun `깨진 JSON 은 없는 것으로 취급한다`() {
-        val entity = PendingStoryCreationEntity(stage = "KEYWORD_DRAFT", keywordSnapshot = "{ not json")
+        val entity =
+            PendingStoryCreationEntity(draftId = "draft-1", stage = "KEYWORD_DRAFT", keywordSnapshot = "{ not json")
 
         assertNull(entity.toDomainOrNull())
     }

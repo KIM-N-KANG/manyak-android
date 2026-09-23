@@ -37,8 +37,10 @@ sealed interface StudioCard {
         val story: StorySummary,
     ) : StudioCard
 
-    /** 편집 중 초안. 삭제는 로컬 초안만 지우고 서버를 부르지 않는다. */
-    data object Draft : StudioCard
+    /** 편집 중 초안. 삭제는 그 로컬 초안만 지우고 서버를 부르지 않는다. */
+    data class Draft(
+        val draftId: String,
+    ) : StudioCard
 
     /** 완성에 실패한 요청. 삭제는 그 요청 행만 지운다. */
     data class FailedRequest(
@@ -52,12 +54,10 @@ data class StudioUiState(
     val loadFailed: Boolean = false,
     /** 목록을 그린 채로 다시 읽는 중. 골격이 아니라 당김 표시자가 이 상태를 말한다. */
     val isRefreshing: Boolean = false,
-    /** 편집 중 초안. 레코드 존재만 확인하며 서버 조회는 하지 않는다. */
-    val draft: CreationProgressSummary? = null,
-    /** 제출 최신순 완성 요청. 완료된 요청은 목록에 같은 스토리가 실리면 사라진다. */
+    /** 편집 중 초안. 처음 임시 저장 최신순이며 레코드 존재만 확인하고 서버 조회는 하지 않는다. */
+    val drafts: List<CreationProgressSummary> = emptyList(),
+    /** 처음 임시 저장 최신순 완성 요청. 완료된 요청은 목록에 같은 스토리가 실리면 사라진다. */
     val completionRequests: List<CompletionRequestSummary> = emptyList(),
-    /** FAB 등 카드가 아닌 경로로 진입하려는데 초안이 있어 새로 만들기를 묻는 중. */
-    val showResumeChoiceDialog: Boolean = false,
     /** 더보기·길게 누르기로 옵션 시트를 연 카드. null 이면 시트가 없다. */
     val optionsTarget: StudioCard? = null,
     /** 삭제 확인을 묻는 대상. null 이면 다이얼로그가 없다. */
@@ -69,20 +69,17 @@ data class StudioUiState(
     val reportStoryId: String? = null,
 ) {
     /** 서버 목록과 무관하게 화면에 올릴 로컬 카드가 있는지. 있으면 빈 목록·실패 화면 대신 목록을 그린다. */
-    val hasLocalCards: Boolean get() = draft != null || completionRequests.isNotEmpty()
+    val hasLocalCards: Boolean get() = drafts.isNotEmpty() || completionRequests.isNotEmpty()
 }
 
 sealed interface StudioIntent {
-    /** 제작 퍼널 진입 시도(FAB). 초안이 있으면 다이얼로그로 묻는다. */
+    /** 제작 퍼널 진입(FAB). 초안이 있어도 묻지 않고 새 초안으로 시작한다. */
     data object CreateStory : StudioIntent
 
     /** 초안 카드의 "이어서 만들기". */
-    data object ResumeCreation : StudioIntent
-
-    /** 다이얼로그의 "새로 만들기" — 초안만 폐기하고 키워드 단계부터 시작한다. */
-    data object StartNewCreation : StudioIntent
-
-    data object DismissResumeChoiceDialog : StudioIntent
+    data class ResumeCreation(
+        val draftId: String,
+    ) : StudioIntent
 
     /** 화면이 다시 보였다. 떠난 사이 바뀐 목록과 요청 상태를 서버와 맞춘다. */
     data object ScreenShown : StudioIntent
@@ -160,16 +157,12 @@ sealed interface StudioEvent {
 
     data object DeleteFailed : StudioEvent
 
-    data class DraftChanged(
-        val draft: CreationProgressSummary?,
+    data class DraftsChanged(
+        val drafts: List<CreationProgressSummary>,
     ) : StudioEvent
 
     data class CompletionRequestsChanged(
         val requests: List<CompletionRequestSummary>,
-    ) : StudioEvent
-
-    data class ResumeChoiceDialogVisibleChanged(
-        val visible: Boolean,
     ) : StudioEvent
 }
 
@@ -177,8 +170,9 @@ sealed interface StudioEffect {
     /** 새 생성으로 퍼널 진입 — 키워드 단계부터. */
     data object NavigateToCreate : StudioEffect
 
-    /** 재개 진입 — 레코드 단계까지 퍼널 백스택을 쌓는다. */
+    /** 재개 진입 — 그 초안의 레코드 단계까지 퍼널 백스택을 쌓는다. */
     data class NavigateToResume(
+        val draftId: String,
         val resumePoint: CreationResumePoint,
     ) : StudioEffect
 
@@ -194,7 +188,7 @@ sealed interface StudioEffect {
 }
 
 /**
- * 제작 탭. 내가 만든 스토리 목록을 화면이 보일 때마다 조회하고, 편집 초안과 완성 요청을 구독한다.
+ * 제작 탭. 내가 만든 스토리 목록을 화면이 보일 때마다 조회하고, 편집 초안들과 완성 요청을 구독한다.
  * 목록·초안·요청·삭제·신고를 한 화면이 조정하므로 함수 수 상한을 넘긴다 — 나누면 상태 소유가 흩어진다.
  *
  * 목록은 서버가 소유하고 제작 완료로 늘어나므로, 화면을 떠났다 돌아오면 다시 읽어 맞춘다. 이미 그릴
@@ -218,8 +212,8 @@ class StudioViewModel
         private var deleteJob: Job? = null
         private var requestRefreshJob: Job? = null
 
-        /** 초안 카드로 보여 준 레코드 단계. 같은 레코드가 다시 흘러와도 노출을 두 번 세지 않는다. */
-        private var shownDraftStage: PendingCreationStage? = null
+        /** 초안 카드별로 보여 준 레코드 단계. 같은 레코드가 다시 흘러와도 노출을 두 번 세지 않는다. */
+        private val shownDraftStages = mutableMapOf<String, PendingCreationStage>()
 
         /** 완료를 확인하고 목록을 다시 읽은 요청. 목록에 늦게 실려도 한 번만 다시 읽는다. */
         private val reloadedForRequests = mutableSetOf<String>()
@@ -245,13 +239,15 @@ class StudioViewModel
         init {
             analytics.track(AnalyticsEvent.StoryListViewed(StoryListSection.CREATED))
             viewModelScope.launch {
-                creationProgress.progress.collect { draft ->
-                    val stage = draft?.toStage()
-                    if (stage != null && stage != shownDraftStage) {
-                        analytics.track(AnalyticsEvent.ContinueBannerShown(stage))
+                creationProgress.drafts.collect { drafts ->
+                    drafts.forEach { draft ->
+                        val stage = draft.toStage()
+                        if (shownDraftStages.put(draft.draftId, stage) != stage) {
+                            analytics.track(AnalyticsEvent.ContinueBannerShown(stage))
+                        }
                     }
-                    shownDraftStage = stage
-                    dispatchEvent(StudioEvent.DraftChanged(draft))
+                    shownDraftStages.keys.retainAll(drafts.mapTo(mutableSetOf()) { it.draftId })
+                    dispatchEvent(StudioEvent.DraftsChanged(drafts))
                 }
             }
             viewModelScope.launch {
@@ -305,34 +301,14 @@ class StudioViewModel
                 is StudioIntent.Report,
                 -> handleCardIntent(intent, state)
 
-                StudioIntent.CreateStory -> startCreation(state.draft)
+                // 초안은 여러 개를 둘 수 있어 새 제작 전에 묻지 않는다. 이어 만들기는 초안 카드가 맡는다.
+                StudioIntent.CreateStory -> dispatchEffect(StudioEffect.NavigateToCreate)
 
-                StudioIntent.ResumeCreation ->
-                    state.draft?.let { draft ->
-                        // 같은 Intent 가 카드와 재개 다이얼로그 두 곳에서 온다. 열려 있던 쪽이 출처다.
-                        analytics.track(
-                            if (state.showResumeChoiceDialog) {
-                                AnalyticsEvent.ResumeDialogContinued
-                            } else {
-                                AnalyticsEvent.ContinueBannerClicked(
-                                    shownDraftStage ?: PendingCreationStage.STORY_DRAFT,
-                                )
-                            },
-                        )
-                        dispatchEvent(StudioEvent.ResumeChoiceDialogVisibleChanged(visible = false))
-                        dispatchEffect(StudioEffect.NavigateToResume(draft.resumePoint))
+                is StudioIntent.ResumeCreation ->
+                    state.drafts.firstOrNull { it.draftId == intent.draftId }?.let { draft ->
+                        analytics.track(AnalyticsEvent.ContinueBannerClicked(draft.toStage()))
+                        dispatchEffect(StudioEffect.NavigateToResume(draft.draftId, draft.resumePoint))
                     }
-
-                StudioIntent.StartNewCreation -> {
-                    analytics.track(AnalyticsEvent.ResumeDialogDiscarded)
-                    // 초안 폐기가 진입보다 먼저다 — 초안이 남은 채 들어가면 재개로 복원된다. 완성 요청은 남는다.
-                    creationProgress.discard()
-                    dispatchEvent(StudioEvent.ResumeChoiceDialogVisibleChanged(visible = false))
-                    dispatchEffect(StudioEffect.NavigateToCreate)
-                }
-
-                StudioIntent.DismissResumeChoiceDialog ->
-                    dispatchEvent(StudioEvent.ResumeChoiceDialogVisibleChanged(visible = false))
 
                 is StudioIntent.RetryCompletion -> creationProgress.retryCompletionRequest(intent.requestId)
             }
@@ -465,16 +441,6 @@ class StudioViewModel
             }
         }
 
-        /** FAB 등 카드가 아닌 경로의 진입. 초안이 있으면 바로 들어가지 않고 묻는다. 완성 중 요청만 있으면 묻지 않는다. */
-        private suspend fun startCreation(draft: CreationProgressSummary?) {
-            if (draft == null) {
-                dispatchEffect(StudioEffect.NavigateToCreate)
-            } else {
-                analytics.track(AnalyticsEvent.ResumeDialogShown)
-                dispatchEvent(StudioEvent.ResumeChoiceDialogVisibleChanged(visible = true))
-            }
-        }
-
         /** 다이얼로그가 이미 닫힌 뒤 확인이 도착하면 대상이 없다. */
         private fun confirmDelete(target: StudioCard?) {
             if (target != null) delete(target)
@@ -494,7 +460,7 @@ class StudioViewModel
                         is StudioCard.Story -> deleteStory(target.story)
 
                         // 로컬 초안·요청은 서버 삭제 API 를 부르지 않는다. 실패하면 카드와 입력이 그대로 남는다.
-                        StudioCard.Draft -> finishLocalDelete(creationProgress.discard())
+                        is StudioCard.Draft -> finishLocalDelete(creationProgress.discard(target.draftId))
 
                         is StudioCard.FailedRequest ->
                             finishLocalDelete(creationProgress.deleteCompletionRequest(target.requestId))
@@ -560,25 +526,19 @@ class StudioViewModel
                 StudioEvent.DeleteFailed,
                 -> reduceCardEvent(state, event)
 
-                is StudioEvent.DraftChanged ->
+                is StudioEvent.DraftsChanged -> {
+                    // 시트·다이얼로그가 열린 사이 그 초안이 사라졌으면 물을 대상도 없다.
+                    val draftIds = event.drafts.mapTo(mutableSetOf()) { it.draftId }
+
+                    fun StudioCard?.isGone() = this is StudioCard.Draft && draftId !in draftIds
                     state.copy(
-                        draft = event.draft,
-                        // 다이얼로그가 열린 사이 초안이 사라졌으면 물을 것도 없다.
-                        showResumeChoiceDialog = state.showResumeChoiceDialog && event.draft != null,
-                        optionsTarget =
-                            state.optionsTarget.takeUnless {
-                                it == StudioCard.Draft && event.draft == null
-                            },
-                        deleteTarget =
-                            state.deleteTarget.takeUnless {
-                                it == StudioCard.Draft && event.draft == null
-                            },
+                        drafts = event.drafts,
+                        optionsTarget = state.optionsTarget.takeUnless { it.isGone() },
+                        deleteTarget = state.deleteTarget.takeUnless { it.isGone() },
                     )
+                }
 
                 is StudioEvent.CompletionRequestsChanged -> state.copy(completionRequests = event.requests)
-
-                is StudioEvent.ResumeChoiceDialogVisibleChanged ->
-                    state.copy(showResumeChoiceDialog = event.visible)
             }
     }
 

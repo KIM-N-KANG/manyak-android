@@ -68,12 +68,16 @@ import app.manyak.create.R as CreateR
  */
 @Composable
 fun CreateAdditionalInfoScreen(
+    draftId: String,
     storylineIndex: Int,
     onLeaveFunnel: () -> Unit,
     onBackToStoryline: () -> Unit,
     onSubmitted: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: CreateAdditionalInfoViewModel = hiltViewModel(),
+    viewModel: CreateAdditionalInfoViewModel =
+        hiltViewModel<CreateAdditionalInfoViewModel, CreateAdditionalInfoViewModel.Factory>(
+            creationCallback = { factory -> factory.create(draftId) },
+        ),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val draftSave by viewModel.draftSave.collectAsStateWithLifecycle()

@@ -39,7 +39,7 @@ import javax.inject.Singleton
  * 저장소에 닿지 않는다.
  *
  * 같은 requestId 의 전송만 합류시키고 요청끼리는 직렬화하지 않는다 — 완성 POST 는 오래 걸리므로
- * 하나가 도는 동안에도 다른 요청을 낼 수 있어야 한다. 결과는 requestId 행만 갱신하고 편집 슬롯은
+ * 하나가 도는 동안에도 다른 요청을 낼 수 있어야 한다. 결과는 requestId 행만 갱신하고 편집 초안은
  * 건드리지 않는다.
  */
 @Singleton
@@ -60,15 +60,19 @@ class StoryCompletionExecutor
         private val refreshMutex = Mutex()
         private var refreshJob: Job? = null
 
-        override val progress: Flow<CreationProgressSummary?> = draftStore.record.map { it?.toProgressSummary() }
+        override val drafts: Flow<List<CreationProgressSummary>> =
+            draftStore.drafts.map { drafts -> drafts.map { it.toProgressSummary() } }
 
         override val completionRequests: Flow<List<CompletionRequestSummary>> =
             requestStore.requests.map { requests -> requests.map(StoryCompletionRequest::toSummary) }
 
-        override suspend fun discard(): Boolean = draftStore.clear()
+        override suspend fun discard(draftId: String): Boolean = draftStore.clear(draftId)
 
-        override suspend fun submit(request: StoryCompletionRequest): Boolean {
-            if (!requestStore.submit(request)) return false
+        override suspend fun submit(
+            request: StoryCompletionRequest,
+            draftId: String,
+        ): Boolean {
+            if (!requestStore.submit(request, draftId)) return false
             send(request.command)
             return true
         }

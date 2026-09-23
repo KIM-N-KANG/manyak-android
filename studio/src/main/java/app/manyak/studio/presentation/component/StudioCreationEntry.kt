@@ -1,8 +1,5 @@
 package app.manyak.studio.presentation.component
 
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
@@ -12,68 +9,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import app.manyak.designsystem.component.ManyakTextButton
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.designsystem.R as DesignsystemR
 import app.manyak.studio.R as StudioR
-
-/**
- * 초안 카드가 아닌 경로로 진입할 때, 임시 저장본을 버리고 새로 시작할지 묻는다.
- *
- * 이어가는 길은 이 다이얼로그가 아니라 목록의 초안 카드가 맡는다 — 여기서는 임시 저장본을 버리는
- * 것만 확인받고, 닫으면 아무 일도 일어나지 않는다. 완성 중 요청은 이 확인과 무관하게 남는다.
- */
-@Composable
-internal fun ResumeChoiceDialog(
-    onStartNew: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = ManyakTheme.colors.surfaceRaised,
-        shape = ManyakTheme.shapes.overlay,
-        title = {
-            Text(
-                text = stringResource(StudioR.string.studio_pending_dialog_title),
-                style = ManyakTheme.typography.titleMedium,
-                color = ManyakTheme.colors.text,
-            )
-        },
-        text = {
-            Text(
-                text = stringResource(StudioR.string.studio_pending_dialog_description),
-                style = ManyakTheme.typography.bodyMedium,
-                color = ManyakTheme.colors.textSubtle,
-            )
-        },
-        confirmButton = {
-            Button(
-                onClick = onStartNew,
-                shape = ManyakTheme.shapes.control,
-                // 임시 저장본을 버리는 쪽이라 다른 경고 다이얼로그와 같은 위험 색을 쓴다.
-                colors =
-                    ButtonDefaults.buttonColors(
-                        containerColor = ManyakTheme.colors.backgroundDangerSubtle,
-                        contentColor = ManyakTheme.colors.textDanger,
-                    ),
-            ) {
-                Text(
-                    text = stringResource(StudioR.string.studio_pending_dialog_start_new),
-                    style = ManyakTheme.typography.labelLarge,
-                )
-            }
-        },
-        dismissButton = {
-            ManyakTextButton(onClick = onDismiss) {
-                Text(
-                    text = stringResource(StudioR.string.studio_pending_dialog_close),
-                    style = ManyakTheme.typography.labelLarge,
-                    color = ManyakTheme.colors.textSubtle,
-                )
-            }
-        },
-    )
-}
 
 /**
  * 제작 퍼널 진입 FAB. 목록 맨 위에서는 웹처럼 라벨을 펼치고, 스크롤을 내리면 아이콘만 남긴다 —

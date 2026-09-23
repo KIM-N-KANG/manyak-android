@@ -16,7 +16,7 @@ import app.manyak.designsystem.R as DesignsystemR
 import app.manyak.report.R as ReportR
 import app.manyak.studio.R as StudioR
 
-/** 제작 탭이 본문 위에 띄우는 것들 — 카드 옵션 시트, 확인 다이얼로그 둘, 신고 시트. 본문 배치와 섞이지 않게 따로 둔다. */
+/** 제작 탭이 본문 위에 띄우는 것들 — 카드 옵션 시트, 삭제 확인 다이얼로그, 신고 시트. 본문 배치와 섞이지 않게 따로 둔다. */
 @Composable
 internal fun StudioDialogs(
     state: StudioUiState,
@@ -59,13 +59,6 @@ internal fun StudioDialogs(
             onAction = { action -> onIntent(StudioIntent.Report(action)) },
         )
     }
-
-    if (state.showResumeChoiceDialog) {
-        ResumeChoiceDialog(
-            onStartNew = { onIntent(StudioIntent.StartNewCreation) },
-            onDismiss = { onIntent(StudioIntent.DismissResumeChoiceDialog) },
-        )
-    }
 }
 
 /** 스토리 카드는 신고·삭제, 초안·실패 요청 카드는 삭제만 있다. 완성 중 카드는 옵션 자체가 없다. */
@@ -89,7 +82,7 @@ private fun CardOptionsSheet(
                 title =
                     when (card) {
                         is StudioCard.Story -> card.story.title
-                        StudioCard.Draft -> stringResource(StudioR.string.studio_progress_draft_title)
+                        is StudioCard.Draft -> stringResource(StudioR.string.studio_progress_draft_title)
                         is StudioCard.FailedRequest -> stringResource(StudioR.string.studio_progress_failed_title)
                     },
             )

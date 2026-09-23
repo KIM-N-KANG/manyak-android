@@ -8,16 +8,16 @@ import kotlinx.coroutines.flow.MutableStateFlow
 
 /** 초안·요청 흐름의 인메모리 구현. 호출 기록으로 제작 탭의 갱신·삭제 시점을 검증한다. */
 internal class FakeCreationProgressAccess(
-    draft: CreationProgressSummary? = null,
+    drafts: List<CreationProgressSummary> = emptyList(),
     requests: List<CompletionRequestSummary> = emptyList(),
 ) : CreationProgressAccess {
-    private val draftState = MutableStateFlow(draft)
+    private val draftState = MutableStateFlow(drafts)
     private val requestState = MutableStateFlow(requests)
 
-    override val progress: Flow<CreationProgressSummary?> = draftState
+    override val drafts: Flow<List<CreationProgressSummary>> = draftState
     override val completionRequests: Flow<List<CompletionRequestSummary>> = requestState
 
-    val currentDraft: CreationProgressSummary? get() = draftState.value
+    val currentDrafts: List<CreationProgressSummary> get() = draftState.value
     val currentRequests: List<CompletionRequestSummary> get() = requestState.value
     var refreshCount = 0
     val retriedRequestIds = mutableListOf<String>()
@@ -29,9 +29,9 @@ internal class FakeCreationProgressAccess(
         requestState.value = requests
     }
 
-    override suspend fun discard(): Boolean {
+    override suspend fun discard(draftId: String): Boolean {
         if (!discardSucceeds) return false
-        draftState.value = null
+        draftState.value = draftState.value.filterNot { it.draftId == draftId }
         return true
     }
 

@@ -74,8 +74,8 @@ class StoryCompletionExecutorTest {
             val fixture = fixture()
             fixture.repository.queuedCompletionResults += DomainResult.Success(CompletedStory("story-a", "A"))
 
-            assertTrue(fixture.executor.submit(request("a")))
-            assertTrue(fixture.executor.submit(request("b")))
+            assertTrue(fixture.executor.submit(request("a"), "draft-a"))
+            assertTrue(fixture.executor.submit(request("b"), "draft-b"))
             advanceUntilIdle()
 
             assertEquals(listOf("a", "b"), fixture.repository.completionCommands.map { it.requestId })
@@ -99,7 +99,7 @@ class StoryCompletionExecutorTest {
             val fixture = fixture()
             fixture.requestStore.submitSucceeds = false
 
-            assertFalse(fixture.executor.submit(request("a")))
+            assertFalse(fixture.executor.submit(request("a"), "draft-a"))
             advanceUntilIdle()
 
             assertTrue(fixture.repository.completionCommands.isEmpty())
@@ -110,7 +110,7 @@ class StoryCompletionExecutorTest {
         runTest {
             val fixture = fixture()
             fixture.repository.queuedCompletionResults += DomainResult.Failure(DomainError.Network)
-            fixture.executor.submit(request("a"))
+            fixture.executor.submit(request("a"), "draft-a")
             advanceUntilIdle()
             assertEquals(
                 CompletionOutcome.Pending,
@@ -156,7 +156,7 @@ class StoryCompletionExecutorTest {
             fixture.repository.queuedCompletionResults +=
                 DomainResult.Failure(DomainError.Server(status = 402, code = null, requestId = null))
             fixture.repository.queuedCreationRequestResults += DomainResult.Failure(notFound())
-            fixture.executor.submit(request("a"))
+            fixture.executor.submit(request("a"), "draft-a")
             advanceUntilIdle()
             assertEquals(
                 CompletionOutcome.Failed,
@@ -169,7 +169,7 @@ class StoryCompletionExecutorTest {
             fixture.repository.queuedCompletionResults +=
                 DomainResult.Failure(DomainError.Server(status = 409, code = null, requestId = null))
             fixture.repository.queuedCreationRequestResults += DomainResult.Success(CreationRequestSnapshot.Pending)
-            fixture.executor.submit(request("b"))
+            fixture.executor.submit(request("b"), "draft-b")
             advanceUntilIdle()
             assertEquals(
                 CompletionOutcome.Pending,
@@ -217,7 +217,7 @@ class StoryCompletionExecutorTest {
             val fixture = fixture()
             val release = CompletableDeferred<Unit>()
             fixture.repository.completionGate = release
-            fixture.executor.submit(request("a"))
+            fixture.executor.submit(request("a"), "draft-a")
             advanceUntilIdle()
 
             fixture.gate.raiseBarrier()
@@ -238,8 +238,8 @@ class StoryCompletionExecutorTest {
             val fixture = fixture()
             fixture.repository.queuedCompletionResults += DomainResult.Success(CompletedStory("story-a", "A"))
             fixture.repository.queuedCompletionResults += DomainResult.Failure(DomainError.Network)
-            fixture.executor.submit(request("a"))
-            fixture.executor.submit(request("b"))
+            fixture.executor.submit(request("a"), "draft-a")
+            fixture.executor.submit(request("b"), "draft-b")
             advanceUntilIdle()
 
             assertEquals(listOf(AnalyticsEvent.StoryCreateCompleted("story-a")), fixture.analytics.events)

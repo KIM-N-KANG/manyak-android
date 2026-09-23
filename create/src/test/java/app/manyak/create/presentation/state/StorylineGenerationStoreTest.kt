@@ -11,6 +11,7 @@ import app.manyak.create.entity.StorylineGenerationCommand
 import app.manyak.create.testing.FakePendingStoryCreationStore
 import app.manyak.create.testing.FakeStoryCompletionSubmitter
 import app.manyak.create.testing.FakeStoryCreationRepository
+import app.manyak.create.testing.TEST_DRAFT_ID
 import app.manyak.create.testing.sampleGenerationInput
 import app.manyak.create.testing.sampleStorylineGeneration
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -38,7 +39,7 @@ class StorylineGenerationStoreTest {
                     FakePendingStoryCreationStore(),
                     FakeStoryCompletionSubmitter(),
                     this,
-                )
+                ).bind(TEST_DRAFT_ID)
 
             store.generate(sampleGenerationInput())
 
@@ -63,7 +64,7 @@ class StorylineGenerationStoreTest {
                     FakePendingStoryCreationStore(),
                     FakeStoryCompletionSubmitter(),
                     this,
-                )
+                ).bind(TEST_DRAFT_ID)
 
             store.generate(sampleGenerationInput())
 
@@ -89,7 +90,7 @@ class StorylineGenerationStoreTest {
                     FakePendingStoryCreationStore(),
                     FakeStoryCompletionSubmitter(),
                     this,
-                )
+                ).bind(TEST_DRAFT_ID)
 
             store.generate(sampleGenerationInput())
 
@@ -116,7 +117,7 @@ class StorylineGenerationStoreTest {
                     FakePendingStoryCreationStore(),
                     FakeStoryCompletionSubmitter(),
                     this,
-                )
+                ).bind(TEST_DRAFT_ID)
 
             store.generate(sampleGenerationInput())
 
@@ -141,7 +142,7 @@ class StorylineGenerationStoreTest {
                     FakePendingStoryCreationStore(),
                     FakeStoryCompletionSubmitter(),
                     this,
-                )
+                ).bind(TEST_DRAFT_ID)
 
             store.generate(sampleGenerationInput())
             runCurrent()
@@ -168,7 +169,7 @@ class StorylineGenerationStoreTest {
                     FakePendingStoryCreationStore(),
                     FakeStoryCompletionSubmitter(),
                     this,
-                )
+                ).bind(TEST_DRAFT_ID)
 
             store.regenerate()
 
@@ -188,7 +189,7 @@ class StorylineGenerationStoreTest {
                     FakePendingStoryCreationStore(),
                     FakeStoryCompletionSubmitter(),
                     this,
-                )
+                ).bind(TEST_DRAFT_ID)
 
             store.generate(sampleGenerationInput())
 
@@ -205,7 +206,13 @@ class StorylineGenerationStoreTest {
         runTest {
             val repository = FakeStoryCreationRepository()
             val pendingStore = FakePendingStoryCreationStore()
-            val store = StorylineGenerationStore(repository, pendingStore, FakeStoryCompletionSubmitter(), this)
+            val store =
+                StorylineGenerationStore(
+                    repository,
+                    pendingStore,
+                    FakeStoryCompletionSubmitter(),
+                    this,
+                ).bind(TEST_DRAFT_ID)
 
             store.generate(sampleGenerationInput())
 
@@ -223,7 +230,13 @@ class StorylineGenerationStoreTest {
         runTest {
             val repository = FakeStoryCreationRepository()
             val pendingStore = FakePendingStoryCreationStore()
-            val store = StorylineGenerationStore(repository, pendingStore, FakeStoryCompletionSubmitter(), this)
+            val store =
+                StorylineGenerationStore(
+                    repository,
+                    pendingStore,
+                    FakeStoryCompletionSubmitter(),
+                    this,
+                ).bind(TEST_DRAFT_ID)
 
             repository.queuedGenerationResults += DomainResult.Failure(DomainError.Network)
             store.generate(sampleGenerationInput())
@@ -242,7 +255,13 @@ class StorylineGenerationStoreTest {
         runTest {
             val repository = FakeStoryCreationRepository()
             val pendingStore = FakePendingStoryCreationStore()
-            val store = StorylineGenerationStore(repository, pendingStore, FakeStoryCompletionSubmitter(), this)
+            val store =
+                StorylineGenerationStore(
+                    repository,
+                    pendingStore,
+                    FakeStoryCompletionSubmitter(),
+                    this,
+                ).bind(TEST_DRAFT_ID)
             repository.queuedGenerationResults += DomainResult.Failure(DomainError.Network)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
@@ -277,7 +296,13 @@ class StorylineGenerationStoreTest {
             val command = sampleGenerationCommand()
             val pendingStore =
                 FakePendingStoryCreationStore(initial = PendingStoryCreation.GeneratingStorylines(command))
-            val store = StorylineGenerationStore(repository, pendingStore, FakeStoryCompletionSubmitter(), this)
+            val store =
+                StorylineGenerationStore(
+                    repository,
+                    pendingStore,
+                    FakeStoryCompletionSubmitter(),
+                    this,
+                ).bind(TEST_DRAFT_ID)
 
             store.ensureRestored()
             assertEquals(StorylineGenerationState.Generating, store.state.value)
@@ -311,7 +336,13 @@ class StorylineGenerationStoreTest {
                             progress = progress,
                         ),
                 )
-            val store = StorylineGenerationStore(repository, pendingStore, FakeStoryCompletionSubmitter(), this)
+            val store =
+                StorylineGenerationStore(
+                    repository,
+                    pendingStore,
+                    FakeStoryCompletionSubmitter(),
+                    this,
+                ).bind(TEST_DRAFT_ID)
 
             store.ensureRestored()
 
@@ -338,7 +369,7 @@ class StorylineGenerationStoreTest {
                     pendingStore,
                     FakeStoryCompletionSubmitter(),
                     this,
-                )
+                ).bind(TEST_DRAFT_ID)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
 
@@ -368,7 +399,7 @@ class StorylineGenerationStoreTest {
                     pendingStore,
                     FakeStoryCompletionSubmitter(),
                     this,
-                )
+                ).bind(TEST_DRAFT_ID)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
             val writesAfterGeneration = pendingStore.writes.size
@@ -400,7 +431,7 @@ class StorylineGenerationStoreTest {
                     FakePendingStoryCreationStore(),
                     FakeStoryCompletionSubmitter(),
                     this,
-                )
+                ).bind(TEST_DRAFT_ID)
             store.generate(sampleGenerationInput())
             advanceTimeBy(DRAFT_SAVED_DISPLAY_MS - 1)
             runCurrent()
@@ -419,7 +450,13 @@ class StorylineGenerationStoreTest {
             val repository = FakeStoryCreationRepository()
             repository.holdGeneration = true
             val pendingStore = FakePendingStoryCreationStore()
-            val store = StorylineGenerationStore(repository, pendingStore, FakeStoryCompletionSubmitter(), this)
+            val store =
+                StorylineGenerationStore(
+                    repository,
+                    pendingStore,
+                    FakeStoryCompletionSubmitter(),
+                    this,
+                ).bind(TEST_DRAFT_ID)
 
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
@@ -443,7 +480,7 @@ class StorylineGenerationStoreTest {
                     pendingStore,
                     FakeStoryCompletionSubmitter(),
                     this,
-                )
+                ).bind(TEST_DRAFT_ID)
 
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
@@ -458,7 +495,13 @@ class StorylineGenerationStoreTest {
         runTest {
             val pendingStore = FakePendingStoryCreationStore()
             val submitter = FakeStoryCompletionSubmitter()
-            val store = StorylineGenerationStore(FakeStoryCreationRepository(), pendingStore, submitter, this)
+            val store =
+                StorylineGenerationStore(
+                    FakeStoryCreationRepository(),
+                    pendingStore,
+                    submitter,
+                    this,
+                ).bind(TEST_DRAFT_ID)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
             store.updateAdditionalInfoProgress(listOf("배경은 서울"), emptyList())
@@ -475,6 +518,7 @@ class StorylineGenerationStoreTest {
             advanceUntilIdle()
 
             val request = submitter.submitted.single()
+            assertEquals(TEST_DRAFT_ID, submitter.submittedDraftIds.single())
             assertEquals(command, request.command)
             assertEquals(generation, request.generation)
             assertEquals(listOf("배경은 서울"), request.progress.additionalInfoInputs)
@@ -488,7 +532,13 @@ class StorylineGenerationStoreTest {
         runTest {
             val pendingStore = FakePendingStoryCreationStore()
             val submitter = FakeStoryCompletionSubmitter(submitSucceeds = false)
-            val store = StorylineGenerationStore(FakeStoryCreationRepository(), pendingStore, submitter, this)
+            val store =
+                StorylineGenerationStore(
+                    FakeStoryCreationRepository(),
+                    pendingStore,
+                    submitter,
+                    this,
+                ).bind(TEST_DRAFT_ID)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
             store.updateAdditionalInfoProgress(listOf("배경은 서울"), emptyList())
@@ -513,11 +563,42 @@ class StorylineGenerationStoreTest {
         }
 
     @Test
+    fun `다른 초안을 맡으면 앞 초안을 덮지 않고 복원도 자기 초안만 한다`() =
+        runTest {
+            val pendingStore = FakePendingStoryCreationStore()
+            val store =
+                StorylineGenerationStore(
+                    FakeStoryCreationRepository(),
+                    pendingStore,
+                    FakeStoryCompletionSubmitter(),
+                    this,
+                ).bind("draft-a")
+            store.generate(sampleGenerationInput())
+            advanceUntilIdle()
+
+            // 이탈 없이 다른 초안 카드로 들어와도 앞 초안의 결과가 새 초안에 섞이지 않는다.
+            store.bind("draft-b")
+            assertEquals(StorylineGenerationState.Idle, store.state.value)
+            pendingStore.write("draft-b", PendingStoryCreation.GeneratingStorylines(sampleGenerationCommand()))
+            store.ensureRestored()
+
+            assertEquals(StorylineGenerationState.Generating, store.state.value)
+            assertTrue(pendingStore.record("draft-a") is PendingStoryCreation.Draft)
+            assertEquals(2, pendingStore.all.size)
+        }
+
+    @Test
     fun `이탈은 저장하지 않은 변경을 버리고 진행 중 레코드는 유지하며 스토어를 초기화한다`() =
         runTest {
             val repository = FakeStoryCreationRepository()
             val pendingStore = FakePendingStoryCreationStore()
-            val store = StorylineGenerationStore(repository, pendingStore, FakeStoryCompletionSubmitter(), this)
+            val store =
+                StorylineGenerationStore(
+                    repository,
+                    pendingStore,
+                    FakeStoryCompletionSubmitter(),
+                    this,
+                ).bind(TEST_DRAFT_ID)
 
             // 저장하지 않은 탭 변경은 마지막 저장 스냅숏을 덮지 않는다.
             store.generate(sampleGenerationInput())
@@ -538,7 +619,7 @@ class StorylineGenerationStoreTest {
             assertTrue(pendingStore.current is PendingStoryCreation.GeneratingStorylines)
 
             // 남은 것이 없는 이탈 — 조용히 나간다.
-            pendingStore.clear()
+            pendingStore.clear(TEST_DRAFT_ID)
             store.leaveFunnel()
             assertNull(pendingStore.current)
         }

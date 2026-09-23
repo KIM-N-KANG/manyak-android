@@ -13,9 +13,14 @@ class CreationStorageCompatibilityTest {
     fun `기존 편집 스테이지의 JSON을 복원하고 같은 페이로드로 저장한다`() {
         val fixtures =
             listOf(
-                PendingStoryCreationEntity(stage = "KEYWORD_DRAFT", keywordSnapshot = keyword),
-                PendingStoryCreationEntity(stage = "STORYLINE_GENERATION", generationCommand = generationCommand),
+                PendingStoryCreationEntity(draftId = "legacy-0", stage = "KEYWORD_DRAFT", keywordSnapshot = keyword),
                 PendingStoryCreationEntity(
+                    draftId = "legacy-0",
+                    stage = "STORYLINE_GENERATION",
+                    generationCommand = generationCommand,
+                ),
+                PendingStoryCreationEntity(
+                    draftId = "legacy-0",
                     stage = "STORY_DRAFT",
                     generationCommand = generationCommand,
                     completionCommand = completionCommand,
@@ -31,11 +36,13 @@ class CreationStorageCompatibilityTest {
             )
 
         for ((index, fixture) in fixtures.withIndex()) {
-            val record = requireNotNull(fixture.toDomainOrNull())
-            val saved = record.toEntity()
-            val summary = record.toProgressSummary()
+            val stored = requireNotNull(fixture.toStoredDraftOrNull())
+            val saved = stored.record.toEntity(stored.draftId)
+            val summary = stored.toProgressSummary()
             assertEquals(fixture.stage, saved.stage)
-            assertEquals(0, saved.id)
+            assertEquals("legacy-0", saved.draftId)
+            assertEquals("legacy-0", summary.draftId)
+            assertNull(summary.createdAt)
             assertEquals(CreationStage.valueOf(fixture.stage), summary.stage)
             assertEquals(resumePoints[index], summary.resumePoint)
             assertJsonEquals(fixture.generationCommand, saved.generationCommand)

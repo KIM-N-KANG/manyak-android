@@ -20,6 +20,7 @@ import app.manyak.create.presentation.state.StorylineGenerationStore
 import app.manyak.create.testing.FakePendingStoryCreationStore
 import app.manyak.create.testing.FakeStoryCompletionSubmitter
 import app.manyak.create.testing.FakeStoryCreationRepository
+import app.manyak.create.testing.TEST_DRAFT_ID
 import app.manyak.create.testing.sampleGenerationInput
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -58,8 +59,10 @@ class CreateKeywordViewModelTest {
     private fun TestScope.viewModel(
         repository: StoryCreationRepository,
         pending: FakePendingStoryCreationStore = FakePendingStoryCreationStore(),
+        draftId: String = TEST_DRAFT_ID,
     ): CreateKeywordViewModel =
         CreateKeywordViewModel(
+            draftId = draftId,
             storyCreationRepository = repository,
             storylineGenerationStore =
                 StorylineGenerationStore(
@@ -180,11 +183,18 @@ class CreateKeywordViewModelTest {
         runTest(dispatcher) {
             val repository = fixedTagsRepository()
             val pendingStore = FakePendingStoryCreationStore()
-            val store = StorylineGenerationStore(repository, pendingStore, FakeStoryCompletionSubmitter(), this)
+            val store =
+                StorylineGenerationStore(
+                    repository,
+                    pendingStore,
+                    FakeStoryCompletionSubmitter(),
+                    this,
+                ).bind(TEST_DRAFT_ID)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
             val viewModel =
                 CreateKeywordViewModel(
+                    TEST_DRAFT_ID,
                     storyCreationRepository = repository,
                     storylineGenerationStore = store,
                     pendingCreationStore = pendingStore,
@@ -218,7 +228,7 @@ class CreateKeywordViewModelTest {
             viewModel.onIntent(CreateKeywordIntent.ConfirmLeaveFunnel)
             advanceUntilIdle()
 
-            assertNull(pending.read())
+            assertNull(pending.read(TEST_DRAFT_ID))
             assertNull(viewModel.uiState.value.exitWarning)
             assertEquals(CreateKeywordEffect.ExitFunnel, viewModel.uiEffect.first())
         }
@@ -236,7 +246,7 @@ class CreateKeywordViewModelTest {
             advanceUntilIdle()
 
             assertEquals(FunnelExitWarning.UNSAVED_CHANGES, viewModel.uiState.value.exitWarning)
-            assertNull(pending.read())
+            assertNull(pending.read(TEST_DRAFT_ID))
             assertNull(withTimeoutOrNull(100) { viewModel.uiEffect.first() })
         }
 
@@ -254,7 +264,7 @@ class CreateKeywordViewModelTest {
             advanceUntilIdle()
 
             assertNull(viewModel.uiState.value.exitWarning)
-            assertNull(pending.read())
+            assertNull(pending.read(TEST_DRAFT_ID))
             assertEquals(CreateKeywordEffect.ExitFunnel, viewModel.uiEffect.first())
         }
 
@@ -271,7 +281,7 @@ class CreateKeywordViewModelTest {
             viewModel.onIntent(CreateKeywordIntent.ToggleProvidedTag(KeywordTarget.Genre, tagId = 1L))
             advanceUntilIdle()
 
-            assertNull(pending.read())
+            assertNull(pending.read(TEST_DRAFT_ID))
             assertEquals(DraftSaveStatus.IDLE, viewModel.uiState.value.draftSave.status)
             assertTrue(viewModel.uiState.value.draftSave.canSave)
             assertTrue(viewModel.uiState.value.draftSave.hasUnsavedChanges)
@@ -279,11 +289,36 @@ class CreateKeywordViewModelTest {
             viewModel.onIntent(CreateKeywordIntent.SaveDraft)
             advanceUntilIdle()
 
-            val record = pending.read() as PendingStoryCreation.KeywordDraft
+            val record = pending.read(TEST_DRAFT_ID) as PendingStoryCreation.KeywordDraft
             assertEquals(listOf(1L), record.snapshot.selectedGenreTagIds)
             assertFalse(viewModel.uiState.value.draftSave.hasUnsavedChanges)
             // 저장하고 나면 다시 편집하기 전까지 저장할 것이 없다.
             assertFalse(viewModel.uiState.value.draftSave.canSave)
+        }
+
+    @Test
+    fun `새 제작은 다른 초안을 복원하지 않고 저장하면 그 옆에 초안을 하나 더 남긴다`() =
+        runTest(dispatcher) {
+            val pending = FakePendingStoryCreationStore()
+            val existing = PendingStoryCreation.KeywordDraft(keywordSnapshotWithGenre(2L))
+            pending.write(TEST_DRAFT_ID, existing)
+            val viewModel = viewModel(fixedTagsRepository(), pending, draftId = "draft-new")
+            advanceUntilIdle()
+
+            assertTrue(
+                viewModel.uiState.value.selectedGenreTagIds
+                    .isEmpty(),
+            )
+
+            viewModel.onIntent(CreateKeywordIntent.ToggleProvidedTag(KeywordTarget.Genre, tagId = 1L))
+            viewModel.onIntent(CreateKeywordIntent.SaveDraft)
+            advanceUntilIdle()
+
+            assertEquals(existing, pending.read(TEST_DRAFT_ID))
+            assertEquals(
+                listOf(1L),
+                (pending.read("draft-new") as PendingStoryCreation.KeywordDraft).snapshot.selectedGenreTagIds,
+            )
         }
 
     @Test
@@ -365,7 +400,7 @@ class CreateKeywordViewModelTest {
             viewModel.onIntent(CreateKeywordIntent.SaveDraft)
             advanceUntilIdle()
 
-            assertNull(pending.read())
+            assertNull(pending.read(TEST_DRAFT_ID))
             assertFalse(viewModel.uiState.value.draftSave.hasUnsavedChanges)
         }
 
@@ -380,7 +415,7 @@ class CreateKeywordViewModelTest {
             viewModel.onIntent(CreateKeywordIntent.SaveDraft)
             advanceUntilIdle()
 
-            assertNull(pending.read())
+            assertNull(pending.read(TEST_DRAFT_ID))
             assertEquals(DraftSaveStatus.IDLE, viewModel.uiState.value.draftSave.status)
             assertTrue(viewModel.uiState.value.draftSave.hasUnsavedChanges)
         }
@@ -390,7 +425,7 @@ class CreateKeywordViewModelTest {
         runTest(dispatcher) {
             val pending = FakePendingStoryCreationStore()
             val inFlight = PendingStoryCreation.GeneratingStorylines(command = generationCommand())
-            pending.write(inFlight)
+            pending.write(TEST_DRAFT_ID, inFlight)
             val viewModel = viewModel(fixedTagsRepository(), pending)
             advanceUntilIdle()
             viewModel.onIntent(CreateKeywordIntent.ToggleProvidedTag(KeywordTarget.Genre, tagId = 1L))
@@ -399,7 +434,7 @@ class CreateKeywordViewModelTest {
             viewModel.onIntent(CreateKeywordIntent.SaveDraft)
             advanceUntilIdle()
 
-            assertEquals(inFlight, pending.read())
+            assertEquals(inFlight, pending.read(TEST_DRAFT_ID))
         }
 
     @Test
@@ -407,6 +442,7 @@ class CreateKeywordViewModelTest {
         runTest(dispatcher) {
             val pending = FakePendingStoryCreationStore()
             pending.write(
+                TEST_DRAFT_ID,
                 PendingStoryCreation.KeywordDraft(
                     snapshot =
                         KeywordDraftSnapshot(
@@ -436,7 +472,7 @@ class CreateKeywordViewModelTest {
             // 복원 직후 화면은 디스크와 같으므로 저장하지 않은 변경으로 세지 않는다.
             assertEquals(DraftSaveStatus.IDLE, state.draftSave.status)
             assertFalse(state.draftSave.hasUnsavedChanges)
-            assertTrue(pending.read() is PendingStoryCreation.KeywordDraft)
+            assertTrue(pending.read(TEST_DRAFT_ID) is PendingStoryCreation.KeywordDraft)
         }
 
     @Test
@@ -453,6 +489,7 @@ class CreateKeywordViewModelTest {
         runTest(dispatcher) {
             val pending = FakePendingStoryCreationStore()
             pending.write(
+                TEST_DRAFT_ID,
                 PendingStoryCreation.KeywordDraft(
                     snapshot =
                         KeywordDraftSnapshot(
@@ -474,7 +511,7 @@ class CreateKeywordViewModelTest {
             viewModel.onIntent(CreateKeywordIntent.SaveDraft)
             advanceUntilIdle()
 
-            val record = pending.read() as PendingStoryCreation.KeywordDraft
+            val record = pending.read(TEST_DRAFT_ID) as PendingStoryCreation.KeywordDraft
             assertEquals(listOf(2L), record.snapshot.selectedGenreTagIds)
             assertEquals("홍길동", record.snapshot.protagonist.name)
         }
@@ -523,3 +560,17 @@ class CreateKeywordViewModelTest {
         }
     }
 }
+
+private fun keywordSnapshotWithGenre(tagId: Long): KeywordDraftSnapshot =
+    KeywordDraftSnapshot(
+        selectedGenreTagIds = listOf(tagId),
+        customGenreTags = emptyList(),
+        protagonist =
+            KeywordCharacterSnapshot(
+                name = "",
+                gender = null,
+                selectedTagIds = emptyList(),
+                customTags = emptyList(),
+            ),
+        supportingCharacters = emptyList(),
+    )
