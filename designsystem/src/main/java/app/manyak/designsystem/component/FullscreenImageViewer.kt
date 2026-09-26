@@ -22,16 +22,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.center
+import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.times
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.toSize
 import androidx.core.view.ViewCompat
 import app.manyak.designsystem.theme.ManyakTheme
 import coil3.compose.AsyncImage
@@ -68,8 +74,8 @@ fun FullscreenImageViewer(
                     }
                 }.pointerInput(imageUrl) {
                     detectTapGestures(
-                        // 화면 어디를 눌러도 닫힌다. 이미지 위에 얹는 눌림 표시는 두지 않는다.
-                        onTap = { currentOnClose() },
+                        // 그림 밖 배경을 누를 때만 닫힌다. 그림 위 탭은 확대하려다 닿은 손일 수 있다.
+                        onTap = { tap -> if (!zoom.isOnImage(tap)) currentOnClose() },
                         onDoubleTap = { zoom.toggle(tap = it, viewportCenter = size.center) },
                     )
                 }.transformable(transformState),
@@ -87,6 +93,7 @@ fun FullscreenImageViewer(
                         translationY = zoom.offset.y
                     },
             model = imageUrl,
+            onSuccess = { success -> zoom.imageSize = success.painter.intrinsicSize },
             // 원본을 잘라 보여 주려고 여는 자리가 아니라 전체를 보려고 여는 자리다.
             contentScale = ContentScale.Fit,
             // 스토리 제목·소개가 이미 말하는 것을 되풀이하지 않는다. 낭독 대상은 닫기 버튼이다.
@@ -129,6 +136,11 @@ private class ZoomState {
         private set
     var viewport = IntSize.Zero
 
+    /** 불러온 그림의 원본 크기. 불러오기 전에는 그림이 없는 것으로 본다. */
+    var imageSize = Size.Unspecified
+
+    fun isOnImage(tap: Offset): Boolean = isOnFittedImage(tap, viewport.toSize(), imageSize, scale, offset)
+
     fun transform(
         zoomChange: Float,
         panChange: Offset,
@@ -156,6 +168,25 @@ private class ZoomState {
         val maxY = viewport.height * (scale - 1f) / 2f
         return Offset(candidate.x.coerceIn(-maxX, maxX), candidate.y.coerceIn(-maxY, maxY))
     }
+}
+
+/**
+ * [tap]이 [viewport]에 Fit으로 맞춘 뒤 가운데 기준 [scale]배 확대하고 [offset]만큼 옮겨 그린 그림 위인지.
+ * 여백(레터박스)은 그림이 아니다. 원본 크기를 모르면 그림이 없는 것으로 본다.
+ */
+internal fun isOnFittedImage(
+    tap: Offset,
+    viewport: Size,
+    imageSize: Size,
+    scale: Float,
+    offset: Offset,
+): Boolean {
+    if (!imageSize.isSpecified || imageSize.isEmpty()) return false
+    val fitted = imageSize * ContentScale.Fit.computeScaleFactor(imageSize, viewport)
+    val center = viewport.center
+    // 그린 변환을 되돌려 확대 전 좌표로 옮긴 뒤 맞춘 그림 영역과 비교한다.
+    val untransformed = center + (tap - center - offset) / scale
+    return Rect(center - Offset(fitted.width / 2f, fitted.height / 2f), fitted).contains(untransformed)
 }
 
 private val IntSize.center: Offset get() = Offset(width / 2f, height / 2f)

@@ -1,6 +1,8 @@
 package app.manyak.chat.room.presentation
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -11,6 +13,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -27,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.manyak.chat.list.presentation.label
@@ -118,34 +122,24 @@ private fun ChatRoomContent(
     val showProgress = rememberDelayedProgressVisibility(state.isLoading)
     // 덮어쓰기 확인 대상. 구성 변경에서 되돌아가면 안 되는 진행 상태다.
     var pendingFill by rememberSaveable { mutableStateOf<Int?>(null) }
+    // 메시지 영역의 빈 곳을 누를 때마다 바뀐다. 구성 변경에서 읽던 화면이 달라지지 않게 남긴다.
+    var headerHidden by rememberSaveable { mutableStateOf(false) }
 
     Box(modifier = modifier.fillMaxSize()) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .windowInsetsPadding(WindowInsets.safeDrawing),
-        ) {
+        // 헤더는 목록 위에 겹쳐 뜬다 — 숨기고 보일 때 목록 높이가 바뀌면 읽던 줄이 밀린다.
+        Box(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
             val phase = chatRoomPhase(state)
-            // 헤더는 어느 상태에서나 남는다 — 실패 화면에서도 뒤로 나갈 곳이 있어야 한다. 다만 방을 아직
-            // 열지 못한 상태에서는 메뉴를 두지 않는다.
-            ChatRoomHeader(
-                title = state.storyTitle,
-                // 방을 연 뒤에도 제목이 비어 있으면 참조 스토리가 삭제된 것이다 — 목록 카드와 같은 문구로 알린다.
-                isStoryDeleted = phase == ChatRoomPhase.CONTENT && state.storyTitle.isBlank(),
-                showsMenu = phase == ChatRoomPhase.CONTENT,
-                onBack = onBack,
-                onOpenMenu = onOpenMenu,
-            )
             val millis = ManyakTheme.motion.screenTransitionMillis
             AnimatedContent(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxSize(),
                 targetState = phase,
                 // 앞 화면이 다 빠진 뒤에 다음 화면이 든다 — 둘이 겹쳐 보이면 어느 쪽이 지금인지 흐려진다.
                 transitionSpec = { fadeIn(tween(millis, delayMillis = millis)) togetherWith fadeOut(tween(millis)) },
                 label = "chat-room-phase",
             ) { phase ->
-                Column(modifier = Modifier.fillMaxSize()) {
+                // 목록은 헤더 아래까지 깔리고 스스로 위 여백을 둔다. 나머지 상태는 헤더 아래에서 시작한다.
+                val top = if (phase == ChatRoomPhase.CONTENT) 0.dp else ChatRoomHeaderHeight
+                Column(modifier = Modifier.fillMaxSize().padding(top = top)) {
                     when (phase) {
                         ChatRoomPhase.LOADING ->
                             Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -163,10 +157,18 @@ private fun ChatRoomContent(
                                 state = state,
                                 onIntent = onIntent,
                                 onFillRequested = { position -> pendingFill = position },
+                                onBackgroundTap = { headerHidden = !headerHidden },
                             )
                     }
                 }
             }
+            ChatRoomHeaderOverlay(
+                visible = !headerHidden || phase != ChatRoomPhase.CONTENT,
+                title = state.storyTitle,
+                phase = phase,
+                onBack = onBack,
+                onOpenMenu = onOpenMenu,
+            )
         }
         FullscreenImageViewer(state.imageViewerUrl, onClose = { onIntent(ChatRoomIntent.CloseImageViewer) })
     }
@@ -203,12 +205,15 @@ private fun ColumnScope.ChatRoomLoaded(
     state: ChatRoomUiState,
     onIntent: (ChatRoomIntent) -> Unit,
     onFillRequested: (Int) -> Unit,
+    onBackgroundTap: () -> Unit,
 ) {
     // 설정 시트 열림. 회전·다크 모드 전환에서 닫히면 사용자가 다시 열어야 한다.
     var settingsOpen by rememberSaveable { mutableStateOf(false) }
     ChatTranscript(
         modifier = Modifier.weight(1f),
         state = state,
+        topInset = ChatRoomHeaderHeight,
+        onBackgroundTap = onBackgroundTap,
         // 초안이 있으면 채우기 전에 확인을 받는다. 즉시 전송에는 이 확인이 없다.
         onIntent = { intent ->
             if (intent is ChatRoomIntent.SuggestionFilled && state.composer.hasInput) {
@@ -271,6 +276,33 @@ private fun ReplaceDraftDialog(
     )
 }
 
+/** 목록 위에 겹쳐 뜬 헤더. 방을 열기 전에는 숨길 수 없다 — 실패 화면에서도 뒤로 나갈 곳이 있어야 한다. */
+@Composable
+private fun ChatRoomHeaderOverlay(
+    visible: Boolean,
+    title: String,
+    phase: ChatRoomPhase,
+    onBack: () -> Unit,
+    onOpenMenu: () -> Unit,
+) {
+    val millis = ManyakTheme.motion.elementEnterMillis
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(tween(millis, easing = LinearOutSlowInEasing)),
+        exit = fadeOut(tween(millis, easing = LinearOutSlowInEasing)),
+    ) {
+        // 방을 아직 열지 못한 상태에서는 메뉴를 두지 않는다.
+        ChatRoomHeader(
+            title = title,
+            // 방을 연 뒤에도 제목이 비어 있으면 참조 스토리가 삭제된 것이다 — 목록 카드와 같은 문구로 알린다.
+            isStoryDeleted = phase == ChatRoomPhase.CONTENT && title.isBlank(),
+            showsMenu = phase == ChatRoomPhase.CONTENT,
+            onBack = onBack,
+            onOpenMenu = onOpenMenu,
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ChatRoomHeader(
@@ -318,6 +350,9 @@ private fun ChatRoomHeader(
             ),
     )
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+private val ChatRoomHeaderHeight = TopAppBarDefaults.TopAppBarExpandedHeight
 
 private fun previewChatRoomState(): ChatRoomUiState =
     ChatRoomUiState(
