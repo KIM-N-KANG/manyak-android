@@ -130,6 +130,7 @@ class HomeViewModelTest {
 
             assertEquals(2, repository.requests.size)
             assertFalse(viewModel.uiState.value.isRefreshing)
+            assertEquals(2, viewModel.uiState.value.firstPageVersion)
         }
 
     @Test
@@ -171,6 +172,8 @@ class HomeViewModelTest {
             val state = viewModel.uiState.value
             assertEquals(listOf(first, second, third), state.stories)
             assertFalse(state.hasMore)
+            // 이어 붙인 페이지는 스크롤 위치를 그대로 잇는다.
+            assertEquals(1, state.firstPageVersion)
         }
 
     @Test
@@ -235,6 +238,8 @@ class HomeViewModelTest {
             assertTrue(loading.isLoading)
             assertEquals(sampleStories(), loading.stories)
             assertFalse(loading.hasMore)
+            // 남겨 둔 목록은 보던 스크롤 위치를 그대로 쓴다.
+            assertEquals(1, loading.firstPageVersion)
 
             val fresh = sampleStories().first().copy(id = "fresh")
             repository.queuedResults += DomainResult.Success(StoryPage(listOf(fresh), nextCursor = null))
@@ -244,6 +249,8 @@ class HomeViewModelTest {
             val loaded = viewModel.uiState.value
             assertFalse(loaded.isLoading)
             assertEquals(listOf(fresh), loaded.stories)
+            // 새 목록은 새 스크롤 상태로 맨 위에서 시작한다.
+            assertEquals(2, loaded.firstPageVersion)
         }
 
     @Test

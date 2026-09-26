@@ -123,8 +123,9 @@ private fun HomeContent(
             bottom = contentPadding.calculateBottomPadding(),
         )
 
-    // 조건을 바꾸면 새 목록의 맨 위에서 시작한다. 같은 조건이면 구성 변경을 넘어 위치를 지킨다.
-    val gridState = rememberSaveable(state.query, saver = LazyGridState.Saver) { LazyGridState() }
+    // 첫 페이지가 새로 오면(조건 변경·새로고침) 새 목록의 맨 위에서 시작하고, 그 사이 구성 변경에서는 위치를 지킨다.
+    // 새 응답을 기다리는 동안 남겨 둔 이전 목록은 보던 위치 그대로 둔다.
+    val gridState = rememberSaveable(state.firstPageVersion, saver = LazyGridState.Saver) { LazyGridState() }
     val hideState = rememberToolbarHideState()
     val alwaysShownOffsetPx = with(density) { ToolbarAlwaysShownScroll.toPx() }
     val toolbarVisible by remember(gridState, alwaysShownOffsetPx) {
