@@ -270,8 +270,8 @@ private fun AiNotice(modifier: Modifier = Modifier) {
         modifier =
             modifier
                 .fillMaxWidth()
-                .padding(horizontal = ManyakTheme.spacing.gutter)
-                .padding(top = ManyakTheme.spacing.passage),
+                // 위 여백은 두지 않는다 — 목록의 위 여백(헤더 높이)이 끝나는 자리에서 바로 시작한다.
+                .padding(horizontal = ManyakTheme.spacing.gutter),
         text = stringResource(ChatR.string.chat_room_ai_notice),
         style = ManyakTheme.typography.bodySmall,
         color = ManyakTheme.colors.textSubtle,

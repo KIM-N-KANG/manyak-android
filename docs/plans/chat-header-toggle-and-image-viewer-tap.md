@@ -14,7 +14,8 @@
 3. 스트리밍 앵커의 패드 높이를 위 여백을 뺀 콘텐츠 시작점부터 뷰포트 끝까지(`viewportEndOffset`)로 잽니다. 전체 뷰포트로 재면 헤더 높이만큼 패드가 남습니다.
 4. `FullscreenImageViewer`는 Coil이 알려 준 원본 크기로 Fit 그림 영역을 계산하고, 현재 확대·이동을 되돌린 좌표가 그 안이면 닫지 않습니다(`isOnFittedImage`). 여백 배경 탭·닫기 버튼·뒤로가기로만 닫히고 더블 탭·핀치·이동은 그대로입니다. 원본 크기를 알기 전에는 그림이 없는 것으로 보고 닫습니다. 스토리 상세 썸네일 뷰어에도 같이 적용됩니다.
 5. 뷰어의 배경 탭 닫힘이 약 300ms 늦던 문제를 고쳤습니다. `detectTapGestures`에 `onDoubleTap`을 함께 주면 모든 한 번 탭이 더블 탭 대기 시간(`doubleTapTimeoutMillis`)을 채운 뒤에야 `onTap`으로 옵니다. 웹처럼 배경 탭은 떼는 즉시 닫고, 두 번째 탭 대기는 그림 위 탭에만 겁니다. 두 번째 탭이 배경이면 닫습니다.
-6. 하네스 Android spec의 "채팅 헤더는 고정" 문구와 design을 현행화했습니다.
+6. 대화 맨 위 AI 생성 안내 문구의 위 여백(`spacing.passage` 20dp)을 없앴습니다. 웹처럼 목록 위 여백(헤더 높이)이 끝나는 자리에서 바로 시작합니다. 헤더 높이는 앱의 다른 헤더와 같은 M3 기본 64dp로 두어 웹(56px)보다 4dp 아래에서 시작합니다.
+7. 하네스 Android spec의 "채팅 헤더는 고정" 문구와 design을 현행화했습니다.
 
 ## 검증
 
@@ -35,6 +36,7 @@
 | 화면 | 캡처 |
 | --- | --- |
 | 헤더 | [진입 시 표시](../../captures/knk-1432/header-shown.png) · [숨긴 상태에서 본문 탭 → 표시](../../captures/knk-1432/header-shown-again.png) · [다시 본문 탭 → 숨김, 본문 위치 그대로](../../captures/knk-1432/header-hidden.png) |
+| AI 생성 안내 | [헤더 바로 아래](../../captures/knk-1432/ai-notice-top.png) |
 | 뷰어 그림 탭 → 여백 탭 | [그림 탭 후 유지](../../captures/knk-1432/viewer-image-tap.png) · [여백 탭 후 닫힘](../../captures/knk-1432/viewer-background-tap.png) |
 
 ## 복구
