@@ -41,13 +41,13 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `진입 시 전체·인기순 첫 페이지를 조회해 서버 순서 그대로 상태에 담는다`() =
+    fun `진입 시 전체·최신순 첫 페이지를 조회해 서버 순서 그대로 상태에 담는다`() =
         runTest(dispatcher) {
             val repository = FakeStoryRepository()
             val viewModel = HomeViewModel(storyRepository = repository, analytics = NoOpAnalytics)
             advanceUntilIdle()
 
-            assertEquals(listOf(StoryListQuery(StoryListFilter.ALL, StoryListSort.LIKES) to null), repository.requests)
+            assertEquals(listOf(StoryListQuery(StoryListFilter.ALL, StoryListSort.LATEST) to null), repository.requests)
             val state = viewModel.uiState.value
             assertFalse(state.isLoading)
             assertFalse(state.loadFailed)
@@ -283,14 +283,14 @@ class HomeViewModelTest {
             repository.queuedResults += DomainResult.Success(StoryPage(listOf(stale), nextCursor = null))
             repository.inFlightGate = null
 
-            viewModel.onIntent(HomeIntent.SelectSort(StoryListSort.LATEST))
+            viewModel.onIntent(HomeIntent.SelectSort(StoryListSort.LIKES))
             advanceUntilIdle()
             gate.complete(Unit)
             advanceUntilIdle()
 
             val state = viewModel.uiState.value
-            assertEquals(StoryListQuery(sort = StoryListSort.LATEST) to null, repository.requests.last())
-            assertEquals(StoryListSort.LATEST, state.query.sort)
+            assertEquals(StoryListQuery(sort = StoryListSort.LIKES) to null, repository.requests.last())
+            assertEquals(StoryListSort.LIKES, state.query.sort)
             assertEquals(listOf(stale), state.stories)
             assertFalse(state.isLoading)
             assertFalse(state.isLoadingMore)

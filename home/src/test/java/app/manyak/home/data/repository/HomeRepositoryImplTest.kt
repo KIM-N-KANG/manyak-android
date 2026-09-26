@@ -35,13 +35,13 @@ class HomeRepositoryImplTest {
         }
 
     @Test
-    fun `첫 페이지는 커서 없이 전체·인기순을 보낸다`() =
+    fun `첫 페이지는 커서 없이 전체·최신순을 보낸다`() =
         runTest {
             val api = RecordingStoryApi(StoryPageDto(nextCursor = ""))
 
             val result = HomeRepositoryImpl(api).publicStories(StoryListQuery())
 
-            assertEquals(listOf("all", "likes", null), api.lastRequest)
+            assertEquals(listOf("all", "latest", null), api.lastRequest)
             assertEquals(null, (result as DomainResult.Success).value.nextCursor)
         }
 }
