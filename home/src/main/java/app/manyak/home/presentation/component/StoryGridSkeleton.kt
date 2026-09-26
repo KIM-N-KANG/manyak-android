@@ -26,13 +26,10 @@ import app.manyak.home.R as HomeR
  * 조회 중 자리를 잡아 두는 골격. 카드와 **같은 구조**(3:4 표지 + 제목 줄 + 제작자 줄)라
  * 목록이 도착할 때 요소가 튀지 않는다.
  *
- * 섹션 제목 자리는 두지 않는다 — 카드와 달리 무엇이 올지 이미 아는 고정 문구라 흉내 낼 것이 없고,
- * 실제 제목은 목록이 도착해 그릴 것이 생겼을 때 함께 나타난다.
- *
  * 표시 여부는 호출부가 지연 판정으로 정한다 — 금방 끝나는 조회에서는 아예 그리지 않는다.
  */
 @Composable
-internal fun OriginalStoriesSkeleton(
+internal fun StoryGridSkeleton(
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
 ) {

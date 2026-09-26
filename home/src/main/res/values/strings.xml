@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="home_loading">오리지널 스토리 불러오는 중</string>
-    <string name="home_original_stories">오리지널 스토리</string>
+    <string name="home_loading">스토리 불러오는 중</string>
+    <string name="home_stories_empty">아직 스토리가 없어요</string>
     <string name="home_original_tag">오리지널 스토리</string>
+    <string name="home_filter_all">전체</string>
+    <string name="home_filter_original">오리지널</string>
+    <string name="home_sort_likes">인기순</string>
+    <string name="home_sort_latest">최신순</string>
+    <string name="home_sort_chats">채팅순</string>
+    <string name="home_sort_change">정렬 바꾸기</string>
 </resources>

@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,8 +19,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import app.manyak.designsystem.component.ManyakProgressIndicator
-import app.manyak.designsystem.component.ManyakTextButton
 import app.manyak.designsystem.component.SkeletonPlaceholder
 import app.manyak.designsystem.component.rememberSkeletonPulseAlpha
 import app.manyak.designsystem.theme.ManyakTheme
@@ -30,7 +27,6 @@ import app.manyak.my.credit.entity.CreditTransactionReason
 import app.manyak.my.credit.entity.CreditTransactionType
 import app.manyak.my.presentation.component.labelRes
 import java.text.NumberFormat
-import app.manyak.designsystem.R as DesignsystemR
 import app.manyak.my.R as MyR
 
 /**
@@ -127,34 +123,6 @@ private fun CreditTransactionReason.labelRes(): Int =
         CreditTransactionReason.EXPIRE -> MyR.string.my_credit_reason_expire
         CreditTransactionReason.UNKNOWN -> MyR.string.my_credit_reason_unknown
     }
-
-/**
- * 다음 페이지 자리. 받는 중에는 진행 표시, 실패하면 재시도 버튼이고 **이미 그린 목록은 그대로 둔다**.
- */
-@Composable
-internal fun CreditHistoryLoadMoreFooter(
-    isLoading: Boolean,
-    onRetry: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier.fillMaxWidth().padding(vertical = ManyakTheme.spacing.component),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (isLoading) {
-            ManyakProgressIndicator(modifier = Modifier.size(ManyakTheme.sizes.icon))
-        } else {
-            ManyakTextButton(onClick = onRetry) {
-                Text(
-                    text = stringResource(DesignsystemR.string.common_retry),
-                    style = ManyakTheme.typography.labelLarge,
-                    color = ManyakTheme.colors.textBrand,
-                )
-            }
-        }
-    }
-}
 
 /** 조회 중 자리를 잡아 두는 골격. 내역 줄과 같은 구조라 목록이 도착해도 요소가 튀지 않는다. */
 @Composable

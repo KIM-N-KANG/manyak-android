@@ -1,12 +1,13 @@
 package app.manyak.home.domain
 
 import app.manyak.common.domain.error.DomainResult
-import app.manyak.common.entity.story.StorySummary
+import app.manyak.home.entity.StoryListQuery
+import app.manyak.home.entity.StoryPage
 
 interface HomeRepository {
-    /**
-     * 마냑 공식 계정의 오리지널 스토리 목록. 서버 등록순을 그대로 유지하며, 공식 계정이 설정되지
-     * 않은 환경은 빈 목록이다.
-     */
-    suspend fun originalStories(): DomainResult<List<StorySummary>>
+    /** 발행·공개된 스토리 한 페이지. [cursor] 가 없으면 첫 페이지이고 서버 순서를 그대로 유지한다. */
+    suspend fun publicStories(
+        query: StoryListQuery,
+        cursor: String? = null,
+    ): DomainResult<StoryPage>
 }

@@ -1,6 +1,7 @@
 plugins {
     id("manyak.android.compose")
     id("manyak.hilt")
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
