@@ -219,6 +219,34 @@ class HomeViewModelTest {
         }
 
     @Test
+    fun `조건을 바꾸면 새 첫 페이지가 올 때까지 보던 목록을 남기고 이어 읽지 않는다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryRepository()
+            repository.queuedResults += DomainResult.Success(StoryPage(sampleStories(), nextCursor = "c1"))
+            val viewModel = HomeViewModel(storyRepository = repository, analytics = NoOpAnalytics)
+            advanceUntilIdle()
+
+            val gate = CompletableDeferred<Unit>()
+            repository.inFlightGate = gate
+            viewModel.onIntent(HomeIntent.SelectFilter(StoryListFilter.ORIGINAL))
+            advanceUntilIdle()
+
+            val loading = viewModel.uiState.value
+            assertTrue(loading.isLoading)
+            assertEquals(sampleStories(), loading.stories)
+            assertFalse(loading.hasMore)
+
+            val fresh = sampleStories().first().copy(id = "fresh")
+            repository.queuedResults += DomainResult.Success(StoryPage(listOf(fresh), nextCursor = null))
+            gate.complete(Unit)
+            advanceUntilIdle()
+
+            val loaded = viewModel.uiState.value
+            assertFalse(loaded.isLoading)
+            assertEquals(listOf(fresh), loaded.stories)
+        }
+
+    @Test
     fun `이미 선택한 필터를 다시 고르면 다시 읽지 않는다`() =
         runTest(dispatcher) {
             val repository = FakeStoryRepository()

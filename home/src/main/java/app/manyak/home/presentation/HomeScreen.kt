@@ -1,6 +1,7 @@
 package app.manyak.home.presentation
 
 import android.widget.Toast
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -25,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
@@ -169,11 +171,14 @@ private fun StoriesContent(
     onOpenStory: (String) -> Unit,
     onIntent: (HomeIntent) -> Unit,
 ) {
-    val showSkeleton = rememberDelayedProgressVisibility(state.isLoading)
+    // 금방 끝나는 조회에서 자리만 잡았다 사라지는 깜빡임을 만들지 않는다.
+    val showProgress = rememberDelayedProgressVisibility(state.isLoading)
+    // 조건을 바꾼 직후에는 이전 목록이 남아 있다. 응답이 늦을 때만 흐려 새 목록을 기다리는 중임을 알린다.
+    val listAlpha by animateFloatAsState(if (showProgress) STALE_LIST_ALPHA else 1f, label = "staleList")
 
     when {
-        // 금방 끝나는 조회에서 자리만 잡았다 사라지는 깜빡임을 만들지 않는다.
-        state.isLoading -> if (showSkeleton) StoryGridSkeleton(contentPadding = listPadding.withScreenMargins())
+        state.isLoading && state.stories.isEmpty() ->
+            if (showProgress) StoryGridSkeleton(contentPadding = listPadding.withScreenMargins())
 
         state.loadFailed ->
             LoadFailedContent(
@@ -197,6 +202,7 @@ private fun StoriesContent(
 
         else ->
             StoryGrid(
+                modifier = Modifier.alpha(listAlpha),
                 state = state,
                 gridState = gridState,
                 contentPadding = contentPadding,
@@ -216,6 +222,7 @@ private fun StoryGrid(
     listPadding: PaddingValues,
     onOpenStory: (String) -> Unit,
     onIntent: (HomeIntent) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val analytics = LocalAnalytics.current
     val impressions = rememberImpressionTracker()
@@ -226,6 +233,7 @@ private fun StoryGrid(
         isRefreshing = state.isRefreshing,
         onRefresh = { onIntent(HomeIntent.Refresh) },
         contentPadding = contentPadding,
+        modifier = modifier,
     ) {
         LazyVerticalGrid(
             modifier = Modifier.fillMaxSize(),
@@ -292,6 +300,9 @@ internal const val GRID_COLUMNS = 2
 private const val LOAD_MORE_AHEAD_ITEMS = GRID_COLUMNS * 2
 
 private const val LOAD_MORE_KEY = "load-more"
+
+/** 새 조건의 응답을 기다리는 동안 남겨 둔 이전 목록의 불투명도. 읽을 수는 있되 곧 바뀔 것임이 보이는 정도다. */
+private const val STALE_LIST_ALPHA = 0.5f
 
 /** 목록 맨 위에서 이만큼 안쪽이면 스크롤 방향과 무관하게 바를 보인다. 바 높이보다 크게 둔다. */
 private val ToolbarAlwaysShownScroll: Dp = 64.dp
