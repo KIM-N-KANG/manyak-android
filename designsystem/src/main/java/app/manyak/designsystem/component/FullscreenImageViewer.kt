@@ -2,9 +2,11 @@ package app.manyak.designsystem.component
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -72,13 +74,8 @@ fun FullscreenImageViewer(
                         onClose()
                         true
                     }
-                }.pointerInput(imageUrl) {
-                    detectTapGestures(
-                        // 그림 밖 배경을 누를 때만 닫힌다. 그림 위 탭은 확대하려다 닿은 손일 수 있다.
-                        onTap = { tap -> if (!zoom.isOnImage(tap)) currentOnClose() },
-                        onDoubleTap = { zoom.toggle(tap = it, viewportCenter = size.center) },
-                    )
-                }.transformable(transformState),
+                }.viewerTaps(zoom, onClose = { currentOnClose() })
+                .transformable(transformState),
         contentAlignment = Alignment.Center,
     ) {
         AsyncImage(
@@ -113,6 +110,26 @@ fun FullscreenImageViewer(
         )
     }
 }
+
+/**
+ * 그림 밖 배경을 누를 때만 닫힌다. 그림 위 탭은 확대하려다 닿은 손일 수 있다.
+ *
+ * 더블 탭 대기는 그림 위 탭에만 건다 — 배경 탭까지 두 번째 탭을 기다리면 닫힘이 그만큼 늦는다.
+ */
+private fun Modifier.viewerTaps(
+    zoom: ZoomState,
+    onClose: () -> Unit,
+): Modifier =
+    pointerInput(zoom) {
+        awaitEachGesture {
+            awaitFirstDown()
+            val tap = waitForUpOrCancellation()?.position ?: return@awaitEachGesture
+            if (!zoom.isOnImage(tap)) return@awaitEachGesture onClose()
+            withTimeoutOrNull(viewConfiguration.doubleTapTimeoutMillis) { awaitFirstDown() } ?: return@awaitEachGesture
+            val second = waitForUpOrCancellation()?.position ?: return@awaitEachGesture
+            if (zoom.isOnImage(second)) zoom.toggle(tap = second, viewportCenter = size.center) else onClose()
+        }
+    }
 
 /** 어두운 이미지 위에서 상태 바 아이콘을 밝히고 닫을 때 원래 값으로 되돌린다. */
 @Composable
