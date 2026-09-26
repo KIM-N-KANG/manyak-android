@@ -111,10 +111,10 @@ private fun PlainComposer(
         modifier =
             modifier
                 .fillMaxWidth()
+                // 블럭 모드처럼 위 여백 없이 목록 바로 아래에서 시작한다.
                 .padding(
                     start = ManyakTheme.spacing.gutter,
                     end = ManyakTheme.spacing.gutter,
-                    top = ManyakTheme.spacing.compact,
                     bottom = ManyakTheme.spacing.gutter,
                 ),
     ) {
