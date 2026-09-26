@@ -1,3 +1,4 @@
+import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
 import java.util.Properties
 
 plugins {
@@ -131,7 +132,15 @@ android {
             manifestPlaceholders["kakaoNativeAppKey"] = authProperty("KAKAO_NATIVE_APP_KEY", "release")
             buildConfigField("String", "AMPLITUDE_API_KEY", "\"${authProperty("AMPLITUDE_API_KEY", "release")}\"")
             optimization {
-                enable = false
+                enable = true
+                keepRules {
+                    files.add(file("proguard-rules.pro"))
+                }
+            }
+            // Crashlytics 는 variant.isMinifyEnabled 로 매핑 업로드 여부를 정하는데, optimization DSL 로 켠
+            // R8 을 그 값이 반영하지 않는다. 명시하지 않으면 난독화된 스택만 올라간다.
+            configure<CrashlyticsExtension> {
+                mappingFileUploadEnabled = true
             }
         }
     }
