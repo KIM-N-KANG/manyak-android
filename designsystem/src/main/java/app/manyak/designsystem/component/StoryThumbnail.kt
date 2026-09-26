@@ -31,6 +31,9 @@ import app.manyak.designsystem.text.formatCompactCount
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.designsystem.theme.insetForBorder
 import coil3.compose.AsyncImage
+import coil3.compose.LocalPlatformContext
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import app.manyak.designsystem.R as DesignsystemR
 
 /**
@@ -136,9 +139,20 @@ fun StoryCover(
                     tint = ManyakTheme.colors.textSubtlest,
                 )
             } else {
+                val context = LocalPlatformContext.current
+                // 받는 동안의 빈 바탕에서 그림이 한 프레임에 튀어나오지 않게 서서히 드러낸다.
+                // 메모리 캐시에서 바로 나오는 표지는 Coil 이 페이드 없이 그린다.
+                val request =
+                    remember(context, thumbnailUrl) {
+                        ImageRequest
+                            .Builder(context)
+                            .data(thumbnailUrl)
+                            .crossfade(true)
+                            .build()
+                    }
                 AsyncImage(
                     modifier = Modifier.fillMaxSize(),
-                    model = thumbnailUrl,
+                    model = request,
                     // 표지는 카드의 텍스트 줄이 이미 말하는 것을 되풀이하므로 낭독 대상이 아니다.
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
