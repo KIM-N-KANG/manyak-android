@@ -127,7 +127,7 @@ private fun FilterChip(
     modifier: Modifier = Modifier,
 ) {
     val colors = ManyakTheme.colors
-    val fill = if (selected) colors.backgroundBrandBold else colors.surfaceRaised
+    val fill = if (selected) colors.brand else colors.surfaceRaised
     Box(
         modifier =
             modifier

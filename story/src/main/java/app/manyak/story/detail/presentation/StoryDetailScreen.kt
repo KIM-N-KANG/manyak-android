@@ -349,7 +349,11 @@ private fun StoryDetailLoaded(
                     .onSizeChanged { size -> ctaHeight = with(density) { size.height.toDp() } },
             isStarting = state.isStartingChat,
             failed = state.startChatFailed,
+            canLike = state.canLike,
+            isLiked = story.isLiked,
+            isTogglingLike = state.isTogglingLike,
             onClick = { onIntent(StoryDetailIntent.StartChat) },
+            onToggleLike = { onIntent(StoryDetailIntent.ToggleLike) },
         )
     }
 }
