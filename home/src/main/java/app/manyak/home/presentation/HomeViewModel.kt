@@ -31,6 +31,11 @@ data class HomeUiState(
     val nextCursor: String? = null,
     val isLoadingMore: Boolean = false,
     val loadMoreFailed: Boolean = false,
+    /**
+     * 첫 페이지를 새로 받을 때마다 오른다. 화면은 이 값을 목록 스크롤 상태의 키로 쓴다 — 스크롤 상태를
+     * 이어 쓰면 그리드가 보던 첫 카드를 키로 따라가, 정렬로 그 카드가 끝으로 밀리면 목록 끝까지 내려간다.
+     */
+    val firstPageVersion: Int = 0,
 ) {
     val hasMore: Boolean get() = nextCursor != null
 }
@@ -176,7 +181,18 @@ class HomeViewModel
             event: HomeEvent,
         ): HomeUiState =
             when (event) {
-                is HomeEvent.QueryChanged -> HomeUiState(query = event.query)
+                // 새 조건의 첫 페이지가 올 때까지 보던 목록을 남긴다 — 비웠다 채우면 칩을 누를 때마다 목록이 깜빡인다.
+                // 커서는 비워 이전 조건의 다음 페이지를 잇지 않는다.
+                is HomeEvent.QueryChanged ->
+                    state.copy(
+                        query = event.query,
+                        isLoading = true,
+                        nextCursor = null,
+                        loadFailed = false,
+                        isRefreshing = false,
+                        isLoadingMore = false,
+                        loadMoreFailed = false,
+                    )
 
                 HomeEvent.LoadStarted ->
                     state.copy(
@@ -193,6 +209,7 @@ class HomeViewModel
 
                 is HomeEvent.Loaded ->
                     state.copy(
+                        firstPageVersion = state.firstPageVersion + 1,
                         isLoading = false,
                         stories = event.page.items.distinctBy { story -> story.id },
                         nextCursor = event.page.nextCursor,

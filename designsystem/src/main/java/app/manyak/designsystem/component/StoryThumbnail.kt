@@ -27,14 +27,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
+import app.manyak.designsystem.text.formatCompactCount
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.designsystem.theme.insetForBorder
 import coil3.compose.AsyncImage
-import java.text.NumberFormat
+import coil3.compose.LocalPlatformContext
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import app.manyak.designsystem.R as DesignsystemR
 
 /**
- * 목록 카드의 3:4 표지에 누적 턴 수 뱃지를 얹은 것. 카드 종류별 표시(예: 홈의
+ * 목록 카드의 3:4 표지에 좋아요 수·누적 턴 수 뱃지를 얹은 것. 카드 종류별 표시(예: 홈의
  * ORIGINAL 태그)는 [overlay] 로 표지 위에 더한다.
  *
  * 뱃지를 얹을 수 없는 자리 — 채팅 목록 카드처럼 표지가 작거나, 턴 수를 카드의 다른 자리가 이미
@@ -43,6 +46,7 @@ import app.manyak.designsystem.R as DesignsystemR
 @Composable
 fun StoryThumbnail(
     thumbnailUrl: String?,
+    likeCount: Long,
     turnCount: Long,
     modifier: Modifier = Modifier,
     badgeScale: StoryBadgeScale = StoryBadgeScale.Compact,
@@ -57,13 +61,24 @@ fun StoryThumbnail(
         showBorder = showBorder,
     ) {
         overlay()
-        CountBadge(
+        Row(
             modifier = Modifier.align(Alignment.BottomEnd).padding(ManyakTheme.spacing.compact),
-            iconRes = DesignsystemR.drawable.ic_dialog,
-            count = turnCount,
-            descriptionRes = DesignsystemR.string.story_turn_count_description,
-            scale = badgeScale,
-        )
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
+        ) {
+            CountBadge(
+                iconRes = DesignsystemR.drawable.ic_heart_outline,
+                count = likeCount,
+                descriptionRes = DesignsystemR.string.story_like_count_description,
+                scale = badgeScale,
+            )
+            CountBadge(
+                iconRes = DesignsystemR.drawable.ic_dialog,
+                count = turnCount,
+                descriptionRes = DesignsystemR.string.story_turn_count_description,
+                scale = badgeScale,
+            )
+        }
     }
 }
 
@@ -124,9 +139,20 @@ fun StoryCover(
                     tint = ManyakTheme.colors.textSubtlest,
                 )
             } else {
+                val context = LocalPlatformContext.current
+                // 받는 동안의 빈 바탕에서 그림이 한 프레임에 튀어나오지 않게 서서히 드러낸다.
+                // 메모리 캐시에서 바로 나오는 표지는 Coil 이 페이드 없이 그린다.
+                val request =
+                    remember(context, thumbnailUrl) {
+                        ImageRequest
+                            .Builder(context)
+                            .data(thumbnailUrl)
+                            .crossfade(true)
+                            .build()
+                    }
                 AsyncImage(
                     modifier = Modifier.fillMaxSize(),
-                    model = thumbnailUrl,
+                    model = request,
                     // 표지는 카드의 텍스트 줄이 이미 말하는 것을 되풀이하므로 낭독 대상이 아니다.
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
@@ -139,7 +165,7 @@ fun StoryCover(
 }
 
 /**
- * 표지 위 지표 뱃지 하나.
+ * 표지 위 지표 뱃지 하나. 좋아요 수와 누적 턴 수가 같은 모양을 쓰므로 아이콘과 문구만 갈린다.
  * 표지 위에 놓이므로 색은 테마가 아니라 표지 대비로 정한다.
  */
 @Composable
@@ -150,7 +176,7 @@ private fun CountBadge(
     scale: StoryBadgeScale,
     modifier: Modifier = Modifier,
 ) {
-    val formatted = remember(count) { NumberFormat.getIntegerInstance().format(count) }
+    val formatted = remember(count) { formatCompactCount(count) }
     val description = stringResource(descriptionRes, formatted)
 
     Row(

@@ -41,13 +41,13 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `진입 시 전체·인기순 첫 페이지를 조회해 서버 순서 그대로 상태에 담는다`() =
+    fun `진입 시 전체·최신순 첫 페이지를 조회해 서버 순서 그대로 상태에 담는다`() =
         runTest(dispatcher) {
             val repository = FakeStoryRepository()
             val viewModel = HomeViewModel(storyRepository = repository, analytics = NoOpAnalytics)
             advanceUntilIdle()
 
-            assertEquals(listOf(StoryListQuery(StoryListFilter.ALL, StoryListSort.LIKES) to null), repository.requests)
+            assertEquals(listOf(StoryListQuery(StoryListFilter.ALL, StoryListSort.LATEST) to null), repository.requests)
             val state = viewModel.uiState.value
             assertFalse(state.isLoading)
             assertFalse(state.loadFailed)
@@ -130,6 +130,7 @@ class HomeViewModelTest {
 
             assertEquals(2, repository.requests.size)
             assertFalse(viewModel.uiState.value.isRefreshing)
+            assertEquals(2, viewModel.uiState.value.firstPageVersion)
         }
 
     @Test
@@ -171,6 +172,8 @@ class HomeViewModelTest {
             val state = viewModel.uiState.value
             assertEquals(listOf(first, second, third), state.stories)
             assertFalse(state.hasMore)
+            // 이어 붙인 페이지는 스크롤 위치를 그대로 잇는다.
+            assertEquals(1, state.firstPageVersion)
         }
 
     @Test
@@ -219,6 +222,38 @@ class HomeViewModelTest {
         }
 
     @Test
+    fun `조건을 바꾸면 새 첫 페이지가 올 때까지 보던 목록을 남기고 이어 읽지 않는다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryRepository()
+            repository.queuedResults += DomainResult.Success(StoryPage(sampleStories(), nextCursor = "c1"))
+            val viewModel = HomeViewModel(storyRepository = repository, analytics = NoOpAnalytics)
+            advanceUntilIdle()
+
+            val gate = CompletableDeferred<Unit>()
+            repository.inFlightGate = gate
+            viewModel.onIntent(HomeIntent.SelectFilter(StoryListFilter.ORIGINAL))
+            advanceUntilIdle()
+
+            val loading = viewModel.uiState.value
+            assertTrue(loading.isLoading)
+            assertEquals(sampleStories(), loading.stories)
+            assertFalse(loading.hasMore)
+            // 남겨 둔 목록은 보던 스크롤 위치를 그대로 쓴다.
+            assertEquals(1, loading.firstPageVersion)
+
+            val fresh = sampleStories().first().copy(id = "fresh")
+            repository.queuedResults += DomainResult.Success(StoryPage(listOf(fresh), nextCursor = null))
+            gate.complete(Unit)
+            advanceUntilIdle()
+
+            val loaded = viewModel.uiState.value
+            assertFalse(loaded.isLoading)
+            assertEquals(listOf(fresh), loaded.stories)
+            // 새 목록은 새 스크롤 상태로 맨 위에서 시작한다.
+            assertEquals(2, loaded.firstPageVersion)
+        }
+
+    @Test
     fun `이미 선택한 필터를 다시 고르면 다시 읽지 않는다`() =
         runTest(dispatcher) {
             val repository = FakeStoryRepository()
@@ -248,14 +283,14 @@ class HomeViewModelTest {
             repository.queuedResults += DomainResult.Success(StoryPage(listOf(stale), nextCursor = null))
             repository.inFlightGate = null
 
-            viewModel.onIntent(HomeIntent.SelectSort(StoryListSort.LATEST))
+            viewModel.onIntent(HomeIntent.SelectSort(StoryListSort.LIKES))
             advanceUntilIdle()
             gate.complete(Unit)
             advanceUntilIdle()
 
             val state = viewModel.uiState.value
-            assertEquals(StoryListQuery(sort = StoryListSort.LATEST) to null, repository.requests.last())
-            assertEquals(StoryListSort.LATEST, state.query.sort)
+            assertEquals(StoryListQuery(sort = StoryListSort.LIKES) to null, repository.requests.last())
+            assertEquals(StoryListSort.LIKES, state.query.sort)
             assertEquals(listOf(stale), state.stories)
             assertFalse(state.isLoading)
             assertFalse(state.isLoadingMore)
