@@ -10,10 +10,10 @@ enum class StoryListFilter {
     ORIGINAL,
 }
 
-/** 홈 목록의 정렬. */
+/** 홈 목록의 정렬. 선언 순서가 정렬 메뉴의 순서다 — 기본값인 최신순이 맨 위에 온다. */
 enum class StoryListSort {
-    LIKES,
     LATEST,
+    LIKES,
     CHATS,
 }
 
