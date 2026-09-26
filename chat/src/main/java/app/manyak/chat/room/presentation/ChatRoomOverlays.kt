@@ -1,7 +1,12 @@
 package app.manyak.chat.room.presentation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import app.manyak.chat.room.presentation.tour.ChatTourOverlay
+import app.manyak.chat.room.presentation.tour.ChatTourTargets
+import app.manyak.chat.room.presentation.tour.chatTourSteps
 import app.manyak.designsystem.component.ManyakDestructiveDialog
 import app.manyak.report.presentation.StoryReportUiState
 import app.manyak.report.presentation.component.StoryReportSheet
@@ -39,3 +44,25 @@ internal fun ChatRoomReportSheet(
         onAction = { action -> onIntent(ChatRoomIntent.Report(action)) },
     )
 }
+
+/** 첫 진입 안내 투어. 방을 연 뒤에만 열린다. */
+@Composable
+internal fun ChatRoomTour(
+    state: ChatRoomUiState,
+    targets: ChatTourTargets,
+    onIntent: (ChatRoomIntent) -> Unit,
+) {
+    if (!state.tourOpen) return
+    ChatTourOverlay(
+        steps = chatTourSteps(state.composer.mode),
+        stepIndex = state.tourStep,
+        targets = targets,
+        onStepShown = { index, step -> onIntent(ChatRoomIntent.TourStepShown(index, step)) },
+        onComplete = { onIntent(ChatRoomIntent.TourCompleted) },
+        onSkip = { index -> onIntent(ChatRoomIntent.TourSkipped(index)) },
+    )
+}
+
+/** 투어가 딤으로 덮은 화면은 보조기술도 읽지 않는다. 조작이 막힌 버튼을 읽어 주면 누를 수 있는 것처럼 들린다. */
+internal fun Modifier.hiddenBehindTour(state: ChatRoomUiState): Modifier =
+    if (state.tourOpen) clearAndSetSemantics {} else this

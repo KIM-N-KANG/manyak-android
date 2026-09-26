@@ -23,6 +23,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -37,6 +38,7 @@ import app.manyak.chat.list.presentation.label
 import app.manyak.chat.room.presentation.composer.ChatComposer
 import app.manyak.chat.room.presentation.composer.ChatComposerActions
 import app.manyak.chat.room.presentation.composer.ChatSettingsSheet
+import app.manyak.chat.room.presentation.tour.ChatTourTargets
 import app.manyak.designsystem.component.FullscreenImageViewer
 import app.manyak.designsystem.component.ManyakDestructiveDialog
 import app.manyak.designsystem.component.ManyakIconButton
@@ -124,10 +126,12 @@ private fun ChatRoomContent(
     var pendingFill by rememberSaveable { mutableStateOf<Int?>(null) }
     // 메시지 영역의 빈 곳을 누를 때마다 바뀐다. 구성 변경에서 읽던 화면이 달라지지 않게 남긴다.
     var headerHidden by rememberSaveable { mutableStateOf(false) }
+    val tourTargets = remember { ChatTourTargets() }
 
     Box(modifier = modifier.fillMaxSize()) {
         // 헤더는 목록 위에 겹쳐 뜬다 — 숨기고 보일 때 목록 높이가 바뀌면 읽던 줄이 밀린다.
-        Box(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
+        // 투어 중에는 딤 뒤의 화면을 보조기술에서도 가린다.
+        Box(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).hiddenBehindTour(state)) {
             val phase = chatRoomPhase(state)
             val millis = ManyakTheme.motion.screenTransitionMillis
             AnimatedContent(
@@ -158,12 +162,14 @@ private fun ChatRoomContent(
                                 onIntent = onIntent,
                                 onFillRequested = { position -> pendingFill = position },
                                 onBackgroundTap = { headerHidden = !headerHidden },
+                                tourTargets = tourTargets,
                             )
                     }
                 }
             }
             ChatRoomHeaderOverlay(
-                visible = !headerHidden || phase != ChatRoomPhase.CONTENT,
+                // 투어 중에는 숨겨 둔 헤더도 보인다 — 딤 아래에서 화면이 어디인지 알려 준다.
+                visible = !headerHidden || phase != ChatRoomPhase.CONTENT || state.tourOpen,
                 title = state.storyTitle,
                 phase = phase,
                 onBack = onBack,
@@ -171,6 +177,7 @@ private fun ChatRoomContent(
             )
         }
         FullscreenImageViewer(state.imageViewerUrl, onClose = { onIntent(ChatRoomIntent.CloseImageViewer) })
+        ChatRoomTour(state = state, targets = tourTargets, onIntent = onIntent)
     }
 
     val fillPosition = pendingFill
@@ -206,6 +213,7 @@ private fun ColumnScope.ChatRoomLoaded(
     onIntent: (ChatRoomIntent) -> Unit,
     onFillRequested: (Int) -> Unit,
     onBackgroundTap: () -> Unit,
+    tourTargets: ChatTourTargets,
 ) {
     // 설정 시트 열림. 회전·다크 모드 전환에서 닫히면 사용자가 다시 열어야 한다.
     var settingsOpen by rememberSaveable { mutableStateOf(false) }
@@ -230,6 +238,7 @@ private fun ColumnScope.ChatRoomLoaded(
         hasSuggestions = state.suggestions.hasCandidate,
         isStreaming = state.isStreaming,
         actions = composerActions(onIntent, onOpenSettings = { settingsOpen = true }),
+        tourTargets = tourTargets,
     )
     if (settingsOpen) {
         // 스위치는 의도로 바로 올라가고 시트는 닫기 전까지 남는다 — 블럭 입력을 끄면 뒤의 컴포저가 바뀐다.

@@ -9,6 +9,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import app.manyak.chat.entity.ChatInputMode
+import app.manyak.chat.room.presentation.tour.ChatTourTarget
+import app.manyak.chat.room.presentation.tour.ChatTourTargets
+import app.manyak.chat.room.presentation.tour.chatTourTarget
 import app.manyak.common.presentation.credit.LocalCreditPolicy
 import app.manyak.common.presentation.credit.LocalTrials
 import app.manyak.common.presentation.credit.creditAmountText
@@ -30,6 +33,7 @@ internal fun ComposerToolbar(
     onInsertEmphasis: () -> Unit,
     onSend: () -> Unit,
     modifier: Modifier = Modifier,
+    tourTargets: ChatTourTargets? = null,
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -38,6 +42,7 @@ internal fun ComposerToolbar(
     ) {
         val blockMode = mode == ChatInputMode.BLOCK
         ComposerChipButton(
+            modifier = Modifier.chatTourTarget(tourTargets, ChatTourTarget.ADD_SITUATION),
             text = stringResource(ChatR.string.chat_composer_add_situation),
             // 일반 모드에서는 칸이 늘지 않으므로 개수 상한과 무관하다.
             enabled = enabled && (!blockMode || canAddBlock),
@@ -52,12 +57,14 @@ internal fun ComposerToolbar(
         )
         if (blockMode) {
             ComposerChipButton(
+                modifier = Modifier.chatTourTarget(tourTargets, ChatTourTarget.ADD_DIALOGUE),
                 text = stringResource(ChatR.string.chat_composer_add_dialogue),
                 enabled = enabled && canAddBlock,
                 onClick = { actions.onAddBlock(InputBlockType.DIALOGUE) },
             )
         }
         ComposerIconButton(
+            modifier = Modifier.chatTourTarget(tourTargets, ChatTourTarget.SETTINGS),
             iconRes = DesignsystemR.drawable.ic_gear,
             contentDescription = stringResource(ChatR.string.chat_settings_open),
             onClick = actions.onOpenSettings,
@@ -78,7 +85,11 @@ internal fun ComposerToolbar(
                 style = ManyakTheme.typography.bodySmall,
                 color = ManyakTheme.colors.textSubtle,
             )
-            ComposerSendButton(state = sendState, onClick = onSend)
+            ComposerSendButton(
+                modifier = Modifier.chatTourTarget(tourTargets, ChatTourTarget.SEND),
+                state = sendState,
+                onClick = onSend,
+            )
         }
     }
 }

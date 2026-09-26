@@ -181,6 +181,7 @@ internal class FakeChatPreferencesRepository(
     private var choices: Boolean = true,
     private var hintSeen: Boolean = true,
     private var realtimeImage: Boolean = true,
+    private var tourSeen: Boolean = true,
 ) : ChatPreferencesRepository {
     val savedModes = mutableListOf<ChatInputMode>()
     val savedChoices = mutableListOf<Boolean>()
@@ -215,5 +216,15 @@ internal class FakeChatPreferencesRepository(
     override suspend fun markChoicesHintSeen() {
         hintSeen = true
         hintSeenMarkCount++
+    }
+
+    var tourSeenMarkCount = 0
+        private set
+
+    override suspend fun isChatTourSeen(): Boolean = tourSeen
+
+    override suspend fun markChatTourSeen() {
+        tourSeen = true
+        tourSeenMarkCount++
     }
 }

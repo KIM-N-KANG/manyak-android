@@ -90,6 +90,8 @@ data class ManyakColors(
      */
     val overlayPressed: Color,
     val imageViewerScrim: Color,
+    /** 채팅 안내 투어의 딤. 하이라이트한 버튼만 뚫어 두므로 뒤 화면이 무엇인지는 읽혀야 한다. */
+    val tourScrim: Color,
     val backgroundBrandBold: Color,
     val backgroundBrandBoldPressed: Color,
     val backgroundBrandSubtle: Color,
@@ -130,6 +132,7 @@ internal val ManyakLightColors =
         backgroundNeutralPressed = Gray150,
         overlayPressed = PressedOverlayLight,
         imageViewerScrim = Color.Black.copy(alpha = 0.92f),
+        tourScrim = Color.Black.copy(alpha = 0.5f),
         backgroundBrandBold = Green800,
         backgroundBrandBoldPressed = Green900,
         backgroundBrandSubtle = Green50,
@@ -170,6 +173,7 @@ internal val ManyakDarkColors =
         backgroundNeutralPressed = Gray750,
         overlayPressed = PressedOverlayDark,
         imageViewerScrim = Color.Black.copy(alpha = 0.92f),
+        tourScrim = Color.Black.copy(alpha = 0.5f),
         backgroundBrandBold = Green800,
         backgroundBrandBoldPressed = Green900,
         backgroundBrandSubtle = Green950,

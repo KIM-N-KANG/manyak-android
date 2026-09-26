@@ -23,6 +23,7 @@ colors:
   background-neutral-pressed: "#EEEEEE"
   overlay-pressed: "#0F000000"
   image-viewer-scrim: "#EB000000"
+  tour-scrim: "#80000000"
   background-brand-bold: "#00804B"
   background-brand-bold-pressed: "#006034"
   background-brand-subtle: "#E8F8EE"
@@ -61,6 +62,7 @@ colors-dark:
   background-neutral-pressed: "#575757"
   overlay-pressed: "#14FFFFFF"
   image-viewer-scrim: "#EB000000"
+  tour-scrim: "#80000000"
   background-brand-bold: "#00804B"
   background-brand-bold-pressed: "#006034"
   background-brand-subtle: "#00411F"
@@ -164,6 +166,8 @@ sizes:
   generation-dot-gap: 10dp
   generation-dot-radius: 1dp
   generation-dot-displacement: 9dp
+  tour-card-width: 288dp
+  tour-step-dot: 6dp
 
 spacing:
   hairline: 2dp
@@ -358,6 +362,21 @@ components:
     textColor: "{colors.text}"
     typography: "{typography.body-large-strong}"
     minHeight: 64dp
+  chat-tour-card:
+    backgroundColor: "{colors.surface-raised}"
+    scrimColor: "{colors.tour-scrim}"
+    titleTypography: "{typography.body-large-strong}"
+    descriptionTypography: "{typography.body-medium}"
+    descriptionColor: "{colors.text-subtle}"
+    rounded: "{rounded.card}"
+    highlightRounded: "{rounded.control}"
+    highlightPadding: "{spacing.dense}"
+    gap: "{spacing.component}"
+    padding: "{spacing.gutter}"
+    width: "{sizes.tour-card-width}"
+    dotSize: "{sizes.tour-step-dot}"
+    dotActiveColor: "{colors.text-subtle}"
+    dotInactiveColor: "{colors.border}"
   step-indicator:
     completedColor: "{colors.text-disabled}"
     activeColor: "{colors.step-indicator-active}"
@@ -472,6 +491,7 @@ components:
 - **보조 배경** (`{colors.background-neutral}` — 라이트 #F5F5F5 / 다크 #191919): 입력창·비강조 채움. 눌림은 `{colors.background-neutral-pressed}`.
 - **눌림 리플** (`{colors.overlay-pressed}` — 라이트 검정 6% / 다크 흰 8%): 리플의 색이고 알파가 곧 눌림 농도다. 흰 행에서는 보조 배경 눌림 색 근처가 되고, 표지 위에서는 옅은 스크림이 된다. 배경색이 없는 카드에도 같은 규칙으로 눌림을 말하기 위한 값이라 채움 색이 아니라 반투명이다.
 - **비활성 채움** (`{colors.background-disabled}`): 비활성 컨트롤의 바닥.
+- **투어 딤** (`{colors.tour-scrim}` — 검정 50%, 라이트·다크 공통): 채팅 안내 투어가 하이라이트한 버튼만 뚫고 나머지를 덮는다. 이미지 뷰어 스크림(92%)보다 옅은 것은 뒤 화면이 어디인지 읽혀야 안내가 성립하기 때문이다. 웹과 같은 값이다.
 
 ### 텍스트
 
@@ -607,6 +627,8 @@ components:
 | `{sizes.generation-dot-gap}` | 10dp | 이미지 생성 로딩 점 간격 |
 | `{sizes.generation-dot-radius}` | 1dp | 이미지 생성 로딩 점 반지름 기준·테두리 |
 | `{sizes.generation-dot-displacement}` | 9dp | 이미지 생성 로딩 점 최대 변위 |
+| `{sizes.tour-card-width}` | 288dp | 채팅 안내 투어 카드의 폭. 좁은 화면에서는 좌우 `{spacing.gutter}`를 남기고 줄어든다 |
+| `{sizes.tour-step-dot}` | 6dp | 채팅 안내 투어 카드의 스텝 점 지름 |
 
 `{sizes.tab-icon}`이 `{sizes.icon}`보다 큰 이유는 놓이는 자리가 다르기 때문이다. `{sizes.icon}`은 같은 줄의
 라벨 옆에 붙어 글자 크기에 맞추지만, 탭 아이콘은 라벨 위에 놓인 탭의 주된 시각 요소다. 웹 하단
@@ -716,6 +738,8 @@ components:
 **`overlay`** — 다이얼로그. 배경 `{colors.surface-raised}`, 모서리 `{rounded.overlay}`, 내부 여백 `{spacing.gutter}`.
 
 **`sheet`** — 바텀시트. 배경 `{colors.surface-raised}`, 모서리는 `{rounded.sheet}`로 위쪽 두 곳만 깎습니다 — 아래쪽은 화면 끝에 붙어 있어 깎으면 그 틈으로 스크림이 비칩니다. 내부 여백은 좌·우·아래 `{spacing.gutter}`이고 **위쪽은 두지 않습니다** — 드래그 핸들이 자체 여백을 갖고 있어 겹칩니다. 하단 안전 영역과 키보드 높이는 그 아래로 시트가 직접 낍니다. **하단 닫기는 `button-text` 규칙의 전체 폭·최소 높이 `{sizes.control}`(48dp)·주 동작 버튼과 같은 글자 스타일(`{typography.label-large}`)·보조색 텍스트 버튼이며, 위에 주 동작 버튼이 있을 때만 그 짝으로 둡니다.** 신고·초대 코드 온보딩·광고 알림 동의 시트가 그렇습니다. **주 동작 버튼이 없는 시트 — 읽기 전용(선택한 키워드·채팅 설정)과 항목을 고르는 옵션 시트(카드 옵션·상세 옵션·채팅 메뉴) — 에는 닫기 버튼을 두지 않고** 스크림·끌어내리기·뒤로가기로만 닫습니다(2026-09-18) — 닫기 하나뿐인 줄은 자리만 차지합니다. **닫힘을 막은 시트는 핸들 드래그도 잠급니다**(2026-09-20) — 끌리기만 하고 닫히지 않는 튕김이 "닫을 수 있다"는 신호가 됩니다. 끌어내리기가 아예 없는 시트(필수 동의)는 핸들 자체를 두지 않고 위쪽 여백을 `{spacing.gutter}`로 채우며, 전송 중처럼 잠깐 잠그는 시트는 핸들이 사라졌다 나타나지 않게 그대로 둡니다.
+
+**`chat-tour-card`** — 채팅 첫 진입 안내 투어. 딤 `{colors.tour-scrim}`은 대상 버튼을 `{spacing.dense}`만큼 넓힌 `{rounded.control}` 모양으로 뚫고, 카드는 `{colors.surface-raised}` · `{rounded.card}` · 내부 여백 `{spacing.gutter}` · 폭 `{sizes.tour-card-width}`(좁으면 좌우 `{spacing.gutter}`를 남기고 줄어듦)입니다. 카드는 하이라이트와 `{spacing.component}` 떨어져 아래에, 아래 공간이 모자라면 위에 놓이고 가로는 하이라이트 중앙이 기본이며 가장자리에서는 그쪽 변에 맞춥니다. 제목 `{typography.body-large-strong}`, 설명 `{typography.body-medium}` + `{colors.text-subtle}`, 아래 줄에 스텝 점(`{sizes.tour-step-dot}`, 현재 `{colors.text-subtle}` · 나머지 `{colors.border}`)과 건너뛰기(텍스트 버튼)·다음/완료(주 버튼)를 둡니다. 그림자는 두지 않습니다. 구멍은 스텝이 바뀔 때 `{motion.element-enter}`로 다음 대상에 옮겨 가고, 카드는 같은 시간에 `{spacing.compact}` 아래에서 올라오며 나타납니다.
 
 **`badge`** — 배경 `{colors.background-brand-subtle}`, 텍스트 `{colors.text-brand}` + `{typography.body-small}`, 모서리 `{rounded.pill}`, 여백 세로 `{spacing.hairline}` · 가로 `{spacing.compact}`.
 

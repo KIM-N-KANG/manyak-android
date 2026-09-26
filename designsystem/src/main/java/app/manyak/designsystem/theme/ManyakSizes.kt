@@ -38,6 +38,10 @@ data class ManyakSizes(
     val generationDotRadius: Dp,
     /** 9dp — 이미지 생성 로딩의 점 최대 변위 */
     val generationDotDisplacement: Dp,
+    /** 288dp — 채팅 안내 투어 카드의 폭 */
+    val tourCardWidth: Dp,
+    /** 6dp — 채팅 안내 투어 카드의 스텝 점 지름 */
+    val tourStepDot: Dp,
 )
 
 internal val ManyakDefaultSizes =
@@ -55,4 +59,6 @@ internal val ManyakDefaultSizes =
         generationDotGap = 10.dp,
         generationDotRadius = 1.dp,
         generationDotDisplacement = 9.dp,
+        tourCardWidth = 288.dp,
+        tourStepDot = 6.dp,
     )
