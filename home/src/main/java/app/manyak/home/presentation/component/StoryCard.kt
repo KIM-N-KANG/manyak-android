@@ -23,7 +23,7 @@ import app.manyak.designsystem.R as DesignsystemR
 import app.manyak.home.R as HomeR
 
 /**
- * 오리지널 스토리 카드.
+ * 홈 스토리 카드.
  *
  * 제목과 제작자가 **1줄 고정**인 것이 이 카드의 규칙이다. 그래서 제목 길이와 무관하게 카드 높이가
  * 같고, 같은 행에 놓인 카드들의 제작자 줄이 같은 높이에 온다. 텍스트 영역에 고정 높이를 두면
@@ -47,16 +47,18 @@ internal fun StoryCard(
             turnCount = story.turnCount,
             showBorder = true,
         ) {
-            // 스크롤로 섹션 제목이 밀려 나가도 공식 스토리임이 카드 자체로 드러나게 하는 표시다.
-            Image(
-                modifier =
-                    Modifier
-                        .align(Alignment.TopStart)
-                        .width(OriginalTagWidth)
-                        .aspectRatio(ORIGINAL_TAG_ASPECT_RATIO),
-                painter = painterResource(DesignsystemR.drawable.ic_story_original_tag),
-                contentDescription = stringResource(HomeR.string.home_original_tag),
-            )
+            // 선택한 필터와 무관하게 공식 스토리임을 카드 자체로 드러낸다.
+            if (story.isOriginal) {
+                Image(
+                    modifier =
+                        Modifier
+                            .align(Alignment.TopStart)
+                            .width(OriginalTagWidth)
+                            .aspectRatio(ORIGINAL_TAG_ASPECT_RATIO),
+                    painter = painterResource(DesignsystemR.drawable.ic_story_original_tag),
+                    contentDescription = stringResource(HomeR.string.home_original_tag),
+                )
+            }
         }
         Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.hairline)) {
             Text(
@@ -66,7 +68,7 @@ internal fun StoryCard(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            // 공식 계정이라 "마냑" 이 들어오지만, 작성자가 없는 스토리는 줄 자체를 그리지 않는다.
+            // 작성자가 없는 스토리는 줄 자체를 그리지 않는다.
             story.authorNickname?.let { nickname ->
                 Text(
                     text = stringResource(CommonR.string.story_author_nickname, nickname),

@@ -15,7 +15,7 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object HomeNetworkModule {
-    /** 오리지널 목록은 인증을 요구하지 않아 토큰 없는 클라이언트로 부른다. */
+    /** 공개 목록은 인증을 요구하지 않아 토큰 없는 클라이언트로 부른다. */
     @Provides
     @Singleton
     fun provideStoryApi(

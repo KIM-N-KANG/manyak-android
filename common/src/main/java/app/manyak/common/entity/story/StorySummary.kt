@@ -1,7 +1,7 @@
 package app.manyak.common.entity.story
 
 /**
- * 목록 카드가 그리는 스토리 한 건. 홈(오리지널)과 제작(내가 만든) 카드가 함께 쓴다.
+ * 목록 카드가 그리는 스토리 한 건. 홈(공개 목록)과 제작(내가 만든) 카드가 함께 쓴다.
  *
  * 서버의 목록 응답에는 등록 상태도 있지만, 두 카드가 그리는 것의 합집합만 담는다 —
  * 쓰지 않는 필드를 도메인에 두면 화면이 무엇에 의존하는지 흐려진다. 상세나 다른 목록이 필요로
@@ -24,4 +24,6 @@ data class StorySummary(
     val turnCount: Long,
     /** 제작일 `YYYY-MM-DD`. 서버 값이 없거나 형식이 다르면 `null` 이라 카드에서 줄 자체를 그리지 않는다. */
     val createdDate: String?,
+    /** 마냑 공식 계정의 스토리. 홈 카드가 선택한 필터와 무관하게 이 값으로 ORIGINAL 태그를 그린다. */
+    val isOriginal: Boolean,
 )

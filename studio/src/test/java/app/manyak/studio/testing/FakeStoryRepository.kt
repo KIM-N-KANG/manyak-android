@@ -19,6 +19,7 @@ internal fun sampleStories(): List<StorySummary> =
             likeCount = 0,
             turnCount = 128,
             createdDate = "2026-08-03",
+            isOriginal = false,
         ),
         StorySummary(
             id = "story-2",
@@ -30,6 +31,7 @@ internal fun sampleStories(): List<StorySummary> =
             likeCount = 0,
             turnCount = 0,
             createdDate = null,
+            isOriginal = false,
         ),
     )
 

@@ -459,4 +459,5 @@ private fun previewStory(
         likeCount = likeCount,
         turnCount = turnCount,
         createdDate = createdDate,
+        isOriginal = false,
     )
