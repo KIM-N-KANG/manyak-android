@@ -29,6 +29,7 @@ import app.manyak.chat.room.presentation.suggestion.composerOrigin
 import app.manyak.chat.room.presentation.suggestion.normalizeSuggestion
 import app.manyak.chat.room.presentation.suggestion.randomSuggestionPosition
 import app.manyak.chat.room.presentation.suggestion.shouldGenerateChoices
+import app.manyak.chat.room.presentation.tour.ChatTourStep
 import app.manyak.common.domain.credit.CreditPolicyRepository
 import app.manyak.common.domain.credit.TrialsRepository
 import app.manyak.common.domain.error.DomainError
@@ -108,6 +109,10 @@ data class ChatRoomUiState(
     val isStartingNewChat: Boolean = false,
     /** 공유 링크를 발급하는 중. 메뉴 항목을 잠그고 시트 닫기를 막는다. */
     val isSharing: Boolean = false,
+    /** 첫 진입 안내 투어가 열려 있는지. */
+    val tourOpen: Boolean = false,
+    /** 투어가 보이고 있는 스텝의 자리. 열린 직후 화면이 첫 스텝을 고르기 전에는 null 이다. */
+    val tourStep: Int? = null,
 ) {
     /** 참조 스토리가 남아 있어야 신고·새 채팅을 둘 수 있다. */
     val hasStory: Boolean
@@ -194,6 +199,20 @@ sealed interface ChatRoomIntent {
 
     data class Report(
         val action: StoryReportAction,
+    ) : ChatRoomIntent
+
+    /** 안내 투어가 [index] 자리의 스텝을 보이기 시작했다. */
+    data class TourStepShown(
+        val index: Int,
+        val step: ChatTourStep,
+    ) : ChatRoomIntent
+
+    /** 마지막 스텝에서 완료를 눌렀다. 보일 스텝이 하나도 없던 경우도 여기로 닫는다. */
+    data object TourCompleted : ChatRoomIntent
+
+    /** 건너뛰기·뒤로가기로 [index] 자리에서 투어를 닫았다. */
+    data class TourSkipped(
+        val index: Int,
     ) : ChatRoomIntent
 }
 
@@ -297,6 +316,14 @@ sealed interface ChatRoomEvent {
     data class Report(
         val change: StoryReportChange,
     ) : ChatRoomEvent
+
+    data object TourOpened : ChatRoomEvent
+
+    data class TourStepChanged(
+        val index: Int,
+    ) : ChatRoomEvent
+
+    data object TourClosed : ChatRoomEvent
 }
 
 sealed interface ChatRoomEffect {
@@ -379,6 +406,7 @@ class ChatRoomViewModel
         private var deleteJob: Job? = null
         private var newChatJob: Job? = null
         private var shareJob: Job? = null
+        private var tourJob: Job? = null
 
         /**
          * 의도 처리기가 읽는 정본.
@@ -393,6 +421,8 @@ class ChatRoomViewModel
         private var choicesEnabled = true
         private var realtimeImageEnabled = true
         private var hintUnseen = false
+        private var tourUnseen = false
+        private var tourOpen = false
 
         /**
          * 응답을 받는 중인지. [streamJob] 은 확정 조회가 끝날 때까지 살아 있어 선택지 생성 조건과
@@ -422,6 +452,7 @@ class ChatRoomViewModel
                     choicesEnabled = preferences.choicesEnabled()
                     realtimeImageEnabled = preferences.realtimeImageEnabled()
                     hintUnseen = !preferences.isChoicesHintSeen()
+                    tourUnseen = !preferences.isChatTourSeen()
                     dispatchEvent(
                         ChatRoomEvent.PreferencesLoaded(
                             composer = composer,
@@ -556,6 +587,7 @@ class ChatRoomViewModel
                             )
                             // 보이는 순간 열람으로 기록한다. 상태는 그대로 둬 이 방에서는 계속 보인다.
                             if (hintUnseen && turns.isEmpty()) preferences.markChoicesHintSeen()
+                            if (turns.isEmpty()) scheduleTour()
                         }
 
                         is DomainResult.Failure -> {
@@ -677,8 +709,57 @@ class ChatRoomViewModel
 
                 ChatRoomIntent.ChoicesRetried -> generateChoices()
 
+                else -> handleTour(intent)
+            }
+        }
+
+        /**
+         * 첫 진입 안내 투어를 연다. 화면이 그려진 직후에 딤이 깔리지 않게 잠깐 두되, 사용자가 전송을 시도하기
+         * 전에는 떠야 해서 짧다.
+         *
+         * 그 사이 전송이 나가 턴이 생기면 이 방에서는 건너뛰고 기록도 남기지 않는다 — 다음 새 채팅에서 연다.
+         */
+        private fun scheduleTour() {
+            if (!tourUnseen || tourJob?.isActive == true) return
+            tourJob =
+                viewModelScope.launch {
+                    delay(TOUR_OPEN_DELAY_MILLIS)
+                    if (!tourUnseen || isStreaming || turns.isNotEmpty()) return@launch
+                    tourUnseen = false
+                    tourOpen = true
+                    analytics.track(AnalyticsEvent.ChatTourShown(chatId))
+                    dispatchEvent(ChatRoomEvent.TourOpened)
+                    // 여는 순간 기록한다. 끝까지 보지 않고 나가도 다시 띄우지 않는다.
+                    preferences.markChatTourSeen()
+                }
+        }
+
+        private suspend fun handleTour(intent: ChatRoomIntent) {
+            // 닫힌 뒤에 늦게 도착한 조작이다.
+            if (!tourOpen) return
+            when (intent) {
+                is ChatRoomIntent.TourStepShown -> {
+                    analytics.track(AnalyticsEvent.ChatTourStepViewed(chatId, intent.index, intent.step.wire))
+                    dispatchEvent(ChatRoomEvent.TourStepChanged(intent.index))
+                }
+
+                ChatRoomIntent.TourCompleted -> {
+                    analytics.track(AnalyticsEvent.ChatTourCompleted(chatId))
+                    closeTour()
+                }
+
+                is ChatRoomIntent.TourSkipped -> {
+                    analytics.track(AnalyticsEvent.ChatTourSkipButtonClicked(chatId, intent.index))
+                    closeTour()
+                }
+
                 else -> Unit
             }
+        }
+
+        private suspend fun closeTour() {
+            tourOpen = false
+            dispatchEvent(ChatRoomEvent.TourClosed)
         }
 
         /**
@@ -908,6 +989,7 @@ class ChatRoomViewModel
             const val HTTP_CONFLICT = 409
 
             const val CHOICES_TOGGLE_DEBOUNCE_MILLIS = 500L
+            const val TOUR_OPEN_DELAY_MILLIS = 200L
             const val REGENERATE_COOLDOWN_MILLIS = 500L
         }
     }
@@ -1046,6 +1128,12 @@ private fun reduceChoices(
 
         is ChatRoomEvent.ChoicesFailed ->
             state.copy(choicesProgress = ChoicesProgress(event.turnId, failed = true))
+
+        ChatRoomEvent.TourOpened -> state.copy(tourOpen = true, tourStep = null)
+
+        is ChatRoomEvent.TourStepChanged -> state.copy(tourStep = event.index)
+
+        ChatRoomEvent.TourClosed -> state.copy(tourOpen = false, tourStep = null)
 
         else -> state
     }

@@ -310,6 +310,32 @@ sealed class AnalyticsEvent(
         val chatId: String,
     ) : AnalyticsEvent("client_chat_retryButton_clicked", mapOf("chat_id" to chatId))
 
+    data class ChatTourShown(
+        val chatId: String,
+    ) : AnalyticsEvent("client_chat_tour_shown", mapOf("chat_id" to chatId))
+
+    /** [stepNumber] 는 입력 모드별 스텝 목록 안의 0부터 센 자리, [stepId] 는 안내 대상 식별자다. */
+    data class ChatTourStepViewed(
+        val chatId: String,
+        val stepNumber: Int,
+        val stepId: String,
+    ) : AnalyticsEvent(
+            "client_chat_tourStep_viewed",
+            mapOf("chat_id" to chatId, "step_number" to stepNumber, "step_id" to stepId),
+        )
+
+    data class ChatTourCompleted(
+        val chatId: String,
+    ) : AnalyticsEvent("client_chat_tour_completed", mapOf("chat_id" to chatId))
+
+    data class ChatTourSkipButtonClicked(
+        val chatId: String,
+        val stepNumber: Int,
+    ) : AnalyticsEvent(
+            "client_chat_tourSkipButton_clicked",
+            mapOf("chat_id" to chatId, "step_number" to stepNumber),
+        )
+
     // creditShortageDialog — 이름은 웹 호환, 실제 UI 는 토스트
     data class CreditShortageShown(
         val trigger: CreditShortageTrigger,

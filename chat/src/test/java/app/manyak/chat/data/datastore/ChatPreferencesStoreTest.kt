@@ -32,6 +32,7 @@ class ChatPreferencesStoreTest {
             assertEquals(ChatInputMode.BLOCK, store.inputMode())
             assertTrue(store.choicesEnabled())
             assertFalse(store.isChoicesHintSeen())
+            assertFalse(store.isChatTourSeen())
         }
 
     @Test
@@ -42,10 +43,12 @@ class ChatPreferencesStoreTest {
             store.setInputMode(ChatInputMode.PLAIN)
             store.setChoicesEnabled(false)
             store.markChoicesHintSeen()
+            store.markChatTourSeen()
 
             assertEquals(ChatInputMode.PLAIN, store.inputMode())
             assertFalse(store.choicesEnabled())
             assertTrue(store.isChoicesHintSeen())
+            assertTrue(store.isChatTourSeen())
         }
 
     @Test

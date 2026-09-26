@@ -25,6 +25,7 @@ import javax.inject.Singleton
  * 읽기·쓰기 실패를 모두 삼킨다. 설정 하나를 읽지 못했다고 채팅방이 열리지 않거나, 저장에 실패했다고
  * 방금 누른 선택이 화면에서 되돌아가서는 안 된다. 실패의 결과는 "다음 실행에서 기본값"뿐이다.
  */
+@Suppress("TooManyFunctions") // 기기 설정마다 읽기·쓰기 한 쌍이다.
 @Singleton
 class ChatPreferencesStore
     @Inject
@@ -53,6 +54,10 @@ class ChatPreferencesStore
 
         override suspend fun markChoicesHintSeen() = write { it[CHOICES_HINT_SEEN_KEY] = true }
 
+        override suspend fun isChatTourSeen(): Boolean = read(CHAT_TOUR_SEEN_KEY) ?: false
+
+        override suspend fun markChatTourSeen() = write { it[CHAT_TOUR_SEEN_KEY] = true }
+
         private suspend fun <T> read(key: Preferences.Key<T>): T? =
             withContext(ioDispatcher) {
                 runCatching { dataStore.data.first()[key] }.getOrNull()
@@ -68,6 +73,7 @@ class ChatPreferencesStore
             val INPUT_MODE_KEY = stringPreferencesKey("chat_input_mode")
             val CHOICES_ENABLED_KEY = booleanPreferencesKey("chat_choices_enabled")
             val CHOICES_HINT_SEEN_KEY = booleanPreferencesKey("chat_choices_hint_seen")
+            val CHAT_TOUR_SEEN_KEY = booleanPreferencesKey("chat_tour_seen")
             val REALTIME_IMAGE_ENABLED_KEY = booleanPreferencesKey("chat_realtime_image_enabled")
 
             /** 웹과 같은 기본값이다. 처음 들어온 사용자가 두 클라이언트에서 다른 화면을 보면 안 된다. */

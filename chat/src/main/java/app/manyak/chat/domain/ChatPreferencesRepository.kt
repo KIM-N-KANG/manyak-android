@@ -37,4 +37,9 @@ interface ChatPreferencesRepository {
     suspend fun isChoicesHintSeen(): Boolean
 
     suspend fun markChoicesHintSeen()
+
+    /** 채팅 화면 안내 투어를 이미 봤는지. 읽지 못하면 보지 않은 것으로 본다. */
+    suspend fun isChatTourSeen(): Boolean
+
+    suspend fun markChatTourSeen()
 }

@@ -7,10 +7,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -236,6 +240,16 @@ private fun Chats(
 ) {
     val analytics = LocalAnalytics.current
     val impressions = rememberImpressionTracker()
+    val listState = rememberLazyListState()
+    // 다른 탭에서 만든 채팅은 돌아와 다시 읽을 때 목록 앞에 붙는데, 목록은 보던 첫 카드를 따라가 그만큼
+    // 아래에 선다. 맨 위를 보던 중이었으면 맨 위에 남긴다. 스크롤해 둔 자리는 그대로 둔다.
+    val firstChatId = chats.first().id
+    val shownFirstChatId = remember { mutableStateOf(firstChatId) }
+    SideEffect {
+        val atTop = listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0
+        if (shownFirstChatId.value != firstChatId && atTop) listState.requestScrollToItem(0)
+        shownFirstChatId.value = firstChatId
+    }
     ManyakPullToRefreshBox(
         modifier = modifier,
         isRefreshing = isRefreshing,
@@ -244,6 +258,7 @@ private fun Chats(
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
+            state = listState,
             // 좌우 여백은 카드가 스스로 갖는다 — 카드 전체가 눌리는 자리라 눌림 효과가 화면 폭을
             // 채워야 한다. 그래서 셸이 넘긴 여백에 하단 여유만 더한다.
             contentPadding = contentPadding.withRowListMargins(),

@@ -26,6 +26,7 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import app.manyak.chat.entity.ChatInputMode
+import app.manyak.chat.room.presentation.tour.ChatTourTargets
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.chat.R as ChatR
 
@@ -34,6 +35,8 @@ import app.manyak.chat.R as ChatR
  *
  * [hasSuggestions] 를 목록이 아니라 **불리언으로 받는다** — 추천 문구를 그리는 곳은 메시지 영역이고,
  * 컴포저는 "무작위로 보낼 것이 있는가"만 알면 된다.
+ *
+ * @param tourTargets 안내 투어가 짚을 버튼 위치를 받는 곳. 미리보기처럼 투어가 없으면 null 이다.
  */
 @Composable
 internal fun ChatComposer(
@@ -44,6 +47,7 @@ internal fun ChatComposer(
     isStreaming: Boolean,
     actions: ChatComposerActions,
     modifier: Modifier = Modifier,
+    tourTargets: ChatTourTargets? = null,
 ) {
     val sendState =
         sendButtonState(
@@ -69,6 +73,7 @@ internal fun ChatComposer(
             actions = actions,
             onInsertEmphasis = { plainState.wrapSelectionWithEmphasis() },
             onSend = onSend,
+            tourTargets = tourTargets,
         )
     }
 
