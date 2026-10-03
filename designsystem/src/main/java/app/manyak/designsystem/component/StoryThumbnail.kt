@@ -134,9 +134,9 @@ fun StoryCover(
             if (thumbnailUrl == null) {
                 Icon(
                     modifier = Modifier.size(ThumbnailPlaceholderSize),
-                    painter = painterResource(DesignsystemR.drawable.ic_image),
+                    painter = painterResource(DesignsystemR.drawable.ic_manyak_symbol),
                     contentDescription = stringResource(DesignsystemR.string.story_thumbnail_placeholder),
-                    tint = ManyakTheme.colors.textSubtlest,
+                    tint = ManyakTheme.colors.textDisabled,
                 )
             } else {
                 val context = LocalPlatformContext.current

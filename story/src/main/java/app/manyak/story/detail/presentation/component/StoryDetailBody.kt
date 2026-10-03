@@ -97,9 +97,10 @@ internal fun LazyListScope.storyDetailBody(
             }
         }
     }
-    if (story.authorNickname != null || story.createdDate != null) {
+    val visibility = story.visibility.takeIf { story.isOwner }
+    if (story.authorNickname != null || story.createdDate != null || visibility != null) {
         item(key = META_KEY) {
-            MetaBlock(authorNickname = story.authorNickname, date = story.createdDate)
+            MetaBlock(authorNickname = story.authorNickname, date = story.createdDate, visibility = visibility)
         }
     }
 }
@@ -375,4 +376,4 @@ private const val OVERVIEW_KEY = "overview"
 private const val DESCRIPTION_KEY = "description"
 private const val CHARACTERS_KEY = "characters"
 private const val START_SETTING_KEY = "start-setting"
-private const val META_KEY = "meta"
+internal const val META_KEY = "meta"

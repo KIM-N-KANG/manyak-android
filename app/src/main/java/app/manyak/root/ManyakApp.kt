@@ -285,6 +285,10 @@ private fun MainNavDisplay(
                     StoryDetailScreen(
                         storyId = route.storyId,
                         onBack = { backStack.pop() },
+                        onStoryDeleted = {
+                            backStack.popToMainTabs()
+                            selectedTab = MainTab.STUDIO
+                        },
                         // 상세를 걷어내지 않고 그 위에 쌓는다 — 채팅방 뒤로가기가 방금 보던
                         // 스토리로 돌아온다(웹 `replace` 와 갈리는 앱 전용 차이).
                         onEnterChat = { chatId -> backStack.push(ChatRoomRoute(chatId)) },

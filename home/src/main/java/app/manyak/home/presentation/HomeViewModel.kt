@@ -59,6 +59,11 @@ sealed interface HomeIntent {
 }
 
 sealed interface HomeEvent {
+    data class LikeCountChanged(
+        val storyId: String,
+        val likeCount: Long,
+    ) : HomeEvent
+
     data class QueryChanged(
         val query: StoryListQuery,
     ) : HomeEvent
@@ -112,7 +117,16 @@ class HomeViewModel
          */
         private var query = StoryListQuery()
 
+        // 조회가 시작된 뒤 성공한 좋아요는 늦게 도착한 목록 응답보다 우선한다.
+        private val likesDuringLoad = mutableMapOf<String, Long>()
+
         init {
+            viewModelScope.launch {
+                storyRepository.likeCountUpdates.collect { (storyId, likeCount) ->
+                    if (pageJob?.isActive == true) likesDuringLoad[storyId] = likeCount
+                    dispatchEvent(HomeEvent.LikeCountChanged(storyId, likeCount))
+                }
+            }
             analytics.track(AnalyticsEvent.StoryListViewed(StoryListSection.ORIGINAL))
             loadFirstPage(refresh = false)
         }
@@ -140,12 +154,13 @@ class HomeViewModel
          */
         private fun loadFirstPage(refresh: Boolean) {
             pageJob?.cancel()
+            likesDuringLoad.clear()
             val requested = query
             pageJob =
                 viewModelScope.launch {
                     dispatchEvent(if (refresh) HomeEvent.RefreshStarted else HomeEvent.LoadStarted)
                     when (val result = storyRepository.publicStories(requested)) {
-                        is DomainResult.Success -> dispatchEvent(HomeEvent.Loaded(result.value))
+                        is DomainResult.Success -> dispatchEvent(HomeEvent.Loaded(result.value.withUpdatedLikes()))
                         is DomainResult.Failure ->
                             if (refresh) {
                                 dispatchEvent(HomeEvent.RefreshFailed)
@@ -165,22 +180,39 @@ class HomeViewModel
         private fun loadNextPage() {
             val cursor = uiState.value.nextCursor ?: return
             if (pageJob?.isActive == true) return
+            likesDuringLoad.clear()
             val requested = query
             pageJob =
                 viewModelScope.launch {
                     dispatchEvent(HomeEvent.LoadMoreStarted)
                     when (val result = storyRepository.publicStories(requested, cursor)) {
-                        is DomainResult.Success -> dispatchEvent(HomeEvent.MoreLoaded(result.value))
+                        is DomainResult.Success -> dispatchEvent(HomeEvent.MoreLoaded(result.value.withUpdatedLikes()))
                         is DomainResult.Failure -> dispatchEvent(HomeEvent.LoadMoreFailed)
                     }
                 }
         }
+
+        private fun StoryPage.withUpdatedLikes(): StoryPage =
+            copy(
+                items =
+                    items.map { story ->
+                        likesDuringLoad[story.id]?.let { story.copy(likeCount = it) } ?: story
+                    },
+            )
 
         override fun reduce(
             state: HomeUiState,
             event: HomeEvent,
         ): HomeUiState =
             when (event) {
+                is HomeEvent.LikeCountChanged ->
+                    state.copy(
+                        stories =
+                            state.stories.map { story ->
+                                if (story.id == event.storyId) story.copy(likeCount = event.likeCount) else story
+                            },
+                    )
+
                 // 새 조건의 첫 페이지가 올 때까지 보던 목록을 남긴다 — 비웠다 채우면 칩을 누를 때마다 목록이 깜빡인다.
                 // 커서는 비워 이전 조건의 다음 페이지를 잇지 않는다.
                 is HomeEvent.QueryChanged ->

@@ -16,6 +16,19 @@ private const val REALTIME_IMAGE_URL =
 
 class ChatMessageSegmentsTest {
     @Test
+    fun `업로드 이미지가 확정 턴과 스트리밍에서 같은 이미지로 표시된다`() {
+        listOf("cdn.manyak.app", "dev-cdn.manyak.app").forEach { host ->
+            val url = "https://$host/characters/uploaded/watchmaker.webp"
+            val expected = ChatMessageSegment.CharacterImage("시계공", url)
+            assertTrue(isAllowedCharacterImageUrl(url))
+            assertEquals(expected, parseChatMessageSegments("[[$url]]\n\n시계공: 오셨군요.").first())
+            assertEquals(listOf(expected), emptyList<ChatMessageSegment>().appendCharacterImage("시계공", url))
+            assertFalse(isAllowedCharacterImageUrl("https://$host/characters/uploaded/"))
+        }
+        assertFalse(isAllowedCharacterImageUrl("https://evil.example/characters/uploaded/a.webp"))
+    }
+
+    @Test
     fun `마커가 없으면 본문 전체가 텍스트 한 조각이다`() {
         assertEquals(
             listOf(ChatMessageSegment.Text("문이 열린다.")),

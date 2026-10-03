@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withTimeoutOrNull
@@ -39,6 +40,66 @@ class HomeViewModelTest {
     fun tearDown() {
         Dispatchers.resetMain()
     }
+
+    @Test
+    fun `좋아요 성공은 목록 순서와 스크롤 버전을 유지하며 같은 카드만 갱신한다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryRepository()
+            val viewModel = HomeViewModel(repository, NoOpAnalytics)
+            advanceUntilIdle()
+            val before = viewModel.uiState.value
+            repository.likeCountUpdates.emit("story-1" to 13L)
+            runCurrent()
+            assertEquals(
+                before.stories.map { it.id },
+                viewModel.uiState.value.stories
+                    .map { it.id },
+            )
+            assertEquals(
+                13L,
+                viewModel.uiState.value.stories
+                    .first()
+                    .likeCount,
+            )
+            assertEquals(
+                before.stories.last(),
+                viewModel.uiState.value.stories
+                    .last(),
+            )
+            assertEquals(before.firstPageVersion, viewModel.uiState.value.firstPageVersion)
+            assertEquals(1, repository.requests.size)
+        }
+
+    @Test
+    fun `조회 중 성공한 좋아요는 늦게 도착한 목록에 덮이지 않고 다음 새로고침은 서버 값을 쓴다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryRepository()
+            val viewModel = HomeViewModel(repository, NoOpAnalytics)
+            advanceUntilIdle()
+            val gate = CompletableDeferred<Unit>()
+            repository.inFlightGate = gate
+            viewModel.onIntent(HomeIntent.Refresh)
+            runCurrent()
+            repository.likeCountUpdates.emit("story-1" to 13L)
+            runCurrent()
+            gate.complete(Unit)
+            advanceUntilIdle()
+            assertEquals(
+                13L,
+                viewModel.uiState.value.stories
+                    .first()
+                    .likeCount,
+            )
+            repository.inFlightGate = null
+            viewModel.onIntent(HomeIntent.Refresh)
+            advanceUntilIdle()
+            assertEquals(
+                0L,
+                viewModel.uiState.value.stories
+                    .first()
+                    .likeCount,
+            )
+        }
 
     @Test
     fun `진입 시 전체·최신순 첫 페이지를 조회해 서버 순서 그대로 상태에 담는다`() =
