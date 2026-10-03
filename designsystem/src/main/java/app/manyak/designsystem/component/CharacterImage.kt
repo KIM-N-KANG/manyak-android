@@ -98,6 +98,8 @@ private val AllowedImageHosts = setOf("cdn.manyak.app", "dev-cdn.manyak.app")
 
 /**
  * 사용자가 만든 스토리는 `generated`, 오리지널 스토리는 `originals` 아래에 인물 이미지가 올라가고,
+ * 사용자가 업로드한 인물 이미지는 `uploaded` 아래에 저장된다.
  * 채팅 중 실시간으로 만든 인물 이미지는 `chat-images/{chatId}/{turn}-{uuid}.webp` 로 올라간다.
  */
-private val AllowedImagePathPrefixes = listOf("/characters/generated/", "/characters/originals/", "/chat-images/")
+private val AllowedImagePathPrefixes =
+    listOf("/characters/generated/", "/characters/originals/", "/characters/uploaded/", "/chat-images/")

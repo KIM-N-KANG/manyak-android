@@ -27,8 +27,10 @@ import app.manyak.designsystem.theme.ManyakTheme
  * 필요해 경계선이 맡는다([ManyakNavigationBar]).
  */
 @Composable
-fun ScrollEdgeFade(modifier: Modifier = Modifier) {
-    val surface = ManyakTheme.colors.surface
+fun ScrollEdgeFade(
+    modifier: Modifier = Modifier,
+    surface: Color = ManyakTheme.colors.surface,
+) {
     val brush =
         remember(surface) {
             val stops: Array<Pair<Float, Color>> =

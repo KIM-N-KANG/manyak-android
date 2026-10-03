@@ -13,19 +13,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.story.entity.StoryVisibility
 import app.manyak.story.R as StoryR
 
-/**
- * 제작자·생성일. 본문 마지막에 딸린 메타 정보라 다른 섹션과 달리 화면 폭을 그대로 채우는 옅은
- * 바탕을 깔아 읽을 글과 구분한다. 좌우 여백은 바탕 밖이 아니라 안에 둔다.
- *
- * 둘은 바탕 하나를 나눠 쓴다 — 같은 성격의 값이라 띠를 둘로 나누면 무엇이 한 묶음인지 흐려진다.
- * 값이 없는 줄은 그리지 않고, 둘 다 없으면 띠 자체가 없다.
- */
+/** 본문 마지막 메타 정보. 제작자, 생성일, 소유자의 공개 범위를 한 바탕에 표시한다. */
 @Composable
 internal fun MetaBlock(
     authorNickname: String?,
     date: String?,
+    visibility: StoryVisibility?,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -40,6 +36,18 @@ internal fun MetaBlock(
             MetaRow(labelRes = StoryR.string.story_detail_author, value = nickname)
         }
         date?.let { value -> MetaRow(labelRes = StoryR.string.story_detail_created_at, value = value) }
+        visibility?.let { value ->
+            MetaRow(
+                labelRes = StoryR.string.story_detail_visibility,
+                value =
+                    stringResource(
+                        when (value) {
+                            StoryVisibility.PUBLIC -> StoryR.string.story_detail_visibility_public
+                            StoryVisibility.PRIVATE -> StoryR.string.story_detail_visibility_private
+                        },
+                    ),
+            )
+        }
     }
 }
 

@@ -8,6 +8,7 @@ import app.manyak.common.domain.chat.ChatStarter
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.story.StoryDeletion
+import app.manyak.common.domain.story.StoryLikeUpdates
 import app.manyak.common.presentation.mvi.MviViewModel
 import app.manyak.designsystem.component.isAllowedCharacterImageUrl
 import app.manyak.report.domain.ReportRepository
@@ -43,7 +44,6 @@ data class StoryDetailUiState(
     val selectedStartSettingId: String? = null,
     val imageViewerUrl: String? = null,
     val isStartingChat: Boolean = false,
-    val startChatFailed: Boolean = false,
     val report: StoryReportUiState = StoryReportUiState(),
     /** 삭제 확인 다이얼로그. 내 스토리로 들어온 상세에서만 열린다. */
     val isDeleteDialogOpen: Boolean = false,
@@ -139,13 +139,12 @@ sealed interface StoryDetailEvent {
 
 /** 좋아요 요청의 진행. 신고와 같이 한 갈래로 묶어 reduce 가 세 갈래로 갈라지지 않게 한다. */
 sealed interface LikeChange {
-    data object Requested : LikeChange
-
-    data class Toggled(
+    data class Updated(
         val liked: Boolean,
+        val likeCount: Long,
     ) : LikeChange
 
-    data object Failed : LikeChange
+    data object Finished : LikeChange
 }
 
 sealed interface StoryDetailEffect {
@@ -157,12 +156,14 @@ sealed interface StoryDetailEffect {
 
     data object ShowReportFailed : StoryDetailEffect
 
-    /** 삭제됐다 — 더 볼 것이 없으니 화면이 진입한 목록으로 돌아간다. */
+    /** 삭제됐다 — 더 볼 것이 없으니 화면이 제작 목록으로 돌아간다. */
     data object StoryDeleted : StoryDetailEffect
 
     data object ShowDeleteFailed : StoryDetailEffect
 
     data object ShowLikeFailed : StoryDetailEffect
+
+    data object ShowChatStartFailed : StoryDetailEffect
 }
 
 /**
@@ -185,6 +186,7 @@ class StoryDetailViewModel
         private val analytics: Analytics,
         reportRepository: ReportRepository,
         private val storyDeletion: StoryDeletion,
+        private val storyLikeUpdates: StoryLikeUpdates,
     ) : MviViewModel<StoryDetailIntent, StoryDetailUiState, StoryDetailEvent, StoryDetailEffect>(
             StoryDetailUiState(),
         ) {
@@ -289,7 +291,7 @@ class StoryDetailViewModel
          *  않는다 — 보고 있던 본문이 사라지는 쪽이 갱신 실패보다 나쁘다.
          */
         private fun load(showProgress: Boolean) {
-            if (loadJob?.isActive == true) return
+            if (loadJob?.isActive == true || likeJob?.isActive == true) return
             loadJob =
                 viewModelScope.launch {
                     if (showProgress) dispatchEvent(StoryDetailEvent.LoadStarted)
@@ -319,7 +321,10 @@ class StoryDetailViewModel
                         is DomainResult.Success ->
                             dispatchEffect(StoryDetailEffect.NavigateToChat(result.value.id))
 
-                        is DomainResult.Failure -> dispatchEvent(StoryDetailEvent.ChatStartFailed)
+                        is DomainResult.Failure -> {
+                            dispatchEvent(StoryDetailEvent.ChatStartFailed)
+                            dispatchEffect(StoryDetailEffect.ShowChatStartFailed)
+                        }
                     }
                 }
         }
@@ -330,27 +335,24 @@ class StoryDetailViewModel
             dispatchEvent(StoryDetailEvent.DeleteDialogVisibleChanged(visible = false))
         }
 
-        /**
-         * 204 는 갱신된 수를 주지 않으므로 성공한 뒤에야 상태와 수를 한 칸 옮긴다. 미리 옮겼다가
-         * 실패로 되돌리면 눌린 하트가 깜빡였다 풀린다.
-         */
         private suspend fun toggleLike(state: StoryDetailUiState) {
             if (!state.canLike || likeJob?.isActive == true) return
-            val liked = state.story?.isLiked != true
-            dispatchEvent(StoryDetailEvent.Like(LikeChange.Requested))
+            val story = state.story ?: return
+            val liked = !story.isLiked
+            val likeCount = (story.likeCount + if (liked) 1 else -1).coerceAtLeast(0)
+            // 진행 중인 재조회가 낙관적 상태나 복원한 값을 덮지 않게 한다.
+            loadJob?.cancel()
+            dispatchEvent(StoryDetailEvent.Like(LikeChange.Updated(liked, likeCount)))
             likeJob =
                 viewModelScope.launch {
                     when (storyRepository.setStoryLiked(storyId, liked)) {
-                        is DomainResult.Success ->
-                            dispatchEvent(StoryDetailEvent.Like(LikeChange.Toggled(liked)))
-
+                        is DomainResult.Success -> storyLikeUpdates.updateLikeCount(storyId, likeCount)
                         is DomainResult.Failure -> {
-                            dispatchEvent(StoryDetailEvent.Like(LikeChange.Failed))
+                            dispatchEvent(StoryDetailEvent.Like(LikeChange.Updated(story.isLiked, story.likeCount)))
                             dispatchEffect(StoryDetailEffect.ShowLikeFailed)
                         }
                     }
-                    // 응답 직후의 연타는 좋아요와 취소를 번갈아 서버로 보낸다. 하트는 바로 바꾸되
-                    // 잠깐 더 잡아 두어 그 사이의 탭을 버린다.
+                    dispatchEvent(StoryDetailEvent.Like(LikeChange.Finished))
                     delay(LIKE_COOLDOWN_MILLIS)
                 }
         }
@@ -399,12 +401,10 @@ class StoryDetailViewModel
                 is StoryDetailEvent.StartSettingSelected ->
                     state.copy(selectedStartSettingId = event.startSettingId)
 
-                StoryDetailEvent.ChatStartRequested -> state.copy(isStartingChat = true, startChatFailed = false)
+                StoryDetailEvent.ChatStartRequested -> state.copy(isStartingChat = true)
 
-                StoryDetailEvent.ChatStartFailed -> state.copy(isStartingChat = false, startChatFailed = true)
+                StoryDetailEvent.ChatStartFailed -> state.copy(isStartingChat = false)
 
-                // 실패 문구는 남긴다 — 화면이 다시 만들어졌다고 해서 사용자가 읽지 않은 실패가 없던 일이 되지는 않는다.
-                // 다시 누르면 ChatStartRequested 가 지운다.
                 StoryDetailEvent.ChatStartReset -> state.copy(isStartingChat = false)
 
                 is StoryDetailEvent.Report -> state.copy(report = state.report.reduceReport(event.change))
@@ -421,20 +421,13 @@ class StoryDetailViewModel
 
 private fun StoryDetailUiState.reduceLike(change: LikeChange): StoryDetailUiState =
     when (change) {
-        LikeChange.Requested -> copy(isTogglingLike = true)
-
-        is LikeChange.Toggled ->
+        is LikeChange.Updated ->
             copy(
-                isTogglingLike = false,
-                story =
-                    story?.copy(
-                        isLiked = change.liked,
-                        // 서버가 준 수가 아니라 화면이 든 수를 옮긴다. 다음 조회가 맞춘다.
-                        likeCount = (story.likeCount + if (change.liked) 1 else -1).coerceAtLeast(0),
-                    ),
+                isTogglingLike = true,
+                story = story?.copy(isLiked = change.liked, likeCount = change.likeCount),
             )
 
-        LikeChange.Failed -> copy(isTogglingLike = false)
+        LikeChange.Finished -> copy(isTogglingLike = false)
     }
 
 /**

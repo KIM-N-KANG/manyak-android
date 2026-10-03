@@ -12,6 +12,15 @@ import org.junit.Test
  */
 class ChatSseEventMapperTest {
     @Test
+    fun `업로드 이미지의 SSE 사건도 URL을 보존한다`() {
+        val url = "https://dev-cdn.manyak.app/characters/uploaded/clockmaker.webp"
+        assertEquals(
+            ChatStreamEvent.CharacterImage("시계공", url),
+            chatStreamEventOf("character_image", """{"name":"시계공","imageUrl":"$url"}"""),
+        )
+    }
+
+    @Test
     fun `started 는 그대로 사건이 된다`() {
         assertEquals(ChatStreamEvent.Started, chatStreamEventOf("started", ""))
     }

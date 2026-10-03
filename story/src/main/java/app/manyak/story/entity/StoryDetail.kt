@@ -3,7 +3,7 @@ package app.manyak.story.entity
 /**
  * 스토리 상세 화면이 그리는 스토리 한 건.
  *
- * 서버 상세 응답에는 등록 상태·공개 범위·로어북·주요 사건·해시태그도 있지만 이 화면이
+ * 서버 상세 응답에는 등록 상태·로어북·주요 사건·해시태그도 있지만 이 화면이
  * 그리는 것만 담는다 — 쓰지 않는 필드를 도메인에 두면 화면이 무엇에 의존하는지 흐려진다.
  * 다른 화면이 필요로 할 때 그 화면과 함께 넓힌다.
  */
@@ -34,23 +34,27 @@ data class StoryDetail(
      * 게스트 로컬 서재 합산 분기는 없다.
      */
     val reachedEndings: List<String>,
-    /** 주변 인물. 이미지를 만들지 못한 스토리는 비어 있고, 그때는 섹션을 그리지 않는다. */
+    /** 주변 인물. 인물이 없으면 섹션을 그리지 않는다. */
     val characters: List<StoryCharacter>,
     /**
      * 요청 회원이 이 스토리의 소유자인지. 서버가 판정한다 — `author` 에는 식별자가 없어 클라이언트가
      * 비교할 수 없다. 삭제 같은 소유자 동작의 노출 근거다.
      */
     val isOwner: Boolean,
+    val visibility: StoryVisibility? = null,
 )
 
-/**
- * 스토리에 등장하는 인물 하나. 이름과 이미지뿐이고 소개는 없다 — 서버가 인물별 설명을 두지 않고
- * 인물 소개에 해당하는 글은 스토리 설정 통글 한 덩어리라 인물별로 쪼갤 근거가 없다.
- */
+enum class StoryVisibility {
+    PUBLIC,
+    PRIVATE,
+}
+
+/** 스토리에 등장하는 인물의 이름, 이미지, 소개. 이미지와 소개는 각각 생략될 수 있다. */
 data class StoryCharacter(
     val name: String,
-    /** 이미지 생성에 실패한 인물은 `null` 이고, 그때는 이름만 그린다. */
+    /** 이미지가 없는 인물은 `null` 이고, 그때는 이미지만 생략한다. */
     val imageUrl: String?,
+    val description: String? = null,
 )
 
 /** 채팅을 시작할 상황 하나. 프롤로그와 추천 입력은 상세가 그리지 않고 채팅 화면이 노출한다. */

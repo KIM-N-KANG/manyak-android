@@ -21,9 +21,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import app.manyak.designsystem.component.ManyakIconButton
 import app.manyak.designsystem.component.ManyakProgressIndicator
 import app.manyak.designsystem.component.ScrollEdgeFade
@@ -40,43 +39,28 @@ import app.manyak.story.R as StoryR
 @Composable
 internal fun StartChatCta(
     isStarting: Boolean,
-    failed: Boolean,
     canLike: Boolean,
     isLiked: Boolean,
     isTogglingLike: Boolean,
     onClick: () -> Unit,
     onToggleLike: () -> Unit,
     modifier: Modifier = Modifier,
+    backgroundColor: Color = ManyakTheme.colors.surface,
 ) {
-    val surface = ManyakTheme.colors.surface
-
     Column(modifier = modifier.fillMaxWidth()) {
-        ScrollEdgeFade()
+        ScrollEdgeFade(surface = backgroundColor)
         Column(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .background(surface)
+                    .background(backgroundColor)
                     // 배경은 화면 끝까지 깔고 내용만 시스템 바를 피한다 — 본문이 바 뒤로 비치지 않게.
                     .windowInsetsPadding(
                         WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom),
                     ).padding(horizontal = ManyakTheme.spacing.gutter)
-                    // 위 여백은 실패 문구가 있을 때만 둔다 — 퍼널 푸터와 같은 규칙이다.
-                    .padding(
-                        top = if (failed) ManyakTheme.spacing.compact else 0.dp,
-                        bottom = ManyakTheme.spacing.gutter,
-                    ),
+                    .padding(bottom = ManyakTheme.spacing.gutter),
             verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
         ) {
-            if (failed) {
-                Text(
-                    modifier = Modifier.fillMaxWidth(),
-                    text = stringResource(StoryR.string.story_detail_start_chat_failed),
-                    style = ManyakTheme.typography.bodySmall,
-                    color = ManyakTheme.colors.textDanger,
-                    textAlign = TextAlign.Center,
-                )
-            }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
