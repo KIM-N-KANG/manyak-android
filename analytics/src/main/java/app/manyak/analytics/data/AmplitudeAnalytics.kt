@@ -75,6 +75,8 @@ class AmplitudeAnalytics
             crashReporter.setUser(null)
         }
 
+        override fun currentSessionId(): Long? = amplitude?.sessionId?.takeIf { it >= 0 }
+
         private fun send(
             name: String,
             payload: Map<String, Any>,

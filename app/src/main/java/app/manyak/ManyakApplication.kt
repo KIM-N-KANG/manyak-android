@@ -43,7 +43,7 @@ class ManyakApplication : Application() {
         sessionBootstrapper.start()
         // device_id 를 SDK 에 넣기 전까지 이벤트가 나가지 않으므로 세션 복원과 나란히 시작해도 된다.
         analyticsSessionBinder.start()
-        // 회원이 되는 순간마다 FCM 토큰을 서버에 맡긴다. 세션 복원 결과를 관찰하므로 순서는 상관없다.
+        // 회원 세션과 필수 동의가 확인된 뒤 FCM 토큰을 서버에 맡긴다.
         pushTokenRegistrar.start()
         // 채널은 첫 메시지 전에 있어야 한다. 멱등이라 매 실행마다 불러도 사용자 설정은 유지된다.
         pushNotificationTray.ensureChannels()

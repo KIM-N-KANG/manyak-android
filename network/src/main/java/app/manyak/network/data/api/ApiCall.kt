@@ -79,6 +79,7 @@ fun Response<*>.parseErrorCode(): String? {
     }
 }
 
+const val HEADER_SESSION_ID = "X-Manyak-Session-Id"
 const val HEADER_DEVICE_ID = "X-Manyak-Device-Id"
 const val HEADER_REQUEST_ID = "X-Manyak-Request-Id"
 const val HEADER_APP_VERSION = "X-Manyak-App-Version"

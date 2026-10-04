@@ -1,5 +1,6 @@
 package app.manyak.legal.consent.data.di
 
+import app.manyak.common.domain.session.MemberConsent
 import app.manyak.legal.consent.data.api.ConsentApi
 import app.manyak.legal.consent.data.repository.ConsentRepositoryImpl
 import app.manyak.legal.consent.domain.ConsentRepository
@@ -21,6 +22,9 @@ abstract class ConsentModule {
     @Binds
     @Singleton
     abstract fun bindConsentRepository(impl: ConsentRepositoryImpl): ConsentRepository
+
+    @Binds
+    abstract fun bindMemberConsent(impl: ConsentRepositoryImpl): MemberConsent
 
     companion object {
         @Provides

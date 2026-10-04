@@ -1,6 +1,7 @@
 package app.manyak.di
 
 import app.manyak.common.domain.session.UserScopedStore
+import app.manyak.legal.consent.data.repository.ConsentRepositoryImpl
 import app.manyak.my.credit.data.repository.TrialsRepositoryImpl
 import app.manyak.my.invite.data.datastore.InviteOnboardingStore
 import app.manyak.my.profile.data.datastore.ProfileCacheStore
@@ -15,6 +16,10 @@ import dagger.multibindings.IntoSet
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class UserScopedStoreModule {
+    @Binds
+    @IntoSet
+    abstract fun bindConsentAsUserScoped(impl: ConsentRepositoryImpl): UserScopedStore
+
     @Binds
     @IntoSet
     abstract fun bindProfileCacheAsUserScoped(impl: ProfileCacheStore): UserScopedStore
