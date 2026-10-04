@@ -94,4 +94,7 @@
     <string name="relative_time_minutes">%1$d분 전</string>
     <string name="relative_time_today">오늘</string>
     <string name="relative_time_yesterday">어제</string>
+    <string name="chat_realtime_image_nudge_title">실시간 이미지를 켜보세요</string>
+    <string name="chat_realtime_image_nudge_description">대화에 따라 달라지는 인물의 모습을 볼 수 있어요</string>
+    <string name="chat_realtime_image_nudge_confirm">확인</string>
 </resources>

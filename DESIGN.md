@@ -453,7 +453,7 @@ components:
 | `ManyakSpacing.kt` | 시맨틱 여백 |
 | `ManyakShapes.kt` | 시맨틱 모서리 |
 | `ManyakSizes.kt` | 크기 6종 |
-| `ManyakMotion.kt` | 전환 시간 2종 |
+| `ManyakMotion.kt` | 화면 전환과 요소 및 안내 모션 시간 |
 | `Theme.kt` | `ManyakTheme` 컴포저블·접근자, M3 슬롯 파생 |
 
 `designsystem/src/main/java/app/manyak/designsystem/component/`
@@ -650,6 +650,10 @@ components:
 | `{motion.element-exit}` | 150ms | 화면 안의 작은 요소가 사라질 때 |
 | `{motion.list-item-enter}` | 300ms | 차례로 드러나는 목록에서 항목 하나 |
 | `{motion.list-item-stagger}` | 80ms | 그 항목들이 시작하는 간격 |
+| `{motion.nudge-dim-enter}` | 550ms | 실시간 이미지 안내 딤 등장 |
+| `{motion.nudge-card-delay}` | 200ms | 딤 등장 뒤 안내 카드 시작 지연 |
+| `{motion.nudge-card-enter}` | 450ms | 실시간 이미지 안내 카드 등장 |
+| `{motion.nudge-exit}` | 300ms | 실시간 이미지 안내 딤과 카드 퇴장 |
 
 토큰 정본에 모션이 없어 이 값도 이 레포가 소유한다. 시간만 정하고 무엇을 움직일지는 쓰는 쪽이 정한다.
 
@@ -738,6 +742,8 @@ components:
 **`overlay`** — 다이얼로그. 배경 `{colors.surface-raised}`, 모서리 `{rounded.overlay}`, 내부 여백 `{spacing.gutter}`.
 
 **`sheet`** — 바텀시트. 배경 `{colors.surface-raised}`, 모서리는 `{rounded.sheet}`로 위쪽 두 곳만 깎습니다 — 아래쪽은 화면 끝에 붙어 있어 깎으면 그 틈으로 스크림이 비칩니다. 내부 여백은 좌·우·아래 `{spacing.gutter}`이고 **위쪽은 두지 않습니다** — 드래그 핸들이 자체 여백을 갖고 있어 겹칩니다. 하단 안전 영역과 키보드 높이는 그 아래로 시트가 직접 낍니다. **하단 닫기는 `button-text` 규칙의 전체 폭·최소 높이 `{sizes.control}`(48dp)·주 동작 버튼과 같은 글자 스타일(`{typography.label-large}`)·보조색 텍스트 버튼이며, 위에 주 동작 버튼이 있을 때만 그 짝으로 둡니다.** 신고·초대 코드 온보딩·광고 알림 동의 시트가 그렇습니다. **주 동작 버튼이 없는 시트 — 읽기 전용(선택한 키워드·채팅 설정)과 항목을 고르는 옵션 시트(카드 옵션·상세 옵션·채팅 메뉴) — 에는 닫기 버튼을 두지 않고** 스크림·끌어내리기·뒤로가기로만 닫습니다(2026-09-18) — 닫기 하나뿐인 줄은 자리만 차지합니다. **닫힘을 막은 시트는 핸들 드래그도 잠급니다**(2026-09-20) — 끌리기만 하고 닫히지 않는 튕김이 "닫을 수 있다"는 신호가 됩니다. 끌어내리기가 아예 없는 시트(필수 동의)는 핸들 자체를 두지 않고 위쪽 여백을 `{spacing.gutter}`로 채우며, 전송 중처럼 잠깐 잠그는 시트는 핸들이 사라졌다 나타나지 않게 그대로 둡니다.
+
+**`chat-realtime-image-nudge`**: 시트가 완전히 펼쳐진 뒤 화면 전체를 `{colors.tour-scrim}`으로 덮고, 실시간 이미지 행을 `{rounded.control}`로 뚫습니다. 하이라이트는 시트 좌우에서 `{spacing.compact}`(8dp) 안쪽이며 행 내용까지 같은 여백을 둡니다. 카드는 행 아래 `{spacing.component}` 간격, `{sizes.tour-card-width}` 폭, `{colors.surface-raised}` 배경과 `{rounded.card}` 모서리, `{spacing.gutter}` 내부 여백을 사용합니다. 제목과 설명은 투어와 같은 타이포를 쓰고 오른쪽 아래 확인 버튼을 둡니다. 모션은 `nudge-dim-enter`, `nudge-card-delay`, `nudge-card-enter`, `nudge-exit`을 따릅니다. 카드가 아래 공간보다 길면 카드 안에서 스크롤합니다.
 
 **`chat-tour-card`** — 채팅 첫 진입 안내 투어. 딤 `{colors.tour-scrim}`은 대상 버튼을 `{spacing.dense}`만큼 넓힌 `{rounded.control}` 모양으로 뚫고, 카드는 `{colors.surface-raised}` · `{rounded.card}` · 내부 여백 `{spacing.gutter}` · 폭 `{sizes.tour-card-width}`(좁으면 좌우 `{spacing.gutter}`를 남기고 줄어듦)입니다. 카드는 하이라이트와 `{spacing.component}` 떨어져 아래에, 아래 공간이 모자라면 위에 놓이고 가로는 하이라이트 중앙이 기본이며 가장자리에서는 그쪽 변에 맞춥니다. 제목 `{typography.body-large-strong}`, 설명 `{typography.body-medium}` + `{colors.text-subtle}`, 아래 줄에 스텝 점(`{sizes.tour-step-dot}`, 현재 `{colors.text-subtle}` · 나머지 `{colors.border}`)과 건너뛰기(텍스트 버튼)·다음/완료(주 버튼)를 둡니다. 그림자는 두지 않습니다. 구멍은 스텝이 바뀔 때 `{motion.element-enter}`로 다음 대상에 옮겨 가고, 카드는 같은 시간에 `{spacing.compact}` 아래에서 올라오며 나타납니다.
 
@@ -860,6 +866,6 @@ components:
 - **태블릿·폴더블·가로 모드 정책이 없습니다.**
 - **컨트롤 높이(`sizes.*`)는 토큰 정본이 아니라 이 레포가 정한 값입니다.** 웹과 맞추려면 디자인 토큰 쪽에 크기 층을 추가해야 합니다.
 - **토큰 값이 웹과 같은지 자동으로 확인할 방법이 없습니다.** 생성기가 레포 밖에 있고 웹은 자체 CSS 변수를 쓰므로, 두 클라이언트의 값이 갈리는지는 사람이 봐야 합니다. 다크 보조 텍스트 두 단계는 지금 앱이 웹보다 밝습니다(2026-08-29).
-- **모션 토큰이 탭 전환·화면 밀기·요소 등장·퇴장·목록 등장 여섯 단계뿐입니다.** 눌림 상태는 여전히 색 변화로만 정의되어 있고, 스켈레톤 같은 나머지 모션은 정의되지 않았습니다. 필요해지는 시점에 `{motion.*}`에 단계를 추가합니다.
+- **모션 토큰은 화면 전환과 요소 및 목록 등장, 실시간 이미지 안내를 정의합니다.** 눌림 상태는 여전히 색 변화로만 정의되어 있고, 스켈레톤 같은 나머지 모션은 정의되지 않았습니다. 필요해지는 시점에 `{motion.*}`에 단계를 추가합니다.
 
 **`FullscreenImageViewer`** — 상세 썸네일·주변 인물과 채팅 인물 이미지에 공용으로 사용합니다. 바탕은 `{colors.image-viewer-scrim}`(검정 92%), 닫기 아이콘은 `{colors.text-inverse}`입니다. 핀치 1~5배·팬·더블탭 2.5배 토글을 제공하며 X·화면 탭·시스템 뒤로가기로 닫습니다. `CharacterImage`는 4:3 원본 전체 표시와 실패 시 영역 제거를 유지하며, 버튼 접근성 이름은 “{이름} 인물 이미지 크게 보기”입니다.

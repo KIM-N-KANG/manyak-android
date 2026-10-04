@@ -127,17 +127,7 @@ private fun TourDim(highlight: Rect) {
         animationSpec = tween(ManyakTheme.motion.elementEnterMillis, easing = LinearOutSlowInEasing),
         label = "chat-tour-highlight",
     )
-    val scrim = ManyakTheme.colors.tourScrim
-    val shape = ManyakTheme.shapes.control
-    Canvas(modifier = Modifier.fillMaxSize()) {
-        val cutout =
-            Path().apply {
-                addOutline(shape.createOutline(hole.size, layoutDirection, this@Canvas))
-                translate(hole.topLeft)
-            }
-        val dim = Path().apply { addRect(size.toRect()) }
-        drawPath(Path.combine(PathOperation.Difference, dim, cutout), scrim)
-    }
+    ChatSpotlightDim(hole)
 }
 
 /**
@@ -255,5 +245,24 @@ private fun TourStepDots(
                         ),
             )
         }
+    }
+}
+
+/** 투어와 설정 안내가 함께 쓰는 둥근 하이라이트 딤. */
+@Composable
+internal fun ChatSpotlightDim(
+    hole: Rect,
+    modifier: Modifier = Modifier,
+) {
+    val scrim = ManyakTheme.colors.tourScrim
+    val shape = ManyakTheme.shapes.control
+    Canvas(modifier = modifier.fillMaxSize()) {
+        val cutout =
+            Path().apply {
+                addOutline(shape.createOutline(hole.size, layoutDirection, this@Canvas))
+                translate(hole.topLeft)
+            }
+        val dim = Path().apply { addRect(size.toRect()) }
+        drawPath(Path.combine(PathOperation.Difference, dim, cutout), scrim)
     }
 }

@@ -215,8 +215,6 @@ private fun ColumnScope.ChatRoomLoaded(
     onBackgroundTap: () -> Unit,
     tourTargets: ChatTourTargets,
 ) {
-    // 설정 시트 열림. 회전·다크 모드 전환에서 닫히면 사용자가 다시 열어야 한다.
-    var settingsOpen by rememberSaveable { mutableStateOf(false) }
     ChatTranscript(
         modifier = Modifier.weight(1f),
         state = state,
@@ -237,10 +235,10 @@ private fun ColumnScope.ChatRoomLoaded(
         realtimeImageEnabled = state.realtimeImageEnabled,
         hasSuggestions = state.suggestions.hasCandidate,
         isStreaming = state.isStreaming,
-        actions = composerActions(onIntent, onOpenSettings = { settingsOpen = true }),
+        actions = composerActions(onIntent, onOpenSettings = { onIntent(ChatRoomIntent.SettingsOpened) }),
         tourTargets = tourTargets,
     )
-    if (settingsOpen) {
+    if (state.settingsOpen) {
         // 스위치는 의도로 바로 올라가고 시트는 닫기 전까지 남는다 — 블럭 입력을 끄면 뒤의 컴포저가 바뀐다.
         ChatSettingsSheet(
             realtimeImageEnabled = state.realtimeImageEnabled,
@@ -249,7 +247,9 @@ private fun ColumnScope.ChatRoomLoaded(
             onRealtimeImageEnabledChange = { enabled -> onIntent(ChatRoomIntent.RealtimeImageEnabledChanged(enabled)) },
             onChoicesEnabledChange = { enabled -> onIntent(ChatRoomIntent.ChoicesEnabledChanged(enabled)) },
             onModeChange = { mode -> onIntent(ChatRoomIntent.InputModeChanged(mode)) },
-            onDismiss = { settingsOpen = false },
+            onDismiss = { onIntent(ChatRoomIntent.SettingsClosed) },
+            nudgeOpen = state.realtimeImageNudgeOpen,
+            onNudgeDismiss = { onIntent(ChatRoomIntent.RealtimeImageNudgeDismissed) },
         )
     }
 }
