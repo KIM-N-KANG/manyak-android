@@ -41,7 +41,7 @@
     <string name="my_link_button">%1$s 연동하기</string>
     <string name="my_link_confirm_action">연동하기</string>
     <string name="my_link_confirm_benefit">%1$s와 %2$s 중 어느 쪽으로 로그인해도 같은 마냑 계정을 이용할 수 있어요</string>
-    <string name="my_link_confirm_cancel">나중에 하기</string>
+    <string name="my_link_confirm_cancel">닫기</string>
     <string name="my_link_confirm_irreversible">한 번 연동하면 해제할 수 없어요</string>
     <string name="my_link_confirm_reauth">보안을 위해 %1$s 계정을 다시 인증한 뒤 %2$s 계정을 연동해요</string>
     <string name="my_link_confirm_title">%1$s 계정을 연동할까요?</string>
