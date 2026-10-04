@@ -37,7 +37,7 @@
     <string name="chat_room_delete_failed">채팅 삭제에 실패했어요</string>
     <string name="chat_room_deleted">채팅이 삭제되었어요</string>
     <string name="chat_room_ending_badge">엔딩 · %1$s</string>
-    <string name="chat_room_fill_confirm_cancel">닫기</string>
+    <string name="chat_room_fill_confirm_cancel">그대로 두기</string>
     <string name="chat_room_fill_confirm_confirm">바꾸기</string>
     <string name="chat_room_fill_confirm_description">지금 작성 중인 내용은 사라져요</string>
     <string name="chat_room_fill_confirm_title">작성 중인 내용을 바꿀까요?</string>

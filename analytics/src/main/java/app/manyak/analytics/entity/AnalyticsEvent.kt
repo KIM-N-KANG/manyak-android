@@ -261,6 +261,10 @@ sealed class AnalyticsEvent(
             mapOf("chat_id" to chatId, "turn_number" to turnNumber, "input_mode" to inputMode.wire),
         )
 
+    data class SituationInsertButtonClicked(
+        val chatId: String,
+    ) : AnalyticsEvent("client_chat_situationInsertButton_clicked", mapOf("chat_id" to chatId))
+
     data class AddBlockButtonClicked(
         val chatId: String,
         val blockType: String,

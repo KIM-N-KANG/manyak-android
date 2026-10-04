@@ -239,7 +239,7 @@ class ChatListViewModel
         ) {
             val storyId =
                 if (action == StoryReportAction.Open) {
-                    val target = state.optionsTarget?.storyId?.takeIf { id -> id.isNotBlank() } ?: return
+                    val target = state.optionsTarget?.takeIf { it.hasReferenceStory }?.storyId ?: return
                     dispatchEvent(ChatListEvent.OptionsTargetChanged(null))
                     dispatchEvent(ChatListEvent.ReportTargetChanged(target))
                     target

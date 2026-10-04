@@ -71,7 +71,10 @@ internal fun ChatComposer(
             realtimeImageEnabled = realtimeImageEnabled,
             sendState = sendState,
             actions = actions,
-            onInsertEmphasis = { plainState.wrapSelectionWithEmphasis() },
+            onInsertEmphasis = {
+                plainState.wrapSelectionWithEmphasis()
+                actions.onInsertSituation()
+            },
             onSend = onSend,
             tourTargets = tourTargets,
         )
@@ -253,6 +256,7 @@ private fun previewActions(): ChatComposerActions =
         onSend = {},
         onSendRandomSuggestion = {},
         onLockedTap = {},
+        onInsertSituation = {},
     )
 
 @Preview(showBackground = true, name = "컴포저 · 블럭 모드")

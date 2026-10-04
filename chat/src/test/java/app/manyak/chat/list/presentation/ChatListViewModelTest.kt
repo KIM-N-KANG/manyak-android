@@ -3,10 +3,12 @@ package app.manyak.chat.list.presentation
 import app.manyak.analytics.domain.NoOpAnalytics
 import app.manyak.chat.testing.FakeChatRepository
 import app.manyak.chat.testing.FakeReportRepository
+import app.manyak.chat.testing.sampleChats
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.report.entity.StoryReportReason
 import app.manyak.report.presentation.StoryReportAction
+import app.manyak.report.presentation.StoryReportUiState
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -37,6 +39,27 @@ class ChatListViewModelTest {
     fun tearDown() {
         Dispatchers.resetMain()
     }
+
+    @Test
+    fun `제목 없는 카드의 신고는 ID가 남아도 열리지 않는다`() =
+        runTest(dispatcher) {
+            val repository = FakeChatRepository()
+            val deleted =
+                sampleChats()
+                    .first()
+                    .copy(storyTitle = "")
+            val vm = ChatListViewModel(repository, FakeReportRepository(), NoOpAnalytics)
+            vm.onIntent(ChatListIntent.OpenOptions(deleted))
+            advanceUntilIdle()
+            vm.onIntent(ChatListIntent.Report(StoryReportAction.Open))
+            advanceUntilIdle()
+            assertFalse(deleted.hasReferenceStory)
+            assertNull(vm.uiState.value.reportStoryId)
+            assertEquals(
+                StoryReportUiState(),
+                vm.uiState.value.report,
+            )
+        }
 
     @Test
     fun `화면이 보이면 조회해 서버가 준 순서 그대로 목록을 만든다`() =
