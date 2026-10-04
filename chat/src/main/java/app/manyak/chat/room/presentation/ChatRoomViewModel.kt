@@ -85,7 +85,9 @@ data class ChatRoomUiState(
     val imageViewerUrl: String? = null,
     val composer: ChatComposerState = ChatComposerState(),
     val choicesEnabled: Boolean = true,
-    val realtimeImageEnabled: Boolean = true,
+    val realtimeImageEnabled: Boolean = false,
+    val settingsOpen: Boolean = false,
+    val realtimeImageNudgeOpen: Boolean = false,
     /** 턴이 0개인 방의 첫 입력 후보. */
     val suggestedInputs: List<String> = emptyList(),
     /** 선택지 생성의 진행 상태. 대상 턴이 마지막 턴일 때만 그린다. */
@@ -160,6 +162,12 @@ sealed interface ChatRoomIntent {
     data class RealtimeImageEnabledChanged(
         val enabled: Boolean,
     ) : ChatRoomIntent
+
+    data object SettingsOpened : ChatRoomIntent
+
+    data object SettingsClosed : ChatRoomIntent
+
+    data object RealtimeImageNudgeDismissed : ChatRoomIntent
 
     data object Sent : ChatRoomIntent
 
@@ -317,6 +325,11 @@ sealed interface ChatRoomEvent {
         val change: StoryReportChange,
     ) : ChatRoomEvent
 
+    data class SettingsChanged(
+        val open: Boolean,
+        val nudgeOpen: Boolean,
+    ) : ChatRoomEvent
+
     data object TourOpened : ChatRoomEvent
 
     data class TourStepChanged(
@@ -407,6 +420,8 @@ class ChatRoomViewModel
         private var newChatJob: Job? = null
         private var shareJob: Job? = null
         private var tourJob: Job? = null
+        private var realtimeImageNudgeJob: Job? = null
+        private var realtimeImageNudgePending = false
 
         /**
          * 의도 처리기가 읽는 정본.
@@ -419,7 +434,7 @@ class ChatRoomViewModel
         private var turns: List<ChatRoomTurn> = emptyList()
         private var suggestedInputs: List<String> = emptyList()
         private var choicesEnabled = true
-        private var realtimeImageEnabled = true
+        private var realtimeImageEnabled = false
         private var hintUnseen = false
         private var tourUnseen = false
         private var tourOpen = false
@@ -474,6 +489,12 @@ class ChatRoomViewModel
             intent.analyticsEvent(chatId, composer)?.let(analytics::track)
             when (intent) {
                 ChatRoomIntent.Retry -> load()
+
+                ChatRoomIntent.SettingsOpened -> dispatchEvent(ChatRoomEvent.SettingsChanged(true, false))
+
+                ChatRoomIntent.SettingsClosed -> dispatchEvent(ChatRoomEvent.SettingsChanged(false, false))
+
+                ChatRoomIntent.RealtimeImageNudgeDismissed -> dispatchEvent(ChatRoomEvent.SettingsChanged(true, false))
 
                 is ChatRoomIntent.PlainTextChanged -> updateComposer(composer.copy(plainText = intent.text))
 
@@ -613,6 +634,8 @@ class ChatRoomViewModel
                     dispatchEvent(ChatRoomEvent.DeleteStarted)
                     streamJob?.cancel()
                     choicesJob?.cancel()
+                    realtimeImageNudgeJob?.cancel()
+                    realtimeImageNudgePending = false
                     when (chatRepository.deleteChat(chatId)) {
                         is DomainResult.Success -> dispatchEffect(ChatRoomEffect.ChatDeleted)
 
@@ -809,6 +832,7 @@ class ChatRoomViewModel
             }
             regeneratingTurnId = regeneratedTurnId
             choicesJob?.cancel()
+            realtimeImageNudgeJob?.cancel()
             isStreaming = true
             streamJob =
                 viewModelScope.launch {
@@ -854,13 +878,20 @@ class ChatRoomViewModel
                     dispatchEvent(ChatRoomEvent.CharacterImageAppended(event.name, event.imageUrl))
 
                 ChatStreamEvent.Completed -> {
+                    if (!isStreaming) return
                     isStreaming = false
+                    // 완료 순간의 설정으로 판단한다. 저장을 기다리는 중 토글이 바뀌어도 다시 판단하지 않는다.
+                    val imageWasEnabled = realtimeImageEnabled
+                    if (regeneratingTurnId == null && preferences.recordCompletedTurn() == NUDGE_TURN_COUNT) {
+                        realtimeImageNudgePending = !imageWasEnabled
+                    }
                     // 완료된 턴이 체험 한 회와 이프를 썼을 수 있다. 다음 턴의 배지와 잔액 선검사가 낡은 값을
                     // 보지 않게 둘 다 다시 읽는다.
                     viewModelScope.launch { trialsRepository.refresh() }
                     viewModelScope.launch { profileRepository.refresh() }
                     refreshTurns(confirmed = true)
                     regeneratingTurnId = null
+                    scheduleRealtimeImageNudge()
                 }
 
                 is ChatStreamEvent.Failed -> handleStreamFailure(event)
@@ -873,6 +904,7 @@ class ChatRoomViewModel
                     // 서버 저장·교체 여부가 불명이라 임의로 복원하지 않고 확정 상태를 다시 읽는다.
                     refreshTurns(confirmed = false)
                     regeneratingTurnId = null
+                    scheduleRealtimeImageNudge()
                 }
             }
         }
@@ -907,6 +939,7 @@ class ChatRoomViewModel
             }
             if (regeneratingTurnId != null && status == HTTP_CONFLICT) refreshTurns(confirmed = false)
             regeneratingTurnId = null
+            scheduleRealtimeImageNudge()
         }
 
         /**
@@ -971,6 +1004,19 @@ class ChatRoomViewModel
                 }
         }
 
+        private fun scheduleRealtimeImageNudge() {
+            if (!realtimeImageNudgePending || isStreaming) return
+            realtimeImageNudgeJob?.cancel()
+            realtimeImageNudgeJob =
+                viewModelScope.launch {
+                    delay(NUDGE_DELAY_MILLIS)
+                    if (!isStreaming && realtimeImageNudgePending) {
+                        realtimeImageNudgePending = false
+                        dispatchEvent(ChatRoomEvent.SettingsChanged(open = true, nudgeOpen = true))
+                    }
+                }
+        }
+
         override fun reduce(
             state: ChatRoomUiState,
             event: ChatRoomEvent,
@@ -991,6 +1037,8 @@ class ChatRoomViewModel
             const val CHOICES_TOGGLE_DEBOUNCE_MILLIS = 500L
             const val TOUR_OPEN_DELAY_MILLIS = 200L
             const val REGENERATE_COOLDOWN_MILLIS = 500L
+            const val NUDGE_DELAY_MILLIS = 500L
+            const val NUDGE_TURN_COUNT = 2
         }
     }
 
@@ -999,6 +1047,9 @@ private fun reduceChatRoom(
     event: ChatRoomEvent,
 ): ChatRoomUiState =
     when (event) {
+        is ChatRoomEvent.SettingsChanged ->
+            state.copy(settingsOpen = event.open, realtimeImageNudgeOpen = event.nudgeOpen)
+
         is ChatRoomEvent.ImageViewerChanged -> state.copy(imageViewerUrl = event.imageUrl)
 
         ChatRoomEvent.LoadStarted -> state.copy(isLoading = true, loadFailed = false)
