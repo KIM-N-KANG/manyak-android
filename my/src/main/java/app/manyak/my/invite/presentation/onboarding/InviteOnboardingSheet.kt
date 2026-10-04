@@ -77,12 +77,25 @@ fun InviteOnboardingSheet(
             ),
         )
 
+    val closeFailedMessage by rememberUpdatedState(
+        LocalCreditPolicy.current?.inviteReward?.let { reward ->
+            stringResource(MyR.string.invite_onboarding_redeemed_close_failed, creditAmountText(reward))
+        } ?: stringResource(MyR.string.invite_onboarding_redeemed_close_failed_without_amount),
+    )
+
     LaunchedEffect(viewModel, lifecycleOwner) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
             viewModel.uiEffect.collect { effect ->
                 when (effect) {
-                    InviteOnboardingEffect.Redeemed ->
-                        Toast.makeText(context, redeemedMessage, Toast.LENGTH_SHORT).show()
+                    is InviteOnboardingEffect.Redeemed ->
+                        Toast
+                            .makeText(
+                                context,
+                                if (effect.closeFailed) closeFailedMessage else redeemedMessage,
+                                Toast.LENGTH_SHORT,
+                            ).show()
+                    InviteOnboardingEffect.DismissFailed ->
+                        Toast.makeText(context, MyR.string.invite_onboarding_close_failed, Toast.LENGTH_SHORT).show()
                 }
             }
         }

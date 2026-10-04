@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -43,7 +44,15 @@ class InviteOnboardingStore
 
         override suspend fun markPending() = write { it[PENDING_KEY] = true }
 
-        override suspend fun acknowledge() = write { it.remove(PENDING_KEY) }
+        override suspend fun acknowledge(): Boolean =
+            withContext(ioDispatcher) {
+                try {
+                    dataStore.edit { it.remove(PENDING_KEY) }
+                    true
+                } catch (_: IOException) {
+                    false
+                }
+            }
 
         /** 실패를 삼키지 않는다. 종료 흐름이 재시도하고, 성공 전에는 다음 단계로 넘어가지 않는다. */
         override suspend fun clearUserData(): Boolean =

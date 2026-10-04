@@ -12,7 +12,7 @@
     <string name="notification_consent_notice_result_night_off">야간 광고 알림 수신 동의 철회 완료</string>
     <string name="notification_consent_notice_result_night_on">야간 광고 알림 수신 동의 완료</string>
     <string name="notification_consent_notice_title">알림 수신 동의 처리 안내</string>
-    <string name="notification_consent_sender">마냑 운영자 강동우</string>
+    <string name="notification_consent_sender">마냑 운영자 강동우(팀명 김앤강)</string>
     <string name="notification_consent_sender_line">전송자: %1$s</string>
     <string name="notification_consent_title">이벤트·혜택 소식을 알림으로 받아 볼까요?</string>
     <string name="notification_settings_disabled_notice">기기 알림 설정이 꺼져 있어요</string>

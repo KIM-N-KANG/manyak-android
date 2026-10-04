@@ -41,7 +41,7 @@
     <string name="my_link_button">%1$s 연동하기</string>
     <string name="my_link_confirm_action">연동하기</string>
     <string name="my_link_confirm_benefit">%1$s와 %2$s 중 어느 쪽으로 로그인해도 같은 마냑 계정을 이용할 수 있어요</string>
-    <string name="my_link_confirm_cancel">닫기</string>
+    <string name="my_link_confirm_cancel">나중에 하기</string>
     <string name="my_link_confirm_irreversible">한 번 연동하면 해제할 수 없어요</string>
     <string name="my_link_confirm_reauth">보안을 위해 %1$s 계정을 다시 인증한 뒤 %2$s 계정을 연동해요</string>
     <string name="my_link_confirm_title">%1$s 계정을 연동할까요?</string>
@@ -134,4 +134,7 @@
     <string name="withdrawal_submit">회원 탈퇴하기</string>
     <string name="withdrawal_submitting">회원 탈퇴 중</string>
     <string name="withdrawal_title">탈퇴하기 전에\n아래 내용을 모두 확인해주세요</string>
+    <string name="invite_onboarding_redeemed_close_failed">%1$s 이프는 정상 지급되었지만, 창을 닫는 데 실패했어요</string>
+    <string name="invite_onboarding_redeemed_close_failed_without_amount">이프는 정상 지급되었지만, 창을 닫는 데 실패했어요</string>
+    <string name="invite_onboarding_close_failed">안내를 닫은 기록을 저장하지 못했어요. 다음 실행에서 다시 표시될 수 있어요</string>
 </resources>
