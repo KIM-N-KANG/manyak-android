@@ -25,7 +25,7 @@ internal fun reduceKeywordState(
                 state.copy(draftSaveStatus = DraftSaveStatus.IDLE)
             }
 
-        CreateKeywordEvent.DraftSavedDisplayExpired ->
+        CreateKeywordEvent.DraftSaveLockExpired ->
             if (state.draftSaveStatus == DraftSaveStatus.SAVED) {
                 state.copy(draftSaveStatus = DraftSaveStatus.IDLE)
             } else {

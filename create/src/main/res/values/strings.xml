@@ -34,7 +34,7 @@
     <string name="create_dialog_add">추가하기</string>
     <string name="create_dialog_close">닫기</string>
     <string name="create_draft_save">임시 저장</string>
-    <string name="create_draft_saved">임시 저장됨</string>
+    <string name="create_draft_saved">임시 저장했어요</string>
     <string name="create_error_duplicate_name">이미 사용한 이름이에요</string>
     <string name="create_error_duplicate_name_footer">인물 이름이 겹치지 않게 해주세요</string>
     <string name="create_error_select_keyword">키워드를 하나 이상 선택해주세요</string>

@@ -16,7 +16,7 @@ import app.manyak.create.entity.PendingStoryCreation
 import app.manyak.create.entity.StoryCharacterInput
 import app.manyak.create.entity.StoryTag
 import app.manyak.create.entity.StoryTagCategory
-import app.manyak.create.presentation.state.DRAFT_SAVED_DISPLAY_MS
+import app.manyak.create.presentation.state.DRAFT_SAVE_LOCK_MS
 import app.manyak.create.presentation.state.DraftSaveStatus
 import app.manyak.create.presentation.state.DraftSaveUiState
 import app.manyak.create.presentation.state.FunnelExitWarning
@@ -176,12 +176,7 @@ data class CreateKeywordUiState(
         get() {
             val unsaved = hasUnsavedChanges
             return DraftSaveUiState(
-                status =
-                    if (draftSaveStatus == DraftSaveStatus.SAVED && unsaved) {
-                        DraftSaveStatus.IDLE
-                    } else {
-                        draftSaveStatus
-                    },
+                status = draftSaveStatus,
                 // 입력을 모두 지운 변경도 저장 대상이다 — 그래야 남아 있는 저장본이 함께 사라진다.
                 canSave = !isRestoring && unsaved,
                 hasUnsavedChanges = unsaved,
@@ -290,8 +285,8 @@ sealed interface CreateKeywordEvent {
         val saved: Boolean,
     ) : CreateKeywordEvent
 
-    /** 저장 성공 표시 시간이 지났다. */
-    data object DraftSavedDisplayExpired : CreateKeywordEvent
+    /** 저장 성공 뒤의 버튼 잠금 시간이 지났다. */
+    data object DraftSaveLockExpired : CreateKeywordEvent
 
     data class ExitWarningChanged(
         val warning: FunnelExitWarning?,
@@ -379,7 +374,7 @@ class CreateKeywordViewModel
         ) {
         private var tagsLoadJob: Job? = null
         private var draftSaveJob: Job? = null
-        private var savedDisplayJob: Job? = null
+        private var saveLockJob: Job? = null
 
         /**
          * 디스크에 마지막으로 써 넣은 스냅숏. 연타로 같은 내용을 다시 쓰지 않기 위한 장부다.
@@ -546,8 +541,8 @@ class CreateKeywordViewModel
                     val state = uiState.first { !it.isRestoring }
                     if (state.isGeneratingStorylines) return@launch
                     val snapshot = state.toKeywordSnapshot()
-                    // 이미 같은 스냅숏이 디스크에 있으면 확인 표시만 다시 보여 준다. 연타로
-                    // 눌러도 디스크는 건드리지 않고, 버튼이 죽은 것처럼 보이지도 않는다.
+                    // 이미 같은 스냅숏이 디스크에 있으면 쓰지 않고 성공으로 끝낸다. 디스크는
+                    // 건드리지 않아도 누른 사람에게는 저장 토스트가 뜬다.
                     if (snapshot != persistedSnapshot) {
                         dispatchEvent(CreateKeywordEvent.DraftSaveStarted)
                         if (!pendingCreationStore.persistKeywordSnapshot(draftId, snapshot)) {
@@ -558,16 +553,16 @@ class CreateKeywordViewModel
                         analytics.track(AnalyticsEvent.DraftSaved(CreateStep.KEYWORD))
                     }
                     dispatchEvent(CreateKeywordEvent.DraftSaveFinished(snapshot, saved = true))
-                    scheduleSavedDisplayReset()
+                    scheduleSaveLockRelease()
                 }
         }
 
-        private fun scheduleSavedDisplayReset() {
-            savedDisplayJob?.cancel()
-            savedDisplayJob =
+        private fun scheduleSaveLockRelease() {
+            saveLockJob?.cancel()
+            saveLockJob =
                 viewModelScope.launch {
-                    delay(DRAFT_SAVED_DISPLAY_MS)
-                    dispatchEvent(CreateKeywordEvent.DraftSavedDisplayExpired)
+                    delay(DRAFT_SAVE_LOCK_MS)
+                    dispatchEvent(CreateKeywordEvent.DraftSaveLockExpired)
                 }
         }
 

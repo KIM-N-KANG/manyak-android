@@ -13,7 +13,7 @@ import app.manyak.create.entity.StoryCharacterInput
 import app.manyak.create.entity.StoryTag
 import app.manyak.create.entity.StoryTagCategory
 import app.manyak.create.entity.StorylineGenerationCommand
-import app.manyak.create.presentation.state.DRAFT_SAVED_DISPLAY_MS
+import app.manyak.create.presentation.state.DRAFT_SAVE_LOCK_MS
 import app.manyak.create.presentation.state.DraftSaveStatus
 import app.manyak.create.presentation.state.FunnelExitWarning
 import app.manyak.create.presentation.state.StorylineGenerationStore
@@ -443,7 +443,7 @@ class CreateKeywordViewModelTest {
             advanceUntilIdle()
 
             repeat(5) { viewModel.onIntent(CreateKeywordIntent.SaveDraft) }
-            advanceTimeBy(DRAFT_SAVED_DISPLAY_MS - 1)
+            advanceTimeBy(DRAFT_SAVE_LOCK_MS - 1)
             runCurrent()
 
             assertEquals(1, pending.writes.size)
@@ -458,14 +458,14 @@ class CreateKeywordViewModelTest {
         }
 
     @Test
-    fun `저장 완료 표시는 3초 뒤 기본 상태로 돌아간다`() =
+    fun `저장 뒤 버튼 잠금은 잠금 시간이 지나면 풀린다`() =
         runTest(dispatcher) {
             val pending = FakePendingStoryCreationStore()
             val viewModel = viewModel(fixedTagsRepository(), pending)
             advanceUntilIdle()
             viewModel.onIntent(CreateKeywordIntent.ToggleProvidedTag(KeywordTarget.Genre, tagId = 1L))
             viewModel.onIntent(CreateKeywordIntent.SaveDraft)
-            advanceTimeBy(DRAFT_SAVED_DISPLAY_MS - 1)
+            advanceTimeBy(DRAFT_SAVE_LOCK_MS - 1)
             runCurrent()
 
             assertEquals(DraftSaveStatus.SAVED, viewModel.uiState.value.draftSave.status)
@@ -477,22 +477,27 @@ class CreateKeywordViewModelTest {
         }
 
     @Test
-    fun `저장 뒤 다시 편집하면 저장 완료 표시를 거둔다`() =
+    fun `저장 뒤 다시 편집해도 잠금 시간 동안은 버튼을 잠근다`() =
         runTest(dispatcher) {
             val pending = FakePendingStoryCreationStore()
             val viewModel = viewModel(fixedTagsRepository(), pending)
             advanceUntilIdle()
             viewModel.onIntent(CreateKeywordIntent.ToggleProvidedTag(KeywordTarget.Genre, tagId = 1L))
             viewModel.onIntent(CreateKeywordIntent.SaveDraft)
-            advanceTimeBy(DRAFT_SAVED_DISPLAY_MS - 1)
             runCurrent()
-            assertEquals(DraftSaveStatus.SAVED, viewModel.uiState.value.draftSave.status)
 
             viewModel.onIntent(CreateKeywordIntent.ChangeCharacterName(KeywordTarget.Protagonist, "새 이름"))
+            advanceTimeBy(DRAFT_SAVE_LOCK_MS - 1)
+            runCurrent()
+
+            assertEquals(DraftSaveStatus.SAVED, viewModel.uiState.value.draftSave.status)
+            assertTrue(viewModel.uiState.value.draftSave.hasUnsavedChanges)
+
+            advanceTimeBy(1)
             runCurrent()
 
             assertEquals(DraftSaveStatus.IDLE, viewModel.uiState.value.draftSave.status)
-            assertTrue(viewModel.uiState.value.draftSave.hasUnsavedChanges)
+            assertTrue(viewModel.uiState.value.draftSave.canSave)
         }
 
     @Test

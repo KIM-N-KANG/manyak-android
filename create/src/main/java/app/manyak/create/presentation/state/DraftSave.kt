@@ -8,7 +8,7 @@ enum class DraftSaveStatus {
     /** 쓰기 진행 중 — 라벨 자리에 스피너를 띄우고 버튼을 잠근다. */
     SAVING,
 
-    /** 쓰기 성공 — 체크와 "임시 저장됨"을 [DRAFT_SAVED_DISPLAY_MS] 동안 보여 주고 버튼을 잠근다. */
+    /** 쓰기 성공 — [DRAFT_SAVE_LOCK_MS] 동안 버튼을 잠근다. 그 사이 편집해도 풀지 않는다. */
     SAVED,
 }
 
@@ -36,5 +36,5 @@ enum class FunnelExitWarning {
     SAVED_DRAFT,
 }
 
-/** 저장 성공 표시를 유지하는 시간. 지나면 다시 "임시 저장"으로 돌아가 버튼이 풀린다. */
-internal const val DRAFT_SAVED_DISPLAY_MS: Long = 2_000
+/** 저장 성공 뒤 버튼을 잠가 두는 시간. 저장 토스트가 떠 있는 동안 같은 저장을 거듭하지 않게 한다. */
+internal const val DRAFT_SAVE_LOCK_MS: Long = 2_000

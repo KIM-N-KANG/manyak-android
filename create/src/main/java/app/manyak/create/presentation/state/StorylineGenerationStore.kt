@@ -138,7 +138,7 @@ class StorylineGenerationStore
         /** 임시 저장과 요청 단계 저장이 같은 초안을 덮는 순서를 직렬화한다. */
         private val persistenceMutex = Mutex()
         private var draftSaveJob: Job? = null
-        private var savedDisplayJob: Job? = null
+        private var saveLockJob: Job? = null
 
         /** 초안을 저장해도 되는 구간인지. 진행 중 생성 레코드가 초안을 쥐고 있으면 false 다. */
         private var draftSaveEnabled = false
@@ -457,11 +457,11 @@ class StorylineGenerationStore
         fun saveDraft() {
             // 쓰기가 도는 동안의 추가 요청은 버린다 — 같은 내용을 두 번 쓸 뿐이다.
             if (!draftSaveEnabled || draftSaveJob?.isActive == true) return
-            // 이미 같은 내용이 디스크에 있으면 확인 표시만 다시 보여 준다. 연타로 눌러도
-            // 디스크는 건드리지 않고, 버튼이 죽은 것처럼 보이지도 않는다.
+            // 이미 같은 내용이 디스크에 있으면 쓰지 않고 성공으로 끝낸다. 디스크는 건드리지
+            // 않아도 누른 사람에게는 저장 토스트가 뜬다.
             if (draftPersisted) {
                 refreshDraftSave(DraftSaveStatus.SAVED)
-                scheduleSavedDisplayReset()
+                scheduleSaveLockRelease()
                 return
             }
             val owner = draftId
@@ -521,8 +521,8 @@ class StorylineGenerationStore
 
         private fun disableDraftSave() {
             draftSaveEnabled = false
-            savedDisplayJob?.cancel()
-            savedDisplayJob = null
+            saveLockJob?.cancel()
+            saveLockJob = null
             refreshDraftSave(DraftSaveStatus.IDLE)
         }
 
@@ -537,8 +537,7 @@ class StorylineGenerationStore
             val hasUnsavedChanges = draftSaveEnabled && !progress.hasSameContentAs(savedProgress)
             mutableDraftSave.value =
                 DraftSaveUiState(
-                    // 저장한 뒤 다시 편집했으면 "임시 저장됨"은 지금 상태를 가리키지 않는다.
-                    status = if (status == DraftSaveStatus.SAVED && hasUnsavedChanges) DraftSaveStatus.IDLE else status,
+                    status = status,
                     // 진행 중 요청이 초안을 쥐고 있거나 이미 같은 내용이 디스크에 있으면 잠근다.
                     // 활성 탭까지 따지는 [draftPersisted] 를 쓴다 — 탭을 옮겼으면 저장할 것이 있다.
                     canSave = draftSaveEnabled && lastResult != null && !draftPersisted,
@@ -549,7 +548,7 @@ class StorylineGenerationStore
         private suspend fun persistDraft(owner: String?): Boolean {
             val record = currentRecord() ?: return false
             val recordProgress = progress
-            savedDisplayJob?.cancel()
+            saveLockJob?.cancel()
             refreshDraftSave(DraftSaveStatus.SAVING)
             val saved =
                 persistenceMutex.withLock {
@@ -561,7 +560,7 @@ class StorylineGenerationStore
                 // 쓰는 사이에 진행이 바뀌었으면 디스크는 이미 한 박자 뒤처져 있다.
                 draftPersisted = recordProgress == progress
                 refreshDraftSave(DraftSaveStatus.SAVED)
-                scheduleSavedDisplayReset()
+                scheduleSaveLockRelease()
             } else {
                 draftPersisted = false
                 refreshDraftSave(DraftSaveStatus.IDLE)
@@ -569,11 +568,11 @@ class StorylineGenerationStore
             return saved
         }
 
-        private fun scheduleSavedDisplayReset() {
-            savedDisplayJob?.cancel()
-            savedDisplayJob =
+        private fun scheduleSaveLockRelease() {
+            saveLockJob?.cancel()
+            saveLockJob =
                 funnelScope.launch {
-                    delay(DRAFT_SAVED_DISPLAY_MS)
+                    delay(DRAFT_SAVE_LOCK_MS)
                     refreshDraftSave(DraftSaveStatus.IDLE)
                 }
         }
