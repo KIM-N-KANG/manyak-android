@@ -5,14 +5,19 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,8 +27,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.manyak.designsystem.component.ManyakTextButton
 import app.manyak.designsystem.theme.ManyakTheme
@@ -43,43 +48,60 @@ internal fun CollapsibleInputHeader(
     val toggleLabel =
         stringResource(if (expanded) CreateR.string.create_section_collapse else CreateR.string.create_section_expand)
     val deleteDescription = stringResource(CreateR.string.create_supporting_delete_description, headerLabel)
+    // M3 TextButton 은 들어오는 최소 폭이 0일 때만 58dp 최소 폭을 강제한다. 0이 아닌 최소 폭을 넘겨 글자 폭에 맞춘다.
+    val buttonModifier = Modifier.widthIn(min = 1.dp).height(ManyakTheme.sizes.controlSmall)
     Row(
         modifier =
             modifier
                 .fillMaxWidth()
+                .heightIn(min = ManyakTheme.sizes.control)
                 .background(ManyakTheme.colors.backgroundNeutral)
-                .padding(horizontal = ManyakTheme.spacing.gutter),
+                .padding(start = ManyakTheme.spacing.gutter, end = ManyakTheme.spacing.compact),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         InputHeaderLabel(headerLabel, countLabel, Modifier.weight(1f))
+        // 버튼이 48dp 터치 타깃으로 레이아웃을 넓히면 글자 양옆에 빈 공간이 생겨 간격이 어긋난다.
+        CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+            HeaderButtons(buttonModifier, toggleLabel, rotation, deleteDescription, onToggle, onDelete)
+        }
+    }
+}
+
+@Suppress("LongParameterList")
+@Composable
+private fun HeaderButtons(
+    buttonModifier: Modifier,
+    toggleLabel: String,
+    rotation: Float,
+    deleteDescription: String,
+    onToggle: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
         ManyakTextButton(
-            modifier = Modifier.height(ManyakTheme.sizes.controlSmall),
+            modifier = buttonModifier,
             onClick = onToggle,
             contentPadding = PaddingValues(horizontal = ManyakTheme.spacing.compact),
         ) {
             Text(text = toggleLabel, style = ManyakTheme.typography.labelSmall, color = ManyakTheme.colors.textSubtle)
+            Spacer(Modifier.width(ManyakTheme.spacing.inline))
             Icon(
                 painter = painterResource(DesignR.drawable.ic_chevron_down),
                 contentDescription = null,
                 tint = ManyakTheme.colors.textSubtle,
-                modifier = Modifier.size(ManyakTheme.sizes.iconSmall).rotate(rotation),
+                modifier = Modifier.size(ManyakTheme.sizes.iconTiny).rotate(rotation),
             )
         }
+        Spacer(Modifier.width(ManyakTheme.spacing.inline))
         ManyakTextButton(
-            modifier =
-                Modifier
-                    .width(ManyakTheme.sizes.control)
-                    .height(ManyakTheme.sizes.controlSmall)
-                    .semantics { contentDescription = deleteDescription },
+            modifier = buttonModifier.semantics { contentDescription = deleteDescription },
             onClick = onDelete,
-            contentPadding = PaddingValues(0.dp),
+            contentPadding = PaddingValues(horizontal = ManyakTheme.spacing.compact),
         ) {
             Text(
-                modifier = Modifier.fillMaxWidth(),
                 text = stringResource(CreateR.string.create_supporting_delete),
                 style = ManyakTheme.typography.labelSmall,
                 color = ManyakTheme.colors.textSubtle,
-                textAlign = TextAlign.End,
             )
         }
     }

@@ -302,21 +302,32 @@ internal fun SupportingCharacterList(
                     },
             )
         }
-        if (state.supportingCharacters.isEmpty()) {
-            Text(
-                modifier = Modifier.fillMaxWidth().padding(top = ManyakTheme.spacing.gutter),
-                text = stringResource(CreateR.string.create_supporting_empty_description),
-                style = ManyakTheme.typography.bodyMedium,
-                color = ManyakTheme.colors.textSubtlest,
-                textAlign = TextAlign.Center,
-            )
-        }
-        AddCharacterTrigger(
-            enabled = state.supportingCharacters.size < CreateKeywordUiState.SUPPORTING_CHARACTER_MAX,
-            onClick = { onIntent(CreateKeywordIntent.AddSupportingCharacter) },
-            modifier = Modifier.padding(top = ManyakTheme.spacing.gutter),
+        SupportingCharacterFooter(state, onIntent)
+    }
+}
+
+@Composable
+private fun SupportingCharacterFooter(
+    state: CreateKeywordUiState,
+    onIntent: (CreateKeywordIntent) -> Unit,
+) {
+    val empty = state.supportingCharacters.isEmpty()
+    if (empty) {
+        Text(
+            modifier = Modifier.fillMaxWidth().padding(top = ManyakTheme.spacing.gutter),
+            text = stringResource(CreateR.string.create_supporting_empty_description),
+            style = ManyakTheme.typography.bodyMedium,
+            color = ManyakTheme.colors.textSubtlest,
+            textAlign = TextAlign.Center,
         )
     }
+    // 펼친 인물 폼은 아래 여백을 이미 깔고 있다. 빈 안내 문구나 접힌 머리 줄 뒤에만 간격을 둔다.
+    val lastCollapsed = state.supportingCharacters.lastOrNull()?.id in state.collapsedCharacterIds
+    AddCharacterTrigger(
+        enabled = state.supportingCharacters.size < CreateKeywordUiState.SUPPORTING_CHARACTER_MAX,
+        onClick = { onIntent(CreateKeywordIntent.AddSupportingCharacter) },
+        modifier = if (empty || lastCollapsed) Modifier.padding(top = ManyakTheme.spacing.gutter) else Modifier,
+    )
 }
 
 @Composable

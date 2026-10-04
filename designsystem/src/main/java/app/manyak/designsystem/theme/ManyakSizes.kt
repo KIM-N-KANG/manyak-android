@@ -20,6 +20,8 @@ data class ManyakSizes(
     val controlCompact: Dp,
     /** 32dp — 작은 보조 버튼. 인물 머리 줄의 접기와 삭제, 본문 옆 아이콘에 사용한다 */
     val controlSmall: Dp,
+    /** 12dp — 작은 보조 버튼 안에서 12sp 라벨 옆에 붙는 아이콘. 글자 크기와 맞춘다 */
+    val iconTiny: Dp,
     /** 16dp — 밀도 높은 컨트롤 안에서 라벨 옆에 붙는 작은 아이콘 */
     val iconSmall: Dp,
     /** 20dp — 라벨 옆에 붙는 아이콘·제공자 로고 */
@@ -50,6 +52,7 @@ internal val ManyakDefaultSizes =
         input = 40.dp,
         controlCompact = 40.dp,
         controlSmall = 32.dp,
+        iconTiny = 12.dp,
         iconSmall = 16.dp,
         icon = 20.dp,
         tabIcon = 24.dp,

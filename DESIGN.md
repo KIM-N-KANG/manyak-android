@@ -158,6 +158,7 @@ sizes:
   control-compact: 40dp
   control-small: 32dp
   control: 48dp
+  icon-tiny: 12dp
   icon-small: 16dp
   icon: 20dp
   tab-icon: 24dp
@@ -618,6 +619,7 @@ components:
 | `{sizes.input}` | 40dp | 입력창·칩·셀렉트 앵커의 최소 높이 |
 | `{sizes.control-compact}` | 40dp | 카드 안에 놓이는 라벨 버튼의 보이는 높이. 터치 영역은 48dp 를 유지한다 |
 | `{sizes.control}` | 48dp | 버튼·탭처럼 탭 가능한 일반 컨트롤의 높이 |
+| `{sizes.icon-tiny}` | 12dp | 작은 보조 버튼 안에서 12sp 라벨 옆에 붙는 아이콘 |
 | `{sizes.icon-small}` | 16dp | 밀도 높은 컨트롤 안의 작은 아이콘 |
 | `{sizes.icon}` | 20dp | 라벨 옆 아이콘·제공자 로고 |
 | `{sizes.tab-icon}` | 24dp | 하단 탭 아이콘 |
