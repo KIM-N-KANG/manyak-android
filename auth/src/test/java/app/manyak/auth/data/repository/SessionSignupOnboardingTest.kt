@@ -19,16 +19,12 @@ import app.manyak.auth.data.session.TokenStorage
 import app.manyak.auth.domain.SessionEndSignal
 import app.manyak.auth.domain.SessionGate
 import app.manyak.auth.entity.SessionState
-import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.invite.SignupOnboardingWriter
-import app.manyak.common.domain.user.UserProfileRepository
 import app.manyak.common.entity.auth.AuthProvider
 import app.manyak.common.entity.session.SessionEndNotice
-import app.manyak.common.entity.user.UserProfile
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -96,12 +92,6 @@ private class SignupFixture(
         object : SessionClock {
             override fun now(): ClockSnapshot = ClockSnapshot(100, 1000, 1)
         }
-    private val profiles =
-        object : UserProfileRepository {
-            override val profile = MutableStateFlow<UserProfile?>(null)
-
-            override suspend fun refresh(): DomainResult<UserProfile> = DomainResult.Failure(DomainError.Network)
-        }
     private val marker =
         object : SignupOnboardingWriter {
             override suspend fun markPending() {
@@ -124,9 +114,7 @@ private class SignupFixture(
             stateHolder = state,
             gate = gate,
             sessionEndSignal = signal,
-            profileRepository = profiles,
             inviteOnboarding = marker,
-            applicationScope = scope,
         )
 }
 

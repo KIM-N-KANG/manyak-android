@@ -7,6 +7,7 @@ import app.manyak.notification.data.PushNotificationTray
 import app.manyak.notification.domain.PushTokenRegistrar
 import app.manyak.session.AnalyticsSessionBinder
 import app.manyak.session.CurrentActivityProvider
+import app.manyak.session.MemberDataLoader
 import app.manyak.session.SessionBootstrapper
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
@@ -29,6 +30,9 @@ class ManyakApplication : Application() {
     lateinit var analyticsSessionBinder: AnalyticsSessionBinder
 
     @Inject
+    lateinit var memberDataLoader: MemberDataLoader
+
+    @Inject
     lateinit var pushTokenRegistrar: PushTokenRegistrar
 
     @Inject
@@ -43,6 +47,7 @@ class ManyakApplication : Application() {
         sessionBootstrapper.start()
         // device_id 를 SDK 에 넣기 전까지 이벤트가 나가지 않으므로 세션 복원과 나란히 시작해도 된다.
         analyticsSessionBinder.start()
+        memberDataLoader.start()
         // 회원 세션과 필수 동의가 확인된 뒤 FCM 토큰을 서버에 맡긴다.
         pushTokenRegistrar.start()
         // 채널은 첫 메시지 전에 있어야 한다. 멱등이라 매 실행마다 불러도 사용자 설정은 유지된다.
