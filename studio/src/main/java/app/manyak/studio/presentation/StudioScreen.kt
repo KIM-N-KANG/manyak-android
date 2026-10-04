@@ -185,19 +185,21 @@ private fun StudioContent(
                 )
         }
 
-        CreateStoryFab(
-            expanded = !listState.canScrollBackward,
-            onClick = {
-                // 앱은 빈 목록에도 FAB 하나만 두므로 출처는 늘 fab 이다.
-                analytics.track(AnalyticsEvent.StoryListCreateButtonClicked(CreateButtonSource.FAB))
-                onIntent(StudioIntent.CreateStory)
-            },
-            modifier =
-                Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(contentPadding)
-                    .padding(ManyakTheme.spacing.gutter),
-        )
+        if (state.showCreateFab) {
+            CreateStoryFab(
+                expanded = !listState.canScrollBackward,
+                onClick = {
+                    // 앱은 빈 목록에도 FAB 하나만 두므로 출처는 늘 fab 이다.
+                    analytics.track(AnalyticsEvent.StoryListCreateButtonClicked(CreateButtonSource.FAB))
+                    onIntent(StudioIntent.CreateStory)
+                },
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(contentPadding)
+                        .padding(ManyakTheme.spacing.gutter),
+            )
+        }
     }
 
     StudioDialogs(state = state, onIntent = onIntent)

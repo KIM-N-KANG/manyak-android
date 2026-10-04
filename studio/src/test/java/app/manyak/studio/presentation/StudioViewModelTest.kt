@@ -49,6 +49,16 @@ class StudioViewModelTest {
     }
 
     @Test
+    fun `제작 FAB는 로컬 카드 없는 로딩과 오류에서 숨긴다`() {
+        assertFalse(StudioUiState().showCreateFab)
+        assertFalse(StudioUiState(isLoading = false, loadFailed = true).showCreateFab)
+        assertTrue(StudioUiState(isLoading = false).showCreateFab)
+        val local = CreationProgressSummary("draft", CreationStage.KEYWORD_DRAFT, CreationResumePoint.KeywordStep)
+        assertTrue(StudioUiState(drafts = listOf(local)).showCreateFab)
+        assertTrue(StudioUiState(loadFailed = true, drafts = listOf(local)).showCreateFab)
+    }
+
+    @Test
     fun `초안이 없으면 카드 없이 바로 새 생성으로 진입한다`() =
         runTest(dispatcher) {
             val viewModel = studioViewModel(FakeCreationProgressAccess(), FakeStoryRepository(), NoOpAnalytics)

@@ -76,6 +76,118 @@ class CreateKeywordViewModelTest {
         )
 
     @Test
+    fun `인물 접기는 탭 이동과 입력 수정 뒤에도 유지하며 저장 변경으로 세지 않는다`() =
+        runTest(dispatcher) {
+            val vm = viewModel(fixedTagsRepository())
+            advanceUntilIdle()
+            vm.onIntent(CreateKeywordIntent.ToggleSupportingCharacter(1))
+            advanceUntilIdle()
+            assertEquals(setOf(1L), vm.uiState.value.collapsedCharacterIds)
+            assertFalse(vm.uiState.value.hasUnsavedChanges)
+            vm.onIntent(CreateKeywordIntent.ToggleProvidedTag(KeywordTarget.Genre, 1))
+            vm.onIntent(CreateKeywordIntent.GoNext)
+            advanceUntilIdle()
+            vm.onIntent(CreateKeywordIntent.GoPrevious)
+            vm.onIntent(CreateKeywordIntent.AddSupportingCharacter)
+            advanceUntilIdle()
+            assertEquals(setOf(1L), vm.uiState.value.collapsedCharacterIds)
+            assertEquals(2, vm.uiState.value.supportingCharacters.size)
+            vm.onIntent(CreateKeywordIntent.ToggleSupportingCharacter(1))
+            advanceUntilIdle()
+            assertTrue(
+                vm.uiState.value.collapsedCharacterIds
+                    .isEmpty(),
+            )
+        }
+
+    @Test
+    fun `빈 인물은 바로 지우고 입력한 인물은 취소와 확인으로 분기한다`() =
+        runTest(dispatcher) {
+            val vm = viewModel(fixedTagsRepository())
+            advanceUntilIdle()
+            vm.onIntent(CreateKeywordIntent.RemoveSupportingCharacter(1))
+            advanceUntilIdle()
+            assertTrue(
+                vm.uiState.value.supportingCharacters
+                    .isEmpty(),
+            )
+            assertNull(vm.uiState.value.pendingRemoveCharacterId)
+            vm.onIntent(CreateKeywordIntent.AddSupportingCharacter)
+            advanceUntilIdle()
+            val id =
+                vm.uiState.value.supportingCharacters
+                    .single()
+                    .id
+            vm.onIntent(CreateKeywordIntent.ChangeCharacterName(KeywordTarget.Supporting(id), "인물"))
+            advanceUntilIdle()
+            vm.onIntent(CreateKeywordIntent.RemoveSupportingCharacter(id))
+            advanceUntilIdle()
+            assertEquals(id, vm.uiState.value.pendingRemoveCharacterId)
+            vm.onIntent(CreateKeywordIntent.DismissRemoveSupportingCharacter)
+            advanceUntilIdle()
+            assertEquals(
+                "인물",
+                vm.uiState.value.supportingCharacters
+                    .single()
+                    .name,
+            )
+            assertNull(vm.uiState.value.pendingRemoveCharacterId)
+            vm.onIntent(CreateKeywordIntent.ToggleSupportingCharacter(id))
+            vm.onIntent(CreateKeywordIntent.RemoveSupportingCharacter(id))
+            advanceUntilIdle()
+            vm.onIntent(CreateKeywordIntent.ConfirmRemoveSupportingCharacter)
+            advanceUntilIdle()
+            assertTrue(
+                vm.uiState.value.supportingCharacters
+                    .isEmpty(),
+            )
+            assertTrue(
+                vm.uiState.value.collapsedCharacterIds
+                    .isEmpty(),
+            )
+        }
+
+    @Test
+    fun `성별 또는 선택 해제한 직접 특징만 있어도 삭제를 확인한다`() =
+        runTest(dispatcher) {
+            val vm = viewModel(fixedTagsRepository())
+            advanceUntilIdle()
+            vm.onIntent(
+                CreateKeywordIntent.ChangeCharacterGender(KeywordTarget.Supporting(1), CharacterGender.entries.first()),
+            )
+            advanceUntilIdle()
+            vm.onIntent(CreateKeywordIntent.RemoveSupportingCharacter(1))
+            advanceUntilIdle()
+            assertEquals(1L, vm.uiState.value.pendingRemoveCharacterId)
+            vm.onIntent(CreateKeywordIntent.DismissRemoveSupportingCharacter)
+            vm.onIntent(CreateKeywordIntent.ChangeCharacterGender(KeywordTarget.Supporting(1), null))
+            vm.onIntent(CreateKeywordIntent.AddCustomTag(KeywordTarget.Supporting(1), "특징"))
+            advanceUntilIdle()
+            vm.onIntent(CreateKeywordIntent.ToggleCustomTag(KeywordTarget.Supporting(1), 0))
+            advanceUntilIdle()
+            vm.onIntent(CreateKeywordIntent.RemoveSupportingCharacter(1))
+            advanceUntilIdle()
+            assertEquals(1L, vm.uiState.value.pendingRemoveCharacterId)
+        }
+
+    @Test
+    fun `저장 후 편집은 저장 이후 내용 소실을 안내한다`() =
+        runTest(dispatcher) {
+            val pending = FakePendingStoryCreationStore()
+            val vm = viewModel(fixedTagsRepository(), pending)
+            advanceUntilIdle()
+            vm.onIntent(CreateKeywordIntent.ToggleProvidedTag(KeywordTarget.Genre, 1))
+            advanceUntilIdle()
+            vm.onIntent(CreateKeywordIntent.SaveDraft)
+            advanceUntilIdle()
+            vm.onIntent(CreateKeywordIntent.ChangeCharacterName(KeywordTarget.Protagonist, "이름"))
+            advanceUntilIdle()
+            vm.onIntent(CreateKeywordIntent.LeaveFunnel)
+            advanceUntilIdle()
+            assertEquals(FunnelExitWarning.UNSAVED_CHANGES, vm.uiState.value.exitWarning)
+        }
+
+    @Test
     fun `태그 조회 실패 후 다시 불러오면 태그를 재조회한다`() =
         runTest(dispatcher) {
             val loadedTag = StoryTag(id = 1, name = "로맨스", category = StoryTagCategory.GENRE)
@@ -245,7 +357,7 @@ class CreateKeywordViewModelTest {
             viewModel.onIntent(CreateKeywordIntent.LeaveFunnel)
             advanceUntilIdle()
 
-            assertEquals(FunnelExitWarning.UNSAVED_CHANGES, viewModel.uiState.value.exitWarning)
+            assertEquals(FunnelExitWarning.UNSAVED_INPUT, viewModel.uiState.value.exitWarning)
             assertNull(pending.read(TEST_DRAFT_ID))
             assertNull(withTimeoutOrNull(100) { viewModel.uiEffect.first() })
         }

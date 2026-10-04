@@ -18,7 +18,7 @@ data class ManyakSizes(
     val input: Dp,
     /** 40dp — 카드 안에 놓이는 라벨 버튼의 보이는 높이. 터치 영역은 최소 48dp 를 그대로 유지한다 */
     val controlCompact: Dp,
-    /** 32dp — 라벨 없이 아이콘만 있는 보조 버튼. 본문 옆에 붙어 눈에 덜 띄어야 하는 자리다 */
+    /** 32dp — 작은 보조 버튼. 인물 머리 줄의 접기와 삭제, 본문 옆 아이콘에 사용한다 */
     val controlSmall: Dp,
     /** 16dp — 밀도 높은 컨트롤 안에서 라벨 옆에 붙는 작은 아이콘 */
     val iconSmall: Dp,

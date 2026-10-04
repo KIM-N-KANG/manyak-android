@@ -284,10 +284,17 @@ internal fun FunnelExitWarningDialog(
     onDismiss: () -> Unit,
 ) {
     when (warning) {
-        FunnelExitWarning.UNSAVED_CHANGES ->
+        FunnelExitWarning.UNSAVED_INPUT,
+        FunnelExitWarning.UNSAVED_CHANGES,
+        ->
             FunnelWarningDialog(
                 titleRes = CreateR.string.create_unsaved_warning_title,
-                descriptionRes = CreateR.string.create_unsaved_warning_description,
+                descriptionRes =
+                    if (warning == FunnelExitWarning.UNSAVED_INPUT) {
+                        CreateR.string.create_unsaved_input_warning_description
+                    } else {
+                        CreateR.string.create_unsaved_warning_description
+                    },
                 confirmRes = CreateR.string.create_unsaved_warning_leave,
                 dismissRes = CreateR.string.create_unsaved_warning_stay,
                 onConfirm = onConfirmLeave,

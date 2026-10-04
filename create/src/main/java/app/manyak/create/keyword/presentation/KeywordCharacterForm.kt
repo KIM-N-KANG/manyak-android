@@ -1,18 +1,18 @@
 package app.manyak.create.keyword.presentation
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.material3.Button
@@ -27,19 +27,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import app.manyak.create.presentation.component.AddTrigger
+import app.manyak.create.presentation.component.CollapsibleInputHeader
 import app.manyak.create.presentation.component.KeywordSectionLabel
 import app.manyak.designsystem.component.ManyakInputCounter
-import app.manyak.designsystem.component.ManyakTextButton
 import app.manyak.designsystem.component.ManyakTextField
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.create.R as CreateR
@@ -274,7 +270,6 @@ internal fun SupportingCharacterList(
 
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
     ) {
         state.supportingCharacters.forEachIndexed { index, character ->
             val order = index + 1
@@ -287,6 +282,7 @@ internal fun SupportingCharacterList(
                         order,
                         CreateKeywordUiState.SUPPORTING_CHARACTER_MAX,
                     ),
+                expanded = character.id !in state.collapsedCharacterIds,
                 target = KeywordTarget.Supporting(character.id),
                 character = character,
                 namePlaceholder = namePlaceholders[index % namePlaceholders.size],
@@ -318,6 +314,7 @@ internal fun SupportingCharacterList(
         AddCharacterTrigger(
             enabled = state.supportingCharacters.size < CreateKeywordUiState.SUPPORTING_CHARACTER_MAX,
             onClick = { onIntent(CreateKeywordIntent.AddSupportingCharacter) },
+            modifier = Modifier.padding(top = ManyakTheme.spacing.gutter),
         )
     }
 }
@@ -341,6 +338,7 @@ private fun AddCharacterTrigger(
 private fun SupportingCharacterSection(
     headerLabel: String,
     countLabel: String,
+    expanded: Boolean,
     target: KeywordTarget,
     character: KeywordCharacter,
     namePlaceholder: String,
@@ -353,89 +351,34 @@ private fun SupportingCharacterSection(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
     ) {
-        SupportingCharacterHeader(
+        CollapsibleInputHeader(
             headerLabel = headerLabel,
             countLabel = countLabel,
+            expanded = expanded,
+            onToggle = { onIntent(CreateKeywordIntent.ToggleSupportingCharacter(character.id)) },
             onDelete = {
                 (target as? KeywordTarget.Supporting)?.let {
                     onIntent(CreateKeywordIntent.RemoveSupportingCharacter(it.characterId))
                 }
             },
         )
-        CharacterForm(
-            modifier = Modifier.padding(horizontal = ManyakTheme.spacing.gutter),
-            target = target,
-            character = character,
-            featureRequired = false,
-            namePlaceholder = namePlaceholder,
-            isDuplicateName = isDuplicateName,
-            providedTags = providedTags,
-            atSelectionCap = atSelectionCap,
-            onIntent = onIntent,
-            onOpenAddKeyword = onOpenAddKeyword,
-        )
-    }
-}
-
-@Composable
-private fun SupportingCharacterHeader(
-    headerLabel: String,
-    countLabel: String,
-    onDelete: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val deleteDescription = stringResource(CreateR.string.create_supporting_delete_description, headerLabel)
-    Row(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .background(ManyakTheme.colors.backgroundNeutral)
-                .padding(horizontal = ManyakTheme.spacing.gutter),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Row(
-            modifier = Modifier.weight(1f),
-            horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
-            verticalAlignment = Alignment.CenterVertically,
+        AnimatedVisibility(
+            visible = expanded,
+            enter = expandVertically(),
+            exit = shrinkVertically(),
         ) {
-            Text(
-                modifier = Modifier.weight(1f, fill = false),
-                text = headerLabel,
-                style = ManyakTheme.typography.labelLarge,
-                color = ManyakTheme.colors.textSubtle,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                modifier =
-                    Modifier
-                        .clip(ManyakTheme.shapes.pill)
-                        .background(ManyakTheme.colors.backgroundNeutralPressed)
-                        .padding(
-                            horizontal = ManyakTheme.spacing.compact,
-                            vertical = ManyakTheme.spacing.inline,
-                        ),
-                text = countLabel,
-                style = ManyakTheme.typography.bodySmall,
-                color = ManyakTheme.colors.textSubtle,
-            )
-        }
-        ManyakTextButton(
-            modifier =
-                Modifier
-                    .width(ManyakTheme.sizes.control)
-                    .semantics { contentDescription = deleteDescription },
-            onClick = onDelete,
-            contentPadding = PaddingValues(0.dp),
-        ) {
-            Text(
-                modifier = Modifier.fillMaxWidth(),
-                text = stringResource(CreateR.string.create_supporting_delete),
-                style = ManyakTheme.typography.labelLarge,
-                color = ManyakTheme.colors.textSubtle,
-                textAlign = TextAlign.End,
+            CharacterForm(
+                modifier = Modifier.padding(ManyakTheme.spacing.gutter),
+                target = target,
+                character = character,
+                featureRequired = false,
+                namePlaceholder = namePlaceholder,
+                isDuplicateName = isDuplicateName,
+                providedTags = providedTags,
+                atSelectionCap = atSelectionCap,
+                onIntent = onIntent,
+                onOpenAddKeyword = onOpenAddKeyword,
             )
         }
     }

@@ -23,6 +23,9 @@ data class DraftSaveUiState(
 
 /** 퍼널 이탈을 막고 띄우는 경고. 둘은 사라지는 대상이 달라 문구도 버튼도 다르다. */
 enum class FunnelExitWarning {
+    /** 저장본 없이 입력한 내용이 사라진다. */
+    UNSAVED_INPUT,
+
     /** 저장한 스냅숏은 있지만 그 뒤의 편집이 남았다. */
     UNSAVED_CHANGES,
 

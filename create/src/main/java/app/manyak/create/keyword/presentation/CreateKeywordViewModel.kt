@@ -46,6 +46,9 @@ data class KeywordCharacter(
     val selectedTagIds: Set<Long> = emptySet(),
     val customTags: List<CustomTag> = emptyList(),
 ) {
+    val hasInput: Boolean
+        get() = name.isNotBlank() || gender != null || selectedTagIds.isNotEmpty() || customTags.isNotEmpty()
+
     val featureCount: Int get() = selectedTagIds.size + customTags.count { it.selected }
 }
 
@@ -107,6 +110,8 @@ data class CreateKeywordUiState(
     /** 퍼널 진입 시 빈 주변 인물 입력 섹션 1개가 놓여 있다. 빈 섹션도 인원으로 센다. */
     val supportingCharacters: List<KeywordCharacter> = listOf(KeywordCharacter(id = FIRST_SUPPORTING_ID)),
     val nextSupportingId: Long = FIRST_SUPPORTING_ID + 1,
+    val collapsedCharacterIds: Set<Long> = emptySet(),
+    val pendingRemoveCharacterId: Long? = null,
 ) {
     val genreSelectedCount: Int get() = selectedGenreTagIds.size + customGenreTags.count { it.selected }
 
@@ -254,6 +259,14 @@ sealed interface CreateKeywordIntent {
         val gender: CharacterGender?,
     ) : CreateKeywordIntent
 
+    data class ToggleSupportingCharacter(
+        val characterId: Long,
+    ) : CreateKeywordIntent
+
+    data object ConfirmRemoveSupportingCharacter : CreateKeywordIntent
+
+    data object DismissRemoveSupportingCharacter : CreateKeywordIntent
+
     data object AddSupportingCharacter : CreateKeywordIntent
 
     data class RemoveSupportingCharacter(
@@ -327,6 +340,14 @@ sealed interface CreateKeywordEvent {
     data class CharacterGenderChanged(
         val target: KeywordTarget,
         val gender: CharacterGender?,
+    ) : CreateKeywordEvent
+
+    data class SupportingCharacterToggled(
+        val characterId: Long,
+    ) : CreateKeywordEvent
+
+    data class RemoveCharacterRequested(
+        val characterId: Long?,
     ) : CreateKeywordEvent
 
     data object SupportingCharacterAdded : CreateKeywordEvent
@@ -433,7 +454,9 @@ class CreateKeywordViewModel
                     dispatchEvent(
                         CreateKeywordEvent.ExitWarningChanged(
                             when {
-                                state.hasUnsavedChanges -> FunnelExitWarning.UNSAVED_CHANGES
+                                state.hasUnsavedChanges && pendingCreationStore.read(draftId) != null ->
+                                    FunnelExitWarning.UNSAVED_CHANGES
+                                state.hasUnsavedChanges -> FunnelExitWarning.UNSAVED_INPUT
                                 pendingCreationStore.read(draftId) != null -> FunnelExitWarning.SAVED_DRAFT
                                 else -> FunnelExitWarning.NOTHING_TO_PRESERVE
                             },
@@ -479,15 +502,7 @@ class CreateKeywordViewModel
                 is CreateKeywordIntent.ChangeCharacterGender ->
                     dispatchEvent(CreateKeywordEvent.CharacterGenderChanged(intent.target, intent.gender))
 
-                CreateKeywordIntent.AddSupportingCharacter ->
-                    if (state.supportingCharacters.size < CreateKeywordUiState.SUPPORTING_CHARACTER_MAX) {
-                        dispatchEvent(CreateKeywordEvent.SupportingCharacterAdded)
-                    }
-
-                is CreateKeywordIntent.RemoveSupportingCharacter ->
-                    dispatchEvent(CreateKeywordEvent.SupportingCharacterRemoved(intent.characterId))
-
-                else -> Unit
+                else -> state.supportingCharacterEvent(intent)?.let { dispatchEvent(it) }
             }
         }
 
