@@ -130,7 +130,7 @@
     <string name="create_remove_input_title">작성한 내용을 삭제할까요?</string>
     <string name="create_remove_input_description">삭제하면 작성한 내용이 사라져요</string>
     <string name="create_remove_input_confirm">삭제하기</string>
-    <string name="create_remove_input_cancel">그대로 두기</string>
+    <string name="create_remove_input_cancel">닫기</string>
     <string name="create_section_collapse">접기</string>
     <string name="create_section_expand">펼치기</string>
 </resources>
