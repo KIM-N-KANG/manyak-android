@@ -22,6 +22,10 @@ data class ManyakMotion(
     val listItemEnterMillis: Int,
     /** 목록 항목 사이의 시작 간격(밀리초) */
     val listItemStaggerMillis: Int,
+    val nudgeDimEnterMillis: Int,
+    val nudgeCardDelayMillis: Int,
+    val nudgeCardEnterMillis: Int,
+    val nudgeExitMillis: Int,
 )
 
 internal val ManyakDefaultMotion =
@@ -32,4 +36,8 @@ internal val ManyakDefaultMotion =
         elementExitMillis = 150,
         listItemEnterMillis = 300,
         listItemStaggerMillis = 80,
+        nudgeDimEnterMillis = 550,
+        nudgeCardDelayMillis = 200,
+        nudgeCardEnterMillis = 450,
+        nudgeExitMillis = 300,
     )

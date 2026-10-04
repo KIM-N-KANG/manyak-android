@@ -68,7 +68,7 @@ internal fun ComposerToolbar(
             iconRes = DesignsystemR.drawable.ic_gear,
             contentDescription = stringResource(ChatR.string.chat_settings_open),
             onClick = actions.onOpenSettings,
-            enabled = enabled,
+            enabled = true,
         )
         // 남은 자리를 밀어내 비용과 전송만 오른쪽 끝에 세운다.
         Spacer(modifier = Modifier.weight(1f))
