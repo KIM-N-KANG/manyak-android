@@ -118,7 +118,7 @@ data class ChatRoomUiState(
 ) {
     /** 참조 스토리가 남아 있어야 신고·새 채팅을 둘 수 있다. */
     val hasStory: Boolean
-        get() = !storyId.isNullOrBlank()
+        get() = !storyId.isNullOrBlank() && storyTitle.isNotBlank()
 
     /** 컴포저와 메시지 목록이 함께 쓰는 추천 목록. */
     val suggestions: ChatSuggestions
@@ -137,6 +137,8 @@ sealed interface ChatRoomIntent {
     data class PlainTextChanged(
         val text: String,
     ) : ChatRoomIntent
+
+    data object SituationInserted : ChatRoomIntent
 
     data class BlockValueChanged(
         val id: Long,
@@ -566,7 +568,11 @@ class ChatRoomViewModel
                 ChatRoomIntent.ShareRequested -> share()
 
                 is ChatRoomIntent.Report ->
-                    report.handle(intent.action, uiState.value.storyId, uiState.value.report)
+                    report.handle(
+                        intent.action,
+                        uiState.value.storyId.takeIf { uiState.value.hasStory },
+                        uiState.value.report,
+                    )
 
                 is ChatRoomIntent.RegenerateRequested -> {
                     // 화면이 본 마지막 턴과 지금 마지막 턴이 다르면 낡은 클릭이다.
@@ -652,7 +658,9 @@ class ChatRoomViewModel
          * 않는다 — 이동 중에 항목이 되살아나 두 번째 방이 만들어지면 안 된다.
          */
         private suspend fun startNewChat() {
-            val storyId = uiState.value.storyId?.takeIf { id -> id.isNotBlank() } ?: return
+            val state = uiState.value
+            if (!state.hasStory) return
+            val storyId = state.storyId ?: return
             if (newChatJob?.isActive == true) return
             dispatchEvent(ChatRoomEvent.NewChatStartChanged(inProgress = true))
             newChatJob =
@@ -1234,6 +1242,7 @@ private fun ChatRoomIntent.analyticsEvent(
 ): AnalyticsEvent? =
     when (this) {
         ChatRoomIntent.Retry -> AnalyticsEvent.ChatRetryButtonClicked(chatId)
+        ChatRoomIntent.SituationInserted -> AnalyticsEvent.SituationInsertButtonClicked(chatId)
         is ChatRoomIntent.BlockAdded -> AnalyticsEvent.AddBlockButtonClicked(chatId, type.name.lowercase())
         is ChatRoomIntent.BlockRemoved ->
             composer.blocks

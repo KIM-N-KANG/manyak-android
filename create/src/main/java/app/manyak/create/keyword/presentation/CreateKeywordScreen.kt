@@ -46,6 +46,7 @@ import app.manyak.create.presentation.component.SaveDraftWhenBackgrounded
 import app.manyak.create.presentation.component.labelRes
 import app.manyak.create.presentation.preview.previewKeywordState
 import app.manyak.designsystem.component.FocusScrollMargin
+import app.manyak.designsystem.component.ManyakDestructiveDialog
 import app.manyak.designsystem.component.ScrollEdgeFade
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.create.R as CreateR
@@ -93,6 +94,17 @@ fun CreateKeywordScreen(
         onIntent = viewModel::onIntent,
         modifier = modifier,
     )
+
+    if (state.pendingRemoveCharacterId != null) {
+        ManyakDestructiveDialog(
+            title = stringResource(CreateR.string.create_remove_input_title),
+            description = stringResource(CreateR.string.create_remove_input_description),
+            confirmLabel = stringResource(CreateR.string.create_remove_input_confirm),
+            cancelLabel = stringResource(CreateR.string.create_remove_input_cancel),
+            onConfirm = { viewModel.onIntent(CreateKeywordIntent.ConfirmRemoveSupportingCharacter) },
+            onDismiss = { viewModel.onIntent(CreateKeywordIntent.DismissRemoveSupportingCharacter) },
+        )
+    }
 
     state.exitWarning?.let { warning ->
         FunnelExitWarningDialog(

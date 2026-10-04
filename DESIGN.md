@@ -158,6 +158,7 @@ sizes:
   control-compact: 40dp
   control-small: 32dp
   control: 48dp
+  icon-tiny: 12dp
   icon-small: 16dp
   icon: 20dp
   tab-icon: 24dp
@@ -614,10 +615,11 @@ components:
 
 | 토큰 | 값 | 용도 |
 | --- | --- | --- |
-| `{sizes.control-small}` | 32dp | 라벨 없이 아이콘만 있는 보조 버튼 |
+| `{sizes.control-small}` | 32dp | 작은 보조 버튼, 인물 머리 줄의 접기와 삭제 |
 | `{sizes.input}` | 40dp | 입력창·칩·셀렉트 앵커의 최소 높이 |
 | `{sizes.control-compact}` | 40dp | 카드 안에 놓이는 라벨 버튼의 보이는 높이. 터치 영역은 48dp 를 유지한다 |
 | `{sizes.control}` | 48dp | 버튼·탭처럼 탭 가능한 일반 컨트롤의 높이 |
+| `{sizes.icon-tiny}` | 12dp | 작은 보조 버튼 안에서 12sp 라벨 옆에 붙는 아이콘 |
 | `{sizes.icon-small}` | 16dp | 밀도 높은 컨트롤 안의 작은 아이콘 |
 | `{sizes.icon}` | 20dp | 라벨 옆 아이콘·제공자 로고 |
 | `{sizes.tab-icon}` | 24dp | 하단 탭 아이콘 |
@@ -636,7 +638,7 @@ components:
 
 `{sizes.control}`은 안드로이드 최소 터치 타깃과 같은 값이다. 버튼·탭은 보이는 크기와 눌리는 크기를
 48dp 로 맞추고, 여러 개가 밀집하는 입력창·칩·셀렉트 앵커는 `{sizes.input}` 40dp 로 구분한다.
-`{sizes.control-small}` 은 라벨 없이 아이콘만 있고 본문 옆에서 눈에 덜 띄어야 하는 보조 버튼용이라
+`{sizes.control-small}`은 본문 옆 아이콘과 인물 머리 줄의 접기 및 삭제 같은 작은 보조 버튼용이라
 최소 터치 타깃보다 작다 — 주된 동작에는 쓰지 않는다. 토큰 정본에는 높이가 없어 이 값들은 이
 레포가 소유한다.
 
@@ -805,6 +807,8 @@ components:
 **키워드 칩** — 제공·커스텀 태그는 `{component.chip}`(흰 배경 + 옅은 경계)이고 선택은 `{component.chip-selected}`(브랜드 subtle 채움 + 브랜드 경계 + 브랜드 텍스트)로 색 하나가 아니라 채움·경계·글자 셋으로 말한다. 높이는 `{sizes.input}`으로 컨트롤(48dp)보다 낮다 — 여럿이 흐르는 밀도 높은 선택 요소라서이고, 터치 타깃이 최소 48dp 에 못 미치는 것은 알고 수용한다. 모서리는 입력창과 같은 `{rounded.control}`이고, 선택 변화 자체가 반응이므로 눌림 리플을 그리지 않는다. "키워드 추가"·"인물 추가" 트리거는 같은 모양에 `{colors.background-neutral}` 채움 + `{colors.border}` 경계이고, `+` 아이콘은 16dp 로 라벨 크기에 맞춘다. 인물 추가는 폭을 채우지 않고 가운데에 놓인다. 상한에 도달하면 미선택 칩과 트리거를 비활성 색(`{colors.text-disabled}`)으로 내린다.
 
 카테고리 탭은 M3 `SecondaryTabRow` 기본을 쓴다(`TabRow`는 deprecated) — 컨테이너 `{colors.surface}`, 선택 라벨 `{colors.text}`, 비선택 `{colors.text-subtle}`, 잠금 `{colors.text-disabled}`, 필수 표시 `*`는 `{colors.text-danger}`. 선택 표시선은 탭 폭에 맞는 `{colors.text}` 1.5dp 선이다 — 선택 표시는 상태이지 다음 동작이 아니라서 초록을 쓰지 않고, 선택 라벨과 같은 색으로 묶는다. **눌림 리플은 끈다** — 탭을 누르면 라벨 색과 표시선이 곧바로 바뀌므로 그 변화 자체가 반응이고, 하단 내비게이션과 같은 이유다. 스크롤 시 탭만 상단에 고정하고 각 카테고리 콘텐츠는 탭 아래에서 시작한다. **이프 충전의 무료 충전·내역 탭도 같은 밑줄 탭이다** — 표시선 색·두께, 라벨 색 위계, 리플 끄기까지 이 규칙을 그대로 쓰고 잠금·필수 표시만 없다.
+
+주변 인물 머리 줄의 접기와 삭제 버튼은 `sizes.controlSmall`(32dp), `typography.labelSmall`(12sp)을 사용합니다. 접기 화살표는 `sizes.iconTiny`(12dp)입니다. 입력 영역은 위 변을 붙잡은 높이와 투명도로 여닫고, 화살표 회전과 인물 추가 위 간격도 같이 움직입니다. 모션은 웹과 같은 튕김 없는 약 0.3초 스프링(`Spring.StiffnessMediumLow`)이며 토큰의 요소 모션과 달리 이 자리에서 고정합니다. 접힌 항목 다음에는 목록 간격을 두지 않습니다.
 
 **스토리라인 단계** — 순번 탭(첫·두·세 번째)은 카테고리 탭과 같은 스타일을 그대로 쓰되 잠금과 필수 표시가 없다. 본문은 `story-body`(`{typography.body-reading}`)로 그린다 — 스토리라인은 스토리 본문의 미리보기라서 서사 서체의 자리다. 본문 마크업은 웹과 같은 규칙으로 파싱한다 — `**…**`는 볼드, 단일 `*…*`(내레이션·속마음)는 `{colors.text-narration}`. 평가 버튼(좋아요·별로예요)은 `{sizes.input}` 정사각 아이콘 칩으로, 아이콘은 기본 크기(`{sizes.icon}`) 대신 16dp 로 한 단계 줄여 본문 옆 보조 동작으로 물러나게 하고, 키워드 칩과 같은 선택 문법을 쓴다 — 기본은 `{component.chip}`(흰 배경 + `{colors.border}` 1dp 경계 + `{colors.text}` 아이콘), 활성 시 좋아요는 `{component.chip-selected}`(브랜드 subtle 채움 + 브랜드 경계 + 브랜드 아이콘), 별로예요는 같은 문법의 danger 변형(`{colors.background-danger-subtle}` + `{colors.border-danger}` + `{colors.text-danger}`)이다. 아이콘은 `ic_thumb_up`·`ic_thumb_down`. 하단 CTA 쌍(다시 만들기·선택하기)은 퍼널 CTA 규칙 그대로다. 웹의 선택 키워드 드로어 트리거는 앱에서는 두지 않는다.
 

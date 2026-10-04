@@ -405,7 +405,7 @@ class StorylineGenerationStoreTest {
             val writesAfterGeneration = pendingStore.writes.size
 
             repeat(5) { store.saveDraft() }
-            advanceTimeBy(DRAFT_SAVED_DISPLAY_MS - 1)
+            advanceTimeBy(DRAFT_SAVE_LOCK_MS - 1)
             runCurrent()
 
             assertEquals(writesAfterGeneration, pendingStore.writes.size)
@@ -423,7 +423,7 @@ class StorylineGenerationStoreTest {
         }
 
     @Test
-    fun `저장 완료 표시는 3초 뒤 기본 상태로 돌아간다`() =
+    fun `저장 뒤 버튼 잠금은 잠금 시간이 지나면 풀린다`() =
         runTest {
             val store =
                 StorylineGenerationStore(
@@ -433,7 +433,7 @@ class StorylineGenerationStoreTest {
                     this,
                 ).bind(TEST_DRAFT_ID)
             store.generate(sampleGenerationInput())
-            advanceTimeBy(DRAFT_SAVED_DISPLAY_MS - 1)
+            advanceTimeBy(DRAFT_SAVE_LOCK_MS - 1)
             runCurrent()
 
             assertEquals(DraftSaveStatus.SAVED, store.draftSave.value.status)

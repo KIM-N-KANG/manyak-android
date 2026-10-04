@@ -267,6 +267,7 @@ private fun composerActions(
         onSend = { onIntent(ChatRoomIntent.Sent) },
         onSendRandomSuggestion = { onIntent(ChatRoomIntent.RandomSuggestionSent) },
         onLockedTap = { onIntent(ChatRoomIntent.LockedComposerTapped) },
+        onInsertSituation = { onIntent(ChatRoomIntent.SituationInserted) },
     )
 
 /** 채우기가 쓰던 초안을 덮어쓰기 전에 묻는다. */

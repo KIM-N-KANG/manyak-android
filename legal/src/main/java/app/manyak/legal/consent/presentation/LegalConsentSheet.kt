@@ -42,7 +42,7 @@ import app.manyak.designsystem.R as DesignsystemR
 import app.manyak.legal.R as LegalR
 
 /**
- * 소셜 인증 후 필수 동의를 받는 시트. 동의를 마칠 때까지 로그인 화면 위에 얹는다.
+ * 소셜 인증 후 필수 동의를 받는 시트. 동의를 마칠 때까지 로그인 또는 앱 시작 화면 위에 얹는다.
  *
  * 닫을 수 없다 — 끌어내리기·스크림 탭은 막고, 뒤로가기만 "동의하지 않음" 으로 보고 로그아웃한다.
  * 전문은 시트 위에 전체 화면 창으로 연다. 모달 시트는 아래 화면을 덮으므로 백스택에 문서를 쌓으면 보이지 않는다.
@@ -102,7 +102,7 @@ private fun LegalConsentContent(
             }
 
             else ->
-                LoadFailedContent(
+                ConsentLoadFailureContent(
                     forbidden = state.phase == LegalConsentPhase.FORBIDDEN,
                     enabled = !state.isLocked,
                     onRetry = {
@@ -268,49 +268,58 @@ private fun SubmitButton(
 }
 
 @Composable
-private fun LoadFailedContent(
+fun ConsentLoadFailureContent(
     forbidden: Boolean,
     enabled: Boolean,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact)) {
-        Text(
-            text =
-                stringResource(
-                    if (forbidden) LegalR.string.consent_forbidden_title else LegalR.string.consent_load_failed_title,
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.block)) {
+        Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact)) {
+            Text(
+                text =
+                    stringResource(
+                        if (forbidden) {
+                            LegalR.string.consent_forbidden_title
+                        } else {
+                            LegalR.string.consent_load_failed_title
+                        },
+                    ),
+                style = ManyakTheme.typography.titleLarge,
+                color = ManyakTheme.colors.text,
+            )
+            Text(
+                text =
+                    stringResource(
+                        if (forbidden) {
+                            LegalR.string.consent_forbidden_description
+                        } else {
+                            LegalR.string.consent_load_failed_description
+                        },
+                    ),
+                style = ManyakTheme.typography.bodyLarge,
+                color = ManyakTheme.colors.textSubtle,
+            )
+        }
+        Button(
+            modifier = Modifier.fillMaxWidth().heightIn(min = ManyakTheme.sizes.control),
+            onClick = onRetry,
+            enabled = enabled,
+            shape = ManyakTheme.shapes.control,
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor = ManyakTheme.colors.brand,
+                    contentColor = ManyakTheme.colors.textInverse,
                 ),
-            style = ManyakTheme.typography.titleLarge,
-            color = ManyakTheme.colors.text,
-        )
-        Text(
-            text =
-                stringResource(
-                    if (forbidden) {
-                        LegalR.string.consent_forbidden_description
-                    } else {
-                        LegalR.string.consent_load_failed_description
-                    },
-                ),
-            style = ManyakTheme.typography.bodyLarge,
-            color = ManyakTheme.colors.textSubtle,
-        )
-    }
-    Button(
-        modifier = Modifier.fillMaxWidth().heightIn(min = ManyakTheme.sizes.control),
-        onClick = onRetry,
-        enabled = enabled,
-        shape = ManyakTheme.shapes.control,
-        colors =
-            ButtonDefaults.buttonColors(
-                containerColor = ManyakTheme.colors.brand,
-                contentColor = ManyakTheme.colors.textInverse,
-            ),
-    ) {
-        Text(
-            text = stringResource(if (forbidden) LegalR.string.consent_logout else DesignsystemR.string.common_retry),
-            style = ManyakTheme.typography.labelLarge,
-        )
+        ) {
+            Text(
+                text =
+                    stringResource(
+                        if (forbidden) LegalR.string.consent_logout else DesignsystemR.string.common_retry,
+                    ),
+                style = ManyakTheme.typography.labelLarge,
+            )
+        }
     }
 }
 

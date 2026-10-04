@@ -213,7 +213,7 @@ private fun ChatOptionsSheet(
             inProgress = isSharing,
         )
         // 참조 스토리가 없으면 신고할 대상도 없다.
-        if (chat.storyId.isNotBlank()) {
+        if (chat.hasReferenceStory) {
             ManyakOptionItem(
                 iconRes = DesignsystemR.drawable.ic_alert_triangle,
                 label = stringResource(ReportR.string.story_report_action),

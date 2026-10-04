@@ -57,7 +57,11 @@ sealed interface InviteOnboardingEvent {
 }
 
 sealed interface InviteOnboardingEffect {
-    data object Redeemed : InviteOnboardingEffect
+    data class Redeemed(
+        val closeFailed: Boolean,
+    ) : InviteOnboardingEffect
+
+    data object DismissFailed : InviteOnboardingEffect
 }
 
 /**
@@ -98,7 +102,7 @@ class InviteOnboardingViewModel
                 InviteOnboardingIntent.Submit -> submit()
                 InviteOnboardingIntent.Skip -> {
                     analytics.track(AnalyticsEvent.InviteOnboardingSkipped)
-                    dismiss()
+                    if (!dismiss()) dispatchEffect(InviteOnboardingEffect.DismissFailed)
                 }
             }
         }
@@ -118,7 +122,7 @@ class InviteOnboardingViewModel
 
         private suspend fun submit() {
             val state = uiState.value
-            if (state.isSubmitting) return
+            if (state.isSubmitting || state.dismissed) return
             val code = state.code.trim()
             if (code.isEmpty()) {
                 dispatchEvent(InviteOnboardingEvent.SubmitFailed(MyR.string.invite_code_error_empty))
@@ -129,10 +133,9 @@ class InviteOnboardingViewModel
             when (val result = inviteRepository.redeemInviteCode(code)) {
                 is DomainResult.Success -> {
                     analytics.track(AnalyticsEvent.InviteCodeSucceeded(InviteCodeSource.ONBOARDING))
-                    dispatchEffect(InviteOnboardingEffect.Redeemed)
                     // 잔액 정본은 프로필이라 지급액을 더하지 않고 다시 읽는다.
                     userProfileRepository.refresh()
-                    dismiss()
+                    dispatchEffect(InviteOnboardingEffect.Redeemed(closeFailed = !dismiss()))
                 }
 
                 is DomainResult.Failure -> {
@@ -147,9 +150,10 @@ class InviteOnboardingViewModel
             }
         }
 
-        private suspend fun dismiss() {
+        private suspend fun dismiss(): Boolean {
+            val saved = onboardingRepository.acknowledge()
             dispatchEvent(InviteOnboardingEvent.Dismissed)
-            onboardingRepository.acknowledge()
+            return saved
         }
     }
 

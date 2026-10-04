@@ -12,4 +12,5 @@ internal data class ChatComposerActions(
     val onSendRandomSuggestion: () -> Unit,
     /** 잠긴 입력창을 눌렀다. 왜 입력할 수 없는지 알리는 데 쓴다. */
     val onLockedTap: () -> Unit,
+    val onInsertSituation: () -> Unit,
 )

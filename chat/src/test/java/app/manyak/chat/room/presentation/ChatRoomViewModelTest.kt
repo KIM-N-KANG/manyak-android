@@ -9,8 +9,11 @@ import app.manyak.chat.testing.FakeCreditPolicyRepository
 import app.manyak.chat.testing.FakeReportRepository
 import app.manyak.chat.testing.FakeTrialsRepository
 import app.manyak.chat.testing.FakeUserProfileRepository
+import app.manyak.chat.testing.sampleChatDetail
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.report.presentation.StoryReportAction
+import app.manyak.report.presentation.StoryReportUiState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -39,6 +42,69 @@ class ChatRoomViewModelTest {
     fun tearDown() {
         Dispatchers.resetMain()
     }
+
+    @Test
+    fun `제목이 없는 스토리는 ID가 남아도 신고와 새 채팅을 막는다`() =
+        runTest(dispatcher) {
+            val repository = FakeChatRepository()
+            repository.queuedChatDetailResults +=
+                DomainResult.Success(
+                    sampleChatDetail()
+                        .copy(storyTitle = "  "),
+                )
+            val vm =
+                ChatRoomViewModel(
+                    chatId = "chat-1",
+                    chatRepository = repository,
+                    reportRepository = FakeReportRepository(),
+                    preferences = FakeChatPreferencesRepository(),
+                    trialsRepository = FakeTrialsRepository(),
+                    creditPolicyRepository = FakeCreditPolicyRepository(),
+                    profileRepository = FakeUserProfileRepository(),
+                    analytics = NoOpAnalytics,
+                )
+            advanceUntilIdle()
+            assertFalse(vm.uiState.value.hasStory)
+            vm.onIntent(ChatRoomIntent.NewChatRequested)
+            vm.onIntent(ChatRoomIntent.Report(StoryReportAction.Open))
+            advanceUntilIdle()
+            assertTrue(repository.createdStoryIds.isEmpty())
+            assertEquals(
+                StoryReportUiState(),
+                vm.uiState.value.report,
+            )
+            assertFalse(vm.uiState.value.isStartingNewChat)
+        }
+
+    @Test
+    fun `상황 추가는 입력 원문 없이 채팅 ID만 이벤트에 기록한다`() =
+        runTest(dispatcher) {
+            val events = mutableListOf<AnalyticsEvent>()
+            val vm =
+                ChatRoomViewModel(
+                    chatId = "chat-1",
+                    chatRepository = FakeChatRepository(),
+                    reportRepository = FakeReportRepository(),
+                    preferences = FakeChatPreferencesRepository(),
+                    trialsRepository = FakeTrialsRepository(),
+                    creditPolicyRepository = FakeCreditPolicyRepository(),
+                    profileRepository = FakeUserProfileRepository(),
+                    analytics =
+                        object : Analytics {
+                            override fun track(event: AnalyticsEvent) {
+                                events += event
+                            }
+                        },
+                )
+            advanceUntilIdle()
+            vm.onIntent(ChatRoomIntent.SituationInserted)
+            advanceUntilIdle()
+            assertEquals(1, events.filterIsInstance<AnalyticsEvent.SituationInsertButtonClicked>().size)
+            assertEquals(
+                "chat-1",
+                events.filterIsInstance<AnalyticsEvent.SituationInsertButtonClicked>().single().chatId,
+            )
+        }
 
     @Test
     fun `진입 시 상세를 조회해 제목·프롤로그·턴을 상태로 만든다`() =

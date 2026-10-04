@@ -18,7 +18,9 @@ data class ChatSummary(
     val lastStoryPreview: String,
     val turnCount: Long,
     val updatedAtEpochMillis: Long?,
-)
+) {
+    val hasReferenceStory: Boolean get() = storyId.isNotBlank() && storyTitle.isNotBlank()
+}
 
 /** 채팅 상세. 렌더 순서는 프롤로그 → 각 턴(사용자 입력 → AI 출력)이다. */
 data class ChatDetail(

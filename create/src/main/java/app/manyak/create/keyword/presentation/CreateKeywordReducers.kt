@@ -25,7 +25,7 @@ internal fun reduceKeywordState(
                 state.copy(draftSaveStatus = DraftSaveStatus.IDLE)
             }
 
-        CreateKeywordEvent.DraftSavedDisplayExpired ->
+        CreateKeywordEvent.DraftSaveLockExpired ->
             if (state.draftSaveStatus == DraftSaveStatus.SAVED) {
                 state.copy(draftSaveStatus = DraftSaveStatus.IDLE)
             } else {
@@ -94,8 +94,17 @@ private fun reduceKeywordInput(
                 nextSupportingId = state.nextSupportingId + 1,
             )
 
+        is CreateKeywordEvent.SupportingCharacterToggled ->
+            state.copy(collapsedCharacterIds = state.collapsedCharacterIds.toggle(event.characterId))
+
+        is CreateKeywordEvent.RemoveCharacterRequested -> state.copy(pendingRemoveCharacterId = event.characterId)
+
         is CreateKeywordEvent.SupportingCharacterRemoved ->
-            state.copy(supportingCharacters = state.supportingCharacters.filterNot { it.id == event.characterId })
+            state.copy(
+                supportingCharacters = state.supportingCharacters.filterNot { it.id == event.characterId },
+                collapsedCharacterIds = state.collapsedCharacterIds - event.characterId,
+                pendingRemoveCharacterId = null,
+            )
 
         else -> state
     }
@@ -130,4 +139,26 @@ private fun CreateKeywordUiState.clearValidationErrorIfComplete(category: StoryT
         copy(validationErrorCategory = null)
     } else {
         this
+    }
+
+internal fun CreateKeywordUiState.supportingCharacterEvent(intent: CreateKeywordIntent): CreateKeywordEvent? =
+    when (intent) {
+        CreateKeywordIntent.AddSupportingCharacter ->
+            CreateKeywordEvent.SupportingCharacterAdded.takeIf {
+                supportingCharacters.size < CreateKeywordUiState.SUPPORTING_CHARACTER_MAX
+            }
+        is CreateKeywordIntent.RemoveSupportingCharacter ->
+            supportingCharacters.firstOrNull { it.id == intent.characterId }?.let { character ->
+                if (character.hasInput) {
+                    CreateKeywordEvent.RemoveCharacterRequested(character.id)
+                } else {
+                    CreateKeywordEvent.SupportingCharacterRemoved(character.id)
+                }
+            }
+        is CreateKeywordIntent.ToggleSupportingCharacter ->
+            CreateKeywordEvent.SupportingCharacterToggled(intent.characterId)
+        CreateKeywordIntent.ConfirmRemoveSupportingCharacter ->
+            pendingRemoveCharacterId?.let(CreateKeywordEvent::SupportingCharacterRemoved)
+        CreateKeywordIntent.DismissRemoveSupportingCharacter -> CreateKeywordEvent.RemoveCharacterRequested(null)
+        else -> null
     }

@@ -68,6 +68,8 @@ data class StudioUiState(
     /** 신고 시트가 열려 있는 동안의 대상. 옵션 시트가 닫혀도 신고가 어느 스토리인지 남아야 한다. */
     val reportStoryId: String? = null,
 ) {
+    val showCreateFab: Boolean get() = hasLocalCards || (!isLoading && !loadFailed)
+
     /** 서버 목록과 무관하게 화면에 올릴 로컬 카드가 있는지. 있으면 빈 목록·실패 화면 대신 목록을 그린다. */
     val hasLocalCards: Boolean get() = drafts.isNotEmpty() || completionRequests.isNotEmpty()
 }
