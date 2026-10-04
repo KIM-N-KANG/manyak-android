@@ -22,7 +22,7 @@ sealed interface LegalIntent {
 data class LegalUiState(
     val document: LegalDocument,
     val url: String,
-    /** 이 호스트 밖으로는 이동하지 않는다. */
+    /** WebView 안에서 문서 이동을 허용하는 호스트. 외부 웹은 브라우저로 연다. */
     val allowedHost: String?,
     val isLoading: Boolean = true,
     val hasError: Boolean = false,

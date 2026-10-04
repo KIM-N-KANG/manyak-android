@@ -49,6 +49,7 @@ enum class LegalConsentPhase {
     REQUIRED,
     SATISFIED,
     LOAD_FAILED,
+    FORBIDDEN,
 }
 
 enum class LegalConsentNotice {
@@ -71,7 +72,7 @@ data class LegalConsentUiState(
 ) {
     val isSatisfied: Boolean get() = phase == LegalConsentPhase.SATISFIED
     val isSheetVisible: Boolean
-        get() = phase == LegalConsentPhase.REQUIRED || phase == LegalConsentPhase.LOAD_FAILED
+        get() = phase in setOf(LegalConsentPhase.REQUIRED, LegalConsentPhase.LOAD_FAILED, LegalConsentPhase.FORBIDDEN)
     val isEveryRequiredChecked: Boolean get() = required.isNotEmpty() && required.all { it.item in checked }
     val isAllChecked: Boolean get() = isEveryRequiredChecked && marketingOptIn
     val isLocked: Boolean get() = isSubmitting || isLoggingOut
@@ -85,6 +86,8 @@ sealed interface LegalConsentEvent {
     ) : LegalConsentEvent
 
     data object LoadFailed : LegalConsentEvent
+
+    data object Forbidden : LegalConsentEvent
 
     data class CheckedChanged(
         val checked: Set<ConsentItem>,
@@ -174,6 +177,7 @@ class LegalConsentViewModel
                     )
                 LegalConsentEvent.LoadFailed ->
                     state.copy(phase = LegalConsentPhase.LOAD_FAILED, required = emptyList())
+                LegalConsentEvent.Forbidden -> LegalConsentUiState(phase = LegalConsentPhase.FORBIDDEN)
                 LegalConsentEvent.SubmitStarted -> state.copy(isSubmitting = true, notice = null)
                 is LegalConsentEvent.SubmitFailed -> state.copy(isSubmitting = false, notice = event.notice)
                 is LegalConsentEvent.Satisfied ->
@@ -199,8 +203,14 @@ class LegalConsentViewModel
             dispatchEvent(LegalConsentEvent.Loading)
             when (val result = consentRepository.get()) {
                 is DomainResult.Success -> dispatchEvent(LegalConsentEvent.Loaded(result.value))
-                // 401·403 은 세션 종료 흐름이 따로 처리한다. 그때까지는 재시도만 보여 주고 회원 기능을 열지 않는다.
-                is DomainResult.Failure -> dispatchEvent(LegalConsentEvent.LoadFailed)
+                is DomainResult.Failure ->
+                    dispatchEvent(
+                        if (result.error == DomainError.AccountSuspended) {
+                            LegalConsentEvent.Forbidden
+                        } else {
+                            LegalConsentEvent.LoadFailed
+                        },
+                    )
             }
         }
 
@@ -249,7 +259,9 @@ class LegalConsentViewModel
                     }
 
                 is DomainResult.Failure ->
-                    if (result.error.isVersionMismatch()) {
+                    if (result.error == DomainError.AccountSuspended) {
+                        dispatchEvent(LegalConsentEvent.Forbidden)
+                    } else if (result.error.isVersionMismatch()) {
                         dispatchEvent(LegalConsentEvent.SubmitFailed(LegalConsentNotice.VERSION_MISMATCH))
                         load()
                     } else {

@@ -101,7 +101,22 @@ private fun LegalConsentContent(
                 }
             }
 
-            else -> LoadFailedContent(onRetry = { onIntent(LegalConsentIntent.Retry) })
+            else ->
+                LoadFailedContent(
+                    forbidden = state.phase == LegalConsentPhase.FORBIDDEN,
+                    enabled = !state.isLocked,
+                    onRetry = {
+                        onIntent(
+                            if (state.phase ==
+                                LegalConsentPhase.FORBIDDEN
+                            ) {
+                                LegalConsentIntent.Abandon
+                            } else {
+                                LegalConsentIntent.Retry
+                            },
+                        )
+                    },
+                )
         }
     }
 }
@@ -254,17 +269,29 @@ private fun SubmitButton(
 
 @Composable
 private fun LoadFailedContent(
+    forbidden: Boolean,
+    enabled: Boolean,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact)) {
         Text(
-            text = stringResource(LegalR.string.consent_load_failed_title),
+            text =
+                stringResource(
+                    if (forbidden) LegalR.string.consent_forbidden_title else LegalR.string.consent_load_failed_title,
+                ),
             style = ManyakTheme.typography.titleLarge,
             color = ManyakTheme.colors.text,
         )
         Text(
-            text = stringResource(LegalR.string.consent_load_failed_description),
+            text =
+                stringResource(
+                    if (forbidden) {
+                        LegalR.string.consent_forbidden_description
+                    } else {
+                        LegalR.string.consent_load_failed_description
+                    },
+                ),
             style = ManyakTheme.typography.bodyLarge,
             color = ManyakTheme.colors.textSubtle,
         )
@@ -272,6 +299,7 @@ private fun LoadFailedContent(
     Button(
         modifier = Modifier.fillMaxWidth().heightIn(min = ManyakTheme.sizes.control),
         onClick = onRetry,
+        enabled = enabled,
         shape = ManyakTheme.shapes.control,
         colors =
             ButtonDefaults.buttonColors(
@@ -279,7 +307,10 @@ private fun LoadFailedContent(
                 contentColor = ManyakTheme.colors.textInverse,
             ),
     ) {
-        Text(text = stringResource(DesignsystemR.string.common_retry), style = ManyakTheme.typography.labelLarge)
+        Text(
+            text = stringResource(if (forbidden) LegalR.string.consent_logout else DesignsystemR.string.common_retry),
+            style = ManyakTheme.typography.labelLarge,
+        )
     }
 }
 

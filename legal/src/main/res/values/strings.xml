@@ -17,4 +17,8 @@
     <string name="legal_load_failed">문서를 불러오지 못했어요. 네트워크 상태를 확인해주세요</string>
     <string name="legal_privacy_title">개인정보 처리방침</string>
     <string name="legal_terms_title">서비스 이용약관</string>
+    <string name="consent_forbidden_title">지금 계정으로는 서비스를 이용할 수 없어요</string>
+    <string name="consent_forbidden_description">계정 상태를 확인할 수 없어 이용이 제한됐어요</string>
+    <string name="consent_logout">로그아웃</string>
+    <string name="legal_external_open_failed">링크를 열 수 있는 브라우저가 없어요</string>
 </resources>
