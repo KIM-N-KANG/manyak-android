@@ -1,6 +1,8 @@
 package app.manyak.create.presentation.component
 
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -44,7 +46,12 @@ internal fun CollapsibleInputHeader(
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val rotation by animateFloatAsState(if (expanded) 180f else 0f, label = "section-chevron")
+    // 입력 영역이 여닫히는 스프링과 같이 돈다.
+    val rotation by animateFloatAsState(
+        targetValue = if (expanded) 180f else 0f,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "section-chevron",
+    )
     val toggleLabel =
         stringResource(if (expanded) CreateR.string.create_section_collapse else CreateR.string.create_section_expand)
     val deleteDescription = stringResource(CreateR.string.create_supporting_delete_description, headerLabel)

@@ -1,7 +1,13 @@
 package app.manyak.create.keyword.presentation
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.VisibilityThreshold
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -31,6 +37,8 @@ import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import app.manyak.create.presentation.component.AddTrigger
 import app.manyak.create.presentation.component.CollapsibleInputHeader
@@ -322,11 +330,17 @@ private fun SupportingCharacterFooter(
         )
     }
     // 펼친 인물 폼은 아래 여백을 이미 깔고 있다. 빈 안내 문구나 접힌 머리 줄 뒤에만 간격을 둔다.
+    // 폼이 접히는 동안 간격이 한 번에 붙으면 인물 추가 버튼이 툭 밀린다. 폼 높이와 같은 스프링으로 채운다.
     val lastCollapsed = state.supportingCharacters.lastOrNull()?.id in state.collapsedCharacterIds
+    val topGap by animateDpAsState(
+        targetValue = if (empty || lastCollapsed) ManyakTheme.spacing.gutter else 0.dp,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow, visibilityThreshold = Dp.VisibilityThreshold),
+        label = "supporting-footer-gap",
+    )
     AddCharacterTrigger(
         enabled = state.supportingCharacters.size < CreateKeywordUiState.SUPPORTING_CHARACTER_MAX,
         onClick = { onIntent(CreateKeywordIntent.AddSupportingCharacter) },
-        modifier = if (empty || lastCollapsed) Modifier.padding(top = ManyakTheme.spacing.gutter) else Modifier,
+        modifier = Modifier.padding(top = topGap),
     )
 }
 
@@ -374,10 +388,14 @@ private fun SupportingCharacterSection(
                 }
             },
         )
+        // 웹과 같은 튕김 없는 약 0.3초 스프링이다. 위 변을 붙잡아 입력 칸은 제자리에 두고 아래로 드러낸다.
+        // 기본값처럼 아래를 붙잡으면 폼이 머리 줄 밑에서 미끄러져 나온다.
+        val sizeSpec = spring(stiffness = Spring.StiffnessMediumLow, visibilityThreshold = IntSize.VisibilityThreshold)
+        val fadeSpec = spring<Float>(stiffness = Spring.StiffnessMediumLow)
         AnimatedVisibility(
             visible = expanded,
-            enter = expandVertically(),
-            exit = shrinkVertically(),
+            enter = expandVertically(sizeSpec, expandFrom = Alignment.Top) + fadeIn(fadeSpec),
+            exit = shrinkVertically(sizeSpec, shrinkTowards = Alignment.Top) + fadeOut(fadeSpec),
         ) {
             CharacterForm(
                 modifier = Modifier.padding(ManyakTheme.spacing.gutter),
