@@ -13,4 +13,7 @@ interface AnalyticsIdentity {
     fun setUser(userId: String)
 
     fun clearUser()
+
+    /** SDK 미초기화 또는 세션 없음은 null이다. 조회 때문에 새 세션을 만들지 않는다. */
+    fun currentSessionId(): Long?
 }

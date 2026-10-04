@@ -9,6 +9,7 @@ import app.manyak.auth.domain.SessionRepository
 import app.manyak.auth.entity.SessionState
 import app.manyak.common.domain.credit.CreditPolicyRepository
 import app.manyak.common.domain.credit.TrialsRepository
+import app.manyak.common.domain.session.MemberConsent
 import app.manyak.common.domain.settings.ThemePreferenceRepository
 import app.manyak.common.domain.user.UserProfileRepository
 import app.manyak.common.entity.credit.CreditPolicy
@@ -21,28 +22,30 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/** 루트는 세션 상태만 본다. 그래프 전환은 이동 효과가 아니라 이 상태의 결과다. */
+/** 루트는 세션과 필수 동의 상태를 본다. 그래프 전환은 이동 효과가 아니라 이 상태의 결과다. */
 @HiltViewModel
 class RootViewModel
     @Inject
     constructor(
         sessionRepository: SessionRepository,
+        memberConsent: MemberConsent,
         themePreferenceRepository: ThemePreferenceRepository,
         profileRepository: UserProfileRepository,
         inviteOnboardingRepository: InviteOnboardingRepository,
         private val savedStateHandle: SavedStateHandle,
         private val creditPolicyRepository: CreditPolicyRepository,
-        private val trialsRepository: TrialsRepository,
+        trialsRepository: TrialsRepository,
         private val coordinator: SessionTerminationCoordinator,
         /** 화면이 직접 보내는 이벤트의 통로. 루트가 CompositionLocal 로 내린다. */
         val analytics: Analytics,
     ) : ViewModel() {
         val sessionState: StateFlow<SessionState> = sessionRepository.sessionState
+
+        val isConsentSatisfied: StateFlow<Boolean> = memberConsent.isSatisfied
 
         /** 저장된 테마. 저장소를 읽기 전 첫 프레임은 시스템 설정으로 그린다. */
         val themeMode: StateFlow<ThemeMode> =
@@ -81,10 +84,6 @@ class RootViewModel
             // 인증이 필요 없는 공개 조회라 세션이 정해지기 전에 시작해도 된다. 실패해도 되살리지 않는다 —
             // 수치를 못 받은 자리는 자리표시 숫자로 그려지고 다음 실행에서 다시 읽는다.
             viewModelScope.launch { creditPolicyRepository.refresh() }
-            // 잔여는 회원 귀속이라 회원 상태가 될 때마다 읽는다. 로그아웃 정리가 비운 뒤 다시 로그인하면 새로 읽는다.
-            viewModelScope.launch {
-                sessionState.filter { it == SessionState.Member }.collect { trialsRepository.refresh() }
-            }
         }
 
         /** 첫 생성과 `onNewIntent` 가 같은 자리로 들어온다. 나중 진입이 앞의 미소비 진입을 대체한다. */

@@ -3,6 +3,7 @@ package app.manyak.network.data.di
 import app.manyak.network.data.interceptor.AppVersionInterceptor
 import app.manyak.network.data.interceptor.AuthInterceptor
 import app.manyak.network.data.interceptor.DeviceIdInterceptor
+import app.manyak.network.data.interceptor.SessionIdInterceptor
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -48,12 +49,14 @@ object HttpModule {
     fun providePlainClient(
         deviceIdInterceptor: DeviceIdInterceptor,
         appVersionInterceptor: AppVersionInterceptor,
+        sessionIdInterceptor: SessionIdInterceptor,
         loggingInterceptor: HttpLoggingInterceptor,
     ): OkHttpClient =
         OkHttpClient
             .Builder()
             .addInterceptor(deviceIdInterceptor)
             .addInterceptor(appVersionInterceptor)
+            .addInterceptor(sessionIdInterceptor)
             .addInterceptor(loggingInterceptor)
             .build()
 
@@ -63,6 +66,7 @@ object HttpModule {
     fun provideAuthenticatedClient(
         deviceIdInterceptor: DeviceIdInterceptor,
         appVersionInterceptor: AppVersionInterceptor,
+        sessionIdInterceptor: SessionIdInterceptor,
         authInterceptor: AuthInterceptor,
         loggingInterceptor: HttpLoggingInterceptor,
     ): OkHttpClient =
@@ -70,6 +74,7 @@ object HttpModule {
             .Builder()
             .addInterceptor(deviceIdInterceptor)
             .addInterceptor(appVersionInterceptor)
+            .addInterceptor(sessionIdInterceptor)
             .addInterceptor(authInterceptor)
             .addInterceptor(loggingInterceptor)
             .build()

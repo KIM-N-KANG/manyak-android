@@ -18,23 +18,18 @@ import app.manyak.auth.domain.SessionRepository
 import app.manyak.auth.entity.SessionRestoreResult
 import app.manyak.auth.entity.SessionState
 import app.manyak.auth.entity.SignInOutcome
-import app.manyak.common.data.di.ApplicationScope
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
-import app.manyak.common.domain.error.errorOrNull
 import app.manyak.common.domain.invite.SignupOnboardingWriter
-import app.manyak.common.domain.user.UserProfileRepository
 import app.manyak.common.entity.auth.AuthProvider
 import app.manyak.common.entity.session.SessionEndNotice
 import app.manyak.network.data.api.apiCall
 import app.manyak.network.data.api.emptyBodyApiCall
 import dagger.Lazy
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -57,9 +52,7 @@ class SessionRepositoryImpl
         private val stateHolder: SessionStateHolder,
         private val gate: SessionGate,
         private val sessionEndSignal: Lazy<SessionEndSignal>,
-        private val profileRepository: UserProfileRepository,
         private val inviteOnboarding: SignupOnboardingWriter,
-        @param:ApplicationScope private val applicationScope: CoroutineScope,
     ) : SessionRepository,
         SessionBootstrap {
         private val inProgress = MutableStateFlow<AuthProvider?>(null)
@@ -131,7 +124,6 @@ class SessionRepositoryImpl
             gate.commit(work) {
                 if (isMember) stateHolder.publishMember() else stateHolder.publishSignedOut(null)
             } ?: return SessionRestoreResult.CLEANUP_REQUIRED
-            if (isMember) applicationScope.launch { refreshProfile() }
             return if (isMember) SessionRestoreResult.MEMBER else SessionRestoreResult.NO_SESSION
         }
 
@@ -174,22 +166,9 @@ class SessionRepositoryImpl
             // 상태 발행도 같은 관문을 지난다. 저장 직후 로그아웃이 끼어들면 회원 상태를 공개하지 않는다.
             gate.commit(work) { stateHolder.publishMember() }
                 ?: return DomainResult.Failure(DomainError.Unauthorized)
-            applicationScope.launch { refreshProfile() }
-            // 신규 가입 안내는 로그인 화면이 아니라 회원 그래프에서 뜬다 — 로그인 성공과 동시에 인증
-            // 백스택이 사라지므로, 여기서 표시를 남겨 두고 안내를 본 뒤에 지운다.
+            // 가입 사실만 기록한다. 안내는 필수 동의를 마친 뒤 회원 화면에서 소비한다.
             if (issued.isNewUser) inviteOnboarding.markPending()
             return DomainResult.Success(SignInOutcome(isNewUser = issued.isNewUser))
-        }
-
-        /**
-         * 로그인 직후·앱 시작 복원의 프로필 확인.
-         *
-         * 정지 계정은 프로필 갱신 성공이 아니라 **세션 종료 사유**다. 조회 실패는 세션을 바꾸지 않는다.
-         */
-        private suspend fun refreshProfile() {
-            if (profileRepository.refresh().errorOrNull() == DomainError.AccountSuspended) {
-                sessionEndSignal.get().onSessionInvalidated(SessionEndNotice.ACCOUNT_SUSPENDED, null)
-            }
         }
 
         private fun readBackoffMillis(attempt: Int): Long = TOKEN_READ_BACKOFF_MILLIS shl attempt

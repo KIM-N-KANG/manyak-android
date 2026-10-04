@@ -63,6 +63,9 @@ import app.manyak.designsystem.component.ManyakProgressIndicator
 import app.manyak.designsystem.component.clearFocusOnTap
 import app.manyak.designsystem.component.rememberDelayedProgressVisibility
 import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.legal.consent.presentation.LegalConsentIntent
+import app.manyak.legal.consent.presentation.LegalConsentSheet
+import app.manyak.legal.consent.presentation.LegalConsentViewModel
 import app.manyak.legal.presentation.LegalDocumentScreen
 import app.manyak.login.presentation.LoginScreen
 import app.manyak.my.credit.presentation.CreditChargeScreen
@@ -77,8 +80,8 @@ import app.manyak.R as AppR
 import app.manyak.designsystem.R as DesignsystemR
 
 /**
- * 세션 상태가 어느 그래프를 띄울지 결정한다. 그래프 안에서 가드로 막지 않는다 —
- * 미로그인 상태에서 **메인 목적지가 백스택에 존재할 수 없게** 만들어 가드 누락이 사고가 되지 않게 한다.
+ * 세션과 필수 동의가 어느 그래프를 띄울지 결정한다.
+ * 동의 확인 전에는 메인 목적지가 백스택에 존재하지 않는다.
  *
  * 상태가 미확정인 동안에는 어느 그래프도 그리지 않는다. 로그인 화면이 잠깐 스쳤다가 메인으로 바뀌는
  * 깜빡임을 막기 위해서다.
@@ -87,8 +90,11 @@ import app.manyak.designsystem.R as DesignsystemR
 fun ManyakApp(
     modifier: Modifier = Modifier,
     viewModel: RootViewModel = hiltViewModel(),
+    consentViewModel: LegalConsentViewModel = hiltViewModel(),
 ) {
     val sessionState by viewModel.sessionState.collectAsStateWithLifecycle()
+    val consentConfirmed by viewModel.isConsentSatisfied.collectAsStateWithLifecycle()
+    val consentState by consentViewModel.uiState.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val creditPolicy by viewModel.creditPolicy.collectAsStateWithLifecycle()
     val trials by viewModel.trials.collectAsStateWithLifecycle()
@@ -114,11 +120,19 @@ fun ManyakApp(
                     SessionState.Undetermined -> if (showSessionProgress) SessionProgress()
                     is SessionState.SignedOut -> AuthNavDisplay()
                     SessionState.Member -> {
-                        MainNavDisplay(
-                            entryDestination = entryDestination,
-                            onEntryConsumed = viewModel::onEntryConsumed,
-                        )
-                        MemberOverlays(viewModel = viewModel)
+                        MemberConsentGate(
+                            state = consentState,
+                            consentConfirmed = consentConfirmed,
+                            onAbandon = { consentViewModel.onIntent(LegalConsentIntent.Abandon) },
+                            loginContent = { AuthNavDisplay() },
+                            consentContent = { LegalConsentSheet(enabled = true, viewModel = consentViewModel) },
+                        ) {
+                            MainNavDisplay(
+                                entryDestination = entryDestination,
+                                onEntryConsumed = viewModel::onEntryConsumed,
+                            )
+                            MemberOverlays(viewModel = viewModel, consentViewModel = consentViewModel)
+                        }
                     }
                     // 이전 사용자의 데이터가 남아 있다. 정리가 끝날 때까지 어느 그래프도 열지 않는다.
                     is SessionState.CleanupFailed -> CleanupFailed(state, onRetry = viewModel::onRetryCleanup)
@@ -201,7 +215,7 @@ private fun SessionProgress() {
 }
 
 /**
- * 인증 백스택. 로그인 성공 시 세션 상태가 바뀌며 이 백스택이 통째로 사라지므로,
+ * 인증 백스택. 필수 동의를 확인한 뒤 이 백스택을 통째로 교체하므로,
  * 메인에서 뒤로가기로 로그인 화면에 돌아갈 수 없다.
  */
 @Composable

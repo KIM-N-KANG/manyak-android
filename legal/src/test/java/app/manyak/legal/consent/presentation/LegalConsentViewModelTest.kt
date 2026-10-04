@@ -81,6 +81,28 @@ class LegalConsentViewModelTest {
         }
 
     @Test
+    fun `조회 403은 재시도 없이 로그아웃을 제공한다`() =
+        runTest {
+            val session = FakeSession()
+            val consents =
+                FakeConsents(
+                    ALL_REQUIRED,
+                    getResults = mutableListOf(DomainResult.Failure(DomainError.AccountSuspended)),
+                )
+            val viewModel = LegalConsentViewModel(consents, session)
+            advanceUntilIdle()
+            assertEquals(LegalConsentPhase.FORBIDDEN, viewModel.uiState.value.phase)
+            assertTrue(viewModel.uiState.value.isSheetVisible)
+            assertFalse(viewModel.uiState.value.isSatisfied)
+            viewModel.onIntent(LegalConsentIntent.Retry)
+            advanceUntilIdle()
+            assertEquals(1, consents.getCount)
+            viewModel.onIntent(LegalConsentIntent.Abandon)
+            advanceUntilIdle()
+            assertTrue(viewModel.uiState.value.isLoggingOut)
+        }
+
+    @Test
     fun `전체 동의는 선택 항목까지 켜고 필수만 모두 켜면 제출할 수 있다`() =
         runTest {
             val viewModel = LegalConsentViewModel(FakeConsents(ALL_REQUIRED), FakeSession())

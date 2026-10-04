@@ -42,13 +42,13 @@ import app.manyak.designsystem.R as DesignsystemR
 import app.manyak.legal.R as LegalR
 
 /**
- * 로그인 직후 필수 동의를 받는 시트. 회원 그래프 위에 얹는다.
+ * 소셜 인증 후 필수 동의를 받는 시트. 동의를 마칠 때까지 로그인 화면 위에 얹는다.
  *
  * 닫을 수 없다 — 끌어내리기·스크림 탭은 막고, 뒤로가기만 "동의하지 않음" 으로 보고 로그아웃한다.
  * 전문은 시트 위에 전체 화면 창으로 연다. 모달 시트는 아래 화면을 덮으므로 백스택에 문서를 쌓으면 보이지 않는다.
  * 선택 항목(광고 알림)은 OS 권한과 별개의 법적 동의라 권한을 거부했어도 싣는다.
  *
- * @param enabled 앞선 안내(알림 권한 응답)가 끝났는가. 참이 되기 전에는 판정은 하되 시트를 그리지 않는다.
+ * @param enabled 시트를 표시할 호스트인가. 판정과 상태의 수명은 ViewModel이 소유한다.
  */
 @Composable
 fun LegalConsentSheet(
@@ -101,7 +101,22 @@ private fun LegalConsentContent(
                 }
             }
 
-            else -> LoadFailedContent(onRetry = { onIntent(LegalConsentIntent.Retry) })
+            else ->
+                LoadFailedContent(
+                    forbidden = state.phase == LegalConsentPhase.FORBIDDEN,
+                    enabled = !state.isLocked,
+                    onRetry = {
+                        onIntent(
+                            if (state.phase ==
+                                LegalConsentPhase.FORBIDDEN
+                            ) {
+                                LegalConsentIntent.Abandon
+                            } else {
+                                LegalConsentIntent.Retry
+                            },
+                        )
+                    },
+                )
         }
     }
 }
@@ -254,17 +269,29 @@ private fun SubmitButton(
 
 @Composable
 private fun LoadFailedContent(
+    forbidden: Boolean,
+    enabled: Boolean,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact)) {
         Text(
-            text = stringResource(LegalR.string.consent_load_failed_title),
+            text =
+                stringResource(
+                    if (forbidden) LegalR.string.consent_forbidden_title else LegalR.string.consent_load_failed_title,
+                ),
             style = ManyakTheme.typography.titleLarge,
             color = ManyakTheme.colors.text,
         )
         Text(
-            text = stringResource(LegalR.string.consent_load_failed_description),
+            text =
+                stringResource(
+                    if (forbidden) {
+                        LegalR.string.consent_forbidden_description
+                    } else {
+                        LegalR.string.consent_load_failed_description
+                    },
+                ),
             style = ManyakTheme.typography.bodyLarge,
             color = ManyakTheme.colors.textSubtle,
         )
@@ -272,6 +299,7 @@ private fun LoadFailedContent(
     Button(
         modifier = Modifier.fillMaxWidth().heightIn(min = ManyakTheme.sizes.control),
         onClick = onRetry,
+        enabled = enabled,
         shape = ManyakTheme.shapes.control,
         colors =
             ButtonDefaults.buttonColors(
@@ -279,7 +307,10 @@ private fun LoadFailedContent(
                 contentColor = ManyakTheme.colors.textInverse,
             ),
     ) {
-        Text(text = stringResource(DesignsystemR.string.common_retry), style = ManyakTheme.typography.labelLarge)
+        Text(
+            text = stringResource(if (forbidden) LegalR.string.consent_logout else DesignsystemR.string.common_retry),
+            style = ManyakTheme.typography.labelLarge,
+        )
     }
 }
 

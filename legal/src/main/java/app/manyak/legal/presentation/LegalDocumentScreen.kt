@@ -1,12 +1,15 @@
 package app.manyak.legal.presentation
 
 import android.annotation.SuppressLint
+import android.content.ActivityNotFoundException
+import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -44,7 +47,7 @@ import app.manyak.legal.R as LegalR
 /**
  * 약관·개인정보처리방침·서비스 안내를 웹 페이지 그대로 보여 준다. 앱바의 뒤로가기와 시스템 뒤로가기는 같은 [onBack] 이다.
  *
- * 같은 호스트 밖으로는 이동하지 않는다 — 문서 화면에서 임의의 목적지로 새는 경로를 만들지 않는다
+ * 문서 경로만 WebView에서 열고 외부 웹 링크는 브라우저로 전달한다.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -181,11 +184,35 @@ private fun LegalWebView(
                             if (request?.isForMainFrame == true) onPageFailed()
                         }
 
-                        // 우리 도메인 밖으로는 이동하지 않는다. 문서 화면이 임의의 목적지로 새면 안 된다.
+                        // 클라이언트 라우팅 링크 제거는 웹이 맡고, 여기서는 새 페이지 로드를 제한한다.
                         override fun shouldOverrideUrlLoading(
                             view: WebView?,
                             request: WebResourceRequest?,
-                        ): Boolean = request?.url?.host != allowedHost
+                        ): Boolean {
+                            if (request == null || !request.isForMainFrame) return true
+                            return when (legalNavigation(request.url.toString(), allowedHost)) {
+                                LegalNavigation.DOCUMENT -> false
+                                LegalNavigation.BLOCKED -> true
+                                LegalNavigation.EXTERNAL -> {
+                                    try {
+                                        context.startActivity(
+                                            Intent(
+                                                Intent.ACTION_VIEW,
+                                                request.url,
+                                            ).addCategory(Intent.CATEGORY_BROWSABLE),
+                                        )
+                                    } catch (_: ActivityNotFoundException) {
+                                        Toast
+                                            .makeText(
+                                                context,
+                                                LegalR.string.legal_external_open_failed,
+                                                Toast.LENGTH_SHORT,
+                                            ).show()
+                                    }
+                                    true
+                                }
+                            }
+                        }
                     }
             }
         },

@@ -5,4 +5,5 @@
     <string name="main_tab_my">마이</string>
     <string name="main_tab_studio">제작</string>
     <string name="session_cleanup_failed">이전 로그인 정보를 정리하지 못했어요. 다시 시도해주세요</string>
+    <string name="member_consent_checking">약관 동의 상태를 확인하고 있어요</string>
 </resources>
