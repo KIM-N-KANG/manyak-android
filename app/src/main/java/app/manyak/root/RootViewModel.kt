@@ -45,6 +45,12 @@ class RootViewModel
     ) : ViewModel() {
         val sessionState: StateFlow<SessionState> = sessionRepository.sessionState
 
+        // Activity 재생성에서는 유지하고 프로세스 재시작에서는 다시 시작 경로로 판정한다.
+        internal val entryState: StateFlow<AppEntryState> =
+            sessionState
+                .appEntryStates()
+                .stateIn(viewModelScope, SharingStarted.Eagerly, AppEntryState(sessionState.value))
+
         val isConsentSatisfied: StateFlow<Boolean> = memberConsent.isSatisfied
 
         /** 저장된 테마. 저장소를 읽기 전 첫 프레임은 시스템 설정으로 그린다. */

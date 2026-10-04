@@ -63,7 +63,7 @@ import app.manyak.designsystem.component.ManyakProgressIndicator
 import app.manyak.designsystem.component.clearFocusOnTap
 import app.manyak.designsystem.component.rememberDelayedProgressVisibility
 import app.manyak.designsystem.theme.ManyakTheme
-import app.manyak.legal.consent.presentation.LegalConsentIntent
+import app.manyak.legal.consent.presentation.LegalConsentPhase
 import app.manyak.legal.consent.presentation.LegalConsentSheet
 import app.manyak.legal.consent.presentation.LegalConsentViewModel
 import app.manyak.legal.presentation.LegalDocumentScreen
@@ -92,7 +92,8 @@ fun ManyakApp(
     viewModel: RootViewModel = hiltViewModel(),
     consentViewModel: LegalConsentViewModel = hiltViewModel(),
 ) {
-    val sessionState by viewModel.sessionState.collectAsStateWithLifecycle()
+    val entryState by viewModel.entryState.collectAsStateWithLifecycle()
+    val sessionState = entryState.session
     val consentConfirmed by viewModel.isConsentSatisfied.collectAsStateWithLifecycle()
     val consentState by consentViewModel.uiState.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
@@ -117,15 +118,26 @@ fun ManyakApp(
             SystemBarIconAppearance(darkTheme = darkTheme)
             Surface(modifier = modifier.fillMaxSize().clearFocusOnTap(), color = ManyakTheme.colors.surface) {
                 when (val state = sessionState) {
-                    SessionState.Undetermined -> if (showSessionProgress) SessionProgress()
+                    SessionState.Undetermined ->
+                        if (entryState.isStartup) {
+                            StartupScreen(showProgress = showSessionProgress)
+                        } else if (showSessionProgress) {
+                            SessionProgress()
+                        }
                     is SessionState.SignedOut -> AuthNavDisplay()
                     SessionState.Member -> {
                         MemberConsentGate(
                             state = consentState,
+                            isStartup = entryState.isStartup,
                             consentConfirmed = consentConfirmed,
-                            onAbandon = { consentViewModel.onIntent(LegalConsentIntent.Abandon) },
+                            onIntent = consentViewModel::onIntent,
                             loginContent = { AuthNavDisplay() },
-                            consentContent = { LegalConsentSheet(enabled = true, viewModel = consentViewModel) },
+                            consentContent = {
+                                LegalConsentSheet(
+                                    enabled = !entryState.isStartup || consentState.phase == LegalConsentPhase.REQUIRED,
+                                    viewModel = consentViewModel,
+                                )
+                            },
                         ) {
                             MainNavDisplay(
                                 entryDestination = entryDestination,
