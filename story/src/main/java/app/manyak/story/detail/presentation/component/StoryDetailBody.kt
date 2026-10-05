@@ -38,12 +38,13 @@ import app.manyak.story.entity.StoryStartSetting
 import app.manyak.story.R as StoryR
 
 /**
- * 상세 본문. 순서는 히어로 → 제목 → 한 줄 소개 → 장르 → 본 엔딩 → 주요 내용 → 주변 인물 →
- * 시작 상황 → 제작자·생성일이다.
+ * 상세 본문. 순서는 히어로 → 제목 → 한 줄 소개 → 장르 → 본 엔딩 → 주요 내용 → 시작 상황 →
+ * 주변 인물 → 제작자·생성일이다.
  *
  * 값이 없는 항목은 자리를 비우지 않고 아예 그리지 않는다 — 이유 없는 공백이 생기지 않게 한다.
  *
  * 표지만 화면 폭을 꽉 채우므로 좌우 여백은 목록이 한 번에 두지 않고 항목마다 각자 건다.
+ * 위 간격도 항목이 건다 — 구획 사이(32dp)와 메타 블록 위(16dp)가 달라 목록의 일정 간격으로는 맞지 않는다.
  */
 @Suppress("LongParameterList")
 internal fun LazyListScope.storyDetailBody(
@@ -66,7 +67,10 @@ internal fun LazyListScope.storyDetailBody(
         item(key = DESCRIPTION_KEY) {
             LabeledSection(
                 labelRes = StoryR.string.story_detail_description,
-                modifier = Modifier.padding(horizontal = ManyakTheme.spacing.gutter),
+                modifier =
+                    Modifier
+                        .padding(horizontal = ManyakTheme.spacing.gutter)
+                        .padding(top = ManyakTheme.spacing.block),
             ) {
                 Text(
                     text = description,
@@ -76,21 +80,14 @@ internal fun LazyListScope.storyDetailBody(
             }
         }
     }
-    if (story.characters.isNotEmpty()) {
-        item(key = CHARACTERS_KEY) {
-            LabeledSection(
-                labelRes = StoryR.string.story_detail_characters,
-                modifier = Modifier.padding(horizontal = ManyakTheme.spacing.gutter),
-            ) {
-                CharacterSection(characters = story.characters, onImageClick = onCharacterImageClick)
-            }
-        }
-    }
     if (selectedStartSetting != null) {
         item(key = START_SETTING_KEY) {
             LabeledSection(
                 labelRes = StoryR.string.story_detail_start_settings,
-                modifier = Modifier.padding(horizontal = ManyakTheme.spacing.gutter),
+                modifier =
+                    Modifier
+                        .padding(horizontal = ManyakTheme.spacing.gutter)
+                        .padding(top = ManyakTheme.spacing.block),
             ) {
                 StartSettingSection(
                     startSettings = story.startSettings,
@@ -102,12 +99,20 @@ internal fun LazyListScope.storyDetailBody(
             }
         }
     }
-    val visibility = story.visibility.takeIf { story.isOwner }
-    if (story.authorNickname != null || story.createdDate != null || visibility != null) {
-        item(key = META_KEY) {
-            MetaBlock(authorNickname = story.authorNickname, date = story.createdDate, visibility = visibility)
+    if (story.characters.isNotEmpty()) {
+        item(key = CHARACTERS_KEY) {
+            LabeledSection(
+                labelRes = StoryR.string.story_detail_characters,
+                modifier =
+                    Modifier
+                        .padding(horizontal = ManyakTheme.spacing.gutter)
+                        .padding(top = ManyakTheme.spacing.block),
+            ) {
+                CharacterSection(characters = story.characters, onImageClick = onCharacterImageClick)
+            }
         }
     }
+    metaItems(story)
 }
 
 /**
@@ -242,7 +247,15 @@ private fun StartSettingSection(
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.section),
     ) {
         if (startSettings.isNotEmpty()) {
-            SubLabeledBlock(label = stringResource(StoryR.string.story_detail_start_setting_name)) {
+            SubLabeledBlock(
+                label = stringResource(StoryR.string.story_detail_start_setting_name),
+                labelTrailing = {
+                    ManyakInfoTooltipButton(
+                        text = stringResource(StoryR.string.story_detail_start_setting_name_info_tooltip),
+                        contentDescription = stringResource(StoryR.string.story_detail_start_setting_name_info),
+                    )
+                },
+            ) {
                 StartSettingSelect(
                     startSettings = startSettings,
                     selectedId = selectedId,
