@@ -130,7 +130,7 @@ private fun CropSheetActions(
     onSave: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    Column {
+    Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact)) {
         FunnelPrimaryButton(
             label = stringResource(CreateR.string.general_image_crop_apply),
             enabled = ready,
