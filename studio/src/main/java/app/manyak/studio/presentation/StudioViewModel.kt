@@ -22,6 +22,8 @@ import app.manyak.report.presentation.StoryReportController
 import app.manyak.report.presentation.StoryReportUiState
 import app.manyak.report.presentation.reduceReport
 import app.manyak.studio.domain.StudioRepository
+import app.manyak.studio.entity.StorySubmission
+import app.manyak.studio.entity.SubmissionStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -29,10 +31,16 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 
 /** 옵션·삭제 확인의 대상이 되는 카드. 완성 중 요청은 옵션이 없어 여기 오지 않는다. */
 sealed interface StudioCard {
+    data class Submission(
+        val submission: StorySubmission,
+    ) : StudioCard
+
     data class Story(
         val story: StorySummary,
     ) : StudioCard
@@ -51,6 +59,8 @@ sealed interface StudioCard {
 data class StudioUiState(
     val isLoading: Boolean = true,
     val stories: List<StorySummary> = emptyList(),
+    val submissions: List<StorySubmission> = emptyList(),
+    val hasPendingSubmissions: Boolean = false,
     val loadFailed: Boolean = false,
     /** 목록을 그린 채로 다시 읽는 중. 골격이 아니라 당김 표시자가 이 상태를 말한다. */
     val isRefreshing: Boolean = false,
@@ -68,9 +78,11 @@ data class StudioUiState(
     /** 신고 시트가 열려 있는 동안의 대상. 옵션 시트가 닫혀도 신고가 어느 스토리인지 남아야 한다. */
     val reportStoryId: String? = null,
 ) {
-    val showCreateFab: Boolean get() = hasLocalCards || (!isLoading && !loadFailed)
+    val showCreateFab: Boolean get() = hasProgressCards || (!isLoading && !loadFailed)
 
-    /** 서버 목록과 무관하게 화면에 올릴 로컬 카드가 있는지. 있으면 빈 목록·실패 화면 대신 목록을 그린다. */
+    /** 서버 스토리 목록이 비어도 초안, 제출본, 완성 요청은 목록에 유지한다. */
+    val hasProgressCards: Boolean get() = hasLocalCards || submissions.isNotEmpty()
+
     val hasLocalCards: Boolean get() = drafts.isNotEmpty() || completionRequests.isNotEmpty()
 }
 
@@ -118,6 +130,17 @@ sealed interface StudioIntent {
 }
 
 sealed interface StudioEvent {
+    data class SubmissionsLoaded(
+        val submissions: List<StorySubmission>,
+    ) : StudioEvent
+
+    data object SubmissionsLoadFailed : StudioEvent
+
+    data class SubmissionDeleted(
+        val submissionId: String,
+        val hasPendingSubmissions: Boolean,
+    ) : StudioEvent
+
     data object LoadStarted : StudioEvent
 
     data object RefreshStarted : StudioEvent
@@ -169,6 +192,10 @@ sealed interface StudioEvent {
 }
 
 sealed interface StudioEffect {
+    data object ShowSubmissionCanceled : StudioEffect
+
+    data object ShowSubmissionCancelFailed : StudioEffect
+
     /** 새 생성으로 퍼널 진입 — 키워드 단계부터. */
     data object NavigateToCreate : StudioEffect
 
@@ -198,7 +225,7 @@ sealed interface StudioEffect {
  * 시점에 완성 요청의 서버 상태도 조회해, 완료된 요청은 목록에 실린 실제 스토리 카드로 바뀐다.
  *
  * 목록을 보는 중에도 서버와 맞출 수 있게 당겨서 새로고침을 둔다. 화면 복귀 갱신과 달리 사용자가
- * 명시적으로 요청한 것이라 실패를 조용히 넘기지 않고 토스트로 알린다. 주기적 재조회는 두지 않는다.
+ * 명시적으로 요청한 것이라 실패를 조용히 넘기지 않고 토스트로 알린다. 검토 중인 제출본과 완성 요청은 화면이 보이는 동안만 주기적으로 조회한다.
  */
 @Suppress("TooManyFunctions")
 @HiltViewModel
@@ -213,6 +240,10 @@ class StudioViewModel
         private var loadJob: Job? = null
         private var deleteJob: Job? = null
         private var requestRefreshJob: Job? = null
+        private var submissionRefreshJob: Job? = null
+        private val submissionMutex = Mutex()
+        private var knownSubmissions: List<StorySubmission> = emptyList()
+        private var reloadStoriesAfterCurrent = false
 
         /** 초안 카드별로 보여 준 레코드 단계. 같은 레코드가 다시 흘러와도 노출을 두 번 세지 않는다. */
         private val shownDraftStages = mutableMapOf<String, PendingCreationStage>()
@@ -276,22 +307,59 @@ class StudioViewModel
                 }
         }
 
+        /** 폴링 호출자가 화면 수명을 소유하므로 화면을 떠나면 진행 중인 조회까지 취소된다. */
+        suspend fun drivePendingSubmissionPolling() {
+            uiState
+                .map { it.hasPendingSubmissions }
+                .distinctUntilChanged()
+                .collectLatest { hasPending ->
+                    while (hasPending) {
+                        delay(PENDING_POLL_INTERVAL_MS)
+                        refreshSubmissions()
+                    }
+                }
+        }
+
+        private fun requestSubmissionRefresh() {
+            submissionRefreshJob?.cancel()
+            submissionRefreshJob = viewModelScope.launch { refreshSubmissions() }
+        }
+
+        private suspend fun refreshSubmissions() {
+            submissionMutex.withLock {
+                when (val result = storyRepository.submissions()) {
+                    is DomainResult.Success -> {
+                        val ids = result.value.mapTo(mutableSetOf()) { it.id }
+                        val removed = knownSubmissions.any { it.id !in ids }
+                        knownSubmissions = result.value
+                        if (removed) load(LoadKind.Silent, ensureFresh = true)
+                        dispatchEvent(StudioEvent.SubmissionsLoaded(result.value))
+                    }
+
+                    is DomainResult.Failure -> dispatchEvent(StudioEvent.SubmissionsLoadFailed)
+                }
+            }
+        }
+
         override suspend fun handleIntent(intent: StudioIntent) {
             val state = uiState.value
             when (intent) {
                 // 이미 그릴 목록이 있으면 갱신이 보이지 않아야 한다 — 골격이 다시 깔리면 복귀가 재진입처럼 보인다.
                 StudioIntent.ScreenShown -> {
                     refreshRequests()
+                    requestSubmissionRefresh()
                     load(if (state.stories.isEmpty()) LoadKind.Blocking else LoadKind.Silent)
                 }
 
                 StudioIntent.Retry -> {
                     refreshRequests()
+                    requestSubmissionRefresh()
                     load(LoadKind.Blocking)
                 }
 
                 StudioIntent.Refresh -> {
                     refreshRequests()
+                    requestSubmissionRefresh()
                     load(LoadKind.Refresh)
                 }
 
@@ -336,6 +404,15 @@ class StudioViewModel
                 // 삭제하기는 시트를 닫고 확인을 묻는다 — 시트 위에 다이얼로그가 겹치지 않는다.
                 StudioIntent.RequestDelete ->
                     state.optionsTarget?.let { card ->
+                        (card as? StudioCard.Submission)?.submission?.let { submission ->
+                            analytics.track(
+                                AnalyticsEvent.SubmissionCardClicked(
+                                    submissionId = submission.id,
+                                    status = submission.status.name.lowercase(),
+                                    action = if (submission.status == SubmissionStatus.PENDING) "cancel" else "delete",
+                                ),
+                            )
+                        }
                         dispatchEvent(StudioEvent.OptionsTargetChanged(null))
                         dispatchEvent(StudioEvent.DeleteRequested(card))
                     }
@@ -370,13 +447,18 @@ class StudioViewModel
             report.handle(action, storyId, state.report)
         }
 
-        private fun load(kind: LoadKind) {
+        private fun load(
+            kind: LoadKind,
+            ensureFresh: Boolean = false,
+        ) {
             // 명시적 요청인 새로고침은 진행 중인 조회를 기다리지 않고 취소한 뒤 시작한다.
             if (kind == LoadKind.Refresh) {
                 loadJob?.cancel()
             } else if (loadJob?.isActive == true) {
+                if (ensureFresh) reloadStoriesAfterCurrent = true
                 return
             }
+            reloadStoriesAfterCurrent = false
             loadJob =
                 viewModelScope.launch {
                     when (kind) {
@@ -392,6 +474,8 @@ class StudioViewModel
 
                         is DomainResult.Failure -> reportLoadFailure(kind)
                     }
+                    loadJob = null
+                    if (reloadStoriesAfterCurrent) load(LoadKind.Silent)
                 }
         }
 
@@ -461,6 +545,8 @@ class StudioViewModel
                     when (target) {
                         is StudioCard.Story -> deleteStory(target.story)
 
+                        is StudioCard.Submission -> deleteSubmission(target.submission)
+
                         // 로컬 초안·요청은 서버 삭제 API 를 부르지 않는다. 실패하면 카드와 입력이 그대로 남는다.
                         is StudioCard.Draft -> finishLocalDelete(creationProgress.discard(target.draftId))
 
@@ -468,6 +554,39 @@ class StudioViewModel
                             finishLocalDelete(creationProgress.deleteCompletionRequest(target.requestId))
                     }
                 }
+        }
+
+        private suspend fun deleteSubmission(submission: StorySubmission) {
+            submissionMutex.withLock {
+                when (storyRepository.deleteSubmission(submission.id)) {
+                    is DomainResult.Success -> {
+                        knownSubmissions = knownSubmissions.filterNot { it.id == submission.id }
+                        dispatchEvent(
+                            StudioEvent.SubmissionDeleted(
+                                submissionId = submission.id,
+                                hasPendingSubmissions = knownSubmissions.any { it.status == SubmissionStatus.PENDING },
+                            ),
+                        )
+                        if (submission.status == SubmissionStatus.PENDING) {
+                            dispatchEffect(StudioEffect.ShowSubmissionCanceled)
+                        }
+                        load(LoadKind.Silent, ensureFresh = true)
+                    }
+
+                    is DomainResult.Failure -> {
+                        dispatchEvent(StudioEvent.DeleteFailed)
+                        dispatchEffect(
+                            if (submission.status == SubmissionStatus.PENDING) {
+                                StudioEffect.ShowSubmissionCancelFailed
+                            } else {
+                                StudioEffect.ShowStoryDeleteFailed
+                            },
+                        )
+                    }
+                }
+            }
+            // 확인 중 승인되면 DELETE가 409다. 성공 여부와 무관하게 서버 결과로 카드를 맞춘다.
+            requestSubmissionRefresh()
         }
 
         private suspend fun deleteStory(story: StorySummary) {
@@ -499,6 +618,21 @@ class StudioViewModel
             event: StudioEvent,
         ): StudioUiState =
             when (event) {
+                is StudioEvent.SubmissionsLoaded -> state.withSubmissions(event.submissions)
+
+                StudioEvent.SubmissionsLoadFailed ->
+                    state.copy(
+                        submissions = emptyList(),
+                        optionsTarget =
+                            state.optionsTarget.takeUnless { it is StudioCard.Submission },
+                    )
+
+                is StudioEvent.SubmissionDeleted ->
+                    state
+                        .copy(isDeleting = false, deleteTarget = null)
+                        .withSubmissions(state.submissions.filterNot { it.id == event.submissionId })
+                        .copy(hasPendingSubmissions = event.hasPendingSubmissions)
+
                 StudioEvent.LoadStarted -> state.copy(isLoading = true, loadFailed = false, isRefreshing = false)
 
                 StudioEvent.RefreshStarted -> state.copy(isRefreshing = true)
@@ -543,6 +677,21 @@ class StudioViewModel
                 is StudioEvent.CompletionRequestsChanged -> state.copy(completionRequests = event.requests)
             }
     }
+
+private fun StudioUiState.withSubmissions(items: List<StorySubmission>): StudioUiState {
+    fun StudioCard?.updated(): StudioCard? =
+        if (this is StudioCard.Submission) {
+            items.firstOrNull { it.id == submission.id }?.let(StudioCard::Submission)
+        } else {
+            this
+        }
+    return copy(
+        submissions = items,
+        hasPendingSubmissions = items.any { it.status == SubmissionStatus.PENDING },
+        optionsTarget = optionsTarget.updated(),
+        deleteTarget = if (isDeleting) deleteTarget else deleteTarget.updated(),
+    )
+}
 
 /** 카드 옵션 시트에서 갈라지는 상태 전이 — 신고와 삭제. 순수 함수라 [MviViewModel.reduce] 와 같은 규칙을 따른다. */
 private fun reduceCardEvent(

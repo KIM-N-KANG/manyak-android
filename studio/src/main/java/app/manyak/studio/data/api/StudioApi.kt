@@ -1,12 +1,21 @@
 package app.manyak.studio.data.api
 
 import app.manyak.common.data.story.StorySummaryDto
+import app.manyak.studio.data.dto.StorySubmissionDto
 import retrofit2.Response
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Path
 
 interface StudioApi {
+    @GET("stories/submissions")
+    suspend fun submissions(): Response<List<StorySubmissionDto>>
+
+    @DELETE("stories/submissions/{submissionId}")
+    suspend fun deleteSubmission(
+        @Path("submissionId") submissionId: String,
+    ): Response<Unit>
+
     /** 내가 만든 스토리 목록. limit 을 생략해 서버 기본 상한(100건)을 그대로 쓴다. */
     @GET("users/me/stories")
     suspend fun myStories(): Response<List<StorySummaryDto>>

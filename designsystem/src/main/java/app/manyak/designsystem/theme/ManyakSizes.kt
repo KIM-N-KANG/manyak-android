@@ -44,6 +44,8 @@ data class ManyakSizes(
     val tourCardWidth: Dp,
     /** 6dp — 채팅 안내 투어 카드의 스텝 점 지름 */
     val tourStepDot: Dp,
+    /** 128dp 제작 탭의 스토리, 초안, 검수 제출본 표지 폭 */
+    val studioCoverWidth: Dp,
 )
 
 internal val ManyakDefaultSizes =
@@ -64,4 +66,5 @@ internal val ManyakDefaultSizes =
         generationDotDisplacement = 9.dp,
         tourCardWidth = 288.dp,
         tourStepDot = 6.dp,
+        studioCoverWidth = 128.dp,
     )

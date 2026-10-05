@@ -8,6 +8,7 @@ import app.manyak.designsystem.component.ManyakOptionsSheet
 import app.manyak.designsystem.component.ManyakOptionsSheetHeader
 import app.manyak.report.presentation.StoryReportAction
 import app.manyak.report.presentation.component.StoryReportSheet
+import app.manyak.studio.entity.SubmissionStatus
 import app.manyak.studio.presentation.StudioCard
 import app.manyak.studio.presentation.StudioIntent
 import app.manyak.studio.presentation.StudioUiState
@@ -27,29 +28,43 @@ internal fun StudioDialogs(
     state.deleteTarget?.let { target ->
         // 로컬 초안·요청은 서버 스토리가 아니라 잃는 것이 다르므로 문구를 나눈다.
         val isStory = target is StudioCard.Story
+        val isSubmission = target is StudioCard.Submission
+        val isCancel = target.isPendingSubmission
         ManyakDestructiveDialog(
             title =
                 stringResource(
-                    if (isStory) {
-                        CommonR.string.studio_delete_dialog_title
-                    } else {
-                        StudioR.string.studio_progress_delete_dialog_title
+                    when {
+                        isCancel -> StudioR.string.studio_submission_cancel_title
+                        isSubmission -> StudioR.string.studio_submission_delete_title
+                        isStory -> CommonR.string.studio_delete_dialog_title
+                        else -> StudioR.string.studio_progress_delete_dialog_title
                     },
                 ),
             description =
                 stringResource(
-                    if (isStory) {
-                        CommonR.string.studio_delete_dialog_description
-                    } else {
-                        StudioR.string.studio_progress_delete_dialog_description
+                    when {
+                        isCancel -> StudioR.string.studio_submission_cancel_description
+                        isSubmission -> StudioR.string.studio_submission_delete_description
+                        isStory -> CommonR.string.studio_delete_dialog_description
+                        else -> StudioR.string.studio_progress_delete_dialog_description
                     },
                 ),
-            confirmLabel = stringResource(CommonR.string.studio_story_delete),
+            confirmLabel =
+                stringResource(
+                    if (isCancel) StudioR.string.studio_submission_cancel else CommonR.string.studio_story_delete,
+                ),
             cancelLabel = stringResource(CommonR.string.studio_delete_dialog_cancel),
             onConfirm = { onIntent(StudioIntent.ConfirmDelete) },
             onDismiss = { onIntent(StudioIntent.DismissDeleteDialog) },
             inProgress = state.isDeleting,
-            inProgressLabel = stringResource(DesignsystemR.string.delete_in_progress),
+            inProgressLabel =
+                stringResource(
+                    if (isCancel) {
+                        StudioR.string.studio_submission_cancel_in_progress
+                    } else {
+                        DesignsystemR.string.delete_in_progress
+                    },
+                ),
         )
     }
 
@@ -73,15 +88,19 @@ private fun CardOptionsSheet(
             ManyakOptionsSheetHeader(
                 kind =
                     stringResource(
-                        if (card is StudioCard.Story) {
-                            StudioR.string.studio_card_kind_story
-                        } else {
-                            StudioR.string.studio_card_kind_progress
+                        when (card) {
+                            is StudioCard.Story -> StudioR.string.studio_card_kind_story
+                            is StudioCard.Submission -> StudioR.string.studio_submission_fallback_title
+                            else -> StudioR.string.studio_card_kind_progress
                         },
                     ),
                 title =
                     when (card) {
                         is StudioCard.Story -> card.story.title
+                        is StudioCard.Submission ->
+                            card.submission.title.ifBlank {
+                                stringResource(StudioR.string.studio_submission_fallback_title)
+                            }
                         is StudioCard.Draft -> stringResource(StudioR.string.studio_progress_draft_title)
                         is StudioCard.FailedRequest -> stringResource(StudioR.string.studio_progress_failed_title)
                     },
@@ -97,9 +116,19 @@ private fun CardOptionsSheet(
         }
         ManyakOptionItem(
             iconRes = DesignsystemR.drawable.ic_delete,
-            label = stringResource(CommonR.string.studio_story_delete),
+            label =
+                stringResource(
+                    if (card.isPendingSubmission) {
+                        StudioR.string.studio_submission_cancel
+                    } else {
+                        CommonR.string.studio_story_delete
+                    },
+                ),
             onClick = { onIntent(StudioIntent.RequestDelete) },
             isDestructive = true,
         )
     }
 }
+
+private val StudioCard.isPendingSubmission: Boolean
+    get() = this is StudioCard.Submission && submission.status == SubmissionStatus.PENDING
