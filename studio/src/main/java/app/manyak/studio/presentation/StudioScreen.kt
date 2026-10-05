@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
@@ -24,7 +23,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
@@ -46,11 +44,10 @@ import app.manyak.designsystem.component.rememberDelayedProgressVisibility
 import app.manyak.designsystem.component.withRowListMargins
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.studio.presentation.component.CreateStoryFab
-import app.manyak.studio.presentation.component.CreationProgressCard
-import app.manyak.studio.presentation.component.CreationProgressCardKind
 import app.manyak.studio.presentation.component.MyStoriesSkeleton
 import app.manyak.studio.presentation.component.MyStoryCard
 import app.manyak.studio.presentation.component.StudioDialogs
+import kotlinx.coroutines.launch
 import app.manyak.common.R as CommonR
 import app.manyak.report.R as ReportR
 import app.manyak.studio.R as StudioR
@@ -61,8 +58,8 @@ import app.manyak.studio.R as StudioR
  * [contentPadding] 은 셸의 chrome 이 차지한 만큼이므로 목록에는 `Modifier.padding` 이 아니라
  * 목록의 `contentPadding` 으로 넘긴다 — 그래야 콘텐츠가 헤더 아래로 흘러 들어간다.
  *
- * 제작 퍼널 진입 FAB 과 초안·완성 요청 카드는 셸이 아니라 이 화면이 소유한다. 초안이 있으면
- * 목록 맨 위에 초안 카드를 두고, FAB 등 카드가 아닌 경로의 진입은 새로 만들기 다이얼로그로 묻는다.
+ * 제작 퍼널 진입 FAB 과 초안·완성 요청 카드는 셸이 아니라 이 화면이 소유한다. 초안은 여러 개를 둘 수
+ * 있어 FAB 은 늘 새 초안으로 들어가고, 이어 만들기는 목록 맨 위의 초안 카드가 맡는다.
  *
  * 목록 조회는 화면이 보일 때 시작한다. 퍼널·채팅방은 이 화면 위가 아니라 셸 위에 쌓여 돌아와도
  * ViewModel 이 그대로 살아 있으므로, 조회 시점을 화면 수명에 맞춰야 떠난 사이의 변화가 반영된다.
@@ -72,12 +69,17 @@ fun StudioScreen(
     contentPadding: PaddingValues,
     onOpenStory: (String) -> Unit,
     onCreateStory: () -> Unit,
-    onResumeCreation: (CreationResumePoint) -> Unit,
+    onResumeCreation: (draftId: String, CreationResumePoint) -> Unit,
     modifier: Modifier = Modifier,
+    refreshRequest: Int = 0,
+    onEditStory: (String) -> Unit = {},
+    onEditSubmission: (String) -> Unit = {},
     viewModel: StudioViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val currentOnCreateStory by rememberUpdatedState(onCreateStory)
+    val currentOnEditStory by rememberUpdatedState(onEditStory)
+    val currentOnEditSubmission by rememberUpdatedState(onEditSubmission)
     val currentOnResumeCreation by rememberUpdatedState(onResumeCreation)
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
@@ -87,7 +89,20 @@ fun StudioScreen(
             viewModel.uiEffect.collect { effect ->
                 when (effect) {
                     StudioEffect.NavigateToCreate -> currentOnCreateStory()
-                    is StudioEffect.NavigateToResume -> currentOnResumeCreation(effect.resumePoint)
+                    is StudioEffect.NavigateToEdit -> currentOnEditStory(effect.storyId)
+                    is StudioEffect.NavigateToSubmission -> currentOnEditSubmission(effect.submissionId)
+                    is StudioEffect.NavigateToResume -> currentOnResumeCreation(effect.draftId, effect.resumePoint)
+
+                    StudioEffect.ShowSubmissionCanceled ->
+                        Toast.makeText(context, StudioR.string.studio_submission_canceled, Toast.LENGTH_SHORT).show()
+
+                    StudioEffect.ShowSubmissionCancelFailed ->
+                        Toast
+                            .makeText(
+                                context,
+                                StudioR.string.studio_submission_cancel_failed,
+                                Toast.LENGTH_SHORT,
+                            ).show()
 
                     StudioEffect.ShowStoryDeleted ->
                         Toast.makeText(context, CommonR.string.studio_story_deleted, Toast.LENGTH_SHORT).show()
@@ -109,14 +124,13 @@ fun StudioScreen(
     }
 
     // 완성 중 카드가 있는 동안만 요청 상태를 주기 조회한다. STARTED 동안만 돌아 탭을 벗어나면 멈춘다.
-    LaunchedEffect(viewModel, lifecycleOwner) {
+    LaunchedEffect(viewModel, lifecycleOwner, refreshRequest) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            viewModel.drivePendingCompletionPolling()
+            viewModel.onIntent(StudioIntent.ScreenShown)
+            launch { viewModel.drivePendingCompletionPolling() }
+            launch { viewModel.drivePendingSubmissionPolling() }
         }
     }
-
-    // 화면을 떠난 사이 늘어난 목록을 반영한다 — 스토리를 완성하고 채팅으로 넘어갔다 돌아온 자리가 대표적이다.
-    LifecycleEventEffect(Lifecycle.Event.ON_START) { viewModel.onIntent(StudioIntent.ScreenShown) }
 
     StudioContent(
         state = state,
@@ -144,7 +158,7 @@ private fun StudioContent(
         when {
             // 로컬 카드가 하나라도 있으면 서버 목록이 없거나 실패해도 목록으로 그린다 — 그래야 스크롤과
             // 당겨서 새로고침이 살아 완성을 확인할 수 있다.
-            state.hasLocalCards ->
+            state.hasProgressCards ->
                 MyStories(
                     state = state,
                     listState = listState,
@@ -185,19 +199,21 @@ private fun StudioContent(
                 )
         }
 
-        CreateStoryFab(
-            expanded = !listState.canScrollBackward,
-            onClick = {
-                // 앱은 빈 목록에도 FAB 하나만 두므로 출처는 늘 fab 이다.
-                analytics.track(AnalyticsEvent.StoryListCreateButtonClicked(CreateButtonSource.FAB))
-                onIntent(StudioIntent.CreateStory)
-            },
-            modifier =
-                Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(contentPadding)
-                    .padding(ManyakTheme.spacing.gutter),
-        )
+        if (state.showCreateFab) {
+            CreateStoryFab(
+                expanded = !listState.canScrollBackward,
+                onClick = {
+                    // 앱은 빈 목록에도 FAB 하나만 두므로 출처는 늘 fab 이다.
+                    analytics.track(AnalyticsEvent.StoryListCreateButtonClicked(CreateButtonSource.FAB))
+                    onIntent(StudioIntent.CreateStory)
+                },
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(contentPadding)
+                        .padding(ManyakTheme.spacing.gutter),
+            )
+        }
     }
 
     StudioDialogs(state = state, onIntent = onIntent)
@@ -216,7 +232,7 @@ private fun StoriesStatus(
 }
 
 /**
- * 초안 → 완성 요청(제출 최신순) → 완성된 스토리 순의 한 목록. 키는 종류별 접두사로 나눠 로컬 카드와
+ * 초안 → 검수 제출본 → 완성 요청 → 완성된 스토리 순의 한 목록. 초안과 완성 요청은 각각 처음 임시 저장 최신순이다. 키는 종류별 접두사로 나눠 로컬 카드와
  * 서버 스토리가 겹치지 않는다. 서버 목록 조회가 실패했으면 로컬 카드 아래에 재시도를 둔다.
  */
 @Composable
@@ -242,20 +258,7 @@ private fun MyStories(
             // 좌우 여백은 카드가 스스로 갖는다 — 채팅 목록과 같은 리듬이다.
             contentPadding = contentPadding.withRowListMargins(),
         ) {
-            state.draft?.let {
-                item(key = DRAFT_KEY) {
-                    CreationProgressCard(
-                        kind = CreationProgressCardKind.Draft,
-                        onPrimaryAction = { onIntent(StudioIntent.ResumeCreation) },
-                        onOptionsClick = { onIntent(StudioIntent.OpenCardOptions(StudioCard.Draft)) },
-                    )
-                }
-            }
-            items(state.completionRequests, key = { request ->
-                "$COMPLETION_KEY_PREFIX${request.requestId}"
-            }) { request ->
-                CompletionRequestRow(request = request, onOpenStory = onOpenStory, onIntent = onIntent)
-            }
+            progressCards(state, onOpenStory, onIntent)
             itemsIndexed(state.stories, key = { _, story -> "$STORY_KEY_PREFIX${story.id}" }) { index, story ->
                 MyStoryCard(
                     story = story,
@@ -288,33 +291,6 @@ private fun MyStories(
     }
 }
 
-/** 요청 상태별 카드. 완성 중에는 아무 동작도 없고, 완료·실패만 각각 상세 진입과 재시도·삭제를 연다. */
-@Composable
-private fun CompletionRequestRow(
-    request: CompletionRequestSummary,
-    onOpenStory: (String) -> Unit,
-    onIntent: (StudioIntent) -> Unit,
-) {
-    when (request.status) {
-        CompletionRequestStatus.PENDING -> CreationProgressCard(kind = CreationProgressCardKind.Completing)
-
-        CompletionRequestStatus.COMPLETED ->
-            CreationProgressCard(
-                kind = CreationProgressCardKind.Completed(request.storyTitle.orEmpty()),
-                onClick = request.storyId?.let { storyId -> { onOpenStory(storyId) } },
-            )
-
-        CompletionRequestStatus.FAILED ->
-            CreationProgressCard(
-                kind = CreationProgressCardKind.Failed,
-                onPrimaryAction = { onIntent(StudioIntent.RetryCompletion(request.requestId)) },
-                onOptionsClick = {
-                    onIntent(StudioIntent.OpenCardOptions(StudioCard.FailedRequest(request.requestId)))
-                },
-            )
-    }
-}
-
 /** 빈 목록은 안내 문구만 둔다 — 만들기 진입은 FAB 이 맡는다. */
 @Composable
 private fun EmptyStories(modifier: Modifier = Modifier) {
@@ -327,8 +303,6 @@ private fun EmptyStories(modifier: Modifier = Modifier) {
     }
 }
 
-private const val DRAFT_KEY = "draft"
-private const val COMPLETION_KEY_PREFIX = "completion:"
 private const val STORY_KEY_PREFIX = "story:"
 private const val LOAD_FAILED_KEY = "load-failed"
 
@@ -367,7 +341,20 @@ private fun StudioScreenProgressCardsPreview() {
                 StudioUiState(
                     isLoading = false,
                     stories = previewStories(),
-                    draft = CreationProgressSummary(CreationStage.STORY_DRAFT, CreationResumePoint.StorylineStep),
+                    drafts =
+                        listOf(
+                            CreationProgressSummary(
+                                draftId = "draft-1",
+                                stage = CreationStage.KEYWORD_DRAFT,
+                                resumePoint = CreationResumePoint.KeywordStep,
+                                createdAt = 1_790_139_900_000L,
+                            ),
+                            CreationProgressSummary(
+                                draftId = "draft-2",
+                                stage = CreationStage.STORY_DRAFT,
+                                resumePoint = CreationResumePoint.StorylineStep,
+                            ),
+                        ),
                     completionRequests =
                         listOf(
                             CompletionRequestSummary(
@@ -445,4 +432,5 @@ private fun previewStory(
         likeCount = likeCount,
         turnCount = turnCount,
         createdDate = createdDate,
+        isOriginal = false,
     )

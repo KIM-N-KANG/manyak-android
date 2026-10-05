@@ -16,7 +16,6 @@ import app.manyak.chat.room.presentation.composer.addBlock
 import app.manyak.chat.room.presentation.composer.chatTurnCost
 import app.manyak.chat.room.presentation.composer.removeBlock
 import app.manyak.chat.room.presentation.composer.updateBlock
-import app.manyak.chat.room.presentation.message.ChatMessageSegment
 import app.manyak.chat.room.presentation.message.appendCharacterImage
 import app.manyak.chat.room.presentation.message.appendText
 import app.manyak.chat.room.presentation.suggestion.ChatSuggestions
@@ -29,6 +28,7 @@ import app.manyak.chat.room.presentation.suggestion.composerOrigin
 import app.manyak.chat.room.presentation.suggestion.normalizeSuggestion
 import app.manyak.chat.room.presentation.suggestion.randomSuggestionPosition
 import app.manyak.chat.room.presentation.suggestion.shouldGenerateChoices
+import app.manyak.chat.room.presentation.tour.ChatTourStep
 import app.manyak.common.domain.credit.CreditPolicyRepository
 import app.manyak.common.domain.credit.TrialsRepository
 import app.manyak.common.domain.error.DomainError
@@ -36,6 +36,7 @@ import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.user.UserProfileRepository
 import app.manyak.common.presentation.mvi.MviViewModel
 import app.manyak.designsystem.component.isAllowedCharacterImageUrl
+import app.manyak.designsystem.text.PassageSegment
 import app.manyak.report.domain.ReportRepository
 import app.manyak.report.presentation.StoryReportAction
 import app.manyak.report.presentation.StoryReportChange
@@ -72,7 +73,7 @@ data class ChatRoomTurn(
 data class StreamingTurn(
     val userInput: String,
     val realtimeImage: Boolean,
-    val segments: List<ChatMessageSegment> = emptyList(),
+    val segments: List<PassageSegment> = emptyList(),
 )
 
 data class ChatRoomUiState(
@@ -84,7 +85,9 @@ data class ChatRoomUiState(
     val imageViewerUrl: String? = null,
     val composer: ChatComposerState = ChatComposerState(),
     val choicesEnabled: Boolean = true,
-    val realtimeImageEnabled: Boolean = true,
+    val realtimeImageEnabled: Boolean = false,
+    val settingsOpen: Boolean = false,
+    val realtimeImageNudgeOpen: Boolean = false,
     /** 턴이 0개인 방의 첫 입력 후보. */
     val suggestedInputs: List<String> = emptyList(),
     /** 선택지 생성의 진행 상태. 대상 턴이 마지막 턴일 때만 그린다. */
@@ -108,10 +111,14 @@ data class ChatRoomUiState(
     val isStartingNewChat: Boolean = false,
     /** 공유 링크를 발급하는 중. 메뉴 항목을 잠그고 시트 닫기를 막는다. */
     val isSharing: Boolean = false,
+    /** 첫 진입 안내 투어가 열려 있는지. */
+    val tourOpen: Boolean = false,
+    /** 투어가 보이고 있는 스텝의 자리. 열린 직후 화면이 첫 스텝을 고르기 전에는 null 이다. */
+    val tourStep: Int? = null,
 ) {
     /** 참조 스토리가 남아 있어야 신고·새 채팅을 둘 수 있다. */
     val hasStory: Boolean
-        get() = !storyId.isNullOrBlank()
+        get() = !storyId.isNullOrBlank() && storyTitle.isNotBlank()
 
     /** 컴포저와 메시지 목록이 함께 쓰는 추천 목록. */
     val suggestions: ChatSuggestions
@@ -130,6 +137,8 @@ sealed interface ChatRoomIntent {
     data class PlainTextChanged(
         val text: String,
     ) : ChatRoomIntent
+
+    data object SituationInserted : ChatRoomIntent
 
     data class BlockValueChanged(
         val id: Long,
@@ -155,6 +164,12 @@ sealed interface ChatRoomIntent {
     data class RealtimeImageEnabledChanged(
         val enabled: Boolean,
     ) : ChatRoomIntent
+
+    data object SettingsOpened : ChatRoomIntent
+
+    data object SettingsClosed : ChatRoomIntent
+
+    data object RealtimeImageNudgeDismissed : ChatRoomIntent
 
     data object Sent : ChatRoomIntent
 
@@ -194,6 +209,20 @@ sealed interface ChatRoomIntent {
 
     data class Report(
         val action: StoryReportAction,
+    ) : ChatRoomIntent
+
+    /** 안내 투어가 [index] 자리의 스텝을 보이기 시작했다. */
+    data class TourStepShown(
+        val index: Int,
+        val step: ChatTourStep,
+    ) : ChatRoomIntent
+
+    /** 마지막 스텝에서 완료를 눌렀다. 보일 스텝이 하나도 없던 경우도 여기로 닫는다. */
+    data object TourCompleted : ChatRoomIntent
+
+    /** 건너뛰기·뒤로가기로 [index] 자리에서 투어를 닫았다. */
+    data class TourSkipped(
+        val index: Int,
     ) : ChatRoomIntent
 }
 
@@ -297,6 +326,19 @@ sealed interface ChatRoomEvent {
     data class Report(
         val change: StoryReportChange,
     ) : ChatRoomEvent
+
+    data class SettingsChanged(
+        val open: Boolean,
+        val nudgeOpen: Boolean,
+    ) : ChatRoomEvent
+
+    data object TourOpened : ChatRoomEvent
+
+    data class TourStepChanged(
+        val index: Int,
+    ) : ChatRoomEvent
+
+    data object TourClosed : ChatRoomEvent
 }
 
 sealed interface ChatRoomEffect {
@@ -379,6 +421,9 @@ class ChatRoomViewModel
         private var deleteJob: Job? = null
         private var newChatJob: Job? = null
         private var shareJob: Job? = null
+        private var tourJob: Job? = null
+        private var realtimeImageNudgeJob: Job? = null
+        private var realtimeImageNudgePending = false
 
         /**
          * 의도 처리기가 읽는 정본.
@@ -391,8 +436,10 @@ class ChatRoomViewModel
         private var turns: List<ChatRoomTurn> = emptyList()
         private var suggestedInputs: List<String> = emptyList()
         private var choicesEnabled = true
-        private var realtimeImageEnabled = true
+        private var realtimeImageEnabled = false
         private var hintUnseen = false
+        private var tourUnseen = false
+        private var tourOpen = false
 
         /**
          * 응답을 받는 중인지. [streamJob] 은 확정 조회가 끝날 때까지 살아 있어 선택지 생성 조건과
@@ -422,6 +469,7 @@ class ChatRoomViewModel
                     choicesEnabled = preferences.choicesEnabled()
                     realtimeImageEnabled = preferences.realtimeImageEnabled()
                     hintUnseen = !preferences.isChoicesHintSeen()
+                    tourUnseen = !preferences.isChatTourSeen()
                     dispatchEvent(
                         ChatRoomEvent.PreferencesLoaded(
                             composer = composer,
@@ -443,6 +491,12 @@ class ChatRoomViewModel
             intent.analyticsEvent(chatId, composer)?.let(analytics::track)
             when (intent) {
                 ChatRoomIntent.Retry -> load()
+
+                ChatRoomIntent.SettingsOpened -> dispatchEvent(ChatRoomEvent.SettingsChanged(true, false))
+
+                ChatRoomIntent.SettingsClosed -> dispatchEvent(ChatRoomEvent.SettingsChanged(false, false))
+
+                ChatRoomIntent.RealtimeImageNudgeDismissed -> dispatchEvent(ChatRoomEvent.SettingsChanged(true, false))
 
                 is ChatRoomIntent.PlainTextChanged -> updateComposer(composer.copy(plainText = intent.text))
 
@@ -514,7 +568,11 @@ class ChatRoomViewModel
                 ChatRoomIntent.ShareRequested -> share()
 
                 is ChatRoomIntent.Report ->
-                    report.handle(intent.action, uiState.value.storyId, uiState.value.report)
+                    report.handle(
+                        intent.action,
+                        uiState.value.storyId.takeIf { uiState.value.hasStory },
+                        uiState.value.report,
+                    )
 
                 is ChatRoomIntent.RegenerateRequested -> {
                     // 화면이 본 마지막 턴과 지금 마지막 턴이 다르면 낡은 클릭이다.
@@ -556,6 +614,7 @@ class ChatRoomViewModel
                             )
                             // 보이는 순간 열람으로 기록한다. 상태는 그대로 둬 이 방에서는 계속 보인다.
                             if (hintUnseen && turns.isEmpty()) preferences.markChoicesHintSeen()
+                            if (turns.isEmpty()) scheduleTour()
                         }
 
                         is DomainResult.Failure -> {
@@ -581,6 +640,8 @@ class ChatRoomViewModel
                     dispatchEvent(ChatRoomEvent.DeleteStarted)
                     streamJob?.cancel()
                     choicesJob?.cancel()
+                    realtimeImageNudgeJob?.cancel()
+                    realtimeImageNudgePending = false
                     when (chatRepository.deleteChat(chatId)) {
                         is DomainResult.Success -> dispatchEffect(ChatRoomEffect.ChatDeleted)
 
@@ -597,7 +658,9 @@ class ChatRoomViewModel
          * 않는다 — 이동 중에 항목이 되살아나 두 번째 방이 만들어지면 안 된다.
          */
         private suspend fun startNewChat() {
-            val storyId = uiState.value.storyId?.takeIf { id -> id.isNotBlank() } ?: return
+            val state = uiState.value
+            if (!state.hasStory) return
+            val storyId = state.storyId ?: return
             if (newChatJob?.isActive == true) return
             dispatchEvent(ChatRoomEvent.NewChatStartChanged(inProgress = true))
             newChatJob =
@@ -677,8 +740,57 @@ class ChatRoomViewModel
 
                 ChatRoomIntent.ChoicesRetried -> generateChoices()
 
+                else -> handleTour(intent)
+            }
+        }
+
+        /**
+         * 첫 진입 안내 투어를 연다. 화면이 그려진 직후에 딤이 깔리지 않게 잠깐 두되, 사용자가 전송을 시도하기
+         * 전에는 떠야 해서 짧다.
+         *
+         * 그 사이 전송이 나가 턴이 생기면 이 방에서는 건너뛰고 기록도 남기지 않는다 — 다음 새 채팅에서 연다.
+         */
+        private fun scheduleTour() {
+            if (!tourUnseen || tourJob?.isActive == true) return
+            tourJob =
+                viewModelScope.launch {
+                    delay(TOUR_OPEN_DELAY_MILLIS)
+                    if (!tourUnseen || isStreaming || turns.isNotEmpty()) return@launch
+                    tourUnseen = false
+                    tourOpen = true
+                    analytics.track(AnalyticsEvent.ChatTourShown(chatId))
+                    dispatchEvent(ChatRoomEvent.TourOpened)
+                    // 여는 순간 기록한다. 끝까지 보지 않고 나가도 다시 띄우지 않는다.
+                    preferences.markChatTourSeen()
+                }
+        }
+
+        private suspend fun handleTour(intent: ChatRoomIntent) {
+            // 닫힌 뒤에 늦게 도착한 조작이다.
+            if (!tourOpen) return
+            when (intent) {
+                is ChatRoomIntent.TourStepShown -> {
+                    analytics.track(AnalyticsEvent.ChatTourStepViewed(chatId, intent.index, intent.step.wire))
+                    dispatchEvent(ChatRoomEvent.TourStepChanged(intent.index))
+                }
+
+                ChatRoomIntent.TourCompleted -> {
+                    analytics.track(AnalyticsEvent.ChatTourCompleted(chatId))
+                    closeTour()
+                }
+
+                is ChatRoomIntent.TourSkipped -> {
+                    analytics.track(AnalyticsEvent.ChatTourSkipButtonClicked(chatId, intent.index))
+                    closeTour()
+                }
+
                 else -> Unit
             }
+        }
+
+        private suspend fun closeTour() {
+            tourOpen = false
+            dispatchEvent(ChatRoomEvent.TourClosed)
         }
 
         /**
@@ -728,6 +840,7 @@ class ChatRoomViewModel
             }
             regeneratingTurnId = regeneratedTurnId
             choicesJob?.cancel()
+            realtimeImageNudgeJob?.cancel()
             isStreaming = true
             streamJob =
                 viewModelScope.launch {
@@ -773,13 +886,20 @@ class ChatRoomViewModel
                     dispatchEvent(ChatRoomEvent.CharacterImageAppended(event.name, event.imageUrl))
 
                 ChatStreamEvent.Completed -> {
+                    if (!isStreaming) return
                     isStreaming = false
+                    // 완료 순간의 설정으로 판단한다. 저장을 기다리는 중 토글이 바뀌어도 다시 판단하지 않는다.
+                    val imageWasEnabled = realtimeImageEnabled
+                    if (regeneratingTurnId == null && preferences.recordCompletedTurn() == NUDGE_TURN_COUNT) {
+                        realtimeImageNudgePending = !imageWasEnabled
+                    }
                     // 완료된 턴이 체험 한 회와 이프를 썼을 수 있다. 다음 턴의 배지와 잔액 선검사가 낡은 값을
                     // 보지 않게 둘 다 다시 읽는다.
                     viewModelScope.launch { trialsRepository.refresh() }
                     viewModelScope.launch { profileRepository.refresh() }
                     refreshTurns(confirmed = true)
                     regeneratingTurnId = null
+                    scheduleRealtimeImageNudge()
                 }
 
                 is ChatStreamEvent.Failed -> handleStreamFailure(event)
@@ -792,6 +912,7 @@ class ChatRoomViewModel
                     // 서버 저장·교체 여부가 불명이라 임의로 복원하지 않고 확정 상태를 다시 읽는다.
                     refreshTurns(confirmed = false)
                     regeneratingTurnId = null
+                    scheduleRealtimeImageNudge()
                 }
             }
         }
@@ -826,6 +947,7 @@ class ChatRoomViewModel
             }
             if (regeneratingTurnId != null && status == HTTP_CONFLICT) refreshTurns(confirmed = false)
             regeneratingTurnId = null
+            scheduleRealtimeImageNudge()
         }
 
         /**
@@ -890,6 +1012,19 @@ class ChatRoomViewModel
                 }
         }
 
+        private fun scheduleRealtimeImageNudge() {
+            if (!realtimeImageNudgePending || isStreaming) return
+            realtimeImageNudgeJob?.cancel()
+            realtimeImageNudgeJob =
+                viewModelScope.launch {
+                    delay(NUDGE_DELAY_MILLIS)
+                    if (!isStreaming && realtimeImageNudgePending) {
+                        realtimeImageNudgePending = false
+                        dispatchEvent(ChatRoomEvent.SettingsChanged(open = true, nudgeOpen = true))
+                    }
+                }
+        }
+
         override fun reduce(
             state: ChatRoomUiState,
             event: ChatRoomEvent,
@@ -908,7 +1043,10 @@ class ChatRoomViewModel
             const val HTTP_CONFLICT = 409
 
             const val CHOICES_TOGGLE_DEBOUNCE_MILLIS = 500L
+            const val TOUR_OPEN_DELAY_MILLIS = 200L
             const val REGENERATE_COOLDOWN_MILLIS = 500L
+            const val NUDGE_DELAY_MILLIS = 500L
+            const val NUDGE_TURN_COUNT = 2
         }
     }
 
@@ -917,6 +1055,9 @@ private fun reduceChatRoom(
     event: ChatRoomEvent,
 ): ChatRoomUiState =
     when (event) {
+        is ChatRoomEvent.SettingsChanged ->
+            state.copy(settingsOpen = event.open, realtimeImageNudgeOpen = event.nudgeOpen)
+
         is ChatRoomEvent.ImageViewerChanged -> state.copy(imageViewerUrl = event.imageUrl)
 
         ChatRoomEvent.LoadStarted -> state.copy(isLoading = true, loadFailed = false)
@@ -1047,6 +1188,12 @@ private fun reduceChoices(
         is ChatRoomEvent.ChoicesFailed ->
             state.copy(choicesProgress = ChoicesProgress(event.turnId, failed = true))
 
+        ChatRoomEvent.TourOpened -> state.copy(tourOpen = true, tourStep = null)
+
+        is ChatRoomEvent.TourStepChanged -> state.copy(tourStep = event.index)
+
+        ChatRoomEvent.TourClosed -> state.copy(tourOpen = false, tourStep = null)
+
         else -> state
     }
 
@@ -1095,6 +1242,7 @@ private fun ChatRoomIntent.analyticsEvent(
 ): AnalyticsEvent? =
     when (this) {
         ChatRoomIntent.Retry -> AnalyticsEvent.ChatRetryButtonClicked(chatId)
+        ChatRoomIntent.SituationInserted -> AnalyticsEvent.SituationInsertButtonClicked(chatId)
         is ChatRoomIntent.BlockAdded -> AnalyticsEvent.AddBlockButtonClicked(chatId, type.name.lowercase())
         is ChatRoomIntent.BlockRemoved ->
             composer.blocks

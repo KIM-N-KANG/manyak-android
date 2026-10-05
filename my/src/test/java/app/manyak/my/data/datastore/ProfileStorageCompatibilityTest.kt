@@ -1,14 +1,19 @@
 package app.manyak.my.data.datastore
 
+import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import app.manyak.common.entity.auth.AuthProvider
 import app.manyak.my.invite.data.datastore.InviteOnboardingStore
 import app.manyak.my.profile.data.datastore.ProfileCacheStore
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
@@ -19,11 +24,28 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.io.IOException
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProfileStorageCompatibilityTest {
     @get:Rule
     val temporaryFolder = TemporaryFolder()
+
+    @Test
+    fun `초대 안내 닫기 쓰기 실패를 반환하고 취소는 전파한다`() =
+        runTest {
+            val dispatcher = StandardTestDispatcher(testScheduler)
+            val failed = InviteOnboardingStore(FailingOnboardingDataStore(IOException("write failed")), dispatcher)
+            assertFalse(failed.acknowledge())
+            val cancelled =
+                InviteOnboardingStore(FailingOnboardingDataStore(CancellationException("cancelled")), dispatcher)
+            try {
+                cancelled.acknowledge()
+                throw AssertionError("Cancellation must propagate")
+            } catch (_: CancellationException) {
+                // 코루틴 취소는 사용자에게 표시할 저장 실패가 아니다.
+            }
+        }
 
     @Test
     fun `이전 프로필 JSON과 초대 안내 키를 읽고 같은 형식으로 저장한다`() =
@@ -79,3 +101,11 @@ private val legacyProfile =
     {"id":"user-fixture","nickname":"fixture","status":"ACTIVE",
     "creditBalance":12,"attendedToday":true,"linkedProviders":["google"]}
     """.trimIndent()
+
+private class FailingOnboardingDataStore(
+    private val failure: Exception,
+) : DataStore<Preferences> {
+    override val data = flowOf(emptyPreferences())
+
+    override suspend fun updateData(transform: suspend (Preferences) -> Preferences): Preferences = throw failure
+}

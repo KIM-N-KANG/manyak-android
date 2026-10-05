@@ -182,7 +182,8 @@ private fun anchorIndexOf(
     return (headerCount + turnIndex).coerceAtLeast(0)
 }
 
-private fun LazyListLayoutInfo.viewportHeight(): Int = viewportEndOffset - viewportStartOffset
+/** 앵커가 올라설 콘텐츠 시작점부터 뷰포트 끝까지. 위 여백(헤더에 가린 자리)은 뺀다. */
+private fun LazyListLayoutInfo.viewportHeight(): Int = viewportEndOffset
 
 /** 앵커가 보이지 않는 동안은 `null`. 모르는 값을 0으로 치면 앵커가 아래로 끌려 내려간다. */
 private fun LazyListLayoutInfo.anchorPadTarget(anchorIndex: Int): Int? {

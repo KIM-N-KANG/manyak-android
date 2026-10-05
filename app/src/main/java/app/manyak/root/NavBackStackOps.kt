@@ -2,6 +2,7 @@ package app.manyak.root
 
 import androidx.navigation3.runtime.NavKey
 import app.manyak.core.navigation.MainTabsRoute
+import app.manyak.core.navigation.StudioRoute
 
 /** 연타로 같은 목적지가 두 번 쌓이지 않는다. 같은 키가 스택에 두 번 있어야 하는 흐름은 없다. */
 internal fun MutableList<NavKey>.push(key: NavKey) {
@@ -21,4 +22,17 @@ internal fun MutableList<NavKey>.popToMainTabs() {
 /** 맨 위 목적지를 바꿔 끼운다 — 채팅방에서 새 채팅을 만들면 지운 방처럼 뒤로가기로 되돌아가지 않는다. */
 internal fun MutableList<NavKey>.replaceTop(key: NavKey) {
     if (isNotEmpty()) this[lastIndex] = key
+}
+
+/** 탭 목적지는 셸 위에 쌓지 않고 기존 탭을 선택한다. */
+internal fun MutableList<NavKey>.openExternalDestination(destination: NavKey): MainTab? {
+    popToMainTabs()
+    return when (destination) {
+        StudioRoute -> MainTab.STUDIO
+        MainTabsRoute -> MainTab.HOME
+        else -> {
+            push(destination)
+            null
+        }
+    }
 }

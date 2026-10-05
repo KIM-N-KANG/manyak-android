@@ -13,6 +13,7 @@ import app.manyak.create.data.api.dto.toRequestDto
 import app.manyak.create.domain.StoryCreationRepository
 import app.manyak.create.entity.CompletedStory
 import app.manyak.create.entity.CreationRequestSnapshot
+import app.manyak.create.entity.GenreCatalog
 import app.manyak.create.entity.StoryCompletionCommand
 import app.manyak.create.entity.StoryTag
 import app.manyak.create.entity.StorylineGeneration
@@ -35,6 +36,9 @@ class StoryCreationRepositoryImpl
         private val creationRequestApi: CreationRequestApi,
         private val json: Json,
     ) : StoryCreationRepository {
+        override suspend fun genres(query: String): DomainResult<GenreCatalog> =
+            apiCall { simpleStoryApi.genres(query) }.map { it.toDomain() }
+
         override suspend fun tags(): DomainResult<List<StoryTag>> =
             apiCall { simpleStoryApi.tags() }.map { tags -> tags.mapNotNull { it.toDomainOrNull() } }
 

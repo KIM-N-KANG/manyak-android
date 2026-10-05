@@ -5,6 +5,7 @@ import app.manyak.common.entity.story.StorySummary
 import app.manyak.report.domain.ReportRepository
 import app.manyak.report.entity.StoryReportReason
 import app.manyak.studio.domain.StudioRepository
+import app.manyak.studio.entity.StorySubmission
 import kotlinx.coroutines.yield
 
 internal fun sampleStories(): List<StorySummary> =
@@ -19,6 +20,7 @@ internal fun sampleStories(): List<StorySummary> =
             likeCount = 0,
             turnCount = 128,
             createdDate = "2026-08-03",
+            isOriginal = false,
         ),
         StorySummary(
             id = "story-2",
@@ -30,6 +32,7 @@ internal fun sampleStories(): List<StorySummary> =
             likeCount = 0,
             turnCount = 0,
             createdDate = null,
+            isOriginal = false,
         ),
     )
 
@@ -37,6 +40,30 @@ internal fun sampleStories(): List<StorySummary> =
 internal class FakeStoryRepository :
     StudioRepository,
     ReportRepository {
+    var submissionsCallCount = 0
+    var currentSubmissions: List<StorySubmission> = emptyList()
+    val queuedSubmissionResults = ArrayDeque<DomainResult<List<StorySubmission>>>()
+    val deletedSubmissionIds = mutableListOf<String>()
+    var submissionDeleteResult: DomainResult<Unit> = DomainResult.Success(Unit)
+    var beforeSubmissions: suspend () -> Unit = {}
+    var beforeStories: suspend () -> Unit = {}
+
+    override suspend fun submissions(): DomainResult<List<StorySubmission>> {
+        submissionsCallCount++
+        beforeSubmissions()
+        yield()
+        return queuedSubmissionResults.removeFirstOrNull() ?: DomainResult.Success(currentSubmissions)
+    }
+
+    override suspend fun deleteSubmission(submissionId: String): DomainResult<Unit> {
+        yield()
+        deletedSubmissionIds += submissionId
+        if (submissionDeleteResult is DomainResult.Success) {
+            currentSubmissions = currentSubmissions.filterNot { it.id == submissionId }
+        }
+        return submissionDeleteResult
+    }
+
     var myStoriesCallCount = 0
     val queuedResults = ArrayDeque<DomainResult<List<StorySummary>>>()
 
@@ -44,6 +71,7 @@ internal class FakeStoryRepository :
         // 실제 네트워크 호출처럼 반드시 한 번 양보한다.
         yield()
         myStoriesCallCount++
+        beforeStories()
         return queuedResults.removeFirstOrNull() ?: DomainResult.Success(sampleStories())
     }
 

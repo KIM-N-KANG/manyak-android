@@ -7,6 +7,7 @@ import app.manyak.auth.entity.SessionState
 import app.manyak.auth.entity.SignInOutcome
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.session.MemberConsent
 import app.manyak.common.entity.auth.AuthProvider
 import app.manyak.common.entity.session.SessionEndNotice
 import app.manyak.notification.data.api.PushTokenApi
@@ -54,7 +55,7 @@ class PushTokenRegistrarImplTest {
             testScheduler.runCurrent()
             registrar.onTokenRefreshed()
             testScheduler.runCurrent()
-            assertEquals(2, api.registered.size)
+            assertEquals(1, api.registered.size)
         }
 
     @Test
@@ -95,19 +96,79 @@ class PushTokenRegistrarImplTest {
             assertEquals(1, api.registerStarted)
         }
 
+    @Test
+    fun `필수 동의 전에는 회원 진입과 토큰 갱신 모두 등록하지 않는다`() =
+        runTest {
+            val session = FakeSessionRepository()
+            val consent = FakeConsent(false)
+            val api = FakeApi()
+            val registrar = registrar(session, api, this, consent = consent).apply { start() }
+            session.state.value = SessionState.Member
+            testScheduler.runCurrent()
+            registrar.onTokenRefreshed()
+            testScheduler.runCurrent()
+            assertEquals(0, api.registerStarted)
+            consent.isSatisfied.value = true
+            testScheduler.runCurrent()
+            registrar.onTokenRefreshed()
+            testScheduler.runCurrent()
+            assertEquals(listOf("tok"), api.registered)
+        }
+
+    @Test
+    fun `동의 후 새 토큰만 다시 등록한다`() =
+        runTest {
+            val session = FakeSessionRepository()
+            val api = FakeApi()
+            var token = "first"
+            val registrar = registrar(session, api, this, tokens = FcmTokenSource { token }).apply { start() }
+            session.state.value = SessionState.Member
+            testScheduler.runCurrent()
+            token = "second"
+            registrar.onTokenRefreshed()
+            testScheduler.runCurrent()
+            assertEquals(listOf("first", "second"), api.registered)
+        }
+
+    @Test
+    fun `토큰 조회 중 동의가 초기화되면 등록하지 않는다`() =
+        runTest {
+            val session = FakeSessionRepository()
+            val consent = FakeConsent(true)
+            val api = FakeApi()
+            val token = CompletableDeferred<String>()
+            registrar(session, api, this, consent = consent, tokens = FcmTokenSource { token.await() }).start()
+            session.state.value = SessionState.Member
+            testScheduler.runCurrent()
+            consent.isSatisfied.value = false
+            testScheduler.runCurrent()
+            token.complete("late")
+            testScheduler.runCurrent()
+            assertEquals(0, api.registerStarted)
+        }
+
     private fun registrar(
         session: FakeSessionRepository,
         api: FakeApi,
         scope: TestScope,
         signal: SessionEndSignal = RecordingSignal(),
+        consent: MemberConsent = FakeConsent(true),
+        tokens: FcmTokenSource = FcmTokenSource { "tok" },
     ) = PushTokenRegistrarImpl(
         sessionRepository = session,
         gate = SessionGate(),
+        memberConsent = consent,
         sessionEndSignal = Lazy { signal },
         api = api,
-        tokens = FcmTokenSource { "tok" },
+        tokens = tokens,
         applicationScope = scope.backgroundScope,
     )
+}
+
+private class FakeConsent(
+    satisfied: Boolean,
+) : MemberConsent {
+    override val isSatisfied = MutableStateFlow(satisfied)
 }
 
 private val JSON = "application/json".toMediaType()

@@ -9,6 +9,7 @@ import app.manyak.auth.data.session.SessionTokenManager
 import app.manyak.auth.domain.AccountLinkRepository
 import app.manyak.auth.domain.SessionBootstrap
 import app.manyak.auth.domain.SessionRepository
+import app.manyak.auth.domain.SignupRepository
 import app.manyak.common.entity.auth.AuthProvider
 import app.manyak.network.domain.SessionTokenAccess
 import dagger.Binds
@@ -36,6 +37,10 @@ abstract class AuthModule {
     @Binds
     @Singleton
     abstract fun bindSessionRepository(impl: SessionRepositoryImpl): SessionRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSignupRepository(impl: SessionRepositoryImpl): SignupRepository
 
     @Binds
     @Singleton

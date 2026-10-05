@@ -16,11 +16,13 @@ import app.manyak.create.presentation.state.FunnelExitWarning
 import app.manyak.create.presentation.state.StorylineGenerationState
 import app.manyak.create.presentation.state.StorylineGenerationStore
 import app.manyak.create.presentation.state.resultOrNull
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 /** 생성 진행 중이거나, 결과(실패 시 빈 목록 포함)를 보여 주는 화면 콘텐츠. */
 sealed interface StorylineContent {
@@ -151,15 +153,16 @@ sealed interface CreateStorylineEffect {
     data object ExitFunnel : CreateStorylineEffect
 }
 
-@HiltViewModel
+@HiltViewModel(assistedFactory = CreateStorylineViewModel.Factory::class)
 class CreateStorylineViewModel
-    @Inject
+    @AssistedInject
     constructor(
+        @Assisted draftId: String,
         private val storylineGenerationStore: StorylineGenerationStore,
         private val storyCreationRepository: StoryCreationRepository,
         private val analytics: Analytics,
     ) : MviViewModel<CreateStorylineIntent, CreateStorylineUiState, CreateStorylineEvent, CreateStorylineEffect>(
-            storylineGenerationStore.toStorylineSnapshot(),
+            storylineGenerationStore.bind(draftId).toStorylineSnapshot(),
         ) {
         /**
          * 평가 동기화 판정의 정본. UiState 반영은 이벤트 채널을 거쳐 한 박자 늦을 수 있어,
@@ -269,8 +272,8 @@ class CreateStorylineViewModel
         }
 
         /**
-         * 닫기는 상태와 무관하게 늘 확인을 거친다. 저장하지 않은 편집이 있으면 미저장 경고, 저장할 것도
-         * 저장된 것도 없으면 소실 경고, 저장분·진행 중 레코드만 남았으면 잃는 것 없이 닫는다는 확인이다.
+         * 저장하지 않은 편집이 있으면 미저장 경고, 저장분·진행 중 레코드만 남았으면 잃는 것 없이 닫는다는
+         * 확인이다. 저장할 것도 저장된 것도 없으면 묻지 않고 나간다.
          */
         private suspend fun leaveFunnel(confirmed: Boolean) {
             val warning =
@@ -280,13 +283,17 @@ class CreateStorylineViewModel
                         FunnelExitWarning.UNSAVED_CHANGES
 
                     storylineGenerationStore.hasContentToPreserve() -> FunnelExitWarning.SAVED_DRAFT
-                    else -> FunnelExitWarning.NOTHING_TO_PRESERVE
+                    else -> null
                 }
             if (warning != null) {
                 dispatchEvent(CreateStorylineEvent.ExitWarningChanged(warning))
                 return
             }
-            if (confirmed) dispatchEvent(CreateStorylineEvent.ExitWarningChanged(null))
+            if (confirmed) {
+                dispatchEvent(CreateStorylineEvent.ExitWarningChanged(null))
+            } else {
+                analytics.track(AnalyticsEvent.CreateExitButtonClicked(CreateStep.STORYLINE_SELECT))
+            }
             isLeaving = true
             storylineGenerationStore.leaveFunnel()
             dispatchEffect(CreateStorylineEffect.ExitFunnel)
@@ -368,6 +375,11 @@ class CreateStorylineViewModel
             ratingSyncTimers.clear()
             desiredRatings.clear()
             syncedRatings.clear()
+        }
+
+        @AssistedFactory
+        interface Factory {
+            fun create(draftId: String): CreateStorylineViewModel
         }
 
         override fun reduce(

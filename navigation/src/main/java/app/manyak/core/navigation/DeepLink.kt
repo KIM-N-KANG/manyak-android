@@ -27,6 +27,7 @@ object DeepLink {
                 .filter { it.isNotEmpty() }
         return when {
             segments.size == 2 && segments[0] == "stories" -> StoryDetailRoute(segments[1])
+            segments == listOf("studio") -> StudioRoute
             segments == listOf("my", "credits") -> MyCreditChargeRoute
             else -> null
         }

@@ -7,6 +7,7 @@ import app.manyak.auth.entity.SessionState
 import app.manyak.common.data.di.ApplicationScope
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.session.MemberConsent
 import app.manyak.common.entity.session.SessionEndNotice
 import app.manyak.network.data.api.emptyBodyApiCall
 import app.manyak.notification.data.api.PushTokenApi
@@ -17,6 +18,7 @@ import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -34,6 +36,7 @@ class PushTokenRegistrarImpl
     constructor(
         private val sessionRepository: SessionRepository,
         private val gate: SessionGate,
+        private val memberConsent: MemberConsent,
         private val sessionEndSignal: Lazy<SessionEndSignal>,
         private val api: PushTokenApi,
         private val tokens: FcmTokenSource,
@@ -48,19 +51,25 @@ class PushTokenRegistrarImpl
         @Volatile
         private var active: Job? = null
 
+        private var registeredToken: Pair<Long, String>? = null
+
         override fun start() {
             applicationScope.launch {
-                sessionRepository.sessionState.collect { state ->
+                var previous: SessionState? = null
+                combine(sessionRepository.sessionState, memberConsent.isSatisfied) { state, satisfied ->
+                    Pair(state, satisfied)
+                }.collect { (state, satisfied) ->
                     // 정리가 끝나 미로그인이 발행되거나 로그아웃이 취소돼 회원으로 돌아오면 다시 연다.
                     // 종료 중(미확정)에는 닫힌 채 두어야 장벽이 서기 전의 창에서 새 등록이 출발하지 않는다.
-                    if (state != SessionState.Undetermined) closed = false
-                    if (state == SessionState.Member) launch { register() }
+                    if (state != previous && state != SessionState.Undetermined) closed = false
+                    previous = state
+                    if (state == SessionState.Member && satisfied) launch { register() } else active?.cancel()
                 }
             }
         }
 
         override fun onTokenRefreshed() {
-            if (closed || sessionRepository.sessionState.value != SessionState.Member) return
+            if (!canRegister()) return
             applicationScope.launch { register() }
         }
 
@@ -68,6 +77,7 @@ class PushTokenRegistrarImpl
             closed = true
             active?.cancel()
             mutex.withLock {
+                registeredToken = null
                 // 조회와 삭제를 합쳐 상한을 둔다. 실패는 로그아웃을 막지 않는다 — 남은 토큰은 수신 시 검증이 걸러 낸다.
                 withTimeoutOrNull(DELETE_TIMEOUT_MILLIS) {
                     gate.withAuthWork(onBlocked = {}) {
@@ -80,13 +90,17 @@ class PushTokenRegistrarImpl
 
         private suspend fun register() =
             mutex.withLock {
-                if (closed) return
+                if (!canRegister()) return
                 active = currentCoroutineContext()[Job]
                 try {
                     gate.withAuthWork(onBlocked = {}) { work ->
                         val token = tokens.current() ?: return@withAuthWork
+                        if (!canRegister()) return@withAuthWork
+                        val registration = gate.currentGeneration to token
+                        if (registeredToken == registration) return@withAuthWork
                         val request = PushTokenRegisterRequestDto(token = token, platform = PLATFORM_ANDROID)
                         val result = emptyBodyApiCall { api.register(request) }
+                        if (result is DomainResult.Success) gate.commit(work) { registeredToken = registration }
                         // 일반 API 의 403 은 인터셉터가 세션을 끝내지 않는다. 이 API 의 403 은 정지 계정뿐이라 여기서 올린다.
                         // 관문 commit 안에서 보내야 이전 세대의 늦은 403 이 새 세션을 끝내지 않는다.
                         if (result is DomainResult.Failure && result.error == DomainError.AccountSuspended) {
@@ -99,6 +113,9 @@ class PushTokenRegistrarImpl
                     active = null
                 }
             }
+
+        private fun canRegister(): Boolean =
+            !closed && sessionRepository.sessionState.value == SessionState.Member && memberConsent.isSatisfied.value
 
         private companion object {
             const val DELETE_TIMEOUT_MILLIS = 3_000L

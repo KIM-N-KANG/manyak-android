@@ -67,6 +67,7 @@ internal class FakeStoryRepository :
     /** 좋아요 요청마다 넘어온 값 — 등록이면 true, 취소면 false 다. */
     val likeRequests = mutableListOf<Pair<String, Boolean>>()
     val queuedLikeResults = ArrayDeque<DomainResult<Unit>>()
+    var likeGate: CompletableDeferred<Unit>? = null
 
     /** 채우면 조회가 여기서 멈춘다 — 조회가 진행 중인 동안의 동작을 볼 때 쓴다. */
     var inFlightGate: CompletableDeferred<Unit>? = null
@@ -85,6 +86,7 @@ internal class FakeStoryRepository :
     ): DomainResult<Unit> {
         yield()
         likeRequests += storyId to liked
+        likeGate?.await()
         return queuedLikeResults.removeFirstOrNull() ?: DomainResult.Success(Unit)
     }
 

@@ -29,12 +29,12 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import app.manyak.chat.room.presentation.message.ChatAiOutput
-import app.manyak.chat.room.presentation.message.ChatMessageSegment
 import app.manyak.chat.room.presentation.message.ChatUserBand
 import app.manyak.chat.room.presentation.message.rememberTypewriterSegments
 import app.manyak.designsystem.component.CHARACTER_IMAGE_ASPECT_RATIO
 import app.manyak.designsystem.component.CyclingPhrases
 import app.manyak.designsystem.component.ImageGenerationLoading
+import app.manyak.designsystem.text.PassageSegment
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.chat.R as ChatR
 
@@ -71,7 +71,7 @@ internal fun StreamingBlock(
 @Composable
 private fun StreamingOutput(
     realtimeImage: Boolean,
-    segments: List<ChatMessageSegment>,
+    segments: List<PassageSegment>,
     onCharacterImageClick: (String) -> Unit,
 ) {
     val hasOutput = segments.isNotEmpty()

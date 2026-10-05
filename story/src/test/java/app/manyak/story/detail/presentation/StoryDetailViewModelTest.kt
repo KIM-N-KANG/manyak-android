@@ -5,6 +5,7 @@ import app.manyak.analytics.domain.NoOpAnalytics
 import app.manyak.analytics.entity.AnalyticsEvent
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.story.StoryLikeUpdates
 import app.manyak.common.entity.chat.CreatedChat
 import app.manyak.report.entity.StoryReportReason
 import app.manyak.report.presentation.StoryReportAction
@@ -19,10 +20,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withTimeoutOrNull
@@ -51,7 +50,33 @@ class StoryDetailViewModelTest {
     private fun viewModel(
         storyRepository: FakeStoryRepository = FakeStoryRepository(),
         chatRepository: FakeChatRepository = FakeChatRepository(),
-    ) = StoryDetailViewModel(STORY_ID, storyRepository, chatRepository, NoOpAnalytics, storyRepository, storyRepository)
+        likeUpdates: StoryLikeUpdates = StoryLikeUpdates { _, _ -> },
+    ) = StoryDetailViewModel(
+        STORY_ID,
+        storyRepository,
+        chatRepository,
+        NoOpAnalytics,
+        storyRepository,
+        storyRepository,
+        likeUpdates,
+    )
+
+    @Test
+    fun `업로드한 주변 인물 이미지도 상세 뷰어로 연다`() =
+        runTest(dispatcher) {
+            val url = "https://dev-cdn.manyak.app/characters/uploaded/clockmaker.webp"
+            val repository = FakeStoryRepository()
+            repository.queuedDetailResults +=
+                DomainResult.Success(
+                    sampleStoryDetail().copy(characters = listOf(StoryCharacter("시계공", url, "시계를 고칩니다"))),
+                )
+            val viewModel = viewModel(repository)
+            viewModel.onIntent(StoryDetailIntent.ScreenShown)
+            advanceUntilIdle()
+            viewModel.onIntent(StoryDetailIntent.OpenCharacterImage(url))
+            advanceUntilIdle()
+            assertEquals(url, viewModel.uiState.value.imageViewerUrl)
+        }
 
     @Test
     fun `화면이 보이면 상세를 조회하고 첫 시작 설정을 고른다`() =
@@ -189,7 +214,7 @@ class StoryDetailViewModelTest {
         }
 
     @Test
-    fun `채팅 시작이 실패하면 잠금을 풀고 문구를 남긴다`() =
+    fun `채팅 시작이 실패하면 잠금을 풀고 실패 토스트를 보낸다`() =
         runTest(dispatcher) {
             val chatRepository = FakeChatRepository()
             chatRepository.queuedCreateChatResults += DomainResult.Failure(DomainError.Network)
@@ -202,7 +227,7 @@ class StoryDetailViewModelTest {
 
             val state = viewModel.uiState.value
             assertFalse(state.isStartingChat)
-            assertTrue(state.startChatFailed)
+            assertEquals(StoryDetailEffect.ShowChatStartFailed, viewModel.uiEffect.first())
 
             // 다시 누를 수 있어야 한다.
             chatRepository.queuedCreateChatResults += DomainResult.Success(CreatedChat(id = "chat-2"))
@@ -282,6 +307,31 @@ class StoryDetailViewModelTest {
                 viewModel.uiState.value.story
                     ?.id,
             )
+            assertEquals(2, storyRepository.storyDetailCallCount)
+        }
+
+    @Test
+    fun `수정 복귀가 이전 조회와 겹쳐도 다시 조회한 수정 내용이 최종 상태가 된다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryRepository()
+            val gate = CompletableDeferred<Unit>()
+            repository.inFlightGate = gate
+            repository.queuedDetailResults += DomainResult.Success(sampleStoryDetail())
+            repository.queuedDetailResults += DomainResult.Success(sampleStoryDetail().copy(title = "수정된 제목"))
+            val model = viewModel(repository)
+            model.onIntent(StoryDetailIntent.ScreenShown)
+            advanceUntilIdle()
+            model.onIntent(StoryDetailIntent.ScreenShown)
+            advanceUntilIdle()
+            assertEquals(1, repository.storyDetailCallCount)
+            gate.complete(Unit)
+            advanceUntilIdle()
+            assertEquals(2, repository.storyDetailCallCount)
+            assertEquals(
+                "수정된 제목",
+                model.uiState.value.story
+                    ?.title,
+            )
         }
 
     @Test
@@ -332,7 +382,19 @@ class StoryDetailViewModelTest {
                     }
                 }
             val viewModel =
-                StoryDetailViewModel(STORY_ID, repository, FakeChatRepository(), analytics, repository, repository)
+                StoryDetailViewModel(
+                    STORY_ID,
+                    repository,
+                    FakeChatRepository(),
+                    analytics,
+                    repository,
+                    repository,
+                    StoryLikeUpdates {
+                        _,
+                        _,
+                        ->
+                    },
+                )
             viewModel.onIntent(StoryDetailIntent.ScreenShown)
             advanceUntilIdle()
             viewModel.onIntent(StoryDetailIntent.OpenCharacterImage(url))
@@ -365,6 +427,41 @@ class StoryDetailViewModelTest {
                 advanceUntilIdle()
                 assertNull(viewModel.uiState.value.imageViewerUrl)
             }
+        }
+
+    @Test
+    fun `상황 설명의 장면 이미지는 인물 이미지 클릭으로 세지 않고 연다`() =
+        runTest(dispatcher) {
+            val url = "https://cdn.manyak.app/scenes/originals/s1/platform_1a2b3c4d.webp"
+            val story =
+                sampleStoryDetail().copy(
+                    startSettings = sampleStartSettings().map { it.copy(startSituation = "안개.\n\n[[$url]]") },
+                )
+            val repository = FakeStoryRepository()
+            repository.queuedDetailResults += DomainResult.Success(story)
+            val events = mutableListOf<AnalyticsEvent>()
+            val viewModel =
+                StoryDetailViewModel(
+                    STORY_ID,
+                    repository,
+                    FakeChatRepository(),
+                    object : Analytics {
+                        override fun track(event: AnalyticsEvent) {
+                            events += event
+                        }
+                    },
+                    repository,
+                    repository,
+                    StoryLikeUpdates { _, _ -> },
+                )
+            viewModel.onIntent(StoryDetailIntent.ScreenShown)
+            advanceUntilIdle()
+
+            viewModel.onIntent(StoryDetailIntent.OpenCharacterImage(url))
+            advanceUntilIdle()
+
+            assertEquals(url, viewModel.uiState.value.imageViewerUrl)
+            assertTrue(events.none { it is AnalyticsEvent.StoryDetailCharacterImageClicked })
         }
 
     @Test
@@ -470,140 +567,6 @@ class StoryDetailViewModelTest {
                 withTimeoutOrNull(TIMEOUT_MILLIS) { viewModel.uiEffect.first() },
             )
         }
-
-    @Test
-    fun `상세 조회와 복귀는 서버 좋아요 값을 보존하고 토글을 보내지 않는다`() =
-        runTest(dispatcher) {
-            val storyRepository = FakeStoryRepository()
-            storyRepository.queuedDetailResults +=
-                DomainResult.Success(sampleStoryDetail(likeCount = 12, isLiked = true, isOwner = false))
-            val viewModel = viewModel(storyRepository = storyRepository)
-
-            viewModel.onIntent(StoryDetailIntent.ScreenShown)
-            advanceUntilIdle()
-
-            val loaded = viewModel.uiState.value
-            assertEquals(12L, loaded.story?.likeCount)
-            assertTrue(loaded.story?.isLiked == true)
-
-            storyRepository.queuedDetailResults +=
-                DomainResult.Success(sampleStoryDetail(likeCount = 15, isLiked = false, isOwner = false))
-            viewModel.onIntent(StoryDetailIntent.ScreenShown)
-            advanceUntilIdle()
-
-            val refreshed = viewModel.uiState.value
-            assertEquals(15L, refreshed.story?.likeCount)
-            assertFalse(refreshed.story?.isLiked == true)
-            assertTrue(storyRepository.likeRequests.isEmpty())
-        }
-
-    @Test
-    fun `좋아요를 누르면 등록을 보내고 성공 뒤 상태와 수를 한 칸 옮긴다`() =
-        runTest(dispatcher) {
-            val storyRepository = FakeStoryRepository()
-            storyRepository.queuedDetailResults +=
-                DomainResult.Success(sampleStoryDetail(likeCount = 12, isLiked = false, isOwner = false))
-            val viewModel = viewModel(storyRepository = storyRepository)
-            viewModel.onIntent(StoryDetailIntent.ScreenShown)
-            advanceUntilIdle()
-
-            viewModel.onIntent(StoryDetailIntent.ToggleLike)
-            advanceUntilIdle()
-
-            val state = viewModel.uiState.value
-            assertEquals(listOf(STORY_ID to true), storyRepository.likeRequests)
-            assertTrue(state.story?.isLiked == true)
-            assertEquals(13L, state.story?.likeCount)
-            assertFalse(state.isTogglingLike)
-        }
-
-    @Test
-    fun `이미 누른 좋아요는 취소를 보내고 수를 되돌린다`() =
-        runTest(dispatcher) {
-            val storyRepository = FakeStoryRepository()
-            storyRepository.queuedDetailResults +=
-                DomainResult.Success(sampleStoryDetail(likeCount = 12, isLiked = true, isOwner = false))
-            val viewModel = viewModel(storyRepository = storyRepository)
-            viewModel.onIntent(StoryDetailIntent.ScreenShown)
-            advanceUntilIdle()
-
-            viewModel.onIntent(StoryDetailIntent.ToggleLike)
-            advanceUntilIdle()
-
-            val state = viewModel.uiState.value
-            assertEquals(listOf(STORY_ID to false), storyRepository.likeRequests)
-            assertFalse(state.story?.isLiked == true)
-            assertEquals(11L, state.story?.likeCount)
-        }
-
-    @Test
-    fun `좋아요 실패는 상태와 수를 그대로 두고 실패를 알린다`() =
-        runTest(dispatcher) {
-            val storyRepository = FakeStoryRepository()
-            storyRepository.queuedDetailResults +=
-                DomainResult.Success(sampleStoryDetail(likeCount = 12, isLiked = false, isOwner = false))
-            storyRepository.queuedLikeResults += DomainResult.Failure(DomainError.Network)
-            val viewModel = viewModel(storyRepository = storyRepository)
-            viewModel.onIntent(StoryDetailIntent.ScreenShown)
-            advanceUntilIdle()
-
-            viewModel.onIntent(StoryDetailIntent.ToggleLike)
-            advanceUntilIdle()
-
-            val state = viewModel.uiState.value
-            assertFalse(state.story?.isLiked == true)
-            assertEquals(12L, state.story?.likeCount)
-            assertFalse(state.isTogglingLike)
-            assertEquals(
-                StoryDetailEffect.ShowLikeFailed,
-                withTimeoutOrNull(TIMEOUT_MILLIS) { viewModel.uiEffect.first() },
-            )
-        }
-
-    @Test
-    fun `응답 직후의 연타는 버리고 잠깐 뒤의 탭만 다시 보낸다`() =
-        runTest(dispatcher) {
-            val storyRepository = FakeStoryRepository()
-            storyRepository.queuedDetailResults +=
-                DomainResult.Success(sampleStoryDetail(likeCount = 12, isLiked = false, isOwner = false))
-            val viewModel = viewModel(storyRepository = storyRepository)
-            viewModel.onIntent(StoryDetailIntent.ScreenShown)
-            advanceUntilIdle()
-
-            viewModel.onIntent(StoryDetailIntent.ToggleLike)
-            runCurrent()
-            viewModel.onIntent(StoryDetailIntent.ToggleLike)
-            advanceTimeBy(COOLDOWN_HALF_MILLIS)
-            viewModel.onIntent(StoryDetailIntent.ToggleLike)
-            runCurrent()
-            assertEquals(listOf(STORY_ID to true), storyRepository.likeRequests)
-            assertTrue(
-                viewModel.uiState.value.story
-                    ?.isLiked == true,
-            )
-
-            advanceUntilIdle()
-            viewModel.onIntent(StoryDetailIntent.ToggleLike)
-            advanceUntilIdle()
-            assertEquals(listOf(STORY_ID to true, STORY_ID to false), storyRepository.likeRequests)
-        }
-
-    @Test
-    fun `내가 만든 스토리는 좋아요를 보내지 않는다`() =
-        runTest(dispatcher) {
-            val storyRepository = FakeStoryRepository()
-            storyRepository.queuedDetailResults += DomainResult.Success(sampleStoryDetail(isOwner = true))
-            val viewModel = viewModel(storyRepository = storyRepository)
-            viewModel.onIntent(StoryDetailIntent.ScreenShown)
-            advanceUntilIdle()
-
-            viewModel.onIntent(StoryDetailIntent.ToggleLike)
-            advanceUntilIdle()
-
-            assertFalse(viewModel.uiState.value.canLike)
-            assertTrue(storyRepository.likeRequests.isEmpty())
-        }
 }
 
 private const val TIMEOUT_MILLIS = 1_000L
-private const val COOLDOWN_HALF_MILLIS = 250L

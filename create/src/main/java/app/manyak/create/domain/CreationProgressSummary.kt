@@ -7,6 +7,7 @@ import app.manyak.common.entity.story.CreationResumePoint
 import app.manyak.common.entity.story.CreationStage
 import app.manyak.create.entity.CompletionOutcome
 import app.manyak.create.entity.PendingStoryCreation
+import app.manyak.create.entity.StoredCreationDraft
 import app.manyak.create.entity.StoryCompletionRequest
 
 fun PendingStoryCreation.resumePoint(): CreationResumePoint =
@@ -21,15 +22,17 @@ fun PendingStoryCreation.resumePoint(): CreationResumePoint =
                 ?: CreationResumePoint.StorylineStep
     }
 
-fun PendingStoryCreation.toProgressSummary(): CreationProgressSummary =
+fun StoredCreationDraft.toProgressSummary(): CreationProgressSummary =
     CreationProgressSummary(
+        draftId = draftId,
         stage =
-            when (this) {
+            when (record) {
                 is PendingStoryCreation.KeywordDraft -> CreationStage.KEYWORD_DRAFT
                 is PendingStoryCreation.GeneratingStorylines -> CreationStage.STORYLINE_GENERATION
                 is PendingStoryCreation.Draft -> CreationStage.STORY_DRAFT
             },
-        resumePoint = resumePoint(),
+        resumePoint = record.resumePoint(),
+        createdAt = createdAt,
     )
 
 fun StoryCompletionRequest.toSummary(): CompletionRequestSummary =
@@ -44,4 +47,5 @@ fun StoryCompletionRequest.toSummary(): CompletionRequestSummary =
             },
         storyId = (outcome as? CompletionOutcome.Completed)?.story?.id,
         storyTitle = (outcome as? CompletionOutcome.Completed)?.story?.title,
+        createdAt = createdAt,
     )

@@ -164,6 +164,7 @@ private fun MyContent(
     ) {
         ProfileHeader(
             profile = state.profile,
+            isLoading = state.isRefreshingProfile,
             onLinkAccount = { provider -> onIntent(MyIntent.RequestAccountLink(provider)) },
         )
         MyCreditBalanceCard(balance = state.profile?.creditBalance, onOpenCreditCharge = onOpenCreditCharge)
@@ -183,16 +184,16 @@ private fun MyContent(
         }
         MySection(labelRes = MyR.string.my_section_etc) {
             MyMenuItem(
-                iconRes = DesignsystemR.drawable.ic_mailbox,
-                labelRes = MyR.string.my_feedback,
-                onClick = onOpenFeedback,
-                trailing = { MenuTrailingIcon(iconRes = DesignsystemR.drawable.ic_chevron_right) },
-            )
-            MyMenuItem(
                 iconRes = DesignsystemR.drawable.ic_info,
                 labelRes = CommonR.string.my_service_info,
                 onClick = onOpenServiceInfo,
                 trailing = { MenuTrailingIcon(iconRes = DesignsystemR.drawable.ic_external_link) },
+            )
+            MyMenuItem(
+                iconRes = DesignsystemR.drawable.ic_mailbox,
+                labelRes = MyR.string.my_feedback,
+                onClick = onOpenFeedback,
+                trailing = { MenuTrailingIcon(iconRes = DesignsystemR.drawable.ic_chevron_right) },
             )
             MyMenuItem(
                 iconRes = DesignsystemR.drawable.ic_book_open,

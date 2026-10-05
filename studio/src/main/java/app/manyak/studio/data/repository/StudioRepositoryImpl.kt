@@ -8,7 +8,9 @@ import app.manyak.common.entity.story.StorySummary
 import app.manyak.network.data.api.apiCall
 import app.manyak.network.data.api.emptyBodyApiCall
 import app.manyak.studio.data.api.StudioApi
+import app.manyak.studio.data.dto.toCardOrNull
 import app.manyak.studio.domain.StudioRepository
+import app.manyak.studio.entity.StorySubmission
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -18,6 +20,14 @@ class StudioRepositoryImpl
     constructor(
         private val userApi: StudioApi,
     ) : StudioRepository {
+        override suspend fun submissions(): DomainResult<List<StorySubmission>> =
+            apiCall { userApi.submissions() }.map { submissions ->
+                submissions.mapNotNull { it.toCardOrNull() }.sortedByDescending { it.submittedAt }
+            }
+
+        override suspend fun deleteSubmission(submissionId: String): DomainResult<Unit> =
+            emptyBodyApiCall { userApi.deleteSubmission(submissionId) }
+
         // 내 스토리는 보호 경로라 인증 클라이언트를 쓰는 StudioApi 쪽에 정의되어 있다.
         override suspend fun myStories(): DomainResult<List<StorySummary>> =
             apiCall { userApi.myStories() }.map { stories -> stories.map { story -> story.toDomain() } }

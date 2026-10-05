@@ -24,17 +24,22 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Popup
+import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import app.manyak.chat.entity.ChatInputMode
@@ -44,6 +49,7 @@ import app.manyak.common.presentation.credit.LocalTrials
 import app.manyak.common.presentation.credit.creditAmountText
 import app.manyak.designsystem.component.ManyakBottomSheet
 import app.manyak.designsystem.component.ManyakIconButton
+import app.manyak.designsystem.component.ManyakPopup
 import app.manyak.designsystem.component.ManyakSwitch
 import app.manyak.designsystem.credit.CreditAmountText
 import app.manyak.designsystem.theme.ManyakTheme
@@ -67,9 +73,13 @@ internal fun ChatSettingsSheet(
     onModeChange: (ChatInputMode) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    nudgeOpen: Boolean = false,
+    onNudgeDismiss: () -> Unit = {},
 ) {
+    var expanded by remember { mutableStateOf(false) }
     ManyakBottomSheet(
-        modifier = modifier,
+        modifier = if (nudgeOpen && expanded) modifier.clearAndSetSemantics {} else modifier,
+        onExpanded = { expanded = true },
         onDismissRequest = onDismiss,
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.section),
     ) {
@@ -79,13 +89,11 @@ internal fun ChatSettingsSheet(
             color = ManyakTheme.colors.text,
         )
         ChatSettingsGroup(labelRes = ChatR.string.chat_settings_group_features) {
-            ChatSettingRow(
-                iconRes = DesignsystemR.drawable.ic_ai_image,
-                labelRes = ChatR.string.chat_settings_realtime_image,
-                descriptionRes = ChatR.string.chat_settings_realtime_image_description,
+            RealtimeImageSetting(
                 checked = realtimeImageEnabled,
+                nudgeOpen = nudgeOpen && expanded,
                 onCheckedChange = onRealtimeImageEnabledChange,
-                labelAddon = { RealtimeImageCostBadge(imageTrial = LocalTrials.current?.chatImage) },
+                onNudgeDismiss = onNudgeDismiss,
             )
             ChatSettingRow(
                 iconRes = DesignsystemR.drawable.ic_ai_chat,
@@ -106,6 +114,42 @@ internal fun ChatSettingsSheet(
                 },
             )
         }
+    }
+}
+
+@Composable
+private fun RealtimeImageSetting(
+    checked: Boolean,
+    nudgeOpen: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    onNudgeDismiss: () -> Unit,
+) {
+    var imageBounds by remember { mutableStateOf<Rect?>(null) }
+    val changeRealtimeImage: (Boolean) -> Unit = { enabled ->
+        onCheckedChange(enabled)
+        if (enabled && nudgeOpen) onNudgeDismiss()
+    }
+    // Popup의 0 크기 앵커를 행 안에 둬 시트의 섹션 간격이 하나 늘어나지 않게 한다.
+    Box {
+        ChatSettingRow(
+            modifier =
+                Modifier.onGloballyPositioned { coordinates ->
+                    imageBounds = Rect(coordinates.localToScreen(Offset.Zero), coordinates.size.toSize())
+                },
+            iconRes = DesignsystemR.drawable.ic_ai_image,
+            labelRes = ChatR.string.chat_settings_realtime_image,
+            descriptionRes = ChatR.string.chat_settings_realtime_image_description,
+            checked = checked,
+            onCheckedChange = changeRealtimeImage,
+            labelAddon = { RealtimeImageCostBadge(imageTrial = LocalTrials.current?.chatImage) },
+        )
+        RealtimeImageNudge(
+            open = nudgeOpen,
+            targetOnScreen = imageBounds,
+            checked = checked,
+            onCheckedChange = changeRealtimeImage,
+            onDismiss = onNudgeDismiss,
+        )
     }
 }
 
@@ -168,13 +212,16 @@ private fun RealtimeImageNoticeButton() {
             iconSize = ManyakTheme.sizes.iconSmall,
             tint = ManyakTheme.colors.textSubtle,
         )
-        if (open) NoticePopover(onDismiss = { open = false })
+        NoticePopover(open, onDismiss = { open = false })
     }
 }
 
 /** 앵커 왼쪽 끝에 맞춰 아래로 여는 한 문장 팝오버. 시트 안에 있어 창 밖으로 나갈 오른쪽 여유가 없다. */
 @Composable
-private fun NoticePopover(onDismiss: () -> Unit) {
+private fun NoticePopover(
+    open: Boolean,
+    onDismiss: () -> Unit,
+) {
     val gapPx = with(LocalDensity.current) { ManyakTheme.spacing.inline.roundToPx() }
     val positionProvider =
         remember(gapPx) {
@@ -191,7 +238,9 @@ private fun NoticePopover(onDismiss: () -> Unit) {
                     )
             }
         }
-    Popup(
+    ManyakPopup(
+        visible = open,
+        transformOrigin = TransformOrigin(pivotFractionX = 0f, pivotFractionY = 0f),
         popupPositionProvider = positionProvider,
         onDismissRequest = onDismiss,
         properties = PopupProperties(focusable = true),

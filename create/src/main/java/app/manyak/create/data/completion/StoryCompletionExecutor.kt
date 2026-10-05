@@ -1,5 +1,7 @@
 package app.manyak.create.data.completion
 
+import app.manyak.analytics.domain.Analytics
+import app.manyak.analytics.entity.AnalyticsEvent
 import app.manyak.auth.domain.AuthWork
 import app.manyak.auth.domain.SessionGate
 import app.manyak.common.data.di.ApplicationScope
@@ -37,7 +39,7 @@ import javax.inject.Singleton
  * 저장소에 닿지 않는다.
  *
  * 같은 requestId 의 전송만 합류시키고 요청끼리는 직렬화하지 않는다 — 완성 POST 는 오래 걸리므로
- * 하나가 도는 동안에도 다른 요청을 낼 수 있어야 한다. 결과는 requestId 행만 갱신하고 편집 슬롯은
+ * 하나가 도는 동안에도 다른 요청을 낼 수 있어야 한다. 결과는 requestId 행만 갱신하고 편집 초안은
  * 건드리지 않는다.
  */
 @Singleton
@@ -50,6 +52,7 @@ class StoryCompletionExecutor
         private val gate: SessionGate,
         @param:ApplicationScope private val applicationScope: CoroutineScope,
         private val trialsRepository: TrialsRepository,
+        private val analytics: Analytics,
     ) : StoryCompletionSubmitter,
         CreationProgressAccess {
         private val inFlightLock = Any()
@@ -57,15 +60,19 @@ class StoryCompletionExecutor
         private val refreshMutex = Mutex()
         private var refreshJob: Job? = null
 
-        override val progress: Flow<CreationProgressSummary?> = draftStore.record.map { it?.toProgressSummary() }
+        override val drafts: Flow<List<CreationProgressSummary>> =
+            draftStore.drafts.map { drafts -> drafts.map { it.toProgressSummary() } }
 
         override val completionRequests: Flow<List<CompletionRequestSummary>> =
             requestStore.requests.map { requests -> requests.map(StoryCompletionRequest::toSummary) }
 
-        override suspend fun discard(): Boolean = draftStore.clear()
+        override suspend fun discard(draftId: String): Boolean = draftStore.clear(draftId)
 
-        override suspend fun submit(request: StoryCompletionRequest): Boolean {
-            if (!requestStore.submit(request)) return false
+        override suspend fun submit(
+            request: StoryCompletionRequest,
+            draftId: String,
+        ): Boolean {
+            if (!requestStore.submit(request, draftId)) return false
             send(request.command)
             return true
         }
@@ -131,13 +138,17 @@ class StoryCompletionExecutor
                 }
             }
 
-        /** 완성 한 건이 제작 체험 한 회를 썼을 수 있다. 다음 완성 비용이 낡은 잔여로 그려지지 않게 다시 읽는다. */
+        /**
+         * 완성 한 건이 제작 체험 한 회를 썼을 수 있다. 다음 완성 비용이 낡은 잔여로 그려지지 않게 다시 읽는다.
+         * 원 응답과 새로고침 판정이 모두 여기로 모이므로 완성 분석 이벤트도 여기서 한 번 낸다.
+         */
         private suspend fun markCompleted(
             work: AuthWork,
             requestId: String,
             story: CompletedStory,
         ) {
-            gate.commit(work) { requestStore.markCompleted(requestId, story) } ?: return
+            val marked = gate.commit(work) { requestStore.markCompleted(requestId, story) } ?: return
+            if (marked) analytics.track(AnalyticsEvent.StoryCreateCompleted(story.id))
             trialsRepository.refresh()
         }
 

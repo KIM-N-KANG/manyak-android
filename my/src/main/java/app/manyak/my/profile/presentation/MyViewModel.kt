@@ -41,6 +41,7 @@ sealed interface MyIntent {
 
 data class MyUiState(
     val profile: UserProfile? = null,
+    val isRefreshingProfile: Boolean = false,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val isLoggingOut: Boolean = false,
     /** 확인 다이얼로그가 떠 있는 대상 제공자. 없으면 다이얼로그가 닫혀 있다. */
@@ -50,6 +51,10 @@ data class MyUiState(
 )
 
 sealed interface MyEvent {
+    data class ProfileRefreshChanged(
+        val loading: Boolean,
+    ) : MyEvent
+
     data class ProfileChanged(
         val profile: UserProfile?,
     ) : MyEvent
@@ -140,6 +145,7 @@ class MyViewModel
             event: MyEvent,
         ): MyUiState =
             when (event) {
+                is MyEvent.ProfileRefreshChanged -> state.copy(isRefreshingProfile = event.loading)
                 is MyEvent.ProfileChanged -> state.copy(profile = event.profile)
                 is MyEvent.ThemeModeChanged -> state.copy(themeMode = event.mode)
                 MyEvent.LogOutStarted -> state.copy(isLoggingOut = true)
@@ -168,7 +174,12 @@ class MyViewModel
         /** 실패는 캐시된 값을 그대로 두는 것으로 흡수한다. 세션 상태를 바꾸지 않는다. */
         private suspend fun refreshProfile() {
             lastRefreshMark = TimeSource.Monotonic.markNow()
-            userProfileRepository.refresh()
+            dispatchEvent(MyEvent.ProfileRefreshChanged(true))
+            try {
+                userProfileRepository.refresh()
+            } finally {
+                dispatchEvent(MyEvent.ProfileRefreshChanged(false))
+            }
         }
 
         /**

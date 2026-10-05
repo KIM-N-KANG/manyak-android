@@ -24,7 +24,7 @@ Android의 간편 제작·제작 목록·해당 저장 및 복구 흐름을 변�
 | 제작 탭 | `CreationProgressCard`(Draft/Completing/Completed/Failed) — 회색 표지 + `ic_manyak_symbol`(`textDisabled`), 제목 `textSubtle`, 40dp `sizes.controlCompact` 버튼(터치 48dp는 M3 기본 유지), 완성 중은 스피너 + 접근성 문구. 목록 키 `draft`/`completion:<id>`/`story:<id>`. 로컬 카드가 있으면 로딩·실패·빈 목록 대신 목록으로 그려 새로고침 유지, 목록 실패는 목록 끝 재시도 항목. 완료 요청은 목록에 같은 storyId가 있으면 행 삭제, 없으면 목록 1회 재조회 |
 | 폴링 | (2026-09-09 사용자 결정) 완성 중 카드가 보이는 동안만 `StudioViewModel.drivePendingCompletionPolling`이 STARTED 게이트 아래 5초마다 `refreshCompletionRequests()`를 부름. 카드가 없거나 탭을 벗어나면 멈춤 |
 | 정리 | (2026-09-08 사용자 결정으로 변경) 두 스토어를 `UserScopedStoreModule`에서 빼고 DB v3 `ownerId` 컬럼으로 회원별 격리. 스토어가 `UserProfileRepository.profile.id`의 행만 읽고 쓰며, 실행자가 로그인 회원 변경 시 소유자 없는 이전 버전 행을 `claimUnowned`로 넘겨받음. 한계: 편집 슬롯은 기기당 한 행이라 다른 회원의 새 초안이 이전 초안을 덮음, 탈퇴 회원 행은 숨은 채 남음 |
-| 분석 | `client_storyCreate_completed`는 `chat_id` 필수라 수집 중단(가짜 ID 금지). `storyCompletion_requested`·`completeError_shown(story)` 유지 |
+| 분석 | `client_storyCreate_completed`는 `spec/6-analytics.md`에서 `chat_id`가 빠진 뒤(KNK-1387) `StoryCompletionExecutor.markCompleted`가 요청 행을 완성으로 확정할 때 `story_id`만 실어 발화(KNK-1388). 원 응답·새로고침 판정 모두 이 지점을 거치고 새로고침은 미확정 요청만 조회해 같은 요청에 두 번 나가지 않음. `storyCompletion_requested`·`completeError_shown(story)` 유지 |
 
 ### 잠정 구현(확인 필요)
 
@@ -115,7 +115,7 @@ Android의 간편 제작·제작 목록·해당 저장 및 복구 흐름을 변�
 | 항목 | 제안과 필요한 확인 | 막는 단계 |
 | --- | --- | --- |
 | A 완성 확정 실패 중 B 초안 존재 | A 입력을 실패 요청에 보존하고 스피너를 멈춘 실패 상태를 표시합니다. 같은 명령 재시도는 A의 requestId를 재사용합니다. 편집 복귀는 슬롯이 비어 있을 때만 옮기고, B가 있으면 먼저 B를 완료하거나 명시적으로 삭제하도록 안내합니다. B 자동 덮어쓰기·복수 편집 초안·실패 입력 자동 폐기를 금지합니다. 실패 카드 문구/버튼 노출은 제품 확인 후 확정합니다. | 실패 상태 UI 완료 판정 |
-| 완료 분석 이벤트의 필수 chatId | `spec/6-analytics.md`는 `client_storyCreate_completed.chat_id`를 필수로 규정합니다. Android에서 실제 스토리 완료를 수집하되 chat_id를 선택으로 바꾸는 안을 제안합니다. 분석 정본·소비 쿼리와 합의 전 임의 이벤트명·가짜 chatId를 만들지 않습니다. | 완료 분석 계약 변경 |
+| 완료 분석 이벤트의 필수 chatId | `spec/6-analytics.md`는 `client_storyCreate_completed.chat_id`를 필수로 규정합니다. Android에서 실제 스토리 완료를 수집하되 chat_id를 선택으로 바꾸는 안을 제안합니다. 분석 정본·소비 쿼리와 합의 전 임의 이벤트명·가짜 chatId를 만들지 않습니다. (KNK-1387에서 `chat_id` 제거로 확정, KNK-1388에서 발화 구현) | 완료 분석 계약 변경 |
 | 저장 DDL·업그레이드 | 위 보존 설계를 기반으로 실제 schema diff와 v1 변환 예시를 구현 전에 검토합니다. 데이터 폐기나 새 외부 계약이 필요한 변경만 별도로 승인받습니다. | 마이그레이션 적용 |
 
 ## 의존 순서와 완료 조건

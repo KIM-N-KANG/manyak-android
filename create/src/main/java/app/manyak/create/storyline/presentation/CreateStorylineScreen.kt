@@ -65,10 +65,14 @@ import app.manyak.create.R as CreateR
  */
 @Composable
 fun CreateStorylineScreen(
+    draftId: String,
     onLeaveFunnel: () -> Unit,
     onOpenAdditionalInfoStep: (storylineIndex: Int) -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: CreateStorylineViewModel = hiltViewModel(),
+    viewModel: CreateStorylineViewModel =
+        hiltViewModel<CreateStorylineViewModel, CreateStorylineViewModel.Factory>(
+            creationCallback = { factory -> factory.create(draftId) },
+        ),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val draftSave by viewModel.draftSave.collectAsStateWithLifecycle()

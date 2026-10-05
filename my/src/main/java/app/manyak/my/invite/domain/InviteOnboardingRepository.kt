@@ -15,6 +15,6 @@ import kotlinx.coroutines.flow.Flow
 interface InviteOnboardingRepository : SignupOnboardingWriter {
     val pending: Flow<Boolean>
 
-    /** 사용자가 등록했거나 건너뛰었다. 실패해도 화면은 닫고, 다음 실행에서 다시 뜬다. */
-    suspend fun acknowledge()
+    /** 사용자가 등록했거나 건너뛰었다. 실패하면 false를 반환한다. 화면은 닫고 실패를 안내하며 다음 실행에서 다시 뜰 수 있다. */
+    suspend fun acknowledge(): Boolean
 }

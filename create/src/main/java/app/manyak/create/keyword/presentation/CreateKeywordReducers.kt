@@ -11,7 +11,10 @@ internal fun reduceKeywordState(
         // 복원한 화면은 디스크와 같은 상태다. 되살린 결과에서 다시 뽑아 기준선으로 삼는다 —
         // 저장본에 없던 빈 인물 섹션처럼 복원이 채워 넣은 것까지 변경으로 세지 않기 위해서다.
         is CreateKeywordEvent.SnapshotRestored ->
-            event.snapshot.toKeywordUiState(state).let { it.copy(savedSnapshot = it.toKeywordSnapshot()) }
+            event.snapshot
+                .toKeywordUiState(
+                    state,
+                ).let { it.copy(savedSnapshot = it.toKeywordSnapshot()).reconcileGenres() }
 
         CreateKeywordEvent.RestoreFinished ->
             state.copy(isRestoring = false, savedSnapshot = state.toKeywordSnapshot())
@@ -25,7 +28,7 @@ internal fun reduceKeywordState(
                 state.copy(draftSaveStatus = DraftSaveStatus.IDLE)
             }
 
-        CreateKeywordEvent.DraftSavedDisplayExpired ->
+        CreateKeywordEvent.DraftSaveLockExpired ->
             if (state.draftSaveStatus == DraftSaveStatus.SAVED) {
                 state.copy(draftSaveStatus = DraftSaveStatus.IDLE)
             } else {
@@ -45,7 +48,11 @@ private fun reduceKeywordContent(
         is CreateKeywordEvent.TagsLoaded -> state.copy(providedTags = ProvidedTags.Loaded(event.byCategory))
         CreateKeywordEvent.TagsLoadFailed -> state.copy(providedTags = ProvidedTags.Failed)
         CreateKeywordEvent.TagsReloadStarted -> state.copy(providedTags = ProvidedTags.Loading)
-        is CreateKeywordEvent.CategoryChanged -> state.copy(activeCategory = event.category)
+        is CreateKeywordEvent.CategoryChanged ->
+            state.copy(
+                activeCategory = event.category,
+                genrePicker = state.genrePicker.copy(expanded = false),
+            )
         is CreateKeywordEvent.ValidationFailed -> state.copy(validationErrorCategory = event.category)
         CreateKeywordEvent.GenerateAttempted -> state.copy(hasAttemptedGenerate = true)
         CreateKeywordEvent.StorylineGenerationStarted -> state.copy(isGeneratingStorylines = true)
@@ -94,10 +101,19 @@ private fun reduceKeywordInput(
                 nextSupportingId = state.nextSupportingId + 1,
             )
 
-        is CreateKeywordEvent.SupportingCharacterRemoved ->
-            state.copy(supportingCharacters = state.supportingCharacters.filterNot { it.id == event.characterId })
+        is CreateKeywordEvent.SupportingCharacterToggled ->
+            state.copy(collapsedCharacterIds = state.collapsedCharacterIds.toggle(event.characterId))
 
-        else -> state
+        is CreateKeywordEvent.RemoveCharacterRequested -> state.copy(pendingRemoveCharacterId = event.characterId)
+
+        is CreateKeywordEvent.SupportingCharacterRemoved ->
+            state.copy(
+                supportingCharacters = state.supportingCharacters.filterNot { it.id == event.characterId },
+                collapsedCharacterIds = state.collapsedCharacterIds - event.characterId,
+                pendingRemoveCharacterId = null,
+            )
+
+        else -> reduceGenrePicker(state, event)
     }
 
 private fun Set<Long>.toggle(id: Long): Set<Long> = if (id in this) this - id else this + id
@@ -121,7 +137,7 @@ private fun CreateKeywordUiState.updateCustomTags(
     transform: (List<CustomTag>) -> List<CustomTag>,
 ): CreateKeywordUiState =
     when (target) {
-        KeywordTarget.Genre -> copy(customGenreTags = transform(customGenreTags))
+        KeywordTarget.Genre -> this
         else -> updateTarget(target) { it.copy(customTags = transform(it.customTags)) }
     }
 
@@ -130,4 +146,26 @@ private fun CreateKeywordUiState.clearValidationErrorIfComplete(category: StoryT
         copy(validationErrorCategory = null)
     } else {
         this
+    }
+
+internal fun CreateKeywordUiState.supportingCharacterEvent(intent: CreateKeywordIntent): CreateKeywordEvent? =
+    when (intent) {
+        CreateKeywordIntent.AddSupportingCharacter ->
+            CreateKeywordEvent.SupportingCharacterAdded.takeIf {
+                supportingCharacters.size < CreateKeywordUiState.SUPPORTING_CHARACTER_MAX
+            }
+        is CreateKeywordIntent.RemoveSupportingCharacter ->
+            supportingCharacters.firstOrNull { it.id == intent.characterId }?.let { character ->
+                if (character.hasInput) {
+                    CreateKeywordEvent.RemoveCharacterRequested(character.id)
+                } else {
+                    CreateKeywordEvent.SupportingCharacterRemoved(character.id)
+                }
+            }
+        is CreateKeywordIntent.ToggleSupportingCharacter ->
+            CreateKeywordEvent.SupportingCharacterToggled(intent.characterId)
+        CreateKeywordIntent.ConfirmRemoveSupportingCharacter ->
+            pendingRemoveCharacterId?.let(CreateKeywordEvent::SupportingCharacterRemoved)
+        CreateKeywordIntent.DismissRemoveSupportingCharacter -> CreateKeywordEvent.RemoveCharacterRequested(null)
+        else -> null
     }

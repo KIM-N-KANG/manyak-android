@@ -9,7 +9,7 @@ import org.junit.Test
 class CreateKeywordUiStateTest {
     @Test
     fun `앞선 필수 카테고리가 완료되어야 다음 카테고리가 잠금 해제된다`() {
-        val empty = CreateKeywordUiState()
+        val empty = CreateKeywordUiState(genrePicker = loadedGenres())
         assertTrue(empty.isUnlocked(StoryTagCategory.GENRE))
         assertFalse(empty.isUnlocked(StoryTagCategory.PROTAGONIST))
         assertFalse(empty.isUnlocked(StoryTagCategory.SUPPORTING_CHARACTER))
@@ -23,13 +23,14 @@ class CreateKeywordUiStateTest {
     }
 
     @Test
-    fun `선택 상한은 제공 태그와 선택된 커스텀 태그를 합산한다`() {
+    fun `장르 선택 상한에는 이전 직접 입력을 합산하지 않는다`() {
         val state =
             CreateKeywordUiState(
                 selectedGenreTagIds = setOf(1L, 2L),
                 customGenreTags = listOf(CustomTag(name = "타임루프", selected = true)),
             )
-        assertTrue(state.isAtSelectionCap(KeywordTarget.Genre))
+        assertFalse(state.isAtSelectionCap(KeywordTarget.Genre))
+        assertTrue(state.copy(selectedGenreTagIds = setOf(1L, 2L, 3L)).isAtSelectionCap(KeywordTarget.Genre))
 
         val deselectedCustom = state.copy(customGenreTags = listOf(CustomTag(name = "타임루프", selected = false)))
         assertFalse(deselectedCustom.isAtSelectionCap(KeywordTarget.Genre))
@@ -65,7 +66,7 @@ class CreateKeywordUiStateTest {
 
     @Test
     fun `스토리라인 생성은 장르·주인공 완료와 이름 중복 없음을 모두 요구한다`() {
-        val incomplete = CreateKeywordUiState(selectedGenreTagIds = setOf(1L))
+        val incomplete = CreateKeywordUiState(selectedGenreTagIds = setOf(1L), genrePicker = loadedGenres())
         assertFalse(incomplete.canGenerateStorylines)
 
         val complete =
@@ -86,3 +87,10 @@ class CreateKeywordUiStateTest {
         assertFalse(CreateKeywordUiState(providedTags = ProvidedTags.Failed).isFooterEnabled)
     }
 }
+
+private fun loadedGenres() =
+    GenrePickerState(
+        catalog =
+            app.manyak.create.entity
+                .GenreCatalog(emptyList(), emptyList()),
+    )

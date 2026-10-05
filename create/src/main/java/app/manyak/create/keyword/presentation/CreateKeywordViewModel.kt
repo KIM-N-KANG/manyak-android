@@ -9,6 +9,7 @@ import app.manyak.common.presentation.mvi.MviViewModel
 import app.manyak.create.domain.PendingStoryCreationStore
 import app.manyak.create.domain.StoryCreationRepository
 import app.manyak.create.entity.CharacterGender
+import app.manyak.create.entity.GenreCatalog
 import app.manyak.create.entity.KeywordCharacterSnapshot
 import app.manyak.create.entity.KeywordCustomTagSnapshot
 import app.manyak.create.entity.KeywordDraftSnapshot
@@ -16,19 +17,21 @@ import app.manyak.create.entity.PendingStoryCreation
 import app.manyak.create.entity.StoryCharacterInput
 import app.manyak.create.entity.StoryTag
 import app.manyak.create.entity.StoryTagCategory
-import app.manyak.create.presentation.state.DRAFT_SAVED_DISPLAY_MS
+import app.manyak.create.presentation.state.DRAFT_SAVE_LOCK_MS
 import app.manyak.create.presentation.state.DraftSaveStatus
 import app.manyak.create.presentation.state.DraftSaveUiState
 import app.manyak.create.presentation.state.FunnelExitWarning
 import app.manyak.create.presentation.state.StorylineGenerationInput
 import app.manyak.create.presentation.state.StorylineGenerationStore
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.text.Normalizer
-import javax.inject.Inject
 
 /** 직접 추가한 키워드는 선택 해제해도 목록에 남는다. */
 data class CustomTag(
@@ -44,6 +47,9 @@ data class KeywordCharacter(
     val selectedTagIds: Set<Long> = emptySet(),
     val customTags: List<CustomTag> = emptyList(),
 ) {
+    val hasInput: Boolean
+        get() = name.isNotBlank() || gender != null || selectedTagIds.isNotEmpty() || customTags.isNotEmpty()
+
     val featureCount: Int get() = selectedTagIds.size + customTags.count { it.selected }
 }
 
@@ -101,12 +107,16 @@ data class CreateKeywordUiState(
     val providedTags: ProvidedTags = ProvidedTags.Loading,
     val selectedGenreTagIds: Set<Long> = emptySet(),
     val customGenreTags: List<CustomTag> = emptyList(),
+    val addedGenreTagIds: List<Long> = emptyList(),
+    val genrePicker: GenrePickerState = GenrePickerState(),
     val protagonist: KeywordCharacter = KeywordCharacter(id = PROTAGONIST_ID),
     /** 퍼널 진입 시 빈 주변 인물 입력 섹션 1개가 놓여 있다. 빈 섹션도 인원으로 센다. */
     val supportingCharacters: List<KeywordCharacter> = listOf(KeywordCharacter(id = FIRST_SUPPORTING_ID)),
     val nextSupportingId: Long = FIRST_SUPPORTING_ID + 1,
+    val collapsedCharacterIds: Set<Long> = emptySet(),
+    val pendingRemoveCharacterId: Long? = null,
 ) {
-    val genreSelectedCount: Int get() = selectedGenreTagIds.size + customGenreTags.count { it.selected }
+    val genreSelectedCount: Int get() = selectedGenreTagIds.size
 
     /**
      * 주인공과 주변 인물의 이름은 한 스토리 안에서 겹칠 수 없다. 판정 키는 서버와 같다 —
@@ -139,7 +149,7 @@ data class CreateKeywordUiState(
 
     fun isComplete(category: StoryTagCategory): Boolean =
         when (category) {
-            StoryTagCategory.GENRE -> genreSelectedCount > 0
+            StoryTagCategory.GENRE -> genrePicker.catalog != null && genreSelectedCount > 0
             StoryTagCategory.PROTAGONIST -> protagonist.featureCount > 0
             StoryTagCategory.SUPPORTING_CHARACTER -> true
         }
@@ -169,12 +179,7 @@ data class CreateKeywordUiState(
         get() {
             val unsaved = hasUnsavedChanges
             return DraftSaveUiState(
-                status =
-                    if (draftSaveStatus == DraftSaveStatus.SAVED && unsaved) {
-                        DraftSaveStatus.IDLE
-                    } else {
-                        draftSaveStatus
-                    },
+                status = draftSaveStatus,
                 // 입력을 모두 지운 변경도 저장 대상이다 — 그래야 남아 있는 저장본이 함께 사라진다.
                 canSave = !isRestoring && unsaved,
                 hasUnsavedChanges = unsaved,
@@ -202,6 +207,22 @@ private fun normalizeName(name: String): String? {
 }
 
 sealed interface CreateKeywordIntent {
+    sealed interface GenreInput : CreateKeywordIntent
+
+    data class SearchGenres(
+        val query: String,
+    ) : GenreInput
+
+    data class ExpandGenres(
+        val expanded: Boolean,
+    ) : GenreInput
+
+    data class SelectGenre(
+        val id: Long,
+    ) : GenreInput
+
+    data object RetryGenres : GenreInput
+
     data class SelectCategory(
         val category: StoryTagCategory,
     ) : CreateKeywordIntent
@@ -252,6 +273,14 @@ sealed interface CreateKeywordIntent {
         val gender: CharacterGender?,
     ) : CreateKeywordIntent
 
+    data class ToggleSupportingCharacter(
+        val characterId: Long,
+    ) : CreateKeywordIntent
+
+    data object ConfirmRemoveSupportingCharacter : CreateKeywordIntent
+
+    data object DismissRemoveSupportingCharacter : CreateKeywordIntent
+
     data object AddSupportingCharacter : CreateKeywordIntent
 
     data class RemoveSupportingCharacter(
@@ -260,6 +289,33 @@ sealed interface CreateKeywordIntent {
 }
 
 sealed interface CreateKeywordEvent {
+    data class GenreCatalogLoaded(
+        val catalog: GenreCatalog,
+    ) : CreateKeywordEvent
+
+    data object GenreCatalogFailed : CreateKeywordEvent
+
+    data class GenreQueryChanged(
+        val query: String,
+    ) : CreateKeywordEvent
+
+    data class GenreExpandedChanged(
+        val expanded: Boolean,
+    ) : CreateKeywordEvent
+
+    data class GenreSearchFinished(
+        val query: String,
+        val result: DomainResult<GenreCatalog>,
+    ) : CreateKeywordEvent
+
+    data class GenreSearchLoading(
+        val query: String,
+    ) : CreateKeywordEvent
+
+    data class GenreSelected(
+        val id: Long,
+    ) : CreateKeywordEvent
+
     /** 키워드 임시 저장본이 도착했다. */
     data class SnapshotRestored(
         val snapshot: KeywordDraftSnapshot,
@@ -275,8 +331,8 @@ sealed interface CreateKeywordEvent {
         val saved: Boolean,
     ) : CreateKeywordEvent
 
-    /** 저장 성공 표시 시간이 지났다. */
-    data object DraftSavedDisplayExpired : CreateKeywordEvent
+    /** 저장 성공 뒤의 버튼 잠금 시간이 지났다. */
+    data object DraftSaveLockExpired : CreateKeywordEvent
 
     data class ExitWarningChanged(
         val warning: FunnelExitWarning?,
@@ -327,6 +383,14 @@ sealed interface CreateKeywordEvent {
         val gender: CharacterGender?,
     ) : CreateKeywordEvent
 
+    data class SupportingCharacterToggled(
+        val characterId: Long,
+    ) : CreateKeywordEvent
+
+    data class RemoveCharacterRequested(
+        val characterId: Long?,
+    ) : CreateKeywordEvent
+
     data object SupportingCharacterAdded : CreateKeywordEvent
 
     data class SupportingCharacterRemoved(
@@ -342,10 +406,11 @@ sealed interface CreateKeywordEffect {
     data object ExitFunnel : CreateKeywordEffect
 }
 
-@HiltViewModel
+@HiltViewModel(assistedFactory = CreateKeywordViewModel.Factory::class)
 class CreateKeywordViewModel
-    @Inject
+    @AssistedInject
     constructor(
+        @Assisted private val draftId: String,
         private val storyCreationRepository: StoryCreationRepository,
         private val storylineGenerationStore: StorylineGenerationStore,
         private val pendingCreationStore: PendingStoryCreationStore,
@@ -354,8 +419,15 @@ class CreateKeywordViewModel
             CreateKeywordUiState(),
         ) {
         private var tagsLoadJob: Job? = null
+        private val genreSearch =
+            GenreSearch(
+                repository = storyCreationRepository,
+                scope = viewModelScope,
+                state = { uiState.value },
+                onEvent = { dispatchEvent(it) },
+            )
         private var draftSaveJob: Job? = null
-        private var savedDisplayJob: Job? = null
+        private var saveLockJob: Job? = null
 
         /**
          * 디스크에 마지막으로 써 넣은 스냅숏. 연타로 같은 내용을 다시 쓰지 않기 위한 장부다.
@@ -364,12 +436,14 @@ class CreateKeywordViewModel
         private var persistedSnapshot: KeywordDraftSnapshot? = null
 
         init {
+            storylineGenerationStore.bind(draftId)
             analytics.track(AnalyticsEvent.StoryCreateViewed)
             analytics.track(AnalyticsEvent.StoryCreateStepViewed(CreateStep.KEYWORD))
             startTagsLoad()
+            genreSearch.loadCatalog()
             viewModelScope.launch {
-                // 레코드가 남아 있는 진입은 곧 재개다. 재개 의도를 따로 저장하지 않는다.
-                val record = pendingCreationStore.read()
+                // 라우트의 초안에 키워드 입력이 있으면 재개다. 새 제작은 새 ID 라 읽을 것이 없다.
+                val record = pendingCreationStore.read(draftId)
                 if (record is PendingStoryCreation.KeywordDraft) {
                     persistedSnapshot = record.snapshot
                     dispatchEvent(CreateKeywordEvent.SnapshotRestored(record.snapshot))
@@ -386,8 +460,6 @@ class CreateKeywordViewModel
                     if (showLoading) dispatchEvent(CreateKeywordEvent.TagsReloadStarted)
                     when (val result = storyCreationRepository.tags()) {
                         is DomainResult.Success -> {
-                            // 스토리라인 단계의 "선택한 키워드 보기"가 태그 ID 를 이름으로 풀 때 쓴다.
-                            storylineGenerationStore.cacheTags(result.value)
                             dispatchEvent(CreateKeywordEvent.TagsLoaded(result.value.groupBy(StoryTag::category)))
                         }
 
@@ -399,6 +471,7 @@ class CreateKeywordViewModel
         override suspend fun handleIntent(intent: CreateKeywordIntent) {
             val state = uiState.value
             when (intent) {
+                is CreateKeywordIntent.GenreInput -> genreSearch.handle(intent)
                 is CreateKeywordIntent.SelectCategory ->
                     if (state.isUnlocked(intent.category)) moveToCategory(state, intent.category)
 
@@ -424,17 +497,23 @@ class CreateKeywordViewModel
             state: CreateKeywordUiState,
         ) {
             when (intent) {
-                // 닫기는 상태와 무관하게 늘 확인을 거친다 — 무엇을 잃는지에 따라 문구만 갈린다.
-                CreateKeywordIntent.LeaveFunnel ->
-                    dispatchEvent(
-                        CreateKeywordEvent.ExitWarningChanged(
-                            when {
-                                state.hasUnsavedChanges -> FunnelExitWarning.UNSAVED_CHANGES
-                                pendingCreationStore.read() != null -> FunnelExitWarning.SAVED_DRAFT
-                                else -> FunnelExitWarning.NOTHING_TO_PRESERVE
-                            },
-                        ),
-                    )
+                // 무엇을 잃는지에 따라 경고 문구가 갈린다. 입력한 것도 저장한 것도 없으면 묻지 않고 나간다.
+                CreateKeywordIntent.LeaveFunnel -> {
+                    val saved = pendingCreationStore.read(draftId) != null
+                    val warning =
+                        when {
+                            state.hasUnsavedChanges && saved -> FunnelExitWarning.UNSAVED_CHANGES
+                            state.hasUnsavedChanges -> FunnelExitWarning.UNSAVED_INPUT
+                            saved -> FunnelExitWarning.SAVED_DRAFT
+                            else -> null
+                        }
+                    if (warning != null) {
+                        dispatchEvent(CreateKeywordEvent.ExitWarningChanged(warning))
+                    } else {
+                        analytics.track(AnalyticsEvent.CreateExitButtonClicked(CreateStep.KEYWORD))
+                        leaveFunnel()
+                    }
+                }
 
                 CreateKeywordIntent.ConfirmLeaveFunnel -> {
                     analytics.track(AnalyticsEvent.CreateExitButtonClicked(CreateStep.KEYWORD))
@@ -475,15 +554,7 @@ class CreateKeywordViewModel
                 is CreateKeywordIntent.ChangeCharacterGender ->
                     dispatchEvent(CreateKeywordEvent.CharacterGenderChanged(intent.target, intent.gender))
 
-                CreateKeywordIntent.AddSupportingCharacter ->
-                    if (state.supportingCharacters.size < CreateKeywordUiState.SUPPORTING_CHARACTER_MAX) {
-                        dispatchEvent(CreateKeywordEvent.SupportingCharacterAdded)
-                    }
-
-                is CreateKeywordIntent.RemoveSupportingCharacter ->
-                    dispatchEvent(CreateKeywordEvent.SupportingCharacterRemoved(intent.characterId))
-
-                else -> Unit
+                else -> state.supportingCharacterEvent(intent)?.let { dispatchEvent(it) }
             }
         }
 
@@ -527,11 +598,11 @@ class CreateKeywordViewModel
                     val state = uiState.first { !it.isRestoring }
                     if (state.isGeneratingStorylines) return@launch
                     val snapshot = state.toKeywordSnapshot()
-                    // 이미 같은 스냅숏이 디스크에 있으면 확인 표시만 다시 보여 준다. 연타로
-                    // 눌러도 디스크는 건드리지 않고, 버튼이 죽은 것처럼 보이지도 않는다.
+                    // 이미 같은 스냅숏이 디스크에 있으면 쓰지 않고 성공으로 끝낸다. 디스크는
+                    // 건드리지 않아도 누른 사람에게는 저장 토스트가 뜬다.
                     if (snapshot != persistedSnapshot) {
                         dispatchEvent(CreateKeywordEvent.DraftSaveStarted)
-                        if (!pendingCreationStore.persistKeywordSnapshot(snapshot)) {
+                        if (!pendingCreationStore.persistKeywordSnapshot(draftId, snapshot)) {
                             dispatchEvent(CreateKeywordEvent.DraftSaveFinished(snapshot, saved = false))
                             return@launch
                         }
@@ -539,23 +610,23 @@ class CreateKeywordViewModel
                         analytics.track(AnalyticsEvent.DraftSaved(CreateStep.KEYWORD))
                     }
                     dispatchEvent(CreateKeywordEvent.DraftSaveFinished(snapshot, saved = true))
-                    scheduleSavedDisplayReset()
+                    scheduleSaveLockRelease()
                 }
         }
 
-        private fun scheduleSavedDisplayReset() {
-            savedDisplayJob?.cancel()
-            savedDisplayJob =
+        private fun scheduleSaveLockRelease() {
+            saveLockJob?.cancel()
+            saveLockJob =
                 viewModelScope.launch {
-                    delay(DRAFT_SAVED_DISPLAY_MS)
-                    dispatchEvent(CreateKeywordEvent.DraftSavedDisplayExpired)
+                    delay(DRAFT_SAVE_LOCK_MS)
+                    dispatchEvent(CreateKeywordEvent.DraftSaveLockExpired)
                 }
         }
 
         /**
          * 키워드 단계 이탈. 저장하지 않은 입력은 사용자가 버리기로 한 것이라 여기서 저장하지 않는다.
          *
-         * 뒤 단계의 진행 중 레코드가 슬롯에 있으면 건드리지 않는다 — 서버에서 실제로 돌고 있는
+         * 뒤 단계의 진행 중 레코드가 이 초안에 있으면 건드리지 않는다 — 서버에서 실제로 돌고 있는
          * 복구 대상이 우선한다. 그 판정과 정리는 스토어가 소유하므로 여기서는 넘기기만 한다.
          */
         private suspend fun leaveFunnel() {
@@ -578,6 +649,20 @@ class CreateKeywordViewModel
             draftSaveJob?.join()
             dispatchEvent(CreateKeywordEvent.StorylineGenerationStarted)
             analytics.track(AnalyticsEvent.StoryGenerationRequested)
+            val characterTags =
+                (state.providedTags as? ProvidedTags.Loaded)
+                    ?.byCategory
+                    ?.values
+                    ?.flatten()
+                    .orEmpty()
+            storylineGenerationStore.cacheTags(
+                (
+                    characterTags +
+                        state.genrePicker.catalog
+                            ?.genres
+                            .orEmpty()
+                ).distinctBy(StoryTag::id),
+            )
             storylineGenerationStore.generate(state.toGenerationInput())
             dispatchEffect(CreateKeywordEffect.NavigateToStoryline)
         }
@@ -586,12 +671,22 @@ class CreateKeywordViewModel
             state: CreateKeywordUiState,
             event: CreateKeywordEvent,
         ): CreateKeywordUiState = reduceKeywordState(state, event)
+
+        @AssistedFactory
+        interface Factory {
+            fun create(draftId: String): CreateKeywordViewModel
+        }
     }
 
 /** 선택 상한에 걸리면 이벤트를 내지 않는다. 판정 재료가 모두 상태라 상태 옆에 둔다. */
 private fun CreateKeywordUiState.providedTagToggleEvent(
     intent: CreateKeywordIntent.ToggleProvidedTag,
 ): CreateKeywordEvent? {
+    if (intent.target == KeywordTarget.Genre &&
+        (isRestoring || genrePicker.catalog?.genres?.none { it.id == intent.tagId } != false)
+    ) {
+        return null
+    }
     val selecting =
         when (intent.target) {
             KeywordTarget.Genre -> intent.tagId !in selectedGenreTagIds
@@ -604,38 +699,39 @@ private fun CreateKeywordUiState.providedTagToggleEvent(
 private fun CreateKeywordUiState.customTagToggleEvent(
     intent: CreateKeywordIntent.ToggleCustomTag,
 ): CreateKeywordEvent? {
-    val customTags =
-        when (intent.target) {
-            KeywordTarget.Genre -> customGenreTags
-            else -> character(intent.target)?.customTags ?: return null
-        }
+    val customTags = character(intent.target)?.customTags ?: return null
     val tag = customTags.getOrNull(intent.index) ?: return null
     if (!tag.selected && isAtSelectionCap(intent.target)) return null
     return CreateKeywordEvent.CustomTagToggled(intent.target, intent.index)
 }
 
 private fun CreateKeywordUiState.customTagAddEvent(intent: CreateKeywordIntent.AddCustomTag): CreateKeywordEvent? {
+    if (intent.target == KeywordTarget.Genre) return null
     val name = intent.name.trim().take(CreateKeywordUiState.CUSTOM_TAG_MAX_LENGTH)
     if (name.isEmpty()) return null
     if (isAtSelectionCap(intent.target)) return null
     return CreateKeywordEvent.CustomTagAdded(intent.target, name)
 }
 
-/** 뒤 단계의 생성·완성·결과 레코드는 키워드 편집본보다 우선한다. */
-private suspend fun PendingStoryCreationStore.persistKeywordSnapshot(snapshot: KeywordDraftSnapshot): Boolean {
-    val current = read()
+/** 같은 초안의 뒤 단계 생성·결과 레코드는 키워드 편집본보다 우선한다. */
+private suspend fun PendingStoryCreationStore.persistKeywordSnapshot(
+    draftId: String,
+    snapshot: KeywordDraftSnapshot,
+): Boolean {
+    val current = read(draftId)
     if (current != null && current !is PendingStoryCreation.KeywordDraft) return false
     // 입력을 모두 지운 상태를 저장하면 남아 있던 저장본도 함께 사라져야 한다.
     if (!snapshot.hasInput) {
-        return if (current is PendingStoryCreation.KeywordDraft) clear() else true
+        return if (current is PendingStoryCreation.KeywordDraft) clear(draftId) else true
     }
-    return write(PendingStoryCreation.KeywordDraft(snapshot))
+    return write(draftId, PendingStoryCreation.KeywordDraft(snapshot))
 }
 
 /** 자동 저장할 편집 상태. 선택 해제된 커스텀 키워드도 그대로 담는다. */
 internal fun CreateKeywordUiState.toKeywordSnapshot(): KeywordDraftSnapshot =
     KeywordDraftSnapshot(
         selectedGenreTagIds = selectedGenreTagIds.toList(),
+        addedGenreTagIds = addedGenreTagIds,
         customGenreTags = customGenreTags.map { KeywordCustomTagSnapshot(it.name, it.selected) },
         protagonist = protagonist.toSnapshot(),
         supportingCharacters = supportingCharacters.map { it.toSnapshot() },
@@ -668,6 +764,7 @@ internal fun KeywordDraftSnapshot.toKeywordUiState(base: CreateKeywordUiState): 
     return base.copy(
         isRestoring = false,
         selectedGenreTagIds = selectedGenreTagIds.toSet(),
+        addedGenreTagIds = addedGenreTagIds,
         customGenreTags = customGenreTags.map { CustomTag(it.name, it.selected) },
         protagonist =
             KeywordCharacter(
@@ -686,10 +783,10 @@ internal fun KeywordDraftSnapshot.toKeywordUiState(base: CreateKeywordUiState): 
     )
 }
 
-private fun CreateKeywordUiState.toGenerationInput(): StorylineGenerationInput =
+internal fun CreateKeywordUiState.toGenerationInput(): StorylineGenerationInput =
     StorylineGenerationInput(
         genreTagIds = selectedGenreTagIds.toList(),
-        customGenreTags = customGenreTags.filter(CustomTag::selected).map(CustomTag::name),
+        customGenreTags = emptyList(),
         protagonist = protagonist.toCharacterInput(),
         // 퍼널 진입 시 놓이는 빈 주변 인물 섹션을 그대로 보내면 의도하지 않은 인물이 AI 로
         // 채워지므로, 아무것도 입력하지 않은 섹션은 인원 의사가 없는 것으로 보고 제외한다.

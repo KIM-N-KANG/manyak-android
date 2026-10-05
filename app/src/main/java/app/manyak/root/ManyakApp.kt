@@ -43,7 +43,10 @@ import app.manyak.common.presentation.error.messageResOrNull
 import app.manyak.core.navigation.ChatRoomRoute
 import app.manyak.core.navigation.CreateAdditionalInfoRoute
 import app.manyak.core.navigation.CreateKeywordRoute
+import app.manyak.core.navigation.CreateMethodRoute
 import app.manyak.core.navigation.CreateStorylineRoute
+import app.manyak.core.navigation.GeneralCreateRoute
+import app.manyak.core.navigation.GeneralSubmissionRoute
 import app.manyak.core.navigation.LegalDocument
 import app.manyak.core.navigation.LegalRoute
 import app.manyak.core.navigation.LoginRoute
@@ -54,6 +57,8 @@ import app.manyak.core.navigation.MyInviteRoute
 import app.manyak.core.navigation.MyOpenSourceLicenseRoute
 import app.manyak.core.navigation.NotificationSettingsRoute
 import app.manyak.core.navigation.StoryDetailRoute
+import app.manyak.core.navigation.StoryEditRoute
+import app.manyak.core.navigation.StudioRoute
 import app.manyak.core.navigation.WithdrawalRoute
 import app.manyak.create.additionalinfo.presentation.CreateAdditionalInfoScreen
 import app.manyak.create.keyword.presentation.CreateKeywordScreen
@@ -63,6 +68,9 @@ import app.manyak.designsystem.component.ManyakProgressIndicator
 import app.manyak.designsystem.component.clearFocusOnTap
 import app.manyak.designsystem.component.rememberDelayedProgressVisibility
 import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.legal.consent.presentation.LegalConsentPhase
+import app.manyak.legal.consent.presentation.LegalConsentSheet
+import app.manyak.legal.consent.presentation.LegalConsentViewModel
 import app.manyak.legal.presentation.LegalDocumentScreen
 import app.manyak.login.presentation.LoginScreen
 import app.manyak.my.credit.presentation.CreditChargeScreen
@@ -71,13 +79,12 @@ import app.manyak.my.invite.presentation.InviteScreen
 import app.manyak.my.licenses.presentation.OpenSourceLicenseScreen
 import app.manyak.my.withdrawal.presentation.WithdrawalScreen
 import app.manyak.notification.settings.presentation.NotificationSettingsScreen
-import app.manyak.story.detail.presentation.StoryDetailScreen
 import app.manyak.R as AppR
 import app.manyak.designsystem.R as DesignsystemR
 
 /**
- * 세션 상태가 어느 그래프를 띄울지 결정한다. 그래프 안에서 가드로 막지 않는다 —
- * 미로그인 상태에서 **메인 목적지가 백스택에 존재할 수 없게** 만들어 가드 누락이 사고가 되지 않게 한다.
+ * 세션과 필수 동의가 어느 그래프를 띄울지 결정한다.
+ * 동의 확인 전에는 메인 목적지가 백스택에 존재하지 않는다.
  *
  * 상태가 미확정인 동안에는 어느 그래프도 그리지 않는다. 로그인 화면이 잠깐 스쳤다가 메인으로 바뀌는
  * 깜빡임을 막기 위해서다.
@@ -86,8 +93,12 @@ import app.manyak.designsystem.R as DesignsystemR
 fun ManyakApp(
     modifier: Modifier = Modifier,
     viewModel: RootViewModel = hiltViewModel(),
+    consentViewModel: LegalConsentViewModel = hiltViewModel(),
 ) {
-    val sessionState by viewModel.sessionState.collectAsStateWithLifecycle()
+    val entryState by viewModel.entryState.collectAsStateWithLifecycle()
+    val sessionState = entryState.session
+    val consentConfirmed by viewModel.isConsentSatisfied.collectAsStateWithLifecycle()
+    val consentState by consentViewModel.uiState.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val creditPolicy by viewModel.creditPolicy.collectAsStateWithLifecycle()
     val trials by viewModel.trials.collectAsStateWithLifecycle()
@@ -110,14 +121,33 @@ fun ManyakApp(
             SystemBarIconAppearance(darkTheme = darkTheme)
             Surface(modifier = modifier.fillMaxSize().clearFocusOnTap(), color = ManyakTheme.colors.surface) {
                 when (val state = sessionState) {
-                    SessionState.Undetermined -> if (showSessionProgress) SessionProgress()
-                    is SessionState.SignedOut -> AuthNavDisplay()
+                    SessionState.Undetermined ->
+                        if (entryState.isStartup) {
+                            StartupScreen(showProgress = showSessionProgress)
+                        } else if (showSessionProgress) {
+                            SessionProgress()
+                        }
+                    is SessionState.SignedOut -> SignupConsentGate(consentState.isSignup, consentViewModel)
                     SessionState.Member -> {
-                        MainNavDisplay(
-                            entryDestination = entryDestination,
-                            onEntryConsumed = viewModel::onEntryConsumed,
-                        )
-                        MemberOverlays(viewModel = viewModel)
+                        MemberConsentGate(
+                            state = consentState,
+                            isStartup = entryState.isStartup,
+                            consentConfirmed = consentConfirmed,
+                            onIntent = consentViewModel::onIntent,
+                            loginContent = { AuthNavDisplay() },
+                            consentContent = {
+                                LegalConsentSheet(
+                                    enabled = !entryState.isStartup || consentState.phase == LegalConsentPhase.REQUIRED,
+                                    viewModel = consentViewModel,
+                                )
+                            },
+                        ) {
+                            MainNavDisplay(
+                                entryDestination = entryDestination,
+                                onEntryConsumed = viewModel::onEntryConsumed,
+                            )
+                            MemberOverlays(viewModel = viewModel, consentViewModel = consentViewModel)
+                        }
                     }
                     // 이전 사용자의 데이터가 남아 있다. 정리가 끝날 때까지 어느 그래프도 열지 않는다.
                     is SessionState.CleanupFailed -> CleanupFailed(state, onRetry = viewModel::onRetryCleanup)
@@ -200,11 +230,11 @@ private fun SessionProgress() {
 }
 
 /**
- * 인증 백스택. 로그인 성공 시 세션 상태가 바뀌며 이 백스택이 통째로 사라지므로,
+ * 인증 백스택. 필수 동의를 확인한 뒤 이 백스택을 통째로 교체하므로,
  * 메인에서 뒤로가기로 로그인 화면에 돌아갈 수 없다.
  */
 @Composable
-private fun AuthNavDisplay() {
+internal fun AuthNavDisplay() {
     val backStack = rememberNavBackStack(LoginRoute)
     val slide = rememberScreenSlideTransitions()
     NavDisplay(
@@ -233,18 +263,17 @@ private fun MainNavDisplay(
     onEntryConsumed: () -> Unit,
 ) {
     val backStack = rememberNavBackStack(MainTabsRoute)
-    // 알림 탭 진입은 셸까지 걷어낸 뒤 목적지 하나만 쌓는다. 홈이면 걷어내기만 한다 — 셸은 이미 있어
-    // push 가 무시된다. 이 그래프는 회원일 때만 그려지므로 미로그인 진입은 로그인 뒤 여기서 소비된다.
+    var selectedTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
+    var studioRefreshRequest by rememberSaveable { mutableStateOf(0) }
+    // 알림 진입은 셸까지 걷어낸 뒤 탭을 선택하거나 상세 하나를 쌓는다.
+    // 이 그래프는 회원일 때만 그려지므로 미로그인 진입은 로그인 뒤 여기서 소비된다.
     LaunchedEffect(entryDestination) {
         val destination = entryDestination ?: return@LaunchedEffect
-        backStack.popToMainTabs()
-        backStack.push(destination)
+        backStack.openExternalDestination(destination)?.let { selectedTab = it }
+        if (destination == StudioRoute) studioRefreshRequest++
         onEntryConsumed()
     }
-    // 셸 밖에서도 탭을 바꿀 수 있어야 한다 — 채팅을 지우면 방을 걷어내고 채팅 탭을 편다.
-    var selectedTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
     val slide = rememberScreenSlideTransitions()
-    val creationFunnelMetadata = rememberCreationFunnelMetadata()
     NavDisplay(
         backStack = backStack,
         entryDecorators = rememberManyakEntryDecorators(),
@@ -256,6 +285,7 @@ private fun MainNavDisplay(
                 entry<MainTabsRoute> {
                     MainTabsScreen(
                         selectedTab = selectedTab,
+                        studioRefreshRequest = studioRefreshRequest,
                         onSelectTab = { tab -> selectedTab = tab },
                         // 상세는 셸 위에 쌓여 헤더도 하단 탭도 없는 전체 화면이 되고, 뒤로가기는
                         // 셸이 든 선택 탭으로 그대로 돌아온다.
@@ -263,9 +293,14 @@ private fun MainNavDisplay(
                         // 채팅 목록에서 이어가기 — 상세에서 시작한 채팅과 같은 목적지를 쌓고,
                         // 뒤로가기는 채팅 탭으로 돌아온다.
                         onOpenChat = { chatId -> backStack.push(ChatRoomRoute(chatId)) },
-                        onCreateStory = { backStack.push(CreateKeywordRoute) },
+                        // 제작 방식을 고른 뒤 초안 ID를 정해 복원 가능한 라우트로 진입한다.
+                        onCreateStory = { backStack.push(CreateMethodRoute) },
+                        onEditStory = { backStack.push(StoryEditRoute(it)) },
+                        onEditSubmission = { backStack.push(GeneralSubmissionRoute(it)) },
                         // 재개·복구 진입 — 레코드가 가리키는 단계까지 체인을 쌓는다.
-                        onResumeCreation = { resumePoint -> backStack.addCreationResumeChain(resumePoint) },
+                        onResumeCreation = { draftId, resumePoint ->
+                            backStack.addCreationResumeChain(draftId, resumePoint)
+                        },
                         // 마이 하위 목적지들 — 셸 위에 쌓이는 전체 화면이고 뒤로가기는 마이 탭으로 돌아온다.
                         onOpenInvite = { backStack.push(MyInviteRoute) },
                         onOpenServiceInfo = { backStack.push(LegalRoute(LegalDocument.ABOUT)) },
@@ -277,16 +312,12 @@ private fun MainNavDisplay(
                     )
                 }
                 myDestinationEntries(backStack)
-                entry<StoryDetailRoute> { route ->
-                    StoryDetailScreen(
-                        storyId = route.storyId,
-                        onBack = { backStack.pop() },
-                        // 상세를 걷어내지 않고 그 위에 쌓는다 — 채팅방 뒤로가기가 방금 보던
-                        // 스토리로 돌아온다(웹 `replace` 와 갈리는 앱 전용 차이).
-                        onEnterChat = { chatId -> backStack.push(ChatRoomRoute(chatId)) },
-                    )
+                storyDetailEntry(backStack) { selectedTab = MainTab.STUDIO }
+                generalStoryEntries(backStack) {
+                    selectedTab = MainTab.STUDIO
+                    studioRefreshRequest++
                 }
-                creationFunnelEntries(backStack, creationFunnelMetadata) { selectedTab = MainTab.STUDIO }
+                creationFunnelEntries(backStack) { selectedTab = MainTab.STUDIO }
                 chatRoomEntry(backStack) { selectedTab = MainTab.CHAT }
                 legalEntry(backStack)
             },
@@ -346,13 +377,17 @@ private fun EntryProviderScope<NavKey>.myDestinationEntries(backStack: MutableLi
     }
 }
 
-private fun MutableList<NavKey>.addCreationResumeChain(resumePoint: CreationResumePoint) {
+private fun MutableList<NavKey>.addCreationResumeChain(
+    draftId: String,
+    resumePoint: CreationResumePoint,
+) {
     when (resumePoint) {
-        CreationResumePoint.KeywordStep -> push(CreateKeywordRoute)
-        CreationResumePoint.StorylineStep -> push(CreateStorylineRoute)
+        CreationResumePoint.GeneralStep -> push(GeneralCreateRoute(draftId))
+        CreationResumePoint.KeywordStep -> push(CreateKeywordRoute(draftId))
+        CreationResumePoint.StorylineStep -> push(CreateStorylineRoute(draftId))
         is CreationResumePoint.AdditionalInfoStep -> {
-            push(CreateStorylineRoute)
-            push(CreateAdditionalInfoRoute(resumePoint.storylineIndex))
+            push(CreateStorylineRoute(draftId))
+            push(CreateAdditionalInfoRoute(draftId, resumePoint.storylineIndex))
         }
     }
 }
@@ -362,30 +397,32 @@ private fun MutableList<NavKey>.addCreationResumeChain(resumePoint: CreationResu
  */
 private fun EntryProviderScope<NavKey>.creationFunnelEntries(
     backStack: MutableList<NavKey>,
-    metadata: Map<String, Any>,
     onSelectStudioTab: () -> Unit,
 ) {
-    entry<CreateKeywordRoute>(metadata = metadata) {
+    entry<CreateKeywordRoute> { route ->
         CreateKeywordScreen(
+            draftId = route.draftId,
             onLeaveFunnel = { backStack.pop() },
             // 스토리라인 단계는 키워드 목적지를 대체한다 — 그 화면의 뒤로가기가
             // 홈 복귀(퍼널 이탈)가 되도록 한다.
             onOpenStorylineStep = {
                 backStack.pop()
-                backStack.push(CreateStorylineRoute)
+                backStack.push(CreateStorylineRoute(route.draftId))
             },
         )
     }
-    entry<CreateStorylineRoute>(metadata = metadata) {
+    entry<CreateStorylineRoute> { route ->
         CreateStorylineScreen(
+            draftId = route.draftId,
             onLeaveFunnel = { backStack.pop() },
             onOpenAdditionalInfoStep = { storylineIndex ->
-                backStack.push(CreateAdditionalInfoRoute(storylineIndex))
+                backStack.push(CreateAdditionalInfoRoute(route.draftId, storylineIndex))
             },
         )
     }
-    entry<CreateAdditionalInfoRoute>(metadata = metadata) { route ->
+    entry<CreateAdditionalInfoRoute> { route ->
         CreateAdditionalInfoScreen(
+            draftId = route.draftId,
             storylineIndex = route.storylineIndex,
             // 이탈은 퍼널 단계를 전부 걷어내고 홈으로 돌아간다. 스토리라인 단계만 pop 하면
             // 홈으로 나가려던 조작이 한 단계 뒤로 가기로 보인다.

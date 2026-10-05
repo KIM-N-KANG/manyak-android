@@ -5,10 +5,11 @@ import app.manyak.common.data.time.toDisplayDate
 import app.manyak.story.entity.StoryCharacter
 import app.manyak.story.entity.StoryDetail
 import app.manyak.story.entity.StoryStartSetting
+import app.manyak.story.entity.StoryVisibility
 import kotlinx.serialization.Serializable
 
 /**
- * 상세 응답. 상세 화면이 그리지 않는 등록 상태·공개 범위·로어북·주요 사건·해시태그는
+ * 상세 응답. 상세 화면이 그리지 않는 등록 상태·로어북·주요 사건·해시태그는
  * 역직렬화하지 않는다.
  *
  * 식별자 밖의 필드에 기본값을 두는 이유는 목록 DTO 와 같다 — 서버가 필드를 하나 빼도 화면 전체가
@@ -35,10 +36,11 @@ data class StoryDetailResponseDto(
     val characters: List<StoryCharacterDto> = emptyList(),
     /** 서버가 요청자와 소유자를 비교한 값. 게스트·미인증은 false 다. */
     val isOwner: Boolean = false,
+    val visibility: String? = null,
 )
 
 /**
- * 등장인물 하나. 서버는 외형 필드와 공개 식별자를 상세에 싣지 않고 이름·이미지만 준다.
+ * 등장인물 하나. 서버는 외형 필드와 공개 식별자를 상세에 싣지 않고 이름, 이미지, 소개를 준다.
  *
  * 이미지 생성에 실패한 인물도 목록에 남고 그 `imageUrl` 이 `null` 이다.
  */
@@ -46,6 +48,7 @@ data class StoryDetailResponseDto(
 data class StoryCharacterDto(
     val name: String = "",
     val imageUrl: String? = null,
+    val description: String? = null,
 )
 
 /** 프롤로그·추천 입력은 상세가 그리지 않아 역직렬화하지 않는다. */
@@ -96,8 +99,10 @@ fun StoryDetailResponseDto.toDomain(): StoryDetail =
                 .map { character ->
                     StoryCharacter(
                         name = character.name,
+                        description = character.description?.takeIf { it.isNotBlank() },
                         imageUrl = character.imageUrl?.takeIf { url -> url.isNotBlank() },
                     )
                 },
         isOwner = isOwner,
+        visibility = StoryVisibility.entries.firstOrNull { it.name == visibility },
     )

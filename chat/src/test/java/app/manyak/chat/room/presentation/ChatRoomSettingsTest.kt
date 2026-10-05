@@ -71,7 +71,7 @@ class ChatRoomSettingsTest {
         }
 
     @Test
-    fun `기본값은 켬이라 요청에 true 를 명시해 보낸다`() =
+    fun `기본값은 끔이라 요청에 false 를 명시해 보낸다`() =
         runTest(dispatcher) {
             val repository = FakeChatRepository()
             val viewModel = viewModel(repository)
@@ -81,9 +81,9 @@ class ChatRoomSettingsTest {
             viewModel.onIntent(ChatRoomIntent.Sent)
             advanceUntilIdle()
 
-            assertEquals(listOf(true), repository.streamedRealtimeImages)
+            assertEquals(listOf(false), repository.streamedRealtimeImages)
             assertEquals(
-                true,
+                false,
                 viewModel.uiState.value.streaming
                     ?.realtimeImage,
             )
@@ -99,14 +99,14 @@ class ChatRoomSettingsTest {
             viewModel.onIntent(ChatRoomIntent.Sent)
             advanceUntilIdle()
 
-            viewModel.onIntent(ChatRoomIntent.RealtimeImageEnabledChanged(false))
+            viewModel.onIntent(ChatRoomIntent.RealtimeImageEnabledChanged(true))
             repository.streamEvents.send(ChatStreamEvent.Token("문이 열린다"))
             advanceUntilIdle()
 
             val state = viewModel.uiState.value
-            assertFalse(state.realtimeImageEnabled)
+            assertTrue(state.realtimeImageEnabled)
             assertTrue(state.isStreaming)
-            assertEquals(true, state.streaming?.realtimeImage)
+            assertEquals(false, state.streaming?.realtimeImage)
 
             // 다음 턴부터 바뀐 값을 쓴다. 가짜 스트림은 닫아야 끝난다.
             repository.streamEvents.send(ChatStreamEvent.Completed)
@@ -115,7 +115,7 @@ class ChatRoomSettingsTest {
             viewModel.type("계단을 오른다")
             viewModel.onIntent(ChatRoomIntent.Sent)
             advanceUntilIdle()
-            assertEquals(listOf(true, false), repository.streamedRealtimeImages)
+            assertEquals(listOf(false, true), repository.streamedRealtimeImages)
         }
 
     @Test

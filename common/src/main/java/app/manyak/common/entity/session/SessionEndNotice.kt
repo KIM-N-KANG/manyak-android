@@ -1,7 +1,7 @@
 package app.manyak.common.entity.session
 
 /**
- * 세션이 끝난 이유. 화면 수명 효과가 아니라 지속 상태다 — 종료 시점에 화면이 없을 수 있으므로
+ * 세션 또는 동의를 기다리던 가입이 끝난 이유. 화면 수명 효과가 아니라 지속 상태다 — 종료 시점에 화면이 없을 수 있으므로
  * 사용자가 명시적으로 확인할 때까지 남는다.
  */
 enum class SessionEndNotice {
@@ -16,4 +16,10 @@ enum class SessionEndNotice {
 
     /** 서버 회전은 성공했지만 새 토큰을 저장하지 못했다. 구 토큰은 이미 폐기되어 재로그인이 필요하다. */
     TOKEN_PERSISTENCE_FAILED,
+
+    /** 가입 대기 코드가 없거나 만료·소비됐다. 소셜 인증부터 다시 해야 한다. */
+    SIGNUP_EXPIRED,
+
+    /** 가입 대기 중 약관 버전이 바뀌었거나 필요한 항목이 늘었다. 소셜 인증부터 다시 해 새 버전으로 받는다. */
+    SIGNUP_OUTDATED,
 }

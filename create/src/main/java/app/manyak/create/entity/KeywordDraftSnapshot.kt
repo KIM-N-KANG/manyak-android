@@ -11,6 +11,7 @@ data class KeywordDraftSnapshot(
     val customGenreTags: List<KeywordCustomTagSnapshot>,
     val protagonist: KeywordCharacterSnapshot,
     val supportingCharacters: List<KeywordCharacterSnapshot>,
+    val addedGenreTagIds: List<Long> = emptyList(),
 ) {
     /**
      * 저장할 만한 입력이 있는지. 빈 화면을 열었다 닫은 것까지 배너로 남기면 배너가 신호를 잃는다.
@@ -19,6 +20,7 @@ data class KeywordDraftSnapshot(
     val hasInput: Boolean
         get() =
             selectedGenreTagIds.isNotEmpty() ||
+                addedGenreTagIds.isNotEmpty() ||
                 customGenreTags.isNotEmpty() ||
                 protagonist.hasInput ||
                 supportingCharacters.any(KeywordCharacterSnapshot::hasInput)

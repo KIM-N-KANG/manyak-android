@@ -13,6 +13,8 @@ data class PushMessage(
     /** 서버가 실은 이동 주소. 없는 페이로드(프로모션·구버전 발송)는 `type` 매핑으로 간다. */
     val deepLink: String?,
 ) {
+    val notificationId: Int get() = (type + targetId.orEmpty()).hashCode()
+
     val entry: PushEntry
         get() = PushEntry(type = type, targetId = targetId, recipientId = recipientId, deepLink = deepLink)
 
@@ -20,11 +22,19 @@ data class PushMessage(
         get() = type == PushEntry.TYPE_ATTENDANCE_REMINDER || type == PushEntry.TYPE_PROMOTION
 
     companion object {
+        private val moderationStatuses = setOf("APPROVED", "REJECTED", "FAILED")
+
         /** `type` 이 없으면 표시할 수 없는 메시지다. */
         fun from(data: Map<String, String>): PushMessage? {
             val type = data["type"]?.takeIf { it.isNotBlank() } ?: return null
+            if (type == PushEntry.TYPE_STORY_MODERATION_COMPLETED &&
+                (data["submissionId"].isNullOrBlank() || data["status"] !in moderationStatuses)
+            ) {
+                return null
+            }
             val targetId =
                 when (type) {
+                    PushEntry.TYPE_STORY_MODERATION_COMPLETED -> data["submissionId"]
                     PushEntry.TYPE_STORY_COMPLETED -> data["storyId"]
                     PushEntry.TYPE_ATTENDANCE_REMINDER -> data["date"]
                     PushEntry.TYPE_PROMOTION -> data["campaignId"]

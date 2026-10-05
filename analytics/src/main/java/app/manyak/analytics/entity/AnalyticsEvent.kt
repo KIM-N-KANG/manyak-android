@@ -60,6 +60,15 @@ sealed class AnalyticsEvent(
         val storyId: String,
     ) : AnalyticsEvent("client_storyList_storyOptions_opened", mapOf("story_id" to storyId))
 
+    data class SubmissionCardClicked(
+        val submissionId: String,
+        val status: String,
+        val action: String,
+    ) : AnalyticsEvent(
+            "client_storyList_submissionCard_clicked",
+            mapOf("submission_id" to submissionId, "status" to status, "action" to action),
+        )
+
     data class StoryListStoryDeleted(
         val storyId: String,
     ) : AnalyticsEvent("client_storyList_story_deleted", mapOf("story_id" to storyId))
@@ -69,6 +78,49 @@ sealed class AnalyticsEvent(
     ) : AnalyticsEvent("client_storyList_loadError_shown", mapOf("section" to section.wire))
 
     // storyCreate
+    data class StoryCreateMethodSelected(
+        val method: String,
+    ) : AnalyticsEvent("client_storyCreate_methodOption_selected", mapOf("method" to method))
+
+    data object GeneralCreateViewed : AnalyticsEvent("client_generalCreate_viewed")
+
+    data class GeneralCreateCompleted(
+        val submissionId: String,
+        val startSettingCount: Int,
+        val endingCount: Int,
+        val mainEventCount: Int,
+        val imageCount: Int,
+    ) : AnalyticsEvent(
+            "client_generalCreate_completed",
+            mapOf(
+                "submission_id" to submissionId,
+                "start_setting_count" to startSettingCount,
+                "ending_count" to endingCount,
+                "main_event_count" to mainEventCount,
+                "image_count" to imageCount,
+            ),
+        )
+
+    data class GeneralCreateRegisterErrorShown(
+        val status: Int,
+    ) : AnalyticsEvent("client_generalCreate_registerError_shown", mapOf("status" to status))
+
+    data class GeneralCreateReviewResultShown(
+        val submissionId: String,
+        val result: String,
+    ) : AnalyticsEvent(
+            "client_generalCreate_reviewResult_shown",
+            mapOf("submission_id" to submissionId, "result" to result),
+        )
+
+    data class StoryEditViewed(
+        val storyId: String,
+    ) : AnalyticsEvent("client_storyEdit_viewed", mapOf("story_id" to storyId))
+
+    data class StoryEditCompleted(
+        val storyId: String,
+    ) : AnalyticsEvent("client_storyEdit_completed", mapOf("story_id" to storyId))
+
     data object StoryCreateViewed : AnalyticsEvent("client_storyCreate_viewed")
 
     data class StoryCreateStepViewed(
@@ -153,12 +205,6 @@ sealed class AnalyticsEvent(
         val step: CreateStep,
     ) : AnalyticsEvent("client_storyCreate_draftSaved", mapOf("step" to step.draftName))
 
-    data object ResumeDialogShown : AnalyticsEvent("client_storyCreate_resumeDialog_shown")
-
-    data object ResumeDialogContinued : AnalyticsEvent("client_storyCreate_resumeDialog_continued")
-
-    data object ResumeDialogDiscarded : AnalyticsEvent("client_storyCreate_resumeDialog_discarded")
-
     data class ContinueBannerShown(
         val stage: PendingCreationStage,
     ) : AnalyticsEvent("client_storyCreate_continueBanner_shown", mapOf("stage" to stage.name))
@@ -176,8 +222,7 @@ sealed class AnalyticsEvent(
 
     data class StoryCreateCompleted(
         val storyId: String,
-        val chatId: String,
-    ) : AnalyticsEvent("client_storyCreate_completed", mapOf("story_id" to storyId, "chat_id" to chatId))
+    ) : AnalyticsEvent("client_storyCreate_completed", mapOf("story_id" to storyId))
 
     // storyDetail
     data class StoryDetailViewed(
@@ -268,6 +313,10 @@ sealed class AnalyticsEvent(
             mapOf("chat_id" to chatId, "turn_number" to turnNumber, "input_mode" to inputMode.wire),
         )
 
+    data class SituationInsertButtonClicked(
+        val chatId: String,
+    ) : AnalyticsEvent("client_chat_situationInsertButton_clicked", mapOf("chat_id" to chatId))
+
     data class AddBlockButtonClicked(
         val chatId: String,
         val blockType: String,
@@ -316,6 +365,32 @@ sealed class AnalyticsEvent(
     data class ChatRetryButtonClicked(
         val chatId: String,
     ) : AnalyticsEvent("client_chat_retryButton_clicked", mapOf("chat_id" to chatId))
+
+    data class ChatTourShown(
+        val chatId: String,
+    ) : AnalyticsEvent("client_chat_tour_shown", mapOf("chat_id" to chatId))
+
+    /** [stepNumber] 는 입력 모드별 스텝 목록 안의 0부터 센 자리, [stepId] 는 안내 대상 식별자다. */
+    data class ChatTourStepViewed(
+        val chatId: String,
+        val stepNumber: Int,
+        val stepId: String,
+    ) : AnalyticsEvent(
+            "client_chat_tourStep_viewed",
+            mapOf("chat_id" to chatId, "step_number" to stepNumber, "step_id" to stepId),
+        )
+
+    data class ChatTourCompleted(
+        val chatId: String,
+    ) : AnalyticsEvent("client_chat_tour_completed", mapOf("chat_id" to chatId))
+
+    data class ChatTourSkipButtonClicked(
+        val chatId: String,
+        val stepNumber: Int,
+    ) : AnalyticsEvent(
+            "client_chat_tourSkipButton_clicked",
+            mapOf("chat_id" to chatId, "step_number" to stepNumber),
+        )
 
     // creditShortageDialog — 이름은 웹 호환, 실제 UI 는 토스트
     data class CreditShortageShown(

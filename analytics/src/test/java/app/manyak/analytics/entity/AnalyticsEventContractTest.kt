@@ -52,6 +52,32 @@ class AnalyticsEventContractTest {
         )
     }
 
+    @Test
+    fun `chat tour events use the web names and zero-based step numbers`() {
+        assertEvent(
+            AnalyticsEvent.ChatTourShown("chat-fixture"),
+            "client_chat_tour_shown",
+            mapOf(
+                "chat_id" to "chat-fixture",
+            ),
+        )
+        assertEvent(
+            AnalyticsEvent.ChatTourStepViewed("chat-fixture", stepNumber = 0, stepId = "add-blocks"),
+            "client_chat_tourStep_viewed",
+            mapOf("chat_id" to "chat-fixture", "step_number" to 0, "step_id" to "add-blocks"),
+        )
+        assertEvent(
+            AnalyticsEvent.ChatTourCompleted("chat-fixture"),
+            "client_chat_tour_completed",
+            mapOf("chat_id" to "chat-fixture"),
+        )
+        assertEvent(
+            AnalyticsEvent.ChatTourSkipButtonClicked("chat-fixture", stepNumber = 1),
+            "client_chat_tourSkipButton_clicked",
+            mapOf("chat_id" to "chat-fixture", "step_number" to 1),
+        )
+    }
+
     private fun assertEvent(
         event: AnalyticsEvent,
         name: String,

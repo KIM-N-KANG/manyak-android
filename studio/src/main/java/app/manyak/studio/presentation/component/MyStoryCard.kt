@@ -22,7 +22,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.intl.LocaleList
 import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import app.manyak.common.entity.story.StorySummary
 import app.manyak.designsystem.component.ManyakMoreButton
 import app.manyak.designsystem.component.MetaChip
@@ -30,8 +29,8 @@ import app.manyak.designsystem.component.STORY_THUMBNAIL_ASPECT_RATIO
 import app.manyak.designsystem.component.StoryBadgeScale
 import app.manyak.designsystem.component.StoryCover
 import app.manyak.designsystem.component.moreButtonTitleAlignment
+import app.manyak.designsystem.text.formatCompactCount
 import app.manyak.designsystem.theme.ManyakTheme
-import java.text.NumberFormat
 import app.manyak.designsystem.R as DesignsystemR
 import app.manyak.studio.R as StudioR
 
@@ -43,7 +42,7 @@ import app.manyak.studio.R as StudioR
  * 텍스트 길이와도, 창 크기와도 무관하게 같다. 텍스트 영역에 고정 높이를 두면 시스템 글자 크기를 키웠을 때
  * 잘리므로 높이를 지정하지 않는다.
  *
- * 제목은 두 줄, 한 줄 소개도 두 줄까지 쓰고 넘치면 자른다. 누적 턴 수는 표지 위 뱃지가 아니라
+ * 제목은 두 줄, 한 줄 소개도 두 줄까지 쓰고 넘치면 자른다. 좋아요 수·누적 턴 수는 표지 위 뱃지가 아니라
  * 제작일과 함께 오른쪽 메타 줄이 맡는다 — 표지가 커져 뱃지가 그림을 가린다. ORIGINAL 태그는
  * 공식 스토리 표시라 붙이지 않는다.
  */
@@ -141,8 +140,10 @@ private fun StoryInfo(
             }
         }
         StoryMeta(
+            likeCount = story.likeCount,
             turnCount = story.turnCount,
             createdDate = story.createdDate,
+            createdAtMillis = story.createdAtMillis,
             // 글이 길어 남는 자리가 없을 때도 뱃지와 붙지 않을 만큼은 띄운다.
             modifier = Modifier.padding(top = lineGap),
         )
@@ -150,18 +151,21 @@ private fun StoryInfo(
 }
 
 /**
- * 누적 턴 수·제작일. 채팅 목록 카드와 같이 오른쪽 끝에 붙는다 — 왼쪽에서 읽어 내려오는
+ * 좋아요 수·누적 턴 수·제작일. 채팅 목록 카드와 같이 오른쪽 끝에 붙는다 — 왼쪽에서 읽어 내려오는
  * 제목·소개와 성질이 달라 같은 줄머리에 두면 소개의 연장으로 읽힌다.
  *
- * 제작일은 서버 값을 읽을 수 없을 때 그 칩만 빠지고 누적 턴 수는 남는다.
+ * 제작일은 서버 값을 읽을 수 없을 때 그 칩만 빠지고 앞의 두 수는 남는다.
  */
 @Composable
 private fun StoryMeta(
+    likeCount: Long,
     turnCount: Long,
     createdDate: String?,
+    createdAtMillis: Long?,
     modifier: Modifier = Modifier,
 ) {
-    val formattedTurnCount = remember(turnCount) { NumberFormat.getIntegerInstance().format(turnCount) }
+    val formattedLikeCount = remember(likeCount) { formatCompactCount(likeCount) }
+    val formattedTurnCount = remember(turnCount) { formatCompactCount(turnCount) }
 
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -169,11 +173,17 @@ private fun StoryMeta(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         MetaChip(
+            iconRes = DesignsystemR.drawable.ic_heart_outline,
+            text = formattedLikeCount,
+            description = stringResource(DesignsystemR.string.story_like_count_description, formattedLikeCount),
+        )
+        MetaChip(
             iconRes = DesignsystemR.drawable.ic_dialog,
             text = formattedTurnCount,
             description = stringResource(DesignsystemR.string.story_turn_count_description, formattedTurnCount),
         )
-        createdDate?.let { date ->
+        val sameDay = createdAtMillis?.let { sameDayElapsedOf(it, System.currentTimeMillis()) }
+        (sameDay?.label() ?: createdDate)?.let { date ->
             MetaChip(
                 iconRes = DesignsystemR.drawable.ic_calendar,
                 text = date,
@@ -225,10 +235,12 @@ private fun TitleRow(
  *
  * 골격도 같은 값을 써야 목록이 도착할 때 표지 자리가 튀지 않는다.
  */
-internal val CoverWidth = 128.dp
+internal val CoverWidth
+    @Composable get() = ManyakTheme.sizes.studioCoverWidth
 
 /** 표지 높이. 3:4 라 폭에서 따라온다. 글 영역이 이 높이를 최소치로 삼는다. */
-internal val CoverHeight = CoverWidth / STORY_THUMBNAIL_ASPECT_RATIO
+internal val CoverHeight
+    @Composable get() = CoverWidth / STORY_THUMBNAIL_ASPECT_RATIO
 
 /**
  * 제목·한 줄 소개의 줄바꿈. 한글은 기본값이 글자 단위로 끊어 "선행만 한 / 다" 처럼 어절 가운데가

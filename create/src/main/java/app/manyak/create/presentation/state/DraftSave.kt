@@ -8,7 +8,7 @@ enum class DraftSaveStatus {
     /** 쓰기 진행 중 — 라벨 자리에 스피너를 띄우고 버튼을 잠근다. */
     SAVING,
 
-    /** 쓰기 성공 — 체크와 "임시 저장됨"을 [DRAFT_SAVED_DISPLAY_MS] 동안 보여 주고 버튼을 잠근다. */
+    /** 쓰기 성공 — [DRAFT_SAVE_LOCK_MS] 동안 버튼을 잠근다. 그 사이 편집해도 풀지 않는다. */
     SAVED,
 }
 
@@ -21,17 +21,17 @@ data class DraftSaveUiState(
     val hasUnsavedChanges: Boolean = false,
 )
 
-/** 퍼널 이탈을 막고 띄우는 경고. 둘은 사라지는 대상이 달라 문구도 버튼도 다르다. */
+/** 퍼널 이탈을 막고 띄우는 경고. 잃을 것도 남길 것도 없으면 경고 없이 나간다. */
 enum class FunnelExitWarning {
+    /** 저장본 없이 입력한 내용이 사라진다. */
+    UNSAVED_INPUT,
+
     /** 저장한 스냅숏은 있지만 그 뒤의 편집이 남았다. */
     UNSAVED_CHANGES,
-
-    /** 저장한 것도 저장할 것도 없다 — 생성 실패처럼 재개할 재료가 아예 없는 경우. */
-    NOTHING_TO_PRESERVE,
 
     /** 저장한 스냅숏(또는 진행 중 레코드)만 남았다. 잃는 것은 없지만 닫기라는 사실만 확인받는다. */
     SAVED_DRAFT,
 }
 
-/** 저장 성공 표시를 유지하는 시간. 지나면 다시 "임시 저장"으로 돌아가 버튼이 풀린다. */
-internal const val DRAFT_SAVED_DISPLAY_MS: Long = 2_000
+/** 저장 성공 뒤 버튼을 잠가 두는 시간. 저장 토스트가 떠 있는 동안 같은 저장을 거듭하지 않게 한다. */
+internal const val DRAFT_SAVE_LOCK_MS: Long = 2_000

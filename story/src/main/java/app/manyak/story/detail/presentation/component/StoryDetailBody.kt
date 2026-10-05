@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,22 +25,26 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import app.manyak.designsystem.component.CharacterImage
 import app.manyak.designsystem.component.ManyakInfoTooltipButton
 import app.manyak.designsystem.component.StoryBadgeScale
 import app.manyak.designsystem.component.StoryGenreBadge
 import app.manyak.designsystem.component.StoryThumbnail
+import app.manyak.designsystem.text.PassageSegment
+import app.manyak.designsystem.text.parsePassageSegments
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.story.entity.StoryDetail
 import app.manyak.story.entity.StoryStartSetting
 import app.manyak.story.R as StoryR
 
 /**
- * 상세 본문. 순서는 히어로 → 제목 → 한 줄 소개 → 장르 → 본 엔딩 → 주요 내용 → 주변 인물 →
- * 시작 상황 → 제작자·생성일이다.
+ * 상세 본문. 순서는 히어로 → 제목 → 한 줄 소개 → 장르 → 본 엔딩 → 주요 내용 → 시작 상황 →
+ * 주변 인물 → 제작자·생성일이다.
  *
  * 값이 없는 항목은 자리를 비우지 않고 아예 그리지 않는다 — 이유 없는 공백이 생기지 않게 한다.
  *
  * 표지만 화면 폭을 꽉 채우므로 좌우 여백은 목록이 한 번에 두지 않고 항목마다 각자 건다.
+ * 위 간격도 항목이 건다 — 구획 사이(32dp)와 메타 블록 위(16dp)가 달라 목록의 일정 간격으로는 맞지 않는다.
  */
 @Suppress("LongParameterList")
 internal fun LazyListScope.storyDetailBody(
@@ -62,7 +67,10 @@ internal fun LazyListScope.storyDetailBody(
         item(key = DESCRIPTION_KEY) {
             LabeledSection(
                 labelRes = StoryR.string.story_detail_description,
-                modifier = Modifier.padding(horizontal = ManyakTheme.spacing.gutter),
+                modifier =
+                    Modifier
+                        .padding(horizontal = ManyakTheme.spacing.gutter)
+                        .padding(top = ManyakTheme.spacing.block),
             ) {
                 Text(
                     text = description,
@@ -72,36 +80,36 @@ internal fun LazyListScope.storyDetailBody(
             }
         }
     }
-    if (story.characters.isNotEmpty()) {
-        item(key = CHARACTERS_KEY) {
-            LabeledSection(
-                labelRes = StoryR.string.story_detail_characters,
-                modifier = Modifier.padding(horizontal = ManyakTheme.spacing.gutter),
-            ) {
-                CharacterSection(characters = story.characters, onImageClick = onCharacterImageClick)
-            }
-        }
-    }
     if (selectedStartSetting != null) {
         item(key = START_SETTING_KEY) {
             LabeledSection(
                 labelRes = StoryR.string.story_detail_start_settings,
-                modifier = Modifier.padding(horizontal = ManyakTheme.spacing.gutter),
+                modifier =
+                    Modifier
+                        .padding(horizontal = ManyakTheme.spacing.gutter)
+                        .padding(top = ManyakTheme.spacing.block),
             ) {
                 StartSettingSection(
                     startSettings = story.startSettings,
                     selectedId = selectedStartSettingId,
                     selected = selectedStartSetting,
                     onSelect = onSelectStartSetting,
+                    onImageClick = onCharacterImageClick,
                 )
             }
         }
     }
-    if (story.authorNickname != null || story.createdDate != null) {
-        item(key = META_KEY) {
-            MetaBlock(authorNickname = story.authorNickname, date = story.createdDate)
+    if (story.characters.isNotEmpty()) {
+        item(key = CHARACTERS_KEY) {
+            // 인물 선택 줄은 화면 끝까지 스크롤되어야 해서 좌우 여백을 섹션이 아니라 안쪽 요소가 각자 건다.
+            CharacterSection(
+                characters = story.characters,
+                onImageClick = onCharacterImageClick,
+                modifier = Modifier.padding(top = ManyakTheme.spacing.block),
+            )
         }
     }
+    metaItems(story)
 }
 
 /**
@@ -148,6 +156,7 @@ private fun StoryHero(
                     Modifier.clickable(role = Role.Button, onClickLabel = openLabel, onClick = onClick)
                 },
             thumbnailUrl = story.thumbnailUrl,
+            likeCount = story.likeCount,
             turnCount = story.turnCount,
             badgeScale = StoryBadgeScale.Large,
             shape = RectangleShape,
@@ -226,6 +235,7 @@ private fun StartSettingSection(
     selectedId: String?,
     selected: StoryStartSetting,
     onSelect: (String) -> Unit,
+    onImageClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -234,7 +244,15 @@ private fun StartSettingSection(
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.section),
     ) {
         if (startSettings.isNotEmpty()) {
-            SubLabeledBlock(label = stringResource(StoryR.string.story_detail_start_setting_name)) {
+            SubLabeledBlock(
+                label = stringResource(StoryR.string.story_detail_start_setting_name),
+                labelTrailing = {
+                    ManyakInfoTooltipButton(
+                        text = stringResource(StoryR.string.story_detail_start_setting_name_info_tooltip),
+                        contentDescription = stringResource(StoryR.string.story_detail_start_setting_name_info),
+                    )
+                },
+            ) {
                 StartSettingSelect(
                     startSettings = startSettings,
                     selectedId = selectedId,
@@ -243,11 +261,7 @@ private fun StartSettingSection(
             }
         }
         SubLabeledBlock(label = stringResource(StoryR.string.story_detail_start_setting_situation)) {
-            Text(
-                text = selected.startSituation,
-                style = ManyakTheme.typography.bodyLarge,
-                color = ManyakTheme.colors.text,
-            )
+            StartSituation(text = selected.startSituation, onImageClick = onImageClick)
         }
         if (selected.endings.isNotEmpty()) {
             SubLabeledBlock(
@@ -260,6 +274,46 @@ private fun StartSettingSection(
                 },
             ) {
                 EndingList(endings = selected.endings)
+            }
+        }
+    }
+}
+
+/** 오리지널 스토리의 상황 설명에는 채팅 프롤로그와 같은 장면 이미지 마커가 들어 있다. */
+@Composable
+private fun StartSituation(
+    text: String,
+    onImageClick: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val segments = remember(text) { parsePassageSegments(text) }
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        // 글과 그림 사이는 문단 사이보다 넓어야 그림이 앞 문단의 일부로 읽히지 않는다(웹과 같은 28dp).
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.passage + ManyakTheme.spacing.compact),
+    ) {
+        segments.forEach { segment ->
+            when (segment) {
+                is PassageSegment.Text ->
+                    Text(
+                        text = segment.content,
+                        style = ManyakTheme.typography.bodyLarge,
+                        color = ManyakTheme.colors.text,
+                    )
+
+                is PassageSegment.CharacterImage ->
+                    CharacterImage(
+                        name = segment.name,
+                        imageUrl = segment.imageUrl,
+                        onClick = { onImageClick(segment.imageUrl) },
+                    )
+
+                is PassageSegment.SceneImage ->
+                    CharacterImage(
+                        name = null,
+                        imageUrl = segment.imageUrl,
+                        onClick = { onImageClick(segment.imageUrl) },
+                    )
             }
         }
     }
@@ -374,4 +428,4 @@ private const val OVERVIEW_KEY = "overview"
 private const val DESCRIPTION_KEY = "description"
 private const val CHARACTERS_KEY = "characters"
 private const val START_SETTING_KEY = "start-setting"
-private const val META_KEY = "meta"
+internal const val META_KEY = "meta"

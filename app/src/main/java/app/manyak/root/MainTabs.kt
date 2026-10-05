@@ -42,11 +42,14 @@ import app.manyak.studio.presentation.StudioScreen
 @Suppress("LongParameterList")
 internal fun MainTabsScreen(
     selectedTab: MainTab,
+    studioRefreshRequest: Int,
     onSelectTab: (MainTab) -> Unit,
     onOpenStory: (String) -> Unit,
     onOpenChat: (String) -> Unit,
     onCreateStory: () -> Unit,
-    onResumeCreation: (CreationResumePoint) -> Unit,
+    onEditStory: (String) -> Unit,
+    onEditSubmission: (String) -> Unit,
+    onResumeCreation: (draftId: String, CreationResumePoint) -> Unit,
     onOpenInvite: () -> Unit,
     onOpenServiceInfo: () -> Unit,
     onOpenFeedback: () -> Unit,
@@ -81,12 +84,15 @@ internal fun MainTabsScreen(
     ) { innerPadding ->
         MainTabsContent(
             selectedTab = selectedTab,
+            studioRefreshRequest = studioRefreshRequest,
             backStacks = backStacks,
             contentPadding = innerPadding,
             onLeaveTab = { onSelectTab(MainTab.HOME) },
             onOpenStory = onOpenStory,
             onOpenChat = onOpenChat,
             onCreateStory = onCreateStory,
+            onEditStory = onEditStory,
+            onEditSubmission = onEditSubmission,
             onResumeCreation = onResumeCreation,
             onOpenInvite = onOpenInvite,
             onOpenServiceInfo = onOpenServiceInfo,
@@ -123,16 +129,19 @@ private fun MainTabsBar(
  * 홈으로 한 번에 돌아오는 것이 여기서 나오고, 홈 탭에서는 밑에 아무것도 없어 앱을 벗어난다.
  */
 @Composable
-@Suppress("LongParameterList")
+@Suppress("LongParameterList", "LongMethod")
 private fun MainTabsContent(
     selectedTab: MainTab,
+    studioRefreshRequest: Int,
     backStacks: Map<MainTab, NavBackStack<NavKey>>,
     contentPadding: PaddingValues,
     onLeaveTab: () -> Unit,
     onOpenStory: (String) -> Unit,
     onOpenChat: (String) -> Unit,
     onCreateStory: () -> Unit,
-    onResumeCreation: (CreationResumePoint) -> Unit,
+    onEditStory: (String) -> Unit,
+    onEditSubmission: (String) -> Unit,
+    onResumeCreation: (draftId: String, CreationResumePoint) -> Unit,
     onOpenInvite: () -> Unit,
     onOpenServiceInfo: () -> Unit,
     onOpenFeedback: () -> Unit,
@@ -144,6 +153,7 @@ private fun MainTabsContent(
     // 목적지는 백스택이 바뀔 때만 다시 만들어지므로, 그 사이에 바뀌는 여백을 값으로 붙잡으면 오래된 값이
     // 화면에 남는다. 상태로 넘겨 화면이 그릴 때마다 현재 값을 읽게 한다.
     val padding = rememberUpdatedState(contentPadding)
+    val studioRefresh = rememberUpdatedState(studioRefreshRequest)
     val screenTransition = rememberTabCrossfade()
 
     val homeEntries =
@@ -160,9 +170,12 @@ private fun MainTabsContent(
         rememberTabEntries(backStacks.getValue(MainTab.STUDIO)) {
             entry<StudioRoute> {
                 StudioScreen(
+                    refreshRequest = studioRefresh.value,
                     contentPadding = padding.value,
                     onOpenStory = onOpenStory,
                     onCreateStory = onCreateStory,
+                    onEditStory = onEditStory,
+                    onEditSubmission = onEditSubmission,
                     onResumeCreation = onResumeCreation,
                 )
             }

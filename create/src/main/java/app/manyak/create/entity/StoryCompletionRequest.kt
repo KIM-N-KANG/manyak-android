@@ -1,7 +1,7 @@
 package app.manyak.create.entity
 
 /**
- * 제출된 완성 요청 한 건. 편집 슬롯과 분리해 requestId 별로 보존되며, 응답을 못 받거나 프로세스가
+ * 제출된 완성 요청 한 건. 편집 초안과 분리해 requestId 별로 보존되며, 응답을 못 받거나 프로세스가
  * 재시작해도 같은 [command] 로 복구·재전송할 수 있도록 생성 결과와 입력을 함께 담는다.
  */
 data class StoryCompletionRequest(
@@ -9,9 +9,11 @@ data class StoryCompletionRequest(
     val generationCommand: StorylineGenerationCommand?,
     val generation: StorylineGeneration,
     val progress: CreationProgress,
-    /** 제출 시각(epoch millis). 목록 정렬에만 쓴다. */
+    /** 제출 시각(epoch millis). 처음 저장 시각이 없는 이전 요청의 정렬에 쓴다. */
     val submittedAt: Long,
     val outcome: CompletionOutcome = CompletionOutcome.Pending,
+    /** 제출한 초안을 처음 임시 저장한 시각(epoch millis). 제출할 때 저장소가 초안에서 이어받는다. */
+    val createdAt: Long? = null,
 ) {
     val requestId: String get() = command.requestId
 }

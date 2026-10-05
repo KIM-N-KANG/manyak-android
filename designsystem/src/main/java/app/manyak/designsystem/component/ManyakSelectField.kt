@@ -1,10 +1,15 @@
 package app.manyak.designsystem.component
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -23,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -34,7 +40,6 @@ import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import app.manyak.designsystem.theme.ManyakTheme
@@ -45,6 +50,9 @@ import app.manyak.designsystem.R as DesignsystemR
  *
  * 펼침 상태는 이 컴포넌트가 든다 — 밖에서 알 필요가 없는 표현 상태이고, 호출부마다 상태를 두면
  * 열고 닫는 규칙이 화면마다 갈린다.
+ *
+ * @param placeholder [selected] 가 [options] 에 없을 때 앵커에 흐리게 보일 문구. 고르지 않은 상태를
+ * 메뉴 항목으로 두지 않는 필수 선택에서 쓴다.
  */
 @Composable
 fun <T> ManyakSelectField(
@@ -54,74 +62,88 @@ fun <T> ManyakSelectField(
     modifier: Modifier = Modifier,
     isPlaceholder: Boolean = false,
     onClickLabel: String? = null,
+    placeholder: String? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
     var anchorWidthPx by remember { mutableIntStateOf(0) }
-    val selectedLabel = options.firstOrNull { option -> option.value == selected }?.label.orEmpty()
+    val selectedLabel = options.firstOrNull { option -> option.value == selected }?.label
 
     Box(modifier = modifier.onSizeChanged { size -> anchorWidthPx = size.width }) {
         SelectAnchor(
-            label = selectedLabel,
-            isPlaceholder = isPlaceholder,
+            label = selectedLabel ?: placeholder.orEmpty(),
+            isPlaceholder = isPlaceholder || selectedLabel == null,
             expanded = expanded,
             onClickLabel = onClickLabel,
             onClick = { expanded = true },
         )
-        if (expanded) {
-            SelectMenu(
-                anchorWidthPx = anchorWidthPx,
-                options = options,
-                selected = selected,
-                onDismiss = { expanded = false },
-                onSelect = { value ->
-                    expanded = false
-                    onSelect(value)
-                },
-            )
-        }
+        ManyakSelectMenu(
+            expanded = expanded,
+            modifier = Modifier.width(with(LocalDensity.current) { anchorWidthPx.toDp() }),
+            options = options,
+            selected = selected,
+            onDismiss = { expanded = false },
+            onSelect = { value ->
+                expanded = false
+                onSelect(value)
+            },
+        )
     }
 }
 
 /**
+ * 앵커 바로 아래에 열리는 단일 선택 메뉴. 앵커와 같은 부모 안에 두고 [expanded] 로 여닫는다.
+ *
+ * 폭은 [modifier] 로 정하고, 정하지 않으면 가장 긴 항목에 맞춘다. [alignment] 는 메뉴를 앵커의 어느
+ * 끝에 맞출지다 — 화면 끝에 붙은 앵커보다 메뉴가 넓으면 그 끝에 맞춰야 화면 밖으로 밀리지 않는다.
+ *
  * M3 `DropdownMenu`는 공간에 따라 위로 뒤집히므로, 항상 앵커 아래에 열리도록 위치를 직접 계산한다.
  * 흰 앵커와 메뉴의 경계를 구분하기 위해 디자인 시스템의 무그림자 원칙에서 예외로 둔다.
  */
 @Composable
-private fun <T> SelectMenu(
-    anchorWidthPx: Int,
+fun <T> ManyakSelectMenu(
+    expanded: Boolean,
     options: List<ManyakSelectOption<T>>,
     selected: T,
     onDismiss: () -> Unit,
     onSelect: (T) -> Unit,
+    modifier: Modifier = Modifier,
+    alignment: Alignment.Horizontal = Alignment.Start,
 ) {
-    val density = LocalDensity.current
-    val gapPx = with(density) { ManyakTheme.spacing.inline.roundToPx() }
+    val gapPx = with(LocalDensity.current) { ManyakTheme.spacing.inline.roundToPx() }
     val positionProvider =
-        remember(gapPx) {
+        remember(gapPx, alignment) {
             object : PopupPositionProvider {
                 override fun calculatePosition(
                     anchorBounds: IntRect,
                     windowSize: IntSize,
                     layoutDirection: LayoutDirection,
                     popupContentSize: IntSize,
-                ): IntOffset = IntOffset(x = anchorBounds.left, y = anchorBounds.bottom + gapPx)
+                ): IntOffset =
+                    IntOffset(
+                        x =
+                            anchorBounds.left +
+                                alignment.align(popupContentSize.width, anchorBounds.width, layoutDirection),
+                        y = anchorBounds.bottom + gapPx,
+                    )
             }
         }
 
-    Popup(
+    ManyakPopup(
+        visible = expanded,
         popupPositionProvider = positionProvider,
         onDismissRequest = onDismiss,
         properties = PopupProperties(focusable = true),
     ) {
         Column(
             modifier =
-                Modifier
-                    .width(with(density) { anchorWidthPx.toDp() })
+                modifier
+                    .width(IntrinsicSize.Max)
                     .shadow(elevation = MenuShadowElevation, shape = ManyakTheme.shapes.control)
                     .background(ManyakTheme.colors.surfaceRaised, ManyakTheme.shapes.control)
                     .border(BorderWidth, ManyakTheme.colors.border, ManyakTheme.shapes.control)
                     .clip(ManyakTheme.shapes.control)
                     .padding(ManyakTheme.spacing.inline),
+            verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
         ) {
             options.forEach { option ->
                 SelectMenuItem(
@@ -154,6 +176,8 @@ private fun SelectMenuItem(
                     vertical = ManyakTheme.spacing.controlVertical,
                 ),
         verticalAlignment = Alignment.CenterVertically,
+        // 메뉴 폭이 가장 긴 항목에 맞춰질 때 체크가 글자에 붙지 않게 한다.
+        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
         Text(
             modifier = Modifier.weight(1f),
@@ -202,18 +226,23 @@ private fun SelectAnchor(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
+        // 메뉴가 자리 잡는 스프링과 같이 돌아 두 움직임이 한 번에 읽힌다.
+        val rotation by animateFloatAsState(
+            targetValue = if (expanded) HALF_TURN else 0f,
+            animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow),
+            label = "selectChevron",
+        )
         Icon(
-            modifier = Modifier.size(ManyakTheme.sizes.iconSmall),
-            painter =
-                painterResource(
-                    if (expanded) DesignsystemR.drawable.ic_angle_up else DesignsystemR.drawable.ic_angle_down,
-                ),
+            modifier = Modifier.size(ManyakTheme.sizes.iconSmall).rotate(rotation),
+            painter = painterResource(DesignsystemR.drawable.ic_angle_down),
             // 고른 값과 함께 한 줄로 읽히므로 아이콘에 따로 이름을 붙이지 않는다.
             contentDescription = null,
             tint = ManyakTheme.colors.textSubtle,
         )
     }
 }
+
+private const val HALF_TURN = 180f
 
 private val MenuShadowElevation = 4.dp
 

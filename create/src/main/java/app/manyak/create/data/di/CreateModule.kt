@@ -9,6 +9,7 @@ import app.manyak.create.domain.PendingStoryCreationStore
 import app.manyak.create.domain.StoryCompletionRequestStore
 import app.manyak.create.domain.StoryCompletionSubmitter
 import app.manyak.create.domain.StoryCreationRepository
+import app.manyak.create.general.data.CreationProgressRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -36,5 +37,5 @@ abstract class CreateModule {
 
     @Binds
     @Singleton
-    abstract fun bindCreationProgressAccess(impl: StoryCompletionExecutor): CreationProgressAccess
+    abstract fun bindCreationProgressAccess(impl: CreationProgressRepository): CreationProgressAccess
 }

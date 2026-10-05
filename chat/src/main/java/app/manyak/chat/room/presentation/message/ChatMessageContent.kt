@@ -17,6 +17,8 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.manyak.designsystem.component.CharacterImage
+import app.manyak.designsystem.text.PassageSegment
+import app.manyak.designsystem.text.parsePassageSegments
 import app.manyak.designsystem.text.storyAnnotatedString
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.chat.R as ChatR
@@ -47,7 +49,7 @@ internal fun ChatAiOutput(
     endingName: String? = null,
 ) {
     ChatAiOutput(
-        segments = remember(content) { parseChatMessageSegments(content) },
+        segments = remember(content) { parsePassageSegments(content) },
         onCharacterImageClick = onCharacterImageClick,
         modifier = modifier,
         endingName = endingName,
@@ -63,7 +65,7 @@ internal fun ChatAiOutput(
  */
 @Composable
 internal fun ChatAiOutput(
-    segments: List<ChatMessageSegment>,
+    segments: List<PassageSegment>,
     onCharacterImageClick: (String) -> Unit,
     modifier: Modifier = Modifier,
     endingName: String? = null,
@@ -86,7 +88,7 @@ internal fun ChatAiOutput(
 /** AI 출력의 조각들. 조각 사이 간격만 맡는다. */
 @Composable
 private fun SegmentColumn(
-    segments: List<ChatMessageSegment>,
+    segments: List<PassageSegment>,
     onCharacterImageClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -96,23 +98,45 @@ private fun SegmentColumn(
     ) {
         segments.forEachIndexed { index, segment ->
             when (segment) {
-                is ChatMessageSegment.Text -> ChatPassage(text = segment.content, vertical = false)
+                is PassageSegment.Text -> ChatPassage(text = segment.content, vertical = false)
 
-                is ChatMessageSegment.CharacterImage ->
-                    CharacterImage(
-                        modifier =
-                            Modifier
-                                // 본문 마지막 줄 아래에는 폰트 descent 와 행간 여유(6sp)가 이미 남는다.
-                                // 그만큼 빼야 눈에 보이는 간격이 조각 간격 두 번(40)과 같아진다.
-                                .padding(top = if (index > 0) ManyakTheme.spacing.compact else 0.dp)
-                                .padding(horizontal = ManyakTheme.spacing.gutter),
+                is PassageSegment.CharacterImage ->
+                    SegmentImage(
                         name = segment.name,
                         imageUrl = segment.imageUrl,
-                        onClick = { onCharacterImageClick(segment.imageUrl) },
+                        first = index == 0,
+                        onClick = onCharacterImageClick,
+                    )
+
+                is PassageSegment.SceneImage ->
+                    SegmentImage(
+                        name = null,
+                        imageUrl = segment.imageUrl,
+                        first = index == 0,
+                        onClick = onCharacterImageClick,
                     )
             }
         }
     }
+}
+
+@Composable
+private fun SegmentImage(
+    name: String?,
+    imageUrl: String,
+    first: Boolean,
+    onClick: (String) -> Unit,
+) {
+    CharacterImage(
+        modifier =
+            Modifier
+                // 이야기 사이에 끼는 이미지는 조각 간격을 한 번 더 둬 앞 문단과 떼어 놓는다(웹과 같은 40).
+                .padding(top = if (first) 0.dp else ManyakTheme.spacing.passage)
+                .padding(horizontal = ManyakTheme.spacing.gutter),
+        name = name,
+        imageUrl = imageUrl,
+        onClick = { onClick(imageUrl) },
+    )
 }
 
 /**

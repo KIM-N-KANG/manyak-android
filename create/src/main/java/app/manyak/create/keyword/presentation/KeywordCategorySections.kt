@@ -100,6 +100,7 @@ internal fun CategoryContent(
     onIntent: (CreateKeywordIntent) -> Unit,
     onOpenAddKeyword: (KeywordTarget) -> Unit,
     modifier: Modifier = Modifier,
+    scrollToCenter: suspend (Float) -> Unit = {},
 ) {
     Column(modifier = modifier) {
         when (state.activeCategory) {
@@ -115,15 +116,7 @@ internal fun CategoryContent(
                         text = stringResource(CreateR.string.create_section_genre),
                         required = true,
                     )
-                    KeywordChipArea(
-                        providedTags = state.providedTags,
-                        target = KeywordTarget.Genre,
-                        selectedTagIds = state.selectedGenreTagIds,
-                        customTags = state.customGenreTags,
-                        atSelectionCap = state.isAtSelectionCap(KeywordTarget.Genre),
-                        onIntent = onIntent,
-                        onOpenAddKeyword = onOpenAddKeyword,
-                    )
+                    GenreKeywordSection(state, onIntent)
                 }
             }
 
@@ -150,6 +143,7 @@ internal fun CategoryContent(
                     state = state,
                     onIntent = onIntent,
                     onOpenAddKeyword = onOpenAddKeyword,
+                    scrollToCenter = scrollToCenter,
                 )
             }
         }

@@ -1,20 +1,19 @@
 package app.manyak.create.keyword.presentation
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.VisibilityThreshold
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.relocation.BringIntoViewRequester
-import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
@@ -27,21 +26,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.manyak.create.presentation.component.AddTrigger
+import app.manyak.create.presentation.component.CollapsibleInputSection
 import app.manyak.create.presentation.component.KeywordSectionLabel
 import app.manyak.designsystem.component.ManyakInputCounter
-import app.manyak.designsystem.component.ManyakTextButton
 import app.manyak.designsystem.component.ManyakTextField
 import app.manyak.designsystem.theme.ManyakTheme
+import kotlinx.coroutines.withTimeoutOrNull
 import app.manyak.create.R as CreateR
 
 @Composable
@@ -56,6 +55,7 @@ internal fun CharacterForm(
     onIntent: (CreateKeywordIntent) -> Unit,
     onOpenAddKeyword: (KeywordTarget) -> Unit,
     modifier: Modifier = Modifier,
+    nameFieldModifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -67,6 +67,7 @@ internal fun CharacterForm(
             namePlaceholder = namePlaceholder,
             isDuplicateName = isDuplicateName,
             onIntent = onIntent,
+            nameFieldModifier = nameFieldModifier,
         )
         KeywordSectionLabel(
             modifier = Modifier.padding(top = ManyakTheme.spacing.gutter),
@@ -100,6 +101,7 @@ private fun CharacterBasicInfo(
     isDuplicateName: Boolean,
     onIntent: (CreateKeywordIntent) -> Unit,
     modifier: Modifier = Modifier,
+    nameFieldModifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier,
@@ -111,7 +113,7 @@ private fun CharacterBasicInfo(
         )
         Row(horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact)) {
             ManyakTextField(
-                modifier = Modifier.weight(3f),
+                modifier = Modifier.weight(3f).then(nameFieldModifier),
                 value = character.name,
                 onValueChange = { name -> onIntent(CreateKeywordIntent.ChangeCharacterName(target, name)) },
                 placeholder = namePlaceholder,
@@ -256,25 +258,30 @@ internal fun SupportingCharacterList(
     onIntent: (CreateKeywordIntent) -> Unit,
     onOpenAddKeyword: (KeywordTarget) -> Unit,
     modifier: Modifier = Modifier,
+    scrollToCenter: suspend (Float) -> Unit = {},
 ) {
     val namePlaceholders = stringArrayResource(CreateR.array.create_name_placeholders_supporting)
-    val addedCharacterRequester = remember { BringIntoViewRequester() }
+    val nameCenters = remember { mutableMapOf<Long, Float>() }
     var previousCharacterCount by remember { mutableIntStateOf(state.supportingCharacters.size) }
 
+    // 웹과 같이 새 인물의 이름 칸을 화면 가운데로 옮긴다. 새 인물은 펼친 채 나타나므로 자리를 잡는 대로 옮긴다.
     LaunchedEffect(state.supportingCharacters.size) {
         val currentCount = state.supportingCharacters.size
         val characterWasAdded = currentCount > previousCharacterCount
         previousCharacterCount = currentCount
-
-        if (characterWasAdded) {
-            withFrameNanos { }
-            addedCharacterRequester.bringIntoView()
+        val addedId = state.supportingCharacters.lastOrNull()?.id
+        if (characterWasAdded && addedId != null) {
+            val center =
+                withTimeoutOrNull(ADDED_LAYOUT_TIMEOUT_MILLIS) {
+                    while (addedId !in nameCenters) withFrameNanos { }
+                    nameCenters.getValue(addedId)
+                }
+            center?.let { scrollToCenter(it) }
         }
     }
 
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
     ) {
         state.supportingCharacters.forEachIndexed { index, character ->
             val order = index + 1
@@ -287,6 +294,7 @@ internal fun SupportingCharacterList(
                         order,
                         CreateKeywordUiState.SUPPORTING_CHARACTER_MAX,
                     ),
+                expanded = character.id !in state.collapsedCharacterIds,
                 target = KeywordTarget.Supporting(character.id),
                 character = character,
                 namePlaceholder = namePlaceholders[index % namePlaceholders.size],
@@ -295,31 +303,44 @@ internal fun SupportingCharacterList(
                 atSelectionCap = state.isAtSelectionCap(KeywordTarget.Supporting(character.id)),
                 onIntent = onIntent,
                 onOpenAddKeyword = onOpenAddKeyword,
-                // 요청 대상은 기본 정보가 아니라 섹션 전체다 — 기본 정보만 겨누면 특징 칸이
-                // 화면 밖에 남는다. 섹션이 뷰포트보다 크면 컨테이너가 위 모서리를 맞춰 세우므로,
-                // 들어가는 만큼의 특징 칸이 기본 정보와 함께 보인다.
-                modifier =
-                    if (index == state.supportingCharacters.lastIndex) {
-                        Modifier.bringIntoViewRequester(addedCharacterRequester)
-                    } else {
-                        Modifier
+                nameFieldModifier =
+                    Modifier.onGloballyPositioned {
+                        nameCenters[character.id] = it.positionInRoot().y + it.size.height / 2f
                     },
             )
         }
-        if (state.supportingCharacters.isEmpty()) {
-            Text(
-                modifier = Modifier.fillMaxWidth().padding(top = ManyakTheme.spacing.gutter),
-                text = stringResource(CreateR.string.create_supporting_empty_description),
-                style = ManyakTheme.typography.bodyMedium,
-                color = ManyakTheme.colors.textSubtlest,
-                textAlign = TextAlign.Center,
-            )
-        }
-        AddCharacterTrigger(
-            enabled = state.supportingCharacters.size < CreateKeywordUiState.SUPPORTING_CHARACTER_MAX,
-            onClick = { onIntent(CreateKeywordIntent.AddSupportingCharacter) },
+        SupportingCharacterFooter(state, onIntent)
+    }
+}
+
+@Composable
+private fun SupportingCharacterFooter(
+    state: CreateKeywordUiState,
+    onIntent: (CreateKeywordIntent) -> Unit,
+) {
+    val empty = state.supportingCharacters.isEmpty()
+    if (empty) {
+        Text(
+            modifier = Modifier.fillMaxWidth().padding(top = ManyakTheme.spacing.gutter),
+            text = stringResource(CreateR.string.create_supporting_empty_description),
+            style = ManyakTheme.typography.bodyMedium,
+            color = ManyakTheme.colors.textSubtlest,
+            textAlign = TextAlign.Center,
         )
     }
+    // 펼친 인물 폼은 아래 여백을 이미 깔고 있다. 빈 안내 문구나 접힌 머리 줄 뒤에만 간격을 둔다.
+    // 폼이 접히는 동안 간격이 한 번에 붙으면 인물 추가 버튼이 툭 밀린다. 폼 높이와 같은 스프링으로 채운다.
+    val lastCollapsed = state.supportingCharacters.lastOrNull()?.id in state.collapsedCharacterIds
+    val topGap by animateDpAsState(
+        targetValue = if (empty || lastCollapsed) ManyakTheme.spacing.gutter else 0.dp,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow, visibilityThreshold = Dp.VisibilityThreshold),
+        label = "supporting-footer-gap",
+    )
+    AddCharacterTrigger(
+        enabled = state.supportingCharacters.size < CreateKeywordUiState.SUPPORTING_CHARACTER_MAX,
+        onClick = { onIntent(CreateKeywordIntent.AddSupportingCharacter) },
+        modifier = Modifier.padding(top = topGap),
+    )
 }
 
 @Composable
@@ -341,6 +362,7 @@ private fun AddCharacterTrigger(
 private fun SupportingCharacterSection(
     headerLabel: String,
     countLabel: String,
+    expanded: Boolean,
     target: KeywordTarget,
     character: KeywordCharacter,
     namePlaceholder: String,
@@ -350,22 +372,21 @@ private fun SupportingCharacterSection(
     onIntent: (CreateKeywordIntent) -> Unit,
     onOpenAddKeyword: (KeywordTarget) -> Unit,
     modifier: Modifier = Modifier,
+    nameFieldModifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
+    CollapsibleInputSection(
+        modifier = modifier,
+        headerLabel = headerLabel,
+        countLabel = countLabel,
+        expanded = expanded,
+        onToggle = { onIntent(CreateKeywordIntent.ToggleSupportingCharacter(character.id)) },
+        onDelete = {
+            (target as? KeywordTarget.Supporting)?.let {
+                onIntent(CreateKeywordIntent.RemoveSupportingCharacter(it.characterId))
+            }
+        },
     ) {
-        SupportingCharacterHeader(
-            headerLabel = headerLabel,
-            countLabel = countLabel,
-            onDelete = {
-                (target as? KeywordTarget.Supporting)?.let {
-                    onIntent(CreateKeywordIntent.RemoveSupportingCharacter(it.characterId))
-                }
-            },
-        )
         CharacterForm(
-            modifier = Modifier.padding(horizontal = ManyakTheme.spacing.gutter),
             target = target,
             character = character,
             featureRequired = false,
@@ -375,69 +396,8 @@ private fun SupportingCharacterSection(
             atSelectionCap = atSelectionCap,
             onIntent = onIntent,
             onOpenAddKeyword = onOpenAddKeyword,
+            nameFieldModifier = nameFieldModifier,
         )
-    }
-}
-
-@Composable
-private fun SupportingCharacterHeader(
-    headerLabel: String,
-    countLabel: String,
-    onDelete: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val deleteDescription = stringResource(CreateR.string.create_supporting_delete_description, headerLabel)
-    Row(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .background(ManyakTheme.colors.backgroundNeutral)
-                .padding(horizontal = ManyakTheme.spacing.gutter),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Row(
-            modifier = Modifier.weight(1f),
-            horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                modifier = Modifier.weight(1f, fill = false),
-                text = headerLabel,
-                style = ManyakTheme.typography.labelLarge,
-                color = ManyakTheme.colors.textSubtle,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                modifier =
-                    Modifier
-                        .clip(ManyakTheme.shapes.pill)
-                        .background(ManyakTheme.colors.backgroundNeutralPressed)
-                        .padding(
-                            horizontal = ManyakTheme.spacing.compact,
-                            vertical = ManyakTheme.spacing.inline,
-                        ),
-                text = countLabel,
-                style = ManyakTheme.typography.bodySmall,
-                color = ManyakTheme.colors.textSubtle,
-            )
-        }
-        ManyakTextButton(
-            modifier =
-                Modifier
-                    .width(ManyakTheme.sizes.control)
-                    .semantics { contentDescription = deleteDescription },
-            onClick = onDelete,
-            contentPadding = PaddingValues(0.dp),
-        ) {
-            Text(
-                modifier = Modifier.fillMaxWidth(),
-                text = stringResource(CreateR.string.create_supporting_delete),
-                style = ManyakTheme.typography.labelLarge,
-                color = ManyakTheme.colors.textSubtle,
-                textAlign = TextAlign.End,
-            )
-        }
     }
 }
 
@@ -452,3 +412,5 @@ private fun EmptySupportingCharactersPreview() {
         )
     }
 }
+
+private const val ADDED_LAYOUT_TIMEOUT_MILLIS = 500L

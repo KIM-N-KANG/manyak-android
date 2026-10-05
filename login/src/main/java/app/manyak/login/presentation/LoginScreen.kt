@@ -254,7 +254,7 @@ private fun ProviderButton(
     onClick: (AuthProvider) -> Unit,
     border: BorderStroke? = null,
 ) {
-    val isBusy = state.inProgress != null
+    val isBusy = state.inProgress != null || !state.canSignIn
     Button(
         modifier =
             Modifier

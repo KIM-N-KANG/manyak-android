@@ -10,6 +10,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import app.manyak.common.domain.session.UserScopedStore
+import app.manyak.common.domain.story.ReviewWatch
 import app.manyak.core.navigation.PushEntry
 import app.manyak.notification.R
 import app.manyak.notification.domain.PushRecipientGate
@@ -32,6 +33,7 @@ class PushNotificationTray
     constructor(
         @param:ApplicationContext private val context: Context,
         private val gate: PushRecipientGate,
+        private val reviewWatch: ReviewWatch,
     ) : UserScopedStore {
         override val storeName: String = "notification-tray"
 
@@ -56,6 +58,12 @@ class PushNotificationTray
         /** 수신자 확인·표시를 통틀어 [ADMIT_TIMEOUT_MILLIS] 안에 끝낸다. 넘기면 버린다. */
         suspend fun show(data: Map<String, String>) {
             val message = PushMessage.from(data) ?: return
+            // 검수 결과를 이미 화면으로 보고 있으면 같은 내용을 알림으로 한 번 더 알리지 않는다.
+            if (message.type == PushEntry.TYPE_STORY_MODERATION_COMPLETED &&
+                message.targetId?.let { reviewWatch.suppresses(it, data["status"]) } == true
+            ) {
+                return
+            }
             if (withTimeoutOrNull(ADMIT_TIMEOUT_MILLIS) { gate.admits(message.recipientId) } != true) return
             post(message)
         }
@@ -71,7 +79,7 @@ class PushNotificationTray
             val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
             if (granted != PackageManager.PERMISSION_GRANTED || !gate.isMemberNow()) return
             val channelId = if (message.isMarketing) CHANNEL_MARKETING else CHANNEL_SERVICE
-            val id = (message.type + message.targetId.orEmpty()).hashCode()
+            val id = message.notificationId
             val notification =
                 NotificationCompat
                     .Builder(context, channelId)

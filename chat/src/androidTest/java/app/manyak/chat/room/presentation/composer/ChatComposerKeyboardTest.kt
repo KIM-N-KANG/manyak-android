@@ -27,8 +27,10 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performTouchInput
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import app.manyak.chat.entity.ChatInputMode
 import app.manyak.designsystem.component.clearFocusOnTap
 import app.manyak.designsystem.theme.ManyakTheme
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -37,6 +39,41 @@ class ChatComposerKeyboardTest {
     @get:Rule
     val compose = createComposeRule()
     private lateinit var view: View
+
+    @Test
+    fun plainSituationButtonEmitsOnceAndPreservesInput() {
+        var insertions = 0
+        var state by mutableStateOf(ChatComposerState(mode = ChatInputMode.PLAIN, plainText = "scene"))
+        compose.setContent {
+            ManyakTheme {
+                ChatComposer(
+                    state = state,
+                    choicesEnabled = true,
+                    realtimeImageEnabled = false,
+                    hasSuggestions = false,
+                    isStreaming = false,
+                    actions =
+                        ChatComposerActions(
+                            onPlainTextChange = { state = state.copy(plainText = it) },
+                            onBlockValueChange = { _, _ -> },
+                            onAddBlock = {},
+                            onRemoveBlock = {},
+                            onOpenSettings = {},
+                            onSend = {},
+                            onSendRandomSuggestion = {},
+                            onLockedTap = {},
+                            onInsertSituation = { insertions++ },
+                        ),
+                )
+            }
+        }
+        compose.onNodeWithText("상황 추가").performTouchInput { click() }
+        compose.runOnIdle {
+            assertEquals(1, insertions)
+            assertTrue(state.plainText.contains("scene"))
+            assertTrue(state.plainText.contains("*"))
+        }
+    }
 
     @Test
     fun editingButtons_preserveKeyboard_andBackgroundDismissesIt() {
@@ -66,6 +103,7 @@ class ChatComposerKeyboardTest {
                                 onSend = {},
                                 onSendRandomSuggestion = {},
                                 onLockedTap = {},
+                                onInsertSituation = {},
                             ),
                     )
                 }

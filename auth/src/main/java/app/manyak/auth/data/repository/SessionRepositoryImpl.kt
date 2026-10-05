@@ -2,8 +2,11 @@ package app.manyak.auth.data.repository
 
 import app.manyak.auth.data.api.AccountApi
 import app.manyak.auth.data.api.AuthApi
+import app.manyak.auth.data.api.dto.SignupConsentRequestDto
+import app.manyak.auth.data.api.dto.SocialAuthResponseDto
 import app.manyak.auth.data.api.dto.SocialLoginRequestDto
 import app.manyak.auth.data.api.dto.TokenResponseDto
+import app.manyak.auth.data.api.dto.requiredOrNull
 import app.manyak.auth.data.provider.SocialIdTokenProvider
 import app.manyak.auth.data.session.SessionStateHolder
 import app.manyak.auth.data.session.SessionTokenManager
@@ -15,36 +18,36 @@ import app.manyak.auth.domain.SessionBootstrap
 import app.manyak.auth.domain.SessionEndSignal
 import app.manyak.auth.domain.SessionGate
 import app.manyak.auth.domain.SessionRepository
+import app.manyak.auth.domain.SignupRepository
+import app.manyak.auth.entity.PendingSignup
 import app.manyak.auth.entity.SessionRestoreResult
 import app.manyak.auth.entity.SessionState
 import app.manyak.auth.entity.SignInOutcome
-import app.manyak.common.data.di.ApplicationScope
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
-import app.manyak.common.domain.error.errorOrNull
 import app.manyak.common.domain.invite.SignupOnboardingWriter
-import app.manyak.common.domain.user.UserProfileRepository
 import app.manyak.common.entity.auth.AuthProvider
+import app.manyak.common.entity.consent.ConsentItem
 import app.manyak.common.entity.session.SessionEndNotice
 import app.manyak.network.data.api.apiCall
 import app.manyak.network.data.api.emptyBodyApiCall
 import dagger.Lazy
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * 로그인은 **SDK 인증 → 서버 로그인 → 원자 저장 → 상태 공개** 순서로만 진행한다.
+ * 로그인은 **SDK 인증 → 서버 로그인 → 원자 저장 → 상태 공개** 순서로만 진행한다. 필수 동의가 남았으면
+ * 서버 로그인이 토큰 대신 대기 코드를 주고, 동의 제출이 성공해야 저장과 상태 공개로 넘어간다.
  *
  * 네 단계 전체가 [SessionGate] 의 인증 작업으로 실행된다 — 시작 시 세대를 캡처하고, 저장과 상태
  * 발행은 같은 잠금 안에서 세대를 다시 확인한 뒤에만 일어난다. 종료가 먼저 시작되면 아예 시작하지
  * 않고, 도중에 시작되면 취소되며, 취소되지 않는 제공자 SDK 호출이 늦게 돌아와도 커밋되지 않는다.
  */
+@Suppress("TooManyFunctions") // 로그인·가입 완료·복원이 같은 토큰 저장과 상태 공개 경로를 공유한다.
 @Singleton
 class SessionRepositoryImpl
     @Inject
@@ -57,12 +60,18 @@ class SessionRepositoryImpl
         private val stateHolder: SessionStateHolder,
         private val gate: SessionGate,
         private val sessionEndSignal: Lazy<SessionEndSignal>,
-        private val profileRepository: UserProfileRepository,
         private val inviteOnboarding: SignupOnboardingWriter,
-        @param:ApplicationScope private val applicationScope: CoroutineScope,
     ) : SessionRepository,
+        SignupRepository,
         SessionBootstrap {
         private val inProgress = MutableStateFlow<AuthProvider?>(null)
+        private val pending = MutableStateFlow<PendingSignup?>(null)
+
+        /** 완료 API 전용 불투명 코드. 메모리에만 두고 로그·분석·디스크에 남기지 않는다. */
+        @Volatile
+        private var consentToken: String? = null
+
+        override val pendingSignup: StateFlow<PendingSignup?> = pending.asStateFlow()
 
         override val sessionState: StateFlow<SessionState> = stateHolder.sessionState
 
@@ -73,6 +82,8 @@ class SessionRepositoryImpl
                 providers[provider]
                     ?: return DomainResult.Failure(DomainError.ProviderFailed(provider, "no-adapter"))
 
+            // 공유 기기에서 끝내지 않은 가입이 다음 로그인에 섞이지 않게 먼저 버린다.
+            cancelSignup()
             return gate.withAuthWork(onBlocked = { DomainResult.Failure(DomainError.Unauthorized) }) { work ->
                 inProgress.value = provider
                 try {
@@ -81,6 +92,49 @@ class SessionRepositoryImpl
                     inProgress.value = null
                 }
             }
+        }
+
+        override suspend fun completeSignup(versions: Map<ConsentItem, String>): DomainResult<Unit> =
+            gate.withAuthWork(
+                onBlocked = {
+                    // 종료 절차가 끼어들어도 대기를 버린다. 남기면 시트가 제출 중으로 멈춘다.
+                    cancelSignup()
+                    DomainResult.Failure(DomainError.Unauthorized)
+                },
+            ) { work ->
+                val token = consentToken ?: return@withAuthWork endSignup(work, SessionEndNotice.SIGNUP_EXPIRED)
+                val request =
+                    SignupConsentRequestDto(
+                        terms = versions[ConsentItem.TERMS],
+                        privacy = versions[ConsentItem.PRIVACY],
+                        age14 = versions[ConsentItem.AGE14],
+                    )
+                when (val response = apiCall { authApi.completeSocial(token, request) }) {
+                    is DomainResult.Success -> {
+                        val result = finishSignIn(response.value, work)
+                        // 서버는 토큰을 발급하며 코드를 소비했다. 저장에 실패했어도 같은 코드로 다시 보낼 수 없다.
+                        // 회원 상태를 공개한 뒤에 비워야 시트 쪽이 가입 취소로 오인하지 않는다.
+                        cancelSignup()
+                        if (result is DomainResult.Failure) result else DomainResult.Success(Unit)
+                    }
+                    is DomainResult.Failure ->
+                        response.error.signupEndNotice()?.let { notice -> endSignup(work, notice) } ?: response
+                }
+            }
+
+        override fun cancelSignup() {
+            consentToken = null
+            pending.value = null
+        }
+
+        /** 소셜 인증부터 다시 해야 한다. 대기를 버리고 로그인 화면에 이유를 남긴다. */
+        private suspend fun endSignup(
+            work: AuthWork,
+            notice: SessionEndNotice,
+        ): DomainResult<Unit> {
+            cancelSignup()
+            gate.commit(work) { stateHolder.publishSignedOut(notice) }
+            return DomainResult.Failure(DomainError.Unauthorized)
         }
 
         override suspend fun signOut() {
@@ -131,7 +185,6 @@ class SessionRepositoryImpl
             gate.commit(work) {
                 if (isMember) stateHolder.publishMember() else stateHolder.publishSignedOut(null)
             } ?: return SessionRestoreResult.CLEANUP_REQUIRED
-            if (isMember) applicationScope.launch { refreshProfile() }
             return if (isMember) SessionRestoreResult.MEMBER else SessionRestoreResult.NO_SESSION
         }
 
@@ -146,13 +199,34 @@ class SessionRepositoryImpl
                     is DomainResult.Failure -> return authenticated
                 }
 
-            val issued =
-                when (val response = apiCall { authApi.login(provider.wireName, SocialLoginRequestDto(idToken)) }) {
+            val request = SocialLoginRequestDto(idToken)
+            val started =
+                when (val response = apiCall { authApi.startSocial(provider.wireName, request) }) {
                     is DomainResult.Success -> response.value
                     is DomainResult.Failure -> return response
                 }
 
-            return finishSignIn(issued, work)
+            return when (started.status) {
+                STATUS_COMPLETED -> started.token?.let { finishSignIn(it, work) }
+                STATUS_CONSENT_REQUIRED -> awaitConsent(started, work)
+                else -> null
+            } ?: DomainResult.Failure(DomainError.Serialization)
+        }
+
+        /** 계정과 토큰은 아직 없다. 응답을 해석할 수 없으면 null 이며 그런 응답으로 동의를 받지 않는다. */
+        private suspend fun awaitConsent(
+            started: SocialAuthResponseDto,
+            work: AuthWork,
+        ): DomainResult<SignInOutcome>? {
+            val token = started.consentToken?.takeIf(String::isNotBlank) ?: return null
+            val required = started.consents?.requiredOrNull()?.takeIf(List<*>::isNotEmpty) ?: return null
+            return gate.commit(work) {
+                consentToken = token
+                pending.value = PendingSignup(required)
+                // 직전 가입의 만료 안내가 새 시트 뒤에 남지 않게 지운다.
+                stateHolder.clearNotice()
+                DomainResult.Success(SignInOutcome.ConsentRequired)
+            } ?: DomainResult.Failure(DomainError.Unauthorized)
         }
 
         private suspend fun finishSignIn(
@@ -174,28 +248,27 @@ class SessionRepositoryImpl
             // 상태 발행도 같은 관문을 지난다. 저장 직후 로그아웃이 끼어들면 회원 상태를 공개하지 않는다.
             gate.commit(work) { stateHolder.publishMember() }
                 ?: return DomainResult.Failure(DomainError.Unauthorized)
-            applicationScope.launch { refreshProfile() }
-            // 신규 가입 안내는 로그인 화면이 아니라 회원 그래프에서 뜬다 — 로그인 성공과 동시에 인증
-            // 백스택이 사라지므로, 여기서 표시를 남겨 두고 안내를 본 뒤에 지운다.
+            // 가입 사실만 기록한다. 안내는 필수 동의를 마친 뒤 회원 화면에서 소비한다.
             if (issued.isNewUser) inviteOnboarding.markPending()
-            return DomainResult.Success(SignInOutcome(isNewUser = issued.isNewUser))
-        }
-
-        /**
-         * 로그인 직후·앱 시작 복원의 프로필 확인.
-         *
-         * 정지 계정은 프로필 갱신 성공이 아니라 **세션 종료 사유**다. 조회 실패는 세션을 바꾸지 않는다.
-         */
-        private suspend fun refreshProfile() {
-            if (profileRepository.refresh().errorOrNull() == DomainError.AccountSuspended) {
-                sessionEndSignal.get().onSessionInvalidated(SessionEndNotice.ACCOUNT_SUSPENDED, null)
-            }
+            return DomainResult.Success(SignInOutcome.Completed(isNewUser = issued.isNewUser))
         }
 
         private fun readBackoffMillis(attempt: Int): Long = TOKEN_READ_BACKOFF_MILLIS shl attempt
 
         private companion object {
+            const val STATUS_COMPLETED = "COMPLETED"
+            const val STATUS_CONSENT_REQUIRED = "CONSENT_REQUIRED"
             const val TOKEN_READ_ATTEMPTS = 3
             const val TOKEN_READ_BACKOFF_MILLIS = 100L
         }
     }
+
+/** 400 은 코드를 소비하지 않지만, 버전만 바꿔 자동으로 다시 보내지 않고 새 소셜 인증으로 현행 버전을 다시 받는다. */
+private fun DomainError.signupEndNotice(): SessionEndNotice? =
+    when {
+        this == DomainError.Unauthorized -> SessionEndNotice.SIGNUP_EXPIRED
+        this is DomainError.Server && code in signupRestartCodes -> SessionEndNotice.SIGNUP_OUTDATED
+        else -> null
+    }
+
+private val signupRestartCodes = setOf("CONSENT_VERSION_MISMATCH", "CONSENT_REQUIRED_MISSING")

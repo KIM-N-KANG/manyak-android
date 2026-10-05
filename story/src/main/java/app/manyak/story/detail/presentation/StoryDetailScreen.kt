@@ -3,7 +3,6 @@ package app.manyak.story.detail.presentation
 import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -34,7 +33,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -61,7 +59,6 @@ import app.manyak.designsystem.component.ManyakDestructiveDialog
 import app.manyak.designsystem.component.ManyakIconButton
 import app.manyak.designsystem.component.STORY_THUMBNAIL_ASPECT_RATIO
 import app.manyak.designsystem.component.ScrollEdgeFadeHeight
-import app.manyak.designsystem.component.StoryOverlayScrim
 import app.manyak.designsystem.component.rememberDelayedProgressVisibility
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.report.presentation.StoryReportAction
@@ -88,7 +85,9 @@ import app.manyak.story.R as StoryR
 fun StoryDetailScreen(
     storyId: String,
     onBack: () -> Unit,
+    onStoryDeleted: () -> Unit,
     onEnterChat: (String) -> Unit,
+    onEditStory: (String) -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: StoryDetailViewModel =
         hiltViewModel<StoryDetailViewModel, StoryDetailViewModel.Factory>(
@@ -97,7 +96,7 @@ fun StoryDetailScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val currentOnEnterChat by rememberUpdatedState(onEnterChat)
-    val currentOnBack by rememberUpdatedState(onBack)
+    val currentOnStoryDeleted by rememberUpdatedState(onStoryDeleted)
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
 
@@ -109,7 +108,7 @@ fun StoryDetailScreen(
 
                     StoryDetailEffect.StoryDeleted -> {
                         Toast.makeText(context, CommonR.string.studio_story_deleted, Toast.LENGTH_SHORT).show()
-                        currentOnBack()
+                        currentOnStoryDeleted()
                     }
 
                     StoryDetailEffect.ShowDeleteFailed ->
@@ -120,6 +119,9 @@ fun StoryDetailScreen(
 
                     StoryDetailEffect.ShowReportFailed ->
                         Toast.makeText(context, ReportR.string.story_report_failed, Toast.LENGTH_SHORT).show()
+
+                    StoryDetailEffect.ShowChatStartFailed ->
+                        Toast.makeText(context, StoryR.string.story_detail_start_chat_failed, Toast.LENGTH_SHORT).show()
 
                     StoryDetailEffect.ShowLikeFailed ->
                         Toast.makeText(context, StoryR.string.story_detail_like_failed, Toast.LENGTH_SHORT).show()
@@ -134,6 +136,7 @@ fun StoryDetailScreen(
         state = state,
         onBack = onBack,
         onIntent = viewModel::onIntent,
+        onEdit = { onEditStory(storyId) },
         modifier = modifier,
     )
 }
@@ -149,6 +152,7 @@ private fun StoryDetailContent(
     onBack: () -> Unit,
     onIntent: (StoryDetailIntent) -> Unit,
     modifier: Modifier = Modifier,
+    onEdit: () -> Unit = {},
 ) {
     val listState = rememberLazyListState()
     var headerHeight by remember { mutableFloatStateOf(0f) }
@@ -158,19 +162,21 @@ private fun StoryDetailContent(
     var contentWidth by remember { mutableIntStateOf(0) }
 
     val thumbnailUrl = state.story?.thumbnailUrl
-    // 표지 사진이 있을 때만 앱바가 투명하게 시작한다 — 자리만 채운 회색 위에서는 흰 아이콘이 묻힌다.
     // 상태로 들고 있어야 아래 파생 상태들이 조회 결과가 바뀔 때마다 다시 만들어지지 않는다.
     val hasHeroImage by rememberUpdatedState(thumbnailUrl != null)
+    val hasStory by rememberUpdatedState(state.story != null)
 
     // 본문 제목이 앱바 뒤로 다 지나간 뒤에 앱바가 제목을 이어받는다.
-    val showHeaderTitle by remember { derivedStateOf { titleBottom <= headerBottom } }
+    val showHeaderTitle by remember {
+        derivedStateOf { listState.firstVisibleItemIndex > OVERVIEW_ITEM_INDEX || titleBottom <= headerBottom }
+    }
 
     // 표지가 앱바 뒤로 지나간 정도(0..1). 표지는 화면 폭을 그대로 채우므로 높이는 폭에서 나온다.
     val headerSurfaceAlpha by remember {
         derivedStateOf {
             val scrollRange = contentWidth / STORY_THUMBNAIL_ASPECT_RATIO - headerHeight
             when {
-                !hasHeroImage -> 1f
+                !hasStory -> 1f
                 listState.firstVisibleItemIndex > OVERVIEW_ITEM_INDEX -> 1f
                 scrollRange <= 0f -> 1f
                 else -> (listState.firstVisibleItemScrollOffset / scrollRange).coerceIn(0f, 1f)
@@ -178,7 +184,7 @@ private fun StoryDetailContent(
         }
     }
     val overHeroImage by remember {
-        derivedStateOf { headerSurfaceAlpha < SYSTEM_BAR_FLIP_ALPHA }
+        derivedStateOf { hasHeroImage && headerSurfaceAlpha < SYSTEM_BAR_FLIP_ALPHA }
     }
 
     if (overHeroImage) {
@@ -206,6 +212,7 @@ private fun StoryDetailContent(
             showTitle = showHeaderTitle && state.story != null,
             // 스크롤 값은 앱바 안에서만 읽는다 — 여기서 읽으면 본문까지 매 프레임 다시 구성된다.
             surfaceAlpha = { headerSurfaceAlpha },
+            hasHeroImage = hasHeroImage,
             onBack = onBack,
             // 신고할 대상이 아직 없으면 진입점을 두지 않는다.
             showsMenu = state.story != null,
@@ -213,6 +220,7 @@ private fun StoryDetailContent(
             isOwner = state.story?.isOwner == true,
             onReport = { onIntent(StoryDetailIntent.Report(StoryReportAction.Open)) },
             onDelete = { onIntent(StoryDetailIntent.RequestDelete) },
+            onEdit = onEdit,
         )
 
         StoryDetailOverlays(state = state, onIntent = onIntent)
@@ -329,7 +337,6 @@ private fun StoryDetailLoaded(
             // 여백까지 잡으면 마지막 줄 아래가 그만큼 비어 보인다.
             contentPadding =
                 PaddingValues(bottom = (ctaHeight - ScrollEdgeFadeHeight).coerceAtLeast(0.dp)),
-            verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.block),
         ) {
             storyDetailBody(
                 story = story,
@@ -348,8 +355,12 @@ private fun StoryDetailLoaded(
                     .align(Alignment.BottomCenter)
                     .onSizeChanged { size -> ctaHeight = with(density) { size.height.toDp() } },
             isStarting = state.isStartingChat,
-            failed = state.startChatFailed,
+            canLike = state.canLike,
+            isLiked = story.isLiked,
+            isTogglingLike = state.isTogglingLike,
             onClick = { onIntent(StoryDetailIntent.StartChat) },
+            onToggleLike = { onIntent(StoryDetailIntent.ToggleLike) },
+            backgroundColor = storyFooterBackground(listState),
         )
     }
 }
@@ -360,25 +371,33 @@ private fun StoryDetailHeader(
     title: String,
     showTitle: Boolean,
     surfaceAlpha: () -> Float,
+    hasHeroImage: Boolean,
     onBack: () -> Unit,
     showsMenu: Boolean,
     isOwner: Boolean,
     onReport: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
+    onEdit: () -> Unit = {},
 ) {
     val alpha = surfaceAlpha()
     // 표지 위에 얹힌 동안에는 앱바 아이콘 색을 테마가 아니라 표지 대비로 정한다.
-    val contentColor = lerp(Color.White, ManyakTheme.colors.text, alpha)
-    // 밝은 표지에서도 흰 아이콘이 읽히도록, 배경이 없는 만큼만 표지를 눌러 준다.
-    val scrim = remember { Brush.verticalGradient(listOf(StoryOverlayScrim, Color.Transparent)) }
+    val contentColor =
+        if (hasHeroImage) {
+            lerp(
+                ManyakTheme.colors.textInverse,
+                ManyakTheme.colors.text,
+                alpha,
+            )
+        } else {
+            ManyakTheme.colors.text
+        }
     val titleAlpha by animateFloatAsState(targetValue = if (showTitle) 1f else 0f, label = "headerTitle")
 
     Box(
         modifier =
             modifier
                 .fillMaxWidth()
-                .background(brush = scrim, alpha = 1f - alpha)
                 .background(color = ManyakTheme.colors.surface.copy(alpha = alpha)),
     ) {
         TopAppBar(
@@ -407,6 +426,7 @@ private fun StoryDetailHeader(
                         isOwner = isOwner,
                         onReport = onReport,
                         onDelete = onDelete,
+                        onEdit = onEdit,
                         tint = contentColor,
                     )
                 }
@@ -429,11 +449,12 @@ private const val OVERVIEW_ITEM_INDEX = 0
 /** 앱바 배경이 이만큼 차기 전까지는 아직 표지 위로 본다 — 아이콘 색은 중간값 없이 한 번에 뒤집힌다. */
 private const val SYSTEM_BAR_FLIP_ALPHA = 0.5f
 
-@Preview(showBackground = true, name = "스토리 상세 · 기본")
+@Preview(showBackground = true, name = "스토리 상세 표지 없음")
 @Composable
 private fun StoryDetailPreview() {
-    ManyakTheme(darkTheme = false) {
+    ManyakTheme {
         StoryDetailContent(
+            modifier = Modifier.background(ManyakTheme.colors.surface),
             state =
                 StoryDetailUiState(
                     isLoading = false,

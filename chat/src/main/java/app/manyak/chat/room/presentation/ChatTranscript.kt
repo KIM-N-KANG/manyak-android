@@ -11,11 +11,18 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -31,16 +38,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.manyak.chat.list.presentation.label
 import app.manyak.chat.room.presentation.message.ChatAiOutput
@@ -59,11 +69,16 @@ import app.manyak.designsystem.R as DesignsystemR
  *
  * **항목 사이에 간격을 두지 않는다** — 각 덩이가 스스로 위아래 여백을 갖고, 사용자 밴드의 배경이
  * 시작과 끝을 말한다. 여기에 목록 간격을 더하면 배경 밴드가 본문에서 떠 버린다.
+ *
+ * @param topInset 목록 위에 겹쳐 뜬 헤더의 높이. 첫 항목이 헤더에 가리지 않게 그만큼 내려 둔다.
+ * @param onBackgroundTap 버튼·이미지가 아닌 빈 곳을 눌렀다.
  */
 @Composable
 internal fun ChatTranscript(
     state: ChatRoomUiState,
     onIntent: (ChatRoomIntent) -> Unit,
+    topInset: Dp,
+    onBackgroundTap: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val onCharacterImageClick: (String) -> Unit = { url -> onIntent(ChatRoomIntent.OpenCharacterImage(url)) }
@@ -95,9 +110,9 @@ internal fun ChatTranscript(
     KeepReadingPosition(listState = listState, anchored = state.isStreaming)
 
     Box(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().backgroundTap(onBackgroundTap),
     ) {
-        LazyColumn(modifier = Modifier.fillMaxWidth(), state = listState) {
+        LazyColumn(Modifier.fillMaxWidth(), listState, PaddingValues(top = topInset)) {
             item(key = "ai-notice") { AiNotice() }
             if (state.prologue.isNotBlank()) {
                 item(
@@ -131,6 +146,24 @@ internal fun ChatTranscript(
             visible = listState.canScrollForward,
             onClick = { scope.launch { listState.animateScrollToItem(itemCount - 1) } },
         )
+    }
+}
+
+/**
+ * 자식이 소비하지 않은 탭만 알린다. 버튼·이미지는 떼는 이벤트를, 스크롤은 이동을 소비하므로 여기까지
+ * 오지 않는다. 키보드가 떠 있을 때의 탭은 키보드를 닫으려는 것이라 넘긴다.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun Modifier.backgroundTap(onTap: () -> Unit): Modifier {
+    val currentOnTap by rememberUpdatedState(onTap)
+    val imeVisible by rememberUpdatedState(WindowInsets.isImeVisible)
+    return pointerInput(Unit) {
+        awaitEachGesture {
+            awaitFirstDown(requireUnconsumed = false)
+            val dismissingKeyboard = imeVisible
+            if (waitForUpOrCancellation() != null && !dismissingKeyboard) currentOnTap()
+        }
     }
 }
 
@@ -237,8 +270,8 @@ private fun AiNotice(modifier: Modifier = Modifier) {
         modifier =
             modifier
                 .fillMaxWidth()
-                .padding(horizontal = ManyakTheme.spacing.gutter)
-                .padding(top = ManyakTheme.spacing.passage),
+                // 위 여백은 두지 않는다 — 목록의 위 여백(헤더 높이)이 끝나는 자리에서 바로 시작한다.
+                .padding(horizontal = ManyakTheme.spacing.gutter),
         text = stringResource(ChatR.string.chat_room_ai_notice),
         style = ManyakTheme.typography.bodySmall,
         color = ManyakTheme.colors.textSubtle,

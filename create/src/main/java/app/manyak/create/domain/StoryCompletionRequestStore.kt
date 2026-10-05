@@ -16,8 +16,11 @@ interface StoryCompletionRequestStore {
 
     suspend fun readAll(): List<StoryCompletionRequest>
 
-    /** 요청 행 삽입과 해당 초안 해제를 원자적으로 처리한다. 영속에 성공했을 때만 true. */
-    suspend fun submit(request: StoryCompletionRequest): Boolean
+    /** 요청 행 삽입과 [draftId] 초안 해제를 원자적으로 처리한다. 영속에 성공했을 때만 true. */
+    suspend fun submit(
+        request: StoryCompletionRequest,
+        draftId: String,
+    ): Boolean
 
     suspend fun markCompleted(
         requestId: String,

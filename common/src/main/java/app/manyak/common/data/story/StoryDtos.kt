@@ -1,11 +1,12 @@
 package app.manyak.common.data.story
 
 import app.manyak.common.data.time.toDisplayDate
+import app.manyak.common.data.time.toEpochMillisOrNull
 import app.manyak.common.entity.story.StorySummary
 import kotlinx.serialization.Serializable
 
 /**
- * 목록 응답 한 건. 오리지널·내 스토리 목록이 같은 모양을 쓴다. 카드가 쓰지 않는
+ * 목록 응답 한 건. 공개·내 스토리 목록이 같은 모양을 쓴다. 카드가 쓰지 않는
  * 등록 상태는 역직렬화하지 않는다.
  *
  * 식별자 밖의 필드에 기본값을 두는 이유는 서버가 필드를 하나 빼도 목록 전체가 실패로
@@ -22,6 +23,7 @@ data class StorySummaryDto(
     val likeCount: Long = 0,
     val turnCount: Long = 0,
     val createdAt: String? = null,
+    val isOriginal: Boolean = false,
 )
 
 @Serializable
@@ -40,4 +42,6 @@ fun StorySummaryDto.toDomain(): StorySummary =
         likeCount = likeCount,
         turnCount = turnCount,
         createdDate = createdAt?.toDisplayDate(),
+        createdAtMillis = createdAt?.toEpochMillisOrNull(),
+        isOriginal = isOriginal,
     )

@@ -18,8 +18,10 @@ data class ManyakSizes(
     val input: Dp,
     /** 40dp — 카드 안에 놓이는 라벨 버튼의 보이는 높이. 터치 영역은 최소 48dp 를 그대로 유지한다 */
     val controlCompact: Dp,
-    /** 32dp — 라벨 없이 아이콘만 있는 보조 버튼. 본문 옆에 붙어 눈에 덜 띄어야 하는 자리다 */
+    /** 32dp — 작은 보조 버튼. 인물 머리 줄의 접기와 삭제, 본문 옆 아이콘에 사용한다 */
     val controlSmall: Dp,
+    /** 12dp — 작은 보조 버튼 안에서 12sp 라벨 옆에 붙는 아이콘. 글자 크기와 맞춘다 */
+    val iconTiny: Dp,
     /** 16dp — 밀도 높은 컨트롤 안에서 라벨 옆에 붙는 작은 아이콘 */
     val iconSmall: Dp,
     /** 20dp — 라벨 옆에 붙는 아이콘·제공자 로고 */
@@ -28,6 +30,8 @@ data class ManyakSizes(
     val tabIcon: Dp,
     /** 24dp — 마냑 로고 락업의 높이. 폭은 원본 비율(89:32)로 따라간다 */
     val logo: Dp,
+    /** 64dp — 시작 화면에서 혼자 튀는 로고 심벌의 크기 */
+    val startupSymbol: Dp,
     /** 2dp — 미선택 체크박스 경계. Material 3 라디오 버튼의 선 두께와 동일 */
     val selectionBorderWidth: Dp,
     /** 60dp — 텍스트 시머 띠의 반폭 */
@@ -38,6 +42,18 @@ data class ManyakSizes(
     val generationDotRadius: Dp,
     /** 9dp — 이미지 생성 로딩의 점 최대 변위 */
     val generationDotDisplacement: Dp,
+    /** 288dp — 채팅 안내 투어 카드의 폭 */
+    val tourCardWidth: Dp,
+    /** 6dp — 채팅 안내 투어 카드의 스텝 점 지름 */
+    val tourStepDot: Dp,
+    /** 128dp 제작 탭의 스토리, 초안, 검수 제출본 표지 폭 */
+    val studioCoverWidth: Dp,
+    /** 240dp 장르 검색 결과 메뉴의 최대 높이 */
+    val genreMenuMaxHeight: Dp,
+    /** 1dp 입력과 검색 메뉴의 경계 두께 */
+    val inputBorderWidth: Dp,
+    /** 4dp 입력 아래에 겹쳐지는 선택 메뉴의 그림자 */
+    val selectMenuElevation: Dp,
 )
 
 internal val ManyakDefaultSizes =
@@ -46,13 +62,21 @@ internal val ManyakDefaultSizes =
         input = 40.dp,
         controlCompact = 40.dp,
         controlSmall = 32.dp,
+        iconTiny = 12.dp,
         iconSmall = 16.dp,
         icon = 20.dp,
         tabIcon = 24.dp,
         logo = 24.dp,
+        startupSymbol = 64.dp,
         selectionBorderWidth = 2.dp,
         shimmerBandHalfWidth = 60.dp,
         generationDotGap = 10.dp,
         generationDotRadius = 1.dp,
         generationDotDisplacement = 9.dp,
+        tourCardWidth = 288.dp,
+        tourStepDot = 6.dp,
+        studioCoverWidth = 128.dp,
+        genreMenuMaxHeight = 240.dp,
+        inputBorderWidth = 1.dp,
+        selectMenuElevation = 4.dp,
     )

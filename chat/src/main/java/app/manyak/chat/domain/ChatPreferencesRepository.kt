@@ -8,7 +8,7 @@ import app.manyak.chat.entity.ChatInputMode
  * **계정이 아니라 기기에 남는다** — 로그아웃해도 지우지 않으며 언어·테마와 같은 분류다. 그래서 세션
  * 종료 정리 계약(`UserScopedStore`)에 참여하지 않는다.
  *
- * 모두 한 번 읽는 값이고 관찰 흐름을 노출하지 않는다. 화면은 진입할 때 읽어 상태로 들고, 바꿀 때
+ * 설정은 진입할 때 한 번 읽고 관찰 흐름을 노출하지 않는다. 화면은 진입할 때 읽어 상태로 들고, 바꿀 때
  * 상태를 먼저 바꾼 뒤 저장한다 — **저장에 실패해도 지금 세션의 선택은 유지되어야 하기 때문**이다.
  * 저장소를 정본으로 삼아 흐름을 구독하면 저장이 실패한 순간 사용자가 방금 누른 선택이 되돌아간다.
  */
@@ -23,10 +23,13 @@ interface ChatPreferencesRepository {
 
     suspend fun setChoicesEnabled(enabled: Boolean)
 
-    /** 턴마다 인물 이미지를 실시간으로 만들지. 읽지 못하면 켬. */
+    /** 턴마다 인물 이미지를 실시간으로 만들지. 읽지 못하면 끔. */
     suspend fun realtimeImageEnabled(): Boolean
 
     suspend fun setRealtimeImageEnabled(enabled: Boolean)
+
+    /** 정상 전송 완료를 원자적으로 더해 3에서 멈춘다. 읽기나 저장 실패는 null이다. */
+    suspend fun recordCompletedTurn(): Int?
 
     /**
      * 추천 입력 사용법 힌트를 이미 봤는지. 읽지 못하면 보지 않은 것으로 본다.
@@ -37,4 +40,9 @@ interface ChatPreferencesRepository {
     suspend fun isChoicesHintSeen(): Boolean
 
     suspend fun markChoicesHintSeen()
+
+    /** 채팅 화면 안내 투어를 이미 봤는지. 읽지 못하면 보지 않은 것으로 본다. */
+    suspend fun isChatTourSeen(): Boolean
+
+    suspend fun markChatTourSeen()
 }

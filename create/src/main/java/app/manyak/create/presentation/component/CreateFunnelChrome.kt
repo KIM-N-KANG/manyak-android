@@ -1,5 +1,6 @@
 package app.manyak.create.presentation.component
 
+import android.widget.Toast
 import androidx.activity.compose.LocalActivity
 import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
@@ -19,17 +20,21 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -53,16 +58,17 @@ internal const val INDICATOR_STEP_COUNT = 3
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun CreateFunnelHeader(
-    draftSave: DraftSaveUiState,
+    draftSave: DraftSaveUiState?,
     onSaveDraft: () -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
+    title: String = stringResource(CreateR.string.create_title),
 ) {
     TopAppBar(
         modifier = modifier,
         title = {
             Text(
-                text = stringResource(CreateR.string.create_title),
+                text = title,
                 style = ManyakTheme.typography.titleLarge,
                 color = ManyakTheme.colors.text,
             )
@@ -75,7 +81,8 @@ internal fun CreateFunnelHeader(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
             ) {
-                DraftSaveButton(draftSave = draftSave, onClick = onSaveDraft)
+                // 스토리 수정처럼 임시 저장이 없는 화면은 닫기만 둔다.
+                draftSave?.let { DraftSaveButton(draftSave = it, onClick = onSaveDraft) }
                 ManyakIconButton(
                     iconRes = DesignsystemR.drawable.ic_close,
                     contentDescription = stringResource(CreateR.string.create_close_funnel),
@@ -97,35 +104,43 @@ internal fun CreateFunnelHeader(
  * 헤더의 임시 저장 버튼. 편집은 화면 안에 모아 두었다가 이 버튼이나 백그라운드 전환에서만
  * 디스크로 나가므로, 저장 여부를 사용자가 직접 결정한다.
  *
- * 저장 중에는 라벨 자리에 스피너를 겹치고, 성공하면 잠깐 체크와 "임시 저장됨"으로 바꾸며
- * 브랜드 배경을 입는다. 두 상태 모두 버튼을 잠근다 — 방금 저장한 것을 곧바로 다시 저장할
- * 이유가 없다.
- *
- * 상태마다 색을 직접 정해 잠금 여부와 무관하게 같은 값을 넘긴다. `enabled` 에 색까지 맡기면
- * 저장 완료로 잠긴 버튼이 "누를 수 없음" 회색으로 보인다.
+ * 저장 중에는 라벨 자리에 스피너를 겹친다. 성공하면 버튼 모양은 그대로 두고 토스트로 알리며,
+ * 잠금 시간 동안 버튼을 잠근다.
  */
 @Composable
 private fun DraftSaveButton(
     draftSave: DraftSaveUiState,
     onClick: () -> Unit,
 ) {
+    val context = LocalContext.current
+    val savedMessage = stringResource(CreateR.string.create_draft_saved)
+    // 백그라운드 전환 저장도 같은 상태를 지나간다. 이 버튼으로 시작한 저장에만 알린다.
+    var awaitingResult by remember { mutableStateOf(false) }
+    LaunchedEffect(draftSave.status) {
+        if (!awaitingResult || draftSave.status == DraftSaveStatus.SAVING) return@LaunchedEffect
+        awaitingResult = false
+        if (draftSave.status == DraftSaveStatus.SAVED) {
+            Toast.makeText(context, savedMessage, Toast.LENGTH_SHORT).show()
+        }
+    }
     val isSaving = draftSave.status == DraftSaveStatus.SAVING
-    val isSaved = draftSave.status == DraftSaveStatus.SAVED
     val isEnabled = draftSave.canSave && draftSave.status == DraftSaveStatus.IDLE
-    val labelRes = if (isSaved) CreateR.string.create_draft_saved else CreateR.string.create_draft_save
+    // 저장 중에도 잠겨 있지만 스피너가 돌고 있으므로 회색으로 바꾸지 않는다.
     val (containerColor, contentColor) =
-        when {
-            isSaved -> ManyakTheme.colors.backgroundBrandSubtle to ManyakTheme.colors.textBrand
-            isEnabled || isSaving -> ManyakTheme.colors.backgroundNeutral to ManyakTheme.colors.text
-            else -> ManyakTheme.colors.backgroundDisabled to ManyakTheme.colors.textDisabled
+        if (isEnabled || isSaving) {
+            ManyakTheme.colors.backgroundNeutral to ManyakTheme.colors.text
+        } else {
+            ManyakTheme.colors.backgroundDisabled to ManyakTheme.colors.textDisabled
         }
     Button(
         modifier = Modifier.height(ManyakTheme.sizes.input),
         enabled = isEnabled,
-        onClick = onClick,
+        onClick = {
+            awaitingResult = true
+            onClick()
+        },
         shape = ManyakTheme.shapes.control,
-        // 저장 완료는 브랜드 배경만으로 충분히 구분된다 — 테두리까지 두르면 과하다.
-        border = if (isSaved) null else BorderStroke(1.dp, ManyakTheme.colors.border),
+        border = BorderStroke(1.dp, ManyakTheme.colors.border),
         contentPadding = PaddingValues(horizontal = ManyakTheme.spacing.component),
         colors =
             ButtonDefaults.buttonColors(
@@ -137,21 +152,11 @@ private fun DraftSaveButton(
     ) {
         Box(contentAlignment = Alignment.Center) {
             // 문구를 투명하게 남겨 스피너가 떠도 버튼 폭이 흔들리지 않게 한다.
-            Row(
+            Text(
                 modifier = Modifier.alpha(if (isSaving) 0f else 1f),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
-            ) {
-                if (isSaved) {
-                    Icon(
-                        modifier = Modifier.size(ManyakTheme.sizes.iconSmall),
-                        painter = painterResource(DesignsystemR.drawable.ic_check),
-                        contentDescription = null,
-                        tint = LocalContentColor.current,
-                    )
-                }
-                Text(text = stringResource(labelRes), style = ManyakTheme.typography.labelLarge)
-            }
+                text = stringResource(CreateR.string.create_draft_save),
+                style = ManyakTheme.typography.labelLarge,
+            )
             if (isSaving) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(ManyakTheme.sizes.iconSmall),
@@ -284,22 +289,19 @@ internal fun FunnelExitWarningDialog(
     onDismiss: () -> Unit,
 ) {
     when (warning) {
-        FunnelExitWarning.UNSAVED_CHANGES ->
+        FunnelExitWarning.UNSAVED_INPUT,
+        FunnelExitWarning.UNSAVED_CHANGES,
+        ->
             FunnelWarningDialog(
                 titleRes = CreateR.string.create_unsaved_warning_title,
-                descriptionRes = CreateR.string.create_unsaved_warning_description,
+                descriptionRes =
+                    if (warning == FunnelExitWarning.UNSAVED_INPUT) {
+                        CreateR.string.create_unsaved_input_warning_description
+                    } else {
+                        CreateR.string.create_unsaved_warning_description
+                    },
                 confirmRes = CreateR.string.create_unsaved_warning_leave,
                 dismissRes = CreateR.string.create_unsaved_warning_stay,
-                onConfirm = onConfirmLeave,
-                onDismiss = onDismiss,
-            )
-
-        FunnelExitWarning.NOTHING_TO_PRESERVE ->
-            FunnelWarningDialog(
-                titleRes = CreateR.string.create_exit_warning_title,
-                descriptionRes = CreateR.string.create_exit_warning_description,
-                confirmRes = CreateR.string.create_exit_warning_leave,
-                dismissRes = CreateR.string.create_exit_warning_stay,
                 onConfirm = onConfirmLeave,
                 onDismiss = onDismiss,
             )

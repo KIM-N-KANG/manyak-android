@@ -1,5 +1,7 @@
 package app.manyak.create.data.completion
 
+import app.manyak.analytics.domain.Analytics
+import app.manyak.analytics.entity.AnalyticsEvent
 import app.manyak.auth.domain.SessionGate
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
@@ -31,13 +33,23 @@ class StoryCompletionExecutorTest {
         val requestStore: FakeStoryCompletionRequestStore,
         val gate: SessionGate,
         val executor: StoryCompletionExecutor,
+        val analytics: RecordingAnalytics,
     )
+
+    private class RecordingAnalytics : Analytics {
+        val events = mutableListOf<AnalyticsEvent>()
+
+        override fun track(event: AnalyticsEvent) {
+            events += event
+        }
+    }
 
     private fun TestScope.fixture(initial: List<StoryCompletionRequest> = emptyList()): Fixture {
         val repository = FakeStoryCreationRepository()
         val draftStore = FakePendingStoryCreationStore()
         val requestStore = FakeStoryCompletionRequestStore(initial, draftStore)
         val gate = SessionGate()
+        val analytics = RecordingAnalytics()
         return Fixture(
             repository = repository,
             requestStore = requestStore,
@@ -50,7 +62,9 @@ class StoryCompletionExecutorTest {
                     gate,
                     this,
                     FakeTrialsRepository(),
+                    analytics,
                 ),
+            analytics = analytics,
         )
     }
 
@@ -60,8 +74,8 @@ class StoryCompletionExecutorTest {
             val fixture = fixture()
             fixture.repository.queuedCompletionResults += DomainResult.Success(CompletedStory("story-a", "A"))
 
-            assertTrue(fixture.executor.submit(request("a")))
-            assertTrue(fixture.executor.submit(request("b")))
+            assertTrue(fixture.executor.submit(request("a"), "draft-a"))
+            assertTrue(fixture.executor.submit(request("b"), "draft-b"))
             advanceUntilIdle()
 
             assertEquals(listOf("a", "b"), fixture.repository.completionCommands.map { it.requestId })
@@ -85,7 +99,7 @@ class StoryCompletionExecutorTest {
             val fixture = fixture()
             fixture.requestStore.submitSucceeds = false
 
-            assertFalse(fixture.executor.submit(request("a")))
+            assertFalse(fixture.executor.submit(request("a"), "draft-a"))
             advanceUntilIdle()
 
             assertTrue(fixture.repository.completionCommands.isEmpty())
@@ -96,7 +110,7 @@ class StoryCompletionExecutorTest {
         runTest {
             val fixture = fixture()
             fixture.repository.queuedCompletionResults += DomainResult.Failure(DomainError.Network)
-            fixture.executor.submit(request("a"))
+            fixture.executor.submit(request("a"), "draft-a")
             advanceUntilIdle()
             assertEquals(
                 CompletionOutcome.Pending,
@@ -142,7 +156,7 @@ class StoryCompletionExecutorTest {
             fixture.repository.queuedCompletionResults +=
                 DomainResult.Failure(DomainError.Server(status = 402, code = null, requestId = null))
             fixture.repository.queuedCreationRequestResults += DomainResult.Failure(notFound())
-            fixture.executor.submit(request("a"))
+            fixture.executor.submit(request("a"), "draft-a")
             advanceUntilIdle()
             assertEquals(
                 CompletionOutcome.Failed,
@@ -155,7 +169,7 @@ class StoryCompletionExecutorTest {
             fixture.repository.queuedCompletionResults +=
                 DomainResult.Failure(DomainError.Server(status = 409, code = null, requestId = null))
             fixture.repository.queuedCreationRequestResults += DomainResult.Success(CreationRequestSnapshot.Pending)
-            fixture.executor.submit(request("b"))
+            fixture.executor.submit(request("b"), "draft-b")
             advanceUntilIdle()
             assertEquals(
                 CompletionOutcome.Pending,
@@ -203,7 +217,7 @@ class StoryCompletionExecutorTest {
             val fixture = fixture()
             val release = CompletableDeferred<Unit>()
             fixture.repository.completionGate = release
-            fixture.executor.submit(request("a"))
+            fixture.executor.submit(request("a"), "draft-a")
             advanceUntilIdle()
 
             fixture.gate.raiseBarrier()
@@ -215,6 +229,36 @@ class StoryCompletionExecutorTest {
                 fixture.requestStore.current
                     .single()
                     .outcome,
+            )
+        }
+
+    @Test
+    fun `완성 확정은 원 응답과 새로고침 판정 어느 쪽이든 완성 이벤트를 한 번만 낸다`() =
+        runTest {
+            val fixture = fixture()
+            fixture.repository.queuedCompletionResults += DomainResult.Success(CompletedStory("story-a", "A"))
+            fixture.repository.queuedCompletionResults += DomainResult.Failure(DomainError.Network)
+            fixture.executor.submit(request("a"), "draft-a")
+            fixture.executor.submit(request("b"), "draft-b")
+            advanceUntilIdle()
+
+            assertEquals(listOf(AnalyticsEvent.StoryCreateCompleted("story-a")), fixture.analytics.events)
+
+            fixture.repository.queuedCreationRequestResults +=
+                DomainResult.Success(CreationRequestSnapshot.StoryReady(CompletedStory("story-b", "B")))
+            fixture.executor.refreshCompletionRequests()
+            advanceUntilIdle()
+
+            // 두 번째 새로고침은 완성된 요청을 다시 조회하지 않으므로 이벤트가 늘지 않는다.
+            fixture.executor.refreshCompletionRequests()
+            advanceUntilIdle()
+
+            assertEquals(
+                listOf(
+                    AnalyticsEvent.StoryCreateCompleted("story-a"),
+                    AnalyticsEvent.StoryCreateCompleted("story-b"),
+                ),
+                fixture.analytics.events,
             )
         }
 

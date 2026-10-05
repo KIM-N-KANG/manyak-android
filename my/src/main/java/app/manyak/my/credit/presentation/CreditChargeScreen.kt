@@ -42,6 +42,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.designsystem.component.LoadFailedContent
+import app.manyak.designsystem.component.LoadMoreFooter
 import app.manyak.designsystem.component.ManyakInfoTooltipButton
 import app.manyak.designsystem.component.ManyakPullToRefreshBox
 import app.manyak.designsystem.component.SkeletonPlaceholder
@@ -209,7 +210,7 @@ private fun LazyListScope.creditHistoryBody(
             items(state.items) { transaction -> CreditTransactionRow(transaction = transaction) }
             if (state.isLoadingMore || state.loadMoreFailed) {
                 item {
-                    CreditHistoryLoadMoreFooter(
+                    LoadMoreFooter(
                         isLoading = state.isLoadingMore,
                         onRetry = { onIntent(CreditChargeIntent.LoadMore) },
                     )

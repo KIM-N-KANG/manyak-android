@@ -17,12 +17,15 @@ import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import app.manyak.designsystem.theme.ManyakTheme
+import kotlinx.coroutines.flow.first
 
 /**
  * 앱의 바텀 시트. 모양과 안전 영역 처리, 그리고 **열리는 방식**을 이 컴포넌트가 소유한다.
@@ -37,6 +40,7 @@ import app.manyak.designsystem.theme.ManyakTheme
  * 결과를 못 본 채 사라지지 않게). 닫히지 않는 시트가 끌리기만 하면 튕기는 움직임이 "닫을 수 있다" 는 신호가 된다.
  * @param dismissOnBackPress false 면 뒤로가기도 막는다. 기본은 [dismissEnabled] 와 같다 — 뒤로가기는
  * 끌어내리기 판정을 거치지 않고 [onDismissRequest] 를 부르므로 따로 잠가야 한다.
+ * @param onExpanded 시트가 완전히 펼쳐진 뒤 호출한다. 시트 위 안내가 움직이는 행을 가리지 않게 한다.
  * @param dragHandleVisible false 면 핸들을 두지 않는다. 끌어내릴 수 없는 시트(필수 동의)에 핸들이 있으면 닫을 수
  * 있다는 신호가 되어서다. 전송 중처럼 잠깐 잠그는 시트는 핸들이 사라졌다 나타나지 않게 그대로 둔다.
  */
@@ -49,6 +53,7 @@ fun ManyakBottomSheet(
     dismissOnBackPress: Boolean = dismissEnabled,
     dragHandleVisible: Boolean = true,
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
+    onExpanded: () -> Unit = {},
     content: @Composable ColumnScope.() -> Unit,
 ) {
     // SheetValue 는 실험 API 라 공개 시그니처에 두지 않는다 — 노출하면 호출부까지 OptIn 이 번진다.
@@ -57,14 +62,21 @@ fun ManyakBottomSheet(
     val confirmValueChange =
         remember { { value: SheetValue -> currentDismissEnabled || value != SheetValue.Hidden } }
 
+    val sheetState =
+        rememberModalBottomSheetState(
+            skipPartiallyExpanded = true,
+            confirmValueChange = confirmValueChange,
+        )
+    val currentOnExpanded by rememberUpdatedState(onExpanded)
+    LaunchedEffect(sheetState) {
+        snapshotFlow { sheetState.currentValue }.first { it == SheetValue.Expanded }
+        currentOnExpanded()
+    }
+
     ModalBottomSheet(
         modifier = modifier,
         onDismissRequest = onDismissRequest,
-        sheetState =
-            rememberModalBottomSheetState(
-                skipPartiallyExpanded = true,
-                confirmValueChange = confirmValueChange,
-            ),
+        sheetState = sheetState,
         containerColor = ManyakTheme.colors.surfaceRaised,
         shape = ManyakTheme.shapes.sheet,
         // 하단 안전 영역과 키보드 높이는 아래 본문이 직접 낀다.

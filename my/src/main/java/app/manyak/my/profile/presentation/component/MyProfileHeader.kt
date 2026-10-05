@@ -40,6 +40,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.manyak.common.entity.auth.AuthProvider
 import app.manyak.common.entity.user.UserProfile
+import app.manyak.designsystem.component.SkeletonPlaceholder
+import app.manyak.designsystem.component.rememberSkeletonPulseAlpha
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.my.presentation.component.chipLogoTint
 import app.manyak.my.presentation.component.labelRes
@@ -51,6 +53,7 @@ import app.manyak.my.R as MyR
 internal fun ProfileHeader(
     profile: UserProfile?,
     onLinkAccount: (AuthProvider) -> Unit,
+    isLoading: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -68,6 +71,21 @@ internal fun ProfileHeader(
                 style = ManyakTheme.typography.titleMediumStrong,
                 color = ManyakTheme.colors.text,
             )
+            if (isLoading && profile == null) {
+                val alpha = rememberSkeletonPulseAlpha()
+                Row(horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline)) {
+                    repeat(2) {
+                        SkeletonPlaceholder(
+                            alpha = alpha,
+                            modifier =
+                                Modifier.size(
+                                    width = ManyakTheme.sizes.control * 2,
+                                    height = ManyakTheme.sizes.tabIcon,
+                                ),
+                        )
+                    }
+                }
+            }
             // 연동 목록이 비어 있으면 아직 실데이터가 아니다. 연동 버튼 둘만 뜨는 오해를 만들지 않는다.
             profile?.linkedProviders?.takeIf { it.isNotEmpty() }?.let { linked ->
                 LinkedAccountRow(linked = linked, onLinkAccount = onLinkAccount)

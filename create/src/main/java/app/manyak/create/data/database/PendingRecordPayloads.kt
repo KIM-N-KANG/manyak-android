@@ -10,7 +10,7 @@ import app.manyak.create.entity.StorylineGenerationCommand
 import app.manyak.create.entity.StorylineRecommendedInfo
 import kotlinx.serialization.Serializable
 
-// 컬럼 하나에 담기는 JSON 페이로드. 슬롯이 하나라 조인할 대상이 없어 중첩 구조는 여기 남는다.
+// 컬럼 하나에 담기는 JSON 페이로드. 행마다 독립된 스냅숏이라 조인할 대상이 없어 중첩 구조는 여기 남는다.
 @Serializable
 internal data class GenerationCommandDto(
     val requestId: String,

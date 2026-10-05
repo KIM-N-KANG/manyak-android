@@ -38,4 +38,6 @@ fun SessionEndNotice.messageResOrNull(): Int? =
         SessionEndNotice.REAUTHENTICATION_REQUIRED -> CommonR.string.session_ended_reauthentication_required
         SessionEndNotice.ACCOUNT_SUSPENDED -> CommonR.string.session_ended_account_suspended
         SessionEndNotice.TOKEN_PERSISTENCE_FAILED -> CommonR.string.session_ended_token_persistence_failed
+        SessionEndNotice.SIGNUP_EXPIRED -> CommonR.string.signup_ended_expired
+        SessionEndNotice.SIGNUP_OUTDATED -> CommonR.string.signup_ended_outdated
     }

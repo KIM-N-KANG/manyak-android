@@ -15,9 +15,9 @@ data class CreationProgress(
 )
 
 /**
- * 편집 슬롯에 저장되는 간편 제작 진행 레코드. 응답을 못 받은 생성 요청의 복구 조회와 이탈 시
- * 임시 저장이 같은 슬롯을 쓰므로, 새 생성을 시작하면 이전 레코드는 자연히 덮인다. 제출한 완성
- * 요청은 이 슬롯이 아니라 [StoryCompletionRequest] 로 따로 보존된다.
+ * 편집 초안으로 저장되는 간편 제작 진행 레코드. 퍼널 세션 하나가 초안 하나를 가지며, 응답을 못 받은
+ * 생성 요청의 복구 조회와 이탈 시 임시 저장이 같은 초안을 쓰므로 단계가 바뀌면 이전 레코드는 자연히
+ * 덮인다. 제출한 완성 요청은 초안이 아니라 [StoryCompletionRequest] 로 따로 보존된다.
  */
 sealed interface PendingStoryCreation {
     /** 스토리라인 생성 요청을 보냈고 결과를 아직 화면에 반영하지 못했다. */
@@ -45,3 +45,11 @@ sealed interface PendingStoryCreation {
         val snapshot: KeywordDraftSnapshot,
     ) : PendingStoryCreation
 }
+
+/** 저장소에 있는 초안 한 건. 제작 탭이 카드로 그리고 [draftId] 로 재개·삭제한다. */
+data class StoredCreationDraft(
+    val draftId: String,
+    /** 처음 임시 저장한 시각(epoch millis). 여러 초안 이전에 저장한 초안은 null 이다. */
+    val createdAt: Long?,
+    val record: PendingStoryCreation,
+)

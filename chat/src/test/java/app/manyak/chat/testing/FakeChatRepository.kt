@@ -106,7 +106,7 @@ internal class FakeChatRepository : ChatRepository {
     }
 
     /** 테스트가 사건을 하나씩 밀어 넣는 통로. 비어 있으면 스트림을 열지 않은 것과 같다. */
-    val streamEvents = Channel<ChatStreamEvent>(Channel.UNLIMITED)
+    var streamEvents = Channel<ChatStreamEvent>(Channel.UNLIMITED)
     val streamedInputs = mutableListOf<String>()
     val streamedOrigins = mutableListOf<Triple<UserSource, Long?, Int?>>()
     val streamedRealtimeImages = mutableListOf<Boolean>()
@@ -180,11 +180,20 @@ internal class FakeChatPreferencesRepository(
     private var mode: ChatInputMode = ChatInputMode.BLOCK,
     private var choices: Boolean = true,
     private var hintSeen: Boolean = true,
-    private var realtimeImage: Boolean = true,
+    private var realtimeImage: Boolean = false,
+    private var tourSeen: Boolean = true,
+    var completedTurnCount: Int = 0,
+    var failsRecordingTurn: Boolean = false,
 ) : ChatPreferencesRepository {
     val savedModes = mutableListOf<ChatInputMode>()
     val savedChoices = mutableListOf<Boolean>()
     val savedRealtimeImages = mutableListOf<Boolean>()
+
+    override suspend fun recordCompletedTurn(): Int? {
+        if (failsRecordingTurn) return null
+        completedTurnCount = (completedTurnCount + 1).coerceAtMost(3)
+        return completedTurnCount
+    }
 
     override suspend fun realtimeImageEnabled(): Boolean = realtimeImage
 
@@ -215,5 +224,15 @@ internal class FakeChatPreferencesRepository(
     override suspend fun markChoicesHintSeen() {
         hintSeen = true
         hintSeenMarkCount++
+    }
+
+    var tourSeenMarkCount = 0
+        private set
+
+    override suspend fun isChatTourSeen(): Boolean = tourSeen
+
+    override suspend fun markChatTourSeen() {
+        tourSeen = true
+        tourSeenMarkCount++
     }
 }

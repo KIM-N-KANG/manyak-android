@@ -53,9 +53,14 @@ class StoryCompletionRequestRoomStore
         }
 
         /** 로그인한 회원을 모르면 영속하지 않는다 — 소유자 없는 요청은 다음 회원에게 넘어간다. */
-        override suspend fun submit(request: StoryCompletionRequest): Boolean {
+        override suspend fun submit(
+            request: StoryCompletionRequest,
+            draftId: String,
+        ): Boolean {
             val ownerId = ownerId() ?: return false
-            return withContext(ioDispatcher) { runCatching { dao.submit(request.toEntity(ownerId)) }.isSuccess }
+            return withContext(ioDispatcher) {
+                runCatching { dao.submit(request.toEntity(ownerId), draftId) }.isSuccess
+            }
         }
 
         override suspend fun markCompleted(

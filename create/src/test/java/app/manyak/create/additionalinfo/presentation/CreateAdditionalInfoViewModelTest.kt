@@ -9,6 +9,7 @@ import app.manyak.create.presentation.state.StorylineGenerationStore
 import app.manyak.create.testing.FakePendingStoryCreationStore
 import app.manyak.create.testing.FakeStoryCompletionSubmitter
 import app.manyak.create.testing.FakeStoryCreationRepository
+import app.manyak.create.testing.TEST_DRAFT_ID
 import app.manyak.create.testing.sampleGenerationInput
 import app.manyak.create.testing.sampleStorylineGeneration
 import kotlinx.coroutines.Dispatchers
@@ -47,7 +48,13 @@ class CreateAdditionalInfoViewModelTest {
         val repository = FakeStoryCreationRepository()
         val pendingStore = FakePendingStoryCreationStore()
         return CreateAdditionalInfoViewModel(
-            StorylineGenerationStore(repository, pendingStore, FakeStoryCompletionSubmitter(), this),
+            TEST_DRAFT_ID,
+            StorylineGenerationStore(
+                repository,
+                pendingStore,
+                FakeStoryCompletionSubmitter(),
+                this,
+            ).bind(TEST_DRAFT_ID),
             NoOpAnalytics,
         )
     }
@@ -66,7 +73,7 @@ class CreateAdditionalInfoViewModelTest {
     ): LoadedFixture {
         val repository = FakeStoryCreationRepository()
         val pendingStore = FakePendingStoryCreationStore()
-        val store = StorylineGenerationStore(repository, pendingStore, submitter, this)
+        val store = StorylineGenerationStore(repository, pendingStore, submitter, this).bind(TEST_DRAFT_ID)
         store.generate(sampleGenerationInput())
         advanceUntilIdle()
         // "선택하기"로 추가 정보 단계에 들어온 상태를 만든다. 재개 지점이 이 값으로 갈린다.
@@ -75,7 +82,7 @@ class CreateAdditionalInfoViewModelTest {
             submitter = submitter,
             pendingStore = pendingStore,
             store = store,
-            viewModel = CreateAdditionalInfoViewModel(store, NoOpAnalytics),
+            viewModel = CreateAdditionalInfoViewModel(TEST_DRAFT_ID, store, NoOpAnalytics),
         )
     }
 
@@ -304,9 +311,15 @@ class CreateAdditionalInfoViewModelTest {
                                 ),
                         ),
                 )
-            val store = StorylineGenerationStore(repository, pendingStore, FakeStoryCompletionSubmitter(), this)
+            val store =
+                StorylineGenerationStore(
+                    repository,
+                    pendingStore,
+                    FakeStoryCompletionSubmitter(),
+                    this,
+                ).bind(TEST_DRAFT_ID)
             val viewModel =
-                CreateAdditionalInfoViewModel(store, NoOpAnalytics)
+                CreateAdditionalInfoViewModel(TEST_DRAFT_ID, store, NoOpAnalytics)
             advanceUntilIdle()
 
             val state = viewModel.uiState.value
@@ -329,10 +342,16 @@ class CreateAdditionalInfoViewModelTest {
                             progress = CreationProgress(selectedStorylineIndex = 0),
                         ),
                 )
-            val store = StorylineGenerationStore(repository, pendingStore, FakeStoryCompletionSubmitter(), this)
+            val store =
+                StorylineGenerationStore(
+                    repository,
+                    pendingStore,
+                    FakeStoryCompletionSubmitter(),
+                    this,
+                ).bind(TEST_DRAFT_ID)
 
             val viewModel =
-                CreateAdditionalInfoViewModel(store, NoOpAnalytics)
+                CreateAdditionalInfoViewModel(TEST_DRAFT_ID, store, NoOpAnalytics)
 
             // 복원 결과가 오기 전 첫 프레임. 여기서 입력 화면을 그리면 본문 없는 화면이 스쳐 지나간다.
             assertTrue(viewModel.uiState.value.isRestoring)
@@ -368,9 +387,15 @@ class CreateAdditionalInfoViewModelTest {
                                 ),
                         ),
                 )
-            val store = StorylineGenerationStore(repository, pendingStore, FakeStoryCompletionSubmitter(), this)
+            val store =
+                StorylineGenerationStore(
+                    repository,
+                    pendingStore,
+                    FakeStoryCompletionSubmitter(),
+                    this,
+                ).bind(TEST_DRAFT_ID)
 
-            CreateAdditionalInfoViewModel(store, NoOpAnalytics)
+            CreateAdditionalInfoViewModel(TEST_DRAFT_ID, store, NoOpAnalytics)
             advanceUntilIdle()
 
             assertEquals(inputs, store.progress.additionalInfoInputs)
@@ -407,7 +432,7 @@ class CreateAdditionalInfoViewModelTest {
             fixture.viewModel.onIntent(CreateAdditionalInfoIntent.SaveDraft)
             advanceUntilIdle()
 
-            val record = fixture.pendingStore.read() as PendingStoryCreation.Draft
+            val record = fixture.pendingStore.read(TEST_DRAFT_ID) as PendingStoryCreation.Draft
             assertEquals(1, record.progress.selectedStorylineIndex)
             assertEquals(listOf("배경은 서울", "", ""), record.progress.additionalInfoInputs)
         }
