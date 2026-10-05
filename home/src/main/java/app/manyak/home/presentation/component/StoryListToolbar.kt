@@ -195,18 +195,17 @@ private fun SortDropdown(
                 tint = ManyakTheme.colors.textSubtle,
             )
         }
-        if (expanded) {
-            ManyakSelectMenu(
-                options = options,
-                selected = selected,
-                alignment = Alignment.End,
-                onDismiss = { expanded = false },
-                onSelect = { sort ->
-                    expanded = false
-                    if (sort != selected) onSelect(sort)
-                },
-            )
-        }
+        ManyakSelectMenu(
+            expanded = expanded,
+            options = options,
+            selected = selected,
+            alignment = Alignment.End,
+            onDismiss = { expanded = false },
+            onSelect = { sort ->
+                expanded = false
+                if (sort != selected) onSelect(sort)
+            },
+        )
     }
 }
 

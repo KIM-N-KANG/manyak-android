@@ -12,6 +12,7 @@ import app.manyak.common.entity.auth.AuthProvider
 import app.manyak.common.entity.user.AccountStatus
 import app.manyak.common.entity.user.UserProfile
 import app.manyak.core.navigation.PushEntry
+import app.manyak.create.general.data.GeneralReviewWatch
 import app.manyak.notification.data.PushNotificationTray
 import app.manyak.notification.domain.PushRecipientGate
 import app.manyak.notification.entity.PushMessage
@@ -31,7 +32,12 @@ class ModerationNotificationUiTest {
             val first = payload("knk1520-local-1")
             val second = payload("knk1520-local-2")
             val ids = listOf(first, second).map { requireNotNull(PushMessage.from(it)).notificationId }
-            val tray = PushNotificationTray(context, PushRecipientGate(NotificationSession(), NotificationProfile()))
+            val tray =
+                PushNotificationTray(
+                    context,
+                    PushRecipientGate(NotificationSession(), NotificationProfile()),
+                    GeneralReviewWatch(),
+                )
             tray.ensureChannels()
             try {
                 tray.show(first)
@@ -63,12 +69,39 @@ class ModerationNotificationUiTest {
             }
         }
 
+    @Test
+    fun resultAlreadyShownOnScreenIsNotPostedAgain() =
+        runBlocking {
+            val context = InstrumentationRegistry.getInstrumentation().targetContext
+            val manager = context.getSystemService(NotificationManager::class.java)
+            val shown = payload("knk1521-shown")
+            val other = payload("knk1521-other")
+            val ids = listOf(shown, other).map { requireNotNull(PushMessage.from(it)).notificationId }
+            val watch = GeneralReviewWatch().apply { shown("knk1521-shown", "APPROVED") }
+            val tray =
+                PushNotificationTray(
+                    context,
+                    PushRecipientGate(NotificationSession(), NotificationProfile()),
+                    watch,
+                )
+            tray.ensureChannels()
+            try {
+                tray.show(shown)
+                tray.show(other)
+                awaitNotifications(manager, ids, expected = 1)
+                assertEquals(listOf(ids[1]), manager.activeNotifications.map { it.id }.filter { it in ids })
+            } finally {
+                ids.forEach(manager::cancel)
+            }
+        }
+
     private fun awaitNotifications(
         manager: NotificationManager,
         ids: List<Int>,
+        expected: Int = 2,
     ) {
         val deadline = System.nanoTime() + 5_000_000_000L
-        while (manager.activeNotifications.count { it.id in ids } != 2 && System.nanoTime() < deadline) {
+        while (manager.activeNotifications.count { it.id in ids } != expected && System.nanoTime() < deadline) {
             Thread.sleep(50)
         }
     }

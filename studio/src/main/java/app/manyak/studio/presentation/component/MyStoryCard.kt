@@ -143,6 +143,7 @@ private fun StoryInfo(
             likeCount = story.likeCount,
             turnCount = story.turnCount,
             createdDate = story.createdDate,
+            createdAtMillis = story.createdAtMillis,
             // 글이 길어 남는 자리가 없을 때도 뱃지와 붙지 않을 만큼은 띄운다.
             modifier = Modifier.padding(top = lineGap),
         )
@@ -160,6 +161,7 @@ private fun StoryMeta(
     likeCount: Long,
     turnCount: Long,
     createdDate: String?,
+    createdAtMillis: Long?,
     modifier: Modifier = Modifier,
 ) {
     val formattedLikeCount = remember(likeCount) { formatCompactCount(likeCount) }
@@ -180,7 +182,8 @@ private fun StoryMeta(
             text = formattedTurnCount,
             description = stringResource(DesignsystemR.string.story_turn_count_description, formattedTurnCount),
         )
-        createdDate?.let { date ->
+        val sameDay = createdAtMillis?.let { sameDayElapsedOf(it, System.currentTimeMillis()) }
+        (sameDay?.label() ?: createdDate)?.let { date ->
             MetaChip(
                 iconRes = DesignsystemR.drawable.ic_calendar,
                 text = date,

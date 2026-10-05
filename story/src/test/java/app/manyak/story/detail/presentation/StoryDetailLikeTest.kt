@@ -61,6 +61,8 @@ class StoryDetailLikeTest {
             val repository = FakeStoryRepository()
             repository.queuedDetailResults +=
                 DomainResult.Success(sampleStoryDetail(likeCount = 0, isLiked = true, isOwner = false))
+            repository.queuedDetailResults +=
+                DomainResult.Success(sampleStoryDetail(likeCount = 0, isLiked = true, isOwner = false))
             repository.queuedLikeResults += DomainResult.Failure(DomainError.Network)
             val gate = CompletableDeferred<Unit>()
             repository.likeGate = gate
@@ -108,6 +110,7 @@ class StoryDetailLikeTest {
             )
             assertFalse(viewModel.uiState.value.isTogglingLike)
             assertTrue(updates.isEmpty())
+            assertEquals(2, repository.storyDetailCallCount)
             assertEquals(StoryDetailEffect.ShowLikeFailed, viewModel.uiEffect.first())
         }
 

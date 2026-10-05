@@ -86,6 +86,8 @@ fun ManyakTextField(
  * 여러 줄 입력창. 높이를 고정하지 않고 내용만큼 자라며 [footer] 는 오른쪽 아래에 붙는다.
  *
  * @param contentDescription 라벨이 입력창과 떨어져 있을 때 화면 낭독기에 읽힐 이름.
+ * @param minLines 비어 있어도 확보하는 줄 수. 긴 글을 받는 칸이 처음부터 넉넉해 보이게 한다.
+ * @param maxLines 이 줄 수를 넘으면 더 자라지 않고 칸 안에서 스크롤한다.
  */
 @Composable
 @Suppress("LongParameterList")
@@ -99,6 +101,8 @@ fun ManyakMultilineTextField(
     contentDescription: String? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
+    minLines: Int = 1,
+    maxLines: Int = Int.MAX_VALUE,
     footer: (@Composable () -> Unit)? = null,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -119,6 +123,8 @@ fun ManyakMultilineTextField(
         cursorBrush = SolidColor(ManyakTheme.colors.text),
         keyboardOptions = keyboardOptions,
         keyboardActions = keyboardActions,
+        minLines = minLines,
+        maxLines = maxLines,
         interactionSource = interactionSource,
         decorationBox = { innerTextField ->
             Column(
@@ -126,7 +132,7 @@ fun ManyakMultilineTextField(
                 verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
             ) {
                 Box(modifier = Modifier.fillMaxWidth()) {
-                    FieldPlaceholder(value = value, placeholder = placeholder, maxLines = Int.MAX_VALUE)
+                    FieldPlaceholder(value = value, placeholder = placeholder, maxLines = maxLines)
                     innerTextField()
                 }
                 footer?.let { Box(modifier = Modifier.align(Alignment.End)) { it() } }

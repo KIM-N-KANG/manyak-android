@@ -43,7 +43,10 @@ import app.manyak.common.presentation.error.messageResOrNull
 import app.manyak.core.navigation.ChatRoomRoute
 import app.manyak.core.navigation.CreateAdditionalInfoRoute
 import app.manyak.core.navigation.CreateKeywordRoute
+import app.manyak.core.navigation.CreateMethodRoute
 import app.manyak.core.navigation.CreateStorylineRoute
+import app.manyak.core.navigation.GeneralCreateRoute
+import app.manyak.core.navigation.GeneralSubmissionRoute
 import app.manyak.core.navigation.LegalDocument
 import app.manyak.core.navigation.LegalRoute
 import app.manyak.core.navigation.LoginRoute
@@ -54,6 +57,7 @@ import app.manyak.core.navigation.MyInviteRoute
 import app.manyak.core.navigation.MyOpenSourceLicenseRoute
 import app.manyak.core.navigation.NotificationSettingsRoute
 import app.manyak.core.navigation.StoryDetailRoute
+import app.manyak.core.navigation.StoryEditRoute
 import app.manyak.core.navigation.StudioRoute
 import app.manyak.core.navigation.WithdrawalRoute
 import app.manyak.create.additionalinfo.presentation.CreateAdditionalInfoScreen
@@ -75,8 +79,6 @@ import app.manyak.my.invite.presentation.InviteScreen
 import app.manyak.my.licenses.presentation.OpenSourceLicenseScreen
 import app.manyak.my.withdrawal.presentation.WithdrawalScreen
 import app.manyak.notification.settings.presentation.NotificationSettingsScreen
-import app.manyak.story.detail.presentation.StoryDetailScreen
-import java.util.UUID
 import app.manyak.R as AppR
 import app.manyak.designsystem.R as DesignsystemR
 
@@ -272,7 +274,6 @@ private fun MainNavDisplay(
         onEntryConsumed()
     }
     val slide = rememberScreenSlideTransitions()
-    val creationFunnelMetadata = rememberCreationFunnelMetadata()
     NavDisplay(
         backStack = backStack,
         entryDecorators = rememberManyakEntryDecorators(),
@@ -292,8 +293,10 @@ private fun MainNavDisplay(
                         // 채팅 목록에서 이어가기 — 상세에서 시작한 채팅과 같은 목적지를 쌓고,
                         // 뒤로가기는 채팅 탭으로 돌아온다.
                         onOpenChat = { chatId -> backStack.push(ChatRoomRoute(chatId)) },
-                        // 새 제작은 새 초안이다 — 진입할 때 ID 를 정해 라우트에 실어야 프로세스 재시작 뒤에도 같은 초안을 잇는다.
-                        onCreateStory = { backStack.push(CreateKeywordRoute(UUID.randomUUID().toString())) },
+                        // 제작 방식을 고른 뒤 초안 ID를 정해 복원 가능한 라우트로 진입한다.
+                        onCreateStory = { backStack.push(CreateMethodRoute) },
+                        onEditStory = { backStack.push(StoryEditRoute(it)) },
+                        onEditSubmission = { backStack.push(GeneralSubmissionRoute(it)) },
                         // 재개·복구 진입 — 레코드가 가리키는 단계까지 체인을 쌓는다.
                         onResumeCreation = { draftId, resumePoint ->
                             backStack.addCreationResumeChain(draftId, resumePoint)
@@ -309,20 +312,12 @@ private fun MainNavDisplay(
                     )
                 }
                 myDestinationEntries(backStack)
-                entry<StoryDetailRoute> { route ->
-                    StoryDetailScreen(
-                        storyId = route.storyId,
-                        onBack = { backStack.pop() },
-                        onStoryDeleted = {
-                            backStack.popToMainTabs()
-                            selectedTab = MainTab.STUDIO
-                        },
-                        // 상세를 걷어내지 않고 그 위에 쌓는다 — 채팅방 뒤로가기가 방금 보던
-                        // 스토리로 돌아온다(웹 `replace` 와 갈리는 앱 전용 차이).
-                        onEnterChat = { chatId -> backStack.push(ChatRoomRoute(chatId)) },
-                    )
+                storyDetailEntry(backStack) { selectedTab = MainTab.STUDIO }
+                generalStoryEntries(backStack) {
+                    selectedTab = MainTab.STUDIO
+                    studioRefreshRequest++
                 }
-                creationFunnelEntries(backStack, creationFunnelMetadata) { selectedTab = MainTab.STUDIO }
+                creationFunnelEntries(backStack) { selectedTab = MainTab.STUDIO }
                 chatRoomEntry(backStack) { selectedTab = MainTab.CHAT }
                 legalEntry(backStack)
             },
@@ -387,6 +382,7 @@ private fun MutableList<NavKey>.addCreationResumeChain(
     resumePoint: CreationResumePoint,
 ) {
     when (resumePoint) {
+        CreationResumePoint.GeneralStep -> push(GeneralCreateRoute(draftId))
         CreationResumePoint.KeywordStep -> push(CreateKeywordRoute(draftId))
         CreationResumePoint.StorylineStep -> push(CreateStorylineRoute(draftId))
         is CreationResumePoint.AdditionalInfoStep -> {
@@ -401,10 +397,9 @@ private fun MutableList<NavKey>.addCreationResumeChain(
  */
 private fun EntryProviderScope<NavKey>.creationFunnelEntries(
     backStack: MutableList<NavKey>,
-    metadata: Map<String, Any>,
     onSelectStudioTab: () -> Unit,
 ) {
-    entry<CreateKeywordRoute>(metadata = metadata) { route ->
+    entry<CreateKeywordRoute> { route ->
         CreateKeywordScreen(
             draftId = route.draftId,
             onLeaveFunnel = { backStack.pop() },
@@ -416,7 +411,7 @@ private fun EntryProviderScope<NavKey>.creationFunnelEntries(
             },
         )
     }
-    entry<CreateStorylineRoute>(metadata = metadata) { route ->
+    entry<CreateStorylineRoute> { route ->
         CreateStorylineScreen(
             draftId = route.draftId,
             onLeaveFunnel = { backStack.pop() },
@@ -425,7 +420,7 @@ private fun EntryProviderScope<NavKey>.creationFunnelEntries(
             },
         )
     }
-    entry<CreateAdditionalInfoRoute>(metadata = metadata) { route ->
+    entry<CreateAdditionalInfoRoute> { route ->
         CreateAdditionalInfoScreen(
             draftId = route.draftId,
             storylineIndex = route.storylineIndex,

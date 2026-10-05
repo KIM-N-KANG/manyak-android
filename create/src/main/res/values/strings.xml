@@ -91,7 +91,7 @@
     <string name="create_tags_load_failed">키워드를 불러오지 못했어요</string>
     <string name="create_tags_reload">다시 불러오기</string>
     <string name="create_tags_reload_description">아래 버튼으로 다시 시도해주세요</string>
-    <string name="create_title">스토리 만들기</string>
+    <string name="create_title">스토리 간편 제작</string>
     <string name="create_unsaved_warning_description">지금 나가면 임시 저장한 뒤에 만든 내용은 사라져요</string>
     <string name="create_unsaved_warning_leave">나가기</string>
     <string name="create_unsaved_warning_stay">닫기</string>
@@ -140,4 +140,222 @@
     <string name="create_genre_legacy_notice">이전 직접 입력 장르는 사용할 수 없어요. 제공 장르를 다시 선택해 주세요.</string>
     <string name="create_genre_open_list">장르 목록 열기</string>
     <string name="create_genre_close_list">장르 목록 닫기</string>
+
+    <string name="general_method_title">스토리 제작</string>
+    <string name="general_method_simple">간편 제작</string>
+    <string name="general_method_simple_description">키워드만 고르면 AI가 이미지까지 담긴 스토리를 완성해드려요</string>
+    <string name="general_method_general">일반 제작</string>
+    <string name="general_method_general_description">스토리 설정, 엔딩 등 스토리에 필요한 내용을 직접 입력해요</string>
+    <string name="general_editor_title">스토리 일반 제작</string>
+    <string name="general_editor_edit_title">스토리 수정</string>
+    <string name="general_editor_register">등록하기</string>
+    <string name="general_editor_save">저장하기</string>
+    <string name="general_editor_load_failed">스토리를 불러오지 못했어요</string>
+    <string name="general_editor_register_failed">스토리를 등록하지 못했어요</string>
+    <string name="general_editor_update_failed">스토리를 수정하지 못했어요</string>
+    <string name="general_editor_updated">스토리를 수정했어요</string>
+    <string name="general_editor_reviewing">스토리를 검토하고 있어요</string>
+    <string name="general_editor_pending">아직 검토 중이에요</string>
+    <string name="general_editor_update_pending_title">수정 내용을 검토하고 있어요</string>
+    <string name="general_editor_update_pending_description">검토가 끝나면 다시 수정할 수 있어요</string>
+    <string name="general_editor_rejected_toast">스토리가 검토를 통과하지 못했어요</string>
+    <string name="general_editor_rejected_title">검토를 통과하지 못했어요</string>
+    <string name="general_editor_failed_title">검토를 마치지 못했어요</string>
+    <string name="general_editor_rejected_create">표시된 곳을 고쳐 다시 등록해 주세요</string>
+    <string name="general_editor_rejected_edit">표시된 곳을 고쳐 다시 저장해 주세요</string>
+    <string name="general_editor_image_create">표시된 이미지를 바꿔 다시 등록해 주세요</string>
+    <string name="general_editor_image_edit">표시된 이미지를 바꿔 다시 저장해 주세요</string>
+    <string name="general_editor_failed_create">검토 중 문제가 생겼어요. 다시 등록해 주세요</string>
+    <string name="general_editor_failed_edit">검토 중 문제가 생겼어요. 다시 저장해 주세요</string>
+    <string name="general_editor_timeout_create">검토가 늦어지고 있어요. 끝나면 제작 탭에 추가돼요</string>
+    <string name="general_editor_timeout_edit">검토가 늦어지고 있어요. 끝나면 스토리에 반영돼요</string>
+    <string name="general_editor_images_too_large">이미지 크기나 장수를 줄여 주세요</string>
+    <string name="general_editor_upload_not_found">올린 이미지를 찾지 못했어요. 이미지를 다시 올려 주세요</string>
+    <string name="general_editor_upload_failed">이미지를 올리지 못했어요</string>
+    <string name="general_editor_unknown_issue">등록할 수 없는 내용이 있어요</string>
+    <string name="general_editor_image_invalid">이미지 형식이나 크기를 확인해 주세요</string>
+    <string name="general_editor_image_unreadable">이미지를 읽을 수 없어요. 다른 이미지로 바꿔 주세요</string>
+    <string name="general_editor_image_error">이미지를 확인하지 못했어요. 다른 이미지로 바꿔 주세요</string>
+    <string name="general_editor_submit_unknown">등록 결과를 확인하지 못했어요. 제작 탭에서 확인해 주세요</string>
+    <string name="general_editor_edit_exit_title">저장하지 않은 내용이 있어요</string>
+    <string name="general_editor_edit_exit_description">지금 나가면 수정한 내용이 사라져요</string>
+    <string name="general_editor_exit_title">스토리 만들기를 그만둘까요?</string>
+    <string name="general_editor_exit_submitted">등록을 요청한 내용은 제작 탭에서 확인할 수 있어요</string>
+    <string name="general_editor_exit_edited_submission">지금 나가면 등록을 요청한 뒤에 고친 내용은 사라져요</string>
+    <string name="general_editor_exit_close">닫기</string>
+    <string name="general_editor_exit_leave">나가기</string>
+    <string name="general_editor_draft_failed">작성 내용을 저장하지 못했어요</string>
+    <string name="general_editor_chat_failed">채팅을 시작하지 못했어요</string>
+    <string name="general_editor_acceptance_failed">등록은 접수됐지만 기기에 접수 상태를 저장하지 못했어요. 다시 시도해 주세요</string>
+    <string name="general_editor_tab_reason">%1$s: %2$s</string>
+    <string name="general_tab_profile">스토리 프로필</string>
+    <string name="general_tab_settings">스토리 설정</string>
+    <string name="general_tab_protagonist">주인공(나)</string>
+    <string name="general_tab_supporting">주변 인물</string>
+    <string name="general_tab_start">시작 상황 설정</string>
+    <string name="general_tab_events">주요 사건</string>
+    <string name="general_tab_publish">등록</string>
+    <string name="general_title">제목</string>
+    <string name="general_intro">한 줄 소개</string>
+    <string name="general_world">세계관</string>
+    <string name="general_progression">전개 방식</string>
+    <string name="general_name">이름</string>
+    <string name="general_gender">성별</string>
+    <string name="general_basic_info">기본 정보</string>
+    <string name="general_feature">특징</string>
+    <string name="general_character_description">인물 소개</string>
+    <string name="general_prologue">프롤로그</string>
+    <string name="general_situation">상황 설명</string>
+    <string name="general_suggested_input">추천 입력</string>
+    <string name="general_suggested_number">추천 입력 %1$d</string>
+    <string name="general_min_turns">최소 턴 수</string>
+    <string name="general_condition">달성 조건</string>
+    <string name="general_epilogue">에필로그</string>
+    <string name="general_event_description">사건 설명</string>
+    <string name="general_key_sentence">키 문장</string>
+    <string name="general_genres">장르</string>
+    <string name="general_description">주요 내용</string>
+    <string name="general_character_image">이미지</string>
+    <string name="general_cover">커버 이미지</string>
+    <string name="general_items">항목</string>
+    <string name="general_ratio">분량 배분</string>
+    <string name="general_ratio_value">묘사 %1$d : 대사 %2$d</string>
+    <string name="general_world_hint">시대와 장소, 사회의 모습처럼 스토리의 배경이 되는 설정이에요. 마법이 작동하는 원리나 기술의 수준 등 이 세계만의 특징과 법칙을 적어주세요</string>
+    <string name="general_progression_hint">스토리의 진행 속도와 중요한 사건이 일어나는 조건을 정해요. 갈등을 천천히 쌓을지, 사건을 빠르게 이어갈지와 함께 원하는 말투와 분위기도 적어주세요</string>
+    <string name="general_character_description_hint">스토리 상세에서 이름 아래에 보이는 소개 글이에요. 어떤 인물인지 한 문장으로 적어주세요</string>
+    <string name="general_character_fallback">주변 인물 %1$d</string>
+    <string name="general_start_fallback">시작 상황 %1$d</string>
+    <string name="general_ending_fallback">엔딩 %1$d</string>
+    <string name="general_event_fallback">주요 사건 %1$d</string>
+    <string name="general_start_name">상황 이름</string>
+    <string name="general_ending_name">엔딩 이름</string>
+    <string name="general_event_name">사건 이름</string>
+    <string name="general_item_count">%1$d/%2$d</string>
+    <string name="general_add">추가</string>
+    <string name="general_add_ending">엔딩 추가</string>
+    <string name="general_add_event">사건 추가</string>
+    <string name="general_events_hint">채팅이 엔딩을 향하도록 이야기의 방향을 잡아 주는 사건이에요. 모든 시작 상황에 함께 쓰이며, 주인공(나)이 겪을 큰 위기나 전환점을 적어주세요</string>
+    <string name="general_remove_named">%1$s 삭제</string>
+    <string name="general_genres_hint">스토리 목록과 상세에 보이는 장르예요</string>
+    <string name="general_visibility">공개</string>
+    <string name="general_visibility_hint">누구나 스토리를 찾아보고 플레이할 수 있어요</string>
+    <string name="general_moderation_notice">노골적인 성적 표현, 지나치게 잔혹한 묘사, 혐오를 부추기는 내용은 등록할 수 없어요. 이런 내용을 올리면 이용이 제한될 수 있어요</string>
+    <string name="general_error_required_final">%1$s을 입력해 주세요</string>
+    <string name="general_error_required">%1$s를 입력해 주세요</string>
+    <string name="general_error_short_final">%1$s은 2자 이상 입력해 주세요</string>
+    <string name="general_error_short">%1$s는 2자 이상 입력해 주세요</string>
+    <string name="general_error_long">%1$s은 %2$d자 이내로 입력해 주세요</string>
+    <string name="general_error_suggestions">추천 입력을 모두 채워 주세요</string>
+    <string name="general_error_gender">성별을 선택해 주세요</string>
+    <string name="general_error_genres">장르를 1개 이상 선택해 주세요</string>
+    <string name="general_error_turns">최소 턴 수는 0부터 50까지 입력해 주세요</string>
+    <string name="general_error_genre_invalid">제공되는 장르를 선택해 주세요</string>
+    <string name="general_error_count">항목 수를 확인해 주세요</string>
+    <string name="general_image_remove">삭제</string>
+    <string name="general_image_hint">(JPG, PNG, WEBP / 최대 5MB)</string>
+    <string name="general_image_invalid">이미지 형식이나 크기를 확인해 주세요. JPG, PNG, WebP 파일을 5MB 이하로 선택해 주세요.</string>
+    <string name="general_image_crop_title">이미지 자르기</string>
+    <string name="general_image_crop_preview">자를 이미지 미리보기</string>
+    <string name="general_image_zoom">확대</string>
+    <string name="general_image_crop_apply">자르기</string>
+    <string name="general_previous">이전</string>
+    <string name="general_next">다음</string>
+    <string name="general_register">등록하기</string>
+    <string name="general_editor_exit_edited_submission_title">등록하지 않은 수정 내용이 있어요</string>
+    <string name="general_title_placeholder">예: 노선도에 없는 역</string>
+    <string name="general_title_hint">스토리 목록과 상세에 보이는 제목이에요. 스토리의 특징이 드러나게 지어주세요</string>
+    <string name="general_intro_placeholder">예: 막차에서 내린 곳은 존재하지 않는 역이었다</string>
+    <string name="general_intro_hint">스토리 상세에 보이는 소개 글이에요. 스토리의 핵심을 한 문장으로 적어주세요</string>
+    <string name="general_world_placeholder">예: 유실역은 막차가 끊긴 뒤에만 불이 켜지는, 노선도에 없는 역이다.\n세상에서 잃어버린 물건과 기억은 모두 이 역의 유실물 보관소로 모인다.\n무언가를 되찾으려면 대신 자신의 무언가 하나를 맡겨야 한다.\n\n# 전제\n막차에서 잘못 내린 주인공은 텅 빈 승강장에 홀로 남았다.\n\n# 갈등\n첫차가 오기 전에 역을 나가야 하지만, 보관소에는 주인공이 잊고 지낸 누군가의 기억이 있다.</string>
+    <string name="general_progression_placeholder">예: 역무실, 보관소, 개찰구 순서로 한 곳씩 탐색하며 단서를 모은다.\n첫차 시각이 다가올수록 사건의 속도를 높인다.\n보관소의 진실은 주인공이 무언가를 맡긴 뒤에야 드러난다.\n\n# 문체 톤\n새벽 역의 적막이 느껴지는 잔잔하고 쓸쓸한 문체로 쓴다.</string>
+    <string name="general_cover_ratio_hint">가로 3 : 세로 4 비율로 잘라서 올려요</string>
+    <string name="general_character_image_ratio_hint">가로 4 : 세로 3 비율로 잘라서 올려요</string>
+    <string name="general_character_image_hint">이 이미지를 바탕으로 상황에 맞게 인물의 모습이 실시간으로 바뀌어요</string>
+    <string name="general_image_add">이미지 추가</string>
+    <string name="general_image_change">이미지 변경</string>
+    <string name="general_image_close">닫기</string>
+    <string name="general_ratio_description">AI가 응답할 때 장면 묘사와 인물 대사를 어떤 비율로 쓸지 정해요</string>
+    <string name="general_ratio_description_part">묘사 %1$d</string>
+    <string name="general_ratio_dialogue_part">대사 %1$d</string>
+    <string name="general_protagonist_basic_hint">스토리 속에서 내가 사용할 이름과 성별이에요</string>
+    <string name="general_supporting_basic_hint">이 이름과 성별로 스토리에 등장해요</string>
+    <string name="general_protagonist_feature_hint">내가 어떤 사람인지에 따라 주변 인물들의 반응이 달라져요</string>
+    <string name="general_supporting_feature_hint">인물의 성격이 대화와 행동에 드러나요</string>
+    <string name="general_protagonist_name_placeholder">예: 윤해솔</string>
+    <string name="general_protagonist_feature_placeholder">예:\n## 역할\n막차에서 잘못 내려 유실역에 남겨진 회사원\n\n## 배경\n몇 해 전 동생과 크게 다툰 뒤로 연락을 끊고 지냈다.\n\n## 성격\n겁이 많지만 한번 정한 일은 끝까지 해내는 편이다.</string>
+    <string name="general_supporting_feature_placeholder">예:\n### 성격\n유실물 보관소를 지키는 무뚝뚝한 관리인이다.\n\n### 말투\n짧고 건조한 반말을 쓴다.\n\n### 동기\n보관소에 맡겨진 자신의 이름을 되찾고 싶어 한다.\n\n### 주인공을 대하는 태도\n처음에는 경계하지만, 주인공이 무언가를 맡기면 조금씩 돕는다.</string>
+    <string name="general_character_description_placeholder">예: 유실물 보관소를 지키는 무뚝뚝한 관리인</string>
+    <string name="general_start_name_placeholder">예: 불 꺼진 승강장</string>
+    <string name="general_start_name_hint">스토리 상세에서 시작 상황을 고를 때 보이는 이름이에요</string>
+    <string name="general_prologue_placeholder">예: 막차 문이 닫히는 소리에 잠에서 깼다.\n열차는 이미 떠났고, 승강장에는 나 혼자 남았다.\n역명판에는 처음 보는 이름이 적혀 있었다. 유실역.</string>
+    <string name="general_prologue_hint">채팅을 시작하면 첫 화면에 보이는 도입 글이에요. 주인공(나)이 스토리 속으로 들어서는 순간을 적어주세요</string>
+    <string name="general_situation_placeholder">예: 텅 빈 승강장 끝, 유실물 보관소 창구에만 불이 켜져 있다.\n창구 안의 관리인 도하람이 주인공을 보고 말없이 장부를 덮는다.\n첫차까지 남은 시간은 네 시간이다.</string>
+    <string name="general_situation_hint">AI가 첫 장면을 이어 쓰는 출발점이에요. 주인공(나)이 마주한 상황과 주변 인물들이 하고 있는 일을 적어주세요</string>
+    <string name="general_suggested_input_hint">채팅 첫 화면에서 누르면 바로 보내지는 입력이에요. 주인공(나)이 할 수 있는 행동이나 말을 세 가지 적어주세요</string>
+    <string name="general_ending">엔딩</string>
+    <string name="general_ending_hint">이 시작 상황에서 스토리가 끝나는 결말이에요. 엔딩이 없으면 채팅이 끝나지 않고 계속 이어져요</string>
+    <string name="general_ending_name_placeholder">예: 첫차</string>
+    <string name="general_ending_name_hint">엔딩에 도달했을 때 채팅과 스토리 상세에 보이는 이름이에요</string>
+    <string name="general_min_turns_unit">턴</string>
+    <string name="general_min_turns_placeholder">예: 10</string>
+    <string name="general_min_turns_hint">이 턴 수를 넘기기 전에는 엔딩에 도달하지 않아요</string>
+    <string name="general_condition_placeholder">예: 보관소에서 동생의 기억을 되찾고, 그 대가로 무언가를 맡긴 뒤 첫차에 오르면 이 엔딩에 도달한다</string>
+    <string name="general_condition_hint">AI가 채팅 흐름을 보고 이 엔딩에 도달했는지 판단하는 기준이에요. 어떤 상황이 되면 도달하는지 적어주세요</string>
+    <string name="general_epilogue_placeholder">예: 되찾은 기억과 맡기고 온 것을 나란히 비추며, 새벽빛이 드는 첫차 안에서 잔잔하게 마무리한다</string>
+    <string name="general_epilogue_hint">엔딩에 도달했을 때 AI가 마지막 장면을 쓰는 방향이에요. 어떤 분위기로 마무리할지 적어주세요</string>
+    <string name="general_events">주요 사건</string>
+    <string name="general_event_name_placeholder">예: 도하람의 장부</string>
+    <string name="general_event_name_hint">채팅과 스토리 상세에는 보이지 않고, AI가 사건을 구분할 때 쓰는 이름이에요</string>
+    <string name="general_event_description_placeholder">예: 보관소 장부에는 맡겨진 물건과 기억의 주인이 모두 적혀 있다.\n도하람은 대가 없이는 장부를 보여 주지 않는다.\n주인공이 무언가를 맡기면 동생의 기억이 있는 자리를 알게 되고, 몰래 훔쳐보면 도하람의 신뢰를 잃는다.</string>
+    <string name="general_event_description_hint">AI가 이 사건을 장면으로 풀어낼 때 참고하는 내용이에요. 무슨 일이 벌어지고 어떤 방향으로 풀릴 수 있는지 적어주세요</string>
+    <string name="general_key_sentence_placeholder">예: 주인공이 도하람에게 장부를 보여 달라고 하거나 장부를 몰래 살펴보려 한다</string>
+    <string name="general_key_sentence_hint">주인공(나)의 행동이 이 사건과 관련되는지 AI가 판단하는 기준 문장이에요. 할 법한 행동을 한 문장으로 적어주세요</string>
+    <string name="general_genres_max">(최대 %1$d개)</string>
+    <string name="general_description_placeholder">예: 막차에서 잘못 내린 윤해솔은 노선도에 없는 유실역에 홀로 남는다.\n역의 유실물 보관소에는 세상에서 잃어버린 물건과 기억이 모두 모이고, 무언가를 되찾으려면 자신의 무언가를 맡겨야 한다.\n첫차가 오기 전, 해솔은 보관소에서 잊고 지낸 동생의 기억을 발견한다.</string>
+    <string name="general_description_hint">스토리 상세의 주요 내용에 보이는 글이에요. 한 줄 소개보다 자세한 줄거리와 볼거리를 적어주세요</string>
+    <string-array name="general_supporting_name_placeholders">
+        <item>예: 도하람</item>
+        <item>예: 서은결</item>
+        <item>예: 강태오</item>
+        <item>예: 민소율</item>
+        <item>예: 한시원</item>
+    </string-array>
+    <string-array name="general_suggested_input_placeholders">
+        <item>예: *창구로 다가가 유리창을 가볍게 두드린다* 실례지만, 여기가 어디예요?</item>
+        <item>예: *승강장을 따라 걸으며 출구 계단을 찾는다* 누구 없어요? 여기 사람 있어요!</item>
+        <item>예: *휴대전화를 꺼내 시간과 전파를 확인한다* 전파가 하나도 안 잡히네…</item>
+    </string-array>
+
+    <!-- 제작 방식 선택 일러스트 -->
+    <string name="create_method_art_genre_label">장르</string>
+    <string-array name="create_method_art_genres">
+        <item>괴담</item>
+        <item>로맨스</item>
+        <item>미스터리</item>
+        <item>무협</item>
+        <item>타임루프</item>
+        <item>생존</item>
+    </string-array>
+    <string-array name="create_method_art_picked_genres">
+        <item>괴담</item>
+        <item>미스터리</item>
+        <item>생존</item>
+    </string-array>
+    <string-array name="create_method_art_storylines">
+        <item>막차 안내 방송이 노선도에 없는 역을 불렀다. 문이 열렸고, 내린 사람은 나 하나뿐이었다.</item>
+        <item>매일 같은 칸에 타던 여자가 오늘 처음으로 말을 걸었다. \"이번 역에서 내리면 안 돼요.\"</item>
+    </string-array>
+    <string name="create_method_art_title_label">제목</string>
+    <string name="create_method_art_title">노선도에 없는 역</string>
+    <string name="create_method_art_intro_label">한 줄 소개</string>
+    <string name="create_method_art_intro">막차에서 내린 곳은 존재하지 않는 역이었다</string>
+    <string name="create_method_art_characters_label">인물</string>
+    <string-array name="create_method_art_character_avatars">
+        <item>나</item>
+        <item>역</item>
+    </string-array>
+    <string-array name="create_method_art_character_names">
+        <item>막차 승객</item>
+        <item>얼굴 없는 역무원</item>
+    </string-array>
 </resources>

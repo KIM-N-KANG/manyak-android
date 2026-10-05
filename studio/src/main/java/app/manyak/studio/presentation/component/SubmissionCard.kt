@@ -30,6 +30,7 @@ internal fun SubmissionCard(
     submission: StorySubmission,
     onOptionsClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onEdit: () -> Unit = {},
 ) {
     Row(
         modifier =
@@ -71,14 +72,30 @@ internal fun SubmissionCard(
                     color = ManyakTheme.colors.textSubtle,
                 )
             }
-            submission.submittedAt?.let { submittedAt ->
-                SavedAtRow(
-                    savedAt = submittedAt,
-                    descriptionRes = R.string.studio_submission_submitted_at,
-                    modifier = Modifier.padding(top = ManyakTheme.spacing.compact),
-                )
-            }
+            SubmissionActions(submission, onEdit)
         }
+    }
+}
+
+/** 초안 카드의 이어서 만들기와 같은 자리·모양이다 — 날짜 아래에 주 버튼을 둔다. */
+@Composable
+private fun SubmissionActions(
+    submission: StorySubmission,
+    onEdit: () -> Unit,
+) {
+    val editable = submission.status != SubmissionStatus.PENDING
+    if (submission.submittedAt == null && !editable) return
+    Column(
+        modifier = Modifier.padding(top = ManyakTheme.spacing.inline),
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+    ) {
+        submission.submittedAt?.let {
+            SavedAtRow(
+                savedAt = it,
+                descriptionRes = R.string.studio_submission_submitted_at,
+            )
+        }
+        if (editable) ProgressActionButton(label = stringResource(R.string.studio_edit_story), onClick = onEdit)
     }
 }
 

@@ -9,12 +9,15 @@ sealed interface CreationResumePoint {
     data class AdditionalInfoStep(
         val storylineIndex: Int,
     ) : CreationResumePoint
+
+    data object GeneralStep : CreationResumePoint
 }
 
 enum class CreationStage {
     KEYWORD_DRAFT,
     STORYLINE_GENERATION,
     STORY_DRAFT,
+    GENERAL_DRAFT,
 }
 
 /** 다른 기능이 편집 초안 카드와 재개 진입에 사용하는 최소 정보. */
@@ -25,6 +28,9 @@ data class CreationProgressSummary(
     val resumePoint: CreationResumePoint,
     /** 처음 임시 저장한 시각(epoch millis). 기능 이전에 저장한 초안은 null 이다. */
     val createdAt: Long? = null,
+    val title: String? = null,
+    val oneLineIntro: String? = null,
+    val thumbnailUrl: String? = null,
 )
 
 enum class CompletionRequestStatus {

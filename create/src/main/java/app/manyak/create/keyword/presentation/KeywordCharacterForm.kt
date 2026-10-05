@@ -1,14 +1,9 @@
 package app.manyak.create.keyword.presentation
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,8 +14,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.relocation.BringIntoViewRequester
-import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
@@ -33,19 +26,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import app.manyak.create.presentation.component.AddTrigger
-import app.manyak.create.presentation.component.CollapsibleInputHeader
+import app.manyak.create.presentation.component.CollapsibleInputSection
 import app.manyak.create.presentation.component.KeywordSectionLabel
 import app.manyak.designsystem.component.ManyakInputCounter
 import app.manyak.designsystem.component.ManyakTextField
 import app.manyak.designsystem.theme.ManyakTheme
+import kotlinx.coroutines.withTimeoutOrNull
 import app.manyak.create.R as CreateR
 
 @Composable
@@ -60,6 +55,7 @@ internal fun CharacterForm(
     onIntent: (CreateKeywordIntent) -> Unit,
     onOpenAddKeyword: (KeywordTarget) -> Unit,
     modifier: Modifier = Modifier,
+    nameFieldModifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -71,6 +67,7 @@ internal fun CharacterForm(
             namePlaceholder = namePlaceholder,
             isDuplicateName = isDuplicateName,
             onIntent = onIntent,
+            nameFieldModifier = nameFieldModifier,
         )
         KeywordSectionLabel(
             modifier = Modifier.padding(top = ManyakTheme.spacing.gutter),
@@ -104,6 +101,7 @@ private fun CharacterBasicInfo(
     isDuplicateName: Boolean,
     onIntent: (CreateKeywordIntent) -> Unit,
     modifier: Modifier = Modifier,
+    nameFieldModifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier,
@@ -115,7 +113,7 @@ private fun CharacterBasicInfo(
         )
         Row(horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact)) {
             ManyakTextField(
-                modifier = Modifier.weight(3f),
+                modifier = Modifier.weight(3f).then(nameFieldModifier),
                 value = character.name,
                 onValueChange = { name -> onIntent(CreateKeywordIntent.ChangeCharacterName(target, name)) },
                 placeholder = namePlaceholder,
@@ -260,19 +258,25 @@ internal fun SupportingCharacterList(
     onIntent: (CreateKeywordIntent) -> Unit,
     onOpenAddKeyword: (KeywordTarget) -> Unit,
     modifier: Modifier = Modifier,
+    scrollToCenter: suspend (Float) -> Unit = {},
 ) {
     val namePlaceholders = stringArrayResource(CreateR.array.create_name_placeholders_supporting)
-    val addedCharacterRequester = remember { BringIntoViewRequester() }
+    val nameCenters = remember { mutableMapOf<Long, Float>() }
     var previousCharacterCount by remember { mutableIntStateOf(state.supportingCharacters.size) }
 
+    // 웹과 같이 새 인물의 이름 칸을 화면 가운데로 옮긴다. 새 인물은 펼친 채 나타나므로 자리를 잡는 대로 옮긴다.
     LaunchedEffect(state.supportingCharacters.size) {
         val currentCount = state.supportingCharacters.size
         val characterWasAdded = currentCount > previousCharacterCount
         previousCharacterCount = currentCount
-
-        if (characterWasAdded) {
-            withFrameNanos { }
-            addedCharacterRequester.bringIntoView()
+        val addedId = state.supportingCharacters.lastOrNull()?.id
+        if (characterWasAdded && addedId != null) {
+            val center =
+                withTimeoutOrNull(ADDED_LAYOUT_TIMEOUT_MILLIS) {
+                    while (addedId !in nameCenters) withFrameNanos { }
+                    nameCenters.getValue(addedId)
+                }
+            center?.let { scrollToCenter(it) }
         }
     }
 
@@ -299,14 +303,9 @@ internal fun SupportingCharacterList(
                 atSelectionCap = state.isAtSelectionCap(KeywordTarget.Supporting(character.id)),
                 onIntent = onIntent,
                 onOpenAddKeyword = onOpenAddKeyword,
-                // 요청 대상은 기본 정보가 아니라 섹션 전체다 — 기본 정보만 겨누면 특징 칸이
-                // 화면 밖에 남는다. 섹션이 뷰포트보다 크면 컨테이너가 위 모서리를 맞춰 세우므로,
-                // 들어가는 만큼의 특징 칸이 기본 정보와 함께 보인다.
-                modifier =
-                    if (index == state.supportingCharacters.lastIndex) {
-                        Modifier.bringIntoViewRequester(addedCharacterRequester)
-                    } else {
-                        Modifier
+                nameFieldModifier =
+                    Modifier.onGloballyPositioned {
+                        nameCenters[character.id] = it.positionInRoot().y + it.size.height / 2f
                     },
             )
         }
@@ -373,43 +372,32 @@ private fun SupportingCharacterSection(
     onIntent: (CreateKeywordIntent) -> Unit,
     onOpenAddKeyword: (KeywordTarget) -> Unit,
     modifier: Modifier = Modifier,
+    nameFieldModifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
+    CollapsibleInputSection(
+        modifier = modifier,
+        headerLabel = headerLabel,
+        countLabel = countLabel,
+        expanded = expanded,
+        onToggle = { onIntent(CreateKeywordIntent.ToggleSupportingCharacter(character.id)) },
+        onDelete = {
+            (target as? KeywordTarget.Supporting)?.let {
+                onIntent(CreateKeywordIntent.RemoveSupportingCharacter(it.characterId))
+            }
+        },
     ) {
-        CollapsibleInputHeader(
-            headerLabel = headerLabel,
-            countLabel = countLabel,
-            expanded = expanded,
-            onToggle = { onIntent(CreateKeywordIntent.ToggleSupportingCharacter(character.id)) },
-            onDelete = {
-                (target as? KeywordTarget.Supporting)?.let {
-                    onIntent(CreateKeywordIntent.RemoveSupportingCharacter(it.characterId))
-                }
-            },
+        CharacterForm(
+            target = target,
+            character = character,
+            featureRequired = false,
+            namePlaceholder = namePlaceholder,
+            isDuplicateName = isDuplicateName,
+            providedTags = providedTags,
+            atSelectionCap = atSelectionCap,
+            onIntent = onIntent,
+            onOpenAddKeyword = onOpenAddKeyword,
+            nameFieldModifier = nameFieldModifier,
         )
-        // 웹과 같은 튕김 없는 약 0.3초 스프링이다. 위 변을 붙잡아 입력 칸은 제자리에 두고 아래로 드러낸다.
-        // 기본값처럼 아래를 붙잡으면 폼이 머리 줄 밑에서 미끄러져 나온다.
-        val sizeSpec = spring(stiffness = Spring.StiffnessMediumLow, visibilityThreshold = IntSize.VisibilityThreshold)
-        val fadeSpec = spring<Float>(stiffness = Spring.StiffnessMediumLow)
-        AnimatedVisibility(
-            visible = expanded,
-            enter = expandVertically(sizeSpec, expandFrom = Alignment.Top) + fadeIn(fadeSpec),
-            exit = shrinkVertically(sizeSpec, shrinkTowards = Alignment.Top) + fadeOut(fadeSpec),
-        ) {
-            CharacterForm(
-                modifier = Modifier.padding(ManyakTheme.spacing.gutter),
-                target = target,
-                character = character,
-                featureRequired = false,
-                namePlaceholder = namePlaceholder,
-                isDuplicateName = isDuplicateName,
-                providedTags = providedTags,
-                atSelectionCap = atSelectionCap,
-                onIntent = onIntent,
-                onOpenAddKeyword = onOpenAddKeyword,
-            )
-        }
     }
 }
 
@@ -424,3 +412,5 @@ private fun EmptySupportingCharactersPreview() {
         )
     }
 }
+
+private const val ADDED_LAYOUT_TIMEOUT_MILLIS = 500L

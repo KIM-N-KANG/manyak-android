@@ -61,6 +61,24 @@ data class CreateKeywordRoute(
     val draftId: String,
 ) : NavKey
 
+@Serializable
+data object CreateMethodRoute : NavKey
+
+@Serializable
+data class GeneralCreateRoute(
+    val draftId: String,
+) : NavKey
+
+@Serializable
+data class GeneralSubmissionRoute(
+    val submissionId: String,
+) : NavKey
+
+@Serializable
+data class StoryEditRoute(
+    val storyId: String,
+) : NavKey
+
 /** 스토리라인 선택 단계. 키워드 목적지를 대체해 뒤로가기가 곧 퍼널 이탈이다. */
 @Serializable
 data class CreateStorylineRoute(

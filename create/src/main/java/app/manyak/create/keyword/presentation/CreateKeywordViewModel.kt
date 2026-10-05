@@ -497,19 +497,23 @@ class CreateKeywordViewModel
             state: CreateKeywordUiState,
         ) {
             when (intent) {
-                // 닫기는 상태와 무관하게 늘 확인을 거친다 — 무엇을 잃는지에 따라 문구만 갈린다.
-                CreateKeywordIntent.LeaveFunnel ->
-                    dispatchEvent(
-                        CreateKeywordEvent.ExitWarningChanged(
-                            when {
-                                state.hasUnsavedChanges && pendingCreationStore.read(draftId) != null ->
-                                    FunnelExitWarning.UNSAVED_CHANGES
-                                state.hasUnsavedChanges -> FunnelExitWarning.UNSAVED_INPUT
-                                pendingCreationStore.read(draftId) != null -> FunnelExitWarning.SAVED_DRAFT
-                                else -> FunnelExitWarning.NOTHING_TO_PRESERVE
-                            },
-                        ),
-                    )
+                // 무엇을 잃는지에 따라 경고 문구가 갈린다. 입력한 것도 저장한 것도 없으면 묻지 않고 나간다.
+                CreateKeywordIntent.LeaveFunnel -> {
+                    val saved = pendingCreationStore.read(draftId) != null
+                    val warning =
+                        when {
+                            state.hasUnsavedChanges && saved -> FunnelExitWarning.UNSAVED_CHANGES
+                            state.hasUnsavedChanges -> FunnelExitWarning.UNSAVED_INPUT
+                            saved -> FunnelExitWarning.SAVED_DRAFT
+                            else -> null
+                        }
+                    if (warning != null) {
+                        dispatchEvent(CreateKeywordEvent.ExitWarningChanged(warning))
+                    } else {
+                        analytics.track(AnalyticsEvent.CreateExitButtonClicked(CreateStep.KEYWORD))
+                        leaveFunnel()
+                    }
+                }
 
                 CreateKeywordIntent.ConfirmLeaveFunnel -> {
                     analytics.track(AnalyticsEvent.CreateExitButtonClicked(CreateStep.KEYWORD))

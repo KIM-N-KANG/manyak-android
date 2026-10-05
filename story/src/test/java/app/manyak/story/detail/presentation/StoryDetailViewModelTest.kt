@@ -307,6 +307,31 @@ class StoryDetailViewModelTest {
                 viewModel.uiState.value.story
                     ?.id,
             )
+            assertEquals(2, storyRepository.storyDetailCallCount)
+        }
+
+    @Test
+    fun `수정 복귀가 이전 조회와 겹쳐도 다시 조회한 수정 내용이 최종 상태가 된다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryRepository()
+            val gate = CompletableDeferred<Unit>()
+            repository.inFlightGate = gate
+            repository.queuedDetailResults += DomainResult.Success(sampleStoryDetail())
+            repository.queuedDetailResults += DomainResult.Success(sampleStoryDetail().copy(title = "수정된 제목"))
+            val model = viewModel(repository)
+            model.onIntent(StoryDetailIntent.ScreenShown)
+            advanceUntilIdle()
+            model.onIntent(StoryDetailIntent.ScreenShown)
+            advanceUntilIdle()
+            assertEquals(1, repository.storyDetailCallCount)
+            gate.complete(Unit)
+            advanceUntilIdle()
+            assertEquals(2, repository.storyDetailCallCount)
+            assertEquals(
+                "수정된 제목",
+                model.uiState.value.story
+                    ?.title,
+            )
         }
 
     @Test

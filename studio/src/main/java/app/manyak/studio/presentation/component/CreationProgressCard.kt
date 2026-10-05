@@ -5,7 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,8 +13,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,8 +33,10 @@ import app.manyak.common.entity.story.CreationResumePoint
 import app.manyak.common.entity.story.CreationStage
 import app.manyak.designsystem.component.ImageGenerationLoading
 import app.manyak.designsystem.component.ManyakMoreButton
+import app.manyak.designsystem.component.ManyakNeutralButton
 import app.manyak.designsystem.component.MetaChip
 import app.manyak.designsystem.component.STORY_THUMBNAIL_ASPECT_RATIO
+import app.manyak.designsystem.component.StoryCover
 import app.manyak.designsystem.component.moreButtonTitleAlignment
 import app.manyak.designsystem.component.rememberTextShimmerBrush
 import app.manyak.designsystem.theme.ManyakTheme
@@ -88,7 +87,9 @@ internal fun CreationProgressCard(
                 ProgressTitleRow(kind = kind, onOptionsClick = onOptionsClick)
                 Text(
                     modifier = Modifier.padding(top = ManyakTheme.spacing.inline),
-                    text = stringResource(kind.descriptionRes()),
+                    text =
+                        (kind as? CreationProgressCardKind.Draft)?.introduction?.takeIf(String::isNotBlank)
+                            ?: stringResource(kind.descriptionRes()),
                     style = ManyakTheme.typography.bodyMedium,
                     color = ManyakTheme.colors.textSubtle,
                 )
@@ -115,6 +116,9 @@ sealed interface CreationProgressCardKind {
     data class Draft(
         val stage: CreationStage,
         val resumePoint: CreationResumePoint,
+        val title: String? = null,
+        val introduction: String? = null,
+        val thumbnailUrl: String? = null,
     ) : CreationProgressCardKind
 
     /** 완성 중 — 이미지 생성 로딩만 있고 아무 동작도 없다. */
@@ -138,6 +142,10 @@ private fun ProgressCover(
     kind: CreationProgressCardKind,
     modifier: Modifier = Modifier,
 ) {
+    if (kind is CreationProgressCardKind.Draft && kind.thumbnailUrl != null) {
+        StoryCover(thumbnailUrl = kind.thumbnailUrl, modifier = modifier, showBorder = true)
+        return
+    }
     val shape = ManyakTheme.shapes.thumbnail
     if (kind == CreationProgressCardKind.Completing) {
         ImageGenerationLoading(
@@ -182,7 +190,9 @@ private fun ProgressTitleRow(
     ) {
         Text(
             modifier = Modifier.weight(1f).alignBy(FirstBaseline),
-            text = stringResource(kind.titleRes()),
+            text =
+                (kind as? CreationProgressCardKind.Draft)?.title?.takeIf(String::isNotBlank)
+                    ?: stringResource(kind.titleRes()),
             style = titleStyle.merge(TextStyle(brush = shimmer)),
             color = if (shimmer == null) kind.titleColor() else Color.Unspecified,
             maxLines = TITLE_MAX_LINES,
@@ -229,24 +239,16 @@ internal fun Long.toSavedAtText(): String =
  * 버튼이 기본으로 확보하는 최소 48dp 그대로다.
  */
 @Composable
-private fun ProgressActionButton(
+internal fun ProgressActionButton(
     label: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Button(
-        modifier = modifier.fillMaxWidth().height(ManyakTheme.sizes.controlCompact),
+    ManyakNeutralButton(
+        label = label,
         onClick = onClick,
-        shape = ManyakTheme.shapes.control,
-        colors =
-            ButtonDefaults.buttonColors(
-                containerColor = ManyakTheme.colors.brand,
-                contentColor = ManyakTheme.colors.textInverse,
-            ),
-        contentPadding = PaddingValues(horizontal = ManyakTheme.spacing.component),
-    ) {
-        Text(text = label, style = ManyakTheme.typography.labelLarge)
-    }
+        modifier = modifier.fillMaxWidth().height(ManyakTheme.sizes.controlCompact),
+    )
 }
 
 private fun CreationProgressCardKind.titleRes(): Int =
@@ -265,6 +267,7 @@ private fun CreationProgressCardKind.descriptionRes(): Int =
         // 초안이 멈춘 단계를 알린다. 스토리라인 생성은 서버에서 실제로 도는 중이라 현재형이다.
         is CreationProgressCardKind.Draft ->
             when (stage) {
+                CreationStage.GENERAL_DRAFT -> StudioR.string.studio_progress_draft_description_general
                 CreationStage.KEYWORD_DRAFT -> StudioR.string.studio_progress_draft_description_keyword
                 CreationStage.STORYLINE_GENERATION -> StudioR.string.studio_progress_draft_description_generating
                 CreationStage.STORY_DRAFT ->

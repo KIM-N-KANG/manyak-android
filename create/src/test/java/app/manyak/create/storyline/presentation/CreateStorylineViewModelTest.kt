@@ -326,7 +326,7 @@ class CreateStorylineViewModelTest {
         }
 
     @Test
-    fun `보존할 결과가 없는 이탈은 소실 경고 다이얼로그를 거쳐 이탈한다`() =
+    fun `보존할 결과가 없는 이탈은 묻지 않고 이탈한다`() =
         runTest(dispatcher) {
             val repository = FakeStoryCreationRepository()
             // HTTP 오류는 레코드도 지워져 보존할 것이 남지 않는다.
@@ -346,10 +346,6 @@ class CreateStorylineViewModelTest {
             advanceUntilIdle()
 
             viewModel.onIntent(CreateStorylineIntent.LeaveFunnel)
-            advanceUntilIdle()
-            assertEquals(FunnelExitWarning.NOTHING_TO_PRESERVE, viewModel.uiState.value.exitWarning)
-
-            viewModel.onIntent(CreateStorylineIntent.ConfirmLeaveFunnel)
             advanceUntilIdle()
 
             assertNull(viewModel.uiState.value.exitWarning)

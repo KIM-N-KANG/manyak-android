@@ -13,6 +13,15 @@ android {
     }
 }
 
+androidComponents {
+    onVariants { variant ->
+        variant.androidTest
+            ?.sources
+            ?.assets
+            ?.addStaticSourceDirectory("schemas")
+    }
+}
+
 room {
     schemaDirectory("$projectDir/schemas")
 }
@@ -33,6 +42,7 @@ dependencies {
     implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.ktx)
+    implementation(libs.coil.compose)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.retrofit)
     implementation(libs.kotlinx.serialization.json)
@@ -51,4 +61,5 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.okhttp.mockwebserver)
 }

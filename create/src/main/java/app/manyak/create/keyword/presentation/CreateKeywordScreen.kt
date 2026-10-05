@@ -17,17 +17,22 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -44,6 +49,7 @@ import app.manyak.create.presentation.component.FunnelNeutralButton
 import app.manyak.create.presentation.component.FunnelPrimaryButton
 import app.manyak.create.presentation.component.SaveDraftWhenBackgrounded
 import app.manyak.create.presentation.component.labelRes
+import app.manyak.create.presentation.component.scrollToCenter
 import app.manyak.create.presentation.preview.previewKeywordState
 import app.manyak.designsystem.component.FocusScrollMargin
 import app.manyak.designsystem.component.ManyakDestructiveDialog
@@ -187,8 +193,16 @@ private fun KeywordStepBody(
         state.providedTags is ProvidedTags.Failed ->
             CreateKeywordFailureContent(modifier = modifier, state = state, onIntent = onIntent)
 
-        else ->
-            LazyColumn(modifier = modifier) {
+        else -> {
+            val listState = rememberLazyListState()
+            var viewportCenter by remember { mutableFloatStateOf(0f) }
+            LazyColumn(
+                modifier =
+                    modifier.onGloballyPositioned {
+                        viewportCenter = it.positionInRoot().y + it.size.height / 2f
+                    },
+                state = listState,
+            ) {
                 item { KeywordStepTitle() }
                 stickyHeader {
                     CategoryTabs(state = state, onIntent = onIntent)
@@ -198,10 +212,12 @@ private fun KeywordStepBody(
                         state = state,
                         onIntent = onIntent,
                         onOpenAddKeyword = onOpenAddKeyword,
+                        scrollToCenter = { listState.scrollToCenter(it, viewportCenter) },
                     )
                 }
                 item { Spacer(modifier = Modifier.height(ManyakTheme.spacing.gutter)) }
             }
+        }
     }
 }
 

@@ -1,10 +1,18 @@
 package app.manyak.create.presentation.component
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -31,6 +39,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import app.manyak.designsystem.component.ManyakTextButton
 import app.manyak.designsystem.theme.ManyakTheme
@@ -43,7 +52,7 @@ internal fun CollapsibleInputHeader(
     countLabel: String,
     expanded: Boolean,
     onToggle: () -> Unit,
-    onDelete: () -> Unit,
+    onDelete: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     // 입력 영역이 여닫히는 스프링과 같이 돈다.
@@ -82,7 +91,7 @@ private fun HeaderButtons(
     rotation: Float,
     deleteDescription: String,
     onToggle: () -> Unit,
-    onDelete: () -> Unit,
+    onDelete: (() -> Unit)?,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         ManyakTextButton(
@@ -99,6 +108,8 @@ private fun HeaderButtons(
                 modifier = Modifier.size(ManyakTheme.sizes.iconTiny).rotate(rotation),
             )
         }
+        // 하나만 남아 지울 수 없는 항목은 삭제를 두지 않는다.
+        if (onDelete == null) return@Row
         Spacer(Modifier.width(ManyakTheme.spacing.inline))
         ManyakTextButton(
             modifier = buttonModifier.semantics { contentDescription = deleteDescription },
@@ -146,5 +157,45 @@ private fun InputHeaderLabel(
             style = ManyakTheme.typography.bodySmall,
             color = ManyakTheme.colors.textSubtle,
         )
+    }
+}
+
+/**
+ * 접히는 입력 항목 하나. 펼친 본문은 아래 여백을 깔고 있어 펼친 항목 사이만 벌어지고, 접힌 머리 줄끼리는 붙는다.
+ */
+@Composable
+internal fun CollapsibleInputSection(
+    headerLabel: String,
+    countLabel: String,
+    expanded: Boolean,
+    onToggle: () -> Unit,
+    onDelete: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+    contentSpacing: Dp = ManyakTheme.spacing.compact,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        CollapsibleInputHeader(
+            headerLabel = headerLabel,
+            countLabel = countLabel,
+            expanded = expanded,
+            onToggle = onToggle,
+            onDelete = onDelete,
+        )
+        // 웹과 같은 튕김 없는 약 0.3초 스프링이다. 위 변을 붙잡아 입력 칸은 제자리에 두고 아래로 드러낸다.
+        // 기본값처럼 아래를 붙잡으면 폼이 머리 줄 밑에서 미끄러져 나온다.
+        val sizeSpec = spring(stiffness = Spring.StiffnessMediumLow, visibilityThreshold = IntSize.VisibilityThreshold)
+        val fadeSpec = spring<Float>(stiffness = Spring.StiffnessMediumLow)
+        AnimatedVisibility(
+            visible = expanded,
+            enter = expandVertically(sizeSpec, expandFrom = Alignment.Top) + fadeIn(fadeSpec),
+            exit = shrinkVertically(sizeSpec, shrinkTowards = Alignment.Top) + fadeOut(fadeSpec),
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(ManyakTheme.spacing.gutter),
+                verticalArrangement = Arrangement.spacedBy(contentSpacing),
+                content = content,
+            )
+        }
     }
 }

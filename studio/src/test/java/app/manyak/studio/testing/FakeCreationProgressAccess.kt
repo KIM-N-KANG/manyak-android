@@ -4,6 +4,7 @@ import app.manyak.common.domain.story.CreationProgressAccess
 import app.manyak.common.entity.story.CompletionRequestSummary
 import app.manyak.common.entity.story.CreationProgressSummary
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /** 초안·요청 흐름의 인메모리 구현. 호출 기록으로 제작 탭의 갱신·삭제 시점을 검증한다. */
@@ -16,6 +17,7 @@ internal class FakeCreationProgressAccess(
 
     override val drafts: Flow<List<CreationProgressSummary>> = draftState
     override val completionRequests: Flow<List<CompletionRequestSummary>> = requestState
+    override val submissionChanges = MutableSharedFlow<Unit>()
 
     val currentDrafts: List<CreationProgressSummary> get() = draftState.value
     val currentRequests: List<CompletionRequestSummary> get() = requestState.value

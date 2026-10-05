@@ -21,16 +21,13 @@ data class DraftSaveUiState(
     val hasUnsavedChanges: Boolean = false,
 )
 
-/** 퍼널 이탈을 막고 띄우는 경고. 둘은 사라지는 대상이 달라 문구도 버튼도 다르다. */
+/** 퍼널 이탈을 막고 띄우는 경고. 잃을 것도 남길 것도 없으면 경고 없이 나간다. */
 enum class FunnelExitWarning {
     /** 저장본 없이 입력한 내용이 사라진다. */
     UNSAVED_INPUT,
 
     /** 저장한 스냅숏은 있지만 그 뒤의 편집이 남았다. */
     UNSAVED_CHANGES,
-
-    /** 저장한 것도 저장할 것도 없다 — 생성 실패처럼 재개할 재료가 아예 없는 경우. */
-    NOTHING_TO_PRESERVE,
 
     /** 저장한 스냅숏(또는 진행 중 레코드)만 남았다. 잃는 것은 없지만 닫기라는 사실만 확인받는다. */
     SAVED_DRAFT,
