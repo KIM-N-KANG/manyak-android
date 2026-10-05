@@ -141,7 +141,7 @@ private fun EditCardOption(
 ) {
     if (card is StudioCard.Story || card is StudioCard.Submission && !card.isPendingSubmission) {
         ManyakOptionItem(
-            iconRes = DesignsystemR.drawable.ic_form,
+            iconRes = DesignsystemR.drawable.ic_edit,
             label = stringResource(StudioR.string.studio_edit_story),
             onClick = {
                 onIntent(

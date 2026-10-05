@@ -61,7 +61,7 @@ internal fun StoryDetailHeaderMenu(
         ) {
             if (isOwner) {
                 ManyakOptionItem(
-                    iconRes = DesignsystemR.drawable.ic_form,
+                    iconRes = DesignsystemR.drawable.ic_edit,
                     label = stringResource(StoryR.string.story_edit_action),
                     onClick = {
                         open = false
