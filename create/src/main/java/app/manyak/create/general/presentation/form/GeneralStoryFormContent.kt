@@ -1,7 +1,5 @@
 package app.manyak.create.general.presentation.form
 
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -50,13 +48,13 @@ import app.manyak.create.general.entity.GeneralStoryForm
 import app.manyak.create.general.entity.GeneralTab
 import app.manyak.create.general.presentation.GeneralGenreSearchState
 import app.manyak.create.presentation.component.FunnelPrimaryButton
+import app.manyak.create.presentation.component.scrollToCenter
 import app.manyak.designsystem.component.ManyakDestructiveDialog
 import app.manyak.designsystem.component.ManyakNeutralButton
 import app.manyak.designsystem.component.ScrollEdgeFade
 import app.manyak.designsystem.theme.ManyakTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
-import kotlin.math.roundToInt
 import app.manyak.create.R as CreateR
 
 @Suppress("LongMethod")
@@ -245,20 +243,8 @@ private fun ScrollToTarget(
     }
 }
 
-/** 칸을 화면 가운데로 옮긴다. 웹의 부드러운 스크롤처럼 천천히 출발해 천천히 멈춘다. */
-private suspend fun ScrollState.scrollToCenter(
-    fieldCenter: Float,
-    viewportCenter: Float,
-) {
-    animateScrollTo(
-        (value + fieldCenter - viewportCenter).roundToInt().coerceAtLeast(0),
-        tween(SCROLL_TO_FIELD_MILLIS, easing = FastOutSlowInEasing),
-    )
-}
-
 private const val EXPAND_SETTLE_MILLIS = 350L
 private const val ADDED_LAYOUT_TIMEOUT_MILLIS = 500L
-private const val SCROLL_TO_FIELD_MILLIS = 400
 
 @Composable
 private fun ResetScrollOnTabChange(

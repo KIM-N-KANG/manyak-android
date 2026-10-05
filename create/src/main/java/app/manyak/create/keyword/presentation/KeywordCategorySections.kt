@@ -100,6 +100,7 @@ internal fun CategoryContent(
     onIntent: (CreateKeywordIntent) -> Unit,
     onOpenAddKeyword: (KeywordTarget) -> Unit,
     modifier: Modifier = Modifier,
+    scrollToCenter: suspend (Float) -> Unit = {},
 ) {
     Column(modifier = modifier) {
         when (state.activeCategory) {
@@ -142,6 +143,7 @@ internal fun CategoryContent(
                     state = state,
                     onIntent = onIntent,
                     onOpenAddKeyword = onOpenAddKeyword,
+                    scrollToCenter = scrollToCenter,
                 )
             }
         }
