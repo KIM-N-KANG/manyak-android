@@ -15,16 +15,18 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.test.espresso.Espresso.pressBack
 import app.manyak.analytics.domain.NoOpAnalytics
 import app.manyak.auth.domain.SessionRepository
+import app.manyak.auth.domain.SignupRepository
+import app.manyak.auth.entity.PendingSignup
 import app.manyak.auth.entity.SessionState
 import app.manyak.auth.entity.SignInOutcome
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.entity.auth.AuthProvider
+import app.manyak.common.entity.consent.ConsentItem
+import app.manyak.common.entity.consent.RequiredConsent
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.legal.consent.domain.ConsentRepository
-import app.manyak.legal.consent.entity.ConsentItem
 import app.manyak.legal.consent.entity.ConsentStatus
-import app.manyak.legal.consent.entity.RequiredConsent
 import app.manyak.legal.consent.presentation.LegalConsentPhase
 import app.manyak.legal.consent.presentation.LegalConsentSheet
 import app.manyak.legal.consent.presentation.LegalConsentViewModel
@@ -61,7 +63,7 @@ class MemberConsentGateUiTest {
         assertNoMember()
 
         compose.onNodeWithText("동의하기").performClick()
-        compose.onNodeWithText("동의를 저장하지 못했어요. 잠시 후 다시 시도해주세요").assertIsDisplayed()
+        compose.onNodeWithText("약관 동의 내역을 저장하지 못했어요").assertIsDisplayed()
         assertNoMember()
         consents.saveSucceeds = true
         compose.onNodeWithText("동의하기").performClick()
@@ -164,7 +166,7 @@ class MemberConsentGateUiTest {
     }
 
     private fun showGate(isStartup: Boolean = false): StateRestorationTester {
-        val consentViewModel = LegalConsentViewModel(consents, session)
+        val consentViewModel = LegalConsentViewModel(consents, session, session)
         val loginViewModel = LoginViewModel(session, NoOpAnalytics)
         val restoration = StateRestorationTester(compose)
         restoration.setContent {
@@ -235,7 +237,9 @@ private class GateConsents : ConsentRepository {
         }
 }
 
-private class GateSession : SessionRepository {
+private class GateSession :
+    SessionRepository,
+    SignupRepository {
     override val sessionState = MutableStateFlow<SessionState>(SessionState.Member)
     override val signInInProgress = MutableStateFlow<AuthProvider?>(null)
     var logouts = 0
@@ -250,4 +254,10 @@ private class GateSession : SessionRepository {
     override suspend fun withdraw(): DomainResult<Unit> = error("not used")
 
     override suspend fun acknowledgeSessionEndNotice() = Unit
+
+    override val pendingSignup = MutableStateFlow<PendingSignup?>(null)
+
+    override suspend fun completeSignup(versions: Map<ConsentItem, String>): DomainResult<Unit> = error("not used")
+
+    override fun cancelSignup() = Unit
 }

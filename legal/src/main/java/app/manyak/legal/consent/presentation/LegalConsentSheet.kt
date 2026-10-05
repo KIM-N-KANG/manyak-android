@@ -29,14 +29,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.manyak.common.entity.consent.ConsentItem
+import app.manyak.common.entity.consent.RequiredConsent
 import app.manyak.core.navigation.LegalDocument
 import app.manyak.designsystem.component.ManyakBottomSheet
 import app.manyak.designsystem.component.ManyakCheckbox
 import app.manyak.designsystem.component.ManyakProgressIndicator
 import app.manyak.designsystem.component.ManyakTextButton
 import app.manyak.designsystem.theme.ManyakTheme
-import app.manyak.legal.consent.entity.ConsentItem
-import app.manyak.legal.consent.entity.RequiredConsent
 import app.manyak.legal.presentation.titleRes
 import app.manyak.designsystem.R as DesignsystemR
 import app.manyak.legal.R as LegalR
@@ -44,7 +44,8 @@ import app.manyak.legal.R as LegalR
 /**
  * 소셜 인증 후 필수 동의를 받는 시트. 동의를 마칠 때까지 로그인 또는 앱 시작 화면 위에 얹는다.
  *
- * 닫을 수 없다 — 끌어내리기·스크림 탭은 막고, 뒤로가기만 "동의하지 않음" 으로 보고 로그아웃한다.
+ * 닫을 수 없다 — 끌어내리기·스크림 탭은 막고, 뒤로가기만 "동의하지 않음" 으로 보고 가입 중이면 가입을 취소하고
+ * 로그인한 세션이면 로그아웃한다.
  * 전문은 시트 위에 전체 화면 창으로 연다. 모달 시트는 아래 화면을 덮으므로 백스택에 문서를 쌓으면 보이지 않는다.
  * 선택 항목(광고 알림)은 OS 권한과 별개의 법적 동의라 권한을 거부했어도 싣는다.
  *
@@ -75,7 +76,7 @@ private fun LegalConsentContent(
         modifier = modifier,
         onDismissRequest = { onIntent(LegalConsentIntent.Abandon) },
         dismissEnabled = false,
-        // 저장·로그아웃 중에는 뒤로가기도 받지 않는다 — 결과가 나오기 전에 두 번째 종료를 시작하지 않는다.
+        // 저장·로그아웃 중에는 뒤로가기도 받지 않는다 — 결과가 나오기 전에 두 번째 종료나 가입 취소를 시작하지 않는다.
         dismissOnBackPress = !state.isLocked,
         // 끌어내려 닫을 수 없는 시트라 핸들을 두지 않는다.
         dragHandleVisible = false,

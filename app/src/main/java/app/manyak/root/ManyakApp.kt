@@ -127,7 +127,7 @@ fun ManyakApp(
                         } else if (showSessionProgress) {
                             SessionProgress()
                         }
-                    is SessionState.SignedOut -> AuthNavDisplay()
+                    is SessionState.SignedOut -> SignupConsentGate(consentState.isSignup, consentViewModel)
                     SessionState.Member -> {
                         MemberConsentGate(
                             state = consentState,
@@ -234,7 +234,7 @@ private fun SessionProgress() {
  * 메인에서 뒤로가기로 로그인 화면에 돌아갈 수 없다.
  */
 @Composable
-private fun AuthNavDisplay() {
+internal fun AuthNavDisplay() {
     val backStack = rememberNavBackStack(LoginRoute)
     val slide = rememberScreenSlideTransitions()
     NavDisplay(

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="consent_agree_all">전체 동의</string>
-    <string name="consent_error_retryable">동의를 저장하지 못했어요. 잠시 후 다시 시도해주세요</string>
+    <string name="consent_error_retryable">약관 동의 내역을 저장하지 못했어요</string>
     <string name="consent_error_version_mismatch">약관이 갱신되어 최신 내용으로 다시 확인해주세요</string>
     <string name="consent_item_age14">[필수] 만 14세 이상입니다</string>
     <string name="consent_item_marketing">[선택] 광고성 알림 수신 동의</string>

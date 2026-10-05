@@ -3,11 +3,11 @@ package app.manyak.legal.consent.data.repository
 import app.manyak.auth.domain.SessionGate
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.entity.consent.ConsentItem
 import app.manyak.legal.consent.data.api.ConsentApi
 import app.manyak.legal.consent.data.api.dto.ConsentStatusDto
 import app.manyak.legal.consent.data.api.dto.UserConsentRequestDto
 import app.manyak.legal.consent.data.api.dto.UserConsentResponseDto
-import app.manyak.legal.consent.entity.ConsentItem
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch

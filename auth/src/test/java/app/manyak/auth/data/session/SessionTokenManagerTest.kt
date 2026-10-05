@@ -3,6 +3,8 @@ package app.manyak.auth.data.session
 import app.manyak.auth.data.api.AuthApi
 import app.manyak.auth.data.api.dto.LogoutRequestDto
 import app.manyak.auth.data.api.dto.RefreshTokenRequestDto
+import app.manyak.auth.data.api.dto.SignupConsentRequestDto
+import app.manyak.auth.data.api.dto.SocialAuthResponseDto
 import app.manyak.auth.data.api.dto.SocialLoginRequestDto
 import app.manyak.auth.data.api.dto.TokenResponseDto
 import app.manyak.auth.data.datastore.StoredSession
@@ -185,10 +187,15 @@ class SessionTokenManagerTest {
         var refreshCount: Int = 0
             private set
 
-        override suspend fun login(
+        override suspend fun startSocial(
             provider: String,
             request: SocialLoginRequestDto,
-        ): Response<TokenResponseDto> = error("이 테스트는 로그인을 호출하지 않는다")
+        ): Response<SocialAuthResponseDto> = error("이 테스트는 로그인을 호출하지 않는다")
+
+        override suspend fun completeSocial(
+            consentToken: String,
+            request: SignupConsentRequestDto,
+        ): Response<TokenResponseDto> = error("이 테스트는 가입을 완료하지 않는다")
 
         override suspend fun refresh(request: RefreshTokenRequestDto): Response<TokenResponseDto> {
             refreshCount++

@@ -5,14 +5,14 @@ import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.session.MemberConsent
 import app.manyak.common.domain.session.UserScopedStore
+import app.manyak.common.entity.consent.ConsentItem
+import app.manyak.common.entity.consent.RequiredConsent
 import app.manyak.legal.consent.data.api.ConsentApi
 import app.manyak.legal.consent.data.api.dto.ConsentStatusDto
 import app.manyak.legal.consent.data.api.dto.UserConsentRequestDto
 import app.manyak.legal.consent.data.api.dto.UserConsentResponseDto
 import app.manyak.legal.consent.domain.ConsentRepository
-import app.manyak.legal.consent.entity.ConsentItem
 import app.manyak.legal.consent.entity.ConsentStatus
-import app.manyak.legal.consent.entity.RequiredConsent
 import app.manyak.network.data.api.apiCall
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow

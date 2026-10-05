@@ -12,7 +12,19 @@ import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.legal.consent.presentation.ConsentLoadFailureContent
 import app.manyak.legal.consent.presentation.LegalConsentIntent
 import app.manyak.legal.consent.presentation.LegalConsentPhase
+import app.manyak.legal.consent.presentation.LegalConsentSheet
 import app.manyak.legal.consent.presentation.LegalConsentUiState
+import app.manyak.legal.consent.presentation.LegalConsentViewModel
+
+/** 로그인 중 필수 동의가 남으면 계정과 세션 없이 로그인 화면 위에서 같은 시트로 받는다. */
+@Composable
+internal fun SignupConsentGate(
+    isSignup: Boolean,
+    consentViewModel: LegalConsentViewModel,
+) {
+    AuthNavDisplay()
+    LegalConsentSheet(enabled = isSignup, viewModel = consentViewModel)
+}
 
 /** 동의 조회와 저장을 마치기 전에는 회원 화면을 구성하지 않는다. */
 @Composable

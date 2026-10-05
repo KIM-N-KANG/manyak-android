@@ -22,7 +22,7 @@
    결정 5의 한계). `LegalDocumentScreen`을 문서별 ViewModel 키로 띄우고 앱바의 뒤로가기·시스템 뒤로가기가 창만 닫는다.
    창에는 나가는 길이 보여야 해서 `LegalDocumentScreen` 자체에 제목·뒤로가기 앱바를 넣었고, 백스택으로 여는 기존 진입(로그인
    화면·서비스 안내·알림 설정)도 같은 화면이라 함께 앱바가 생겼다(2026-09-20 사용자 결정 — 표현을 통일).
-3. **뒤로가기만 로그아웃이다.** 웹과 같다. `ManyakBottomSheet`에 `dismissOnBackPress`를 추가해 저장·로그아웃 중에는 뒤로가기를
+3. **뒤로가기만 로그아웃이다.** 웹과 같다. (KNK-1541부터 로그인 중 가입 대기의 뒤로가기는 가입 취소다. [consent-before-signup.md](consent-before-signup.md)) `ManyakBottomSheet`에 `dismissOnBackPress`를 추가해 저장·로그아웃 중에는 뒤로가기를
    창에서 막는다 — M3 시트의 뒤로가기는 `confirmValueChange`를 거치지 않고 `onDismissRequest`를 부른다.
 4. **ViewModel은 세션 상태로 다시 판정한다.** 루트에서 만든 ViewModel은 액티비티 수명이라 로그아웃 뒤 다른 회원이 로그인해도
    살아 있다. 준비 플래그 대신 `sessionState`가 회원이 될 때마다 조회하고, 회원이 아니면 상태를 비운다. 광고 동의 ViewModel도 같다.
