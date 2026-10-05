@@ -67,7 +67,7 @@ internal enum class GeneralTextHeight(
     SHORT(3, 7),
     LONG(5, 13),
     WORLD(7, 17),
-    SUGGESTED(2, 7),
+    COMPACT(2, 7),
 }
 
 @Suppress("LongParameterList", "CyclomaticComplexMethod")

@@ -143,6 +143,7 @@ fun <T> ManyakSelectMenu(
                     .border(BorderWidth, ManyakTheme.colors.border, ManyakTheme.shapes.control)
                     .clip(ManyakTheme.shapes.control)
                     .padding(ManyakTheme.spacing.inline),
+            verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
         ) {
             options.forEach { option ->
                 SelectMenuItem(
