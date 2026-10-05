@@ -163,6 +163,7 @@ sizes:
   icon: 20dp
   tab-icon: 24dp
   logo: 24dp
+  startup-symbol: 64dp
   shimmer-band-half-width: 60dp
   generation-dot-gap: 10dp
   generation-dot-radius: 1dp
@@ -416,6 +417,12 @@ components:
     asset: "res/drawable/ic_logo_manyak.xml"
     color: "{colors.brand}"
     height: "{sizes.logo}"
+  startup-logo:
+    shape: "ic_logo_manyak 의 심벌(눈 포함)을 직접 그림"
+    color: "{colors.brand}"
+    size: "{sizes.startup-symbol}"
+    hop: "800ms 주기, 22% 착지 찌그러짐 후 심벌 폭의 45% 높이로 포물선 점프"
+    blink: "3200ms 마다 한 번"
   logo-google:
     asset: "res/drawable/ic_logo_google.xml"
     size: 24dp
@@ -625,6 +632,7 @@ components:
 | `{sizes.icon}` | 20dp | 라벨 옆 아이콘·제공자 로고 |
 | `{sizes.tab-icon}` | 24dp | 하단 탭 아이콘 |
 | `{sizes.logo}` | 24dp | 마냑 로고 락업의 높이. 폭은 원본 비율(89:32)로 따라간다 |
+| `{sizes.startup-symbol}` | 64dp | 시작 화면에서 혼자 튀는 로고 심벌의 크기 |
 | `{sizes.shimmer-band-half-width}` | 60dp | 텍스트 시머 띠의 반폭 |
 | `{sizes.selection-border-width}` | 2dp | 미선택 체크박스 경계·M3 라디오 버튼과 동일 |
 | `{sizes.generation-dot-gap}` | 10dp | 이미지 생성 로딩 점 간격 |
@@ -773,6 +781,8 @@ components:
 ### 셸
 
 > 셸의 두 컴포넌트는 **M3 컴포넌트 위에 색만 얹어** 만든다. 인셋·높이·최소 터치 타깃·시맨틱을 직접 계산하지 않기 위해서다. 이 시스템에 없는 요소만 골라 지운다.
+
+**`startup-logo`** — 시작 화면(세션 복원과 필수 동의 확인)의 로딩 표시. 스피너 대신 로고 심벌만 `{sizes.startup-symbol}` 크기의 `{colors.brand}`로 그리고, 확인이 지연 스피너 기준(300ms)보다 길어지면 제자리에서 튀기 시작합니다. 한 번의 점프는 800ms 이며 앞 22% 동안 바닥을 누르듯 가로로 퍼지고 나머지 동안 심벌 폭의 45% 높이로 포물선을 그립니다. 공중에서는 위아래로 살짝 늘어나고 눈이 위를 보며, 착지할 때 눈을 찡그립니다. 바닥의 `{colors.brand}` 18% 타원 그림자는 높이 뜰수록 작고 옅어집니다. 눈은 3200ms 마다 한 번 깜빡입니다. 확인이 끝나거나 실패하면 하던 점프를 마저 착지하고 멈춥니다 — 공중에서 굳으면 고장으로 보입니다. 실패 화면에서도 같은 심벌을 멈춘 채 두어 로고가 바뀌지 않습니다. 모션 값은 토큰의 요소 모션과 성격이 달라 이 자리에서 고정합니다.
 
 **`section-header`** — 메인 탭의 상단 헤더. `TopAppBar` 위에 배경 `{colors.surface}`와 제목 색 `{colors.text}`를 얹는다. 좌우 여백은 앱 바 기본값이 16dp 라 `{spacing.gutter}`와 같고, 로고와 섹션 이름(`{typography.title-large}`) 사이도 `{spacing.gutter}`다. 높이는 최소 64dp 이고 제목이 커지면 함께 늘어난다. 구분선과 그림자를 두지 않는다. `TopAppBar`가 아직 실험 API 라 `@OptIn`이 필요하며, 사용처는 이 컴포넌트와 퍼널 헤더(`funnel-header`) 둘이다.
 
