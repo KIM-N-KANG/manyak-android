@@ -342,7 +342,7 @@ private fun GeneralEditorState.exitCopy(editing: Boolean): GeneralExitCopy {
                 R.string.create_unsaved_input_warning_description,
                 R.string.general_editor_exit_close,
             )
-        // 저장할 것도 저장한 것도 없을 때도 간편 제작처럼 닫기를 한 번 확인한다.
+        // 입력이 없어도 이미지를 올리는 중에 닫으면 올리던 이미지가 사라진다.
         else ->
             GeneralExitCopy(
                 R.string.create_exit_warning_title,

@@ -272,8 +272,8 @@ class CreateStorylineViewModel
         }
 
         /**
-         * 닫기는 상태와 무관하게 늘 확인을 거친다. 저장하지 않은 편집이 있으면 미저장 경고, 저장할 것도
-         * 저장된 것도 없으면 소실 경고, 저장분·진행 중 레코드만 남았으면 잃는 것 없이 닫는다는 확인이다.
+         * 저장하지 않은 편집이 있으면 미저장 경고, 저장분·진행 중 레코드만 남았으면 잃는 것 없이 닫는다는
+         * 확인이다. 저장할 것도 저장된 것도 없으면 묻지 않고 나간다.
          */
         private suspend fun leaveFunnel(confirmed: Boolean) {
             val warning =
@@ -283,13 +283,17 @@ class CreateStorylineViewModel
                         FunnelExitWarning.UNSAVED_CHANGES
 
                     storylineGenerationStore.hasContentToPreserve() -> FunnelExitWarning.SAVED_DRAFT
-                    else -> FunnelExitWarning.NOTHING_TO_PRESERVE
+                    else -> null
                 }
             if (warning != null) {
                 dispatchEvent(CreateStorylineEvent.ExitWarningChanged(warning))
                 return
             }
-            if (confirmed) dispatchEvent(CreateStorylineEvent.ExitWarningChanged(null))
+            if (confirmed) {
+                dispatchEvent(CreateStorylineEvent.ExitWarningChanged(null))
+            } else {
+                analytics.track(AnalyticsEvent.CreateExitButtonClicked(CreateStep.STORYLINE_SELECT))
+            }
             isLeaving = true
             storylineGenerationStore.leaveFunnel()
             dispatchEffect(CreateStorylineEffect.ExitFunnel)

@@ -306,16 +306,6 @@ internal fun FunnelExitWarningDialog(
                 onDismiss = onDismiss,
             )
 
-        FunnelExitWarning.NOTHING_TO_PRESERVE ->
-            FunnelWarningDialog(
-                titleRes = CreateR.string.create_exit_warning_title,
-                descriptionRes = CreateR.string.create_exit_warning_description,
-                confirmRes = CreateR.string.create_exit_warning_leave,
-                dismissRes = CreateR.string.create_exit_warning_stay,
-                onConfirm = onConfirmLeave,
-                onDismiss = onDismiss,
-            )
-
         FunnelExitWarning.SAVED_DRAFT ->
             FunnelWarningDialog(
                 titleRes = CreateR.string.create_saved_exit_warning_title,

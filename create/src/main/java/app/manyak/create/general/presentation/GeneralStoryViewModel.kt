@@ -154,7 +154,18 @@ class GeneralStoryViewModel
         }
 
         private suspend fun requestClose() {
-            if (isEdit && uiState.value.form == initialForm && writeJob?.isActive != true) {
+            val state = uiState.value
+            val unchangedEdit = isEdit && state.form == initialForm
+            // 새로 만들면서 입력한 것도, 저장하거나 등록을 요청한 것도 없으면 잃을 것이 없어 묻지 않고 나간다.
+            val nothingToLose =
+                !isEdit &&
+                    !state.form.hasInput &&
+                    state.savedForm == null &&
+                    state.submission == null &&
+                    state.submittedForm == null &&
+                    acceptedId == null &&
+                    state.uploading.isEmpty()
+            if ((unchangedEdit || nothingToLose) && writeJob?.isActive != true) {
                 dispatchEffect(GeneralEditorEffect.Close)
             } else {
                 dispatchEvent(GeneralEditorEvent.Exit(true))

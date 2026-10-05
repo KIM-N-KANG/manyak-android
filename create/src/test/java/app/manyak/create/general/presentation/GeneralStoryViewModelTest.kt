@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
@@ -54,6 +55,28 @@ class GeneralStoryViewModelTest {
             model.onIntent(GeneralEditorIntent.SaveDraft())
             advanceUntilIdle()
             assertEquals(0, drafts.saves)
+        }
+
+    @Test
+    fun closing_an_untouched_new_draft_leaves_without_asking_but_input_asks_first() =
+        runTest(dispatcher) {
+            val model = model(drafts = GeneralDraftStoreFake().apply { stored = false })
+            advanceUntilIdle()
+            model.onIntent(GeneralEditorIntent.Close)
+            advanceUntilIdle()
+            assertFalse(model.uiState.value.showExit)
+            assertEquals(GeneralEditorEffect.Close, model.uiEffect.first())
+
+            model.onIntent(
+                GeneralEditorIntent.ChangeForm(
+                    model.uiState.value.form
+                        .copy(title = "제목"),
+                ),
+            )
+            advanceUntilIdle()
+            model.onIntent(GeneralEditorIntent.Close)
+            advanceUntilIdle()
+            assertTrue(model.uiState.value.showExit)
         }
 
     @Test

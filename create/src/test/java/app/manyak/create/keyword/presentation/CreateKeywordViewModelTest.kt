@@ -328,16 +328,13 @@ class CreateKeywordViewModelTest {
         }
 
     @Test
-    fun `입력이 없으면 소실 확인만 거쳐 이탈하고 레코드도 남기지 않는다`() =
+    fun `입력이 없으면 묻지 않고 이탈하고 레코드도 남기지 않는다`() =
         runTest(dispatcher) {
             val pending = FakePendingStoryCreationStore()
             val viewModel = viewModel(fixedTagsRepository(), pending)
             advanceUntilIdle()
 
             viewModel.onIntent(CreateKeywordIntent.LeaveFunnel)
-            advanceUntilIdle()
-            assertEquals(FunnelExitWarning.NOTHING_TO_PRESERVE, viewModel.uiState.value.exitWarning)
-            viewModel.onIntent(CreateKeywordIntent.ConfirmLeaveFunnel)
             advanceUntilIdle()
 
             assertNull(pending.read(TEST_DRAFT_ID))

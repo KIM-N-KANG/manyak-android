@@ -274,7 +274,6 @@ private fun MainNavDisplay(
         onEntryConsumed()
     }
     val slide = rememberScreenSlideTransitions()
-    val creationFunnelMetadata = rememberCreationFunnelMetadata()
     NavDisplay(
         backStack = backStack,
         entryDecorators = rememberManyakEntryDecorators(),
@@ -318,7 +317,7 @@ private fun MainNavDisplay(
                     selectedTab = MainTab.STUDIO
                     studioRefreshRequest++
                 }
-                creationFunnelEntries(backStack, creationFunnelMetadata) { selectedTab = MainTab.STUDIO }
+                creationFunnelEntries(backStack) { selectedTab = MainTab.STUDIO }
                 chatRoomEntry(backStack) { selectedTab = MainTab.CHAT }
                 legalEntry(backStack)
             },
@@ -398,10 +397,9 @@ private fun MutableList<NavKey>.addCreationResumeChain(
  */
 private fun EntryProviderScope<NavKey>.creationFunnelEntries(
     backStack: MutableList<NavKey>,
-    metadata: Map<String, Any>,
     onSelectStudioTab: () -> Unit,
 ) {
-    entry<CreateKeywordRoute>(metadata = metadata) { route ->
+    entry<CreateKeywordRoute> { route ->
         CreateKeywordScreen(
             draftId = route.draftId,
             onLeaveFunnel = { backStack.pop() },
@@ -413,7 +411,7 @@ private fun EntryProviderScope<NavKey>.creationFunnelEntries(
             },
         )
     }
-    entry<CreateStorylineRoute>(metadata = metadata) { route ->
+    entry<CreateStorylineRoute> { route ->
         CreateStorylineScreen(
             draftId = route.draftId,
             onLeaveFunnel = { backStack.pop() },
@@ -422,7 +420,7 @@ private fun EntryProviderScope<NavKey>.creationFunnelEntries(
             },
         )
     }
-    entry<CreateAdditionalInfoRoute>(metadata = metadata) { route ->
+    entry<CreateAdditionalInfoRoute> { route ->
         CreateAdditionalInfoScreen(
             draftId = route.draftId,
             storylineIndex = route.storylineIndex,

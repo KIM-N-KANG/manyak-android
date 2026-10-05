@@ -67,6 +67,7 @@ internal open class GeneralEditorRepositoryFake : GeneralStoryRepository {
 internal class GeneralDraftStoreFake : GeneralDraftStore {
     override val drafts = MutableStateFlow(emptyList<GeneralStoredDraft>())
     var form = validGeneralForm()
+    var stored = true
     var readFails = false
     var saveFails = false
     var acceptedSucceeds = true
@@ -74,9 +75,9 @@ internal class GeneralDraftStoreFake : GeneralDraftStore {
     var acceptedWrites = 0
     var acceptedId: String? = null
 
-    override suspend fun read(draftId: String): GeneralStoredDraft {
+    override suspend fun read(draftId: String): GeneralStoredDraft? {
         if (readFails) error("database unavailable")
-        return GeneralStoredDraft(draftId, form, 0)
+        return GeneralStoredDraft(draftId, form, 0).takeIf { stored }
     }
 
     override suspend fun acceptedSubmissionId(draftId: String): String? = acceptedId
