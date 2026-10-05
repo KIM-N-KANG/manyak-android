@@ -3,9 +3,13 @@ package app.manyak.common.domain.story
 import app.manyak.common.entity.story.CompletionRequestSummary
 import app.manyak.common.entity.story.CreationProgressSummary
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 
 /** 제작 기능이 제작 탭에 여는 최소 계약. 편집 초안 여러 개와 완성 요청 여러 개를 따로 전달한다. */
 interface CreationProgressAccess {
+    /** 폼을 떠난 뒤 완료된 등록과 수정도 열려 있는 제작 목록에 알린다. */
+    val submissionChanges: Flow<Unit> get() = emptyFlow()
+
     /** 편집 초안. 처음 임시 저장한 시각 최신순이고, 시각이 없는 이전 초안은 맨 뒤다. */
     val drafts: Flow<List<CreationProgressSummary>>
 

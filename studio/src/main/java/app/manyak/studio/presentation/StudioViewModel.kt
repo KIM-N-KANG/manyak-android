@@ -26,6 +26,7 @@ import app.manyak.studio.entity.StorySubmission
 import app.manyak.studio.entity.SubmissionStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -89,6 +90,12 @@ data class StudioUiState(
 sealed interface StudioIntent {
     /** 제작 퍼널 진입(FAB). 초안이 있어도 묻지 않고 새 초안으로 시작한다. */
     data object CreateStory : StudioIntent
+
+    data object EditStory : StudioIntent
+
+    data class EditSubmission(
+        val submissionId: String,
+    ) : StudioIntent
 
     /** 초안 카드의 "이어서 만들기". */
     data class ResumeCreation(
@@ -196,8 +203,16 @@ sealed interface StudioEffect {
 
     data object ShowSubmissionCancelFailed : StudioEffect
 
-    /** 새 생성으로 퍼널 진입 — 키워드 단계부터. */
+    /** 새 스토리의 제작 방식 선택으로 진입한다. */
     data object NavigateToCreate : StudioEffect
+
+    data class NavigateToEdit(
+        val storyId: String,
+    ) : StudioEffect
+
+    data class NavigateToSubmission(
+        val submissionId: String,
+    ) : StudioEffect
 
     /** 재개 진입 — 그 초안의 레코드 단계까지 퍼널 백스택을 쌓는다. */
     data class NavigateToResume(
@@ -274,7 +289,7 @@ class StudioViewModel
             viewModelScope.launch {
                 creationProgress.drafts.collect { drafts ->
                     drafts.forEach { draft ->
-                        val stage = draft.toStage()
+                        val stage = draft.toStage() ?: return@forEach
                         if (shownDraftStages.put(draft.draftId, stage) != stage) {
                             analytics.track(AnalyticsEvent.ContinueBannerShown(stage))
                         }
@@ -308,17 +323,24 @@ class StudioViewModel
         }
 
         /** 폴링 호출자가 화면 수명을 소유하므로 화면을 떠나면 진행 중인 조회까지 취소된다. */
-        suspend fun drivePendingSubmissionPolling() {
-            uiState
-                .map { it.hasPendingSubmissions }
-                .distinctUntilChanged()
-                .collectLatest { hasPending ->
-                    while (hasPending) {
-                        delay(PENDING_POLL_INTERVAL_MS)
-                        refreshSubmissions()
+        suspend fun drivePendingSubmissionPolling() =
+            coroutineScope {
+                launch {
+                    creationProgress.submissionChanges.collect {
+                        requestSubmissionRefresh()
+                        load(LoadKind.Silent, ensureFresh = true)
                     }
                 }
-        }
+                uiState
+                    .map { it.hasPendingSubmissions }
+                    .distinctUntilChanged()
+                    .collectLatest { hasPending ->
+                        while (hasPending) {
+                            delay(PENDING_POLL_INTERVAL_MS)
+                            refreshSubmissions()
+                        }
+                    }
+            }
 
         private fun requestSubmissionRefresh() {
             submissionRefreshJob?.cancel()
@@ -348,7 +370,7 @@ class StudioViewModel
                 StudioIntent.ScreenShown -> {
                     refreshRequests()
                     requestSubmissionRefresh()
-                    load(if (state.stories.isEmpty()) LoadKind.Blocking else LoadKind.Silent)
+                    load(if (state.stories.isEmpty()) LoadKind.Blocking else LoadKind.Silent, ensureFresh = true)
                 }
 
                 StudioIntent.Retry -> {
@@ -374,9 +396,11 @@ class StudioViewModel
                 // 초안은 여러 개를 둘 수 있어 새 제작 전에 묻지 않는다. 이어 만들기는 초안 카드가 맡는다.
                 StudioIntent.CreateStory -> dispatchEffect(StudioEffect.NavigateToCreate)
 
+                StudioIntent.EditStory, is StudioIntent.EditSubmission -> editSelectedCard(intent, state)
+
                 is StudioIntent.ResumeCreation ->
                     state.drafts.firstOrNull { it.draftId == intent.draftId }?.let { draft ->
-                        analytics.track(AnalyticsEvent.ContinueBannerClicked(draft.toStage()))
+                        draft.toStage()?.let { analytics.track(AnalyticsEvent.ContinueBannerClicked(it)) }
                         dispatchEffect(StudioEffect.NavigateToResume(draft.draftId, draft.resumePoint))
                     }
 
@@ -384,7 +408,34 @@ class StudioViewModel
             }
         }
 
-        /** 카드 옵션 시트에서 갈라지는 동작 — 신고와 삭제. */
+        private suspend fun editSelectedCard(
+            intent: StudioIntent,
+            state: StudioUiState,
+        ) {
+            when (intent) {
+                StudioIntent.EditStory ->
+                    (state.optionsTarget as? StudioCard.Story)?.let {
+                        dispatchEvent(StudioEvent.OptionsTargetChanged(null))
+                        dispatchEffect(StudioEffect.NavigateToEdit(it.story.id))
+                    }
+
+                is StudioIntent.EditSubmission ->
+                    state.submissions
+                        .firstOrNull {
+                            it.id == intent.submissionId && it.status != SubmissionStatus.PENDING
+                        }?.let {
+                            analytics.track(
+                                AnalyticsEvent.SubmissionCardClicked(it.id, it.status.name.lowercase(), "edit"),
+                            )
+                            dispatchEvent(StudioEvent.OptionsTargetChanged(null))
+                            dispatchEffect(StudioEffect.NavigateToSubmission(it.id))
+                        }
+
+                else -> Unit
+            }
+        }
+
+        /** 카드 옵션 시트의 신고와 삭제를 처리한다. */
         private suspend fun handleCardIntent(
             intent: StudioIntent,
             state: StudioUiState,
@@ -746,8 +797,9 @@ private enum class LoadKind {
 }
 
 /** 카탈로그의 `stage` 값. 웹의 진행 레코드 단계 이름과 맞춘다. */
-private fun CreationProgressSummary.toStage(): PendingCreationStage =
+private fun CreationProgressSummary.toStage(): PendingCreationStage? =
     when (stage) {
+        CreationStage.GENERAL_DRAFT -> null
         CreationStage.KEYWORD_DRAFT -> PendingCreationStage.KEYWORD_DRAFT
         CreationStage.STORYLINE_GENERATION -> PendingCreationStage.STORYLINE_GENERATION
         CreationStage.STORY_DRAFT -> PendingCreationStage.STORY_DRAFT

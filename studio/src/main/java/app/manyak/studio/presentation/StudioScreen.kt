@@ -72,10 +72,14 @@ fun StudioScreen(
     onResumeCreation: (draftId: String, CreationResumePoint) -> Unit,
     modifier: Modifier = Modifier,
     refreshRequest: Int = 0,
+    onEditStory: (String) -> Unit = {},
+    onEditSubmission: (String) -> Unit = {},
     viewModel: StudioViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val currentOnCreateStory by rememberUpdatedState(onCreateStory)
+    val currentOnEditStory by rememberUpdatedState(onEditStory)
+    val currentOnEditSubmission by rememberUpdatedState(onEditSubmission)
     val currentOnResumeCreation by rememberUpdatedState(onResumeCreation)
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
@@ -85,6 +89,8 @@ fun StudioScreen(
             viewModel.uiEffect.collect { effect ->
                 when (effect) {
                     StudioEffect.NavigateToCreate -> currentOnCreateStory()
+                    is StudioEffect.NavigateToEdit -> currentOnEditStory(effect.storyId)
+                    is StudioEffect.NavigateToSubmission -> currentOnEditSubmission(effect.submissionId)
                     is StudioEffect.NavigateToResume -> currentOnResumeCreation(effect.draftId, effect.resumePoint)
 
                     StudioEffect.ShowSubmissionCanceled ->

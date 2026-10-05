@@ -88,6 +88,7 @@ fun StoryDetailScreen(
     onBack: () -> Unit,
     onStoryDeleted: () -> Unit,
     onEnterChat: (String) -> Unit,
+    onEditStory: (String) -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: StoryDetailViewModel =
         hiltViewModel<StoryDetailViewModel, StoryDetailViewModel.Factory>(
@@ -136,6 +137,7 @@ fun StoryDetailScreen(
         state = state,
         onBack = onBack,
         onIntent = viewModel::onIntent,
+        onEdit = { onEditStory(storyId) },
         modifier = modifier,
     )
 }
@@ -151,6 +153,7 @@ private fun StoryDetailContent(
     onBack: () -> Unit,
     onIntent: (StoryDetailIntent) -> Unit,
     modifier: Modifier = Modifier,
+    onEdit: () -> Unit = {},
 ) {
     val listState = rememberLazyListState()
     var headerHeight by remember { mutableFloatStateOf(0f) }
@@ -218,6 +221,7 @@ private fun StoryDetailContent(
             isOwner = state.story?.isOwner == true,
             onReport = { onIntent(StoryDetailIntent.Report(StoryReportAction.Open)) },
             onDelete = { onIntent(StoryDetailIntent.RequestDelete) },
+            onEdit = onEdit,
         )
 
         StoryDetailOverlays(state = state, onIntent = onIntent)
@@ -376,6 +380,7 @@ private fun StoryDetailHeader(
     onReport: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
+    onEdit: () -> Unit = {},
 ) {
     val alpha = surfaceAlpha()
     // 표지 위에 얹힌 동안에는 앱바 아이콘 색을 테마가 아니라 표지 대비로 정한다.
@@ -423,6 +428,7 @@ private fun StoryDetailHeader(
                         isOwner = isOwner,
                         onReport = onReport,
                         onDelete = onDelete,
+                        onEdit = onEdit,
                         tint = contentColor,
                     )
                 }

@@ -30,6 +30,7 @@ internal fun SubmissionCard(
     submission: StorySubmission,
     onOptionsClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onEdit: () -> Unit = {},
 ) {
     Row(
         modifier =
@@ -70,6 +71,11 @@ internal fun SubmissionCard(
                     style = ManyakTheme.typography.bodyMedium,
                     color = ManyakTheme.colors.textSubtle,
                 )
+            }
+            if (submission.status != SubmissionStatus.PENDING) {
+                app.manyak.designsystem.component.ManyakTextButton(onClick = onEdit) {
+                    Text(stringResource(R.string.studio_edit_story), style = ManyakTheme.typography.labelLarge)
+                }
             }
             submission.submittedAt?.let { submittedAt ->
                 SavedAtRow(

@@ -16,7 +16,14 @@ internal fun LazyListScope.progressCards(
 ) {
     items(state.drafts, key = { draft -> "$DRAFT_KEY_PREFIX${draft.draftId}" }) { draft ->
         CreationProgressCard(
-            kind = CreationProgressCardKind.Draft(draft.stage, draft.resumePoint),
+            kind =
+                CreationProgressCardKind.Draft(
+                    draft.stage,
+                    draft.resumePoint,
+                    draft.title,
+                    draft.oneLineIntro,
+                    draft.thumbnailUrl,
+                ),
             savedAt = draft.createdAt,
             onPrimaryAction = { onIntent(StudioIntent.ResumeCreation(draft.draftId)) },
             onOptionsClick = { onIntent(StudioIntent.OpenCardOptions(StudioCard.Draft(draft.draftId))) },
@@ -25,6 +32,7 @@ internal fun LazyListScope.progressCards(
     items(state.submissions, key = { "submission:${it.id}" }) { submission ->
         SubmissionCard(
             submission = submission,
+            onEdit = { onIntent(StudioIntent.EditSubmission(submission.id)) },
             onOptionsClick = { onIntent(StudioIntent.OpenCardOptions(StudioCard.Submission(submission))) },
         )
     }

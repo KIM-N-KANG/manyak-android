@@ -30,6 +30,7 @@ internal fun StoryDetailHeaderMenu(
     onReport: () -> Unit,
     onDelete: () -> Unit,
     tint: Color,
+    onEdit: () -> Unit = {},
 ) {
     var open by rememberSaveable { mutableStateOf(false) }
 
@@ -58,6 +59,16 @@ internal fun StoryDetailHeaderMenu(
                 )
             },
         ) {
+            if (isOwner) {
+                ManyakOptionItem(
+                    iconRes = DesignsystemR.drawable.ic_form,
+                    label = stringResource(StoryR.string.story_edit_action),
+                    onClick = {
+                        open = false
+                        onEdit()
+                    },
+                )
+            }
             // 신고 시트·삭제 확인은 이 시트와 별개의 모달이라 먼저 닫고 연다.
             ManyakOptionItem(
                 iconRes = DesignsystemR.drawable.ic_alert_triangle,

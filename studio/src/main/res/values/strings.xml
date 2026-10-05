@@ -46,4 +46,6 @@
     <string name="studio_submission_canceled">등록을 취소했어요</string>
     <string name="studio_submission_cancel_failed">등록을 취소하지 못했어요</string>
     <string name="studio_submission_cancel_in_progress">등록 취소 중</string>
+    <string name="studio_edit_story">수정하기</string>
+    <string name="studio_progress_draft_description_general">일반 제작으로 만들고 있었어요</string>
 </resources>

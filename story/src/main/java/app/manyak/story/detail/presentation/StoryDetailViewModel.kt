@@ -199,6 +199,7 @@ class StoryDetailViewModel
         private var startChatJob: Job? = null
         private var deleteJob: Job? = null
         private var likeJob: Job? = null
+        private var reloadAfterCurrent = false
 
         /**
          * 고른 시작 설정의 장부. UiState 가 아니라 여기서 읽는 이유는 상태 반영이 이벤트 채널을 거쳐
@@ -237,7 +238,7 @@ class StoryDetailViewModel
                     // 요청이 아직 살아 있으면 풀지 않는다 — 구성 변경으로 화면만 다시 만들어졌을 때
                     // 잠금과 스피너가 사라지면 진행 중인 생성이 없는 것처럼 보이고, 다시 눌러도 반응이 없다.
                     if (startChatJob?.isActive != true) dispatchEvent(StoryDetailEvent.ChatStartReset)
-                    load(showProgress = state.story == null)
+                    load(showProgress = state.story == null, ensureFresh = true)
                 }
 
                 StoryDetailIntent.Retry -> load(showProgress = true)
@@ -290,8 +291,15 @@ class StoryDetailViewModel
          * @param showProgress 그릴 본문이 없을 때만 true. 본문이 있는 갱신은 골격도 실패 화면도 띄우지
          *  않는다 — 보고 있던 본문이 사라지는 쪽이 갱신 실패보다 나쁘다.
          */
-        private fun load(showProgress: Boolean) {
-            if (loadJob?.isActive == true || likeJob?.isActive == true) return
+        private fun load(
+            showProgress: Boolean,
+            ensureFresh: Boolean = false,
+        ) {
+            if (loadJob?.isActive == true || likeJob?.isActive == true) {
+                if (ensureFresh) reloadAfterCurrent = true
+                return
+            }
+            reloadAfterCurrent = false
             loadJob =
                 viewModelScope.launch {
                     if (showProgress) dispatchEvent(StoryDetailEvent.LoadStarted)
@@ -305,6 +313,8 @@ class StoryDetailViewModel
                         is DomainResult.Failure ->
                             if (showProgress) dispatchEvent(StoryDetailEvent.LoadFailed(result.error.toLoadError()))
                     }
+                    loadJob = null
+                    if (reloadAfterCurrent) load(showProgress = false)
                 }
         }
 
@@ -354,6 +364,8 @@ class StoryDetailViewModel
                     }
                     dispatchEvent(StoryDetailEvent.Like(LikeChange.Finished))
                     delay(LIKE_COOLDOWN_MILLIS)
+                    likeJob = null
+                    if (reloadAfterCurrent) load(showProgress = false)
                 }
         }
 

@@ -25,4 +25,5 @@
     <string name="story_detail_visibility">공개 범위</string>
     <string name="story_detail_visibility_public">공개</string>
     <string name="story_detail_visibility_private">비공개</string>
+    <string name="story_edit_action">수정하기</string>
 </resources>

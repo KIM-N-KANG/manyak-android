@@ -78,6 +78,49 @@ sealed class AnalyticsEvent(
     ) : AnalyticsEvent("client_storyList_loadError_shown", mapOf("section" to section.wire))
 
     // storyCreate
+    data class StoryCreateMethodSelected(
+        val method: String,
+    ) : AnalyticsEvent("client_storyCreate_methodOption_selected", mapOf("method" to method))
+
+    data object GeneralCreateViewed : AnalyticsEvent("client_generalCreate_viewed")
+
+    data class GeneralCreateCompleted(
+        val submissionId: String,
+        val startSettingCount: Int,
+        val endingCount: Int,
+        val mainEventCount: Int,
+        val imageCount: Int,
+    ) : AnalyticsEvent(
+            "client_generalCreate_completed",
+            mapOf(
+                "submission_id" to submissionId,
+                "start_setting_count" to startSettingCount,
+                "ending_count" to endingCount,
+                "main_event_count" to mainEventCount,
+                "image_count" to imageCount,
+            ),
+        )
+
+    data class GeneralCreateRegisterErrorShown(
+        val status: Int,
+    ) : AnalyticsEvent("client_generalCreate_registerError_shown", mapOf("status" to status))
+
+    data class GeneralCreateReviewResultShown(
+        val submissionId: String,
+        val result: String,
+    ) : AnalyticsEvent(
+            "client_generalCreate_reviewResult_shown",
+            mapOf("submission_id" to submissionId, "result" to result),
+        )
+
+    data class StoryEditViewed(
+        val storyId: String,
+    ) : AnalyticsEvent("client_storyEdit_viewed", mapOf("story_id" to storyId))
+
+    data class StoryEditCompleted(
+        val storyId: String,
+    ) : AnalyticsEvent("client_storyEdit_completed", mapOf("story_id" to storyId))
+
     data object StoryCreateViewed : AnalyticsEvent("client_storyCreate_viewed")
 
     data class StoryCreateStepViewed(

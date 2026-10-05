@@ -14,6 +14,7 @@ import app.manyak.report.presentation.StoryReportAction
 import app.manyak.studio.testing.FakeCreationProgressAccess
 import app.manyak.studio.testing.FakeStoryRepository
 import app.manyak.studio.testing.sampleStories
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -165,6 +166,49 @@ class StudioViewModelTest {
             assertEquals(sampleStories(), state.stories)
             assertFalse(state.isLoading)
             assertEquals(2, repository.myStoriesCallCount)
+        }
+
+    @Test
+    fun `수정 복귀 중 이전 목록 조회가 남아 있으면 완료 후 다시 조회한다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryRepository()
+            val gate = CompletableDeferred<Unit>()
+            repository.beforeStories = { gate.await() }
+            repository.queuedResults += DomainResult.Success(sampleStories())
+            val updated = sampleStories().map { it.copy(title = "수정된 제목") }
+            repository.queuedResults += DomainResult.Success(updated)
+            val viewModel = studioViewModel(FakeCreationProgressAccess(), repository, NoOpAnalytics)
+            viewModel.onIntent(StudioIntent.ScreenShown)
+            runCurrent()
+            viewModel.onIntent(StudioIntent.ScreenShown)
+            runCurrent()
+            assertEquals(1, repository.myStoriesCallCount)
+            gate.complete(Unit)
+            advanceUntilIdle()
+            assertEquals(2, repository.myStoriesCallCount)
+            assertEquals(updated, viewModel.uiState.value.stories)
+        }
+
+    @Test
+    fun `검수 카드가 없어도 늦은 제출 접수 신호가 목록을 새로 읽는다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryRepository()
+            val progress = FakeCreationProgressAccess()
+            val viewModel = studioViewModel(progress, repository, NoOpAnalytics)
+            viewModel.onIntent(StudioIntent.ScreenShown)
+            advanceUntilIdle()
+            val observer = backgroundScope.launch { viewModel.drivePendingSubmissionPolling() }
+            runCurrent()
+            assertFalse(viewModel.uiState.value.hasPendingSubmissions)
+            progress.submissionChanges.emit(Unit)
+            runCurrent()
+            assertEquals(2, repository.submissionsCallCount)
+            assertEquals(2, repository.myStoriesCallCount)
+            observer.cancel()
+            runCurrent()
+            progress.submissionChanges.emit(Unit)
+            runCurrent()
+            assertEquals(2, repository.submissionsCallCount)
         }
 
     @Test

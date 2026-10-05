@@ -47,6 +47,8 @@ internal fun MainTabsScreen(
     onOpenStory: (String) -> Unit,
     onOpenChat: (String) -> Unit,
     onCreateStory: () -> Unit,
+    onEditStory: (String) -> Unit,
+    onEditSubmission: (String) -> Unit,
     onResumeCreation: (draftId: String, CreationResumePoint) -> Unit,
     onOpenInvite: () -> Unit,
     onOpenServiceInfo: () -> Unit,
@@ -89,6 +91,8 @@ internal fun MainTabsScreen(
             onOpenStory = onOpenStory,
             onOpenChat = onOpenChat,
             onCreateStory = onCreateStory,
+            onEditStory = onEditStory,
+            onEditSubmission = onEditSubmission,
             onResumeCreation = onResumeCreation,
             onOpenInvite = onOpenInvite,
             onOpenServiceInfo = onOpenServiceInfo,
@@ -125,7 +129,7 @@ private fun MainTabsBar(
  * 홈으로 한 번에 돌아오는 것이 여기서 나오고, 홈 탭에서는 밑에 아무것도 없어 앱을 벗어난다.
  */
 @Composable
-@Suppress("LongParameterList")
+@Suppress("LongParameterList", "LongMethod")
 private fun MainTabsContent(
     selectedTab: MainTab,
     studioRefreshRequest: Int,
@@ -135,6 +139,8 @@ private fun MainTabsContent(
     onOpenStory: (String) -> Unit,
     onOpenChat: (String) -> Unit,
     onCreateStory: () -> Unit,
+    onEditStory: (String) -> Unit,
+    onEditSubmission: (String) -> Unit,
     onResumeCreation: (draftId: String, CreationResumePoint) -> Unit,
     onOpenInvite: () -> Unit,
     onOpenServiceInfo: () -> Unit,
@@ -168,6 +174,8 @@ private fun MainTabsContent(
                     contentPadding = padding.value,
                     onOpenStory = onOpenStory,
                     onCreateStory = onCreateStory,
+                    onEditStory = onEditStory,
+                    onEditSubmission = onEditSubmission,
                     onResumeCreation = onResumeCreation,
                 )
             }

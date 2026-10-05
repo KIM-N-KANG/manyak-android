@@ -107,6 +107,7 @@ private fun CardOptionsSheet(
             )
         },
     ) {
+        EditCardOption(card, onIntent)
         if (card is StudioCard.Story) {
             ManyakOptionItem(
                 iconRes = DesignsystemR.drawable.ic_alert_triangle,
@@ -132,3 +133,25 @@ private fun CardOptionsSheet(
 
 private val StudioCard.isPendingSubmission: Boolean
     get() = this is StudioCard.Submission && submission.status == SubmissionStatus.PENDING
+
+@Composable
+private fun EditCardOption(
+    card: StudioCard,
+    onIntent: (StudioIntent) -> Unit,
+) {
+    if (card is StudioCard.Story || card is StudioCard.Submission && !card.isPendingSubmission) {
+        ManyakOptionItem(
+            iconRes = DesignsystemR.drawable.ic_form,
+            label = stringResource(StudioR.string.studio_edit_story),
+            onClick = {
+                onIntent(
+                    if (card is StudioCard.Submission) {
+                        StudioIntent.EditSubmission(card.submission.id)
+                    } else {
+                        StudioIntent.EditStory
+                    },
+                )
+            },
+        )
+    }
+}
