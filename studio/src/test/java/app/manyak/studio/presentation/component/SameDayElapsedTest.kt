@@ -3,6 +3,7 @@ package app.manyak.studio.presentation.component
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import java.util.Calendar
 import java.util.GregorianCalendar
 import java.util.TimeZone
 
@@ -13,7 +14,11 @@ class SameDayElapsedTest {
         hour: Int,
         minute: Int,
         day: Int = 5,
-    ) = GregorianCalendar(kst).apply { set(2026, 9, day, hour, minute, 0) }.timeInMillis
+    ) = GregorianCalendar(kst)
+        .apply {
+            set(2026, 9, day, hour, minute, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
 
     @Test
     fun today_reads_as_elapsed_time_and_earlier_days_as_date() {
