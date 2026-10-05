@@ -1,5 +1,7 @@
 package app.manyak.create.general.presentation.form
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -53,6 +55,7 @@ import app.manyak.designsystem.component.ManyakNeutralButton
 import app.manyak.designsystem.component.ScrollEdgeFade
 import app.manyak.designsystem.theme.ManyakTheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.math.roundToInt
 import app.manyak.create.R as CreateR
 
@@ -87,6 +90,7 @@ internal fun GeneralStoryFormContent(
     var collapsed by rememberSaveable { mutableStateOf(arrayListOf<String>()) }
     var deleteId by rememberSaveable { mutableStateOf<String?>(null) }
     var pendingTarget by remember { mutableStateOf<GeneralFieldTarget?>(null) }
+    var addedTarget by remember { mutableStateOf<GeneralFieldTarget?>(null) }
     var seenValidation by rememberSaveable { mutableIntStateOf(-1) }
     var viewportCenter by remember { mutableStateOf(0f) }
     val positions = remember { mutableMapOf<GeneralFieldTarget, Float>() }
@@ -136,15 +140,8 @@ internal fun GeneralStoryFormContent(
         }
     }
     ResetScrollOnTabChange(tabIndex, scroll)
-    LaunchedEffect(pendingTarget) {
-        val target = pendingTarget ?: return@LaunchedEffect
-        withFrameNanos { }
-        delay(350)
-        positions[target]?.let { y ->
-            scroll.animateScrollTo((scroll.value + y - viewportCenter).roundToInt().coerceAtLeast(0))
-        }
-        pendingTarget = null
-    }
+    ScrollToTarget(pendingTarget, positions, scroll, { viewportCenter }, waitForLayout = false) { pendingTarget = null }
+    ScrollToTarget(addedTarget, positions, scroll, { viewportCenter }, waitForLayout = true) { addedTarget = null }
     Column(modifier.fillMaxSize()) {
         GeneralFormTabs(
             tabIndex,
@@ -175,7 +172,7 @@ internal fun GeneralStoryFormContent(
                         collapsed,
                         toggle,
                         requestDelete,
-                        { pendingTarget = it },
+                        { addedTarget = it },
                         GeneralGenreUi(
                             genres,
                             featuredGenres,
@@ -215,6 +212,53 @@ internal fun GeneralStoryFormContent(
         )
     }
 }
+
+/**
+ * [target] 칸을 화면 가운데로 옮긴다. 검증으로 접힌 항목을 펼치면 펼침이 끝나 칸 위치가 굳은 뒤에 옮긴다.
+ * 새로 추가한 항목은 펼친 채 나타나므로([waitForLayout]) 자리를 잡는 대로 옮긴다 — 기다리면 나타난 뒤
+ * 멈췄다가 튀어 보인다.
+ */
+@Composable
+private fun ScrollToTarget(
+    target: GeneralFieldTarget?,
+    positions: Map<GeneralFieldTarget, Float>,
+    scroll: ScrollState,
+    viewportCenter: () -> Float,
+    waitForLayout: Boolean,
+    onDone: () -> Unit,
+) {
+    LaunchedEffect(target) {
+        if (target == null) return@LaunchedEffect
+        val y =
+            if (waitForLayout) {
+                withTimeoutOrNull(ADDED_LAYOUT_TIMEOUT_MILLIS) {
+                    while (target !in positions) withFrameNanos { }
+                    positions.getValue(target)
+                }
+            } else {
+                withFrameNanos { }
+                delay(EXPAND_SETTLE_MILLIS)
+                positions[target]
+            }
+        y?.let { scroll.scrollToCenter(it, viewportCenter()) }
+        onDone()
+    }
+}
+
+/** 칸을 화면 가운데로 옮긴다. 웹의 부드러운 스크롤처럼 천천히 출발해 천천히 멈춘다. */
+private suspend fun ScrollState.scrollToCenter(
+    fieldCenter: Float,
+    viewportCenter: Float,
+) {
+    animateScrollTo(
+        (value + fieldCenter - viewportCenter).roundToInt().coerceAtLeast(0),
+        tween(SCROLL_TO_FIELD_MILLIS, easing = FastOutSlowInEasing),
+    )
+}
+
+private const val EXPAND_SETTLE_MILLIS = 350L
+private const val ADDED_LAYOUT_TIMEOUT_MILLIS = 500L
+private const val SCROLL_TO_FIELD_MILLIS = 400
 
 @Composable
 private fun ResetScrollOnTabChange(
