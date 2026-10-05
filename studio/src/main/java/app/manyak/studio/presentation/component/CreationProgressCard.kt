@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -31,7 +32,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.manyak.common.entity.story.CreationResumePoint
 import app.manyak.common.entity.story.CreationStage
-import app.manyak.designsystem.component.ImageGenerationLoading
 import app.manyak.designsystem.component.ManyakMoreButton
 import app.manyak.designsystem.component.ManyakNeutralButton
 import app.manyak.designsystem.component.MetaChip
@@ -121,7 +121,7 @@ sealed interface CreationProgressCardKind {
         val thumbnailUrl: String? = null,
     ) : CreationProgressCardKind
 
-    /** 완성 중 — 이미지 생성 로딩만 있고 아무 동작도 없다. */
+    /** 완성 중 — 표지의 마스코트 무대만 움직이고 아무 동작도 없다. */
     data object Completing : CreationProgressCardKind
 
     /** 완료됐지만 아직 목록에 실리지 않은 스토리. 실제 제목으로 상세에 들어갈 수 있다. */
@@ -134,7 +134,7 @@ sealed interface CreationProgressCardKind {
 }
 
 /**
- * 회색 3:4 표지. 초안·실패는 가운데에 더 진한 회색 캐릭터 심벌을, 완성 중에는 이미지 생성 로딩을 둔다.
+ * 회색 3:4 표지. 초안·실패는 가운데에 더 진한 회색 캐릭터 심벌을, 완성 중에는 마스코트가 연기하는 무대를 둔다.
  * 테두리 처리는 목록 표지와 같다 — 밝은 표지의 가장자리가 배경에 묻히지 않게 바탕으로 그린다.
  */
 @Composable
@@ -147,15 +147,6 @@ private fun ProgressCover(
         return
     }
     val shape = ManyakTheme.shapes.thumbnail
-    if (kind == CreationProgressCardKind.Completing) {
-        ImageGenerationLoading(
-            modifier = modifier,
-            aspectRatio = STORY_THUMBNAIL_ASPECT_RATIO,
-            shape = shape,
-            label = stringResource(StudioR.string.studio_progress_completing_state),
-        )
-        return
-    }
     Box(
         modifier =
             modifier
@@ -167,12 +158,19 @@ private fun ProgressCover(
                 .background(ManyakTheme.colors.backgroundNeutral),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(
-            modifier = Modifier.size(SymbolSize),
-            painter = painterResource(DesignsystemR.drawable.ic_manyak_symbol),
-            contentDescription = null,
-            tint = ManyakTheme.colors.textDisabled,
-        )
+        if (kind == CreationProgressCardKind.Completing) {
+            StoryCompletingStage(
+                label = stringResource(StudioR.string.studio_progress_completing_state),
+                modifier = Modifier.fillMaxSize(),
+            )
+        } else {
+            Icon(
+                modifier = Modifier.size(SymbolSize),
+                painter = painterResource(DesignsystemR.drawable.ic_manyak_symbol),
+                contentDescription = null,
+                tint = ManyakTheme.colors.textDisabled,
+            )
+        }
     }
 }
 
@@ -293,7 +291,7 @@ private fun CreationProgressCardKind.titleColor() =
 
 private val CoverBorderWidth: Dp = 1.dp
 
-/** 표지 가운데 심벌·스피너 크기. 표지 placeholder 아이콘과 같은 값이다. */
+/** 표지 가운데 심벌 크기. 표지 placeholder 아이콘과 같은 값이다. */
 private val SymbolSize = 32.dp
 
 private const val TITLE_MAX_LINES = 2
