@@ -24,6 +24,8 @@ data class StorySummary(
     val turnCount: Long,
     /** 제작일 `YYYY-MM-DD`. 서버 값이 없거나 형식이 다르면 `null` 이라 카드에서 줄 자체를 그리지 않는다. */
     val createdDate: String?,
+    /** 제작 시각 epoch millis. 제작 탭 카드가 오늘 만든 스토리를 "N분 전"처럼 그릴 때 쓴다. */
+    val createdAtMillis: Long? = null,
     /** 마냑 공식 계정의 스토리. 홈 카드가 선택한 필터와 무관하게 이 값으로 ORIGINAL 태그를 그린다. */
     val isOriginal: Boolean,
 )

@@ -1,6 +1,7 @@
 package app.manyak.common.data.story
 
 import app.manyak.common.data.time.toDisplayDate
+import app.manyak.common.data.time.toEpochMillisOrNull
 import app.manyak.common.entity.story.StorySummary
 import kotlinx.serialization.Serializable
 
@@ -41,5 +42,6 @@ fun StorySummaryDto.toDomain(): StorySummary =
         likeCount = likeCount,
         turnCount = turnCount,
         createdDate = createdAt?.toDisplayDate(),
+        createdAtMillis = createdAt?.toEpochMillisOrNull(),
         isOriginal = isOriginal,
     )
