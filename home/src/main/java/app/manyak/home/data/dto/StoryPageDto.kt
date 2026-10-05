@@ -29,6 +29,7 @@ internal val StoryListFilter.queryValue: String
 internal val StoryListSort.queryValue: String
     get() =
         when (this) {
+            StoryListSort.POPULAR -> "popular"
             StoryListSort.LIKES -> "likes"
             StoryListSort.LATEST -> "latest"
             StoryListSort.CHATS -> "chats"

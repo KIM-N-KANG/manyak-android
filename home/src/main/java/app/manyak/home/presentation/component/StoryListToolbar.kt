@@ -262,6 +262,7 @@ private val StoryListFilter.labelRes: Int
 private val StoryListSort.labelRes: Int
     get() =
         when (this) {
+            StoryListSort.POPULAR -> HomeR.string.home_sort_popular
             StoryListSort.LIKES -> HomeR.string.home_sort_likes
             StoryListSort.LATEST -> HomeR.string.home_sort_latest
             StoryListSort.CHATS -> HomeR.string.home_sort_chats
