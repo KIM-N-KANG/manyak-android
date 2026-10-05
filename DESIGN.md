@@ -418,11 +418,17 @@ components:
     color: "{colors.brand}"
     height: "{sizes.logo}"
   startup-logo:
-    shape: "ic_logo_manyak 의 심벌(눈 포함)을 직접 그림"
+    shape: "ManyakMascot(ic_logo_manyak 의 심벌, 눈 포함)"
     color: "{colors.brand}"
     size: "{sizes.startup-symbol}"
     hop: "800ms 주기, 22% 착지 찌그러짐 후 심벌 폭의 45% 높이로 포물선 점프"
     blink: "3200ms 마다 한 번"
+  story-completing-stage:
+    background: "{colors.background-neutral} + {colors.border} 1dp 테두리(빈 표지와 같음)"
+    dots: "{colors.border-strong} 45%, {sizes.generation-dot-gap} 간격, {sizes.generation-dot-radius} 반지름, 고정"
+    mascot: "ManyakMascot, 표지 폭의 24%, {colors.brand}"
+    props: "{colors.surface-raised} 채움 + {colors.border-strong} 테두리. 키는 {colors.border}, 고른 칩·카드·누른 키·붓질은 {colors.brand}"
+    loop: "키워드 → 쉼 → 스토리라인 → 걷기 쉼 → 타자 → 기지개 → 그림 → 걷기 쉼 → 튀기 → 벽 타기 → 쉼, 약 32초 주기"
   logo-google:
     asset: "res/drawable/ic_logo_google.xml"
     size: 24dp
@@ -470,6 +476,7 @@ components:
 | 파일 | 내용 |
 | --- | --- |
 | `ManyakLogo.kt` | 로고 락업. 높이는 토큰, 폭은 원본 비율 |
+| `ManyakMascot.kt` | 로고 심벌을 눈이 움직이는 마스코트로 그리는 `DrawScope` 함수. 시작 화면과 완성 중 표지가 쓴다 |
 | `ManyakSectionHeader.kt` | 메인 탭 상단 헤더 |
 | `ManyakNavigationBar.kt` · `ManyakNavigationItem.kt` | 하단 탭 바와 그 항목 |
 | `ProgressIndicator.kt` | 로딩 스피너와 지연 표시 헬퍼 |
@@ -783,6 +790,8 @@ components:
 > 셸의 두 컴포넌트는 **M3 컴포넌트 위에 색만 얹어** 만든다. 인셋·높이·최소 터치 타깃·시맨틱을 직접 계산하지 않기 위해서다. 이 시스템에 없는 요소만 골라 지운다.
 
 **`startup-logo`** — 시작 화면(세션 복원과 필수 동의 확인)의 로딩 표시. 스피너 대신 로고 심벌만 `{sizes.startup-symbol}` 크기의 `{colors.brand}`로 그리고, 확인이 지연 스피너 기준(300ms)보다 길어지면 제자리에서 튀기 시작합니다. 한 번의 점프는 800ms 이며 앞 22% 동안 바닥을 누르듯 가로로 퍼지고 나머지 동안 심벌 폭의 45% 높이로 포물선을 그립니다. 공중에서는 위아래로 살짝 늘어나고 눈이 위를 보며, 착지할 때 눈을 찡그립니다. 바닥의 `{colors.brand}` 18% 타원 그림자는 높이 뜰수록 작고 옅어집니다. 눈은 3200ms 마다 한 번 깜빡입니다. 확인이 끝나거나 실패하면 하던 점프를 마저 착지하고 멈춥니다 — 공중에서 굳으면 고장으로 보입니다. 실패 화면에서도 같은 심벌을 멈춘 채 두어 로고가 바뀌지 않습니다. 모션 값은 토큰의 요소 모션과 성격이 달라 이 자리에서 고정합니다.
+
+**`story-completing-stage`** — 제작 탭 완성 중 카드의 표지. 빈 표지(`{colors.background-neutral}`, `{colors.border}` 1dp 테두리) 위에 이미지 생성 로딩과 같은 간격의 점을 `{colors.border-strong}` 45%로 움직이지 않게 깔고, 로고 마스코트(표지 폭의 24%, `{colors.brand}`)가 제작 과정을 따라 여섯 막을 약 32초 주기로 이어 연기합니다. 바쁜 막 사이마다 쉼을 둡니다. 가만히 서서 천천히 숨 쉬며 두리번거리거나, 작은 걸음으로 통통 튀며 천천히 걸어갔다 돌아오거나, 원고를 다 쓴 뒤 기지개를 켭니다. **키워드**는 칩 일곱 개가 차례로 튀어나와 발판이 되고, 마스코트가 아래 줄부터 밟고 올라가며 밟은 칩을 앱의 선택 칩처럼 브랜드 색으로 채웁니다. **스토리라인**은 카드 세 장이 올라오고, 마스코트가 양쪽 카드를 차례로 올려다본 뒤(올려다보는 카드의 테두리가 물들며 살짝 뜸) 가운데 카드를 머리로 받아 고릅니다. 고른 카드에는 체크 표시가 붙고 나머지는 흐려집니다. **타자**는 아래에서 키보드가, 위에 원고가 튀어나오고 마스코트가 누를 키 쪽으로 몸을 숙이며 120ms 마다 한 키씩 칩니다. 누른 키가 브랜드 색으로 빛나고 원고 줄이 차오릅니다. **그림**은 정해진 아이콘을 따라 그리지 않습니다. 발끝을 붓 삼아 먼 능선을 옅게, 가까운 능선을 진하게 긋는데 굵기가 양 끝은 가늘고 가운데가 굵어 붓이 눌렸다 들리는 결이 납니다. 하늘에 물감을 찍으면 둥글게 번지며 작은 방울이 튀고, 두 능선 사이가 수채 물로 옅게 적셔진 뒤 구석에 서명합니다. 마지막 **튀기**와 **벽 타기**는 완성을 기뻐하는 막입니다. 모든 막은 바닥 가운데에서 시작해 같은 자리로 돌아오고, 눈은 2.9초마다 깜빡입니다. 원고·키보드·카드·칩·액자는 다크 테마에서도 바탕과 갈리도록 `{colors.surface-raised}` 위에 `{colors.border-strong}` 테두리를 두르고, 소품 묶음은 불투명하게 그린 뒤 한 번에 투명도를 줘 붓질이 겹친 자리가 진해지지 않습니다. 크기와 자리는 표지 폭에 대한 비율이라 표지 폭이 바뀌어도 구도가 같습니다. 채팅 장면 썸네일 자리는 이미지 생성 점 로딩을 유지합니다.
 
 **`section-header`** — 메인 탭의 상단 헤더. `TopAppBar` 위에 배경 `{colors.surface}`와 제목 색 `{colors.text}`를 얹는다. 좌우 여백은 앱 바 기본값이 16dp 라 `{spacing.gutter}`와 같고, 로고와 섹션 이름(`{typography.title-large}`) 사이도 `{spacing.gutter}`다. 높이는 최소 64dp 이고 제목이 커지면 함께 늘어난다. 구분선과 그림자를 두지 않는다. `TopAppBar`가 아직 실험 API 라 `@OptIn`이 필요하며, 사용처는 이 컴포넌트와 퍼널 헤더(`funnel-header`) 둘이다.
 

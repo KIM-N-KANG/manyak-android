@@ -19,17 +19,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.scale
-import androidx.compose.ui.graphics.drawscope.translate
-import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
+import app.manyak.designsystem.component.drawManyakMascot
 import app.manyak.designsystem.theme.ManyakTheme
 import kotlin.math.PI
 import kotlin.math.abs
@@ -39,8 +34,6 @@ import app.manyak.designsystem.R as DesignsystemR
 /**
  * 로고 심벌이 제자리에서 통통 튀는 로딩 표시. [bouncing] 이 꺼지면 하던 점프를 마저 착지하고 멈춘다 —
  * 공중에서 그대로 굳으면 멈춘 것이 아니라 고장 난 것처럼 보인다.
- *
- * 심벌은 눈이 따로 움직여야 해서 drawable 대신 같은 경로를 직접 그린다(ic_logo_manyak 의 심벌과 같은 값).
  */
 @Composable
 internal fun BouncingLogo(
@@ -50,7 +43,6 @@ internal fun BouncingLogo(
     val color = ManyakTheme.colors.brand
     val symbolSize = ManyakTheme.sizes.startupSymbol
     val description = stringResource(DesignsystemR.string.app_logo_description)
-    val body = remember { PathParser().parsePathString(SYMBOL_PATH).toPath() }
     val hop = rememberHop(bouncing)
     val blink by rememberBlink()
 
@@ -79,31 +71,16 @@ internal fun BouncingLogo(
             size = Size(shadowWidth, 4f * unit),
         )
 
-        translate(top = groundY - SYMBOL_BOTTOM * unit - height * HOP_HEIGHT_RATIO * size.width) {
-            scale(
-                scaleX = 1f + 0.16f * squash - stretch,
-                scaleY = 1f - 0.2f * squash + stretch,
-                pivot = Offset(size.width / 2f, SYMBOL_BOTTOM * unit),
-            ) {
-                scale(unit, pivot = Offset.Zero) {
-                    drawPath(
-                        path = body,
-                        color = color,
-                        style = Stroke(width = 7.6f, cap = StrokeCap.Round, join = StrokeJoin.Round),
-                    )
-                    // 착지할 때 눈을 찡그리고, 날아오를 때는 위를 본다.
-                    val eyeHeight = EYE_RADIUS * 2f * blink * (1f - 0.4f * squash)
-                    val eyeTop = EYE_Y - eyeHeight / 2f - 2f * height
-                    for (eyeX in EyeXs) {
-                        drawOval(
-                            color = color,
-                            topLeft = Offset(eyeX - EYE_RADIUS, eyeTop),
-                            size = Size(EYE_RADIUS * 2f, eyeHeight),
-                        )
-                    }
-                }
-            }
-        }
+        drawManyakMascot(
+            feet = Offset(size.width / 2f, groundY - height * HOP_HEIGHT_RATIO * size.width),
+            size = size.width,
+            color = color,
+            scaleX = 1f + 0.16f * squash - stretch,
+            scaleY = 1f - 0.2f * squash + stretch,
+            // 착지할 때 눈을 찡그리고, 날아오를 때는 위를 본다.
+            look = Offset(0f, -height),
+            eyeOpenness = blink * (1f - 0.4f * squash),
+        )
     }
 }
 
@@ -143,15 +120,10 @@ private fun rememberBlink(): State<Float> =
         label = "blink",
     )
 
-private const val SYMBOL_PATH =
-    "M30,44H24A12,12 0 0 1 12,32V20A12,12 0 0 1 24,8H40A12,12 0 0 1 52,20V44C52,51 50,56 44,56H16"
 private const val VIEWPORT = 64f
 
-/** 심벌 선의 아래 끝(56 + 선 두께의 절반). 이 선을 바닥으로 삼아 찌그러뜨린다. */
+/** 심벌 선의 아래 끝(56 + 선 두께의 절반). 그림자를 이 선에 맞춰 깐다. */
 private const val SYMBOL_BOTTOM = 59.8f
-private const val EYE_Y = 24f
-private const val EYE_RADIUS = 4f
-private val EyeXs = floatArrayOf(25f, 39f)
 
 private const val HOP_MILLIS = 800
 private const val SQUASH_FRACTION = 0.22f
