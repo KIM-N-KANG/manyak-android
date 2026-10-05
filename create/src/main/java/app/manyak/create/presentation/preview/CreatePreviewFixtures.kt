@@ -1,10 +1,12 @@
 package app.manyak.create.presentation.preview
 
+import app.manyak.create.entity.GenreCatalog
 import app.manyak.create.entity.StoryTag
 import app.manyak.create.entity.StoryTagCategory
 import app.manyak.create.entity.Storyline
 import app.manyak.create.entity.StorylineRecommendedInfo
 import app.manyak.create.keyword.presentation.CreateKeywordUiState
+import app.manyak.create.keyword.presentation.GenrePickerState
 import app.manyak.create.keyword.presentation.ProvidedTags
 
 /** 프리뷰 확인용 예시 생성 결과. 스토리라인·추가 정보 화면 프리뷰가 같은 짝을 쓴다. */
@@ -64,18 +66,16 @@ internal fun previewStorylines(): List<Storyline> =
     )
 
 /** 프리뷰 확인용 키워드 단계 기본 상태. 태그 조회가 끝나 장르 목록이 놓인 시점이다. */
-internal fun previewKeywordState(): CreateKeywordUiState =
-    CreateKeywordUiState(
+internal fun previewKeywordState(): CreateKeywordUiState {
+    val genres =
+        listOf(
+            StoryTag(id = 1, name = "로맨스", category = StoryTagCategory.GENRE),
+            StoryTag(id = 2, name = "판타지", category = StoryTagCategory.GENRE),
+            StoryTag(id = 3, name = "미스터리", category = StoryTagCategory.GENRE),
+        )
+    return CreateKeywordUiState(
         isRestoring = false,
-        providedTags =
-            ProvidedTags.Loaded(
-                mapOf(
-                    StoryTagCategory.GENRE to
-                        listOf(
-                            StoryTag(id = 1, name = "로맨스", category = StoryTagCategory.GENRE),
-                            StoryTag(id = 2, name = "판타지", category = StoryTagCategory.GENRE),
-                            StoryTag(id = 3, name = "미스터리", category = StoryTagCategory.GENRE),
-                        ),
-                ),
-            ),
+        genrePicker = GenrePickerState(catalog = GenreCatalog(genres, genres)),
+        providedTags = ProvidedTags.Loaded(mapOf(StoryTagCategory.GENRE to genres)),
     )
+}

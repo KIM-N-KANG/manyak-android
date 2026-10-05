@@ -115,15 +115,7 @@ internal fun CategoryContent(
                         text = stringResource(CreateR.string.create_section_genre),
                         required = true,
                     )
-                    KeywordChipArea(
-                        providedTags = state.providedTags,
-                        target = KeywordTarget.Genre,
-                        selectedTagIds = state.selectedGenreTagIds,
-                        customTags = state.customGenreTags,
-                        atSelectionCap = state.isAtSelectionCap(KeywordTarget.Genre),
-                        onIntent = onIntent,
-                        onOpenAddKeyword = onOpenAddKeyword,
-                    )
+                    GenreKeywordSection(state, onIntent)
                 }
             }
 

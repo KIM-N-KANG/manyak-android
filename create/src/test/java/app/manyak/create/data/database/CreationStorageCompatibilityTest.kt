@@ -10,6 +10,25 @@ import org.junit.Test
 
 class CreationStorageCompatibilityTest {
     @Test
+    fun `검색으로 추가한 장르 순서와 선택 해제를 JSON에 보존한다`() {
+        val legacy =
+            requireNotNull(
+                PendingStoryCreationEntity(draftId = "draft", stage = "KEYWORD_DRAFT", keywordSnapshot = keyword)
+                    .toDomainOrNull(),
+            ) as app.manyak.create.entity.PendingStoryCreation.KeywordDraft
+        assertEquals(emptyList<Long>(), legacy.snapshot.addedGenreTagIds)
+        val changed =
+            legacy.copy(
+                snapshot =
+                    legacy.snapshot.copy(
+                        addedGenreTagIds = listOf(17L, 5L),
+                        selectedGenreTagIds = listOf(5L),
+                    ),
+            )
+        assertEquals(changed, changed.toEntity("draft").toDomainOrNull())
+    }
+
+    @Test
     fun `기존 편집 스테이지의 JSON을 복원하고 같은 페이로드로 저장한다`() {
         val fixtures =
             listOf(

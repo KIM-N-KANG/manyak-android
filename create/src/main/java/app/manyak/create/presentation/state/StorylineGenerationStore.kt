@@ -490,8 +490,17 @@ class StorylineGenerationStore
                 if (cached != null) {
                     DomainResult.Success(cached)
                 } else {
-                    storyCreationRepository.tags().also { result ->
-                        if (result is DomainResult.Success) cachedTags = result.value
+                    when (val tags = storyCreationRepository.tags()) {
+                        is DomainResult.Failure -> tags
+                        is DomainResult.Success ->
+                            when (val genres = storyCreationRepository.genres()) {
+                                is DomainResult.Failure -> genres
+                                is DomainResult.Success -> {
+                                    val catalog = (tags.value + genres.value.genres).distinctBy(StoryTag::id)
+                                    cachedTags = catalog
+                                    DomainResult.Success(catalog)
+                                }
+                            }
                     }
                 }
             }

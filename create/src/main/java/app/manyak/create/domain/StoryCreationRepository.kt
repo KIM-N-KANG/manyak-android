@@ -3,6 +3,7 @@ package app.manyak.create.domain
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.create.entity.CompletedStory
 import app.manyak.create.entity.CreationRequestSnapshot
+import app.manyak.create.entity.GenreCatalog
 import app.manyak.create.entity.StoryCompletionCommand
 import app.manyak.create.entity.StoryTag
 import app.manyak.create.entity.StorylineGeneration
@@ -10,6 +11,8 @@ import app.manyak.create.entity.StorylineGenerationCommand
 import app.manyak.create.entity.StorylineRating
 
 interface StoryCreationRepository {
+    suspend fun genres(query: String = ""): DomainResult<GenreCatalog>
+
     /** 활성화된 제공 태그 목록. 카테고리 → 정렬 순서로 정렬되어 온다. */
     suspend fun tags(): DomainResult<List<StoryTag>>
 

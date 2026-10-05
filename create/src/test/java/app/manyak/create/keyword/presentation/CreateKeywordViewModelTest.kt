@@ -258,7 +258,7 @@ class CreateKeywordViewModelTest {
 
             val command = repository.generationCommands.single()
             assertEquals(listOf(1L), command.genreTagIds)
-            assertEquals(listOf("타임루프"), command.customGenreTags)
+            assertTrue(command.customGenreTags.isEmpty())
             assertEquals("지우", command.protagonist.name)
             assertEquals(listOf(2L), command.protagonist.featureTagIds)
             // 퍼널 진입 시 놓인 빈 주변 인물 섹션은 요청에서 빠진다.
@@ -563,7 +563,7 @@ class CreateKeywordViewModelTest {
                 PendingStoryCreation.KeywordDraft(
                     snapshot =
                         KeywordDraftSnapshot(
-                            selectedGenreTagIds = listOf(2L),
+                            selectedGenreTagIds = listOf(1L),
                             customGenreTags = listOf(KeywordCustomTagSnapshot("느와르", selected = false)),
                             protagonist =
                                 KeywordCharacterSnapshot(
@@ -581,7 +581,7 @@ class CreateKeywordViewModelTest {
 
             val state = viewModel.uiState.value
             assertFalse(state.isRestoring)
-            assertEquals(setOf(2L), state.selectedGenreTagIds)
+            assertEquals(setOf(1L), state.selectedGenreTagIds)
             assertEquals(listOf(CustomTag("느와르", selected = false)), state.customGenreTags)
             assertEquals("홍길동", state.protagonist.name)
             assertEquals(CharacterGender.MALE, state.protagonist.gender)
@@ -610,7 +610,7 @@ class CreateKeywordViewModelTest {
                 PendingStoryCreation.KeywordDraft(
                     snapshot =
                         KeywordDraftSnapshot(
-                            selectedGenreTagIds = listOf(2L),
+                            selectedGenreTagIds = listOf(1L),
                             customGenreTags = emptyList(),
                             protagonist =
                                 KeywordCharacterSnapshot(
@@ -629,7 +629,7 @@ class CreateKeywordViewModelTest {
             advanceUntilIdle()
 
             val record = pending.read(TEST_DRAFT_ID) as PendingStoryCreation.KeywordDraft
-            assertEquals(listOf(2L), record.snapshot.selectedGenreTagIds)
+            assertEquals(listOf(1L), record.snapshot.selectedGenreTagIds)
             assertEquals("홍길동", record.snapshot.protagonist.name)
         }
 

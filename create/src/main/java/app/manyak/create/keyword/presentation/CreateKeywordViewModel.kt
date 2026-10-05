@@ -9,6 +9,7 @@ import app.manyak.common.presentation.mvi.MviViewModel
 import app.manyak.create.domain.PendingStoryCreationStore
 import app.manyak.create.domain.StoryCreationRepository
 import app.manyak.create.entity.CharacterGender
+import app.manyak.create.entity.GenreCatalog
 import app.manyak.create.entity.KeywordCharacterSnapshot
 import app.manyak.create.entity.KeywordCustomTagSnapshot
 import app.manyak.create.entity.KeywordDraftSnapshot
@@ -106,6 +107,8 @@ data class CreateKeywordUiState(
     val providedTags: ProvidedTags = ProvidedTags.Loading,
     val selectedGenreTagIds: Set<Long> = emptySet(),
     val customGenreTags: List<CustomTag> = emptyList(),
+    val addedGenreTagIds: List<Long> = emptyList(),
+    val genrePicker: GenrePickerState = GenrePickerState(),
     val protagonist: KeywordCharacter = KeywordCharacter(id = PROTAGONIST_ID),
     /** 퍼널 진입 시 빈 주변 인물 입력 섹션 1개가 놓여 있다. 빈 섹션도 인원으로 센다. */
     val supportingCharacters: List<KeywordCharacter> = listOf(KeywordCharacter(id = FIRST_SUPPORTING_ID)),
@@ -113,7 +116,7 @@ data class CreateKeywordUiState(
     val collapsedCharacterIds: Set<Long> = emptySet(),
     val pendingRemoveCharacterId: Long? = null,
 ) {
-    val genreSelectedCount: Int get() = selectedGenreTagIds.size + customGenreTags.count { it.selected }
+    val genreSelectedCount: Int get() = selectedGenreTagIds.size
 
     /**
      * 주인공과 주변 인물의 이름은 한 스토리 안에서 겹칠 수 없다. 판정 키는 서버와 같다 —
@@ -146,7 +149,7 @@ data class CreateKeywordUiState(
 
     fun isComplete(category: StoryTagCategory): Boolean =
         when (category) {
-            StoryTagCategory.GENRE -> genreSelectedCount > 0
+            StoryTagCategory.GENRE -> genrePicker.catalog != null && genreSelectedCount > 0
             StoryTagCategory.PROTAGONIST -> protagonist.featureCount > 0
             StoryTagCategory.SUPPORTING_CHARACTER -> true
         }
@@ -204,6 +207,22 @@ private fun normalizeName(name: String): String? {
 }
 
 sealed interface CreateKeywordIntent {
+    sealed interface GenreInput : CreateKeywordIntent
+
+    data class SearchGenres(
+        val query: String,
+    ) : GenreInput
+
+    data class ExpandGenres(
+        val expanded: Boolean,
+    ) : GenreInput
+
+    data class SelectGenre(
+        val id: Long,
+    ) : GenreInput
+
+    data object RetryGenres : GenreInput
+
     data class SelectCategory(
         val category: StoryTagCategory,
     ) : CreateKeywordIntent
@@ -270,6 +289,33 @@ sealed interface CreateKeywordIntent {
 }
 
 sealed interface CreateKeywordEvent {
+    data class GenreCatalogLoaded(
+        val catalog: GenreCatalog,
+    ) : CreateKeywordEvent
+
+    data object GenreCatalogFailed : CreateKeywordEvent
+
+    data class GenreQueryChanged(
+        val query: String,
+    ) : CreateKeywordEvent
+
+    data class GenreExpandedChanged(
+        val expanded: Boolean,
+    ) : CreateKeywordEvent
+
+    data class GenreSearchFinished(
+        val query: String,
+        val result: DomainResult<GenreCatalog>,
+    ) : CreateKeywordEvent
+
+    data class GenreSearchLoading(
+        val query: String,
+    ) : CreateKeywordEvent
+
+    data class GenreSelected(
+        val id: Long,
+    ) : CreateKeywordEvent
+
     /** 키워드 임시 저장본이 도착했다. */
     data class SnapshotRestored(
         val snapshot: KeywordDraftSnapshot,
@@ -373,6 +419,13 @@ class CreateKeywordViewModel
             CreateKeywordUiState(),
         ) {
         private var tagsLoadJob: Job? = null
+        private val genreSearch =
+            GenreSearch(
+                repository = storyCreationRepository,
+                scope = viewModelScope,
+                state = { uiState.value },
+                onEvent = { dispatchEvent(it) },
+            )
         private var draftSaveJob: Job? = null
         private var saveLockJob: Job? = null
 
@@ -387,6 +440,7 @@ class CreateKeywordViewModel
             analytics.track(AnalyticsEvent.StoryCreateViewed)
             analytics.track(AnalyticsEvent.StoryCreateStepViewed(CreateStep.KEYWORD))
             startTagsLoad()
+            genreSearch.loadCatalog()
             viewModelScope.launch {
                 // 라우트의 초안에 키워드 입력이 있으면 재개다. 새 제작은 새 ID 라 읽을 것이 없다.
                 val record = pendingCreationStore.read(draftId)
@@ -406,8 +460,6 @@ class CreateKeywordViewModel
                     if (showLoading) dispatchEvent(CreateKeywordEvent.TagsReloadStarted)
                     when (val result = storyCreationRepository.tags()) {
                         is DomainResult.Success -> {
-                            // 스토리라인 단계의 "선택한 키워드 보기"가 태그 ID 를 이름으로 풀 때 쓴다.
-                            storylineGenerationStore.cacheTags(result.value)
                             dispatchEvent(CreateKeywordEvent.TagsLoaded(result.value.groupBy(StoryTag::category)))
                         }
 
@@ -419,6 +471,7 @@ class CreateKeywordViewModel
         override suspend fun handleIntent(intent: CreateKeywordIntent) {
             val state = uiState.value
             when (intent) {
+                is CreateKeywordIntent.GenreInput -> genreSearch.handle(intent)
                 is CreateKeywordIntent.SelectCategory ->
                     if (state.isUnlocked(intent.category)) moveToCategory(state, intent.category)
 
@@ -592,6 +645,20 @@ class CreateKeywordViewModel
             draftSaveJob?.join()
             dispatchEvent(CreateKeywordEvent.StorylineGenerationStarted)
             analytics.track(AnalyticsEvent.StoryGenerationRequested)
+            val characterTags =
+                (state.providedTags as? ProvidedTags.Loaded)
+                    ?.byCategory
+                    ?.values
+                    ?.flatten()
+                    .orEmpty()
+            storylineGenerationStore.cacheTags(
+                (
+                    characterTags +
+                        state.genrePicker.catalog
+                            ?.genres
+                            .orEmpty()
+                ).distinctBy(StoryTag::id),
+            )
             storylineGenerationStore.generate(state.toGenerationInput())
             dispatchEffect(CreateKeywordEffect.NavigateToStoryline)
         }
@@ -611,6 +678,11 @@ class CreateKeywordViewModel
 private fun CreateKeywordUiState.providedTagToggleEvent(
     intent: CreateKeywordIntent.ToggleProvidedTag,
 ): CreateKeywordEvent? {
+    if (intent.target == KeywordTarget.Genre &&
+        (isRestoring || genrePicker.catalog?.genres?.none { it.id == intent.tagId } != false)
+    ) {
+        return null
+    }
     val selecting =
         when (intent.target) {
             KeywordTarget.Genre -> intent.tagId !in selectedGenreTagIds
@@ -623,17 +695,14 @@ private fun CreateKeywordUiState.providedTagToggleEvent(
 private fun CreateKeywordUiState.customTagToggleEvent(
     intent: CreateKeywordIntent.ToggleCustomTag,
 ): CreateKeywordEvent? {
-    val customTags =
-        when (intent.target) {
-            KeywordTarget.Genre -> customGenreTags
-            else -> character(intent.target)?.customTags ?: return null
-        }
+    val customTags = character(intent.target)?.customTags ?: return null
     val tag = customTags.getOrNull(intent.index) ?: return null
     if (!tag.selected && isAtSelectionCap(intent.target)) return null
     return CreateKeywordEvent.CustomTagToggled(intent.target, intent.index)
 }
 
 private fun CreateKeywordUiState.customTagAddEvent(intent: CreateKeywordIntent.AddCustomTag): CreateKeywordEvent? {
+    if (intent.target == KeywordTarget.Genre) return null
     val name = intent.name.trim().take(CreateKeywordUiState.CUSTOM_TAG_MAX_LENGTH)
     if (name.isEmpty()) return null
     if (isAtSelectionCap(intent.target)) return null
@@ -658,6 +727,7 @@ private suspend fun PendingStoryCreationStore.persistKeywordSnapshot(
 internal fun CreateKeywordUiState.toKeywordSnapshot(): KeywordDraftSnapshot =
     KeywordDraftSnapshot(
         selectedGenreTagIds = selectedGenreTagIds.toList(),
+        addedGenreTagIds = addedGenreTagIds,
         customGenreTags = customGenreTags.map { KeywordCustomTagSnapshot(it.name, it.selected) },
         protagonist = protagonist.toSnapshot(),
         supportingCharacters = supportingCharacters.map { it.toSnapshot() },
@@ -690,6 +760,7 @@ internal fun KeywordDraftSnapshot.toKeywordUiState(base: CreateKeywordUiState): 
     return base.copy(
         isRestoring = false,
         selectedGenreTagIds = selectedGenreTagIds.toSet(),
+        addedGenreTagIds = addedGenreTagIds,
         customGenreTags = customGenreTags.map { CustomTag(it.name, it.selected) },
         protagonist =
             KeywordCharacter(
@@ -708,10 +779,10 @@ internal fun KeywordDraftSnapshot.toKeywordUiState(base: CreateKeywordUiState): 
     )
 }
 
-private fun CreateKeywordUiState.toGenerationInput(): StorylineGenerationInput =
+internal fun CreateKeywordUiState.toGenerationInput(): StorylineGenerationInput =
     StorylineGenerationInput(
         genreTagIds = selectedGenreTagIds.toList(),
-        customGenreTags = customGenreTags.filter(CustomTag::selected).map(CustomTag::name),
+        customGenreTags = emptyList(),
         protagonist = protagonist.toCharacterInput(),
         // 퍼널 진입 시 놓이는 빈 주변 인물 섹션을 그대로 보내면 의도하지 않은 인물이 AI 로
         // 채워지므로, 아무것도 입력하지 않은 섹션은 인원 의사가 없는 것으로 보고 제외한다.
