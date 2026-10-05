@@ -71,7 +71,7 @@ class PushNotificationTray
             val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
             if (granted != PackageManager.PERMISSION_GRANTED || !gate.isMemberNow()) return
             val channelId = if (message.isMarketing) CHANNEL_MARKETING else CHANNEL_SERVICE
-            val id = (message.type + message.targetId.orEmpty()).hashCode()
+            val id = message.notificationId
             val notification =
                 NotificationCompat
                     .Builder(context, channelId)

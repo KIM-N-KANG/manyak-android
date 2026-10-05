@@ -4,10 +4,20 @@ import app.manyak.core.navigation.MainTabsRoute
 import app.manyak.core.navigation.MyCreditChargeRoute
 import app.manyak.core.navigation.PushEntry
 import app.manyak.core.navigation.StoryDetailRoute
+import app.manyak.core.navigation.StudioRoute
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class PushEntryTest {
+    @Test
+    fun `검수 완료의 구형 페이로드도 제출본이 있으면 제작으로 간다`() {
+        val entry = PushEntry(PushEntry.TYPE_STORY_MODERATION_COMPLETED, "submission", "me")
+        assertEquals(StudioRoute, entry.routeFor("me"))
+        assertEquals(MainTabsRoute, entry.copy(targetId = null).routeFor("me"))
+        assertEquals(MainTabsRoute, entry.copy(deepLink = "https://evil.example/studio").routeFor("me"))
+        assertEquals(MainTabsRoute, entry.routeFor("other"))
+    }
+
     @Test
     fun `스토리 완성은 상세로, 출석 리마인드는 이프 충전으로 간다`() {
         assertEquals(

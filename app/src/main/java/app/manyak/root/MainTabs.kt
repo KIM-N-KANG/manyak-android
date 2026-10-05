@@ -42,6 +42,7 @@ import app.manyak.studio.presentation.StudioScreen
 @Suppress("LongParameterList")
 internal fun MainTabsScreen(
     selectedTab: MainTab,
+    studioRefreshRequest: Int,
     onSelectTab: (MainTab) -> Unit,
     onOpenStory: (String) -> Unit,
     onOpenChat: (String) -> Unit,
@@ -81,6 +82,7 @@ internal fun MainTabsScreen(
     ) { innerPadding ->
         MainTabsContent(
             selectedTab = selectedTab,
+            studioRefreshRequest = studioRefreshRequest,
             backStacks = backStacks,
             contentPadding = innerPadding,
             onLeaveTab = { onSelectTab(MainTab.HOME) },
@@ -126,6 +128,7 @@ private fun MainTabsBar(
 @Suppress("LongParameterList")
 private fun MainTabsContent(
     selectedTab: MainTab,
+    studioRefreshRequest: Int,
     backStacks: Map<MainTab, NavBackStack<NavKey>>,
     contentPadding: PaddingValues,
     onLeaveTab: () -> Unit,
@@ -144,6 +147,7 @@ private fun MainTabsContent(
     // 목적지는 백스택이 바뀔 때만 다시 만들어지므로, 그 사이에 바뀌는 여백을 값으로 붙잡으면 오래된 값이
     // 화면에 남는다. 상태로 넘겨 화면이 그릴 때마다 현재 값을 읽게 한다.
     val padding = rememberUpdatedState(contentPadding)
+    val studioRefresh = rememberUpdatedState(studioRefreshRequest)
     val screenTransition = rememberTabCrossfade()
 
     val homeEntries =
@@ -160,6 +164,7 @@ private fun MainTabsContent(
         rememberTabEntries(backStacks.getValue(MainTab.STUDIO)) {
             entry<StudioRoute> {
                 StudioScreen(
+                    refreshRequest = studioRefresh.value,
                     contentPadding = padding.value,
                     onOpenStory = onOpenStory,
                     onCreateStory = onCreateStory,
