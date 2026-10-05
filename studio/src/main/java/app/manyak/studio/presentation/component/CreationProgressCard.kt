@@ -5,7 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,8 +13,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,6 +33,7 @@ import app.manyak.common.entity.story.CreationResumePoint
 import app.manyak.common.entity.story.CreationStage
 import app.manyak.designsystem.component.ImageGenerationLoading
 import app.manyak.designsystem.component.ManyakMoreButton
+import app.manyak.designsystem.component.ManyakNeutralButton
 import app.manyak.designsystem.component.MetaChip
 import app.manyak.designsystem.component.STORY_THUMBNAIL_ASPECT_RATIO
 import app.manyak.designsystem.component.StoryCover
@@ -246,19 +244,11 @@ internal fun ProgressActionButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Button(
-        modifier = modifier.fillMaxWidth().height(ManyakTheme.sizes.controlCompact),
+    ManyakNeutralButton(
+        label = label,
         onClick = onClick,
-        shape = ManyakTheme.shapes.control,
-        colors =
-            ButtonDefaults.buttonColors(
-                containerColor = ManyakTheme.colors.brand,
-                contentColor = ManyakTheme.colors.textInverse,
-            ),
-        contentPadding = PaddingValues(horizontal = ManyakTheme.spacing.component),
-    ) {
-        Text(text = label, style = ManyakTheme.typography.labelLarge)
-    }
+        modifier = modifier.fillMaxWidth().height(ManyakTheme.sizes.controlCompact),
+    )
 }
 
 private fun CreationProgressCardKind.titleRes(): Int =
