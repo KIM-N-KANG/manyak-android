@@ -235,7 +235,7 @@ private fun GeneralFormScope.SuggestedInputs(
                         ),
                     )
                 },
-                height = GeneralTextHeight.SUGGESTED,
+                height = GeneralTextHeight.COMPACT,
                 placeholder = placeholders[index],
                 label = stringResource(CreateR.string.general_suggested_number, index + 1),
                 showLabel = false,

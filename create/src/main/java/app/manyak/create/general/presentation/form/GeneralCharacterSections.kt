@@ -126,6 +126,7 @@ private fun GeneralFormScope.CharacterFields(
             DESCRIPTION_MAX_LENGTH,
             { onChange(character.copy(description = it)) },
             required = false,
+            height = GeneralTextHeight.COMPACT,
             placeholder = stringResource(CreateR.string.general_character_description_placeholder),
             hint = stringResource(CreateR.string.general_character_description_hint),
         )
@@ -294,7 +295,7 @@ private fun GeneralFormScope.SupportingItem(
 
 private const val SUPPORTING_MAX = 5
 private const val NAME_MAX_LENGTH = 30
-private const val DESCRIPTION_MAX_LENGTH = 80
+private const val DESCRIPTION_MAX_LENGTH = 150
 private const val FEATURE_MAX_LENGTH = 1000
 private const val NAME_WEIGHT = 3f
 private const val GENDER_WEIGHT = 2f

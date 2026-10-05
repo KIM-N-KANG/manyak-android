@@ -51,7 +51,7 @@ private fun MutableList<GeneralFieldError>.validateSupporting(form: GeneralStory
         text(
             target.copy(field = GeneralField.CHARACTER_DESCRIPTION),
             normalizeGeneralCharacterDescription(character.description),
-            80,
+            150,
             required = false,
         )
         text(target.copy(field = GeneralField.FEATURE), character.feature, 1000, required = false)

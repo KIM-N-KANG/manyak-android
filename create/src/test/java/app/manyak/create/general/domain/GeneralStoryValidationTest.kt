@@ -101,6 +101,26 @@ class GeneralStoryValidationTest {
         assertTrue(errors.any { it.reason == GeneralErrorReason.INVALID_GENRE })
     }
 
+    @Test
+    fun character_description_accepts_up_to_150_characters() {
+        fun descriptionErrors(length: Int) =
+            validateGeneralStoryForm(
+                validForm().copy(
+                    supporting =
+                        listOf(
+                            GeneralCharacter(
+                                name = "동료",
+                                gender = GeneralGender.MALE,
+                                description = "가".repeat(length),
+                            ),
+                        ),
+                ),
+            ).filter { it.target.field == GeneralField.CHARACTER_DESCRIPTION }
+
+        assertTrue(descriptionErrors(150).isEmpty())
+        assertEquals(GeneralErrorReason.TOO_LONG, descriptionErrors(151).single().reason)
+    }
+
     private fun validForm() =
         GeneralStoryForm(
             title = "스토리 제목",
