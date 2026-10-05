@@ -6,7 +6,6 @@ import app.manyak.chat.entity.ChatInputMode
 import app.manyak.chat.entity.ChatStreamEvent
 import app.manyak.chat.entity.ChatTurn
 import app.manyak.chat.room.presentation.composer.InputBlockType
-import app.manyak.chat.room.presentation.message.ChatMessageSegment
 import app.manyak.chat.testing.FakeChatPreferencesRepository
 import app.manyak.chat.testing.FakeChatRepository
 import app.manyak.chat.testing.FakeCreditPolicyRepository
@@ -16,6 +15,7 @@ import app.manyak.chat.testing.FakeUserProfileRepository
 import app.manyak.chat.testing.sampleChatDetail
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.entity.credit.CreditPolicy
+import app.manyak.designsystem.text.PassageSegment
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -65,7 +65,7 @@ class ChatRoomStreamTest {
             assertTrue(state.isStreaming)
             assertEquals("문을 연다", state.streaming?.userInput)
             // 첫 표시 사건이 오기 전에는 조각이 없어 화면이 "작성 중"을 그린다.
-            assertEquals(emptyList<ChatMessageSegment>(), state.streaming?.segments)
+            assertEquals(emptyList<PassageSegment>(), state.streaming?.segments)
             assertFalse(state.composer.hasInput)
         }
 
@@ -80,7 +80,7 @@ class ChatRoomStreamTest {
             advanceUntilIdle()
 
             assertEquals(
-                listOf(ChatMessageSegment.Text("문이 열린다")),
+                listOf(PassageSegment.Text("문이 열린다")),
                 viewModel.uiState.value.streaming
                     ?.segments,
             )
@@ -299,7 +299,7 @@ class ChatRoomStreamTest {
             assertTrue(viewModel.uiState.value.isStreaming)
             val streaming = viewModel.uiState.value.streaming
             assertEquals(
-                listOf(ChatMessageSegment.CharacterImage("시계공", url), ChatMessageSegment.Text("문이 열린다")),
+                listOf(PassageSegment.CharacterImage("시계공", url), PassageSegment.Text("문이 열린다")),
                 streaming?.segments,
             )
             viewModel.onIntent(ChatRoomIntent.CloseImageViewer)

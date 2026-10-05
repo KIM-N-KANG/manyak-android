@@ -27,7 +27,7 @@ import java.net.URI
 import java.net.URISyntaxException
 
 /**
- * 인물 이미지. 4:3 으로 두고 잘라내지 않는다.
+ * 인물·장면 이미지. 4:3 으로 두고 잘라내지 않는다. [name] 이 null 이면 장면 이미지다.
  *
  * **불러오지 못하면 자리째로 사라진다** — placeholder 를 남기면 빈 상자가 읽는 흐름을 끊는다.
  * 허용 주소 검사를 그리기 직전에 한 번 더 하는 이유는 채팅 마커가 AI 가 만든 본문에서 오기
@@ -35,7 +35,7 @@ import java.net.URISyntaxException
  */
 @Composable
 fun CharacterImage(
-    name: String,
+    name: String?,
     imageUrl: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -43,7 +43,12 @@ fun CharacterImage(
     var failed by rememberSaveable(imageUrl) { mutableStateOf(false) }
     if (failed || !isAllowedCharacterImageUrl(imageUrl)) return
 
-    val openLabel = stringResource(R.string.character_image_open, name)
+    val openLabel =
+        if (name == null) {
+            stringResource(R.string.scene_image_open)
+        } else {
+            stringResource(R.string.character_image_open, name)
+        }
     Box(
         modifier =
             modifier
@@ -89,6 +94,10 @@ fun isAllowedCharacterImageUrl(imageUrl: String): Boolean =
         false
     }
 
+/** 허용된 주소 중 오리지널 스토리의 장면 이미지인지 본다. 장면 이미지 마커는 뒤에 대사가 없다. */
+fun isSceneImageUrl(imageUrl: String): Boolean =
+    isAllowedCharacterImageUrl(imageUrl) && URI(imageUrl).path.startsWith(SCENE_IMAGE_PATH_PREFIX)
+
 /** 인물 이미지의 가로세로 비율. */
 const val CHARACTER_IMAGE_ASPECT_RATIO = 4f / 3f
 
@@ -100,6 +109,15 @@ private val AllowedImageHosts = setOf("cdn.manyak.app", "dev-cdn.manyak.app")
  * 사용자가 만든 스토리는 `generated`, 오리지널 스토리는 `originals` 아래에 인물 이미지가 올라가고,
  * 사용자가 업로드한 인물 이미지는 `uploaded` 아래에 저장된다.
  * 채팅 중 실시간으로 만든 인물 이미지는 `chat-images/{chatId}/{turn}-{uuid}.webp` 로 올라간다.
+ * 오리지널 스토리의 프롤로그·시작 상황에 넣은 장면 그림은 `scenes/originals` 아래에 있다.
  */
 private val AllowedImagePathPrefixes =
-    listOf("/characters/generated/", "/characters/originals/", "/characters/uploaded/", "/chat-images/")
+    listOf(
+        "/characters/generated/",
+        "/characters/originals/",
+        "/characters/uploaded/",
+        "/chat-images/",
+        SCENE_IMAGE_PATH_PREFIX,
+    )
+
+private const val SCENE_IMAGE_PATH_PREFIX = "/scenes/originals/"

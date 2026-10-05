@@ -8,6 +8,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
+import app.manyak.designsystem.text.PassageSegment
 
 /**
  * 렌더에 쓸 공개 수. 저장된 공개 수가 총량을 넘으면 **이전 스트림의 값**이다.
@@ -36,11 +37,11 @@ internal fun typewriterStep(
 ): Int = maxOf(1L, backlog * frameNanos / tauNanos).toInt()
 
 /** 조각 목록의 공개 단위 수. 글자 하나가 1, 이미지도 등장 순서를 지키도록 1을 차지한다. */
-internal fun List<ChatMessageSegment>.revealUnitCount(): Int =
+internal fun List<PassageSegment>.revealUnitCount(): Int =
     sumOf { segment ->
         when (segment) {
-            is ChatMessageSegment.Text -> segment.content.length
-            is ChatMessageSegment.CharacterImage -> 1
+            is PassageSegment.Text -> segment.content.length
+            is PassageSegment.CharacterImage, is PassageSegment.SceneImage -> 1
         }
     }
 
@@ -50,23 +51,23 @@ internal fun List<ChatMessageSegment>.revealUnitCount(): Int =
  * 텍스트 조각은 글자 단위로 잘리고, 이미지는 앞 텍스트가 모두 공개된 뒤에야 통째로 나타난다 —
  * 이미지를 반만 보여 줄 방법은 없고, 순서를 앞당기면 아직 안 읽은 문단 뒤의 이미지가 먼저 보인다.
  */
-internal fun List<ChatMessageSegment>.takeRevealUnits(count: Int): List<ChatMessageSegment> {
+internal fun List<PassageSegment>.takeRevealUnits(count: Int): List<PassageSegment> {
     if (count <= 0) return emptyList()
     var remaining = count
-    val revealed = mutableListOf<ChatMessageSegment>()
+    val revealed = mutableListOf<PassageSegment>()
     for (segment in this) {
         when (segment) {
-            is ChatMessageSegment.Text -> {
+            is PassageSegment.Text -> {
                 if (segment.content.length <= remaining) {
                     revealed += segment
                     remaining -= segment.content.length
                 } else {
-                    revealed += ChatMessageSegment.Text(segment.content.take(remaining))
+                    revealed += PassageSegment.Text(segment.content.take(remaining))
                     remaining = 0
                 }
             }
 
-            is ChatMessageSegment.CharacterImage -> {
+            is PassageSegment.CharacterImage, is PassageSegment.SceneImage -> {
                 revealed += segment
                 remaining -= 1
             }
@@ -86,7 +87,7 @@ internal fun List<ChatMessageSegment>.takeRevealUnits(count: Int): List<ChatMess
  * 공개 수는 [rememberSaveable] 이라 회전해도 읽던 위치부터 이어진다.
  */
 @Composable
-internal fun rememberTypewriterSegments(segments: List<ChatMessageSegment>): List<ChatMessageSegment> {
+internal fun rememberTypewriterSegments(segments: List<PassageSegment>): List<PassageSegment> {
     var revealedUnits by rememberSaveable { mutableIntStateOf(0) }
     val totalUnits = segments.revealUnitCount()
 

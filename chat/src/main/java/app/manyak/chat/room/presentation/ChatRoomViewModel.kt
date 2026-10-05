@@ -16,7 +16,6 @@ import app.manyak.chat.room.presentation.composer.addBlock
 import app.manyak.chat.room.presentation.composer.chatTurnCost
 import app.manyak.chat.room.presentation.composer.removeBlock
 import app.manyak.chat.room.presentation.composer.updateBlock
-import app.manyak.chat.room.presentation.message.ChatMessageSegment
 import app.manyak.chat.room.presentation.message.appendCharacterImage
 import app.manyak.chat.room.presentation.message.appendText
 import app.manyak.chat.room.presentation.suggestion.ChatSuggestions
@@ -37,6 +36,7 @@ import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.user.UserProfileRepository
 import app.manyak.common.presentation.mvi.MviViewModel
 import app.manyak.designsystem.component.isAllowedCharacterImageUrl
+import app.manyak.designsystem.text.PassageSegment
 import app.manyak.report.domain.ReportRepository
 import app.manyak.report.presentation.StoryReportAction
 import app.manyak.report.presentation.StoryReportChange
@@ -73,7 +73,7 @@ data class ChatRoomTurn(
 data class StreamingTurn(
     val userInput: String,
     val realtimeImage: Boolean,
-    val segments: List<ChatMessageSegment> = emptyList(),
+    val segments: List<PassageSegment> = emptyList(),
 )
 
 data class ChatRoomUiState(

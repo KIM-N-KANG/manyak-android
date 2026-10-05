@@ -31,8 +31,14 @@ internal fun previewStory(
 
 internal fun previewCharacters(): List<StoryCharacter> =
     listOf(
-        StoryCharacter(name = "세린", imageUrl = "https://cdn.manyak.app/characters/generated/serin.webp"),
+        StoryCharacter(
+            name = "세린",
+            imageUrl = "https://cdn.manyak.app/characters/generated/serin.webp",
+            description = "시계탑 아래 골목에서 태엽을 고치는 수리공.",
+        ),
         StoryCharacter(name = "도윤", imageUrl = null),
+        StoryCharacter(name = "하람", imageUrl = null, description = "멈춘 시계의 주인을 찾는 소년."),
+        StoryCharacter(name = "로웰", imageUrl = null),
     )
 
 internal fun previewStartSettings(): List<StoryStartSetting> =

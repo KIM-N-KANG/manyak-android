@@ -3,7 +3,6 @@ package app.manyak.story.detail.presentation
 import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -338,7 +337,6 @@ private fun StoryDetailLoaded(
             // 여백까지 잡으면 마지막 줄 아래가 그만큼 비어 보인다.
             contentPadding =
                 PaddingValues(bottom = (ctaHeight - ScrollEdgeFadeHeight).coerceAtLeast(0.dp)),
-            verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.block),
         ) {
             storyDetailBody(
                 story = story,

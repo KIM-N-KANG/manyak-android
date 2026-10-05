@@ -281,9 +281,12 @@ class StoryDetailViewModel
             imageUrl: String,
             state: StoryDetailUiState,
         ) {
-            val exists = state.story?.characters?.any { it.imageUrl == imageUrl } == true
-            if (!exists || !isAllowedCharacterImageUrl(imageUrl)) return
-            analytics.track(AnalyticsEvent.StoryDetailCharacterImageClicked(storyId))
+            val story = state.story ?: return
+            val isCharacter = story.characters.any { it.imageUrl == imageUrl }
+            val inSituation = story.startSettings.any { imageUrl in it.startSituation }
+            if (!(isCharacter || inSituation) || !isAllowedCharacterImageUrl(imageUrl)) return
+            // 상황 설명 속 장면 이미지는 인물 이미지 클릭으로 세지 않는다.
+            if (isCharacter) analytics.track(AnalyticsEvent.StoryDetailCharacterImageClicked(storyId))
             dispatchEvent(StoryDetailEvent.ImageViewerChanged(imageUrl))
         }
 

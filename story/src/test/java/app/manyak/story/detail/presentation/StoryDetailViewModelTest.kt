@@ -430,6 +430,41 @@ class StoryDetailViewModelTest {
         }
 
     @Test
+    fun `상황 설명의 장면 이미지는 인물 이미지 클릭으로 세지 않고 연다`() =
+        runTest(dispatcher) {
+            val url = "https://cdn.manyak.app/scenes/originals/s1/platform_1a2b3c4d.webp"
+            val story =
+                sampleStoryDetail().copy(
+                    startSettings = sampleStartSettings().map { it.copy(startSituation = "안개.\n\n[[$url]]") },
+                )
+            val repository = FakeStoryRepository()
+            repository.queuedDetailResults += DomainResult.Success(story)
+            val events = mutableListOf<AnalyticsEvent>()
+            val viewModel =
+                StoryDetailViewModel(
+                    STORY_ID,
+                    repository,
+                    FakeChatRepository(),
+                    object : Analytics {
+                        override fun track(event: AnalyticsEvent) {
+                            events += event
+                        }
+                    },
+                    repository,
+                    repository,
+                    StoryLikeUpdates { _, _ -> },
+                )
+            viewModel.onIntent(StoryDetailIntent.ScreenShown)
+            advanceUntilIdle()
+
+            viewModel.onIntent(StoryDetailIntent.OpenCharacterImage(url))
+            advanceUntilIdle()
+
+            assertEquals(url, viewModel.uiState.value.imageViewerUrl)
+            assertTrue(events.none { it is AnalyticsEvent.StoryDetailCharacterImageClicked })
+        }
+
+    @Test
     fun `신고를 접수하면 시트를 닫고 입력을 비운다`() =
         runTest(dispatcher) {
             val storyRepository = FakeStoryRepository()
