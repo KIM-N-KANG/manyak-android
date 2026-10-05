@@ -130,9 +130,8 @@ private fun SegmentImage(
     CharacterImage(
         modifier =
             Modifier
-                // 본문 마지막 줄 아래에는 폰트 descent 와 행간 여유(6sp)가 이미 남는다.
-                // 그만큼 빼야 눈에 보이는 간격이 조각 간격 두 번(40)과 같아진다.
-                .padding(top = if (first) 0.dp else ManyakTheme.spacing.compact)
+                // 이야기 사이에 끼는 이미지는 조각 간격을 한 번 더 둬 앞 문단과 떼어 놓는다(웹과 같은 40).
+                .padding(top = if (first) 0.dp else ManyakTheme.spacing.passage)
                 .padding(horizontal = ManyakTheme.spacing.gutter),
         name = name,
         imageUrl = imageUrl,
