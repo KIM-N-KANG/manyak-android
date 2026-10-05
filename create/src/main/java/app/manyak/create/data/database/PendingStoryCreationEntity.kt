@@ -113,6 +113,7 @@ internal fun PendingStoryCreationEntity.toStoredDraftOrNull(): StoredCreationDra
 @Serializable
 private data class KeywordSnapshotDto(
     val selectedGenreTagIds: List<Long> = emptyList(),
+    val addedGenreTagIds: List<Long> = emptyList(),
     val customGenreTags: List<CustomTagDto> = emptyList(),
     val protagonist: KeywordCharacterDto = KeywordCharacterDto(),
     val supportingCharacters: List<KeywordCharacterDto> = emptyList(),
@@ -135,6 +136,7 @@ private data class CustomTagDto(
 private fun KeywordDraftSnapshot.toDto(): KeywordSnapshotDto =
     KeywordSnapshotDto(
         selectedGenreTagIds = selectedGenreTagIds,
+        addedGenreTagIds = addedGenreTagIds,
         customGenreTags = customGenreTags.map { CustomTagDto(it.name, it.selected) },
         protagonist = protagonist.toDto(),
         supportingCharacters = supportingCharacters.map { it.toDto() },
@@ -151,6 +153,7 @@ private fun KeywordCharacterSnapshot.toDto(): KeywordCharacterDto =
 private fun KeywordSnapshotDto.toDomain(): KeywordDraftSnapshot =
     KeywordDraftSnapshot(
         selectedGenreTagIds = selectedGenreTagIds,
+        addedGenreTagIds = addedGenreTagIds,
         customGenreTags = customGenreTags.map { KeywordCustomTagSnapshot(it.name, it.selected) },
         protagonist = protagonist.toDomain(),
         supportingCharacters = supportingCharacters.map { it.toDomain() },

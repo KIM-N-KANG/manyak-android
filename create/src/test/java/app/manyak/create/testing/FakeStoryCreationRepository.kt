@@ -5,11 +5,13 @@ import app.manyak.create.domain.PendingStoryCreationStore
 import app.manyak.create.domain.StoryCreationRepository
 import app.manyak.create.entity.CompletedStory
 import app.manyak.create.entity.CreationRequestSnapshot
+import app.manyak.create.entity.GenreCatalog
 import app.manyak.create.entity.PendingStoryCreation
 import app.manyak.create.entity.StoredCreationDraft
 import app.manyak.create.entity.StoryCharacterInput
 import app.manyak.create.entity.StoryCompletionCommand
 import app.manyak.create.entity.StoryTag
+import app.manyak.create.entity.StoryTagCategory
 import app.manyak.create.entity.Storyline
 import app.manyak.create.entity.StorylineGeneration
 import app.manyak.create.entity.StorylineGenerationCommand
@@ -50,6 +52,18 @@ internal fun sampleGenerationInput(): StorylineGenerationInput =
 internal open class FakeStoryCreationRepository(
     var tagsResult: DomainResult<List<StoryTag>> = DomainResult.Success(emptyList()),
 ) : StoryCreationRepository {
+    override suspend fun genres(query: String): DomainResult<GenreCatalog> {
+        val tags =
+            (tagsResult as? DomainResult.Success)
+                ?.value
+                .orEmpty()
+                .filter { it.category == StoryTagCategory.GENRE }
+        return DomainResult.Success(
+            app.manyak.create.entity
+                .GenreCatalog(tags, tags),
+        )
+    }
+
     val generationCommands = mutableListOf<StorylineGenerationCommand>()
     val queuedGenerationResults = ArrayDeque<DomainResult<StorylineGeneration>>()
 
