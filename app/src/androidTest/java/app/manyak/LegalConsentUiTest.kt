@@ -5,14 +5,16 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import app.manyak.auth.domain.SessionRepository
+import app.manyak.auth.domain.SignupRepository
+import app.manyak.auth.entity.PendingSignup
 import app.manyak.auth.entity.SessionState
 import app.manyak.auth.entity.SignInOutcome
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.entity.auth.AuthProvider
+import app.manyak.common.entity.consent.ConsentItem
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.legal.consent.domain.ConsentRepository
-import app.manyak.legal.consent.entity.ConsentItem
 import app.manyak.legal.consent.entity.ConsentStatus
 import app.manyak.legal.consent.presentation.LegalConsentSheet
 import app.manyak.legal.consent.presentation.LegalConsentViewModel
@@ -35,7 +37,7 @@ class LegalConsentUiTest {
 
                 override suspend fun record(versions: Map<ConsentItem, String>): DomainResult<ConsentStatus> = get()
             }
-        val viewModel = LegalConsentViewModel(repository, session)
+        val viewModel = LegalConsentViewModel(repository, session, session)
         compose.setContent {
             ManyakTheme {
                 LegalConsentSheet(enabled = true, viewModel = viewModel)
@@ -48,7 +50,9 @@ class LegalConsentUiTest {
     }
 }
 
-private class UiSession : SessionRepository {
+private class UiSession :
+    SessionRepository,
+    SignupRepository {
     var logouts = 0
     override val sessionState = MutableStateFlow<SessionState>(SessionState.Member)
     override val signInInProgress = MutableStateFlow<AuthProvider?>(null)
@@ -63,4 +67,10 @@ private class UiSession : SessionRepository {
     override suspend fun withdraw(): DomainResult<Unit> = DomainResult.Success(Unit)
 
     override suspend fun acknowledgeSessionEndNotice() = Unit
+
+    override val pendingSignup = MutableStateFlow<PendingSignup?>(null)
+
+    override suspend fun completeSignup(versions: Map<ConsentItem, String>): DomainResult<Unit> = error("not used")
+
+    override fun cancelSignup() = Unit
 }

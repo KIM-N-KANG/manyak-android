@@ -1,15 +1,17 @@
 package app.manyak.legal.consent.presentation
 
 import app.manyak.auth.domain.SessionRepository
+import app.manyak.auth.domain.SignupRepository
+import app.manyak.auth.entity.PendingSignup
 import app.manyak.auth.entity.SessionState
 import app.manyak.auth.entity.SignInOutcome
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.entity.auth.AuthProvider
+import app.manyak.common.entity.consent.ConsentItem
+import app.manyak.common.entity.consent.RequiredConsent
 import app.manyak.legal.consent.domain.ConsentRepository
-import app.manyak.legal.consent.entity.ConsentItem
 import app.manyak.legal.consent.entity.ConsentStatus
-import app.manyak.legal.consent.entity.RequiredConsent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,7 +29,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-/** 회원 진입 판정, 체크·제출 규칙, 버전 불일치 재조회, 뒤로가기 로그아웃, 세션 교체를 고정한다. */
+/** 회원 진입 판정, 체크·제출 규칙, 버전 불일치 재조회, 뒤로가기 로그아웃, 세션 교체, 가입 대기 동의를 고정한다. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class LegalConsentViewModelTest {
     private val dispatcher = StandardTestDispatcher()
@@ -45,7 +47,7 @@ class LegalConsentViewModelTest {
     @Test
     fun `회원이 되면 조회하고 필요 항목이 있으면 시트를 띄운다`() =
         runTest {
-            val viewModel = LegalConsentViewModel(FakeConsents(ALL_REQUIRED), FakeSession())
+            val viewModel = consentViewModel(FakeConsents(ALL_REQUIRED), FakeSession())
             advanceUntilIdle()
 
             val state = viewModel.uiState.value
@@ -58,7 +60,7 @@ class LegalConsentViewModelTest {
     @Test
     fun `필요 항목이 없으면 시트 없이 만족한다`() =
         runTest {
-            val viewModel = LegalConsentViewModel(FakeConsents(SATISFIED), FakeSession())
+            val viewModel = consentViewModel(FakeConsents(SATISFIED), FakeSession())
             advanceUntilIdle()
 
             assertTrue(viewModel.uiState.value.isSatisfied)
@@ -69,7 +71,7 @@ class LegalConsentViewModelTest {
     fun `조회 실패는 실패 시트를 띄우고 다시 시도로 재조회한다`() =
         runTest {
             val consents = FakeConsents(ALL_REQUIRED, getResults = mutableListOf(NETWORK_FAILURE))
-            val viewModel = LegalConsentViewModel(consents, FakeSession())
+            val viewModel = consentViewModel(consents, FakeSession())
             advanceUntilIdle()
             assertEquals(LegalConsentPhase.LOAD_FAILED, viewModel.uiState.value.phase)
 
@@ -89,7 +91,7 @@ class LegalConsentViewModelTest {
                     ALL_REQUIRED,
                     getResults = mutableListOf(DomainResult.Failure(DomainError.AccountSuspended)),
                 )
-            val viewModel = LegalConsentViewModel(consents, session)
+            val viewModel = consentViewModel(consents, session)
             advanceUntilIdle()
             assertEquals(LegalConsentPhase.FORBIDDEN, viewModel.uiState.value.phase)
             assertTrue(viewModel.uiState.value.isSheetVisible)
@@ -105,7 +107,7 @@ class LegalConsentViewModelTest {
     @Test
     fun `전체 동의는 선택 항목까지 켜고 필수만 모두 켜면 제출할 수 있다`() =
         runTest {
-            val viewModel = LegalConsentViewModel(FakeConsents(ALL_REQUIRED), FakeSession())
+            val viewModel = consentViewModel(FakeConsents(ALL_REQUIRED), FakeSession())
             advanceUntilIdle()
 
             viewModel.onIntent(LegalConsentIntent.ToggleAll)
@@ -127,7 +129,7 @@ class LegalConsentViewModelTest {
     fun `제출은 필요 항목의 요구 버전만 싣고 성공하면 만족하며 선택 항목 답을 남긴다`() =
         runTest {
             val consents = FakeConsents(ALL_REQUIRED)
-            val viewModel = LegalConsentViewModel(consents, FakeSession())
+            val viewModel = consentViewModel(consents, FakeSession())
             advanceUntilIdle()
 
             viewModel.onIntent(LegalConsentIntent.Submit)
@@ -154,7 +156,7 @@ class LegalConsentViewModelTest {
         runTest {
             val mismatch = DomainResult.Failure(DomainError.Server(400, ConsentRepository.ERROR_VERSION_MISMATCH, null))
             val consents = FakeConsents(ALL_REQUIRED, recordResults = mutableListOf(mismatch))
-            val viewModel = LegalConsentViewModel(consents, FakeSession())
+            val viewModel = consentViewModel(consents, FakeSession())
             advanceUntilIdle()
 
             viewModel.onIntent(LegalConsentIntent.ToggleAll)
@@ -174,7 +176,7 @@ class LegalConsentViewModelTest {
         runTest {
             val remaining = ConsentStatus(listOf(RequiredConsent(ConsentItem.PRIVACY, "v3")))
             val consents = FakeConsents(ALL_REQUIRED, recordResults = mutableListOf(DomainResult.Success(remaining)))
-            val viewModel = LegalConsentViewModel(consents, FakeSession())
+            val viewModel = consentViewModel(consents, FakeSession())
             advanceUntilIdle()
 
             viewModel.onIntent(LegalConsentIntent.ToggleAll)
@@ -192,7 +194,7 @@ class LegalConsentViewModelTest {
     fun `저장 실패는 시트를 유지하고 재시도 안내를 띄운다`() =
         runTest {
             val consents = FakeConsents(ALL_REQUIRED, recordResults = mutableListOf(NETWORK_FAILURE))
-            val viewModel = LegalConsentViewModel(consents, FakeSession())
+            val viewModel = consentViewModel(consents, FakeSession())
             advanceUntilIdle()
 
             viewModel.onIntent(LegalConsentIntent.ToggleAll)
@@ -211,7 +213,7 @@ class LegalConsentViewModelTest {
     fun `뒤로가기는 로그아웃을 시작하고 잠근다`() =
         runTest {
             val session = FakeSession()
-            val viewModel = LegalConsentViewModel(FakeConsents(ALL_REQUIRED), session)
+            val viewModel = consentViewModel(FakeConsents(ALL_REQUIRED), session)
             advanceUntilIdle()
 
             viewModel.onIntent(LegalConsentIntent.Abandon)
@@ -228,7 +230,7 @@ class LegalConsentViewModelTest {
         runTest {
             val session = FakeSession()
             val consents = FakeConsents(ALL_REQUIRED)
-            val viewModel = LegalConsentViewModel(consents, session)
+            val viewModel = consentViewModel(consents, session)
             advanceUntilIdle()
             viewModel.onIntent(LegalConsentIntent.ToggleAll)
             advanceUntilIdle()
@@ -243,6 +245,114 @@ class LegalConsentViewModelTest {
             assertEquals(2, consents.getCount)
             assertEquals(LegalConsentPhase.REQUIRED, viewModel.uiState.value.phase)
         }
+
+    @Test
+    fun `가입 대기면 세션 없이 시트를 띄우고 뒤로가기는 가입만 취소한다`() =
+        runTest {
+            val session = FakeSession(SessionState.SignedOut(notice = null))
+            session.pending.value = PendingSignup(ALL_REQUIRED.required)
+            val consents = FakeConsents(ALL_REQUIRED)
+            val viewModel = consentViewModel(consents, session)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertTrue(state.isSignup)
+            assertTrue(state.isSheetVisible)
+            assertEquals(ALL_REQUIRED.required, state.required)
+            assertEquals(0, consents.getCount)
+
+            viewModel.onIntent(LegalConsentIntent.Abandon)
+            advanceUntilIdle()
+
+            assertEquals(1, session.signupCancels)
+            assertEquals(0, session.signOuts)
+            assertEquals(LegalConsentUiState(), viewModel.uiState.value)
+        }
+
+    @Test
+    fun `가입 제출은 가입 완료로 보내고 회원 확인 뒤 선택 항목 답을 남긴다`() =
+        runTest {
+            val session = FakeSession(SessionState.SignedOut(notice = null))
+            session.pending.value = PendingSignup(ALL_REQUIRED.required)
+            val consents = FakeConsents(SATISFIED)
+            val viewModel = consentViewModel(consents, session)
+            advanceUntilIdle()
+
+            viewModel.onIntent(LegalConsentIntent.ToggleAll)
+            advanceUntilIdle()
+            viewModel.onIntent(LegalConsentIntent.Submit)
+            advanceUntilIdle()
+
+            val expected = mapOf(ConsentItem.TERMS to "v1", ConsentItem.PRIVACY to "v2", ConsentItem.AGE14 to "1")
+            assertEquals(listOf(expected), session.completions)
+            assertEquals(emptyList<Map<ConsentItem, String>>(), consents.records)
+            assertEquals(1, consents.getCount)
+            assertTrue(viewModel.uiState.value.isSatisfied)
+            assertFalse(viewModel.uiState.value.isSignup)
+            assertEquals(true, viewModel.uiState.value.marketingAnswer)
+        }
+
+    @Test
+    fun `가입 완료 뒤 회원 조회가 실패해도 다시 시도를 잠그지 않는다`() =
+        runTest {
+            val session = FakeSession(SessionState.SignedOut(notice = null))
+            session.pending.value = PendingSignup(ALL_REQUIRED.required)
+            val consents = FakeConsents(SATISFIED, getResults = mutableListOf(NETWORK_FAILURE))
+            val viewModel = consentViewModel(consents, session)
+            advanceUntilIdle()
+
+            viewModel.onIntent(LegalConsentIntent.ToggleAll)
+            advanceUntilIdle()
+            viewModel.onIntent(LegalConsentIntent.Submit)
+            advanceUntilIdle()
+
+            assertEquals(LegalConsentPhase.LOAD_FAILED, viewModel.uiState.value.phase)
+            assertFalse(viewModel.uiState.value.isLocked)
+        }
+
+    @Test
+    fun `가입 일시 실패는 시트를 유지하고 재시도 안내를 띄운다`() =
+        runTest {
+            val session = FakeSession(SessionState.SignedOut(notice = null))
+            session.pending.value = PendingSignup(ALL_REQUIRED.required)
+            session.completeResult = NETWORK_FAILURE
+            val viewModel = consentViewModel(FakeConsents(ALL_REQUIRED), session)
+            advanceUntilIdle()
+
+            viewModel.onIntent(LegalConsentIntent.ToggleAll)
+            advanceUntilIdle()
+            viewModel.onIntent(LegalConsentIntent.Submit)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertEquals(LegalConsentNotice.RETRYABLE, state.notice)
+            assertTrue(state.isSignup)
+            assertTrue(state.isSheetVisible)
+            assertFalse(state.isSubmitting)
+        }
+
+    @Test
+    fun `만료나 약관 갱신으로 가입이 끝나면 안내 없이 시트를 닫는다`() =
+        runTest {
+            val session = FakeSession(SessionState.SignedOut(notice = null))
+            session.pending.value = PendingSignup(ALL_REQUIRED.required)
+            session.completeResult = DomainResult.Failure(DomainError.Unauthorized)
+            session.completeEndsSignup = true
+            val viewModel = consentViewModel(FakeConsents(ALL_REQUIRED), session)
+            advanceUntilIdle()
+
+            viewModel.onIntent(LegalConsentIntent.ToggleAll)
+            advanceUntilIdle()
+            viewModel.onIntent(LegalConsentIntent.Submit)
+            advanceUntilIdle()
+
+            assertEquals(LegalConsentUiState(), viewModel.uiState.value)
+        }
+
+    private fun consentViewModel(
+        consents: ConsentRepository,
+        session: FakeSession,
+    ) = LegalConsentViewModel(consents, session, session)
 
     private class FakeConsents(
         private val current: ConsentStatus,
@@ -263,9 +373,18 @@ class LegalConsentViewModelTest {
         }
     }
 
-    private class FakeSession : SessionRepository {
-        val state = MutableStateFlow<SessionState>(SessionState.Member)
+    private class FakeSession(
+        initial: SessionState = SessionState.Member,
+    ) : SessionRepository,
+        SignupRepository {
+        val state = MutableStateFlow(initial)
+        val pending = MutableStateFlow<PendingSignup?>(null)
         var signOuts = 0
+        var signupCancels = 0
+        var completeResult: DomainResult<Unit> = DomainResult.Success(Unit)
+        var completeEndsSignup = false
+        val completions = mutableListOf<Map<ConsentItem, String>>()
+        override val pendingSignup: StateFlow<PendingSignup?> = pending
         override val sessionState: StateFlow<SessionState> = state
         override val signInInProgress: StateFlow<AuthProvider?> = MutableStateFlow(null)
 
@@ -278,6 +397,19 @@ class LegalConsentViewModelTest {
         override suspend fun withdraw(): DomainResult<Unit> = error("unused")
 
         override suspend fun acknowledgeSessionEndNotice() = Unit
+
+        /** 저장소처럼 회원을 공개한 뒤에 대기를 비운다. */
+        override suspend fun completeSignup(versions: Map<ConsentItem, String>): DomainResult<Unit> {
+            completions += versions
+            if (completeResult is DomainResult.Success) state.value = SessionState.Member
+            if (completeResult is DomainResult.Success || completeEndsSignup) pending.value = null
+            return completeResult
+        }
+
+        override fun cancelSignup() {
+            signupCancels++
+            pending.value = null
+        }
     }
 
     private companion object {

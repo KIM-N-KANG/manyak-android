@@ -60,7 +60,7 @@ private class LoginSession : SessionRepository {
 
     override suspend fun signIn(provider: AuthProvider): DomainResult<SignInOutcome> {
         calls++
-        return DomainResult.Success(SignInOutcome(false))
+        return DomainResult.Success(SignInOutcome.Completed(false))
     }
 
     override suspend fun signOut() = Unit

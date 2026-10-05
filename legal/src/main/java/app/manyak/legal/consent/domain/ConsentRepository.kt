@@ -1,7 +1,7 @@
 package app.manyak.legal.consent.domain
 
 import app.manyak.common.domain.error.DomainResult
-import app.manyak.legal.consent.entity.ConsentItem
+import app.manyak.common.entity.consent.ConsentItem
 import app.manyak.legal.consent.entity.ConsentStatus
 
 /** 이용약관·개인정보 처리방침·만 14세 이상 확인의 동의 상태. 정본은 서버이고 앱은 로컬 플래그를 두지 않는다. */
