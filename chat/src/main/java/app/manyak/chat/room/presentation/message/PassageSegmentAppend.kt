@@ -22,8 +22,9 @@ fun List<PassageSegment>.appendText(content: String): List<PassageSegment> {
 /**
  * 스트리밍 중 도착한 인물 이미지를 지금 위치에 끼운다.
  *
- * **직전 텍스트가 줄바꿈으로 끝나면 그 줄바꿈 하나를 지운다** — 이미지 블록의 경계이지 본문의 빈
- * 줄이 아니라서, 남겨 두면 이미지 위 간격이 두 번 들어간다. 이름이 비었거나 허용하지 않는 URL 이면
+ * **직전 텍스트 끝의 줄바꿈을 모두 지운다** — 이미지 블록의 경계이지 본문의 빈 줄이 아니다. 대사 앞
+ * 이미지는 문단 사이 빈 줄(`\n\n`) 뒤에 오는데, `Text` 는 끝에 남은 줄바꿈 하나도 빈 줄로 그려 이미지
+ * 위 간격이 한 줄만큼 벌어진다. 저장 본문 파서와 같은 규칙이다. 이름이 비었거나 허용하지 않는 URL 이면
  * 아무것도 하지 않는다.
  */
 fun List<PassageSegment>.appendCharacterImage(
@@ -35,7 +36,7 @@ fun List<PassageSegment>.appendCharacterImage(
     val last = lastOrNull()
     val head =
         if (last is PassageSegment.Text && last.content.endsWith("\n")) {
-            val trimmed = last.content.dropLast(1)
+            val trimmed = last.content.trimEnd('\n')
             if (trimmed.isEmpty()) dropLast(1) else dropLast(1) + PassageSegment.Text(trimmed)
         } else {
             this

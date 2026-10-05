@@ -33,7 +33,7 @@ class PassageSegmentAppendTest {
     }
 
     @Test
-    fun `이미지 앞 텍스트의 마지막 줄바꿈 하나를 지운다`() {
+    fun `이미지 앞 텍스트 끝의 줄바꿈을 지운다`() {
         val segments =
             emptyList<PassageSegment>()
                 .appendText("문이 열린다\n")
@@ -49,10 +49,22 @@ class PassageSegmentAppendTest {
     }
 
     @Test
+    fun `문단 사이 빈 줄 뒤의 이미지는 저장 본문과 같은 조각이 된다`() {
+        // 대사 앞 이미지는 빈 줄 뒤에 온다. 줄바꿈이 하나라도 남으면 이미지 위에 빈 줄이 한 줄 더 그려진다.
+        val streamed =
+            emptyList<PassageSegment>()
+                .appendText("문이 열린다.\n\n")
+                .appendCharacterImage(name = "시계공", imageUrl = IMAGE_URL)
+                .appendText("시계공: 오셨군요.")
+
+        assertEquals(parsePassageSegments("문이 열린다.\n\n[[$IMAGE_URL]]\n\n시계공: 오셨군요."), streamed)
+    }
+
+    @Test
     fun `줄바꿈만 남은 조각은 통째로 버린다`() {
         val segments =
             emptyList<PassageSegment>()
-                .appendText("\n")
+                .appendText("\n\n")
                 .appendCharacterImage(name = "시계공", imageUrl = IMAGE_URL)
 
         assertEquals(listOf(PassageSegment.CharacterImage(name = "시계공", imageUrl = IMAGE_URL)), segments)
