@@ -1,5 +1,7 @@
 package app.manyak.create.general.data.di
 
+import app.manyak.common.domain.story.ReviewWatch
+import app.manyak.create.general.data.GeneralReviewWatch
 import app.manyak.create.general.data.GeneralStoryRepositoryImpl
 import app.manyak.create.general.data.api.GeneralImageUploadApi
 import app.manyak.create.general.data.api.GeneralStoryApi
@@ -30,6 +32,10 @@ abstract class GeneralStoryModule {
     @Binds
     @Singleton
     abstract fun bindGeneralDraftStore(impl: GeneralDraftRoomStore): GeneralDraftStore
+
+    @Binds
+    @Singleton
+    abstract fun bindReviewWatch(impl: GeneralReviewWatch): ReviewWatch
 
     companion object {
         @Provides

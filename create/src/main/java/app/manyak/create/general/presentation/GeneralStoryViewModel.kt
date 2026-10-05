@@ -8,6 +8,7 @@ import app.manyak.auth.domain.SessionGate
 import app.manyak.common.domain.chat.ChatStarter
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.story.ReviewWatch
 import app.manyak.common.presentation.mvi.MviViewModel
 import app.manyak.create.domain.StoryCreationRepository
 import app.manyak.create.general.domain.GeneralDraftStore
@@ -62,6 +63,7 @@ class GeneralStoryViewModel
         private val analytics: Analytics,
         @FunnelScope private val writeScope: CoroutineScope,
         private val clock: GeneralEditorClock,
+        private val reviewWatch: ReviewWatch,
     ) : MviViewModel<GeneralEditorIntent, GeneralEditorState, GeneralEditorEvent, GeneralEditorEffect>(
             GeneralEditorState(),
         ) {
@@ -547,17 +549,20 @@ class GeneralStoryViewModel
                 .collectLatest { id ->
                     val started = reviewStartedAt
                     if (id == null || started == null) return@collectLatest
-                    pollGeneralReview(
-                        startedAt = started,
-                        now = clock::now,
-                        fetch = {
-                            withEditorAuth(
-                                DomainResult.Failure(DomainError.Unauthorized),
-                            ) { repository.submission(id) }
-                        },
-                        onResult = { reviewFinished(id, it) },
-                        onTimeout = { reviewTimedOut(id) },
-                    )
+                    // 화면이 보이며 결과를 기다리는 동안은 같은 제출본의 검수 완료 알림을 띄우지 않는다.
+                    reviewWatch.watching(id) {
+                        pollGeneralReview(
+                            startedAt = started,
+                            now = clock::now,
+                            fetch = {
+                                withEditorAuth(
+                                    DomainResult.Failure(DomainError.Unauthorized),
+                                ) { repository.submission(id) }
+                            },
+                            onResult = { reviewFinished(id, it) },
+                            onTimeout = { reviewTimedOut(id) },
+                        )
+                    }
                 }
         }
 
@@ -579,6 +584,7 @@ class GeneralStoryViewModel
             }
             waitingReview = null
             val submission = editor.submission ?: return
+            reviewWatch.shown(id, submission.status)
             if (!isEdit) {
                 analytics.track(
                     AnalyticsEvent.GeneralCreateReviewResultShown(id, submission.status.lowercase()),

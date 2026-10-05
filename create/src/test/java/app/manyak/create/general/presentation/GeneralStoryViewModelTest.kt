@@ -8,6 +8,7 @@ import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.entity.chat.CreatedChat
 import app.manyak.create.entity.StoryTag
 import app.manyak.create.entity.StoryTagCategory
+import app.manyak.create.general.data.GeneralReviewWatch
 import app.manyak.create.testing.FakeStoryCreationRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -187,5 +188,6 @@ class GeneralStoryViewModelTest {
             analytics = NoOpAnalytics,
             writeScope = this,
             clock = GeneralEditorClock { testScheduler.currentTime },
+            reviewWatch = GeneralReviewWatch { testScheduler.currentTime },
         ).also { models += it }
 }
