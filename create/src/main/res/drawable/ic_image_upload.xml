@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    이미지 올리기. 일반 제작의 이미지 추가·변경 버튼이 그린다.
+    색은 사용처에서 tint 하므로 자산 자체는 단색으로 둔다.
+    원본: image-upload-01 (24×24, 선 1.5).
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <path
+        android:pathData="M5,21C9.21,16.2487 13.9412,9.9475 21,14.6734"
+        android:strokeWidth="1.5"
+        android:strokeColor="#FF000000" />
+
+    <path
+        android:pathData="M17,4.5001C17.4915,3.9944 18.7998,2.0001 19.5,2.0001M22,4.5001C21.5085,3.9944 20.2002,2.0001 19.5,2.0001M19.5,2.0001V10.0001"
+        android:strokeWidth="1.5"
+        android:strokeColor="#FF000000"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <path
+        android:pathData="M20.9999,13C20.998,17.147 20.9472,19.2703 19.6088,20.6088C18.2175,22 15.9783,22 11.5,22C7.0217,22 4.7825,22 3.3912,20.6088C2,19.2175 2,16.9783 2,12.5C2,8.0217 2,5.7825 3.3912,4.3912C4.7825,3 7.0217,3 11.5,3C11.6699,3 14,3.0001 14,3.0001"
+        android:strokeWidth="1.5"
+        android:strokeColor="#FF000000"
+        android:strokeLineCap="round" />
+</vector>

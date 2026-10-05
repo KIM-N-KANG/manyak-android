@@ -3,6 +3,7 @@ package app.manyak.create.general.presentation
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,11 +13,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -27,7 +27,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -36,17 +40,19 @@ import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.create.R
 import app.manyak.create.general.presentation.form.GeneralStoryFormContent
 import app.manyak.create.general.presentation.form.labelRes
+import app.manyak.create.presentation.component.CreateFunnelHeader
 import app.manyak.create.presentation.component.SaveDraftWhenBackgrounded
+import app.manyak.create.presentation.state.DraftSaveStatus
+import app.manyak.create.presentation.state.DraftSaveUiState
+import app.manyak.designsystem.component.FocusScrollMargin
 import app.manyak.designsystem.component.LoadFailedContent
 import app.manyak.designsystem.component.ManyakDestructiveDialog
-import app.manyak.designsystem.component.ManyakIconButton
 import app.manyak.designsystem.component.ManyakProgressIndicator
 import app.manyak.designsystem.component.ManyakTextButton
 import app.manyak.designsystem.theme.ManyakTheme
 import kotlinx.coroutines.launch
 import app.manyak.designsystem.R as DesignsystemR
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GeneralStoryScreen(
     entry: GeneralEditorEntry,
@@ -86,8 +92,29 @@ fun GeneralStoryScreen(
             }
         }
     }
-    Column(modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
-        GeneralEditorHeader(entry, state, onIntent)
+    FocusScrollMargin {
+        Column(modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
+            GeneralEditorBody(entry, state, editing, onIntent) { pickerActive = it }
+        }
+    }
+    if (state.showExit) GeneralExitDialog(state, editing, onIntent)
+}
+
+@Composable
+private fun GeneralEditorBody(
+    entry: GeneralEditorEntry,
+    state: GeneralEditorState,
+    editing: Boolean,
+    onIntent: (GeneralEditorIntent) -> Unit,
+    onPickerActive: (Boolean) -> Unit,
+) {
+    Column(Modifier.fillMaxSize()) {
+        CreateFunnelHeader(
+            title = stringResource(if (editing) R.string.general_editor_edit_title else R.string.general_editor_title),
+            draftSave = if (editing) null else state.draftSave(entry),
+            onSaveDraft = { onIntent(GeneralEditorIntent.SaveDraft()) },
+            onClose = { onIntent(GeneralEditorIntent.Close) },
+        )
         when {
             state.loading ->
                 Box(
@@ -102,12 +129,29 @@ fun GeneralStoryScreen(
                 )
             else -> {
                 ReviewBanner(state, editing) { onIntent(GeneralEditorIntent.Retry) }
-                GeneralEditorForm(state, editing, onIntent, { pickerActive = it }, Modifier.weight(1f))
+                GeneralEditorForm(state, editing, onIntent, onPickerActive, Modifier.weight(1f))
             }
         }
     }
-    if (state.showExit) GeneralExitDialog(state, editing, onIntent)
 }
+
+/** 간편 제작과 같은 헤더 임시 저장 버튼의 상태. 등록을 요청한 뒤에는 저장본을 만들지 않아 잠근다. */
+private fun GeneralEditorState.draftSave(entry: GeneralEditorEntry): DraftSaveUiState =
+    DraftSaveUiState(
+        status =
+            when {
+                saving -> DraftSaveStatus.SAVING
+                saveLocked -> DraftSaveStatus.SAVED
+                else -> DraftSaveStatus.IDLE
+            },
+        canSave =
+            entry is GeneralEditorEntry.Draft &&
+                submission == null &&
+                submittedForm == null &&
+                inputsEnabled &&
+                uploading.isEmpty() &&
+                form.hasInput,
+    )
 
 @Composable
 private fun GeneralEditorForm(
@@ -150,51 +194,6 @@ private fun GeneralEditorForm(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun GeneralEditorHeader(
-    entry: GeneralEditorEntry,
-    state: GeneralEditorState,
-    onIntent: (GeneralEditorIntent) -> Unit,
-) {
-    val editing = entry is GeneralEditorEntry.Edit
-    TopAppBar(
-        title = {
-            Text(
-                stringResource(if (editing) R.string.general_editor_edit_title else R.string.general_editor_title),
-                style = ManyakTheme.typography.titleLarge,
-            )
-        },
-        actions = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (entry is GeneralEditorEntry.Draft && state.submission == null) {
-                    ManyakTextButton(
-                        onClick = { onIntent(GeneralEditorIntent.SaveDraft()) },
-                        enabled =
-                            state.inputsEnabled && !state.saving && !state.saveLocked && state.uploading.isEmpty(),
-                    ) {
-                        if (state.saving) {
-                            ManyakProgressIndicator()
-                        } else {
-                            Text(
-                                stringResource(R.string.create_draft_save),
-                                style = ManyakTheme.typography.labelLarge,
-                            )
-                        }
-                    }
-                }
-                ManyakIconButton(
-                    iconRes = DesignsystemR.drawable.ic_close,
-                    contentDescription = stringResource(R.string.create_close_funnel),
-                    onClick = { onIntent(GeneralEditorIntent.Close) },
-                )
-            }
-        },
-        windowInsets = WindowInsets(0, 0, 0, 0),
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = ManyakTheme.colors.surface),
-    )
-}
-
 @Suppress("CyclomaticComplexMethod")
 @Composable
 private fun ReviewBanner(
@@ -213,35 +212,67 @@ private fun ReviewBanner(
             submission?.status == "FAILED" -> R.string.general_editor_failed_title
             else -> null
         } ?: return
-    val description = reviewDescription(state.submission, editing)
-    Column(
-        Modifier.fillMaxWidth().padding(ManyakTheme.spacing.gutter),
-        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
+    // 검토 중은 기다리면 되는 상태라 회색으로, 통과하지 못했거나 확인하지 못한 상태는 위험 색으로 알린다.
+    val pending = submission?.status == "PENDING" && !state.acceptanceRecordFailed && !state.uncertainSubmission
+    val accent = if (pending) ManyakTheme.colors.textSubtle else ManyakTheme.colors.textDanger
+    Row(
+        Modifier
+            .padding(horizontal = ManyakTheme.spacing.gutter)
+            .padding(bottom = ManyakTheme.spacing.compact)
+            .fillMaxWidth()
+            .background(
+                if (pending) ManyakTheme.colors.backgroundNeutral else ManyakTheme.colors.backgroundDangerSubtle,
+                ManyakTheme.shapes.card,
+            ).padding(horizontal = ManyakTheme.spacing.gutter, vertical = ManyakTheme.spacing.component)
+            .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
+        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
-        Text(
-            stringResource(title),
-            style = ManyakTheme.typography.bodyLargeStrong,
-            color = ManyakTheme.colors.textDanger,
+        Icon(
+            painterResource(R.drawable.ic_alert_circle),
+            contentDescription = null,
+            tint = accent,
+            modifier = Modifier.padding(top = ManyakTheme.spacing.hairline).size(ManyakTheme.sizes.iconSmall),
         )
-        description?.let {
-            Text(stringResource(it), style = ManyakTheme.typography.bodyMedium, color = ManyakTheme.colors.textSubtle)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline)) {
+            Text(
+                stringResource(title),
+                style = ManyakTheme.typography.bodyMediumStrong,
+                color = if (pending) ManyakTheme.colors.text else ManyakTheme.colors.textDanger,
+            )
+            reviewDescription(submission, editing)?.let {
+                Text(
+                    stringResource(it),
+                    style = ManyakTheme.typography.bodyMedium,
+                    color = ManyakTheme.colors.textSubtle,
+                )
+            }
+            ReviewNotices(state)
+            if (state.acceptanceRecordFailed) {
+                ManyakTextButton(onClick = onRetry) {
+                    Text(stringResource(DesignsystemR.string.common_retry), style = ManyakTheme.typography.labelLarge)
+                }
+            }
         }
+    }
+}
+
+/** 칸 하나로 짚을 수 없는 검수 사유. 탭 이름을 붙여 점 목록으로 보인다. */
+@Composable
+private fun ReviewNotices(state: GeneralEditorState) {
+    if (state.generalNotices.isEmpty()) return
+    Column(
+        Modifier.padding(top = ManyakTheme.spacing.inline),
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.hairline),
+    ) {
         state.generalNotices.forEach { notice ->
             val reason = notice.message.text ?: stringResource(checkNotNull(notice.message.message).resource())
             val text =
                 notice.tab?.let {
-                    stringResource(
-                        R.string.general_editor_tab_reason,
-                        stringResource(it.labelRes()),
-                        reason,
-                    )
-                }
-                    ?: reason
-            Text(text, style = ManyakTheme.typography.bodySmall, color = ManyakTheme.colors.textDanger)
-        }
-        if (state.acceptanceRecordFailed) {
-            ManyakTextButton(onClick = onRetry) {
-                Text(stringResource(DesignsystemR.string.common_retry), style = ManyakTheme.typography.labelLarge)
+                    stringResource(R.string.general_editor_tab_reason, stringResource(it.labelRes()), reason)
+                } ?: reason
+            Row(horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact)) {
+                Text("•", style = ManyakTheme.typography.bodyMedium, color = ManyakTheme.colors.textSubtle)
+                Text(text, style = ManyakTheme.typography.bodyMedium, color = ManyakTheme.colors.textSubtle)
             }
         }
     }
@@ -264,37 +295,76 @@ private fun reviewDescription(
         else -> null
     }
 
+/** 닫을 때 무엇이 사라지는지에 따라 고르는 경고 문구. 제목, 설명, 머물기, 나가기 순서다. */
+private data class GeneralExitCopy(
+    @StringRes val title: Int,
+    @StringRes val description: Int,
+    @StringRes val stay: Int,
+    @StringRes val leave: Int = R.string.general_editor_exit_leave,
+)
+
+private fun GeneralEditorState.exitCopy(editing: Boolean): GeneralExitCopy {
+    val submitted = submission != null || submittedForm != null
+    return when {
+        editing ->
+            GeneralExitCopy(
+                R.string.general_editor_edit_exit_title,
+                R.string.general_editor_edit_exit_description,
+                R.string.general_editor_exit_close,
+            )
+        submitted && submittedForm != null && submittedForm != form ->
+            GeneralExitCopy(
+                R.string.general_editor_exit_edited_submission_title,
+                R.string.general_editor_exit_edited_submission,
+                R.string.general_editor_exit_close,
+            )
+        submitted ->
+            GeneralExitCopy(
+                R.string.general_editor_exit_title,
+                R.string.general_editor_exit_submitted,
+                R.string.general_editor_exit_continue,
+            )
+        savedForm != null && savedForm != form ->
+            GeneralExitCopy(
+                R.string.create_unsaved_warning_title,
+                R.string.create_unsaved_warning_description,
+                R.string.general_editor_exit_close,
+            )
+        savedForm != null ->
+            GeneralExitCopy(
+                R.string.create_saved_exit_warning_title,
+                R.string.create_saved_exit_warning_description,
+                R.string.general_editor_exit_continue,
+            )
+        form.hasInput ->
+            GeneralExitCopy(
+                R.string.create_unsaved_warning_title,
+                R.string.create_unsaved_input_warning_description,
+                R.string.general_editor_exit_close,
+            )
+        // 저장할 것도 저장한 것도 없을 때도 간편 제작처럼 닫기를 한 번 확인한다.
+        else ->
+            GeneralExitCopy(
+                R.string.create_exit_warning_title,
+                R.string.create_exit_warning_description,
+                R.string.create_exit_warning_stay,
+                R.string.create_exit_warning_leave,
+            )
+    }
+}
+
 @Composable
 private fun GeneralExitDialog(
     state: GeneralEditorState,
     editing: Boolean,
     onIntent: (GeneralEditorIntent) -> Unit,
 ) {
-    val changedAfterSubmission = state.submittedForm?.let { it != state.form } == true
-    val title =
-        if (editing) {
-            R.string.general_editor_edit_exit_title
-        } else if (state.submission == null &&
-            state.form != state.savedForm
-        ) {
-            R.string.create_unsaved_warning_title
-        } else {
-            R.string.general_editor_exit_title
-        }
-    val description =
-        when {
-            editing -> R.string.general_editor_edit_exit_description
-            changedAfterSubmission -> R.string.general_editor_exit_edited_submission
-            state.submission != null -> R.string.general_editor_exit_submitted
-            state.savedForm == null -> R.string.create_unsaved_input_warning_description
-            state.form != state.savedForm -> R.string.create_unsaved_warning_description
-            else -> R.string.create_exit_warning_description
-        }
+    val copy = state.exitCopy(editing)
     ManyakDestructiveDialog(
-        title = stringResource(title),
-        description = stringResource(description),
-        confirmLabel = stringResource(R.string.general_editor_exit_leave),
-        cancelLabel = stringResource(R.string.general_editor_exit_close),
+        title = stringResource(copy.title),
+        description = stringResource(copy.description),
+        confirmLabel = stringResource(copy.leave),
+        cancelLabel = stringResource(copy.stay),
         onConfirm = { onIntent(GeneralEditorIntent.ConfirmClose) },
         onDismiss = { onIntent(GeneralEditorIntent.DismissClose) },
     )
@@ -321,7 +391,6 @@ internal fun GeneralEditorMessage.resource(): Int =
         GeneralEditorMessage.IMAGE_UNREADABLE -> R.string.general_editor_image_unreadable
         GeneralEditorMessage.IMAGE_ERROR -> R.string.general_editor_image_error
         GeneralEditorMessage.SUBMIT_UNKNOWN -> R.string.general_editor_submit_unknown
-        GeneralEditorMessage.DRAFT_SAVED -> R.string.create_draft_saved
         GeneralEditorMessage.DRAFT_FAILED -> R.string.general_editor_draft_failed
         GeneralEditorMessage.CHAT_FAILED -> R.string.general_editor_chat_failed
     }

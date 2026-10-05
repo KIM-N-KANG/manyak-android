@@ -241,7 +241,7 @@ internal fun Long.toSavedAtText(): String =
  * 버튼이 기본으로 확보하는 최소 48dp 그대로다.
  */
 @Composable
-private fun ProgressActionButton(
+internal fun ProgressActionButton(
     label: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,

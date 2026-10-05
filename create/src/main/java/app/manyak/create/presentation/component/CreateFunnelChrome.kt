@@ -58,16 +58,17 @@ internal const val INDICATOR_STEP_COUNT = 3
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun CreateFunnelHeader(
-    draftSave: DraftSaveUiState,
+    draftSave: DraftSaveUiState?,
     onSaveDraft: () -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
+    title: String = stringResource(CreateR.string.create_title),
 ) {
     TopAppBar(
         modifier = modifier,
         title = {
             Text(
-                text = stringResource(CreateR.string.create_title),
+                text = title,
                 style = ManyakTheme.typography.titleLarge,
                 color = ManyakTheme.colors.text,
             )
@@ -80,7 +81,8 @@ internal fun CreateFunnelHeader(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
             ) {
-                DraftSaveButton(draftSave = draftSave, onClick = onSaveDraft)
+                // 스토리 수정처럼 임시 저장이 없는 화면은 닫기만 둔다.
+                draftSave?.let { DraftSaveButton(draftSave = it, onClick = onSaveDraft) }
                 ManyakIconButton(
                     iconRes = DesignsystemR.drawable.ic_close,
                     contentDescription = stringResource(CreateR.string.create_close_funnel),

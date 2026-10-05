@@ -55,6 +55,22 @@ internal class GeneralFormScope(
         }
 }
 
+/**
+ * 여러 줄 입력의 처음 높이와 더 자라지 않는 높이를 줄 수로 정한다. 긴 글을 받는 칸일수록 처음부터
+ * 넉넉하게 두고, 상한을 넘으면 칸 안에서 스크롤한다.
+ */
+@Suppress("MagicNumber")
+internal enum class GeneralTextHeight(
+    val minLines: Int,
+    val maxLines: Int,
+) {
+    SHORT(3, 7),
+    LONG(5, 13),
+    WORLD(7, 17),
+    SUGGESTED(2, 7),
+}
+
+@Suppress("LongParameterList", "CyclomaticComplexMethod")
 @Composable
 internal fun GeneralFormScope.Input(
     target: GeneralFieldTarget,
@@ -63,10 +79,13 @@ internal fun GeneralFormScope.Input(
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     required: Boolean = true,
-    multiline: Boolean = false,
+    height: GeneralTextHeight? = null,
+    placeholder: String = "",
     hint: String? = null,
     label: String = stringResource(target.labelRes()),
+    showLabel: Boolean = true,
     showHint: Boolean = true,
+    suffix: String? = null,
 ) {
     val message = message(target)
     var focused by remember(target) { mutableStateOf(false) }
@@ -84,7 +103,7 @@ internal fun GeneralFormScope.Input(
         val normalized =
             when {
                 target.field == GeneralField.MIN_TURNS -> text
-                multiline -> text.take(maxLength)
+                height != null -> text.take(maxLength)
                 else -> text.replace(Regex("[\\r\\n\\t]"), " ").take(maxLength)
             }
         onValueChange(normalized)
@@ -93,40 +112,59 @@ internal fun GeneralFormScope.Input(
         modifier.then(anchor(target)),
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
-        KeywordSectionLabel(text = label, required = required)
-        if (multiline) {
-            ManyakMultilineTextField(
-                value = value,
-                onValueChange = change,
-                placeholder = label,
-                enabled = enabled,
-                isError = message != null,
-                modifier = inputModifier,
-                footer = { ManyakInputCounter(value.length, maxLength) },
-            )
-        } else {
-            ManyakTextField(
-                value = value,
-                onValueChange = change,
-                placeholder = label,
-                enabled = enabled,
-                isError = message != null,
-                modifier = inputModifier,
-                keyboardOptions =
-                    if (target.field ==
-                        GeneralField.MIN_TURNS
-                    ) {
-                        NumberKeyboard
-                    } else {
-                        KeyboardOptions.Default
-                    },
-                trailing = { GeneralTextCounter(target.field, value.length, maxLength) },
-            )
-        }
+        if (showLabel) KeywordSectionLabel(text = label, required = required)
+        InputControl(target, value, maxLength, change, inputModifier, message != null, height, placeholder, suffix)
         if (showHint) GeneralFieldHint(message, hint)
     }
 }
 
+@Suppress("LongParameterList")
+@Composable
+private fun GeneralFormScope.InputControl(
+    target: GeneralFieldTarget,
+    value: String,
+    maxLength: Int,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier,
+    isError: Boolean,
+    height: GeneralTextHeight?,
+    placeholder: String,
+    suffix: String?,
+) {
+    if (height != null) {
+        ManyakMultilineTextField(
+            value = value,
+            onValueChange = onValueChange,
+            placeholder = placeholder,
+            enabled = enabled,
+            isError = isError,
+            modifier = modifier,
+            minLines = height.minLines,
+            maxLines = height.maxLines,
+            footer = { ManyakInputCounter(value.length, maxLength) },
+        )
+    } else {
+        ManyakTextField(
+            value = value,
+            onValueChange = onValueChange,
+            placeholder = placeholder,
+            enabled = enabled,
+            isError = isError,
+            modifier = modifier,
+            keyboardOptions = if (target.field == GeneralField.MIN_TURNS) NumberKeyboard else KeyboardOptions.Default,
+            trailing = {
+                // 단위가 붙는 칸은 글자 수 대신 단위를 둔다.
+                if (suffix != null) {
+                    Text(suffix, style = ManyakTheme.typography.bodySmall, color = ManyakTheme.colors.textSubtle)
+                } else {
+                    ManyakInputCounter(value.length, maxLength)
+                }
+            },
+        )
+    }
+}
+
+/** 칸 아래 설명. 오류가 있으면 같은 자리를 오류가 대신한다. */
 @Composable
 internal fun GeneralFieldHint(
     message: String?,
@@ -136,7 +174,7 @@ internal fun GeneralFieldHint(
     if (text != null) {
         Text(
             text,
-            style = ManyakTheme.typography.bodySmall,
+            style = ManyakTheme.typography.bodyMedium,
             color = if (message == null) ManyakTheme.colors.textSubtle else ManyakTheme.colors.textDanger,
         )
     }
@@ -218,15 +256,6 @@ internal fun GeneralFieldTarget.labelRes(): Int =
     }
 
 private val NumberKeyboard = KeyboardOptions(keyboardType = KeyboardType.Number)
-
-@Composable
-private fun GeneralTextCounter(
-    field: GeneralField,
-    length: Int,
-    maximum: Int,
-) {
-    if (field != GeneralField.MIN_TURNS) ManyakInputCounter(length, maximum)
-}
 
 private fun requiredMessageResource(finalConsonant: Boolean): Int =
     if (finalConsonant) CreateR.string.general_error_required_final else CreateR.string.general_error_required

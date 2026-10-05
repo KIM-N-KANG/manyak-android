@@ -315,11 +315,8 @@ class GeneralStoryViewModel
                                     ?: false
                             }
                         if (saved) lastSavedForm = form
-                        if (showToast) {
-                            message(
-                                if (saved) GeneralEditorMessage.DRAFT_SAVED else GeneralEditorMessage.DRAFT_FAILED,
-                            )
-                        }
+                        // 성공 안내는 헤더의 임시 저장 버튼이 맡는다. 간편 제작과 같은 버튼을 쓰기 위해서다.
+                        if (showToast && !saved) message(GeneralEditorMessage.DRAFT_FAILED)
                     } catch (cancelled: CancellationException) {
                         throw cancelled
                     } catch (_: Exception) {

@@ -76,7 +76,6 @@ enum class GeneralEditorMessage {
     IMAGE_UNREADABLE,
     IMAGE_ERROR,
     SUBMIT_UNKNOWN,
-    DRAFT_SAVED,
     DRAFT_FAILED,
     CHAT_FAILED,
 }

@@ -181,4 +181,4 @@ internal fun CropTransform.clampToImage(imageRatio: Float): CropTransform {
     )
 }
 
-private const val MAX_CROP_ZOOM = 5f
+internal const val MAX_CROP_ZOOM = 3f

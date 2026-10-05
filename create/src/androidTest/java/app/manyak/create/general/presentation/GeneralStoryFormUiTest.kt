@@ -24,7 +24,7 @@ import app.manyak.create.general.entity.GeneralStoryForm
 import app.manyak.create.general.entity.GeneralStoryImage
 import app.manyak.create.general.entity.GeneralTab
 import app.manyak.create.general.presentation.form.GeneralStoryFormContent
-import app.manyak.create.general.presentation.image.GeneralImageCropDialog
+import app.manyak.create.general.presentation.image.GeneralImageCropSheet
 import app.manyak.designsystem.theme.ManyakTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -124,7 +124,7 @@ class GeneralStoryFormUiTest {
         compose.setContent {
             ManyakTheme {
                 if (visible) {
-                    GeneralImageCropDialog(
+                    GeneralImageCropSheet(
                         path = "/nonexistent-crop-preview.jpg",
                         aspectRatio = 4f / 3f,
                         onDismiss = { visible = false },
@@ -136,7 +136,7 @@ class GeneralStoryFormUiTest {
                 }
             }
         }
-        compose.onNodeWithText("취소").performScrollTo().performClick()
+        compose.onNodeWithText("닫기").performScrollTo().performClick()
         compose.runOnIdle {
             assertEquals(original, image)
             assertFalse(uploadCalled)

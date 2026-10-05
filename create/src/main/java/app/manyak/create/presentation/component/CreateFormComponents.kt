@@ -1,5 +1,6 @@
 package app.manyak.create.presentation.component
 
+import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -18,7 +19,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
@@ -84,16 +87,18 @@ internal fun AddTrigger(
     enabled: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    shape: Shape = ManyakTheme.shapes.control,
+    @DrawableRes iconRes: Int = DesignsystemR.drawable.ic_add,
 ) {
     val contentColor = if (enabled) ManyakTheme.colors.text else ManyakTheme.colors.textDisabled
     Row(
         modifier =
             modifier
                 .heightIn(min = ManyakTheme.sizes.input)
-                .clip(ManyakTheme.shapes.control)
+                .clip(shape)
                 .background(ManyakTheme.colors.backgroundNeutral)
-                .border(1.dp, ManyakTheme.colors.border, ManyakTheme.shapes.control)
-                .clickable(enabled = enabled, onClick = onClick)
+                .border(1.dp, ManyakTheme.colors.border, shape)
+                .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
                 .padding(
                     horizontal = ManyakTheme.spacing.controlHorizontal,
                     vertical = ManyakTheme.spacing.controlVertical,
@@ -103,7 +108,7 @@ internal fun AddTrigger(
     ) {
         Icon(
             modifier = Modifier.size(ManyakTheme.sizes.iconSmall),
-            painter = painterResource(DesignsystemR.drawable.ic_add),
+            painter = painterResource(iconRes),
             contentDescription = null,
             tint = contentColor,
         )

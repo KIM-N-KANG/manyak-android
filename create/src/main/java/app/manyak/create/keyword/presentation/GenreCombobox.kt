@@ -35,6 +35,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
@@ -92,46 +93,87 @@ internal fun GenreKeywordSection(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun GenreCombobox(
     state: CreateKeywordUiState,
     onIntent: (CreateKeywordIntent) -> Unit,
 ) {
     val picker = state.genrePicker
+    val canPick = !state.isRestoring && picker.catalog != null
+    GenreSearchCombobox(
+        query = picker.query,
+        expanded = picker.expanded,
+        showLoading = picker.showLoading,
+        searching = picker.searching,
+        failed = picker.searchFailed || picker.catalogFailed,
+        options =
+            picker.results.map { tag ->
+                val selected = tag.id in state.selectedGenreTagIds
+                GenreMenuOption(
+                    name = tag.name,
+                    selected = selected,
+                    enabled = canPick && (selected || !state.isAtSelectionCap(KeywordTarget.Genre)),
+                )
+            },
+        onQueryChange = { onIntent(CreateKeywordIntent.SearchGenres(it)) },
+        onExpandedChange = { onIntent(CreateKeywordIntent.ExpandGenres(it)) },
+        onRetry = { onIntent(CreateKeywordIntent.RetryGenres) },
+        onSelect = { index -> onIntent(CreateKeywordIntent.SelectGenre(picker.results[index].id)) },
+    )
+}
+
+/** 장르 검색 결과 한 줄. 간편 제작과 일반 제작이 서로 다른 장르 모델을 이 모양으로 옮겨 같은 목록을 그린다. */
+internal data class GenreMenuOption(
+    val name: String,
+    val selected: Boolean,
+    val enabled: Boolean,
+)
+
+/** 제공 장르 검색 입력과 결과 팝업. 상태는 부르는 쪽이 소유한다. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Suppress("LongParameterList")
+@Composable
+internal fun GenreSearchCombobox(
+    query: String,
+    expanded: Boolean,
+    showLoading: Boolean,
+    searching: Boolean,
+    failed: Boolean,
+    options: List<GenreMenuOption>,
+    onQueryChange: (String) -> Unit,
+    onExpandedChange: (Boolean) -> Unit,
+    onRetry: () -> Unit,
+    onSelect: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+) {
     var anchorBounds by remember { mutableStateOf(IntRect.Zero) }
     val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     val close: () -> Unit = {
-        onIntent(CreateKeywordIntent.ExpandGenres(false))
+        onExpandedChange(false)
         focusManager.clearFocus()
         keyboard?.hide()
     }
     val dropdownLabel =
         stringResource(
-            if (picker.expanded) R.string.create_genre_close_list else R.string.create_genre_open_list,
+            if (expanded) R.string.create_genre_close_list else R.string.create_genre_open_list,
         )
-    BackHandler(enabled = picker.expanded, onBack = close)
+    BackHandler(enabled = expanded, onBack = close)
     ExposedDropdownMenuBox(
-        expanded = picker.expanded,
-        onExpandedChange = { onIntent(CreateKeywordIntent.ExpandGenres(it)) },
+        modifier = modifier,
+        expanded = expanded,
+        onExpandedChange = { if (enabled) onExpandedChange(it) },
     ) {
         ManyakTextField(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .onGloballyPositioned { coordinates ->
-                        val bounds = coordinates.boundsInWindow()
-                        anchorBounds =
-                            IntRect(
-                                bounds.left.roundToInt(),
-                                bounds.top.roundToInt(),
-                                bounds.right.roundToInt(),
-                                bounds.bottom.roundToInt(),
-                            )
-                    }.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable),
-            value = picker.query,
-            onValueChange = { onIntent(CreateKeywordIntent.SearchGenres(it)) },
+                    .onGloballyPositioned { anchorBounds = it.windowIntBounds() }
+                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, enabled),
+            value = query,
+            onValueChange = onQueryChange,
+            enabled = enabled,
             placeholder = stringResource(R.string.create_genre_search_placeholder),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { close() }),
@@ -142,14 +184,14 @@ private fun GenreCombobox(
                     Modifier
                         .semantics {
                             contentDescription = dropdownLabel
-                        }.menuAnchor(ExposedDropdownMenuAnchorType.SecondaryEditable),
+                        }.menuAnchor(ExposedDropdownMenuAnchorType.SecondaryEditable, enabled),
                 )
             },
         )
-        if (picker.expanded) {
+        if (expanded) {
             GenreDropdownMenu(anchorBounds, close) {
-                GenreMenuContents(state, onIntent) { id ->
-                    onIntent(CreateKeywordIntent.SelectGenre(id))
+                GenreMenuContents(showLoading, searching, failed, options, onRetry) { index ->
+                    onSelect(index)
                     focusManager.clearFocus()
                     keyboard?.hide()
                 }
@@ -207,41 +249,38 @@ private fun GenreDropdownMenu(
 
 @Composable
 private fun GenreMenuContents(
-    state: CreateKeywordUiState,
-    onIntent: (CreateKeywordIntent) -> Unit,
-    onSelect: (Long) -> Unit,
+    showLoading: Boolean,
+    searching: Boolean,
+    failed: Boolean,
+    options: List<GenreMenuOption>,
+    onRetry: () -> Unit,
+    onSelect: (Int) -> Unit,
 ) {
-    val picker = state.genrePicker
     when {
-        picker.showLoading -> GenreMenuMessage(stringResource(R.string.create_genre_search_loading))
-        !picker.searching && (picker.searchFailed || picker.catalogFailed) ->
+        showLoading -> GenreMenuMessage(stringResource(R.string.create_genre_search_loading))
+        !searching && failed ->
             DropdownMenuItem(
                 text = { GenreMenuMessage(stringResource(R.string.create_genre_search_retry)) },
-                onClick = { onIntent(CreateKeywordIntent.RetryGenres) },
+                onClick = onRetry,
             )
-        picker.results.isEmpty() ->
-            if (picker.searching) {
+        options.isEmpty() ->
+            if (searching) {
                 Spacer(Modifier.height(ManyakTheme.sizes.input))
             } else {
                 GenreMenuMessage(stringResource(R.string.create_genre_search_empty))
             }
-        else -> GenreMenuItems(state, onSelect)
+        else -> GenreMenuItems(options, onSelect)
     }
 }
 
 @Composable
 private fun GenreMenuItems(
-    state: CreateKeywordUiState,
-    onSelect: (Long) -> Unit,
+    options: List<GenreMenuOption>,
+    onSelect: (Int) -> Unit,
 ) {
-    state.genrePicker.results.forEach { tag ->
-        val selected = tag.id in state.selectedGenreTagIds
-        val enabled =
-            !state.isRestoring &&
-                state.genrePicker.catalog != null &&
-                (selected || !state.isAtSelectionCap(KeywordTarget.Genre))
+    options.forEachIndexed { index, option ->
         val background =
-            if (selected) ManyakTheme.colors.backgroundNeutral else ManyakTheme.colors.surfaceRaised
+            if (option.selected) ManyakTheme.colors.backgroundNeutral else ManyakTheme.colors.surfaceRaised
         DropdownMenuItem(
             modifier =
                 Modifier
@@ -249,22 +288,22 @@ private fun GenreMenuItems(
                     .background(
                         background,
                         ManyakTheme.shapes.menuItem,
-                    ).semantics { this.selected = selected },
+                    ).semantics { this.selected = option.selected },
             text = {
                 Text(
-                    text = tag.name,
+                    text = option.name,
                     style = ManyakTheme.typography.bodyMedium,
-                    color = if (enabled) ManyakTheme.colors.text else ManyakTheme.colors.textDisabled,
+                    color = if (option.enabled) ManyakTheme.colors.text else ManyakTheme.colors.textDisabled,
                 )
             },
             trailingIcon =
-                if (selected) {
+                if (option.selected) {
                     { GenreInputIcon(DesignsystemR.drawable.ic_check) }
                 } else {
                     null
                 },
-            enabled = enabled,
-            onClick = { onSelect(tag.id) },
+            enabled = option.enabled,
+            onClick = { onSelect(index) },
         )
     }
 }
@@ -283,11 +322,21 @@ private fun GenreInputIcon(
 }
 
 @Composable
-private fun GenreMenuMessage(text: String) {
+internal fun GenreMenuMessage(text: String) {
     Text(
         modifier = Modifier.padding(ManyakTheme.spacing.controlHorizontal),
         text = text,
         style = ManyakTheme.typography.bodySmall,
         color = ManyakTheme.colors.textSubtle,
+    )
+}
+
+private fun LayoutCoordinates.windowIntBounds(): IntRect {
+    val bounds = boundsInWindow()
+    return IntRect(
+        bounds.left.roundToInt(),
+        bounds.top.roundToInt(),
+        bounds.right.roundToInt(),
+        bounds.bottom.roundToInt(),
     )
 }

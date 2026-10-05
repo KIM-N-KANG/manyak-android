@@ -47,6 +47,9 @@ import app.manyak.designsystem.R as DesignsystemR
  *
  * 펼침 상태는 이 컴포넌트가 든다 — 밖에서 알 필요가 없는 표현 상태이고, 호출부마다 상태를 두면
  * 열고 닫는 규칙이 화면마다 갈린다.
+ *
+ * @param placeholder [selected] 가 [options] 에 없을 때 앵커에 흐리게 보일 문구. 고르지 않은 상태를
+ * 메뉴 항목으로 두지 않는 필수 선택에서 쓴다.
  */
 @Composable
 fun <T> ManyakSelectField(
@@ -56,15 +59,16 @@ fun <T> ManyakSelectField(
     modifier: Modifier = Modifier,
     isPlaceholder: Boolean = false,
     onClickLabel: String? = null,
+    placeholder: String? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
     var anchorWidthPx by remember { mutableIntStateOf(0) }
-    val selectedLabel = options.firstOrNull { option -> option.value == selected }?.label.orEmpty()
+    val selectedLabel = options.firstOrNull { option -> option.value == selected }?.label
 
     Box(modifier = modifier.onSizeChanged { size -> anchorWidthPx = size.width }) {
         SelectAnchor(
-            label = selectedLabel,
-            isPlaceholder = isPlaceholder,
+            label = selectedLabel ?: placeholder.orEmpty(),
+            isPlaceholder = isPlaceholder || selectedLabel == null,
             expanded = expanded,
             onClickLabel = onClickLabel,
             onClick = { expanded = true },

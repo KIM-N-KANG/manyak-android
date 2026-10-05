@@ -1,14 +1,9 @@
 package app.manyak.create.keyword.presentation
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,10 +33,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import app.manyak.create.presentation.component.AddTrigger
-import app.manyak.create.presentation.component.CollapsibleInputHeader
+import app.manyak.create.presentation.component.CollapsibleInputSection
 import app.manyak.create.presentation.component.KeywordSectionLabel
 import app.manyak.designsystem.component.ManyakInputCounter
 import app.manyak.designsystem.component.ManyakTextField
@@ -374,42 +368,29 @@ private fun SupportingCharacterSection(
     onOpenAddKeyword: (KeywordTarget) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
+    CollapsibleInputSection(
+        modifier = modifier,
+        headerLabel = headerLabel,
+        countLabel = countLabel,
+        expanded = expanded,
+        onToggle = { onIntent(CreateKeywordIntent.ToggleSupportingCharacter(character.id)) },
+        onDelete = {
+            (target as? KeywordTarget.Supporting)?.let {
+                onIntent(CreateKeywordIntent.RemoveSupportingCharacter(it.characterId))
+            }
+        },
     ) {
-        CollapsibleInputHeader(
-            headerLabel = headerLabel,
-            countLabel = countLabel,
-            expanded = expanded,
-            onToggle = { onIntent(CreateKeywordIntent.ToggleSupportingCharacter(character.id)) },
-            onDelete = {
-                (target as? KeywordTarget.Supporting)?.let {
-                    onIntent(CreateKeywordIntent.RemoveSupportingCharacter(it.characterId))
-                }
-            },
+        CharacterForm(
+            target = target,
+            character = character,
+            featureRequired = false,
+            namePlaceholder = namePlaceholder,
+            isDuplicateName = isDuplicateName,
+            providedTags = providedTags,
+            atSelectionCap = atSelectionCap,
+            onIntent = onIntent,
+            onOpenAddKeyword = onOpenAddKeyword,
         )
-        // 웹과 같은 튕김 없는 약 0.3초 스프링이다. 위 변을 붙잡아 입력 칸은 제자리에 두고 아래로 드러낸다.
-        // 기본값처럼 아래를 붙잡으면 폼이 머리 줄 밑에서 미끄러져 나온다.
-        val sizeSpec = spring(stiffness = Spring.StiffnessMediumLow, visibilityThreshold = IntSize.VisibilityThreshold)
-        val fadeSpec = spring<Float>(stiffness = Spring.StiffnessMediumLow)
-        AnimatedVisibility(
-            visible = expanded,
-            enter = expandVertically(sizeSpec, expandFrom = Alignment.Top) + fadeIn(fadeSpec),
-            exit = shrinkVertically(sizeSpec, shrinkTowards = Alignment.Top) + fadeOut(fadeSpec),
-        ) {
-            CharacterForm(
-                modifier = Modifier.padding(ManyakTheme.spacing.gutter),
-                target = target,
-                character = character,
-                featureRequired = false,
-                namePlaceholder = namePlaceholder,
-                isDuplicateName = isDuplicateName,
-                providedTags = providedTags,
-                atSelectionCap = atSelectionCap,
-                onIntent = onIntent,
-                onOpenAddKeyword = onOpenAddKeyword,
-            )
-        }
     }
 }
 

@@ -29,9 +29,9 @@ class CropTransformTest {
     @Test
     fun zoomCannotExceedMaximumAndOffsetsRemainInsideVisibleImage() {
         val result = CropTransform(3f / 4f, 10f, 10f, -10f).clampToImage(3f / 4f)
-        assertEquals(5f, result.zoom, 0.0001f)
-        assertEquals(2f, result.offsetX, 0.0001f)
-        assertEquals(-2f, result.offsetY, 0.0001f)
+        assertEquals(3f, result.zoom, 0.0001f)
+        assertEquals(1f, result.offsetX, 0.0001f)
+        assertEquals(-1f, result.offsetY, 0.0001f)
     }
 
     @Test

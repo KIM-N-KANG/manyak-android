@@ -2,7 +2,9 @@ package app.manyak.create.general.presentation.form
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,6 +30,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
@@ -38,13 +41,16 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import app.manyak.create.general.entity.GeneralFieldError
 import app.manyak.create.general.entity.GeneralFieldTarget
 import app.manyak.create.general.entity.GeneralStoryForm
 import app.manyak.create.general.entity.GeneralTab
 import app.manyak.create.general.presentation.GeneralGenreSearchState
 import app.manyak.create.presentation.component.FunnelPrimaryButton
+import app.manyak.designsystem.component.ManyakDestructiveDialog
 import app.manyak.designsystem.component.ManyakNeutralButton
+import app.manyak.designsystem.component.ScrollEdgeFade
 import app.manyak.designsystem.theme.ManyakTheme
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
@@ -149,37 +155,40 @@ internal fun GeneralStoryFormContent(
             tabsEnabled,
             changeTab,
         )
-        Column(
-            Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .onGloballyPositioned {
-                    viewportCenter =
-                        it.positionInRoot().y + it.size.height / 2f
-                }.verticalScroll(scroll)
-                .padding(ManyakTheme.spacing.gutter),
-        ) {
-            contentState.SaveableStateProvider(tabIndex) {
-                GeneralFormBody(
-                    fields,
-                    GeneralTab.entries[tabIndex],
-                    selectedStart,
-                    { selectedStart = it },
-                    collapsed,
-                    toggle,
-                    requestDelete,
-                    { pendingTarget = it },
-                    GeneralGenreUi(
-                        genres,
-                        featuredGenres,
-                        genreCatalogFailed,
-                        genreSearch,
-                        onGenreQuery,
-                        onGenreExpanded,
-                        onRetryGenres,
-                    ),
-                )
+        // 스크롤 본문이 푸터 경계에서 딱 잘리므로 바닥에 페이드를 겹친다.
+        Box(Modifier.weight(1f).fillMaxWidth()) {
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .onGloballyPositioned {
+                        viewportCenter =
+                            it.positionInRoot().y + it.size.height / 2f
+                    }.verticalScroll(scroll)
+                    .padding(GeneralTab.entries[tabIndex].contentPadding()),
+            ) {
+                contentState.SaveableStateProvider(tabIndex) {
+                    GeneralFormBody(
+                        fields,
+                        GeneralTab.entries[tabIndex],
+                        selectedStart,
+                        { selectedStart = it },
+                        collapsed,
+                        toggle,
+                        requestDelete,
+                        { pendingTarget = it },
+                        GeneralGenreUi(
+                            genres,
+                            featuredGenres,
+                            genreCatalogFailed,
+                            genreSearch,
+                            onGenreQuery,
+                            onGenreExpanded,
+                            onRetryGenres,
+                        ),
+                    )
+                }
             }
+            ScrollEdgeFade(Modifier.align(Alignment.BottomCenter))
         }
         if (WindowInsets.ime.getBottom(LocalDensity.current) == 0) {
             GeneralFormFooter(
@@ -195,7 +204,16 @@ internal fun GeneralStoryFormContent(
             }
         }
     }
-    deleteId?.let { id -> GeneralDeleteDialog(onDismiss = { deleteId = null }, onDelete = { delete(id) }) }
+    deleteId?.let { id ->
+        ManyakDestructiveDialog(
+            title = stringResource(CreateR.string.create_remove_input_title),
+            description = stringResource(CreateR.string.create_remove_input_description),
+            confirmLabel = stringResource(CreateR.string.create_remove_input_confirm),
+            cancelLabel = stringResource(CreateR.string.create_remove_input_cancel),
+            onConfirm = { delete(id) },
+            onDismiss = { deleteId = null },
+        )
+    }
 }
 
 @Composable
@@ -223,6 +241,9 @@ private fun GeneralFormTabs(
     CompositionLocalProvider(LocalRippleConfiguration provides null) {
         SecondaryScrollableTabRow(
             selectedTabIndex = selected,
+            edgePadding = 0.dp,
+            // 탭 폭은 글자 폭에 맞춘다. 기본 최소 폭은 짧은 탭 이름 양옆에 빈 공간을 남긴다.
+            minTabWidth = 0.dp,
             containerColor = ManyakTheme.colors.surface,
             contentColor = ManyakTheme.colors.text,
             indicator = {
@@ -274,8 +295,13 @@ private fun GeneralFormFooter(
     changeTab: (Int) -> Unit,
     submit: () -> Unit,
 ) {
+    // 위 여백은 두지 않는다 — 본문과 버튼 사이는 페이드가 맡는다.
     Row(
-        Modifier.fillMaxWidth().padding(ManyakTheme.spacing.gutter),
+        Modifier
+            .fillMaxWidth()
+            .padding(
+                horizontal = ManyakTheme.spacing.gutter,
+            ).padding(bottom = ManyakTheme.spacing.gutter),
         horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
         if (tab > 0) {
@@ -345,3 +371,12 @@ private fun GeneralFormBody(
         }
     }
 }
+
+/** 목록 머리 줄이 화면 끝까지 닿는 탭은 좌우와 위 여백을 항목이 직접 갖는다. */
+@Composable
+private fun GeneralTab.contentPadding(): PaddingValues =
+    when (this) {
+        GeneralTab.SUPPORTING, GeneralTab.START, GeneralTab.EVENTS ->
+            PaddingValues(bottom = ManyakTheme.spacing.gutter)
+        else -> PaddingValues(ManyakTheme.spacing.gutter)
+    }
