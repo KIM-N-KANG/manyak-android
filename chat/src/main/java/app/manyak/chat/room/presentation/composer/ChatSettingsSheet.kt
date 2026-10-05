@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -39,7 +40,6 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
-import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import app.manyak.chat.entity.ChatInputMode
@@ -49,6 +49,7 @@ import app.manyak.common.presentation.credit.LocalTrials
 import app.manyak.common.presentation.credit.creditAmountText
 import app.manyak.designsystem.component.ManyakBottomSheet
 import app.manyak.designsystem.component.ManyakIconButton
+import app.manyak.designsystem.component.ManyakPopup
 import app.manyak.designsystem.component.ManyakSwitch
 import app.manyak.designsystem.credit.CreditAmountText
 import app.manyak.designsystem.theme.ManyakTheme
@@ -211,13 +212,16 @@ private fun RealtimeImageNoticeButton() {
             iconSize = ManyakTheme.sizes.iconSmall,
             tint = ManyakTheme.colors.textSubtle,
         )
-        if (open) NoticePopover(onDismiss = { open = false })
+        NoticePopover(open, onDismiss = { open = false })
     }
 }
 
 /** 앵커 왼쪽 끝에 맞춰 아래로 여는 한 문장 팝오버. 시트 안에 있어 창 밖으로 나갈 오른쪽 여유가 없다. */
 @Composable
-private fun NoticePopover(onDismiss: () -> Unit) {
+private fun NoticePopover(
+    open: Boolean,
+    onDismiss: () -> Unit,
+) {
     val gapPx = with(LocalDensity.current) { ManyakTheme.spacing.inline.roundToPx() }
     val positionProvider =
         remember(gapPx) {
@@ -234,7 +238,9 @@ private fun NoticePopover(onDismiss: () -> Unit) {
                     )
             }
         }
-    Popup(
+    ManyakPopup(
+        visible = open,
+        transformOrigin = TransformOrigin(pivotFractionX = 0f, pivotFractionY = 0f),
         popupPositionProvider = positionProvider,
         onDismissRequest = onDismiss,
         properties = PopupProperties(focusable = true),

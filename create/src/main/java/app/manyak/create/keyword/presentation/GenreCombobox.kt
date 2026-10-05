@@ -4,10 +4,10 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,10 +18,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -30,11 +32,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -44,18 +49,18 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
-import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import app.manyak.create.R
+import app.manyak.designsystem.component.ManyakPopup
 import app.manyak.designsystem.component.ManyakTextField
 import app.manyak.designsystem.theme.ManyakTheme
 import kotlin.math.roundToInt
@@ -148,22 +153,29 @@ internal fun GenreSearchCombobox(
     enabled: Boolean = true,
 ) {
     var anchorBounds by remember { mutableStateOf(IntRect.Zero) }
+    // 여닫음을 화면에서 먼저 반영해 상태가 ViewModel 을 돌아오는 동안 팝업이 늦게 뜨지 않게 한다.
+    var shown by remember { mutableStateOf(expanded) }
+    LaunchedEffect(expanded) { shown = expanded }
+    val setExpanded: (Boolean) -> Unit = {
+        shown = it
+        onExpandedChange(it)
+    }
     val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     val close: () -> Unit = {
-        onExpandedChange(false)
+        setExpanded(false)
         focusManager.clearFocus()
         keyboard?.hide()
     }
     val dropdownLabel =
         stringResource(
-            if (expanded) R.string.create_genre_close_list else R.string.create_genre_open_list,
+            if (shown) R.string.create_genre_close_list else R.string.create_genre_open_list,
         )
-    BackHandler(enabled = expanded, onBack = close)
+    BackHandler(enabled = shown, onBack = close)
     ExposedDropdownMenuBox(
         modifier = modifier,
-        expanded = expanded,
-        onExpandedChange = { if (enabled) onExpandedChange(it) },
+        expanded = shown,
+        onExpandedChange = { if (enabled) setExpanded(it) },
     ) {
         ManyakTextField(
             modifier =
@@ -188,13 +200,12 @@ internal fun GenreSearchCombobox(
                 )
             },
         )
-        if (expanded) {
-            GenreDropdownMenu(anchorBounds, close) {
-                GenreMenuContents(showLoading, searching, failed, options, onRetry) { index ->
-                    onSelect(index)
-                    focusManager.clearFocus()
-                    keyboard?.hide()
-                }
+        GenreDropdownMenu(shown, anchorBounds, close) {
+            // 결과가 오기 전 한 프레임에 "결과 없음"이 비치지 않게 기다리는 상태로 본다.
+            genreMenuContents(showLoading, searching || !expanded, failed, options, onRetry) { index ->
+                onSelect(index)
+                focusManager.clearFocus()
+                keyboard?.hide()
             }
         }
     }
@@ -202,9 +213,10 @@ internal fun GenreSearchCombobox(
 
 @Composable
 private fun GenreDropdownMenu(
+    visible: Boolean,
     anchorBounds: IntRect,
     onDismiss: () -> Unit,
-    content: @Composable ColumnScope.() -> Unit,
+    content: LazyListScope.() -> Unit,
 ) {
     val density = LocalDensity.current
     val gap = with(density) { ManyakTheme.spacing.inline.roundToPx() }
@@ -226,7 +238,8 @@ private fun GenreDropdownMenu(
                 ) = IntOffset(anchorBounds.left, anchorBounds.bottom + gap)
             }
         }
-    Popup(
+    ManyakPopup(
+        visible = visible,
         popupPositionProvider = position,
         onDismissRequest = onDismiss,
         properties = PopupProperties(focusable = false),
@@ -238,8 +251,9 @@ private fun GenreDropdownMenu(
             border = BorderStroke(ManyakTheme.sizes.inputBorderWidth, ManyakTheme.colors.border),
             shadowElevation = ManyakTheme.sizes.selectMenuElevation,
         ) {
-            Column(
-                modifier = Modifier.verticalScroll(rememberScrollState()).padding(ManyakTheme.spacing.inline),
+            // 장르가 200개 가까이 되므로 보이는 항목만 그린다.
+            LazyColumn(
+                contentPadding = PaddingValues(ManyakTheme.spacing.inline),
                 verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
                 content = content,
             )
@@ -247,8 +261,8 @@ private fun GenreDropdownMenu(
     }
 }
 
-@Composable
-private fun GenreMenuContents(
+@Suppress("LongParameterList")
+private fun LazyListScope.genreMenuContents(
     showLoading: Boolean,
     searching: Boolean,
     failed: Boolean,
@@ -257,54 +271,62 @@ private fun GenreMenuContents(
     onSelect: (Int) -> Unit,
 ) {
     when {
-        showLoading -> GenreMenuMessage(stringResource(R.string.create_genre_search_loading))
+        showLoading -> item { GenreMenuMessage(stringResource(R.string.create_genre_search_loading)) }
         !searching && failed ->
-            DropdownMenuItem(
-                text = { GenreMenuMessage(stringResource(R.string.create_genre_search_retry)) },
-                onClick = onRetry,
-            )
-        options.isEmpty() ->
-            if (searching) {
-                Spacer(Modifier.height(ManyakTheme.sizes.input))
-            } else {
-                GenreMenuMessage(stringResource(R.string.create_genre_search_empty))
+            item {
+                DropdownMenuItem(
+                    text = { GenreMenuMessage(stringResource(R.string.create_genre_search_retry)) },
+                    onClick = onRetry,
+                )
             }
-        else -> GenreMenuItems(options, onSelect)
+        options.isEmpty() ->
+            item {
+                if (searching) {
+                    Spacer(Modifier.height(ManyakTheme.sizes.input))
+                } else {
+                    GenreMenuMessage(stringResource(R.string.create_genre_search_empty))
+                }
+            }
+        else ->
+            itemsIndexed(options, key = {
+                _,
+                option,
+                ->
+                option.name
+            }) { index, option -> GenreMenuItem(option) { onSelect(index) } }
     }
 }
 
 @Composable
-private fun GenreMenuItems(
-    options: List<GenreMenuOption>,
-    onSelect: (Int) -> Unit,
+private fun GenreMenuItem(
+    option: GenreMenuOption,
+    onClick: () -> Unit,
 ) {
-    options.forEachIndexed { index, option ->
-        val background =
-            if (option.selected) ManyakTheme.colors.backgroundNeutral else ManyakTheme.colors.surfaceRaised
-        DropdownMenuItem(
-            modifier =
-                Modifier
-                    .height(ManyakTheme.sizes.input)
-                    .background(
-                        background,
-                        ManyakTheme.shapes.menuItem,
-                    ).semantics { this.selected = option.selected },
-            text = {
-                Text(
-                    text = option.name,
-                    style = ManyakTheme.typography.bodyMedium,
-                    color = if (option.enabled) ManyakTheme.colors.text else ManyakTheme.colors.textDisabled,
-                )
-            },
-            trailingIcon =
-                if (option.selected) {
-                    { GenreInputIcon(DesignsystemR.drawable.ic_check) }
-                } else {
-                    null
-                },
-            enabled = option.enabled,
-            onClick = { onSelect(index) },
+    // 목록이 길어 M3 메뉴 항목보다 가벼운 행으로 그린다. 모양은 셀렉트 메뉴 항목과 같다.
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(ManyakTheme.sizes.input)
+                .clip(ManyakTheme.shapes.menuItem)
+                .background(
+                    if (option.selected) ManyakTheme.colors.backgroundNeutral else ManyakTheme.colors.surfaceRaised,
+                ).selectable(
+                    selected = option.selected,
+                    enabled = option.enabled,
+                    role = Role.Button,
+                    onClick = onClick,
+                ).padding(horizontal = ManyakTheme.spacing.controlHorizontal),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+    ) {
+        Text(
+            modifier = Modifier.weight(1f),
+            text = option.name,
+            style = ManyakTheme.typography.bodyMedium,
+            color = if (option.enabled) ManyakTheme.colors.text else ManyakTheme.colors.textDisabled,
         )
+        if (option.selected) GenreInputIcon(DesignsystemR.drawable.ic_check)
     }
 }
 

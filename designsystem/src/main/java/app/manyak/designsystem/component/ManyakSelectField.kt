@@ -1,5 +1,8 @@
 package app.manyak.designsystem.component
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -25,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -36,7 +40,6 @@ import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import app.manyak.designsystem.theme.ManyakTheme
@@ -73,23 +76,22 @@ fun <T> ManyakSelectField(
             onClickLabel = onClickLabel,
             onClick = { expanded = true },
         )
-        if (expanded) {
-            ManyakSelectMenu(
-                modifier = Modifier.width(with(LocalDensity.current) { anchorWidthPx.toDp() }),
-                options = options,
-                selected = selected,
-                onDismiss = { expanded = false },
-                onSelect = { value ->
-                    expanded = false
-                    onSelect(value)
-                },
-            )
-        }
+        ManyakSelectMenu(
+            expanded = expanded,
+            modifier = Modifier.width(with(LocalDensity.current) { anchorWidthPx.toDp() }),
+            options = options,
+            selected = selected,
+            onDismiss = { expanded = false },
+            onSelect = { value ->
+                expanded = false
+                onSelect(value)
+            },
+        )
     }
 }
 
 /**
- * 앵커 바로 아래에 열리는 단일 선택 메뉴. 앵커와 같은 부모 안에 두고 펼침 상태가 참일 때만 그린다.
+ * 앵커 바로 아래에 열리는 단일 선택 메뉴. 앵커와 같은 부모 안에 두고 [expanded] 로 여닫는다.
  *
  * 폭은 [modifier] 로 정하고, 정하지 않으면 가장 긴 항목에 맞춘다. [alignment] 는 메뉴를 앵커의 어느
  * 끝에 맞출지다 — 화면 끝에 붙은 앵커보다 메뉴가 넓으면 그 끝에 맞춰야 화면 밖으로 밀리지 않는다.
@@ -99,6 +101,7 @@ fun <T> ManyakSelectField(
  */
 @Composable
 fun <T> ManyakSelectMenu(
+    expanded: Boolean,
     options: List<ManyakSelectOption<T>>,
     selected: T,
     onDismiss: () -> Unit,
@@ -125,7 +128,8 @@ fun <T> ManyakSelectMenu(
             }
         }
 
-    Popup(
+    ManyakPopup(
+        visible = expanded,
         popupPositionProvider = positionProvider,
         onDismissRequest = onDismiss,
         properties = PopupProperties(focusable = true),
@@ -221,18 +225,23 @@ private fun SelectAnchor(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
+        // 메뉴가 자리 잡는 스프링과 같이 돌아 두 움직임이 한 번에 읽힌다.
+        val rotation by animateFloatAsState(
+            targetValue = if (expanded) HALF_TURN else 0f,
+            animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow),
+            label = "selectChevron",
+        )
         Icon(
-            modifier = Modifier.size(ManyakTheme.sizes.iconSmall),
-            painter =
-                painterResource(
-                    if (expanded) DesignsystemR.drawable.ic_angle_up else DesignsystemR.drawable.ic_angle_down,
-                ),
+            modifier = Modifier.size(ManyakTheme.sizes.iconSmall).rotate(rotation),
+            painter = painterResource(DesignsystemR.drawable.ic_angle_down),
             // 고른 값과 함께 한 줄로 읽히므로 아이콘에 따로 이름을 붙이지 않는다.
             contentDescription = null,
             tint = ManyakTheme.colors.textSubtle,
         )
     }
 }
+
+private const val HALF_TURN = 180f
 
 private val MenuShadowElevation = 4.dp
 
