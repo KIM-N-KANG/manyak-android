@@ -60,6 +60,15 @@ sealed class AnalyticsEvent(
         val storyId: String,
     ) : AnalyticsEvent("client_storyList_storyOptions_opened", mapOf("story_id" to storyId))
 
+    data class SubmissionCardClicked(
+        val submissionId: String,
+        val status: String,
+        val action: String,
+    ) : AnalyticsEvent(
+            "client_storyList_submissionCard_clicked",
+            mapOf("submission_id" to submissionId, "status" to status, "action" to action),
+        )
+
     data class StoryListStoryDeleted(
         val storyId: String,
     ) : AnalyticsEvent("client_storyList_story_deleted", mapOf("story_id" to storyId))

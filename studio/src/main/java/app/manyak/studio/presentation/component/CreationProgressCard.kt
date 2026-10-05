@@ -200,16 +200,17 @@ private fun ProgressTitleRow(
 
 /** 처음 임시 저장한 시각. 내 스토리 카드의 제작일 줄과 같은 칩으로 오른쪽 끝에 붙는다. */
 @Composable
-private fun SavedAtRow(
+internal fun SavedAtRow(
     savedAt: Long,
     modifier: Modifier = Modifier,
+    descriptionRes: Int = StudioR.string.studio_progress_saved_at_description,
 ) {
     val text = remember(savedAt) { savedAt.toSavedAtText() }
     Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
         MetaChip(
             iconRes = DesignsystemR.drawable.ic_calendar,
             text = text,
-            description = stringResource(StudioR.string.studio_progress_saved_at_description, text),
+            description = stringResource(descriptionRes, text),
         )
     }
 }

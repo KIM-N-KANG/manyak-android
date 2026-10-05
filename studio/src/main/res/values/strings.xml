@@ -27,4 +27,23 @@
     <string name="studio_story_created_date_description">제작일 %1$s</string>
     <string name="studio_story_more">더보기</string>
     <string name="studio_story_options">스토리 옵션</string>
+    <string name="studio_submission_fallback_title">등록을 요청한 스토리</string>
+    <string name="studio_submission_more">등록을 요청한 스토리 옵션 더보기</string>
+    <string name="studio_submission_submitted_at">등록을 요청한 시각 %1$s</string>
+    <string name="studio_submission_pending">검토 중</string>
+    <string name="studio_submission_rejected">반려</string>
+    <string name="studio_submission_failed">검토 실패</string>
+    <string name="studio_submission_pending_description">검토가 끝나면 알려드릴게요</string>
+    <string name="studio_submission_rejected_count">수정이 필요한 곳이 %1$d곳 있어요</string>
+    <string name="studio_submission_rejected_description">내용을 수정해 다시 등록해 주세요</string>
+    <string name="studio_submission_failed_image">이미지를 바꿔 다시 등록해 주세요</string>
+    <string name="studio_submission_failed_description">다시 등록해 주세요</string>
+    <string name="studio_submission_cancel">등록 취소</string>
+    <string name="studio_submission_cancel_title">등록을 취소할까요?</string>
+    <string name="studio_submission_cancel_description">검토 중인 스토리를 지우고 등록을 취소해요</string>
+    <string name="studio_submission_delete_title">스토리를 삭제할까요?</string>
+    <string name="studio_submission_delete_description">삭제하면 입력한 내용이 사라져요</string>
+    <string name="studio_submission_canceled">등록을 취소했어요</string>
+    <string name="studio_submission_cancel_failed">등록을 취소하지 못했어요</string>
+    <string name="studio_submission_cancel_in_progress">등록 취소 중</string>
 </resources>

@@ -22,7 +22,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.intl.LocaleList
 import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import app.manyak.common.entity.story.StorySummary
 import app.manyak.designsystem.component.ManyakMoreButton
 import app.manyak.designsystem.component.MetaChip
@@ -233,10 +232,12 @@ private fun TitleRow(
  *
  * 골격도 같은 값을 써야 목록이 도착할 때 표지 자리가 튀지 않는다.
  */
-internal val CoverWidth = 128.dp
+internal val CoverWidth
+    @Composable get() = ManyakTheme.sizes.studioCoverWidth
 
 /** 표지 높이. 3:4 라 폭에서 따라온다. 글 영역이 이 높이를 최소치로 삼는다. */
-internal val CoverHeight = CoverWidth / STORY_THUMBNAIL_ASPECT_RATIO
+internal val CoverHeight
+    @Composable get() = CoverWidth / STORY_THUMBNAIL_ASPECT_RATIO
 
 /**
  * 제목·한 줄 소개의 줄바꿈. 한글은 기본값이 글자 단위로 끊어 "선행만 한 / 다" 처럼 어절 가운데가

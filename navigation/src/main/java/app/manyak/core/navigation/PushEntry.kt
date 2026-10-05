@@ -26,6 +26,7 @@ data class PushEntry(
             // 해석 실패를 type 매핑으로 되돌리지 않는다 — 서버가 목적지를 바꾼 뒤에도 구 매핑으로 가게 된다.
             deepLink != null -> DeepLink.routeOf(deepLink) ?: MainTabsRoute
             type == TYPE_STORY_COMPLETED && !targetId.isNullOrBlank() -> StoryDetailRoute(targetId)
+            type == TYPE_STORY_MODERATION_COMPLETED && !targetId.isNullOrBlank() -> StudioRoute
             type == TYPE_ATTENDANCE_REMINDER -> MyCreditChargeRoute
             else -> MainTabsRoute
         }
@@ -40,6 +41,7 @@ data class PushEntry(
     companion object {
         private const val serialVersionUID = 1L
 
+        const val TYPE_STORY_MODERATION_COMPLETED = "STORY_MODERATION_COMPLETED"
         const val TYPE_STORY_COMPLETED = "STORY_COMPLETED"
         const val TYPE_ATTENDANCE_REMINDER = "ATTENDANCE_REMINDER"
         const val TYPE_PROMOTION = "PROMOTION"

@@ -169,6 +169,7 @@ sizes:
   generation-dot-displacement: 9dp
   tour-card-width: 288dp
   tour-step-dot: 6dp
+  studio-cover-width: 128dp
 
 spacing:
   hairline: 2dp
@@ -631,6 +632,7 @@ components:
 | `{sizes.generation-dot-displacement}` | 9dp | 이미지 생성 로딩 점 최대 변위 |
 | `{sizes.tour-card-width}` | 288dp | 채팅 안내 투어 카드의 폭. 좁은 화면에서는 좌우 `{spacing.gutter}`를 남기고 줄어든다 |
 | `{sizes.tour-step-dot}` | 6dp | 채팅 안내 투어 카드의 스텝 점 지름 |
+| `{sizes.studio-cover-width}` | 128dp | 제작 탭의 스토리, 초안, 검수 제출본 표지 폭 |
 
 `{sizes.tab-icon}`이 `{sizes.icon}`보다 큰 이유는 놓이는 자리가 다르기 때문이다. `{sizes.icon}`은 같은 줄의
 라벨 옆에 붙어 글자 크기에 맞추지만, 탭 아이콘은 라벨 위에 놓인 탭의 주된 시각 요소다. 웹 하단
@@ -760,6 +762,8 @@ components:
 **`option-item`** — 카드 옵션·상세 옵션·채팅 메뉴 시트의 항목 버튼(`ManyakOptionItem`, 2026-09-18 — 가운데 다이얼로그 `ManyakOptionsDialog`와 앵커 드롭다운 `ManyakOptionsMenu`를 대체). `menu-row`와 같은 아이콘 `{sizes.icon}`(20dp)·간격 `{spacing.component}`(12dp)·최소 높이 `{sizes.control}`(48dp)이고, 가로 여백은 `{spacing.compact}`, 모서리는 `{rounded.menu-item}`, 라벨은 `{typography.body-large}`입니다. 파괴적 항목(삭제하기)은 아이콘·라벨을 `{colors.text-danger}`로 칠하고 맨 아래에 둡니다. 진행 중(새 채팅 시작하기)에는 라벨·크기를 유지한 채 오른쪽에 `{sizes.icon}` 스피너를 두고 탭을 막습니다. 눌림은 리플 하나로 말하며, 시트(`ManyakOptionsSheet`)는 머리글(카드 종류를 `{typography.body-medium}` + `{colors.text-subtle}`로 작게, 제목을 `{typography.title-large}` 한 줄) 아래 `{spacing.gutter}` 띄우고 항목을 쌓으며 닫기 버튼은 두지 않습니다(위 `sheet` 규칙). 카드 축소판 미리보기는 두지 않습니다 — 머리글의 종류·제목이 어느 카드인지 말합니다.
 
 ### 스토리
+
+검수 제출본 카드는 제작 탭의 기존 표지 폭 `{sizes.studio-cover-width}`와 `thumbnail` 모서리, 제목 `body-large-strong`, 설명 `body-medium`, KST 날짜 칩을 사용합니다. 상태 배지는 `pill`, `body-small`, 가로 `compact`와 세로 `hairline` 여백이며 검토 중은 `background-neutral`과 `text-subtle`, 반려와 실패는 `background-danger-subtle`과 `text-danger`를 사용합니다.
 
 **`story-body`** — 배경 `{colors.surface}`, 텍스트 `{colors.text}` + `{typography.body-reading}`, 좌우 여백 `{spacing.gutter}`. 이 시스템에서 MaruBuri가 나타나는 자리는 스토리 본문과 퍼널의 스토리라인 미리보기(아래 퍼널 절)뿐입니다.
 

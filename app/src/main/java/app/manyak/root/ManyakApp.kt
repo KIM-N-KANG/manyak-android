@@ -54,6 +54,7 @@ import app.manyak.core.navigation.MyInviteRoute
 import app.manyak.core.navigation.MyOpenSourceLicenseRoute
 import app.manyak.core.navigation.NotificationSettingsRoute
 import app.manyak.core.navigation.StoryDetailRoute
+import app.manyak.core.navigation.StudioRoute
 import app.manyak.core.navigation.WithdrawalRoute
 import app.manyak.create.additionalinfo.presentation.CreateAdditionalInfoScreen
 import app.manyak.create.keyword.presentation.CreateKeywordScreen
@@ -260,16 +261,16 @@ private fun MainNavDisplay(
     onEntryConsumed: () -> Unit,
 ) {
     val backStack = rememberNavBackStack(MainTabsRoute)
-    // 알림 탭 진입은 셸까지 걷어낸 뒤 목적지 하나만 쌓는다. 홈이면 걷어내기만 한다 — 셸은 이미 있어
-    // push 가 무시된다. 이 그래프는 회원일 때만 그려지므로 미로그인 진입은 로그인 뒤 여기서 소비된다.
+    var selectedTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
+    var studioRefreshRequest by rememberSaveable { mutableStateOf(0) }
+    // 알림 진입은 셸까지 걷어낸 뒤 탭을 선택하거나 상세 하나를 쌓는다.
+    // 이 그래프는 회원일 때만 그려지므로 미로그인 진입은 로그인 뒤 여기서 소비된다.
     LaunchedEffect(entryDestination) {
         val destination = entryDestination ?: return@LaunchedEffect
-        backStack.popToMainTabs()
-        backStack.push(destination)
+        backStack.openExternalDestination(destination)?.let { selectedTab = it }
+        if (destination == StudioRoute) studioRefreshRequest++
         onEntryConsumed()
     }
-    // 셸 밖에서도 탭을 바꿀 수 있어야 한다 — 채팅을 지우면 방을 걷어내고 채팅 탭을 편다.
-    var selectedTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
     val slide = rememberScreenSlideTransitions()
     val creationFunnelMetadata = rememberCreationFunnelMetadata()
     NavDisplay(
@@ -283,6 +284,7 @@ private fun MainNavDisplay(
                 entry<MainTabsRoute> {
                     MainTabsScreen(
                         selectedTab = selectedTab,
+                        studioRefreshRequest = studioRefreshRequest,
                         onSelectTab = { tab -> selectedTab = tab },
                         // 상세는 셸 위에 쌓여 헤더도 하단 탭도 없는 전체 화면이 되고, 뒤로가기는
                         // 셸이 든 선택 탭으로 그대로 돌아온다.
