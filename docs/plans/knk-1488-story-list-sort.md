@@ -16,8 +16,13 @@
 | 요청값 | `POPULAR`는 `popular`로 보냅니다. 정렬은 기존처럼 항상 명시합니다. |
 | 문구 | 기존 `likes`의 "인기순" 표기를 "좋아요순"으로 바로잡고 `home_sort_popular`를 추가했습니다. |
 | 페이징 | 정렬 변경 시 진행 중 요청 취소와 첫 페이지 재조회는 기존 `HomeViewModel.select`를 그대로 씁니다. |
+| 셀렉트 메뉴 | `ManyakSelectMenu` 항목 사이에 판 안쪽 여백과 같은 `spacing.inline`(4dp) 간격을 둡니다. 정렬 메뉴와 성별 등 셀렉트 메뉴에 함께 적용됩니다. |
+| 시작 상황 칩 | 일반 제작 시작 상황 칩도 홈 필터 칩처럼 선택 글자를 `labelLarge`로 올립니다. |
+| 인물 소개 | 일반 제작 주변 인물의 인물 소개 상한을 80자에서 150자로 올리고(서버 KNK-1547, 공통 spec), 웹과 같이 여러 줄 칸으로 바꿨습니다. 높이는 한 줄 소개(3~7줄)보다 한 단계 낮은 2~7줄이며, 탭과 줄바꿈은 기존처럼 요청 시 공백으로 바꿉니다. |
 
 ## 검증 결과
 
 - `./gradlew :home:ktlintCheck :home:detekt :home:testDebugUnitTest` 통과. 진입 시 `all`·`popular` 첫 페이지 요청, 정렬·필터 조합과 다음 페이지 커서 테스트를 포함합니다.
+- `./gradlew :designsystem:ktlintCheck :designsystem:detekt`, `./gradlew :create:ktlintCheck :create:detekt :create:testDebugUnitTest --tests '*GeneralStoryValidationTest*'` 통과. 인물 소개 150자 통과와 151자 오류 테스트를 추가했습니다.
 - 에뮬레이터 `installDebug` 후 홈 진입 시 "인기순"이 선택돼 있고, 메뉴가 인기순·최신순·좋아요순·채팅순 순서로 열리며, 좋아요순 선택 시 좋아요 수 내림차순 목록으로 바뀌는 것을 확인했습니다.
+- 에뮬레이터에서 정렬 메뉴 항목 간격, 선택된 시작 상황 칩의 굵은 글자, 주변 인물 탭의 `0 / 150` 카운터와 2줄 높이 칸을 확인했습니다.
