@@ -133,4 +133,11 @@
     <string name="create_remove_input_cancel">닫기</string>
     <string name="create_section_collapse">접기</string>
     <string name="create_section_expand">펼치기</string>
+    <string name="create_genre_search_placeholder">장르 검색 및 선택</string>
+    <string name="create_genre_search_loading">장르를 불러오고 있어요</string>
+    <string name="create_genre_search_empty">검색 결과가 없어요</string>
+    <string name="create_genre_search_retry">장르를 불러오지 못했어요. 다시 시도</string>
+    <string name="create_genre_legacy_notice">이전 직접 입력 장르는 사용할 수 없어요. 제공 장르를 다시 선택해 주세요.</string>
+    <string name="create_genre_open_list">장르 목록 열기</string>
+    <string name="create_genre_close_list">장르 목록 닫기</string>
 </resources>

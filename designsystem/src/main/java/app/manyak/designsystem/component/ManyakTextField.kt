@@ -45,6 +45,7 @@ fun ManyakTextField(
     isError: Boolean = false,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
+    leading: (@Composable () -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -70,6 +71,7 @@ fun ManyakTextField(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
             ) {
+                leading?.invoke()
                 Box(modifier = Modifier.weight(1f)) {
                     FieldPlaceholder(value = value, placeholder = placeholder, maxLines = 1)
                     innerTextField()
