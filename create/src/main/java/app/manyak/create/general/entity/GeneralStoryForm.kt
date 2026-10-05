@@ -80,12 +80,12 @@ data class GeneralStartSetting(
 data class GeneralEnding(
     val id: String = UUID.randomUUID().toString(),
     val name: String = "",
-    val minTurns: String = "0",
+    val minTurns: String = "",
     val condition: String = "",
     val epilogue: String = "",
 ) {
     val hasInput: Boolean
-        get() = listOf(name, condition, epilogue).any(String::isNotBlank) || minTurns !in listOf("", "0")
+        get() = listOf(name, minTurns, condition, epilogue).any(String::isNotBlank)
 }
 
 @Serializable

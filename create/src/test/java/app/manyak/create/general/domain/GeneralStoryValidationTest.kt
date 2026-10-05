@@ -40,7 +40,7 @@ class GeneralStoryValidationTest {
 
     @Test
     fun duplicate_endings_are_scoped_to_start_setting() {
-        val ending = GeneralEnding(name = "같은 엔딩", condition = "달성 조건", epilogue = "마무리")
+        val ending = GeneralEnding(name = "같은 엔딩", minTurns = "10", condition = "달성 조건", epilogue = "마무리")
         val start = validForm().startSettings.single().copy(endings = listOf(ending))
         val form = validForm().copy(startSettings = listOf(start, start.copy(id = "other")))
 
@@ -48,6 +48,22 @@ class GeneralStoryValidationTest {
         val duplicated =
             form.copy(startSettings = listOf(start.copy(endings = listOf(ending, ending.copy(id = "second")))))
         assertEquals("second", validateGeneralStoryForm(duplicated).single().target.itemId)
+    }
+
+    @Test
+    fun ending_min_turns_is_required_and_between_zero_and_fifty() {
+        fun reasonFor(minTurns: String): GeneralErrorReason? {
+            val ending = GeneralEnding(name = "엔딩", minTurns = minTurns, condition = "달성 조건", epilogue = "마무리")
+            val start = validForm().startSettings.single().copy(endings = listOf(ending))
+            return validateGeneralStoryForm(validForm().copy(startSettings = listOf(start)))
+                .singleOrNull { it.target.field == GeneralField.MIN_TURNS }
+                ?.reason
+        }
+
+        assertEquals(GeneralErrorReason.REQUIRED, reasonFor(""))
+        assertEquals(null, reasonFor("0"))
+        assertEquals(null, reasonFor("50"))
+        assertEquals(GeneralErrorReason.INVALID_NUMBER, reasonFor("51"))
     }
 
     @Test

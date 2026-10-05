@@ -80,9 +80,11 @@ private fun MutableList<GeneralFieldError>.validateEnding(
     duplicate: Boolean,
 ) {
     text(target, ending.name, 100, duplicate = duplicate)
+    val turnsTarget = target.copy(field = GeneralField.MIN_TURNS)
     val turns = ending.minTurns.toIntOrNull()
-    if (turns == null || turns !in 0..50) {
-        add(GeneralFieldError(target.copy(field = GeneralField.MIN_TURNS), GeneralErrorReason.INVALID_NUMBER, 50))
+    when {
+        ending.minTurns.isBlank() -> add(GeneralFieldError(turnsTarget, GeneralErrorReason.REQUIRED))
+        turns == null || turns !in 0..50 -> add(GeneralFieldError(turnsTarget, GeneralErrorReason.INVALID_NUMBER, 50))
     }
     text(target.copy(field = GeneralField.CONDITION), ending.condition, 500)
     text(target.copy(field = GeneralField.EPILOGUE), ending.epilogue, 500)
