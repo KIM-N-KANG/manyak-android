@@ -1,36 +1,37 @@
 package app.manyak.chat.room.presentation.message
 
+import app.manyak.designsystem.text.PassageSegment
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class ChatTypewriterTest {
-    private val image = ChatMessageSegment.CharacterImage(name = "아란", imageUrl = "https://cdn.manyak.app/a.png")
+    private val image = PassageSegment.CharacterImage(name = "아란", imageUrl = "https://cdn.manyak.app/a.png")
 
     @Test
     fun `공개 단위는 글자 수에 이미지당 1을 더한 값이다`() {
-        val segments = listOf(ChatMessageSegment.Text("가나다"), image, ChatMessageSegment.Text("라마"))
+        val segments = listOf(PassageSegment.Text("가나다"), image, PassageSegment.Text("라마"))
 
         assertEquals(6, segments.revealUnitCount())
-        assertEquals(0, emptyList<ChatMessageSegment>().revealUnitCount())
+        assertEquals(0, emptyList<PassageSegment>().revealUnitCount())
     }
 
     @Test
     fun `텍스트 조각은 글자 단위로 잘려 공개된다`() {
-        val segments = listOf(ChatMessageSegment.Text("가나다라"))
+        val segments = listOf(PassageSegment.Text("가나다라"))
 
-        assertEquals(listOf(ChatMessageSegment.Text("가나")), segments.takeRevealUnits(2))
+        assertEquals(listOf(PassageSegment.Text("가나")), segments.takeRevealUnits(2))
         assertEquals(segments, segments.takeRevealUnits(4))
-        assertEquals(emptyList<ChatMessageSegment>(), segments.takeRevealUnits(0))
+        assertEquals(emptyList<PassageSegment>(), segments.takeRevealUnits(0))
     }
 
     @Test
     fun `이미지는 앞 텍스트가 모두 공개된 뒤에야 나타난다`() {
-        val segments = listOf(ChatMessageSegment.Text("가나다"), image, ChatMessageSegment.Text("라"))
+        val segments = listOf(PassageSegment.Text("가나다"), image, PassageSegment.Text("라"))
 
         // 텍스트 3자까지는 이미지가 없다.
-        assertEquals(listOf(ChatMessageSegment.Text("가나다")), segments.takeRevealUnits(3))
+        assertEquals(listOf(PassageSegment.Text("가나다")), segments.takeRevealUnits(3))
         // 4번째 단위가 이미지다.
-        assertEquals(listOf(ChatMessageSegment.Text("가나다"), image), segments.takeRevealUnits(4))
+        assertEquals(listOf(PassageSegment.Text("가나다"), image), segments.takeRevealUnits(4))
         assertEquals(segments, segments.takeRevealUnits(5))
     }
 

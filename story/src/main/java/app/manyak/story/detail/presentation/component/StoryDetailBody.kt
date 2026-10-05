@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,10 +25,13 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import app.manyak.designsystem.component.CharacterImage
 import app.manyak.designsystem.component.ManyakInfoTooltipButton
 import app.manyak.designsystem.component.StoryBadgeScale
 import app.manyak.designsystem.component.StoryGenreBadge
 import app.manyak.designsystem.component.StoryThumbnail
+import app.manyak.designsystem.text.PassageSegment
+import app.manyak.designsystem.text.parsePassageSegments
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.story.entity.StoryDetail
 import app.manyak.story.entity.StoryStartSetting
@@ -93,6 +97,7 @@ internal fun LazyListScope.storyDetailBody(
                     selectedId = selectedStartSettingId,
                     selected = selectedStartSetting,
                     onSelect = onSelectStartSetting,
+                    onImageClick = onCharacterImageClick,
                 )
             }
         }
@@ -228,6 +233,7 @@ private fun StartSettingSection(
     selectedId: String?,
     selected: StoryStartSetting,
     onSelect: (String) -> Unit,
+    onImageClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -245,11 +251,7 @@ private fun StartSettingSection(
             }
         }
         SubLabeledBlock(label = stringResource(StoryR.string.story_detail_start_setting_situation)) {
-            Text(
-                text = selected.startSituation,
-                style = ManyakTheme.typography.bodyLarge,
-                color = ManyakTheme.colors.text,
-            )
+            StartSituation(text = selected.startSituation, onImageClick = onImageClick)
         }
         if (selected.endings.isNotEmpty()) {
             SubLabeledBlock(
@@ -262,6 +264,46 @@ private fun StartSettingSection(
                 },
             ) {
                 EndingList(endings = selected.endings)
+            }
+        }
+    }
+}
+
+/** 오리지널 스토리의 상황 설명에는 채팅 프롤로그와 같은 장면 이미지 마커가 들어 있다. */
+@Composable
+private fun StartSituation(
+    text: String,
+    onImageClick: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val segments = remember(text) { parsePassageSegments(text) }
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        // 글과 그림 사이는 문단 사이보다 넓어야 그림이 앞 문단의 일부로 읽히지 않는다(웹과 같은 28dp).
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.passage + ManyakTheme.spacing.compact),
+    ) {
+        segments.forEach { segment ->
+            when (segment) {
+                is PassageSegment.Text ->
+                    Text(
+                        text = segment.content,
+                        style = ManyakTheme.typography.bodyLarge,
+                        color = ManyakTheme.colors.text,
+                    )
+
+                is PassageSegment.CharacterImage ->
+                    CharacterImage(
+                        name = segment.name,
+                        imageUrl = segment.imageUrl,
+                        onClick = { onImageClick(segment.imageUrl) },
+                    )
+
+                is PassageSegment.SceneImage ->
+                    CharacterImage(
+                        name = null,
+                        imageUrl = segment.imageUrl,
+                        onClick = { onImageClick(segment.imageUrl) },
+                    )
             }
         }
     }
