@@ -98,6 +98,17 @@ internal val MIGRATION_3_4 =
 /** 여러 초안 이전에 남아 있던 초안 행이 받는 ID 의 머리. 새 초안의 UUID 와 겹치지 않는다. */
 internal const val LEGACY_DRAFT_ID_PREFIX = "legacy-"
 
+internal val MIGRATION_4_5 =
+    object : Migration(4, 5) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `general_story_draft` (" +
+                    "`ownerId` TEXT NOT NULL, `draftId` TEXT NOT NULL, `snapshot` TEXT, " +
+                    "`createdAt` INTEGER NOT NULL, `acceptedSubmissionId` TEXT, PRIMARY KEY(`ownerId`, `draftId`))",
+            )
+        }
+    }
+
 /**
  * v1 완성 행을 요청 행으로 바꾼다. 명령과 생성 결과를 해석할 수 있어야 하며, 서버 처리 여부를 모르므로
  * 상태는 PENDING 으로 두어 다음 새로고침이 복구 조회로 확정한다. 진행 JSON 은 없으면 빈 값으로 채운다.
