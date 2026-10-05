@@ -322,7 +322,7 @@ private fun GeneralEditorState.exitCopy(editing: Boolean): GeneralExitCopy {
             GeneralExitCopy(
                 R.string.general_editor_exit_title,
                 R.string.general_editor_exit_submitted,
-                R.string.general_editor_exit_continue,
+                R.string.general_editor_exit_close,
             )
         savedForm != null && savedForm != form ->
             GeneralExitCopy(
@@ -334,7 +334,7 @@ private fun GeneralEditorState.exitCopy(editing: Boolean): GeneralExitCopy {
             GeneralExitCopy(
                 R.string.create_saved_exit_warning_title,
                 R.string.create_saved_exit_warning_description,
-                R.string.general_editor_exit_continue,
+                R.string.general_editor_exit_close,
             )
         form.hasInput ->
             GeneralExitCopy(

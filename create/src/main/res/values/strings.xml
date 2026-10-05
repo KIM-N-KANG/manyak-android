@@ -261,7 +261,6 @@
     <string name="general_previous">이전</string>
     <string name="general_next">다음</string>
     <string name="general_register">등록하기</string>
-    <string name="general_editor_exit_continue">계속 만들기</string>
     <string name="general_editor_exit_edited_submission_title">등록하지 않은 수정 내용이 있어요</string>
     <string name="general_title_placeholder">예: 노선도에 없는 역</string>
     <string name="general_title_hint">스토리 목록과 상세에 보이는 제목이에요. 스토리의 특징이 드러나게 지어주세요</string>
