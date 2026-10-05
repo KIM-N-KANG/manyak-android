@@ -740,7 +740,7 @@ components:
 
 **`text-field-error`** — 경계를 `{colors.border-danger}`로 바꾸고, 오류 문구를 `{colors.text-danger}` + `{typography.body-small}`로 아래에 둡니다. 색만으로 오류를 알리지 않습니다.
 
-**셀렉트 메뉴**(성별 등) — 앵커는 text-field 와 같은 형태이고, 미선택(랜덤) 값은 placeholder 색(`{colors.text-disabled}`)으로 낮춥니다. 메뉴는 앵커와 같은 폭으로 항상 앵커 아래에 `{spacing.inline}` 떨어져 열리며, 배경 `{colors.surface-raised}` + 경계 `{colors.border}` + **연한 그림자**를 쓰고, 각 항목은 `{rounded.menu-item}` 모서리와 세로 `{spacing.control-vertical}` · 가로 `{spacing.control-horizontal}` 여백을 사용합니다. 선택된 항목은 `{colors.background-neutral}` 채움과 체크 표시로 드러냅니다 — 그림자 금지 규칙의 예외로, 떠 있는 흰 메뉴가 흰 앵커·표면과 겹쳐 경계만으로는 층이 드러나지 않기 때문입니다.
+**셀렉트 메뉴**(성별 등) — 앵커는 text-field 와 같은 형태이고, 미선택(랜덤) 값은 placeholder 색(`{colors.text-disabled}`)으로 낮춥니다. 메뉴는 앵커와 같은 폭으로 항상 앵커 아래에 `{spacing.inline}` 떨어져 열리며, 배경 `{colors.surface-raised}` + 경계 `{colors.border}` + **연한 그림자**를 쓰고, 판 안쪽 여백과 항목 사이 간격은 모두 `{spacing.inline}`이고, 각 항목은 `{rounded.menu-item}` 모서리와 세로 `{spacing.control-vertical}` · 가로 `{spacing.control-horizontal}` 여백을 사용합니다. 선택된 항목은 `{colors.background-neutral}` 채움과 체크 표시로 드러냅니다 — 그림자 금지 규칙의 예외로, 떠 있는 흰 메뉴가 흰 앵커·표면과 겹쳐 경계만으로는 층이 드러나지 않기 때문입니다.
 
 ### 컨테이너
 
