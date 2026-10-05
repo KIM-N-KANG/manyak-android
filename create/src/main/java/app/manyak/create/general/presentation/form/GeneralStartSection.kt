@@ -184,7 +184,12 @@ private fun GeneralFormScope.StartChip(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
     ) {
-        Text(label, style = ManyakTheme.typography.bodyMedium, color = contentColor, maxLines = 1)
+        Text(
+            label,
+            style = if (selected) ManyakTheme.typography.labelLarge else ManyakTheme.typography.bodyMedium,
+            color = contentColor,
+            maxLines = 1,
+        )
         if (onRemove != null) {
             ManyakIconButton(
                 iconRes = DesignR.drawable.ic_close,
