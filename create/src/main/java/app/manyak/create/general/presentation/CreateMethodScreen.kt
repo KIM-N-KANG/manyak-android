@@ -126,7 +126,7 @@ private fun MethodCard(
     illustration: @Composable (Modifier) -> Unit,
 ) {
     val colors = ManyakTheme.colors
-    val shape = ManyakTheme.shapes.thumbnail
+    val shape = ManyakTheme.shapes.overlay
     Column(
         modifier
             .fillMaxWidth()

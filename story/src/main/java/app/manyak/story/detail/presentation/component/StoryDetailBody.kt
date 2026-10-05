@@ -101,15 +101,12 @@ internal fun LazyListScope.storyDetailBody(
     }
     if (story.characters.isNotEmpty()) {
         item(key = CHARACTERS_KEY) {
-            LabeledSection(
-                labelRes = StoryR.string.story_detail_characters,
-                modifier =
-                    Modifier
-                        .padding(horizontal = ManyakTheme.spacing.gutter)
-                        .padding(top = ManyakTheme.spacing.block),
-            ) {
-                CharacterSection(characters = story.characters, onImageClick = onCharacterImageClick)
-            }
+            // 인물 선택 줄은 화면 끝까지 스크롤되어야 해서 좌우 여백을 섹션이 아니라 안쪽 요소가 각자 건다.
+            CharacterSection(
+                characters = story.characters,
+                onImageClick = onCharacterImageClick,
+                modifier = Modifier.padding(top = ManyakTheme.spacing.block),
+            )
         }
     }
     metaItems(story)

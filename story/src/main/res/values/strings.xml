@@ -2,6 +2,9 @@
 <resources>
     <string name="story_detail_author">제작자</string>
     <string name="story_detail_characters">주변 인물</string>
+    <string name="story_detail_character_image_missing">%1$s 인물 이미지 없음</string>
+    <string name="story_detail_character_next">다음 인물</string>
+    <string name="story_detail_character_previous">이전 인물</string>
     <string name="story_detail_created_at">생성일</string>
     <string name="story_detail_description">주요 내용</string>
     <string name="story_detail_endings_info">엔딩 안내</string>
