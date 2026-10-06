@@ -12,7 +12,10 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
-import androidx.compose.ui.graphics.lerp
+import app.manyak.designsystem.mascot.StagePalette
+import app.manyak.designsystem.mascot.easeOutBack
+import app.manyak.designsystem.mascot.mix
+import app.manyak.designsystem.mascot.withAlpha
 import kotlin.math.PI
 import kotlin.math.sin
 
@@ -110,7 +113,7 @@ private fun DrawScope.drawStorylineCard(
     palette: StagePalette,
     highlight: Float,
 ) {
-    drawCard(rect, unit, palette, outline = lerp(palette.ink, palette.brand, highlight))
+    drawCard(rect, unit, palette, outline = mix(palette.ink, palette.brand, highlight))
     val inset = 0.04f
     val inner = rect.width - inset * 2
     val lines = floatArrayOf(0.62f, 1f, 0.82f, 1f, 0.7f)
@@ -118,7 +121,7 @@ private fun DrawScope.drawStorylineCard(
         val title = index == 0
         val y = rect.top + 0.07f + index * 0.06f + if (title) 0f else 0.02f
         drawLine(
-            color = if (title) lerp(palette.ink, palette.brand, highlight) else palette.ink,
+            color = if (title) mix(palette.ink, palette.brand, highlight) else palette.ink,
             start = Offset(rect.left + inset, y) * unit,
             end = Offset(rect.left + inset + inner * width, y) * unit,
             strokeWidth = (if (title) 0.024f else 0.014f) * unit,

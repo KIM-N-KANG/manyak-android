@@ -11,7 +11,10 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
-import androidx.compose.ui.graphics.lerp
+import app.manyak.designsystem.mascot.StagePalette
+import app.manyak.designsystem.mascot.easeOutBack
+import app.manyak.designsystem.mascot.mix
+import app.manyak.designsystem.mascot.withAlpha
 
 // 원고는 키보드 위에 떠서 한 줄씩 차오르고, 키보드는 마스코트 앞을 가린다.
 private val Paper = Rect(0.2f, 0.24f, 0.8f, 0.84f)
@@ -56,7 +59,7 @@ internal fun DrawScope.drawManuscript(
                 val y = Paper.top + 0.1f + index * 0.1f + if (title) 0f else 0.03f
                 if (shown > 0f) {
                     drawLine(
-                        color = if (title) lerp(palette.paper, palette.brand, 0.75f) else palette.ink,
+                        color = if (title) mix(palette.paper, palette.brand, 0.75f) else palette.ink,
                         start = Offset(innerLeft, y) * unit,
                         end = Offset(innerLeft + innerWidth * shown, y) * unit,
                         strokeWidth = (if (title) 0.034f else 0.022f) * unit,
@@ -107,7 +110,7 @@ internal fun DrawScope.drawKeyboard(
                 val left = Keyboard.left + KEY_INSET + column * (keyWidth + KEY_GAP)
                 val top = Keyboard.top + KEY_INSET + row * (keyHeight + KEY_GAP) + glow * 0.006f
                 drawRoundRect(
-                    color = lerp(palette.key, palette.brand, glow),
+                    color = mix(palette.key, palette.brand, glow),
                     topLeft = Offset(left, top) * unit,
                     size = Size(width, keyHeight) * unit,
                     cornerRadius = CornerRadius(0.012f * unit),
