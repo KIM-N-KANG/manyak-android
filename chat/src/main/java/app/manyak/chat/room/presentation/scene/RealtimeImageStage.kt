@@ -7,7 +7,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -44,12 +43,11 @@ import app.manyak.designsystem.theme.ManyakTheme
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
-import kotlin.math.exp
 import kotlin.math.sin
 
 /**
- * 실시간 이미지를 기다리는 4:3 장면 자리. 마스코트가 화가 베레모를 쓰고 붓으로 인물 세 장을 그려 빨랫줄에
- * 거는 막을 연기한다. 안무는 [realtimeImageMoment] 가 정하고 여기서는 그리기만 한다.
+ * 실시간 이미지를 기다리는 4:3 장면 자리. 마스코트가 화가 베레모를 쓰고 붓으로 4:3 가로 도화지에 창가 인물화
+ * 한 장을 천천히 그리는 막을 연기한다. 안무는 [realtimeImageMoment] 가 정하고 여기서는 그리기만 한다.
  *
  * 자리는 받은 폭을 그대로 쓰되 안의 연기는 [CONTENT_SCALE] 로 줄여 대화 흐름에서 튀지 않게 한다. 바탕 점은
  * 줄이지 않는다.
@@ -67,39 +65,19 @@ internal fun RealtimeImageStage(modifier: Modifier = Modifier) {
 }
 
 private const val CONTENT_SCALE = 0.72f
-
-/** 그림이 도화지에서 빨랫줄까지 날아가는 시간. */
-private const val FLIGHT_MILLIS = 600
-
-/** 새 도화지가 이젤에 튀어나오는 시간. */
-private const val POP_MILLIS = 320
-private const val RESET_FADE_START = 600
-private const val RESET_FADE_MILLIS = 400f
-private const val HUNG_SCALE = HUNG_WIDTH / PAPER_WIDTH
+private val PaperTopLeft = Offset(PAPER_LEFT, PAPER_TOP)
 private val PaperTopCenter = Offset((PAPER_LEFT + PAPER_RIGHT) / 2f, PAPER_TOP)
-private val PaperBottomCenter = Offset(PaperTopCenter.x, PAPER_BOTTOM)
 
-/** 그림이 빨랫줄에 걸리는 한 바퀴 안의 시각. 날아가기 시작하는 시각은 [FLIGHT_MILLIS] 앞이다. */
-private val HangAt =
-    listOf(
-        actStart(RealtimeImageAct.RELIEF) + cueStart(RealtimeImageCue.EXHALE) + 100 + FLIGHT_MILLIS,
-        actStart(RealtimeImageAct.DAYDREAM) + FLIGHT_MILLIS,
-        actStart(RealtimeImageAct.RESET) + FLIGHT_MILLIS,
-    )
-private val Pictures = Picture.entries
-
-/** 바탕 점, 빨랫줄과 걸린 그림, 이젤 도화지, 마스코트, 막에 맞는 소품, 날아가는 그림을 차례로 얹는다. */
+/** 이젤과 도화지, 물그릇, 마스코트, 베레모와 붓, 막에 맞는 소품을 차례로 얹는다. */
 private fun DrawScope.drawScene(
     millis: Int,
     unit: Float,
     palette: StagePalette,
 ) {
     val (act, actMillis, pose) = realtimeImageMoment(millis)
-    val loopMillis = loopTime(millis)
-    val reveal = Reveal({ cue -> (actMillis - cueStart(cue)).toFloat() }, millis)
-    drawGallery(unit, palette, loopMillis)
     drawEasel(unit, palette)
-    drawEaselPaper(unit, palette, act, actMillis, loopMillis, reveal)
+    drawEaselPaper(unit, palette, act, actMillis)
+    drawWater(unit, palette)
     // 도화지 위에 올라서 있을 때는 바닥 그림자가 허공에 뜬 것처럼 보여 도화지 가까이에서 옅게 지운다.
     val shadow = ((PAPER_LEFT - 0.01f - (pose.x + MASCOT_HALF_WIDTH)) / 0.05f).coerceIn(0f, 1f)
     drawStageShadow(pose, unit, MASCOT_SIZE, FLOOR, palette.ink.copy(alpha = shadow))
@@ -115,14 +93,21 @@ private fun DrawScope.drawScene(
         eyes = pose.eyes,
     )
     drawGear(unit, palette, act, actMillis, pose)
+    drawBowl(unit, palette)
     when (act) {
-        RealtimeImageAct.HYPE -> drawEffort(unit, palette, actMillis, pose)
-        RealtimeImageAct.SKETCH -> drawSpeedLines(unit, palette, actMillis, pose)
-        RealtimeImageAct.RELIEF -> drawRelief(unit, palette, actMillis, pose)
-        RealtimeImageAct.DAYDREAM -> drawDaydream(unit, palette, actMillis)
+        RealtimeImageAct.WASH -> drawSpeedLines(unit, palette, actMillis, pose)
+        RealtimeImageAct.RELIEF -> {
+            drawRelief(unit, palette, actMillis, pose)
+            drawSplash(unit, palette, cueProgress(RealtimeImageCue.RINSE_1, actMillis))
+        }
+        RealtimeImageAct.DAYDREAM -> {
+            drawDaydream(unit, palette, actMillis)
+            drawSplash(unit, palette, cueProgress(RealtimeImageCue.RINSE_2, actMillis))
+        }
+        RealtimeImageAct.PAGE_TURN -> drawSplash(unit, palette, cueProgress(RealtimeImageCue.RINSE_3, actMillis))
+        RealtimeImageAct.SHOWCASE -> drawSparkles(unit, palette, actMillis)
         else -> Unit
     }
-    drawFlights(unit, palette, loopMillis)
 }
 
 /**
@@ -148,7 +133,7 @@ private inline fun DrawScope.onGrid(
     }
 }
 
-/** 이젤 다리와 받침. 도화지가 날아가도 이젤은 남는다. */
+/** 이젤 다리와 받침. 종이를 넘겨도 이젤은 남는다. */
 private fun DrawScope.drawEasel(
     unit: Float,
     palette: StagePalette,
@@ -166,122 +151,92 @@ private fun DrawScope.drawEasel(
 }
 
 /**
- * 이젤에 놓인 도화지. 막에 따라 빈 종이, 그리는 중인 그림, 뒤집히는 종이를 보이고, 그림이 빨랫줄로 날아간
- * 뒤에는 새 종이가 바닥 쪽을 붙잡고 통 튀어나온다.
+ * 이젤에 놓인 도화지. 지난 막까지 그린 층 위에 지금 막의 획을 그린 만큼 얹는다. 종이를 넘기는 막에서는 밑의 새
+ * 종이 위로 다 그린 종이가 위쪽 가장자리를 축으로 넘어가며 뒷면을 보이고 옅어진다.
  */
 private fun DrawScope.drawEaselPaper(
     unit: Float,
     palette: StagePalette,
     act: RealtimeImageAct,
     actMillis: Int,
-    loopMillis: Int,
-    reveal: Reveal,
 ) {
-    val hanging = HangAt.indexOfFirst { loopMillis >= it - FLIGHT_MILLIS && loopMillis < it + POP_MILLIS }
-    if (hanging >= 0) {
-        val pop = (loopMillis - HangAt[hanging]) / POP_MILLIS.toFloat()
-        if (pop < 0f) return
-        val grow = 0.85f + 0.15f * easeOutBack(pop.coerceIn(0f, 1f))
-        withAlpha((pop * 2f).coerceIn(0f, 1f)) {
-            onGrid(unit, PaperBottomCenter, Offset(PAPER_GRID / 2f, GRID_HEIGHT), grow, grow, 0f) {
-                drawSheet(palette, null, Done)
-            }
+    if (act != RealtimeImageAct.PAGE_TURN) {
+        onGrid(unit, PaperTopLeft, Offset.Zero, 1f, 1f, 0f) {
+            drawPainting(palette) { cue -> paintedFor(cue, act, actMillis) }
         }
         return
     }
-    if (act == RealtimeImageAct.CONSTELLATION) {
-        val flip = smooth((cueProgress(RealtimeImageCue.FLIP, actMillis) - 0.1f) / 0.55f)
-        val back = flip >= 0.5f
-        val lifted = PaperTopCenter - Offset(0f, 0.012f * sin(PI.toFloat() * flip))
-        onGrid(unit, lifted, Offset(PAPER_GRID / 2f, 0f), abs(cos(PI.toFloat() * flip)).coerceAtLeast(0.02f), 1f, 0f) {
-            drawSheet(palette, if (back) Picture.CONSTELLATION else null, reveal, night = back)
+    onGrid(unit, PaperTopLeft, Offset.Zero, 1f, 1f, 0f) { drawPainting(palette, Blank) }
+    val turn = smooth(cueProgress(RealtimeImageCue.TURN, actMillis) / 0.9f)
+    val fold = cos(PI.toFloat() * turn)
+    val front = fold >= 0f
+    val lifted = PaperTopCenter - Offset(0f, 0.015f * sin(PI.toFloat() * turn))
+    withAlpha(1f - smooth((turn - 0.55f) / 0.4f)) {
+        onGrid(
+            unit,
+            lifted,
+            Offset(PAPER_GRID / 2f, 0f),
+            1f,
+            if (front) fold.coerceAtLeast(0.02f) else fold.coerceAtMost(-0.02f),
+            0f,
+        ) {
+            if (front) drawPainting(palette, Finished) else drawPaperBack(palette)
         }
-        return
-    }
-    // 안도하는 막에서 크로키가 날아간 뒤로는 새 빈 종이다.
-    val picture =
-        when {
-            act == RealtimeImageAct.SKETCH -> Picture.SKETCH
-            act == RealtimeImageAct.RELIEF && loopMillis < HangAt[0] - FLIGHT_MILLIS -> Picture.SKETCH
-            act == RealtimeImageAct.WATERCOLOR -> Picture.WATERCOLOR
-            else -> null
-        }
-    onGrid(unit, Offset(PAPER_LEFT, PAPER_TOP), Offset.Zero, 1f, 1f, 0f) {
-        drawSheet(palette, picture, if (act == RealtimeImageAct.RELIEF) Done else reveal)
     }
 }
 
-/** 빨랫줄과 거기 걸린 그림. 걸린 그림은 살짝 흔들리다 멈추고, 한 바퀴 끝에 함께 떨어지며 사라진다. */
-private fun DrawScope.drawGallery(
+/** 물그릇의 물 표면. 붓보다 먼저 그려 붓털 끝이 물 위에 비치게 한다. */
+private fun DrawScope.drawWater(
     unit: Float,
     palette: StagePalette,
-    loopMillis: Int,
 ) {
-    val fade = ((loopMillis - actStart(RealtimeImageAct.RESET) - RESET_FADE_START) / RESET_FADE_MILLIS).coerceIn(0f, 1f)
+    val halfWidth = BOWL_HALF_WIDTH * 0.88f * unit
+    val depth = 0.004f * unit
+    drawOval(
+        mix(palette.paper, palette.pencil, 0.18f),
+        topLeft = Offset(BowlX * unit - halfWidth, (BOWL_RIM + 0.002f) * unit - depth),
+        size = Size(halfWidth * 2f, depth * 2f),
+    )
+}
+
+/** 발치의 얕은 물그릇 몸통. 붓 뒤에 그려 헹구는 붓털 끝이 물에 잠겨 가려지게 한다. */
+private fun DrawScope.drawBowl(
+    unit: Float,
+    palette: StagePalette,
+) {
+    val half = BOWL_HALF_WIDTH
     drawPath(
         Path().apply {
-            moveTo(LINE_LEFT * unit, LINE_Y * unit)
-            quadraticTo(
-                (LINE_LEFT + LINE_RIGHT) / 2f * unit,
-                (LINE_Y + 2f * LINE_SAG) * unit,
-                LINE_RIGHT * unit,
-                LINE_Y * unit,
-            )
+            moveTo((BowlX - half) * unit, BOWL_RIM * unit)
+            quadraticTo((BowlX - half * 0.9f) * unit, FLOOR * unit, (BowlX - half * 0.55f) * unit, FLOOR * unit)
+            lineTo((BowlX + half * 0.55f) * unit, FLOOR * unit)
+            quadraticTo((BowlX + half * 0.9f) * unit, FLOOR * unit, (BowlX + half) * unit, BOWL_RIM * unit)
+            close()
         },
-        palette.ink,
-        style = Stroke(width = 0.005f * unit),
+        mix(palette.paper, palette.ink, 0.35f),
     )
-    HangAt.forEachIndexed { index, at ->
-        val since = loopMillis - at
-        if (since < 0) return@forEachIndexed
-        val slot = HangSlots[index]
-        val swing = 9f * exp(-since / 320f) * sin(since / 75f)
-        val top = Offset(slot.x, clotheslineY(slot.x) - 0.006f + 0.04f * fade * fade)
-        withAlpha(1f - fade) {
-            onGrid(unit, top, Offset(PAPER_GRID / 2f, 0f), HUNG_SCALE, HUNG_SCALE, slot.tilt + swing) {
-                drawSheet(palette, Pictures[index], Done)
-                drawRoundRect(palette.ink, Offset(PAPER_GRID / 2f - 7f, -12f), Size(14f, 26f), CornerRadius(3f))
-            }
-        }
-    }
+    stageLine(Offset(BowlX - half, BOWL_RIM), Offset(BowlX + half, BOWL_RIM), 0.004f, palette.ink, unit)
 }
 
-/** 다 그린 그림이 이젤에서 빨랫줄로 포물선을 그리며 줄어들어 날아간다. */
-private fun DrawScope.drawFlights(
-    unit: Float,
+/** 붓털 물감을 테마 색으로 바꾼다. 밑그림은 연필 회색, 밑칠과 인물은 회색, 마무리는 옅은 초록이다. */
+private fun paint(
     palette: StagePalette,
-    loopMillis: Int,
-) {
-    HangAt.forEachIndexed { index, at ->
-        val raw = (loopMillis - (at - FLIGHT_MILLIS)) / FLIGHT_MILLIS.toFloat()
-        if (raw < 0f || raw >= 1f) return@forEachIndexed
-        val f = smooth(raw)
-        val slot = HangSlots[index]
-        val to = Offset(slot.x, clotheslineY(slot.x) - 0.006f)
-        val from = PaperTopCenter
-        val control = Offset((from.x + to.x) / 2f, minOf(from.y, to.y) - 0.05f)
-        val position = from * ((1 - f) * (1 - f)) + control * (2 * f * (1 - f)) + to * (f * f)
-        val scale = 1f + (HUNG_SCALE - 1f) * f
-        onGrid(unit, position, Offset(PAPER_GRID / 2f, 0f), scale, scale, slot.tilt * f - 14f * sin(PI.toFloat() * f)) {
-            drawSheet(palette, Pictures[index], Done)
-        }
-    }
-}
-
-/** 막에 맞는 붓털 색. 처음엔 깨끗하고, 크로키와 별자리는 연필 회색, 수채는 옅은 초록이다. */
-private fun paintColor(
-    palette: StagePalette,
-    act: RealtimeImageAct,
+    color: PaintColor,
 ): Color =
-    when (act) {
-        RealtimeImageAct.GEAR_UP, RealtimeImageAct.HYPE -> mix(palette.paper, palette.pencil, 0.25f)
-        RealtimeImageAct.WATERCOLOR, RealtimeImageAct.DAYDREAM -> mix(palette.paper, palette.brand, 0.4f)
-        else -> palette.pencil
+    when (color) {
+        PaintColor.PENCIL -> mix(palette.paper, palette.pencil, 0.55f)
+        PaintColor.GRAY -> mix(palette.paper, palette.pencil, 0.32f)
+        PaintColor.GREEN -> mix(palette.paper, palette.brand, 0.45f)
     }
+
+/** 붓 회전에서 붓털이 휘는 정도. 끌릴 만큼 살짝 기울 때만 휘고, 치켜들거나 돌릴 때는 곧게 둔다. */
+private fun bendOf(brush: Float): Float =
+    -(brush / 25f).coerceIn(-1f, 1f) * (1f - ((abs(brush) - 30f) / 20f).coerceIn(0f, 1f))
 
 /**
  * 화가 베레모와 붓. 준비 막에서 베레모는 하늘에서 흔들리며 떨어져 머리에 얹히고, 바닥에 누운 붓은 점프에 맞춰
- * 한 바퀴 돌며 손에 들어온다. 그 뒤로는 몸을 따라 함께 기울고 찌그러진다.
+ * 한 바퀴 돌며 손에 들어온다. 그 뒤로 붓은 몸을 따라 기울고, 자세의 붓 회전만큼 쥔 자리를 축으로 더 돌며,
+ * 누르면 붓털이 퍼지고 끌리면 휜다.
  */
 private fun DrawScope.drawGear(
     unit: Float,
@@ -302,7 +257,7 @@ private fun DrawScope.drawGear(
     ) { drawBeret(palette, muted = true) }
 
     val held = pose.onBody(BrushGrip, MASCOT_SIZE)
-    val heldAngle = BRUSH_TILT + pose.rotation
+    val heldAngle = BRUSH_TILT + pose.rotation + pose.brush
     val catchMillis = cueMillis(RealtimeImageCue.BRUSH) * BRUSH_CATCH
     val flight = if (gearingUp) ((actMillis - cueStart(RealtimeImageCue.BRUSH)) / catchMillis).coerceIn(0f, 1f) else 1f
     val grip =
@@ -312,65 +267,67 @@ private fun DrawScope.drawGear(
             BrushOnFloor + (held - BrushOnFloor) * flight - Offset(0f, 0.08f * sin(PI.toFloat() * flight))
         }
     val angle = if (flight >= 1f) heldAngle else -450f + (heldAngle + 450f) * flight
-    inViewport(unit, MASCOT_SIZE, grip, angle, 1f) { drawBrush(palette, paintColor(palette, act)) }
+    inViewport(unit, MASCOT_SIZE, grip, angle, 1f) {
+        drawBrush(palette, paint(palette, paintColorAt(act, actMillis)), pose.press, bendOf(pose.brush))
+    }
 }
 
 /** 소품을 몸에 붙여 그릴 때 쓰는 몸 가운데. */
 private fun MascotPose.center() = Offset(x, y - MASCOT_HEIGHT * scaleY * 0.55f)
 
-/** 힘을 모으는 동안 머리 둘레에 기합 선이 번갈아 깜빡이고, 펌프 점프마다 몸 둘레로 반짝임이 퍼진다. */
-private fun DrawScope.drawEffort(
-    unit: Float,
-    palette: StagePalette,
-    actMillis: Int,
-    pose: MascotPose,
-) {
-    val center = pose.center()
-    val charge = cueProgress(RealtimeImageCue.CHARGE, actMillis)
-    if (charge > 0f && charge < 1f) {
-        val grow = smooth(charge / 0.3f) * (1f - smooth((charge - 0.85f) / 0.15f))
-        for (side in listOf(-1f, 1f)) {
-            listOf(32f, 58f, 84f).forEachIndexed { index, degrees ->
-                val angle = Math.toRadians(degrees.toDouble()).toFloat()
-                val direction = Offset(side * sin(angle), -cos(angle))
-                val pulse = 0.65f + 0.35f * sin(actMillis / 35f + index * 2f)
-                val inner = 0.072f
-                val outer = inner + 0.026f * grow * pulse
-                if (outer - inner >= 0.002f) {
-                    stageLine(center + direction * inner, center + direction * outer, 0.008f, palette.ink, unit)
-                }
-            }
-        }
-    }
-    for (cue in listOf(RealtimeImageCue.PUMP_1, RealtimeImageCue.PUMP_2)) {
-        val burst = (actMillis - cueStart(cue)) / 320f
-        if (burst < 0f || burst >= 1f) continue
-        for (ray in 0 until 6) {
-            val angle = ray / 6f * 2f * PI.toFloat() + PI.toFloat() / 6f
-            val direction = Offset(cos(angle), sin(angle))
-            val from = center + direction * (0.075f + 0.05f * burst)
-            stageLine(from, from + direction * (0.022f * (1f - burst)), 0.007f * (1f - burst * 0.6f), palette.ink, unit)
-        }
-    }
-}
-
-/** 연필로 휘갈기는 동안 마스코트 뒤로 짧은 속도 선이 따라붙는다. */
+/** 지그재그로 쓸어 칠하는 동안 마스코트 뒤로 짧은 속도 선이 따라붙는다. */
 private fun DrawScope.drawSpeedLines(
     unit: Float,
     palette: StagePalette,
     actMillis: Int,
     pose: MascotPose,
 ) {
-    for ((cue, stroke) in listOf(RealtimeImageCue.CONTOUR to SketchContour, RealtimeImageCue.HATCH to SketchHatch)) {
-        val progress = cueProgress(cue, actMillis)
-        if (progress <= 0.04f || progress >= 0.96f) continue
-        val along = stroke.at(progress) - stroke.at(progress - 0.06f)
-        val back = -along / (along.getDistance().takeIf { it > 0f } ?: 1f)
-        val center = pose.center()
-        for (side in listOf(-1f, 1f)) {
-            val start = center + back * 0.07f + Offset(-back.y, back.x) * (side * 0.022f)
-            stageLine(start, start + back * 0.03f, 0.006f, palette.ink, unit)
-        }
+    val progress = cueProgress(RealtimeImageCue.NIGHT, actMillis)
+    if (progress <= 0.04f || progress >= 0.96f) return
+    val along = Night.at(progress) - Night.at(progress - 0.06f)
+    val back = -along / (along.getDistance().takeIf { it > 0f } ?: 1f)
+    val center = pose.center()
+    for (side in listOf(-1f, 1f)) {
+        val start = center + back * 0.07f + Offset(-back.y, back.x) * (side * 0.022f)
+        stageLine(start, start + back * 0.03f, 0.006f, palette.ink, unit)
+    }
+}
+
+/** 붓을 헹구는 동안 물그릇에서 물방울이 세 번 튀어 오른다. */
+private fun DrawScope.drawSplash(
+    unit: Float,
+    palette: StagePalette,
+    progress: Float,
+) {
+    val color = mix(palette.paper, palette.pencil, 0.35f)
+    listOf(-1f, 1f, 0.4f).forEachIndexed { index, side ->
+        val t = ((progress - 0.25f - index * 0.12f) / 0.4f).coerceIn(0f, 1f)
+        if (t <= 0f || t >= 1f) return@forEachIndexed
+        val at = Offset(BowlX + side * 0.02f * t, BOWL_RIM - 0.035f * 4f * t * (1f - t))
+        drawCircle(color, 0.0035f * (1f - 0.5f * t) * unit, at * unit)
+    }
+}
+
+/** 완성한 그림을 감상하는 동안 도화지 네 모서리에 반짝임이 차례로 튀어나왔다 사라진다. */
+private fun DrawScope.drawSparkles(
+    unit: Float,
+    palette: StagePalette,
+    actMillis: Int,
+) {
+    val corners =
+        listOf(
+            Offset(PAPER_LEFT - 0.012f, PAPER_TOP - 0.012f),
+            Offset(PAPER_RIGHT + 0.012f, PAPER_TOP + 0.03f),
+            Offset(PAPER_RIGHT + 0.008f, PAPER_BOTTOM - 0.02f),
+            Offset(PAPER_LEFT - 0.01f, PAPER_BOTTOM - 0.05f),
+        )
+    corners.forEachIndexed { index, at ->
+        val elapsed = actMillis - cueStart(RealtimeImageCue.SHOWCASE) - index * 90
+        val size = easeOutBack((elapsed / 220f).coerceIn(0f, 1f)) * (1f - smooth((elapsed - 380) / 180f))
+        if (size <= 0f) return@forEachIndexed
+        val reach = 0.018f * size
+        stageLine(at - Offset(reach, 0f), at + Offset(reach, 0f), 0.005f, palette.pencil, unit)
+        stageLine(at - Offset(0f, reach), at + Offset(0f, reach), 0.005f, palette.pencil, unit)
     }
 }
 
@@ -438,8 +395,8 @@ private val ThoughtDots =
     )
 
 /**
- * 빨랫줄의 그림을 올려다보며 고민하는 동안 머리 위로 생각 점이 하나씩 떠오르고, 번뜩이는 순간 점이 사라지며
- * 느낌표가 튀어나온다.
+ * 도화지를 올려다보며 고민하는 동안 머리 위로 생각 점이 하나씩 떠오르고, 번뜩이는 순간 점이 사라지며 느낌표가
+ * 튀어나온다.
  */
 private fun DrawScope.drawDaydream(
     unit: Float,

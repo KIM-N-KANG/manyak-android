@@ -42,6 +42,10 @@ data class MascotPose(
     /** 0 은 뜬 눈, 1 은 지그시 감은 눈. */
     val squint: Float = 0f,
     val eyes: MascotEyes = MascotEyes.ROUND,
+    /** 몸에 쥔 붓을 몸 기준으로 더 돌린 각도(도). 0 이면 [BRUSH_TILT] 그대로다. */
+    val brush: Float = 0f,
+    /** 붓털을 누른 정도. 0 은 뾰족한 붓털, 1 은 눌려 넓게 퍼진 붓털이다. */
+    val press: Float = 0f,
 )
 
 /** 낱동작 하나. [cue] 를 단 동작은 소품이 그 시작 시각과 진행도를 찾아 맞춰 움직인다. */
@@ -62,8 +66,8 @@ fun smooth(t: Float): Float {
     return c * c * (3f - 2f * c)
 }
 
-/** 살짝 넘쳤다가 자리를 잡는 등장 곡선. */
-fun easeOutBack(t: Float): Float = 1f + 2.70158f * (t - 1f).pow(3) + 1.70158f * (t - 1f).pow(2)
+/** 살짝 넘쳤다가 자리를 잡는 등장 곡선. 시작 전(0 이하)은 정확히 0 이라 아직 나오지 않은 소품이 점으로 그려지지 않는다. */
+fun easeOutBack(t: Float): Float = if (t <= 0f) 0f else 1f + 2.70158f * (t - 1f).pow(3) + 1.70158f * (t - 1f).pow(2)
 
 /** 2.9초마다 한 번 깜빡인다. 1 은 다 뜬 눈이다. */
 fun blinkOpenness(millis: Int): Float {
@@ -241,18 +245,22 @@ const val BRUSH_TILT = -38f
 const val BRUSH_TIP_LENGTH = 16f
 const val BRUSH_HANDLE_LENGTH = 18f
 
-private val BrushTip =
-    Math.toRadians(BRUSH_TILT.toDouble()).toFloat().let { tilt ->
-        Offset(BrushGrip.x - sin(tilt) * BRUSH_TIP_LENGTH, BrushGrip.y + cos(tilt) * BRUSH_TIP_LENGTH)
-    }
-
-/** 붓털 끝이 발끝 가운데에서 얼마나 떨어져 있는지 반환한다. */
+/**
+ * 붓털 끝이 발끝 가운데에서 얼마나 떨어져 있는지 반환한다. 쥔 자리는 몸과 함께 찌그러지고 돌지만, 붓은
+ * 찌그러지지 않고 몸 회전과 [brush] 만큼 돈다. 그리기도 같은 순서로 붓을 놓는다.
+ */
 fun brushTipOffset(
     size: Float,
     rotation: Float = 0f,
     scaleX: Float = 1f,
     scaleY: Float = 1f,
-): Offset = mascotPointOffset(BrushTip, rotation, scaleX, scaleY, size)
+    brush: Float = 0f,
+): Offset {
+    val grip = mascotPointOffset(BrushGrip, rotation, scaleX, scaleY, size)
+    val radians = Math.toRadians((BRUSH_TILT + rotation + brush).toDouble()).toFloat()
+    val length = BRUSH_TIP_LENGTH * size / MASCOT_VIEWPORT
+    return grip + Offset(-sin(radians) * length, cos(radians) * length)
+}
 
 /** 격자 좌표 꺾은선과 누적 길이. 곡선은 잘게 나눠 길이에 고르게 따라갈 수 있게 한다. */
 class BrushPath(
@@ -339,9 +347,12 @@ fun parseStroke(path: String): BrushPath {
 
 /**
  * 붓털 끝으로 붓길을 따라 긋는다. 붓털 끝을 붓길에 붙잡은 채 나아가는 쪽으로 몸을 기울이되 양 끝에서는 바로
- * 서고, 눈은 붓끝을 본다. [scribble] 이면 지그재그를 휘갈기듯 몸을 좌우로 빠르게 비튼다.
+ * 서고, 눈은 붓끝을 본다. [scribble] 이면 지그재그를 휘갈기듯 몸을 좌우로 빠르게 비튼다. [lean] 이 있으면
+ * 붓털 끝이 진행 반대쪽으로 끌리게 붓을 눕히고, [press] 가 있으면 붓털을 누른다. 둘 다 양 끝에서 0 으로 모은다.
  *
  * @param toStage 그림 격자 좌표를 무대 좌표로 바꾸는 함수
+ * @param lean 끌림의 가장 큰 붓 회전(도)
+ * @param press 가장 큰 누름
  */
 fun paintAlong(
     millis: Int,
@@ -349,6 +360,8 @@ fun paintAlong(
     toStage: (Offset) -> Offset,
     size: Float,
     scribble: Boolean = false,
+    lean: Float = 0f,
+    press: Float = 0f,
 ) = Move<Nothing>(millis) { f ->
     val direction = stroke.heading(f)
     val envelope = minOf(1f, f / 0.08f, (1f - f) / 0.08f)
@@ -356,8 +369,9 @@ fun paintAlong(
     val rotation = (12f * direction.x + 6f * wiggle) * envelope
     val scaleX = 1f + 0.06f * wiggle
     val scaleY = 1f - 0.05f * wiggle
+    val brush = lean * direction.x * envelope
     val target = toStage(stroke.at(f))
-    val offset = brushTipOffset(size, rotation, scaleX, scaleY)
+    val offset = brushTipOffset(size, rotation, scaleX, scaleY, brush)
     MascotPose(
         x = target.x - offset.x,
         y = target.y - offset.y,
@@ -366,6 +380,8 @@ fun paintAlong(
         rotation = rotation,
         look = Offset(0.7f, 0.6f),
         eyes = if (scribble) MascotEyes.FOCUS else MascotEyes.ROUND,
+        brush = brush,
+        press = press * envelope,
     )
 }
 
