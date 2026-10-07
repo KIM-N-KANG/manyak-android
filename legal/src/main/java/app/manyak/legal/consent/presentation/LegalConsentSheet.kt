@@ -44,8 +44,8 @@ import app.manyak.legal.R as LegalR
 /**
  * 소셜 인증 후 필수 동의를 받는 시트. 동의를 마칠 때까지 로그인 또는 앱 시작 화면 위에 얹는다.
  *
- * 닫을 수 없다 — 끌어내리기·스크림 탭은 막고, 뒤로가기만 "동의하지 않음" 으로 보고 가입 중이면 가입을 취소하고
- * 로그인한 세션이면 로그아웃한다.
+ * 끌어내리기·스크림 탭으로는 닫히지 않는다. "로그아웃" 버튼과 뒤로가기만 "동의하지 않음" 으로 보고 가입 중이면 가입을
+ * 취소하고 로그인한 세션이면 로그아웃한다.
  * 전문은 시트 위에 전체 화면 창으로 연다. 모달 시트는 아래 화면을 덮으므로 백스택에 문서를 쌓으면 보이지 않는다.
  * 선택 항목(광고 알림)은 OS 권한과 별개의 법적 동의라 권한을 거부했어도 싣는다.
  *
@@ -99,6 +99,7 @@ private fun LegalConsentContent(
                         )
                     }
                     SubmitButton(state = state, onClick = { onIntent(LegalConsentIntent.Submit) })
+                    ConsentLogoutButton(enabled = !state.isLocked, onClick = { onIntent(LegalConsentIntent.Abandon) })
                 }
             }
 
@@ -117,6 +118,7 @@ private fun LegalConsentContent(
                             },
                         )
                     },
+                    onLogout = { onIntent(LegalConsentIntent.Abandon) },
                 )
         }
     }
@@ -268,12 +270,18 @@ private fun SubmitButton(
     }
 }
 
+/**
+ * 동의 조회 실패와 이용 제한 안내.
+ *
+ * @param onLogout 조회 실패에서 재시도 아래에 둘 로그아웃. 시작 화면은 뒤로가기로 세션을 유지한 채 앱을 떠나므로 넘기지 않는다.
+ */
 @Composable
 fun ConsentLoadFailureContent(
     forbidden: Boolean,
     enabled: Boolean,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
+    onLogout: (() -> Unit)? = null,
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.block)) {
         Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact)) {
@@ -302,24 +310,29 @@ fun ConsentLoadFailureContent(
                 color = ManyakTheme.colors.textSubtle,
             )
         }
-        Button(
-            modifier = Modifier.fillMaxWidth().heightIn(min = ManyakTheme.sizes.control),
-            onClick = onRetry,
-            enabled = enabled,
-            shape = ManyakTheme.shapes.control,
-            colors =
-                ButtonDefaults.buttonColors(
-                    containerColor = ManyakTheme.colors.brand,
-                    contentColor = ManyakTheme.colors.textInverse,
-                ),
-        ) {
-            Text(
-                text =
-                    stringResource(
-                        if (forbidden) LegalR.string.consent_logout else DesignsystemR.string.common_retry,
+        Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact)) {
+            Button(
+                modifier = Modifier.fillMaxWidth().heightIn(min = ManyakTheme.sizes.control),
+                onClick = onRetry,
+                enabled = enabled,
+                shape = ManyakTheme.shapes.control,
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = ManyakTheme.colors.brand,
+                        contentColor = ManyakTheme.colors.textInverse,
                     ),
-                style = ManyakTheme.typography.labelLarge,
-            )
+            ) {
+                Text(
+                    text =
+                        stringResource(
+                            if (forbidden) LegalR.string.consent_logout else DesignsystemR.string.common_retry,
+                        ),
+                    style = ManyakTheme.typography.labelLarge,
+                )
+            }
+            if (!forbidden && onLogout != null) {
+                ConsentLogoutButton(enabled = enabled, onClick = onLogout)
+            }
         }
     }
 }
