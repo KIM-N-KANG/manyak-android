@@ -206,19 +206,28 @@ fun DrawScope.drawBeret(
 
 /**
  * 붓. 쥔 자리를 원점으로, 붓털 끝이 아래(+y)로 가게 심벌 viewport 단위로 그린다. 위로 자루, 쥔 자리 아래로
- * 쇠테, 그 아래로 물감 묻은 붓털이 뾰족하게 모인다.
+ * 쇠테, 그 아래로 물감 묻은 붓털이 뾰족하게 모인다. 누르면 붓털이 넓게 퍼지고, 휘면 붓털 배가 옆으로 휜다.
+ * 붓털 끝 자리는 누름과 휨에 상관없이 그대로라 붓털 끝으로 긋는 계산과 어긋나지 않는다.
+ *
+ * @param press 0..1 누름
+ * @param bend -1..1 휨. 양수면 붓털 배가 +x 쪽으로 휜다
  */
 fun DrawScope.drawBrush(
     palette: StagePalette,
     paint: Color,
+    press: Float = 0f,
+    bend: Float = 0f,
 ) {
     drawLine(palette.pencil, Offset(0f, -BRUSH_HANDLE_LENGTH), Offset(0f, -2f), 4f, StrokeCap.Round)
     drawLine(palette.ink, Offset(0f, -2f), Offset(0f, 4f), 5.2f, StrokeCap.Round)
+    val half = 2.8f + 2.4f * press
+    val belly = 4.4f + 3.4f * press
+    val sway = 2.5f * bend
     val bristles =
         Path().apply {
-            moveTo(-2.8f, 4f)
-            cubicTo(-4.4f, 8.5f, -2f, 12.5f, 0f, BRUSH_TIP_LENGTH)
-            cubicTo(2f, 12.5f, 4.4f, 8.5f, 2.8f, 4f)
+            moveTo(-half, 4f)
+            cubicTo(-belly + sway, 8.5f, -2f - 1.6f * press + sway, 12.5f, 0f, BRUSH_TIP_LENGTH)
+            cubicTo(2f + 1.6f * press + sway, 12.5f, belly + sway, 8.5f, half, 4f)
             close()
         }
     drawPath(bristles, paint)
