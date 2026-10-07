@@ -66,3 +66,13 @@
   검증 뒤 알림 설정에서 광고 알림을 다시 껐다. 캡처는 `../captures/KNK-1347/`(01~12).
 - 코드로만 확인한 것: 조회 실패 시트와 다시 시도, `CONSENT_VERSION_MISMATCH` 재조회, 선택 항목 허용 시 약관 시트 직후 통지, 알림 권한 →
   시트 순서(검증 계정의 동의가 이미 기록돼 시트를 다시 띄울 수 없었다).
+
+## 후속: 시트의 로그아웃 버튼 (KNK-1602, 2026-10-08)
+
+- 브랜치: Android·하네스 모두 `feat/KNK-1602-add-logout-button-to-consent-sheet`. 상위 KNK-1600, 웹 KNK-1601.
+- 결정: 위 3번의 "뒤로가기만 로그아웃"을 [C-010](../../../knk-harness/docs/adr/1-1-client-adr.md#c-010)에 맞춰
+  [A-069](../../../knk-harness/docs/adr/1-3-android-adr.md#a-069-필수-동의-시트에-로그아웃-버튼을-두고-시작-화면-조회-실패에는-두지-않기)로 대체했다.
+  "동의하기"와 시트 안 "다시 시도" 아래에 `ConsentLogoutButton`(다른 시트의 "닫기"와 같은 텍스트 버튼)을 두고 `Abandon`으로 보낸다.
+  시작 화면의 조회 실패에는 `onLogout`을 넘기지 않아 재시도만 남긴다. 웹의 히스토리 재진입 정리는 Android에 해당하지 않는다.
+- 실행 결과: `:legal` `ktlintCheck`·`detekt`·유닛 테스트, `:app` `ktlintCheck` 통과. 에뮬레이터(Pixel_10)에서
+  `LegalConsentUiTest`(4, 새 케이스 3)·`MemberConsentGateUiTest`(7) 통과. Before/After 캡처는 PR에 첨부한다.

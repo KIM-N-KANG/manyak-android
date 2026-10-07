@@ -40,7 +40,7 @@ sealed interface LegalConsentIntent {
 
     data object CloseDocument : LegalConsentIntent
 
-    /** 시트가 열린 채 뒤로가기 — 동의하지 않은 것으로 보고 가입 중이면 가입을 취소하고, 로그인한 세션이면 로그아웃한다. */
+    /** 시트의 로그아웃 버튼이나 뒤로가기 — 동의하지 않은 것으로 보고 가입 중이면 가입을 취소하고, 로그인한 세션이면 로그아웃한다. */
     data object Abandon : LegalConsentIntent
 
     /** 루트가 선택 항목의 답을 알림 기능에 넘겼다. */
