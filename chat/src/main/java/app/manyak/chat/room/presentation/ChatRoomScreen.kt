@@ -170,7 +170,7 @@ private fun ChatRoomContent(
             ChatRoomHeaderOverlay(
                 // 투어 중에는 숨겨 둔 헤더도 보인다 — 딤 아래에서 화면이 어디인지 알려 준다.
                 visible = !headerHidden || phase != ChatRoomPhase.CONTENT || state.tourOpen,
-                state = state,
+                title = state.storyTitle,
                 phase = phase,
                 onBack = onBack,
                 onOpenMenu = onOpenMenu,
@@ -290,7 +290,7 @@ private fun ReplaceDraftDialog(
 @Composable
 private fun ChatRoomHeaderOverlay(
     visible: Boolean,
-    state: ChatRoomUiState,
+    title: String,
     phase: ChatRoomPhase,
     onBack: () -> Unit,
     onOpenMenu: () -> Unit,
@@ -303,10 +303,9 @@ private fun ChatRoomHeaderOverlay(
     ) {
         // 방을 아직 열지 못한 상태에서는 메뉴를 두지 않는다.
         ChatRoomHeader(
-            title = state.storyTitle,
-            personaName = state.personaName,
+            title = title,
             // 방을 연 뒤에도 제목이 비어 있으면 참조 스토리가 삭제된 것이다 — 목록 카드와 같은 문구로 알린다.
-            isStoryDeleted = phase == ChatRoomPhase.CONTENT && state.storyTitle.isBlank(),
+            isStoryDeleted = phase == ChatRoomPhase.CONTENT && title.isBlank(),
             showsMenu = phase == ChatRoomPhase.CONTENT,
             onBack = onBack,
             onOpenMenu = onOpenMenu,
@@ -318,7 +317,6 @@ private fun ChatRoomHeaderOverlay(
 @Composable
 private fun ChatRoomHeader(
     title: String,
-    personaName: String?,
     isStoryDeleted: Boolean,
     showsMenu: Boolean,
     onBack: () -> Unit,
@@ -328,25 +326,13 @@ private fun ChatRoomHeader(
     TopAppBar(
         modifier = modifier,
         title = {
-            Column {
-                Text(
-                    text = if (isStoryDeleted) stringResource(ChatR.string.chat_list_deleted_story) else title,
-                    style = ManyakTheme.typography.bodyLargeStrong,
-                    color = if (isStoryDeleted) ManyakTheme.colors.textSubtlest else ManyakTheme.colors.text,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                // 채팅을 시작할 때 고른 페르소나다. 기본 주인공으로 시작한 채팅에는 두지 않는다.
-                if (personaName != null) {
-                    Text(
-                        text = stringResource(ChatR.string.chat_room_persona, personaName),
-                        style = ManyakTheme.typography.bodySmall,
-                        color = ManyakTheme.colors.textSubtle,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-            }
+            Text(
+                text = if (isStoryDeleted) stringResource(ChatR.string.chat_list_deleted_story) else title,
+                style = ManyakTheme.typography.bodyLargeStrong,
+                color = if (isStoryDeleted) ManyakTheme.colors.textSubtlest else ManyakTheme.colors.text,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         },
         navigationIcon = {
             ManyakIconButton(

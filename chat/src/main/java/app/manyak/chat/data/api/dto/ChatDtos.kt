@@ -105,13 +105,6 @@ data class ChatDetailResponseDto(
     val prologue: String = "",
     val turns: List<ChatTurnDto> = emptyList(),
     val suggestedInputs: List<String> = emptyList(),
-    val persona: ChatPersonaDto? = null,
-)
-
-/** 채팅을 시작할 때 고른 페르소나의 이름. 원본을 고치거나 지워도 바뀌지 않는 스냅샷이다. */
-@Serializable
-data class ChatPersonaDto(
-    val name: String = "",
 )
 
 @Serializable
@@ -140,5 +133,4 @@ fun ChatDetailResponseDto.toDomain(): ChatDetail =
                 )
             },
         suggestedInputs = suggestedInputs,
-        personaName = persona?.name?.trim()?.takeIf(String::isNotEmpty),
     )

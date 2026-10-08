@@ -31,8 +31,6 @@ data class ChatDetail(
     val turns: List<ChatTurn>,
     /** 첫 입력 후보. 턴이 0개일 때만 채워져 온다. */
     val suggestedInputs: List<String>,
-    /** 페르소나로 시작한 채팅의 페르소나 이름. 기본 주인공으로 시작했으면 null 이다. */
-    val personaName: String? = null,
 )
 
 /** 턴 하나 — 사용자 입력과 그에 대한 AI 출력의 짝. */
