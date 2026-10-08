@@ -32,9 +32,9 @@ import app.manyak.create.general.entity.GeneralField
 import app.manyak.create.general.entity.GeneralFieldTarget
 import app.manyak.create.general.entity.GeneralGender
 import app.manyak.create.general.entity.GeneralTab
-import app.manyak.create.presentation.component.AddTrigger
 import app.manyak.create.presentation.component.CollapsibleInputSection
 import app.manyak.create.presentation.component.KeywordSectionLabel
+import app.manyak.designsystem.component.ManyakAddButton
 import app.manyak.designsystem.component.ManyakInputCounter
 import app.manyak.designsystem.component.ManyakSelectField
 import app.manyak.designsystem.component.ManyakSelectOption
@@ -106,7 +106,7 @@ internal fun GeneralListAddButton(
         label = "general-list-add-gap",
     )
     Box(modifier.fillMaxWidth().padding(top = gap), contentAlignment = Alignment.Center) {
-        AddTrigger(label = label, enabled = enabled, onClick = onClick)
+        ManyakAddButton(label = label, enabled = enabled, onClick = onClick)
     }
 }
 
