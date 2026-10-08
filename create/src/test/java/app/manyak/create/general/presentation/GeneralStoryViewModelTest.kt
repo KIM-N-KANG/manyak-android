@@ -182,6 +182,7 @@ class GeneralStoryViewModelTest {
                     override suspend fun createChat(
                         storyId: String,
                         startSettingId: String?,
+                        personaId: String?,
                     ): DomainResult<CreatedChat> = DomainResult.Success(CreatedChat("chat"))
                 },
             gate = gate,

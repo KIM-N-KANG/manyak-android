@@ -142,6 +142,11 @@ typography:
     fontSize: 12sp
     fontWeight: 500
     lineHeight: 16sp
+  label-tiny:
+    fontFamily: "Pretendard"
+    fontSize: 11sp
+    fontWeight: 500
+    lineHeight: 16sp
 
 rounded:
   checkbox: 6dp
@@ -578,6 +583,7 @@ components:
 | `{typography.label-large}` | 14sp | 500 | 20sp | 버튼·탭 라벨 |
 | `{typography.body-small}` | 12sp | 400 | 16sp | 메타 정보·보조 설명 |
 | `{typography.label-small}` | 12sp | 500 | 16sp | 타임스탬프·최소 보조 문구 · 표지 위 뱃지 |
+| `{typography.label-tiny}` | 11sp | 500 | 16sp | 버튼 라벨 아래 보조 줄(채팅 시작 버튼의 페르소나와 시작 상황 요약) |
 
 ### 원칙
 
@@ -758,7 +764,7 @@ components:
 
 **`text-field-error`** — 경계를 `{colors.border-danger}`로 바꾸고, 오류 문구를 `{colors.text-danger}` + `{typography.body-small}`로 아래에 둡니다. 색만으로 오류를 알리지 않습니다.
 
-**셀렉트 메뉴**(성별 등) — 앵커는 text-field 와 같은 형태이고, 미선택(랜덤) 값은 placeholder 색(`{colors.text-disabled}`)으로 낮춥니다. 메뉴는 앵커와 같은 폭으로 항상 앵커 아래에 `{spacing.inline}` 떨어져 열리며, 배경 `{colors.surface-raised}` + 경계 `{colors.border}` + **연한 그림자**를 쓰고, 판 안쪽 여백과 항목 사이 간격은 모두 `{spacing.inline}`이고, 각 항목은 `{rounded.menu-item}` 모서리와 세로 `{spacing.control-vertical}` · 가로 `{spacing.control-horizontal}` 여백을 사용합니다. 선택된 항목은 `{colors.background-neutral}` 채움과 체크 표시로 드러냅니다 — 그림자 금지 규칙의 예외로, 떠 있는 흰 메뉴가 흰 앵커·표면과 겹쳐 경계만으로는 층이 드러나지 않기 때문입니다.
+**셀렉트 메뉴**(성별 등) — 앵커는 text-field 와 같은 형태이고, 미선택(랜덤) 값은 placeholder 색(`{colors.text-disabled}`)으로 낮춥니다. 메뉴는 앵커와 같은 폭으로 항상 앵커 아래에 `{spacing.inline}` 떨어져 열리며, 배경 `{colors.surface-raised}` + 경계 `{colors.border}` + **연한 그림자**를 쓰고, 판 안쪽 여백과 항목 사이 간격은 모두 `{spacing.inline}`이고, 각 항목은 `{rounded.menu-item}` 모서리와 세로 `{spacing.control-vertical}` · 가로 `{spacing.control-horizontal}` 여백을 사용합니다. 선택된 항목은 `{colors.background-neutral}` 채움과 체크 표시로 드러냅니다 — 그림자 금지 규칙의 예외로, 떠 있는 흰 메뉴가 흰 앵커·표면과 겹쳐 경계만으로는 층이 드러나지 않기 때문입니다. 값 항목 아래에는 고를 수 있는 값이 아닌 동작 항목(상세의 "페르소나 생성하기")을 둘 수 있습니다. 같은 여백에 왼쪽 `{sizes.icon-small}` 더하기 아이콘을 두고 선택 채움과 체크는 두지 않으며, 누르면 메뉴를 닫고 동작을 실행합니다.
 
 ### 컨테이너
 
@@ -839,7 +845,7 @@ components:
 
 **퍼널 하단 CTA** — 주 버튼(다음·스토리라인 만들기)은 `{component.button-primary}` 그대로이고 보조 버튼(이전)은 `{component.button-neutral}`이다. 두 버튼은 같은 폭(1:1)으로 하단을 나눈다.
 
-**키워드 칩** — 제공·커스텀 태그는 `{component.chip}`(흰 배경 + 옅은 경계)이고 선택은 `{component.chip-selected}`(브랜드 subtle 채움 + 브랜드 경계 + 브랜드 텍스트)로 색 하나가 아니라 채움·경계·글자 셋으로 말한다. 높이는 `{sizes.input}`으로 컨트롤(48dp)보다 낮다 — 여럿이 흐르는 밀도 높은 선택 요소라서이고, 터치 타깃이 최소 48dp 에 못 미치는 것은 알고 수용한다. 모서리는 입력창과 같은 `{rounded.control}`이고, 선택 변화 자체가 반응이므로 눌림 리플을 그리지 않는다. "키워드 추가"·"인물 추가" 트리거는 같은 모양에 `{colors.background-neutral}` 채움 + `{colors.border}` 경계이고, `+` 아이콘은 16dp 로 라벨 크기에 맞춘다. 인물 추가는 폭을 채우지 않고 가운데에 놓인다. 상한에 도달하면 미선택 칩과 트리거를 비활성 색(`{colors.text-disabled}`)으로 내린다.
+**키워드 칩** — 제공·커스텀 태그는 `{component.chip}`(흰 배경 + 옅은 경계)이고 선택은 `{component.chip-selected}`(브랜드 subtle 채움 + 브랜드 경계 + 브랜드 텍스트)로 색 하나가 아니라 채움·경계·글자 셋으로 말한다. 높이는 `{sizes.input}`으로 컨트롤(48dp)보다 낮다 — 여럿이 흐르는 밀도 높은 선택 요소라서이고, 터치 타깃이 최소 48dp 에 못 미치는 것은 알고 수용한다. 모서리는 입력창과 같은 `{rounded.control}`이고, 선택 변화 자체가 반응이므로 눌림 리플을 그리지 않는다. "키워드 추가"·"인물 추가" 트리거는 같은 모양에 `{colors.background-neutral}` 채움 + `{colors.border}` 경계이고, `+` 아이콘은 16dp 로 라벨 크기에 맞춘다. 인물 추가는 폭을 채우지 않고 가운데에 놓인다. 트리거는 `designsystem`의 `ManyakAddButton`이고, 마이 페르소나 관리의 "페르소나 추가"도 같은 버튼을 목록 아래 가운데에 둔다. 상한에 도달하면 미선택 칩과 트리거를 비활성 색(`{colors.text-disabled}`)으로 내린다.
 
 카테고리 탭은 M3 `SecondaryTabRow` 기본을 쓴다(`TabRow`는 deprecated) — 컨테이너 `{colors.surface}`, 선택 라벨 `{colors.text}`, 비선택 `{colors.text-subtle}`, 잠금 `{colors.text-disabled}`, 필수 표시 `*`는 `{colors.text-danger}`. 선택 표시선은 탭 폭에 맞는 `{colors.text}` 1.5dp 선이다 — 선택 표시는 상태이지 다음 동작이 아니라서 초록을 쓰지 않고, 선택 라벨과 같은 색으로 묶는다. **눌림 리플은 끈다** — 탭을 누르면 라벨 색과 표시선이 곧바로 바뀌므로 그 변화 자체가 반응이고, 하단 내비게이션과 같은 이유다. 스크롤 시 탭만 상단에 고정하고 각 카테고리 콘텐츠는 탭 아래에서 시작한다. **이프 충전의 무료 충전·내역 탭도 같은 밑줄 탭이다** — 표시선 색·두께, 라벨 색 위계, 리플 끄기까지 이 규칙을 그대로 쓰고 잠금·필수 표시만 없다.
 

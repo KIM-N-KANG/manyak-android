@@ -11,6 +11,7 @@ import app.manyak.report.entity.StoryReportReason
 import app.manyak.report.presentation.StoryReportAction
 import app.manyak.story.entity.StoryCharacter
 import app.manyak.story.testing.FakeChatRepository
+import app.manyak.story.testing.FakePersonaAccess
 import app.manyak.story.testing.FakeStoryRepository
 import app.manyak.story.testing.STORY_ID
 import app.manyak.story.testing.sampleStartSettings
@@ -59,6 +60,7 @@ class StoryDetailViewModelTest {
         storyRepository,
         storyRepository,
         likeUpdates,
+        FakePersonaAccess(),
     )
 
     @Test
@@ -394,6 +396,7 @@ class StoryDetailViewModelTest {
                         _,
                         ->
                     },
+                    FakePersonaAccess(),
                 )
             viewModel.onIntent(StoryDetailIntent.ScreenShown)
             advanceUntilIdle()
@@ -453,6 +456,7 @@ class StoryDetailViewModelTest {
                     repository,
                     repository,
                     StoryLikeUpdates { _, _ -> },
+                    FakePersonaAccess(),
                 )
             viewModel.onIntent(StoryDetailIntent.ScreenShown)
             advanceUntilIdle()

@@ -43,6 +43,7 @@
     <string name="chat_room_fill_confirm_title">작성 중인 내용을 바꿀까요?</string>
     <string name="chat_room_load_error">채팅을 불러오지 못했어요</string>
     <string name="chat_room_menu">채팅 메뉴</string>
+    <string name="chat_room_persona">%1$s 페르소나로 채팅 중</string>
     <string name="chat_room_new_chat">새 채팅 시작하기</string>
     <string name="chat_room_new_chat_failed">채팅을 시작하지 못했어요</string>
     <string name="chat_room_regenerate">다시 생성</string>

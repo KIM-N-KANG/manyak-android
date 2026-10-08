@@ -16,8 +16,16 @@
     <string name="story_detail_like_failed">좋아요 변경에 실패했어요</string>
     <string name="story_detail_not_found">스토리를 찾을 수 없어요</string>
     <string name="story_detail_options">스토리 옵션</string>
+    <string name="story_detail_persona">페르소나</string>
+    <string name="story_detail_persona_create">페르소나 생성하기</string>
+    <string name="story_detail_persona_default">기본</string>
+    <string name="story_detail_persona_info">페르소나 안내</string>
+    <string name="story_detail_persona_info_tooltip">선택한 페르소나가 되어 스토리를 진행해요. 채팅을 시작하면 바꿀 수 없어요</string>
+    <string name="story_detail_persona_select">페르소나 선택</string>
     <string name="story_detail_start_chat">새 채팅 시작하기</string>
     <string name="story_detail_start_chat_failed">채팅을 시작하지 못했어요</string>
+    <string name="story_detail_start_chat_summary">%1$s 페르소나 · %2$s</string>
+    <string name="story_detail_start_chat_summary_persona_only">%1$s 페르소나</string>
     <string name="story_detail_start_setting_endings">엔딩</string>
     <string name="story_detail_start_setting_name">상황 이름</string>
     <string name="story_detail_start_setting_name_info">상황 이름 안내</string>

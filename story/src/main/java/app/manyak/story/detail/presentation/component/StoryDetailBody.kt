@@ -25,6 +25,7 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import app.manyak.common.entity.persona.Persona
 import app.manyak.designsystem.component.CharacterImage
 import app.manyak.designsystem.component.ManyakInfoTooltipButton
 import app.manyak.designsystem.component.StoryBadgeScale
@@ -51,6 +52,7 @@ internal fun LazyListScope.storyDetailBody(
     story: StoryDetail,
     selectedStartSettingId: String?,
     selectedStartSetting: StoryStartSetting?,
+    persona: PersonaPick,
     onThumbnailClick: () -> Unit,
     onCharacterImageClick: (String) -> Unit,
     onSelectStartSetting: (String) -> Unit,
@@ -93,6 +95,7 @@ internal fun LazyListScope.storyDetailBody(
                     startSettings = story.startSettings,
                     selectedId = selectedStartSettingId,
                     selected = selectedStartSetting,
+                    persona = persona,
                     onSelect = onSelectStartSetting,
                     onImageClick = onCharacterImageClick,
                 )
@@ -225,15 +228,25 @@ private fun GenreBadges(
     }
 }
 
+/** 페르소나 셀렉트에 필요한 값과 동작. 본문 함수의 인자가 늘지 않게 한 묶음으로 넘긴다. */
+internal class PersonaPick(
+    val personas: List<Persona>,
+    val selectedId: String?,
+    val onSelect: (String?) -> Unit,
+    val onCreate: () -> Unit,
+)
+
 /**
  * 시작 상황은 이름·설명·엔딩 세 갈래다. 이름은 고를 수 있는 값이고 나머지 둘은 그 값에 딸리므로,
- * 한 덩어리로 두면 무엇을 바꿀 수 있는지 드러나지 않는다.
+ * 한 덩어리로 두면 무엇을 바꿀 수 있는지 드러나지 않는다. 맨 위의 페르소나는 어느 주인공으로 시작할지다.
  */
 @Composable
+@Suppress("LongParameterList")
 private fun StartSettingSection(
     startSettings: List<StoryStartSetting>,
     selectedId: String?,
     selected: StoryStartSetting,
+    persona: PersonaPick,
     onSelect: (String) -> Unit,
     onImageClick: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -243,6 +256,22 @@ private fun StartSettingSection(
         // 갈래 사이는 갈래 안(라벨↔내용)보다 넓다 — 같으면 무엇이 한 묶음인지 드러나지 않는다.
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.section),
     ) {
+        SubLabeledBlock(
+            label = stringResource(StoryR.string.story_detail_persona),
+            labelTrailing = {
+                ManyakInfoTooltipButton(
+                    text = stringResource(StoryR.string.story_detail_persona_info_tooltip),
+                    contentDescription = stringResource(StoryR.string.story_detail_persona_info),
+                )
+            },
+        ) {
+            PersonaSelect(
+                personas = persona.personas,
+                selectedId = persona.selectedId,
+                onSelect = persona.onSelect,
+                onCreate = persona.onCreate,
+            )
+        }
         if (startSettings.isNotEmpty()) {
             SubLabeledBlock(
                 label = stringResource(StoryR.string.story_detail_start_setting_name),

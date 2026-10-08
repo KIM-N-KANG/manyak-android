@@ -2,14 +2,18 @@ package app.manyak.story.testing
 
 import app.manyak.common.domain.chat.ChatStarter
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.persona.PersonaAccess
 import app.manyak.common.domain.story.StoryDeletion
 import app.manyak.common.entity.chat.CreatedChat
+import app.manyak.common.entity.persona.CreatedPersona
+import app.manyak.common.entity.persona.Persona
 import app.manyak.report.domain.ReportRepository
 import app.manyak.report.entity.StoryReportReason
 import app.manyak.story.domain.StoryRepository
 import app.manyak.story.entity.StoryDetail
 import app.manyak.story.entity.StoryStartSetting
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.yield
 
 internal const val STORY_ID = "story-1"
@@ -117,14 +121,36 @@ internal class FakeStoryRepository :
 internal class FakeChatRepository : ChatStarter {
     /** 호출마다 넘어온 시작 설정 — null 이면 서버 폴백을 쓴 호출이다. */
     val createChatStartSettingIds = mutableListOf<String?>()
+
+    /** 호출마다 넘어온 페르소나. null 이면 기본 주인공으로 시작한 호출이다. */
+    val createChatPersonaIds = mutableListOf<String?>()
     val queuedCreateChatResults = ArrayDeque<DomainResult<CreatedChat>>()
 
     override suspend fun createChat(
         storyId: String,
         startSettingId: String?,
+        personaId: String?,
     ): DomainResult<CreatedChat> {
         yield()
         createChatStartSettingIds += startSettingId
+        createChatPersonaIds += personaId
         return queuedCreateChatResults.removeFirstOrNull() ?: DomainResult.Success(CreatedChat(id = "chat-1"))
+    }
+}
+
+internal class FakePersonaAccess(
+    personas: List<Persona>? = null,
+) : PersonaAccess {
+    override val personas = MutableStateFlow(personas)
+    override val createdPersona = MutableStateFlow<CreatedPersona?>(null)
+    var refreshCount = 0
+
+    override suspend fun refresh(): DomainResult<Unit> {
+        refreshCount++
+        return DomainResult.Success(Unit)
+    }
+
+    override fun clearCreatedPersona() {
+        createdPersona.value = null
     }
 }
