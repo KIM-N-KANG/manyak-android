@@ -231,7 +231,23 @@ sealed class AnalyticsEvent(
 
     data class ChatStartButtonClicked(
         val storyId: String,
-    ) : AnalyticsEvent("client_storyDetail_chatStartButton_clicked", mapOf("story_id" to storyId))
+        val personaType: PersonaType,
+    ) : AnalyticsEvent(
+            "client_storyDetail_chatStartButton_clicked",
+            mapOf("story_id" to storyId, "persona_type" to personaType.wire),
+        )
+
+    data class PersonaSelected(
+        val storyId: String,
+        val personaType: PersonaType,
+    ) : AnalyticsEvent(
+            "client_storyDetail_persona_selected",
+            mapOf("story_id" to storyId, "persona_type" to personaType.wire),
+        )
+
+    data class PersonaCreateButtonClicked(
+        val storyId: String,
+    ) : AnalyticsEvent("client_storyDetail_personaCreateButton_clicked", mapOf("story_id" to storyId))
 
     data class ThumbnailClicked(
         val storyId: String,
@@ -473,6 +489,25 @@ sealed class AnalyticsEvent(
 
     data object InviteOnboardingSkipped : AnalyticsEvent("client_inviteOnboarding_skipped")
 
+    // persona. 이름, 성별, 특징은 사용자 입력이라 싣지 않는다
+    data object PersonaCreateViewed : AnalyticsEvent("client_personaCreate_viewed")
+
+    data object PersonaCreateFormSubmitted : AnalyticsEvent("client_personaCreate_form_submitted")
+
+    data object PersonaCreateCompleted : AnalyticsEvent("client_personaCreate_completed")
+
+    data object PersonaListViewed : AnalyticsEvent("client_personaList_viewed")
+
+    data object PersonaListCreateButtonClicked : AnalyticsEvent("client_personaList_createButton_clicked")
+
+    data object PersonaListPersonaDeleted : AnalyticsEvent("client_personaList_persona_deleted")
+
+    data object PersonaEditViewed : AnalyticsEvent("client_personaEdit_viewed")
+
+    data object PersonaEditFormSubmitted : AnalyticsEvent("client_personaEdit_form_submitted")
+
+    data object PersonaEditCompleted : AnalyticsEvent("client_personaEdit_completed")
+
     // feedback
     data object FeedbackViewed : AnalyticsEvent("client_feedback_viewed")
 
@@ -484,6 +519,14 @@ sealed class AnalyticsEvent(
     data object PrivacyViewed : AnalyticsEvent("client_privacy_viewed")
 
     data object ServiceInfoViewed : AnalyticsEvent("client_serviceInfo_viewed")
+}
+
+/** 채팅을 시작하거나 고른 주인공의 종류. */
+enum class PersonaType(
+    val wire: String,
+) {
+    DEFAULT("default"),
+    PERSONA("persona"),
 }
 
 enum class StoryListSection(

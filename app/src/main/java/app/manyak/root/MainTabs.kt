@@ -56,6 +56,7 @@ internal fun MainTabsScreen(
     onOpenOpenSourceLicense: () -> Unit,
     onOpenWithdrawal: () -> Unit,
     onOpenCreditCharge: () -> Unit,
+    onOpenPersonas: () -> Unit,
     onOpenNotificationSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -100,6 +101,7 @@ internal fun MainTabsScreen(
             onOpenOpenSourceLicense = onOpenOpenSourceLicense,
             onOpenWithdrawal = onOpenWithdrawal,
             onOpenCreditCharge = onOpenCreditCharge,
+            onOpenPersonas = onOpenPersonas,
             onOpenNotificationSettings = onOpenNotificationSettings,
         )
     }
@@ -148,6 +150,7 @@ private fun MainTabsContent(
     onOpenOpenSourceLicense: () -> Unit,
     onOpenWithdrawal: () -> Unit,
     onOpenCreditCharge: () -> Unit,
+    onOpenPersonas: () -> Unit,
     onOpenNotificationSettings: () -> Unit,
 ) {
     // 목적지는 백스택이 바뀔 때만 다시 만들어지므로, 그 사이에 바뀌는 여백을 값으로 붙잡으면 오래된 값이
@@ -191,6 +194,7 @@ private fun MainTabsContent(
                     onOpenOpenSourceLicense = onOpenOpenSourceLicense,
                     onOpenWithdrawal = onOpenWithdrawal,
                     onOpenCreditCharge = onOpenCreditCharge,
+                    onOpenPersonas = onOpenPersonas,
                     onOpenNotificationSettings = onOpenNotificationSettings,
                 )
             }

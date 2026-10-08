@@ -57,6 +57,7 @@ fun MyScreen(
     onOpenOpenSourceLicense: () -> Unit,
     onOpenWithdrawal: () -> Unit,
     onOpenCreditCharge: () -> Unit,
+    onOpenPersonas: () -> Unit,
     onOpenNotificationSettings: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MyViewModel = hiltViewModel(),
@@ -106,6 +107,7 @@ fun MyScreen(
         onOpenOpenSourceLicense = onOpenOpenSourceLicense,
         onOpenWithdrawal = onOpenWithdrawal,
         onOpenCreditCharge = onOpenCreditCharge,
+        onOpenPersonas = onOpenPersonas,
         onOpenNotificationSettings = onOpenNotificationSettings,
         contentPadding = contentPadding,
         modifier = modifier,
@@ -151,6 +153,7 @@ private fun MyContent(
     onOpenOpenSourceLicense: () -> Unit,
     onOpenWithdrawal: () -> Unit,
     onOpenCreditCharge: () -> Unit,
+    onOpenPersonas: () -> Unit,
     onOpenNotificationSettings: () -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
@@ -168,6 +171,14 @@ private fun MyContent(
             onLinkAccount = { provider -> onIntent(MyIntent.RequestAccountLink(provider)) },
         )
         MyCreditBalanceCard(balance = state.profile?.creditBalance, onOpenCreditCharge = onOpenCreditCharge)
+        MySection(labelRes = MyR.string.my_section_persona) {
+            MyMenuItem(
+                iconRes = DesignsystemR.drawable.ic_personal_card,
+                labelRes = MyR.string.my_persona_manage,
+                onClick = onOpenPersonas,
+                trailing = { MenuTrailingIcon(iconRes = DesignsystemR.drawable.ic_chevron_right) },
+            )
+        }
         MySection(labelRes = MyR.string.my_section_event) {
             InviteMenuItem(onClick = onOpenInvite)
         }
@@ -364,6 +375,7 @@ private fun MyScreenPreview() {
             onOpenOpenSourceLicense = {},
             onOpenWithdrawal = {},
             onOpenCreditCharge = {},
+            onOpenPersonas = {},
             onOpenNotificationSettings = {},
             contentPadding = PaddingValues(0.dp),
         )

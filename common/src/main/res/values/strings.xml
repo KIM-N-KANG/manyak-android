@@ -23,4 +23,5 @@
     <string name="studio_story_delete">삭제하기</string>
     <string name="studio_story_delete_failed">스토리 삭제에 실패했어요</string>
     <string name="studio_story_deleted">스토리가 삭제되었어요</string>
+    <string name="persona_limit_reached">페르소나는 10개까지 만들 수 있어요</string>
 </resources>
