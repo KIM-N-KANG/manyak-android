@@ -5,6 +5,8 @@ data class GeneralStoryContent(
     val oneLineIntro: String,
     val description: String? = null,
     val genres: List<String> = emptyList(),
+    /** 기본 주인공 이름. 주인공 설정 글에 넣지 않고 따로 주고받는다. 없으면 null 이다. */
+    val protagonistName: String? = null,
     val storySettings: GeneralStorySettings = GeneralStorySettings(),
     val startSettings: List<GeneralStartInput> = emptyList(),
     val mainEvents: List<GeneralEventInput> = emptyList(),
@@ -56,12 +58,16 @@ data class GeneralImageInput(
     val imageUrl: String = "",
 )
 
-/** null 필드는 생략하고 빈 소개는 저장된 소개를 지웁니다. */
+/**
+ * null 필드는 생략하고 빈 소개는 저장된 소개를 지웁니다. 주인공 이름은 비우면 싣지 않아 서버가 기존 이름을
+ * 그대로 둡니다.
+ */
 data class GeneralStoryPatch(
     val title: String? = null,
     val oneLineIntro: String? = null,
     val description: String? = null,
     val genres: List<String>? = null,
+    val protagonistName: String? = null,
     val storySettings: GeneralStorySettings? = null,
     val startSettings: List<GeneralStartInput>? = null,
     val mainEvents: List<GeneralEventInput>? = null,
@@ -76,6 +82,7 @@ data class GeneralStoryPatch(
                 oneLineIntro,
                 description,
                 genres,
+                protagonistName,
                 storySettings,
                 startSettings,
                 mainEvents,

@@ -63,9 +63,11 @@ import app.manyak.designsystem.component.rememberDelayedProgressVisibility
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.report.presentation.StoryReportAction
 import app.manyak.report.presentation.component.StoryReportSheet
+import app.manyak.story.detail.presentation.component.PersonaPick
 import app.manyak.story.detail.presentation.component.StartChatCta
 import app.manyak.story.detail.presentation.component.StoryDetailHeaderMenu
 import app.manyak.story.detail.presentation.component.StoryDetailSkeleton
+import app.manyak.story.detail.presentation.component.chatStartSummary
 import app.manyak.story.detail.presentation.component.storyDetailBody
 import app.manyak.story.detail.presentation.preview.previewStartSettings
 import app.manyak.story.detail.presentation.preview.previewStory
@@ -88,6 +90,7 @@ fun StoryDetailScreen(
     onStoryDeleted: () -> Unit,
     onEnterChat: (String) -> Unit,
     onEditStory: (String) -> Unit = {},
+    onCreatePersona: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: StoryDetailViewModel =
         hiltViewModel<StoryDetailViewModel, StoryDetailViewModel.Factory>(
@@ -97,6 +100,7 @@ fun StoryDetailScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val currentOnEnterChat by rememberUpdatedState(onEnterChat)
     val currentOnStoryDeleted by rememberUpdatedState(onStoryDeleted)
+    val currentOnCreatePersona by rememberUpdatedState(onCreatePersona)
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
 
@@ -125,6 +129,11 @@ fun StoryDetailScreen(
 
                     StoryDetailEffect.ShowLikeFailed ->
                         Toast.makeText(context, StoryR.string.story_detail_like_failed, Toast.LENGTH_SHORT).show()
+
+                    StoryDetailEffect.NavigateToPersonaCreate -> currentOnCreatePersona()
+
+                    StoryDetailEffect.ShowPersonaLimitReached ->
+                        Toast.makeText(context, CommonR.string.persona_limit_reached, Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -342,6 +351,13 @@ private fun StoryDetailLoaded(
                 story = story,
                 selectedStartSettingId = state.selectedStartSettingId,
                 selectedStartSetting = state.selectedStartSetting,
+                persona =
+                    PersonaPick(
+                        personas = state.persona.personas,
+                        selectedId = state.persona.selected?.id,
+                        onSelect = { id -> onIntent(StoryDetailIntent.ChoosePersona(PersonaAction.Select(id))) },
+                        onCreate = { onIntent(StoryDetailIntent.ChoosePersona(PersonaAction.Create)) },
+                    ),
                 onThumbnailClick = { onIntent(StoryDetailIntent.OpenImageViewer) },
                 onCharacterImageClick = { url -> onIntent(StoryDetailIntent.OpenCharacterImage(url)) },
                 onSelectStartSetting = { id -> onIntent(StoryDetailIntent.SelectStartSetting(id)) },
@@ -355,6 +371,11 @@ private fun StoryDetailLoaded(
                     .align(Alignment.BottomCenter)
                     .onSizeChanged { size -> ctaHeight = with(density) { size.height.toDp() } },
             isStarting = state.isStartingChat,
+            summary =
+                chatStartSummary(
+                    personaName = state.persona.selected?.name,
+                    startSettingName = state.selectedStartSetting?.name,
+                ),
             canLike = state.canLike,
             isLiked = story.isLiked,
             isTogglingLike = state.isTogglingLike,

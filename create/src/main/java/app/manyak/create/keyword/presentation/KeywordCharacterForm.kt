@@ -34,9 +34,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import app.manyak.create.presentation.component.AddTrigger
 import app.manyak.create.presentation.component.CollapsibleInputSection
 import app.manyak.create.presentation.component.KeywordSectionLabel
+import app.manyak.designsystem.component.ManyakAddButton
 import app.manyak.designsystem.component.ManyakInputCounter
 import app.manyak.designsystem.component.ManyakTextField
 import app.manyak.designsystem.theme.ManyakTheme
@@ -191,7 +191,7 @@ internal fun KeywordChipArea(
                             onClick = { onIntent(CreateKeywordIntent.ToggleCustomTag(target, index)) },
                         )
                     }
-                    AddTrigger(
+                    ManyakAddButton(
                         label = stringResource(CreateR.string.create_add_keyword),
                         enabled = !atSelectionCap,
                         onClick = { onOpenAddKeyword(target) },
@@ -350,7 +350,7 @@ private fun AddCharacterTrigger(
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-        AddTrigger(
+        ManyakAddButton(
             label = stringResource(CreateR.string.create_add_character),
             enabled = enabled,
             onClick = onClick,

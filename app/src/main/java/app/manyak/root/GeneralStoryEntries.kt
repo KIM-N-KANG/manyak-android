@@ -7,6 +7,7 @@ import app.manyak.core.navigation.CreateKeywordRoute
 import app.manyak.core.navigation.CreateMethodRoute
 import app.manyak.core.navigation.GeneralCreateRoute
 import app.manyak.core.navigation.GeneralSubmissionRoute
+import app.manyak.core.navigation.PersonaCreateRoute
 import app.manyak.core.navigation.StoryDetailRoute
 import app.manyak.core.navigation.StoryEditRoute
 import app.manyak.create.general.presentation.CreateMethodScreen
@@ -79,6 +80,7 @@ internal fun EntryProviderScope<NavKey>.storyDetailEntry(
                 onSelectStudio()
             },
             onEnterChat = { backStack.push(ChatRoomRoute(it)) },
+            onCreatePersona = { backStack.push(PersonaCreateRoute(originStoryId = route.storyId)) },
         )
     }
 }

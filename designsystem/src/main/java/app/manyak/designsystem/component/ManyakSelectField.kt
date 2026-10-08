@@ -53,8 +53,10 @@ import app.manyak.designsystem.R as DesignsystemR
  *
  * @param placeholder [selected] 가 [options] 에 없을 때 앵커에 흐리게 보일 문구. 고르지 않은 상태를
  * 메뉴 항목으로 두지 않는 필수 선택에서 쓴다.
+ * @param action 값 항목 아래에 붙는 동작 항목. 눌러도 선택이 바뀌지 않는다.
  */
 @Composable
+@Suppress("LongParameterList")
 fun <T> ManyakSelectField(
     options: List<ManyakSelectOption<T>>,
     selected: T,
@@ -63,6 +65,7 @@ fun <T> ManyakSelectField(
     isPlaceholder: Boolean = false,
     onClickLabel: String? = null,
     placeholder: String? = null,
+    action: ManyakSelectAction? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
     var anchorWidthPx by remember { mutableIntStateOf(0) }
@@ -86,6 +89,15 @@ fun <T> ManyakSelectField(
                 expanded = false
                 onSelect(value)
             },
+            action =
+                action?.let {
+                    it.copy(
+                        onClick = {
+                            expanded = false
+                            it.onClick()
+                        },
+                    )
+                },
         )
     }
 }
@@ -100,6 +112,7 @@ fun <T> ManyakSelectField(
  * 흰 앵커와 메뉴의 경계를 구분하기 위해 디자인 시스템의 무그림자 원칙에서 예외로 둔다.
  */
 @Composable
+@Suppress("LongParameterList")
 fun <T> ManyakSelectMenu(
     expanded: Boolean,
     options: List<ManyakSelectOption<T>>,
@@ -108,6 +121,7 @@ fun <T> ManyakSelectMenu(
     onSelect: (T) -> Unit,
     modifier: Modifier = Modifier,
     alignment: Alignment.Horizontal = Alignment.Start,
+    action: ManyakSelectAction? = null,
 ) {
     val gapPx = with(LocalDensity.current) { ManyakTheme.spacing.inline.roundToPx() }
     val positionProvider =
@@ -152,6 +166,7 @@ fun <T> ManyakSelectMenu(
                     onClick = { onSelect(option.value) },
                 )
             }
+            action?.let { SelectMenuAction(action = it) }
         }
     }
 }
@@ -194,6 +209,39 @@ private fun SelectMenuItem(
                 tint = ManyakTheme.colors.text,
             )
         }
+    }
+}
+
+@Composable
+private fun SelectMenuAction(
+    action: ManyakSelectAction,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clip(ManyakTheme.shapes.menuItem)
+                .clickable(role = Role.Button, onClick = action.onClick)
+                .padding(
+                    horizontal = ManyakTheme.spacing.controlHorizontal,
+                    vertical = ManyakTheme.spacing.controlVertical,
+                ),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+    ) {
+        Icon(
+            modifier = Modifier.size(ManyakTheme.sizes.iconSmall),
+            painter = painterResource(action.iconRes),
+            // 동작 이름이 항목의 이름이라 아이콘에 따로 이름을 붙이지 않는다.
+            contentDescription = null,
+            tint = ManyakTheme.colors.text,
+        )
+        Text(
+            text = action.label,
+            style = ManyakTheme.typography.bodyMedium,
+            color = ManyakTheme.colors.text,
+        )
     }
 }
 

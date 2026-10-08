@@ -5,6 +5,7 @@ import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.story.StoryLikeUpdates
 import app.manyak.story.testing.FakeChatRepository
+import app.manyak.story.testing.FakePersonaAccess
 import app.manyak.story.testing.FakeStoryRepository
 import app.manyak.story.testing.STORY_ID
 import app.manyak.story.testing.sampleStoryDetail
@@ -53,6 +54,7 @@ class StoryDetailLikeTest {
         storyRepository,
         storyRepository,
         likeUpdates,
+        FakePersonaAccess(),
     )
 
     @Test

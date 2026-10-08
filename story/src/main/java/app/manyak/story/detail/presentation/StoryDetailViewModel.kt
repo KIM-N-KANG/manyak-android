@@ -7,6 +7,7 @@ import app.manyak.analytics.entity.ReportSource
 import app.manyak.common.domain.chat.ChatStarter
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.persona.PersonaAccess
 import app.manyak.common.domain.story.StoryDeletion
 import app.manyak.common.domain.story.StoryLikeUpdates
 import app.manyak.common.presentation.mvi.MviViewModel
@@ -50,6 +51,7 @@ data class StoryDetailUiState(
     val isDeleting: Boolean = false,
     /** 좋아요 등록·취소 요청 중. 결과가 정해질 때까지 버튼을 잠가 중복 전송을 막는다. */
     val isTogglingLike: Boolean = false,
+    val persona: StoryPersonaUiState = StoryPersonaUiState(),
 ) {
     /** 내가 만든 스토리에는 좋아요 버튼을 두지 않는다. 소유 판정은 상세 응답의 몫이다. */
     val canLike get() = story != null && !story.isOwner
@@ -74,6 +76,10 @@ sealed interface StoryDetailIntent {
 
     data class SelectStartSetting(
         val startSettingId: String,
+    ) : StoryDetailIntent
+
+    data class ChoosePersona(
+        val action: PersonaAction,
     ) : StoryDetailIntent
 
     data object StartChat : StoryDetailIntent
@@ -113,12 +119,14 @@ sealed interface StoryDetailEvent {
         val startSettingId: String,
     ) : StoryDetailEvent
 
+    data class PersonaChanged(
+        val persona: StoryPersonaUiState,
+    ) : StoryDetailEvent
+
     data object ChatStartRequested : StoryDetailEvent
 
-    data object ChatStartFailed : StoryDetailEvent
-
-    /** 채팅방에서 돌아왔다. 성공 뒤 남겨 둔 시작 잠금을 걷는다. */
-    data object ChatStartReset : StoryDetailEvent
+    /** 시작이 실패했거나 채팅방에서 돌아왔다. 시작 잠금을 걷는다. */
+    data object ChatStartReleased : StoryDetailEvent
 
     data class Like(
         val change: LikeChange,
@@ -164,6 +172,10 @@ sealed interface StoryDetailEffect {
     data object ShowLikeFailed : StoryDetailEffect
 
     data object ShowChatStartFailed : StoryDetailEffect
+
+    data object NavigateToPersonaCreate : StoryDetailEffect
+
+    data object ShowPersonaLimitReached : StoryDetailEffect
 }
 
 /**
@@ -187,6 +199,7 @@ class StoryDetailViewModel
         reportRepository: ReportRepository,
         private val storyDeletion: StoryDeletion,
         private val storyLikeUpdates: StoryLikeUpdates,
+        personaAccess: PersonaAccess,
     ) : MviViewModel<StoryDetailIntent, StoryDetailUiState, StoryDetailEvent, StoryDetailEffect>(
             StoryDetailUiState(),
         ) {
@@ -226,6 +239,16 @@ class StoryDetailViewModel
                 },
             )
 
+        private val persona =
+            StoryPersonaControl(
+                storyId = storyId,
+                scope = viewModelScope,
+                access = personaAccess,
+                analytics = analytics,
+                emit = { snapshot -> dispatchEvent(StoryDetailEvent.PersonaChanged(snapshot)) },
+                notify = { effect -> dispatchEffect(effect) },
+            )
+
         init {
             analytics.track(AnalyticsEvent.StoryDetailViewed(storyId))
         }
@@ -233,13 +256,7 @@ class StoryDetailViewModel
         override suspend fun handleIntent(intent: StoryDetailIntent) {
             val state = uiState.value
             when (intent) {
-                StoryDetailIntent.ScreenShown -> {
-                    // 성공 직후에 풀면 화면이 사라지는 중에 버튼이 되살아나 깜빡인다. 그래서 복귀 시점에 푼다.
-                    // 요청이 아직 살아 있으면 풀지 않는다 — 구성 변경으로 화면만 다시 만들어졌을 때
-                    // 잠금과 스피너가 사라지면 진행 중인 생성이 없는 것처럼 보이고, 다시 눌러도 반응이 없다.
-                    if (startChatJob?.isActive != true) dispatchEvent(StoryDetailEvent.ChatStartReset)
-                    load(showProgress = state.story == null, ensureFresh = true)
-                }
+                StoryDetailIntent.ScreenShown -> onScreenShown(state)
 
                 StoryDetailIntent.Retry -> load(showProgress = true)
 
@@ -255,6 +272,8 @@ class StoryDetailViewModel
                     selectedStartSettingId = intent.startSettingId
                     dispatchEvent(StoryDetailEvent.StartSettingSelected(intent.startSettingId))
                 }
+
+                is StoryDetailIntent.ChoosePersona -> persona.handle(intent.action)
 
                 StoryDetailIntent.StartChat -> startChat(state)
 
@@ -321,21 +340,31 @@ class StoryDetailViewModel
                 }
         }
 
+        private suspend fun onScreenShown(state: StoryDetailUiState) {
+            // 성공 직후에 풀면 화면이 사라지는 중에 버튼이 되살아나 깜빡인다. 그래서 복귀 시점에 푼다.
+            // 요청이 아직 살아 있으면 풀지 않는다. 구성 변경으로 화면만 다시 만들어졌을 때
+            // 잠금과 스피너가 사라지면 진행 중인 생성이 없는 것처럼 보이고, 다시 눌러도 반응이 없다.
+            if (startChatJob?.isActive != true) dispatchEvent(StoryDetailEvent.ChatStartReleased)
+            load(showProgress = state.story == null, ensureFresh = true)
+            persona.refresh()
+        }
+
         private suspend fun startChat(state: StoryDetailUiState) {
             val story = state.story ?: return
             if (startChatJob?.isActive == true) return
-            analytics.track(AnalyticsEvent.ChatStartButtonClicked(story.id))
+            val personaId = persona.commitForChat()
+            analytics.track(AnalyticsEvent.ChatStartButtonClicked(story.id, personaType(personaId)))
             dispatchEvent(StoryDetailEvent.ChatStartRequested)
             startChatJob =
                 viewModelScope.launch {
-                    val result = chatRepository.createChat(story.id, selectedStartSettingId)
+                    val result = chatRepository.createChat(story.id, selectedStartSettingId, personaId)
                     when (result) {
                         // 잠금은 여기서 풀지 않는다 — 복귀 시 ScreenShown 이 푼다.
                         is DomainResult.Success ->
                             dispatchEffect(StoryDetailEffect.NavigateToChat(result.value.id))
 
                         is DomainResult.Failure -> {
-                            dispatchEvent(StoryDetailEvent.ChatStartFailed)
+                            dispatchEvent(StoryDetailEvent.ChatStartReleased)
                             dispatchEffect(StoryDetailEffect.ShowChatStartFailed)
                         }
                     }
@@ -416,11 +445,11 @@ class StoryDetailViewModel
                 is StoryDetailEvent.StartSettingSelected ->
                     state.copy(selectedStartSettingId = event.startSettingId)
 
+                is StoryDetailEvent.PersonaChanged -> state.copy(persona = event.persona)
+
                 StoryDetailEvent.ChatStartRequested -> state.copy(isStartingChat = true)
 
-                StoryDetailEvent.ChatStartFailed -> state.copy(isStartingChat = false)
-
-                StoryDetailEvent.ChatStartReset -> state.copy(isStartingChat = false)
+                StoryDetailEvent.ChatStartReleased -> state.copy(isStartingChat = false)
 
                 is StoryDetailEvent.Report -> state.copy(report = state.report.reduceReport(event.change))
 

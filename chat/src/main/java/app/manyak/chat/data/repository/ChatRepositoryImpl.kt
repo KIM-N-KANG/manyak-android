@@ -36,9 +36,12 @@ class ChatRepositoryImpl
         override suspend fun createChat(
             storyId: String,
             startSettingId: String?,
+            personaId: String?,
         ): DomainResult<CreatedChat> =
             apiCall {
-                chatApi.createChat(ChatCreateRequestDto(storyId = storyId, startSettingId = startSettingId))
+                chatApi.createChat(
+                    ChatCreateRequestDto(storyId = storyId, startSettingId = startSettingId, personaId = personaId),
+                )
             }.map { it.toDomain() }
 
         // 서버 응답 순서(최근 활동순)를 그대로 둔다 — 다시 정렬하면 방금 진행한 채팅이 맨 위로 오지 않는다.

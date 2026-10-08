@@ -21,6 +21,26 @@ class GeneralStoryValidationTest {
     }
 
     @Test
+    fun protagonist_name_is_optional_unless_another_text_uses_the_name_token() {
+        val unnamed = validForm().copy(protagonist = validForm().protagonist.copy(name = ""))
+        val nameErrors = { form: GeneralStoryForm ->
+            validateGeneralStoryForm(form).filter {
+                it.target.tab == GeneralTab.PROTAGONIST && it.target.field == GeneralField.NAME
+            }
+        }
+
+        assertTrue(nameErrors(unnamed).isEmpty())
+        assertTrue(nameErrors(validForm().copy(protagonist = validForm().protagonist.copy(name = "가"))).isEmpty())
+        val tokenized =
+            unnamed.copy(
+                startSettings = unnamed.startSettings.map { it.copy(prologue = "{username} 님, 종점입니다.") },
+            )
+        assertEquals(GeneralErrorReason.NAME_TOKEN_NEEDS_NAME, nameErrors(tokenized).single().reason)
+        val named = tokenized.copy(protagonist = tokenized.protagonist.copy(name = "해솔"))
+        assertTrue(validateGeneralStoryForm(named).isEmpty())
+    }
+
+    @Test
     fun duplicate_names_take_priority_over_minimum_length_and_only_trim_edges() {
         val form =
             validForm().copy(

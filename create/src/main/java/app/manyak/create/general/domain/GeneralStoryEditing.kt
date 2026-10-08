@@ -55,6 +55,8 @@ fun buildGeneralStoryPatch(
         oneLineIntro = changed(candidate.oneLineIntro, baseline.oneLineIntro),
         description = changed(candidate.description, baseline.description),
         genres = changed(candidate.genres, baseline.genres),
+        // 비운 이름은 싣지 않는다. 서버가 기존 이름을 그대로 둔다.
+        protagonistName = changed(candidate.protagonistName, baseline.protagonistName),
         storySettings = changed(candidate.storySettings, baseline.storySettings),
         startSettings = changed(candidate.startSettings, baseline.startSettings),
         mainEvents = changed(candidate.mainEvents, baseline.mainEvents),
@@ -74,6 +76,7 @@ private fun buildEditCandidate(
         oneLineIntro = content.oneLineIntro,
         description = content.description.orEmpty(),
         genres = content.genres,
+        protagonistName = content.protagonistName,
         storySettings = content.storySettings,
         startSettings =
             content.startSettings.mapIndexed { index, setting ->

@@ -2,7 +2,6 @@
 
 package app.manyak.create.general.domain
 
-import app.manyak.create.general.entity.GeneralCharacter
 import app.manyak.create.general.entity.GeneralEnding
 import app.manyak.create.general.entity.GeneralErrorReason
 import app.manyak.create.general.entity.GeneralField
@@ -21,7 +20,7 @@ fun validateGeneralStoryForm(
         text(GeneralFieldTarget(GeneralTab.PROFILE, GeneralField.ONE_LINE_INTRO), form.oneLineIntro, 255)
         text(GeneralFieldTarget(GeneralTab.SETTINGS, GeneralField.WORLD), form.world, 5000)
         text(GeneralFieldTarget(GeneralTab.SETTINGS, GeneralField.PROGRESSION), form.progression, 1000)
-        validateProtagonist(form.protagonist)
+        validateProtagonist(form)
         validateSupporting(form)
         count(GeneralFieldTarget(GeneralTab.START, GeneralField.ITEMS), form.startSettings.size, 1..3)
         form.startSettings.forEach(::validateStart)
@@ -29,14 +28,37 @@ fun validateGeneralStoryForm(
         validatePublishing(form, allowedGenres)
     }
 
-private fun MutableList<GeneralFieldError>.validateProtagonist(character: GeneralCharacter) {
+/** 기본 주인공 이름은 선택이고 최소 글자 수를 보지 않는다. 비웠을 때는 `{username}` 을 쓴 글이 있는지만 본다. */
+private fun MutableList<GeneralFieldError>.validateProtagonist(form: GeneralStoryForm) {
+    val character = form.protagonist
     val target = GeneralFieldTarget(GeneralTab.PROTAGONIST, GeneralField.NAME)
-    text(target, character.name, 30)
+    val name = character.name.trim()
+    when {
+        name.isEmpty() && form.usesNameToken() ->
+            add(GeneralFieldError(target, GeneralErrorReason.NAME_TOKEN_NEEDS_NAME))
+        name.length > 30 -> add(GeneralFieldError(target, GeneralErrorReason.TOO_LONG, 30))
+    }
     if (character.gender == null) {
         add(GeneralFieldError(target.copy(field = GeneralField.GENDER), GeneralErrorReason.GENDER_REQUIRED))
     }
     text(target.copy(field = GeneralField.FEATURE), character.feature, 1000)
 }
+
+/** 주인공 이름 칸을 뺀 글 입력에 이름 토큰이 있는지. 조사 표기(`{username}이(가)` 등)도 이 글자로 시작한다. */
+private fun GeneralStoryForm.usesNameToken(): Boolean =
+    buildList {
+        addAll(listOf(title, oneLineIntro, world, progression, description, protagonist.feature))
+        addAll(genres)
+        supporting.forEach { addAll(listOf(it.name, it.description, it.feature)) }
+        startSettings.forEach { start ->
+            addAll(listOf(start.name, start.prologue, start.situation))
+            addAll(start.suggestedInputs)
+            start.endings.forEach { addAll(listOf(it.name, it.condition, it.epilogue)) }
+        }
+        mainEvents.forEach { addAll(listOf(it.name, it.description, it.keySentence)) }
+    }.any { NAME_TOKEN in it }
+
+private const val NAME_TOKEN = "{username}"
 
 private fun MutableList<GeneralFieldError>.validateSupporting(form: GeneralStoryForm) {
     val tab = GeneralTab.SUPPORTING

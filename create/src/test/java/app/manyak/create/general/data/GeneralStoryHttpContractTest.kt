@@ -118,6 +118,7 @@ private fun request() =
         oneLineIntro = "테스트 소개",
         description = null,
         genres = listOf("판타지"),
+        protagonistName = null,
         storySettings = GeneralSettingsDto("세계", "인물", "주인공", "규칙"),
         startSettings = emptyList(),
         mainEvents = emptyList(),

@@ -251,6 +251,7 @@
     <string name="general_error_turns">최소 턴 수는 0부터 50까지 입력해 주세요</string>
     <string name="general_error_genre_invalid">제공되는 장르를 선택해 주세요</string>
     <string name="general_error_count">항목 수를 확인해 주세요</string>
+    <string name="general_error_name_token">{username}을 쓰려면 이름을 입력해 주세요</string>
     <string name="general_image_remove">삭제</string>
     <string name="general_image_hint">(JPG, PNG, WEBP / 최대 5MB)</string>
     <string name="general_image_invalid">이미지 형식이나 크기를 확인해 주세요. JPG, PNG, WebP 파일을 5MB 이하로 선택해 주세요.</string>
@@ -277,7 +278,7 @@
     <string name="general_ratio_description">AI가 응답할 때 장면 묘사와 인물 대사를 어떤 비율로 쓸지 정해요</string>
     <string name="general_ratio_description_part">묘사 %1$d</string>
     <string name="general_ratio_dialogue_part">대사 %1$d</string>
-    <string name="general_protagonist_basic_hint">스토리 속에서 내가 사용할 이름과 성별이에요</string>
+    <string name="general_protagonist_basic_hint">스토리 속에서 기본으로 쓰이는 이름과 성별이에요</string>
     <string name="general_supporting_basic_hint">이 이름과 성별로 스토리에 등장해요</string>
     <string name="general_protagonist_feature_hint">내가 어떤 사람인지에 따라 주변 인물들의 반응이 달라져요</string>
     <string name="general_supporting_feature_hint">인물의 성격이 대화와 행동에 드러나요</string>
@@ -287,8 +288,8 @@
     <string name="general_character_description_placeholder">예: 유실물 보관소를 지키는 무뚝뚝한 관리인</string>
     <string name="general_start_name_placeholder">예: 불 꺼진 승강장</string>
     <string name="general_start_name_hint">스토리 상세에서 시작 상황을 고를 때 보이는 이름이에요</string>
-    <string name="general_prologue_placeholder">예: 막차 문이 닫히는 소리에 잠에서 깼다.\n열차는 이미 떠났고, 승강장에는 나 혼자 남았다.\n역명판에는 처음 보는 이름이 적혀 있었다. 유실역.</string>
-    <string name="general_prologue_hint">채팅을 시작하면 첫 화면에 보이는 도입 글이에요. 주인공(나)이 스토리 속으로 들어서는 순간을 적어주세요</string>
+    <string name="general_prologue_placeholder">예: 막차 문이 닫히는 소리에 잠에서 깼다.\n\"{username} 님, 종점입니다.\" 안내 방송이 끝나자 승강장에는 나 혼자 남았다.\n역명판에는 처음 보는 이름이 적혀 있었다. 유실역.</string>
+    <string name="general_prologue_hint">채팅을 시작하면 첫 화면에 보이는 도입 글이에요. {username}을 쓰면 사용자의 페르소나 이름으로 바뀌어요</string>
     <string name="general_situation_placeholder">예: 텅 빈 승강장 끝, 유실물 보관소 창구에만 불이 켜져 있다.\n창구 안의 관리인 도하람이 주인공을 보고 말없이 장부를 덮는다.\n첫차까지 남은 시간은 네 시간이다.</string>
     <string name="general_situation_hint">AI가 첫 장면을 이어 쓰는 출발점이에요. 주인공(나)이 마주한 상황과 주변 인물들이 하고 있는 일을 적어주세요</string>
     <string name="general_suggested_input_hint">채팅 첫 화면에서 누르면 바로 보내지는 입력이에요. 주인공(나)이 할 수 있는 행동이나 말을 세 가지 적어주세요</string>

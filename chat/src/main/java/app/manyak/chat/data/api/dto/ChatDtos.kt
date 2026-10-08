@@ -7,11 +7,15 @@ import app.manyak.common.data.time.toEpochMillisOrNull
 import app.manyak.common.entity.chat.CreatedChat
 import kotlinx.serialization.Serializable
 
-/** [startSettingId] 가 null 이면 직렬화에서 빠지고 서버가 첫 시작 설정으로 폴백한다. */
+/**
+ * [startSettingId] 가 null 이면 직렬화에서 빠지고 서버가 첫 시작 설정으로 폴백한다. [personaId] 가 null 이면
+ * 스토리의 기본 주인공으로 시작한다.
+ */
 @Serializable
 data class ChatCreateRequestDto(
     val storyId: String,
     val startSettingId: String? = null,
+    val personaId: String? = null,
 )
 
 /**
@@ -101,6 +105,13 @@ data class ChatDetailResponseDto(
     val prologue: String = "",
     val turns: List<ChatTurnDto> = emptyList(),
     val suggestedInputs: List<String> = emptyList(),
+    val persona: ChatPersonaDto? = null,
+)
+
+/** 채팅을 시작할 때 고른 페르소나의 이름. 원본을 고치거나 지워도 바뀌지 않는 스냅샷이다. */
+@Serializable
+data class ChatPersonaDto(
+    val name: String = "",
 )
 
 @Serializable
@@ -129,4 +140,5 @@ fun ChatDetailResponseDto.toDomain(): ChatDetail =
                 )
             },
         suggestedInputs = suggestedInputs,
+        personaName = persona?.name?.trim()?.takeIf(String::isNotEmpty),
     )

@@ -10,9 +10,11 @@ interface ChatStarter {
      *
      * @param startSettingId 상세에서 고른 시작 설정. `null` 이면 서버가 스토리의 첫 시작 설정으로
      *  폴백한다 — 간편 제작 완성 직후 진입처럼 고를 것이 하나뿐인 경로가 그렇다.
+     * @param personaId 상세에서 고른 내 페르소나. `null` 이면 스토리의 기본 주인공으로 시작한다.
      */
     suspend fun createChat(
         storyId: String,
         startSettingId: String? = null,
+        personaId: String? = null,
     ): DomainResult<CreatedChat>
 }

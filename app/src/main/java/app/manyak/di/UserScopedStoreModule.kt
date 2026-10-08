@@ -4,6 +4,7 @@ import app.manyak.common.domain.session.UserScopedStore
 import app.manyak.legal.consent.data.repository.ConsentRepositoryImpl
 import app.manyak.my.credit.data.repository.TrialsRepositoryImpl
 import app.manyak.my.invite.data.datastore.InviteOnboardingStore
+import app.manyak.my.persona.data.repository.PersonaRepositoryImpl
 import app.manyak.my.profile.data.datastore.ProfileCacheStore
 import app.manyak.notification.consent.data.MarketingConsentPromptStore
 import app.manyak.notification.data.PushNotificationTray
@@ -41,6 +42,11 @@ abstract class UserScopedStoreModule {
     @Binds
     @IntoSet
     abstract fun bindMarketingConsentPromptAsUserScoped(impl: MarketingConsentPromptStore): UserScopedStore
+
+    /** 페르소나 목록과 상세의 미리 선택. 메모리뿐이지만 남으면 다음 회원의 상세에 이전 회원의 페르소나가 보인다. */
+    @Binds
+    @IntoSet
+    abstract fun bindPersonasAsUserScoped(impl: PersonaRepositoryImpl): UserScopedStore
 
     /** 무료 체험 잔여 — 메모리뿐이지만 남으면 다음 회원의 비용 배지가 이전 회원의 잔여로 그려진다. */
     @Binds

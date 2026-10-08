@@ -79,6 +79,8 @@ data class StreamingTurn(
 data class ChatRoomUiState(
     val isLoading: Boolean = true,
     val storyTitle: String = "",
+    /** 페르소나로 시작한 채팅의 페르소나 이름. 기본 주인공 채팅이면 null 이다. */
+    val personaName: String? = null,
     val prologue: String = "",
     val turns: List<ChatRoomTurn> = emptyList(),
     val loadFailed: Boolean = false,
@@ -236,6 +238,7 @@ sealed interface ChatRoomEvent {
     data class Loaded(
         val storyId: String,
         val storyTitle: String,
+        val personaName: String?,
         val prologue: String,
         val turns: List<ChatRoomTurn>,
         val suggestedInputs: List<String>,
@@ -607,6 +610,7 @@ class ChatRoomViewModel
                                 ChatRoomEvent.Loaded(
                                     storyId = result.value.storyId,
                                     storyTitle = result.value.storyTitle,
+                                    personaName = result.value.personaName,
                                     prologue = result.value.prologue,
                                     turns = turns,
                                     suggestedInputs = suggestedInputs,
@@ -1067,6 +1071,7 @@ private fun reduceChatRoom(
                 isLoading = false,
                 storyId = event.storyId,
                 storyTitle = event.storyTitle,
+                personaName = event.personaName,
                 prologue = event.prologue,
                 turns = event.turns,
                 suggestedInputs = event.suggestedInputs,

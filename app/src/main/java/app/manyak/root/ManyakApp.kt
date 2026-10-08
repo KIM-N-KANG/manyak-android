@@ -55,7 +55,10 @@ import app.manyak.core.navigation.MyCreditChargeRoute
 import app.manyak.core.navigation.MyFeedbackRoute
 import app.manyak.core.navigation.MyInviteRoute
 import app.manyak.core.navigation.MyOpenSourceLicenseRoute
+import app.manyak.core.navigation.MyPersonasRoute
 import app.manyak.core.navigation.NotificationSettingsRoute
+import app.manyak.core.navigation.PersonaCreateRoute
+import app.manyak.core.navigation.PersonaEditRoute
 import app.manyak.core.navigation.StoryDetailRoute
 import app.manyak.core.navigation.StoryEditRoute
 import app.manyak.core.navigation.StudioRoute
@@ -77,6 +80,8 @@ import app.manyak.my.credit.presentation.CreditChargeScreen
 import app.manyak.my.feedback.presentation.FeedbackScreen
 import app.manyak.my.invite.presentation.InviteScreen
 import app.manyak.my.licenses.presentation.OpenSourceLicenseScreen
+import app.manyak.my.persona.presentation.PersonaFormScreen
+import app.manyak.my.persona.presentation.PersonaListScreen
 import app.manyak.my.withdrawal.presentation.WithdrawalScreen
 import app.manyak.notification.settings.presentation.NotificationSettingsScreen
 import app.manyak.R as AppR
@@ -308,6 +313,7 @@ private fun MainNavDisplay(
                         onOpenOpenSourceLicense = { backStack.push(MyOpenSourceLicenseRoute) },
                         onOpenWithdrawal = { backStack.push(WithdrawalRoute) },
                         onOpenCreditCharge = { backStack.push(MyCreditChargeRoute) },
+                        onOpenPersonas = { backStack.push(MyPersonasRoute) },
                         onOpenNotificationSettings = { backStack.push(NotificationSettingsRoute) },
                     )
                 }
@@ -368,6 +374,30 @@ private fun EntryProviderScope<NavKey>.myDestinationEntries(backStack: MutableLi
     }
     entry<WithdrawalRoute> {
         WithdrawalScreen(onBack = { backStack.pop() })
+    }
+    entry<MyPersonasRoute> {
+        PersonaListScreen(
+            onBack = { backStack.pop() },
+            onOpenCreate = { backStack.push(PersonaCreateRoute()) },
+            onOpenEdit = { personaId -> backStack.push(PersonaEditRoute(personaId)) },
+        )
+    }
+    // 생성은 관리 목록과 스토리 상세 두 곳에서 들어오고, 저장하면 들어온 화면으로 돌아간다.
+    entry<PersonaCreateRoute> { route ->
+        PersonaFormScreen(
+            personaId = null,
+            originStoryId = route.originStoryId,
+            onBack = { backStack.pop() },
+            onDone = { backStack.pop() },
+        )
+    }
+    entry<PersonaEditRoute> { route ->
+        PersonaFormScreen(
+            personaId = route.personaId,
+            originStoryId = null,
+            onBack = { backStack.pop() },
+            onDone = { backStack.pop() },
+        )
     }
     entry<NotificationSettingsRoute> {
         NotificationSettingsScreen(
