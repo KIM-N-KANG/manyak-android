@@ -2,6 +2,7 @@ package app.manyak.create.general.domain
 
 import app.manyak.create.general.entity.GeneralCharacter
 import app.manyak.create.general.entity.GeneralCharacterInput
+import app.manyak.create.general.entity.GeneralGender
 import app.manyak.create.general.entity.GeneralImageInput
 import app.manyak.create.general.entity.GeneralStartSetting
 import app.manyak.create.general.entity.GeneralStoryContent
@@ -36,8 +37,39 @@ class GeneralStoryConversionTest {
         assertEquals("전개\n# 문체 톤\n차분함", form.progression)
         assertEquals(7, form.descriptionRatio)
         assertNull(form.protagonist.gender)
-        assertEquals("## 성별\n미정\n## 역할\n여행자", form.protagonist.feature)
+        assertEquals("## 호칭\n주인공\n## 성별\n미정\n## 역할\n여행자", form.protagonist.feature)
         assertEquals("### 성격\n친절함", form.supporting.single().feature)
+    }
+
+    @Test
+    fun protagonist_name_travels_as_its_own_field_and_legacy_honorific_stays_in_feature() {
+        val content =
+            buildGeneralStoryContent(
+                GeneralStoryForm(
+                    protagonist = GeneralCharacter(name = " 해솔 ", gender = GeneralGender.FEMALE, feature = "특징"),
+                ),
+            )
+
+        assertEquals("해솔", content.protagonistName)
+        assertEquals("# 주인공\n## 성별\n여성\n특징", content.storySettings.userRoleSetting)
+        assertNull(buildGeneralStoryContent(GeneralStoryForm()).protagonistName)
+
+        val restored = restoreGeneralStoryForm(legacyContent().copy(protagonistName = "해솔"))
+        assertEquals("해솔", restored.protagonist.name)
+        assertEquals(GeneralGender.FEMALE, restored.protagonist.gender)
+        assertEquals("## 호칭\n주인공\n주인공 특징", restored.protagonist.feature)
+    }
+
+    @Test
+    fun edit_patch_sends_protagonist_name_only_when_changed_and_not_blank() {
+        val edit = restoreGeneralStoryEditForm(legacyContent().copy(protagonistName = "해솔"))
+        val protagonist = edit.form.protagonist
+
+        assertNull(buildGeneralStoryPatch(edit.form, edit.base).protagonistName)
+        val renamed = edit.form.copy(protagonist = protagonist.copy(name = "새 이름"))
+        assertEquals("새 이름", buildGeneralStoryPatch(renamed, edit.base).protagonistName)
+        val cleared = edit.form.copy(protagonist = protagonist.copy(name = " "))
+        assertTrue(buildGeneralStoryPatch(cleared, edit.base).isEmpty)
     }
 
     @Test

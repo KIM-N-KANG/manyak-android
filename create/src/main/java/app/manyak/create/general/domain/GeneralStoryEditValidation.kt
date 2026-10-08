@@ -16,7 +16,8 @@ fun validateGeneralStoryEdit(
     val errors = validateGeneralStoryForm(form, allowedGenres)
     if (base.sendAll) return errors
     val patch = buildGeneralStoryPatch(form, base)
-    return errors.filter { patch.contains(it.target) }
+    // 주인공 이름 칸의 오류는 이름 토큰처럼 다른 칸의 글에도 걸리므로 바뀐 필드와 상관없이 보인다.
+    return errors.filter { it.target == ProtagonistName || patch.contains(it.target) }
 }
 
 private fun GeneralStoryPatch.contains(target: GeneralFieldTarget): Boolean =
@@ -46,3 +47,5 @@ private fun GeneralStoryPatch.includesSupporting(field: GeneralField): Boolean =
         GeneralField.NAME, GeneralField.ITEMS -> storySettings != null || characters != null
         else -> false
     }
+
+private val ProtagonistName = GeneralFieldTarget(GeneralTab.PROTAGONIST, GeneralField.NAME)

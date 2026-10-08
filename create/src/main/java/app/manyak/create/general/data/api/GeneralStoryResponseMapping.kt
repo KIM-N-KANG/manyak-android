@@ -30,6 +30,7 @@ private fun GeneralStoryEditDto.toContent(): GeneralStoryContent =
         oneLineIntro = oneLineIntro.orEmpty(),
         description = description,
         genres = genres,
+        protagonistName = protagonistName?.trim()?.takeIf(String::isNotEmpty),
         storySettings =
             GeneralStorySettings(
                 worldSetting = storySettings.worldSetting.orEmpty(),

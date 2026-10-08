@@ -44,6 +44,9 @@ enum class GeneralErrorReason {
     INVALID_COUNT,
     INVALID_NUMBER,
     INVALID_GENRE,
+
+    /** 주인공 이름을 비웠는데 다른 글에 `{username}` 이 있다. 서버는 이름 없이 토큰을 받지 않는다. */
+    NAME_TOKEN_NEEDS_NAME,
 }
 
 data class GeneralFieldError(

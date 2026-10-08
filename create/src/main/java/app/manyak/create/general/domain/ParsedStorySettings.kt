@@ -36,13 +36,10 @@ internal fun buildStorySettings(form: GeneralStoryForm) =
                 },
     )
 
+/** 이름은 `protagonistName` 으로 따로 보낸다. 글에 넣으면 서버가 `{username}` 을 쓸 이름이 없다고 거절한다. */
 private fun buildProtagonistSetting(character: GeneralCharacter) =
     listOfNotNull(
         "# 주인공",
-        character.name
-            .trim()
-            .takeIf(String::isNotEmpty)
-            ?.let { "## 호칭\n$it" },
         character.gender?.let { "## 성별\n${it.asSettingText()}" },
         character.feature.trim().takeIf(String::isNotEmpty),
     ).joinToString("\n")
@@ -95,11 +92,16 @@ private fun splitSections(
     return bodies.map { it.joinToString("\n").trim() }
 }
 
+/**
+ * 주인공 글에서 성별 절만 칸으로 옮긴다. 이름은 `protagonistName` 으로 따로 오므로, 예전 글 맨 앞의 호칭 절은
+ * 칸으로 옮기지 않고 특징 본문 맨 앞에 그대로 남긴다.
+ */
 internal fun parseProtagonist(text: String): GeneralCharacter {
     val lines = dropLeadingHeading(text.lines(), "# 주인공")
-    val (name, afterName) = takeLeadingSection(lines, "## 호칭")
-    val (gender, rest) = takeGender(afterName, "## 성별")
-    return GeneralCharacter(name = name?.trim().orEmpty(), gender = gender, feature = rest.joinToString("\n").trim())
+    val (_, afterHonorific) = takeLeadingSection(lines, "## 호칭")
+    val honorific = lines.dropLast(afterHonorific.size)
+    val (gender, rest) = takeGender(afterHonorific, "## 성별")
+    return GeneralCharacter(gender = gender, feature = (honorific + rest).joinToString("\n").trim())
 }
 
 internal fun parseSupporting(text: String): List<GeneralCharacter> {
