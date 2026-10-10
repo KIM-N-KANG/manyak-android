@@ -57,10 +57,7 @@ internal fun ProfileHeader(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .padding(ManyakTheme.spacing.gutter),
+        modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
     ) {
