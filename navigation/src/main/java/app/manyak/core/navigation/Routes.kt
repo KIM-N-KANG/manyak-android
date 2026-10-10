@@ -123,6 +123,24 @@ data object MyOpenSourceLicenseRoute : NavKey
 @Serializable
 data object WithdrawalRoute : NavKey
 
+/** 페르소나 관리 목록. 마이의 페르소나 섹션이 진입점이다. */
+@Serializable
+data object MyPersonasRoute : NavKey
+
+/**
+ * 페르소나 생성. 스토리 상세에서 왔으면 [originStoryId] 에 그 스토리를 싣는다. 만든 뒤 돌아간 상세가 새
+ * 페르소나를 미리 선택하려면 생성 화면이 출발 스토리를 알아야 한다.
+ */
+@Serializable
+data class PersonaCreateRoute(
+    val originStoryId: String? = null,
+) : NavKey
+
+@Serializable
+data class PersonaEditRoute(
+    val personaId: String,
+) : NavKey
+
 /** 알림 수신 동의 설정. 마이 알림 섹션이 진입점이고 `:notification` 이 화면을 소유한다. */
 @Serializable
 data object NotificationSettingsRoute : NavKey

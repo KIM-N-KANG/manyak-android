@@ -2,6 +2,7 @@ package app.manyak.my.profile.presentation
 
 import android.widget.Toast
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -57,6 +58,7 @@ fun MyScreen(
     onOpenOpenSourceLicense: () -> Unit,
     onOpenWithdrawal: () -> Unit,
     onOpenCreditCharge: () -> Unit,
+    onOpenPersonas: () -> Unit,
     onOpenNotificationSettings: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MyViewModel = hiltViewModel(),
@@ -106,6 +108,7 @@ fun MyScreen(
         onOpenOpenSourceLicense = onOpenOpenSourceLicense,
         onOpenWithdrawal = onOpenWithdrawal,
         onOpenCreditCharge = onOpenCreditCharge,
+        onOpenPersonas = onOpenPersonas,
         onOpenNotificationSettings = onOpenNotificationSettings,
         contentPadding = contentPadding,
         modifier = modifier,
@@ -151,23 +154,30 @@ private fun MyContent(
     onOpenOpenSourceLicense: () -> Unit,
     onOpenWithdrawal: () -> Unit,
     onOpenCreditCharge: () -> Unit,
+    onOpenPersonas: () -> Unit,
     onOpenNotificationSettings: () -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
 ) {
+    // 간격은 요소의 패딩이 아니라 열의 간격이 맡는다. 섹션 사이와 이프 카드 아래가 같은 `block` 으로 읽힌다.
     Column(
         modifier =
             modifier
                 .fillMaxSize()
                 .padding(contentPadding)
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = ManyakTheme.spacing.compact),
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.block),
     ) {
-        ProfileHeader(
-            profile = state.profile,
-            isLoading = state.isRefreshingProfile,
-            onLinkAccount = { provider -> onIntent(MyIntent.RequestAccountLink(provider)) },
-        )
-        MyCreditBalanceCard(balance = state.profile?.creditBalance, onOpenCreditCharge = onOpenCreditCharge)
+        MyProfileSummary(state = state, onIntent = onIntent, onOpenCreditCharge = onOpenCreditCharge)
+        MySection(labelRes = MyR.string.my_section_persona) {
+            MyMenuItem(
+                iconRes = DesignsystemR.drawable.ic_personal_card,
+                labelRes = MyR.string.my_persona_manage,
+                onClick = onOpenPersonas,
+                trailing = { MenuTrailingIcon(iconRes = DesignsystemR.drawable.ic_chevron_right) },
+            )
+        }
         MySection(labelRes = MyR.string.my_section_event) {
             InviteMenuItem(onClick = onOpenInvite)
         }
@@ -207,7 +217,33 @@ private fun MyContent(
     }
 }
 
-/** 마이의 이프 카드. 공용 카드에 화면 여백과 충전 진입 이벤트를 얹는다. */
+/** 프로필 헤더와 이프 카드. 둘은 한 덩어리라 섹션 간격보다 좁은 `gutter` 로 붙인다. */
+@Composable
+private fun MyProfileSummary(
+    state: MyUiState,
+    onIntent: (MyIntent) -> Unit,
+    onOpenCreditCharge: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier =
+            modifier.padding(
+                start = ManyakTheme.spacing.gutter,
+                top = ManyakTheme.spacing.gutter,
+                end = ManyakTheme.spacing.gutter,
+            ),
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
+    ) {
+        ProfileHeader(
+            profile = state.profile,
+            isLoading = state.isRefreshingProfile,
+            onLinkAccount = { provider -> onIntent(MyIntent.RequestAccountLink(provider)) },
+        )
+        MyCreditBalanceCard(balance = state.profile?.creditBalance, onOpenCreditCharge = onOpenCreditCharge)
+    }
+}
+
+/** 마이의 이프 카드. 공용 카드에 충전 진입 이벤트를 얹는다. */
 @Composable
 private fun MyCreditBalanceCard(
     balance: Long?,
@@ -220,11 +256,6 @@ private fun MyCreditBalanceCard(
             analytics.track(AnalyticsEvent.CreditChargeButtonClicked)
             onOpenCreditCharge()
         },
-        modifier =
-            Modifier
-                .padding(
-                    horizontal = ManyakTheme.spacing.gutter,
-                ).padding(bottom = ManyakTheme.spacing.gutter),
     )
 }
 
@@ -263,12 +294,7 @@ private fun MySection(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
-    Column(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .padding(vertical = ManyakTheme.spacing.gutter),
-    ) {
+    Column(modifier = modifier.fillMaxWidth()) {
         Text(
             modifier =
                 Modifier
@@ -364,6 +390,7 @@ private fun MyScreenPreview() {
             onOpenOpenSourceLicense = {},
             onOpenWithdrawal = {},
             onOpenCreditCharge = {},
+            onOpenPersonas = {},
             onOpenNotificationSettings = {},
             contentPadding = PaddingValues(0.dp),
         )

@@ -4,9 +4,11 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -17,6 +19,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringArrayResource
@@ -31,9 +34,9 @@ import androidx.compose.ui.unit.dp
 import app.manyak.chat.room.presentation.message.ChatAiOutput
 import app.manyak.chat.room.presentation.message.ChatUserBand
 import app.manyak.chat.room.presentation.message.rememberTypewriterSegments
+import app.manyak.chat.room.presentation.scene.RealtimeImageStage
 import app.manyak.designsystem.component.CHARACTER_IMAGE_ASPECT_RATIO
 import app.manyak.designsystem.component.CyclingPhrases
-import app.manyak.designsystem.component.ImageGenerationLoading
 import app.manyak.designsystem.text.PassageSegment
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.chat.R as ChatR
@@ -109,8 +112,8 @@ private fun WritingPlaceholder(modifier: Modifier = Modifier) {
 }
 
 /**
- * 실시간 이미지가 켜진 채 보낸 턴의 자리. 순환 문구 아래에 인물 이미지가 들어올 4:3 자리를 미리 잡아,
- * 이미지가 오면 같은 자리에서 교체된다. 보조기술에는 덩이 하나로 읽힌다 — 문구가 4초마다 바뀌는 것을
+ * 실시간 이미지가 켜진 채 보낸 턴의 자리. 순환 문구 아래에 인물 이미지가 들어올 4:3 자리를 미리 잡고 그
+ * 안에서 마스코트가 인물을 그리며, 이미지가 오면 같은 자리에서 교체된다. 보조기술에는 덩이 하나로 읽힌다 — 문구가 4초마다 바뀌는 것을
  * 매번 알리면 소음이다.
  */
 @Composable
@@ -131,11 +134,13 @@ private fun ScenePlaceholder(modifier: Modifier = Modifier) {
             phrases = stringArrayResource(ChatR.array.chat_room_scene_phrases).toList(),
             style = ManyakTheme.typography.bodyReading,
         )
-        ImageGenerationLoading(
-            modifier = Modifier.fillMaxWidth(),
-            label = statusLabel,
-            aspectRatio = CHARACTER_IMAGE_ASPECT_RATIO,
-            shape = ManyakTheme.shapes.overlay,
+        RealtimeImageStage(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(CHARACTER_IMAGE_ASPECT_RATIO)
+                    .clip(ManyakTheme.shapes.overlay)
+                    .background(ManyakTheme.colors.backgroundNeutral.copy(alpha = 0.6f)),
         )
     }
 }

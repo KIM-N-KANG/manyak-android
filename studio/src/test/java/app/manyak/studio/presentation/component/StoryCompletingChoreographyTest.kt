@@ -1,5 +1,6 @@
 package app.manyak.studio.presentation.component
 
+import app.manyak.designsystem.mascot.brushTipOffset
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -48,6 +49,27 @@ class StoryCompletingChoreographyTest {
     @Test
     fun every_cue_belongs_to_a_move() {
         Cue.entries.forEach { cue -> assertTrue("$cue", cueMillis(cue) > 0) }
+    }
+
+    @Test
+    fun brush_tip_stays_on_the_hair_stroke_while_painting() {
+        var painting = 0
+        while (completingMoment(painting).act != CompletingAct.PAINTING) painting += 10
+        while (completingMoment(painting - 1).act == CompletingAct.PAINTING) painting -= 1
+        val start = painting + cueStart(Cue.HAIR)
+        for (f in listOf(0f, 0.4f, 0.8f)) {
+            val pose = completingMoment(start + (f * cueMillis(Cue.HAIR)).toInt()).pose
+            val offset = brushTipOffset(MASCOT_SIZE, pose.rotation, pose.scaleX, pose.scaleY)
+            val target = onCanvas(PortraitHair.at(f))
+            assertEquals("f=$f x", target.x, pose.x + offset.x, 0.0001f)
+            assertEquals("f=$f y", target.y, pose.y + offset.y, 0.0001f)
+        }
+    }
+
+    /** 웹과 같은 안무 값이면 한 바퀴 길이도 같다. */
+    @Test
+    fun loops_every_37_7_seconds_like_the_web() {
+        assertEquals(37_710, CompletingLoopMillis)
     }
 
     private fun turn(

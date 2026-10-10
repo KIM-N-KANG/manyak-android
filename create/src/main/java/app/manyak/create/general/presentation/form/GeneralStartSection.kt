@@ -28,9 +28,9 @@ import app.manyak.create.general.entity.GeneralField
 import app.manyak.create.general.entity.GeneralFieldTarget
 import app.manyak.create.general.entity.GeneralStartSetting
 import app.manyak.create.general.entity.GeneralTab
-import app.manyak.create.presentation.component.AddTrigger
 import app.manyak.create.presentation.component.CollapsibleInputSection
 import app.manyak.create.presentation.component.KeywordSectionLabel
+import app.manyak.designsystem.component.ManyakAddButton
 import app.manyak.designsystem.component.ManyakIconButton
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.create.R as CreateR
@@ -132,7 +132,7 @@ private fun GeneralFormScope.StartChips(
                 onRemove = if (index > 0) ({ onDelete(start.id, start.hasInput) }) else null,
             )
         }
-        AddTrigger(
+        ManyakAddButton(
             label = stringResource(CreateR.string.general_add),
             enabled = enabled && form.startSettings.size < START_MAX,
             shape = ManyakTheme.shapes.pill,

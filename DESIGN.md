@@ -142,6 +142,11 @@ typography:
     fontSize: 12sp
     fontWeight: 500
     lineHeight: 16sp
+  label-tiny:
+    fontFamily: "Pretendard"
+    fontSize: 11sp
+    fontWeight: 500
+    lineHeight: 16sp
 
 rounded:
   checkbox: 6dp
@@ -167,7 +172,6 @@ sizes:
   shimmer-band-half-width: 60dp
   generation-dot-gap: 10dp
   generation-dot-radius: 1dp
-  generation-dot-displacement: 9dp
   tour-card-width: 288dp
   tour-step-dot: 6dp
   studio-cover-width: 128dp
@@ -187,15 +191,6 @@ spacing:
   screen-bottom: 32dp
 
 components:
-  image-generation-loading:
-    backgroundColor: "{colors.background-neutral}"
-    borderColor: "{colors.border}"
-    dotColor: "{colors.text}"
-    dotGap: "{sizes.generation-dot-gap}"
-    dotRadius: "{sizes.generation-dot-radius}"
-    dotDisplacement: "{sizes.generation-dot-displacement}"
-    borderWidth: "{sizes.generation-dot-radius}"
-    rounded: "{rounded.thumbnail}"
   text-shimmer:
     color: "{colors.text-subtle}"
     highlightColor: "{colors.text}"
@@ -425,10 +420,17 @@ components:
     blink: "3200ms 마다 한 번"
   story-completing-stage:
     background: "{colors.background-neutral} + {colors.border} 1dp 테두리(빈 표지와 같음)"
-    dots: "{colors.border-strong} 45%, {sizes.generation-dot-gap} 간격, {sizes.generation-dot-radius} 반지름, 고정"
-    mascot: "ManyakMascot, 표지 폭의 24%, {colors.brand}"
-    props: "{colors.surface-raised} 채움 + {colors.border-strong} 테두리. 키는 {colors.border}, 고른 칩·카드·누른 키·붓질은 {colors.brand}"
-    loop: "키워드 → 쉼 → 스토리라인 → 걷기 쉼 → 타자 → 기지개 → 그림 → 걷기 쉼 → 튀기 → 벽 타기 → 쉼, 약 32초 주기"
+    dots: "{colors.border-strong} 25%, {sizes.generation-dot-gap} 간격, {sizes.generation-dot-radius} 반지름, 고정"
+    mascot: "ManyakMascot, 표지 폭의 24%, {colors.brand}, 막마다 눈 모양을 바꿈"
+    props: "{colors.surface-raised} 채움 + {colors.border-strong} 테두리. 키는 {colors.border}, 고른 칩·카드·누른 키·캔·머리·붓질은 {colors.brand}, 얼굴 선·물음표·Z 는 {colors.text-subtlest}"
+    loop: "키워드 → 쉼 → 스토리라인 → 걷기 쉼 → 에너지 드링크 → 타자 → 기지개 → 인물화 → 걷기 쉼 → 튀기 → 벽 타기 → 쉼, 37.71초 주기"
+  realtime-image-stage:
+    background: "{colors.background-neutral} 60%, {rounded.overlay}, 테두리 없음"
+    dots: "{colors.border-strong} 25%, {sizes.generation-dot-gap} 간격, {sizes.generation-dot-radius} 반지름, 고정, 줄이지 않음"
+    content: "무대 가운데를 붙잡고 72%로 줄여 그림"
+    mascot: "ManyakMascot, 무대 폭의 15%, {colors.brand}. 브랜드 색은 마스코트 몸에만"
+    props: "베레모·붓 자루·느낌표는 {colors.text-subtlest}, 이젤·물그릇 테·속도 선은 {colors.border-strong}, 도화지는 {colors.surface-raised}. 그림은 회색 층이고 달빛·볼터치·마무리 붓털만 옅은 {colors.brand}"
+    loop: "준비(베레모·붓, 1.3초, 처음 한 번) → 밑그림 → 휴(헹굼) → 밑칠 → 인물 → 딴짓(헹굼) → 마무리와 사인(시작부터 15초) → 완성 감상 → 종이 넘기기(헹굼), 16.43초 주기"
   logo-google:
     asset: "res/drawable/ic_logo_google.xml"
     size: 24dp
@@ -476,7 +478,7 @@ components:
 | 파일 | 내용 |
 | --- | --- |
 | `ManyakLogo.kt` | 로고 락업. 높이는 토큰, 폭은 원본 비율 |
-| `ManyakMascot.kt` | 로고 심벌을 눈이 움직이는 마스코트로 그리는 `DrawScope` 함수. 시작 화면과 완성 중 표지가 쓴다 |
+| `ManyakMascot.kt` | 로고 심벌을 눈이 움직이는 마스코트로 그리는 `DrawScope` 함수. 동그란 눈 외에 힘주는·웃는·졸린·반짝이는·윙크·어지러운 눈을 그린다. 시작 화면, 완성 중 표지, 채팅 실시간 이미지 대기가 쓴다 |
 | `ManyakSectionHeader.kt` | 메인 탭 상단 헤더 |
 | `ManyakNavigationBar.kt` · `ManyakNavigationItem.kt` | 하단 탭 바와 그 항목 |
 | `ProgressIndicator.kt` | 로딩 스피너와 지연 표시 헬퍼 |
@@ -485,6 +487,13 @@ components:
 | `credit/CreditBalanceCard.kt` | 내 이프 카드(라벨·잔액·충전 버튼). 마이와 채팅 메뉴 시트가 같이 쓴다 |
 | `ManyakOptionsSheet.kt` · `ManyakOptionItem.kt` | 카드 옵션·상세 옵션·채팅 메뉴의 바텀 시트 틀과 항목 버튼 |
 | `ManyakCheckbox.kt` | 동의·확인 항목의 체크 표시. 줄이 토글을 맡고 상자는 그리기만 한다 |
+
+`designsystem/src/main/java/app/manyak/designsystem/mascot/`
+
+| 파일 | 내용 |
+| --- | --- |
+| `MascotChoreography.kt` | 마스코트 안무의 공용 재료. 자세·눈 모양, 낱동작(서기·둘러보기·걷기·웅크리기·뛰기·붓길 긋기), 막을 이어 시간 → 자세를 계산하는 `Choreography`, 웹과 같은 SVG path 붓길 해석 |
+| `MascotDrawing.kt` | 무대 색과 시계, 바탕 점·그림자, 베레모·붓, 굵기가 변하는 붓질과 수채 얼룩, 소품 묶음 투명도 |
 
 이름은 세 표기가 1:1로 대응합니다 — 이 문서 `{colors.text-subtle}` ↔ Kotlin `ManyakTheme.colors.textSubtle` ↔ 토큰 JSON `color.text.subtle`.
 
@@ -574,6 +583,7 @@ components:
 | `{typography.label-large}` | 14sp | 500 | 20sp | 버튼·탭 라벨 |
 | `{typography.body-small}` | 12sp | 400 | 16sp | 메타 정보·보조 설명 |
 | `{typography.label-small}` | 12sp | 500 | 16sp | 타임스탬프·최소 보조 문구 · 표지 위 뱃지 |
+| `{typography.label-tiny}` | 11sp | 500 | 16sp | 버튼 라벨 아래 보조 줄(채팅 시작 버튼의 페르소나와 시작 상황 요약) |
 
 ### 원칙
 
@@ -642,9 +652,8 @@ components:
 | `{sizes.startup-symbol}` | 64dp | 시작 화면에서 혼자 튀는 로고 심벌의 크기 |
 | `{sizes.shimmer-band-half-width}` | 60dp | 텍스트 시머 띠의 반폭 |
 | `{sizes.selection-border-width}` | 2dp | 미선택 체크박스 경계·M3 라디오 버튼과 동일 |
-| `{sizes.generation-dot-gap}` | 10dp | 이미지 생성 로딩 점 간격 |
-| `{sizes.generation-dot-radius}` | 1dp | 이미지 생성 로딩 점 반지름 기준·테두리 |
-| `{sizes.generation-dot-displacement}` | 9dp | 이미지 생성 로딩 점 최대 변위 |
+| `{sizes.generation-dot-gap}` | 10dp | 마스코트 무대 바탕 점 간격 |
+| `{sizes.generation-dot-radius}` | 1dp | 마스코트 무대 바탕 점 반지름 |
 | `{sizes.tour-card-width}` | 288dp | 채팅 안내 투어 카드의 폭. 좁은 화면에서는 좌우 `{spacing.gutter}`를 남기고 줄어든다 |
 | `{sizes.tour-step-dot}` | 6dp | 채팅 안내 투어 카드의 스텝 점 지름 |
 | `{sizes.studio-cover-width}` | 128dp | 제작 탭의 스토리, 초안, 검수 제출본 표지 폭 |
@@ -755,7 +764,7 @@ components:
 
 **`text-field-error`** — 경계를 `{colors.border-danger}`로 바꾸고, 오류 문구를 `{colors.text-danger}` + `{typography.body-small}`로 아래에 둡니다. 색만으로 오류를 알리지 않습니다.
 
-**셀렉트 메뉴**(성별 등) — 앵커는 text-field 와 같은 형태이고, 미선택(랜덤) 값은 placeholder 색(`{colors.text-disabled}`)으로 낮춥니다. 메뉴는 앵커와 같은 폭으로 항상 앵커 아래에 `{spacing.inline}` 떨어져 열리며, 배경 `{colors.surface-raised}` + 경계 `{colors.border}` + **연한 그림자**를 쓰고, 판 안쪽 여백과 항목 사이 간격은 모두 `{spacing.inline}`이고, 각 항목은 `{rounded.menu-item}` 모서리와 세로 `{spacing.control-vertical}` · 가로 `{spacing.control-horizontal}` 여백을 사용합니다. 선택된 항목은 `{colors.background-neutral}` 채움과 체크 표시로 드러냅니다 — 그림자 금지 규칙의 예외로, 떠 있는 흰 메뉴가 흰 앵커·표면과 겹쳐 경계만으로는 층이 드러나지 않기 때문입니다.
+**셀렉트 메뉴**(성별 등) — 앵커는 text-field 와 같은 형태이고, 미선택(랜덤) 값은 placeholder 색(`{colors.text-disabled}`)으로 낮춥니다. 메뉴는 앵커와 같은 폭으로 항상 앵커 아래에 `{spacing.inline}` 떨어져 열리며, 배경 `{colors.surface-raised}` + 경계 `{colors.border}` + **연한 그림자**를 쓰고, 판 안쪽 여백과 항목 사이 간격은 모두 `{spacing.inline}`이고, 각 항목은 `{rounded.menu-item}` 모서리와 세로 `{spacing.control-vertical}` · 가로 `{spacing.control-horizontal}` 여백을 사용합니다. 선택된 항목은 `{colors.background-neutral}` 채움과 체크 표시로 드러냅니다 — 그림자 금지 규칙의 예외로, 떠 있는 흰 메뉴가 흰 앵커·표면과 겹쳐 경계만으로는 층이 드러나지 않기 때문입니다. 값 항목 아래에는 고를 수 있는 값이 아닌 동작 항목(상세의 "페르소나 생성하기")을 둘 수 있습니다. 같은 여백에 왼쪽 `{sizes.icon-small}` 더하기 아이콘을 두고 선택 채움과 체크는 두지 않으며, 누르면 메뉴를 닫고 동작을 실행합니다.
 
 ### 컨테이너
 
@@ -791,7 +800,9 @@ components:
 
 **`startup-logo`** — 시작 화면(세션 복원과 필수 동의 확인)의 로딩 표시. 스피너 대신 로고 심벌만 `{sizes.startup-symbol}` 크기의 `{colors.brand}`로 그리고, 확인이 지연 스피너 기준(300ms)보다 길어지면 제자리에서 튀기 시작합니다. 한 번의 점프는 800ms 이며 앞 22% 동안 바닥을 누르듯 가로로 퍼지고 나머지 동안 심벌 폭의 45% 높이로 포물선을 그립니다. 공중에서는 위아래로 살짝 늘어나고 눈이 위를 보며, 착지할 때 눈을 찡그립니다. 바닥의 `{colors.brand}` 18% 타원 그림자는 높이 뜰수록 작고 옅어집니다. 눈은 3200ms 마다 한 번 깜빡입니다. 확인이 끝나거나 실패하면 하던 점프를 마저 착지하고 멈춥니다 — 공중에서 굳으면 고장으로 보입니다. 실패 화면에서도 같은 심벌을 멈춘 채 두어 로고가 바뀌지 않습니다. 모션 값은 토큰의 요소 모션과 성격이 달라 이 자리에서 고정합니다.
 
-**`story-completing-stage`** — 제작 탭 완성 중 카드의 표지. 빈 표지(`{colors.background-neutral}`, `{colors.border}` 1dp 테두리) 위에 이미지 생성 로딩과 같은 간격의 점을 `{colors.border-strong}` 45%로 움직이지 않게 깔고, 로고 마스코트(표지 폭의 24%, `{colors.brand}`)가 제작 과정을 따라 여섯 막을 약 32초 주기로 이어 연기합니다. 바쁜 막 사이마다 쉼을 둡니다. 가만히 서서 천천히 숨 쉬며 두리번거리거나, 작은 걸음으로 통통 튀며 천천히 걸어갔다 돌아오거나, 원고를 다 쓴 뒤 기지개를 켭니다. **키워드**는 칩 일곱 개가 차례로 튀어나와 발판이 되고, 마스코트가 아래 줄부터 밟고 올라가며 밟은 칩을 앱의 선택 칩처럼 브랜드 색으로 채웁니다. **스토리라인**은 카드 세 장이 올라오고, 마스코트가 양쪽 카드를 차례로 올려다본 뒤(올려다보는 카드의 테두리가 물들며 살짝 뜸) 가운데 카드를 머리로 받아 고릅니다. 고른 카드에는 체크 표시가 붙고 나머지는 흐려집니다. **타자**는 아래에서 키보드가, 위에 원고가 튀어나오고 마스코트가 누를 키 쪽으로 몸을 숙이며 120ms 마다 한 키씩 칩니다. 누른 키가 브랜드 색으로 빛나고 원고 줄이 차오릅니다. **그림**은 정해진 아이콘을 따라 그리지 않습니다. 발끝을 붓 삼아 먼 능선을 옅게, 가까운 능선을 진하게 긋는데 굵기가 양 끝은 가늘고 가운데가 굵어 붓이 눌렸다 들리는 결이 납니다. 하늘에 물감을 찍으면 둥글게 번지며 작은 방울이 튀고, 두 능선 사이가 수채 물로 옅게 적셔진 뒤 구석에 서명합니다. 마지막 **튀기**와 **벽 타기**는 완성을 기뻐하는 막입니다. 모든 막은 바닥 가운데에서 시작해 같은 자리로 돌아오고, 눈은 2.9초마다 깜빡입니다. 원고·키보드·카드·칩·액자는 다크 테마에서도 바탕과 갈리도록 `{colors.surface-raised}` 위에 `{colors.border-strong}` 테두리를 두르고, 소품 묶음은 불투명하게 그린 뒤 한 번에 투명도를 줘 붓질이 겹친 자리가 진해지지 않습니다. 크기와 자리는 표지 폭에 대한 비율이라 표지 폭이 바뀌어도 구도가 같습니다. 채팅 장면 썸네일 자리는 이미지 생성 점 로딩을 유지합니다.
+**`story-completing-stage`** — 제작 탭 완성 중 카드의 표지. 빈 표지(`{colors.background-neutral}`, `{colors.border}` 1dp 테두리) 위에 마스코트 무대와 같은 간격의 점을 `{colors.border-strong}` 25%로 움직이지 않게 깔고, 로고 마스코트(표지 폭의 24%, `{colors.brand}`)가 웹과 같은 안무 값으로 제작 과정을 따라 일곱 막을 37.71초 주기로 이어 연기합니다. 바쁜 막 사이마다 쉼을 둡니다. 가만히 서서 천천히 숨 쉬며 두리번거리거나, 웃는 눈으로 통통 걸어갔다 돌아오거나, 원고를 다 쓴 뒤 기지개를 켭니다. **키워드**는 칩 일곱 개가 차례로 튀어나와 발판이 되고, 마스코트가 아래 줄부터 밟고 올라가며 밟은 칩을 앱의 선택 칩처럼 브랜드 색으로 채웁니다. 밟을 때마다 웃고, 다 고르면 윙크합니다. **스토리라인**은 카드 세 장이 올라오고, 마스코트가 양쪽 카드를 차례로 올려다보며 머리 위에 물음표를 띄운 뒤(올려다보는 카드의 테두리가 물들며 살짝 뜸) 가운데 카드를 머리로 받아 고르고 별 눈이 됩니다. 고른 카드에는 체크 표시가 붙고 나머지는 흐려집니다. **에너지 드링크**는 졸린 눈으로 두 번 꾸벅이며 Z 를 피워 올리다가, 하늘에서 돌며 떨어지는 번개 마크 캔을 뛰어올라 받아 얼굴 앞으로 들고 세 모금 마신 뒤, 별 눈으로 부르르 떨며 몸 둘레에 번개를 튀기고 캔을 날려 보냅니다. **타자**는 아래에서 키보드가, 위에 원고가 튀어나오고 마스코트가 `> <` 눈으로 누를 키 쪽으로 몸을 숙이며 80ms 마다 한 키씩 칩니다. 누른 키가 브랜드 색으로 빛나고 원고 줄이 차오릅니다. **인물화**는 떨어지는 베레모를 머리로 받고 바닥의 붓을 뛰어올라 낚아챈 뒤, 이젤 위 세로 캔버스에 붓털 끝으로 그립니다. 달을 찍어 번지게 하고, 바람에 날리는 머리를 굵은 붓으로 쓸고, 옆얼굴을 가늘게 그어 눈을 뜨게 하고, 볼을 찍고, 목도리를 두르고, 구석에 서명합니다. 정해진 아이콘이 아니라 달을 등진 사람의 옆모습입니다. 다 그리면 윙크하고 베레모와 붓을 졸업 모자처럼 하늘로 던집니다. 마지막 **튀기**와 **벽 타기**는 완성을 기뻐하는 막으로, 크게 공중제비를 돈 뒤 어지러운 눈으로 휘청이고 머리 위로 별이 돕니다. 모든 막은 바닥 가운데에서 시작해 같은 자리로 돌아오고, 눈은 2.9초마다 깜빡입니다. 원고·키보드·카드·칩·캔버스는 다크 테마에서도 바탕과 갈리도록 `{colors.surface-raised}` 위에 `{colors.border-strong}` 테두리를 두르고, 소품 묶음은 불투명하게 그린 뒤 한 번에 투명도를 줘 붓질이 겹친 자리가 진해지지 않습니다. 크기와 자리는 표지 폭에 대한 비율이라 표지 폭이 바뀌어도 구도가 같습니다. 기기 애니메이션을 끄면 첫 장면에 멈춥니다.
+
+**`realtime-image-stage`** — 채팅 실시간 이미지 턴의 4:3 장면 썸네일 자리. 웹과 같은 안무 값으로, 로고 마스코트가 처음 한 번 하늘에서 떨어지는 베레모를 머리로 받고 발치의 붓을 뛰어올라 낚아챈 뒤, 이젤의 4:3 가로 도화지에 밤 창가에서 달을 보는 인물 그림 한 장을 밑그림(아치 창틀, 창살, 인물 윤곽), 밑칠(달 자리를 남긴 밤 창), 인물(머리카락, 옆얼굴, 감은 눈), 마무리(달빛, 볼터치, 사인) 순서로 천천히 그립니다. 대화 화면에서 정신없지 않도록 획은 11개로 줄이고 모든 획을 초당 격자 160칸보다 느리게 긋습니다. 그림은 몸 오른쪽에 쥔 붓의 털 끝으로 긋고, 붓은 몸과 따로 움직여 그을 때 털 끝이 진행 반대쪽으로 끌리고, 밑칠에서는 털이 눌려 퍼지고, 획을 마치면 톡 튕깁니다. 밑그림 뒤에는 땀방울과 입김으로 휴 하고 숨을 고르고, 인물 뒤에는 도화지를 올려다보며 고민하다 느낌표와 함께 뛰어올라 붓을 한 바퀴 돌립니다. 물감 색이 바뀔 때마다 발치 물그릇에 붓을 헹구고, 무대 시작부터 15초에 사인을 마치면 반짝이는 눈으로 감상한 뒤 종이를 넘겨 밑그림부터 같은 그림을 다시 그립니다. 인물은 사람 아이콘처럼 보이지 않게 비대칭 옆선으로 그립니다. 대화 흐름에서 튀지 않도록 자리 크기는 말풍선 폭을 그대로 쓰되 안의 연기를 72%로 줄이고, 브랜드 색은 마스코트 몸에만 씁니다. 그림과 소품은 회색과 옅은 색이며 달빛, 볼터치, 마무리 붓털만 옅은 브랜드 색입니다. 기기 애니메이션을 끄면 완성한 그림을 올려다보는 장면에 멈춥니다.
 
 **`section-header`** — 메인 탭의 상단 헤더. `TopAppBar` 위에 배경 `{colors.surface}`와 제목 색 `{colors.text}`를 얹는다. 좌우 여백은 앱 바 기본값이 16dp 라 `{spacing.gutter}`와 같고, 로고와 섹션 이름(`{typography.title-large}`) 사이도 `{spacing.gutter}`다. 높이는 최소 64dp 이고 제목이 커지면 함께 늘어난다. 구분선과 그림자를 두지 않는다. `TopAppBar`가 아직 실험 API 라 `@OptIn`이 필요하며, 사용처는 이 컴포넌트와 퍼널 헤더(`funnel-header`) 둘이다.
 
@@ -819,7 +830,7 @@ components:
 
 스토리라인 대기 문구는 4초마다 글자별 25ms 시차로 교차하며, 전체 문구 위에 4초 시머가 지나갑니다. 문구 앞의 점 3개는 1초 주기로 160ms씩 늦게 떠올랐다 내려옵니다. 이전·다음 문구를 별도 레이아웃으로 교차해 서로 다른 글자 폭 때문에 위치가 흔들리지 않도록 합니다. 기존 3종 문구와 15·30초 지연 힌트를 유지합니다. 주변 인물이 0명이면 인물 추가 버튼 위에 랜덤 생성 안내를 표시합니다.
 
-완성 중 카드에는 `ImageGenerationLoading`의 3:4 점 패턴과 제목 시머를 사용합니다. 이미지 로딩은 4:3 비율도 받을 수 있으며, 중심이 가로 약 9.7초·세로 약 12초 주기로 이동하며 주변 점의 위치·반지름·밝기를 함께 바꿉니다. 약 7.3초 주기의 작은 보조 움직임(가로 폭의 2%, 세로 높이의 1.6%)을 섞어 경로에 부드러운 불규칙성을 더합니다. 반지름은 기준 토큰의 0.65~1.5배, 변위는 최대 `{sizes.generation-dot-displacement}`입니다. 앱의 완성 알림 안내 문구를 유지합니다. 채팅 대기 문구는 공용 시머 브러시를 사용하되 기존 2초 주기·색을 유지합니다.
+완성 중 카드에는 `story-completing-stage` 표지와 제목 시머를 사용하고, 앱의 완성 알림 안내 문구를 유지합니다. 채팅 대기 문구는 공용 시머 브러시를 사용하되 기존 2초 주기·색을 유지합니다.
 
 > 간편 제작 퍼널은 셸을 두르지 않는 전체 화면이라 chrome 을 화면이 직접 그린다. 아래 세 컴포넌트는
 > 지금 `:create`(FAB은 `:studio`)가 소유하고, 두 번째 모듈 사용처가 생기면 `:designsystem`로 올린다.
@@ -834,7 +845,7 @@ components:
 
 **퍼널 하단 CTA** — 주 버튼(다음·스토리라인 만들기)은 `{component.button-primary}` 그대로이고 보조 버튼(이전)은 `{component.button-neutral}`이다. 두 버튼은 같은 폭(1:1)으로 하단을 나눈다.
 
-**키워드 칩** — 제공·커스텀 태그는 `{component.chip}`(흰 배경 + 옅은 경계)이고 선택은 `{component.chip-selected}`(브랜드 subtle 채움 + 브랜드 경계 + 브랜드 텍스트)로 색 하나가 아니라 채움·경계·글자 셋으로 말한다. 높이는 `{sizes.input}`으로 컨트롤(48dp)보다 낮다 — 여럿이 흐르는 밀도 높은 선택 요소라서이고, 터치 타깃이 최소 48dp 에 못 미치는 것은 알고 수용한다. 모서리는 입력창과 같은 `{rounded.control}`이고, 선택 변화 자체가 반응이므로 눌림 리플을 그리지 않는다. "키워드 추가"·"인물 추가" 트리거는 같은 모양에 `{colors.background-neutral}` 채움 + `{colors.border}` 경계이고, `+` 아이콘은 16dp 로 라벨 크기에 맞춘다. 인물 추가는 폭을 채우지 않고 가운데에 놓인다. 상한에 도달하면 미선택 칩과 트리거를 비활성 색(`{colors.text-disabled}`)으로 내린다.
+**키워드 칩** — 제공·커스텀 태그는 `{component.chip}`(흰 배경 + 옅은 경계)이고 선택은 `{component.chip-selected}`(브랜드 subtle 채움 + 브랜드 경계 + 브랜드 텍스트)로 색 하나가 아니라 채움·경계·글자 셋으로 말한다. 높이는 `{sizes.input}`으로 컨트롤(48dp)보다 낮다 — 여럿이 흐르는 밀도 높은 선택 요소라서이고, 터치 타깃이 최소 48dp 에 못 미치는 것은 알고 수용한다. 모서리는 입력창과 같은 `{rounded.control}`이고, 선택 변화 자체가 반응이므로 눌림 리플을 그리지 않는다. "키워드 추가"·"인물 추가" 트리거는 같은 모양에 `{colors.background-neutral}` 채움 + `{colors.border}` 경계이고, `+` 아이콘은 16dp 로 라벨 크기에 맞춘다. 인물 추가는 폭을 채우지 않고 가운데에 놓인다. 트리거는 `designsystem`의 `ManyakAddButton`이고, 마이 페르소나 관리의 "페르소나 추가"도 같은 버튼을 목록 아래 가운데에 둔다. 상한에 도달하면 미선택 칩과 트리거를 비활성 색(`{colors.text-disabled}`)으로 내린다.
 
 카테고리 탭은 M3 `SecondaryTabRow` 기본을 쓴다(`TabRow`는 deprecated) — 컨테이너 `{colors.surface}`, 선택 라벨 `{colors.text}`, 비선택 `{colors.text-subtle}`, 잠금 `{colors.text-disabled}`, 필수 표시 `*`는 `{colors.text-danger}`. 선택 표시선은 탭 폭에 맞는 `{colors.text}` 1.5dp 선이다 — 선택 표시는 상태이지 다음 동작이 아니라서 초록을 쓰지 않고, 선택 라벨과 같은 색으로 묶는다. **눌림 리플은 끈다** — 탭을 누르면 라벨 색과 표시선이 곧바로 바뀌므로 그 변화 자체가 반응이고, 하단 내비게이션과 같은 이유다. 스크롤 시 탭만 상단에 고정하고 각 카테고리 콘텐츠는 탭 아래에서 시작한다. **이프 충전의 무료 충전·내역 탭도 같은 밑줄 탭이다** — 표시선 색·두께, 라벨 색 위계, 리플 끄기까지 이 규칙을 그대로 쓰고 잠금·필수 표시만 없다.
 

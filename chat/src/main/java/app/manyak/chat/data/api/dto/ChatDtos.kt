@@ -7,11 +7,15 @@ import app.manyak.common.data.time.toEpochMillisOrNull
 import app.manyak.common.entity.chat.CreatedChat
 import kotlinx.serialization.Serializable
 
-/** [startSettingId] 가 null 이면 직렬화에서 빠지고 서버가 첫 시작 설정으로 폴백한다. */
+/**
+ * [startSettingId] 가 null 이면 직렬화에서 빠지고 서버가 첫 시작 설정으로 폴백한다. [personaId] 가 null 이면
+ * 스토리의 기본 주인공으로 시작한다.
+ */
 @Serializable
 data class ChatCreateRequestDto(
     val storyId: String,
     val startSettingId: String? = null,
+    val personaId: String? = null,
 )
 
 /**

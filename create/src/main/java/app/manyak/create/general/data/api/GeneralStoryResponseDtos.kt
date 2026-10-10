@@ -8,6 +8,7 @@ data class GeneralStoryEditDto(
     val oneLineIntro: String? = null,
     val description: String? = null,
     val genres: List<String> = emptyList(),
+    val protagonistName: String? = null,
     val storySettings: GeneralSettingsDto,
     val startSettings: List<GeneralStartSettingDto> = emptyList(),
     val mainEvents: List<GeneralMainEventDto> = emptyList(),

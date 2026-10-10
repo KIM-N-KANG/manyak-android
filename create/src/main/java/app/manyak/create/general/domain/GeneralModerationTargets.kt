@@ -24,6 +24,7 @@ private fun directTarget(path: String): GeneralFieldTarget? =
             GeneralFieldTarget(GeneralTab.PROFILE, GeneralField.COVER)
         path == "storySettings.worldSetting" -> GeneralFieldTarget(GeneralTab.SETTINGS, GeneralField.WORLD)
         path == "storySettings.ruleSetting" -> GeneralFieldTarget(GeneralTab.SETTINGS, GeneralField.PROGRESSION)
+        path == "protagonistName" -> GeneralFieldTarget(GeneralTab.PROTAGONIST, GeneralField.NAME)
         path == "storySettings.userRoleSetting" -> GeneralFieldTarget(GeneralTab.PROTAGONIST, GeneralField.ITEMS)
         path == "storySettings.characterSetting" -> GeneralFieldTarget(GeneralTab.SUPPORTING, GeneralField.ITEMS)
         path == "description" -> GeneralFieldTarget(GeneralTab.PUBLISH, GeneralField.DESCRIPTION)

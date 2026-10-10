@@ -81,6 +81,7 @@ internal class FakeChatRepository : ChatRepository {
     override suspend fun createChat(
         storyId: String,
         startSettingId: String?,
+        personaId: String?,
     ): DomainResult<CreatedChat> {
         yield()
         createdStoryIds += storyId

@@ -1,153 +1,137 @@
-// 소품의 자리와 크기는 표지 폭에 대한 비율로 한 번씩만 쓰는 연출 수치다.
+// 소품의 자리와 크기는 표지 폭이나 캔버스 격자에 대한 비율로 한 번씩만 쓰는 연출 수치다.
 @file:Suppress("MagicNumber")
 
 package app.manyak.studio.presentation.component
 
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
-import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.drawscope.translate
+import app.manyak.designsystem.mascot.StagePalette
+import app.manyak.designsystem.mascot.brushPressure
+import app.manyak.designsystem.mascot.drawStroke
+import app.manyak.designsystem.mascot.drawWobblyBlob
+import app.manyak.designsystem.mascot.easeOutBack
+import app.manyak.designsystem.mascot.mix
+import app.manyak.designsystem.mascot.parseStroke
+import app.manyak.designsystem.mascot.pencilPressure
+import app.manyak.designsystem.mascot.stageLine
+import app.manyak.designsystem.mascot.withAlpha
 import kotlin.math.PI
-import kotlin.math.ceil
-import kotlin.math.min
+import kotlin.math.cos
 import kotlin.math.pow
 import kotlin.math.sin
 
-private val Frame = Rect(0.12f, 0.12f, 0.88f, 0.74f)
+/** 목도리를 두르면 함께 드러나는 목과 어깨선. */
+private val PortraitBody = listOf("M33,66 L34,76 Q22,82 16,100", "M45,76 Q58,80 70,98").map(::parseStroke)
+private val ScarfTail = parseStroke("M31,77 C25,85 19,84 13,92")
 
-/** 붓질 하나를 나누는 마디 수. 마디마다 굵기를 바꿔 붓이 눌렸다 들리는 결을 낸다. */
-private const val BRUSH_STEPS = 40
-
-/** 물감을 찍은 자리 둘레에 튀는 작은 방울. 찍은 자리에서의 거리와 반지름이다. */
-private val Speckles =
-    listOf(
-        Triple(-0.12f, 0.03f, 0.009f),
-        Triple(0.11f, -0.06f, 0.007f),
-        Triple(0.08f, 0.10f, 0.011f),
-        Triple(-0.07f, -0.09f, 0.006f),
-        Triple(0.15f, 0.04f, 0.005f),
-    )
-
-/**
- * 액자 그림. 먼 능선을 옅게, 가까운 능선을 진하게 한 번씩 긋고, 하늘에 물감을 찍어 번지게 한 뒤 구석에
- * 서명한다. 아이콘처럼 정해진 모양을 따라 그리지 않고, 붓이 눌렸다 들리는 굵기와 수채 번짐으로 그린다.
- */
-internal fun DrawScope.drawPainting(
+/** 이젤에 세운 세로 캔버스와 그 위의 주인공 인물화. 막 시작에 튀어나오고 막 끝에 사라진다. */
+internal fun DrawScope.drawEasel(
     actMillis: Int,
     unit: Float,
     palette: StagePalette,
 ) {
     val visibility = propVisibility(CompletingAct.PAINTING, actMillis)
     withAlpha(visibility.coerceIn(0f, 1f)) {
-        scale(0.8f + 0.2f * visibility, pivot = Offset(Frame.center.x, Frame.bottom) * unit) {
-            drawCard(Frame, unit, palette)
-            val sinceBloom = actMillis - cueStart(Cue.BLOOM)
-            val wash = (sinceBloom / 700f).coerceIn(0f, 1f)
-            if (wash > 0f) drawWash(wash, unit, palette.brand)
-            drawBloom(sinceBloom, unit, palette)
-            val farRidge = lerp(palette.paper, palette.brand, 0.5f)
-            drawBrushStroke(Stroke1, cueProgress(Cue.STROKE_1, actMillis), 0.04f, farRidge, unit)
-            drawBrushStroke(Stroke2, cueProgress(Cue.STROKE_2, actMillis), 0.05f, palette.brand, unit)
-            drawBrushStroke(Signature, cueProgress(Cue.SIGNATURE, actMillis), 0.014f, palette.brand, unit)
+        scale(0.8f + 0.2f * visibility, pivot = Offset(0.5f, FLOOR) * unit) {
+            stageLine(Offset(0.3f, CANVAS_BOTTOM - 0.02f), Offset(0.26f, FLOOR + 0.01f), 0.012f, palette.ink, unit)
+            stageLine(Offset(0.7f, CANVAS_BOTTOM - 0.02f), Offset(0.74f, FLOOR + 0.01f), 0.012f, palette.ink, unit)
+            val cell = CANVAS_WIDTH / CANVAS_GRID * unit
+            translate(CANVAS_LEFT * unit, CANVAS_TOP * unit) {
+                scale(cell, pivot = Offset.Zero) {
+                    val canvasSize = Size(CANVAS_GRID, CANVAS_GRID * 4f / 3f)
+                    drawRoundRect(palette.paper, size = canvasSize, cornerRadius = CornerRadius(4f))
+                    drawRoundRect(
+                        palette.ink,
+                        size = canvasSize,
+                        cornerRadius = CornerRadius(4f),
+                        style = Stroke(width = 1.12f),
+                    )
+                    drawPortrait(actMillis, palette)
+                }
+            }
         }
     }
 }
 
 /**
- * 붓질 하나를 [progress] 만큼 긋는다. 굵기는 곡선 위의 자리로 정해져, 긋는 도중에도 완성될 모양 그대로
- * 드러난다. 양 끝은 가늘고 가운데가 가장 굵다.
+ * 주인공 인물화를 캔버스 격자 좌표로 그린다. 달을 찍어 번지게 하고, 바람에 날리는 머리를 굵은 붓으로 쓸고,
+ * 옆얼굴을 가늘게 긋고 눈을 뜨게 한 뒤, 볼을 찍고 목도리를 두르고 서명한다.
  */
-private fun DrawScope.drawBrushStroke(
-    curve: Cubic,
-    progress: Float,
-    maxWidth: Float,
-    color: Color,
-    unit: Float,
-) {
-    if (progress <= 0f) return
-    var previous = curve.at(0f)
-    for (step in 1..ceil(BRUSH_STEPS * progress).toInt()) {
-        val t = min(step / BRUSH_STEPS.toFloat(), progress)
-        val point = curve.at(t)
-        val middle = (t - 0.5f / BRUSH_STEPS).coerceIn(0f, 1f)
-        val pressure = 0.18f + 0.82f * sin(PI.toFloat() * middle).pow(0.7f)
-        drawLine(color, previous * unit, point * unit, maxWidth * pressure * unit, StrokeCap.Round)
-        previous = point
-    }
-}
-
-/**
- * 두 능선 사이를 수채 물로 옅게 적신다. 가장자리를 두 붓질이 감싸 네모난 테두리 없이 물이 고인 모양이 된다.
- */
-private fun DrawScope.drawWash(
-    amount: Float,
-    unit: Float,
-    color: Color,
-) {
-    val band =
-        Path().apply {
-            moveTo(Stroke1.start.x * unit, Stroke1.start.y * unit)
-            cubicTo(Stroke1, unit)
-            lineTo(Stroke2.start.x * unit, Stroke2.start.y * unit)
-            cubicTo(Stroke2, unit)
-            close()
-        }
-    drawPath(
-        band,
-        Brush.verticalGradient(
-            listOf(color.copy(alpha = 0.24f * amount), color.copy(alpha = 0.06f * amount)),
-            startY = 0.42f * unit,
-            endY = 0.7f * unit,
-        ),
-    )
-}
-
-private fun Path.cubicTo(
-    curve: Cubic,
-    unit: Float,
-) = cubicTo(
-    curve.control1.x * unit,
-    curve.control1.y * unit,
-    curve.control2.x * unit,
-    curve.control2.y * unit,
-    curve.end.x * unit,
-    curve.end.y * unit,
-)
-
-/** 물감을 찍은 자리가 둥글게 번지고, 가운데 물감 자국 둘레로 작은 방울이 차례로 튄다. */
-private fun DrawScope.drawBloom(
-    sinceBloom: Int,
-    unit: Float,
+private fun DrawScope.drawPortrait(
+    actMillis: Int,
     palette: StagePalette,
 ) {
-    val spread = ((sinceBloom - 60) / 700f).coerceIn(0f, 1f)
-    if (spread <= 0f) return
-    val eased = 1f - (1f - spread).pow(3)
-    val center = BloomCenter * unit
-    val glow = 0.12f * eased * unit
-    drawCircle(
-        Brush.radialGradient(
-            listOf(palette.brand.copy(alpha = 0.42f), palette.brand.copy(alpha = 0.14f), Color.Transparent),
-            center = center,
-            radius = glow,
-        ),
-        radius = glow,
-        center = center,
-    )
-    drawCircle(lerp(palette.paper, palette.brand, 0.55f), 0.035f * eased * unit, center)
-    Speckles.forEachIndexed { index, (dx, dy, radius) ->
-        val pop = easeOutBack(((sinceBloom - 140 - index * 60) / 260f).coerceIn(0f, 1f))
-        if (pop > 0f) {
-            drawCircle(
-                lerp(palette.paper, palette.brand, 0.6f),
-                radius * pop * unit,
-                (BloomCenter + Offset(dx, dy)) * unit,
-            )
-        }
+    val brand = palette.brand
+    val paper = palette.paper
+    val pencil = palette.pencil
+    val moonSince = actMillis - cueStart(Cue.MOON)
+    val spread = ((moonSince - 60) / 700f).coerceIn(0f, 1f)
+    if (spread > 0f) {
+        val eased = 1f - (1f - spread).pow(3)
+        drawWobblyBlob(PortraitMoon, 22f * eased, brand.copy(alpha = 0.13f), 1f)
+        drawCircle(mix(paper, brand, 0.3f), 12.5f * eased, PortraitMoon)
+        val twinkle = easeOutBack(((moonSince - 300) / 260f).coerceIn(0f, 1f))
+        if (twinkle > 0f) drawSparkle(Offset(74f, 15f), 3.2f * twinkle, brand)
     }
+
+    val scarf = cueProgress(Cue.SCARF, actMillis)
+    for (stroke in PortraitBody) drawStroke(stroke, scarf, 1.4f, pencil, ::pencilPressure)
+    drawStroke(PortraitHair, cueProgress(Cue.HAIR, actMillis), 6f, brand, ::brushPressure)
+
+    val face = cueProgress(Cue.FACE, actMillis)
+    drawStroke(PortraitFace, face, 1.5f, pencil, ::pencilPressure)
+    val open = easeOutBack(((actMillis - cueStart(Cue.FACE) - cueMillis(Cue.FACE)) / 220f).coerceIn(0f, 1f))
+    if (face >= 1f && open > 0f) {
+        // 앞을 똑바로 보는 뜬 눈과 눈썹으로, 그림 속 주인공에게 또렷한 표정을 준다.
+        drawPath(
+            Path().apply {
+                moveTo(47.5f, 43.6f)
+                quadraticTo(51f, 43.6f - 2.4f * open, 54.5f, 43.6f)
+                moveTo(47f, 39.6f)
+                quadraticTo(51f, 39.6f - 1.8f * open, 55f, 39.2f)
+            },
+            pencil,
+            style = Stroke(width = 1.3f, cap = StrokeCap.Round),
+        )
+        drawCircle(pencil, 1.5f * open, Offset(52.4f, 44.4f))
+    }
+
+    val blush = easeOutBack(((actMillis - cueStart(Cue.BLUSH)) / 260f).coerceIn(0f, 1f))
+    if (blush > 0f) {
+        drawOval(
+            mix(paper, brand, 0.5f),
+            PortraitBlush - Offset(3.6f * blush, 2.2f * blush),
+            Size(7.2f * blush, 4.4f * blush),
+        )
+    }
+
+    drawStroke(PortraitScarf, scarf, 6f, mix(paper, brand, 0.6f), ::brushPressure)
+    drawStroke(ScarfTail, (scarf - 0.5f) * 2f, 4.5f, brand, ::brushPressure)
+    drawStroke(PortraitSignature, cueProgress(Cue.SIGNATURE, actMillis), 1.3f, brand, ::brushPressure)
+}
+
+/** 네 갈래로 뻗은 반짝임 별을 칠한다. */
+internal fun DrawScope.drawSparkle(
+    at: Offset,
+    radius: Float,
+    color: Color,
+) {
+    val path = Path()
+    for (corner in 0 until 8) {
+        val reach = if (corner % 2 == 0) radius else radius * 0.28f
+        val angle = corner * PI.toFloat() / 4f
+        val x = at.x + sin(angle) * reach
+        val y = at.y - cos(angle) * reach
+        if (corner == 0) path.moveTo(x, y) else path.lineTo(x, y)
+    }
+    path.close()
+    drawPath(path, color)
 }

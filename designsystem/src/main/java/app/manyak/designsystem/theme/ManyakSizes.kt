@@ -36,12 +36,10 @@ data class ManyakSizes(
     val selectionBorderWidth: Dp,
     /** 60dp — 텍스트 시머 띠의 반폭 */
     val shimmerBandHalfWidth: Dp,
-    /** 10dp — 이미지 생성 로딩의 점 간격 */
+    /** 10dp — 마스코트 무대 바탕 점의 간격 */
     val generationDotGap: Dp,
-    /** 1dp — 이미지 생성 로딩의 점 반지름과 테두리 */
+    /** 1dp — 마스코트 무대 바탕 점의 반지름 */
     val generationDotRadius: Dp,
-    /** 9dp — 이미지 생성 로딩의 점 최대 변위 */
-    val generationDotDisplacement: Dp,
     /** 288dp — 채팅 안내 투어 카드의 폭 */
     val tourCardWidth: Dp,
     /** 6dp — 채팅 안내 투어 카드의 스텝 점 지름 */
@@ -72,7 +70,6 @@ internal val ManyakDefaultSizes =
         shimmerBandHalfWidth = 60.dp,
         generationDotGap = 10.dp,
         generationDotRadius = 1.dp,
-        generationDotDisplacement = 9.dp,
         tourCardWidth = 288.dp,
         tourStepDot = 6.dp,
         studioCoverWidth = 128.dp,

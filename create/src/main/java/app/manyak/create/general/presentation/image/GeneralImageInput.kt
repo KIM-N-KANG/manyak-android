@@ -37,7 +37,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.manyak.create.general.entity.GeneralStoryImage
 import app.manyak.create.general.presentation.form.GeneralFieldHint
-import app.manyak.create.presentation.component.AddTrigger
+import app.manyak.designsystem.component.ManyakAddButton
 import app.manyak.designsystem.component.ManyakTextButton
 import app.manyak.designsystem.theme.ManyakTheme
 import coil3.compose.AsyncImage
@@ -243,7 +243,7 @@ private fun ImageButtons(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
     ) {
-        AddTrigger(
+        ManyakAddButton(
             label =
                 stringResource(
                     if (hasImage) CreateR.string.general_image_change else CreateR.string.general_image_add,

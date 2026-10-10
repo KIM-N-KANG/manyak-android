@@ -206,6 +206,7 @@ internal fun generalErrorMessage(error: GeneralFieldError): String {
         GeneralErrorReason.INVALID_NUMBER -> stringResource(CreateR.string.general_error_turns)
         GeneralErrorReason.INVALID_GENRE -> stringResource(CreateR.string.general_error_genre_invalid)
         GeneralErrorReason.INVALID_COUNT -> stringResource(CreateR.string.general_error_count)
+        GeneralErrorReason.NAME_TOKEN_NEEDS_NAME -> stringResource(CreateR.string.general_error_name_token)
     }
 }
 

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    인물 카드(페르소나). 색은 사용처에서 tint 하므로 자산 자체는 단색으로 둔다.
+    원본: personalcard-outline.svg (24×24).
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <path
+        android:pathData="M17,21H7C3,21 2,20 2,16V8C2,4 3,3 7,3H17C21,3 22,4 22,8V16C22,20 21,21 17,21Z"
+        android:strokeWidth="1.5"
+        android:strokeColor="#FF000000"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <path
+        android:pathData="M14,8H19M15,12H19M17,16H19"
+        android:strokeWidth="1.5"
+        android:strokeColor="#FF000000"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <path
+        android:pathData="M8.49994,11.2899C9.49958,11.2899 10.3099,10.4796 10.3099,9.47992C10.3099,8.48029 9.49958,7.66992 8.49994,7.66992C7.50031,7.66992 6.68994,8.48029 6.68994,9.47992C6.68994,10.4796 7.50031,11.2899 8.49994,11.2899Z"
+        android:strokeWidth="1.5"
+        android:strokeColor="#FF000000"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <path
+        android:pathData="M12,16.33C11.86,14.88 10.71,13.74 9.26,13.61C8.76,13.56 8.25,13.56 7.74,13.61C6.29,13.75 5.14,14.88 5,16.33"
+        android:strokeWidth="1.5"
+        android:strokeColor="#FF000000"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

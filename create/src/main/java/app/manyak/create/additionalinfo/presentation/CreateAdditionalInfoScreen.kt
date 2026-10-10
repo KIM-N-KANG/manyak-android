@@ -42,7 +42,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.common.presentation.credit.LocalCreditPolicy
 import app.manyak.common.presentation.credit.LocalTrials
 import app.manyak.common.presentation.credit.creditAmountText
-import app.manyak.create.presentation.component.AddTrigger
 import app.manyak.create.presentation.component.CreateFunnelHeader
 import app.manyak.create.presentation.component.CreateStepIndicator
 import app.manyak.create.presentation.component.FunnelExitWarningDialog
@@ -53,6 +52,7 @@ import app.manyak.create.presentation.component.SaveDraftWhenBackgrounded
 import app.manyak.create.presentation.preview.previewStorylines
 import app.manyak.create.presentation.state.DraftSaveUiState
 import app.manyak.designsystem.component.FocusScrollMargin
+import app.manyak.designsystem.component.ManyakAddButton
 import app.manyak.designsystem.component.ScrollEdgeFade
 import app.manyak.designsystem.component.keepKeyboardOnTap
 import app.manyak.designsystem.credit.CreditAmountText
@@ -232,7 +232,7 @@ internal fun AdditionalInfoList(
         }
         item {
             Box(modifier = Modifier.fillMaxWidth()) {
-                AddTrigger(
+                ManyakAddButton(
                     modifier = Modifier.align(Alignment.Center).keepKeyboardOnTap(),
                     label = stringResource(CreateR.string.create_add_info),
                     enabled = state.canAddInput,

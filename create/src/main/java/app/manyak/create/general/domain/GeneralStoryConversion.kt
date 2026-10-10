@@ -23,6 +23,10 @@ fun buildGeneralStoryContent(form: GeneralStoryForm): GeneralStoryContent =
         oneLineIntro = form.oneLineIntro.trim(),
         description = form.description.trim().takeIf(String::isNotEmpty),
         genres = form.genres.map(String::trim),
+        protagonistName =
+            form.protagonist.name
+                .trim()
+                .takeIf(String::isNotEmpty),
         storySettings = buildStorySettings(form),
         startSettings = form.startSettings.map(::toStartInput),
         mainEvents =
@@ -79,7 +83,8 @@ fun restoreGeneralStoryForm(
         world = settings.world,
         progression = settings.progression,
         descriptionRatio = settings.descriptionRatio,
-        protagonist = parseProtagonist(content.storySettings.userRoleSetting),
+        protagonist =
+            parseProtagonist(content.storySettings.userRoleSetting).copy(name = content.protagonistName.orEmpty()),
         supporting =
             supporting.ifEmpty { listOf(GeneralCharacter()) }.mapIndexed { index, character ->
                 val server =
