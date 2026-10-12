@@ -26,6 +26,21 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!--
+                웹 앱 안내 배너의 앱 열기 링크(intent:// 에 패키지를 지정)를 받는다. https 대신 전용 스킴을 쓰는 이유는
+                검증되지 않은 https 필터가 Android 11 이하에서 다른 앱의 manyak.app 링크마다 앱 선택창을 띄우기 때문이다.
+            -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="manyak.app"
+                    android:scheme="manyak" />
+            </intent-filter>
         </activity>
 
         <!--
