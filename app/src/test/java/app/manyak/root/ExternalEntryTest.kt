@@ -51,6 +51,13 @@ class ExternalEntryTest {
         assertEquals(MainTabsRoute, resolveEntryDestination(entry, SessionState.Member, profile("other")))
     }
 
+    @Test
+    fun `앱 열기 링크는 로그인을 기다린 뒤 어느 회원이든 그 화면으로 간다`() {
+        val link = PushEntry.fromAppLink("manyak://manyak.app/stories/s1")
+        assertNull(resolveEntryDestination(link, SessionState.SignedOut(null), profile("me")))
+        assertEquals(StoryDetailRoute("s1"), resolveEntryDestination(link, SessionState.Member, profile("anyone")))
+    }
+
     private fun profile(id: String) =
         UserProfile(
             id = id,

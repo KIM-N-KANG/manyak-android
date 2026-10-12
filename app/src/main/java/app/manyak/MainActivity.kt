@@ -26,13 +26,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    /** singleTop 이라 실행 중에 알림을 탭하면 여기로 온다. 종료 상태의 진입과 같은 보류 경로로 모은다. */
+    /** singleTop 이라 실행 중에 알림을 탭하거나 앱 열기 링크로 들어오면 여기로 온다. 종료 상태의 진입과 같은 보류 경로로 모은다. */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         acceptExternalEntry(intent)
     }
 
     private fun acceptExternalEntry(intent: Intent?) {
-        PushEntry.readFrom(intent)?.let(rootViewModel::onExternalEntry)
+        (PushEntry.readFrom(intent) ?: PushEntry.readAppLinkFrom(intent))?.let(rootViewModel::onExternalEntry)
     }
 }

@@ -6,6 +6,7 @@ import app.manyak.core.navigation.PushEntry
 import app.manyak.core.navigation.StoryDetailRoute
 import app.manyak.core.navigation.StudioRoute
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class PushEntryTest {
@@ -61,5 +62,22 @@ class PushEntryTest {
             MainTabsRoute,
             PushEntry(PushEntry.TYPE_STORY_COMPLETED, "s1", "me", "https://evil.example/stories/s1").routeFor("me"),
         )
+    }
+
+    @Test
+    fun `앱 열기 링크는 수신자 비교 없이 링크의 목적지로 간다`() {
+        val story = PushEntry.fromAppLink("manyak://manyak.app/stories/s1")
+        assertEquals(StoryDetailRoute("s1"), story?.routeFor("me"))
+        assertEquals(StoryDetailRoute("s1"), story?.routeFor("other"))
+        assertEquals(MainTabsRoute, PushEntry.fromAppLink("manyak://manyak.app/")?.routeFor("me"))
+        assertEquals(MainTabsRoute, PushEntry.fromAppLink("manyak://manyak.app")?.routeFor("me"))
+    }
+
+    @Test
+    fun `앱 열기 링크가 아니면 진입으로 받지 않는다`() {
+        assertNull(PushEntry.fromAppLink("https://manyak.app/stories/s1"))
+        assertNull(PushEntry.fromAppLink("manyak://evil.example/stories/s1"))
+        assertNull(PushEntry.fromAppLink("not a url"))
+        assertNull(PushEntry.fromAppLink(null))
     }
 }
