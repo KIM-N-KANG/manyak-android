@@ -261,8 +261,10 @@ class CreateKeywordViewModelTest {
             assertTrue(command.customGenreTags.isEmpty())
             assertEquals("지우", command.protagonist.name)
             assertEquals(listOf(2L), command.protagonist.featureTagIds)
-            // 퍼널 진입 시 놓인 빈 주변 인물 섹션은 요청에서 빠진다.
-            assertTrue(command.supportingCharacters.isEmpty())
+            // 퍼널 진입 시 놓인 빈 주변 인물 섹션도 한 명으로 보내 AI 가 채우게 한다.
+            val emptyCharacter =
+                StoryCharacterInput(name = null, gender = null, featureTagIds = emptyList(), customTags = emptyList())
+            assertEquals(listOf(emptyCharacter), command.supportingCharacters)
             assertNull(command.parentCreationId)
             assertFalse(command.isRegenerated)
             // 이 화면은 스토리라인 목적지로 대체되어 사라지므로 진행 플래그는 해제되지 않는다.

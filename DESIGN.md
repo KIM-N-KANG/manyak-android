@@ -822,6 +822,8 @@ components:
 
 **표지 위 뱃지**: 목록 카드의 좋아요 수와 턴 수 뱃지, ORIGINAL 태그, 화풍 이름, 상세 인물 카드의 이전·다음 버튼은 웹의 `backdrop-blur-md`처럼 뒤 그림을 흐려 바탕에 깝니다(`coverBackdrop`). 흐림은 웹과 같은 표준편차 12dp이고 그 위에 검정 20%를, ORIGINAL 태그는 도안 색 #111414 20%를 덮습니다. 뒤 그림을 흐릴 수 없는 API 31 미만은 흐림 대신 #111414 70%를 깝니다. 상세 히어로의 좋아요 수와 턴 수 뱃지도 같은 흐린 바탕입니다. 웹 상세는 흐림 없는 검정 70%라 이 자리만 웹과 다릅니다. 턴 수 아이콘은 웹과 같은 말풍선(Hugeicons BubbleChat)입니다.
 
+**스토리 뱃지 크기**: 상세 히어로의 좋아요 수와 턴 수 뱃지, 상세 장르와 본 엔딩 뱃지, 제작 탭 카드 장르 뱃지는 웹과 같은 높이 28dp입니다(`StoryBadgeScale.Large`). `{typography.label-large}`(14sp, 줄 높이 20sp)에 여백 가로 `{spacing.component}`, 세로 `{spacing.inline}`이고, 웹 CSS처럼 한 줄 글자의 줄 상자를 자르지 않습니다(`LineHeightStyle.Trim.None`, Compose 기본 `Trim.Both`는 글꼴 높이로 잘라 뱃지가 3dp 낮아집니다). 카드에서 접힌 장르는 웹과 같이 `+N` 글자 뱃지로 보입니다. 목록 카드 표지 뱃지는 `Compact`(`{typography.label-small}`, 여백 가로 `{spacing.compact}`, 세로 `{spacing.hairline}`)입니다.
+
 **스토리 상세 하단 배경**: 스크롤 끝에 가까워질수록 CTA와 위쪽 페이드의 색상을 `{colors.surface}`에서 메타 정보의 `{colors.background-neutral}`로 부드럽게 전환합니다. 맨 아래에서는 메타 정보와 CTA 배경이 같은 색으로 이어지며, 위로 스크롤하면 원래 색으로 돌아갑니다. 메타 정보가 없는 상세는 `{colors.surface}`를 유지합니다. 메타 정보가 처음 보일 때 전환을 0부터 시작하고 `{motion.element-enter}`(200ms)로 진행률을 부드럽게 따라갑니다.
 
 **스토리 상세 구획 간격**: 본문 구획(주요 내용, 채팅 시작 상황, 주변 인물) 사이는 `{spacing.block}`(32dp)이고, 끝의 메타 블록은 바로 위 구획과 `{spacing.gutter}`(16dp)만 띄웁니다. 간격은 목록의 일정 간격이 아니라 항목이 각자 걸며, 메타 블록 위 간격은 블록 안 여백이 아닌 별도 항목이라 하단 배경 전환이 회색 블록이 보일 때 시작합니다. 시작 상황의 "상황 이름"과 "엔딩" 제목 옆에는 같은 정보 툴팁 버튼을 둡니다.
