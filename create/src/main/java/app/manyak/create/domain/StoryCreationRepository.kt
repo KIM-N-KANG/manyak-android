@@ -1,6 +1,7 @@
 package app.manyak.create.domain
 
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.create.entity.ArtStyle
 import app.manyak.create.entity.CompletedStory
 import app.manyak.create.entity.CreationRequestSnapshot
 import app.manyak.create.entity.GenreCatalog
@@ -15,6 +16,9 @@ interface StoryCreationRepository {
 
     /** 활성화된 제공 태그 목록. 카테고리 → 정렬 순서로 정렬되어 온다. */
     suspend fun tags(): DomainResult<List<StoryTag>>
+
+    /** 활성 화풍 목록. 서버 노출 순서대로 온다. */
+    suspend fun artStyles(): DomainResult<List<ArtStyle>>
 
     /** 태그 선택으로 스토리라인 3개를 생성한다. AI 동기 호출이라 오래 걸릴 수 있다. */
     suspend fun generateStorylines(command: StorylineGenerationCommand): DomainResult<StorylineGeneration>

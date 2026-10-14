@@ -247,7 +247,7 @@ class StorylineGenerationStore
             when (result) {
                 is DomainResult.Success -> {
                     lastResult = result.value
-                    progress = CreationProgress()
+                    progress = progress.forNewStorylines()
                     mutableState.value = StorylineGenerationState.Generated(result.value)
                     // 생성 결과는 사용자가 만든 편집이 아니라 다시 얻기 비싼 재료다. 임시 저장을
                     // 기다리지 않고 바로 초안에 넣는다.
@@ -335,7 +335,7 @@ class StorylineGenerationStore
 
                             is CreationRequestSnapshot.StorylinesReady -> {
                                 lastResult = snapshot.generation
-                                progress = CreationProgress()
+                                progress = progress.forNewStorylines()
                                 mutableState.value = StorylineGenerationState.Generated(snapshot.generation)
                                 enableDraftSave()
                                 persistDraft(owner)
@@ -419,19 +419,25 @@ class StorylineGenerationStore
             updateProgress(progress.copy(selectedStorylineIndex = index))
         }
 
-        /** 추가 정보 화면의 입력·추천 선택 미러. */
+        /** 추가 정보 화면의 입력, 추천 선택, 화풍 미러. */
         fun updateAdditionalInfoProgress(
             inputs: List<String>,
             recommendations: List<String>,
+            artStyle: String?,
         ) {
             updateProgress(
-                progress.copy(additionalInfoInputs = inputs, selectedRecommendations = recommendations),
+                progress.copy(
+                    additionalInfoInputs = inputs,
+                    selectedRecommendations = recommendations,
+                    artStyle = artStyle,
+                ),
             )
         }
 
         /**
          * "다시 선택하기"로 스토리라인 단계에 되돌아간다. 입력·추천 선택과 함께 선택 순번도
          * 지운다 — 순번이 남으면 이후 이탈이 추가 정보 단계로 재개되어 이미 버린 입력 화면으로 돌아간다.
+         * 화풍은 스토리라인과 무관한 선택이라 남긴다.
          */
         fun clearAdditionalInfoProgress() {
             updateProgress(
@@ -641,6 +647,9 @@ class StorylineGenerationStore
  */
 private fun CreationProgress.hasSameContentAs(other: CreationProgress): Boolean =
     copy(activeStorylineIndex = other.activeStorylineIndex) == other
+
+/** 새 스토리라인에는 이전 스토리라인에 딸린 편집이 맞지 않아 비우되, 스토리라인과 무관한 화풍은 남긴다. */
+private fun CreationProgress.forNewStorylines(): CreationProgress = CreationProgress(artStyle = artStyle)
 
 /** requestId 재사용이 서버 `PENDING` 과 겹친 409 판정. */
 internal fun DomainError.isConflict(): Boolean = this is DomainError.Server && status == HTTP_CONFLICT

@@ -11,6 +11,7 @@ import app.manyak.create.data.api.dto.toDomain
 import app.manyak.create.data.api.dto.toDomainOrNull
 import app.manyak.create.data.api.dto.toRequestDto
 import app.manyak.create.domain.StoryCreationRepository
+import app.manyak.create.entity.ArtStyle
 import app.manyak.create.entity.CompletedStory
 import app.manyak.create.entity.CreationRequestSnapshot
 import app.manyak.create.entity.GenreCatalog
@@ -41,6 +42,9 @@ class StoryCreationRepositoryImpl
 
         override suspend fun tags(): DomainResult<List<StoryTag>> =
             apiCall { simpleStoryApi.tags() }.map { tags -> tags.mapNotNull { it.toDomainOrNull() } }
+
+        override suspend fun artStyles(): DomainResult<List<ArtStyle>> =
+            apiCall { simpleStoryApi.artStyles() }.map { artStyles -> artStyles.map { it.toDomain() } }
 
         // 자동 재시도를 두지 않는다 — 재시도는 사용자의 "다시 만들기"가 같은 requestId 로 수행한다.
         override suspend fun generateStorylines(

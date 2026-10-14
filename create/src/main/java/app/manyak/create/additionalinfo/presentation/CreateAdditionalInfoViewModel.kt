@@ -5,7 +5,10 @@ import app.manyak.analytics.domain.Analytics
 import app.manyak.analytics.entity.AnalyticsEvent
 import app.manyak.analytics.entity.CompletionStage
 import app.manyak.analytics.entity.CreateStep
+import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.presentation.mvi.MviViewModel
+import app.manyak.create.domain.StoryCreationRepository
+import app.manyak.create.entity.ArtStyle
 import app.manyak.create.entity.StoryCompletionCommand
 import app.manyak.create.presentation.state.FunnelExitWarning
 import app.manyak.create.presentation.state.StorylineGenerationState
@@ -15,6 +18,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -48,6 +52,13 @@ data class CreateAdditionalInfoUiState(
     val additionalInfos: List<AdditionalInfoInput> =
         List(INITIAL_INPUT_COUNT) { index -> AdditionalInfoInput(id = index.toLong()) },
     val nextInputId: Long = INITIAL_INPUT_COUNT.toLong(),
+    /** 제공 화풍 목록. 받기 전이거나 받지 못했으면 null 이다. */
+    val artStyles: List<ArtStyle>? = null,
+    val artStylesFailed: Boolean = false,
+    /** 고른 화풍 code. 필수지만 처음에는 고르지 않은 상태로 둔다. */
+    val selectedArtStyle: String? = null,
+    /** 화풍을 고르지 않고 완성을 눌러 푸터에 선택 안내를 띄운 상태. 화풍을 고르면 내린다. */
+    val showArtStyleRequired: Boolean = false,
     /** 완성 요청을 영속하는 중. 연타를 요청 하나로 묶고, 성공하면 화면이 제작 탭으로 대체된다. */
     val isSubmitting: Boolean = false,
     /** 이탈을 막고 띄운 경고. */
@@ -62,7 +73,7 @@ data class CreateAdditionalInfoUiState(
         get() = selectedRecommendations.isNotEmpty() || additionalInfos.any { it.value.isNotBlank() }
 
     companion object {
-        const val INITIAL_INPUT_COUNT: Int = 3
+        const val INITIAL_INPUT_COUNT: Int = 1
         const val INPUT_MAX_COUNT: Int = 10
         const val INPUT_MAX_LENGTH: Int = 100
     }
@@ -83,6 +94,12 @@ sealed interface CreateAdditionalInfoIntent {
         val inputId: Long,
         val value: String,
     ) : CreateAdditionalInfoIntent
+
+    data class SelectArtStyle(
+        val code: String,
+    ) : CreateAdditionalInfoIntent
+
+    data object RetryArtStyles : CreateAdditionalInfoIntent
 
     data class CompleteStory(
         val storylineIndex: Int,
@@ -126,6 +143,23 @@ sealed interface CreateAdditionalInfoEvent {
         val value: String,
     ) : CreateAdditionalInfoEvent
 
+    /** 화풍 목록과 선택 사건. 화풍끼리 묶어 따로 reduce 한다. */
+    sealed interface ArtStyleEvent : CreateAdditionalInfoEvent
+
+    data object ArtStylesRequested : ArtStyleEvent
+
+    data class ArtStylesLoaded(
+        val artStyles: List<ArtStyle>,
+    ) : ArtStyleEvent
+
+    data object ArtStylesFailed : ArtStyleEvent
+
+    data class ArtStyleSelected(
+        val code: String,
+    ) : ArtStyleEvent
+
+    data object ArtStyleRequired : ArtStyleEvent
+
     data object SubmissionStarted : CreateAdditionalInfoEvent
 
     data object SubmissionFailed : CreateAdditionalInfoEvent
@@ -164,6 +198,7 @@ class CreateAdditionalInfoViewModel
     constructor(
         @Assisted draftId: String,
         private val storylineGenerationStore: StorylineGenerationStore,
+        private val storyCreationRepository: StoryCreationRepository,
         private val analytics: Analytics,
     ) : MviViewModel<
             CreateAdditionalInfoIntent,
@@ -179,10 +214,13 @@ class CreateAdditionalInfoViewModel
          */
         private var isLeaving = false
 
+        private var artStylesJob: Job? = null
+
         val draftSave = storylineGenerationStore.draftSave
 
         init {
             analytics.track(AnalyticsEvent.StoryCreateStepViewed(CreateStep.ADDITIONAL_INFO))
+            loadArtStyles()
             viewModelScope.launch {
                 // 프로세스 재시작·재개 진입이면 진행 레코드에서 스토어를 먼저 복원한다.
                 storylineGenerationStore.ensureRestored()
@@ -195,14 +233,11 @@ class CreateAdditionalInfoViewModel
                 }
             }
             viewModelScope.launch {
-                // 입력·추천 선택을 스토어에 미러링해 이탈 시 임시 저장 재료로 쓴다.
+                // 입력, 추천 선택, 화풍을 스토어에 미러링해 이탈 시 임시 저장 재료로 쓴다.
                 uiState.collect { state ->
                     // 복원 전의 빈 입력을 미러링하면 되살릴 임시 저장 재료를 덮어쓴다.
                     if (state.isRestoring || isLeaving) return@collect
-                    storylineGenerationStore.updateAdditionalInfoProgress(
-                        inputs = state.additionalInfos.map(AdditionalInfoInput::value),
-                        recommendations = state.selectedRecommendations.toList(),
-                    )
+                    mirrorProgress(state)
                 }
             }
         }
@@ -236,15 +271,17 @@ class CreateAdditionalInfoViewModel
                         ),
                     )
 
+                is CreateAdditionalInfoIntent.SelectArtStyle ->
+                    dispatchEvent(CreateAdditionalInfoEvent.ArtStyleSelected(intent.code))
+
+                CreateAdditionalInfoIntent.RetryArtStyles -> loadArtStyles()
+
                 is CreateAdditionalInfoIntent.CompleteStory -> completeStory(state, intent.storylineIndex)
 
                 CreateAdditionalInfoIntent.SaveDraft -> {
                     analytics.track(AnalyticsEvent.DraftSaved(CreateStep.ADDITIONAL_INFO))
                     // 미러링 수집이 UiState 보다 늦게 돌아도 저장에는 지금 입력이 들어가야 한다.
-                    storylineGenerationStore.updateAdditionalInfoProgress(
-                        inputs = state.additionalInfos.map(AdditionalInfoInput::value),
-                        recommendations = state.selectedRecommendations.toList(),
-                    )
+                    mirrorProgress(state)
                     storylineGenerationStore.saveDraft()
                 }
 
@@ -334,6 +371,11 @@ class CreateAdditionalInfoViewModel
             if (state.isSubmitting) return
             val simpleCreationId = state.simpleCreationId ?: return
             val storylineId = state.storylines.getOrNull(storylineIndex)?.id ?: return
+            val artStyle = state.selectedArtStyle
+            if (artStyle == null) {
+                dispatchEvent(CreateAdditionalInfoEvent.ArtStyleRequired)
+                return
+            }
             dispatchEvent(CreateAdditionalInfoEvent.SubmissionStarted)
             val command =
                 buildCompletionCommand(
@@ -341,12 +383,10 @@ class CreateAdditionalInfoViewModel
                     simpleCreationId = simpleCreationId,
                     storylineId = storylineId,
                     additionalInfos = state.submittedAdditionalInfos(),
+                    artStyle = artStyle,
                 )
             // UiState가 이벤트 채널보다 먼저 읽힌 직후에도 요청에는 최신 입력이 들어가야 한다.
-            storylineGenerationStore.updateAdditionalInfoProgress(
-                inputs = state.additionalInfos.map(AdditionalInfoInput::value),
-                recommendations = state.selectedRecommendations.toList(),
-            )
+            mirrorProgress(state)
             analytics.track(AnalyticsEvent.StoryCompletionRequested(simpleCreationId.toString()))
             // 제출이 스토어를 비우므로 그 뒤의 미러링을 먼저 끊는다 — 남은 화면 상태가 빈 스토어를 다시 채우면 안 된다.
             isLeaving = true
@@ -358,6 +398,29 @@ class CreateAdditionalInfoViewModel
                 dispatchEvent(CreateAdditionalInfoEvent.SubmissionFailed)
                 dispatchEffect(CreateAdditionalInfoEffect.ShowSubmissionFailure)
             }
+        }
+
+        /** 연타나 재시도가 겹쳐도 조회는 하나만 돈다. 오래 걸려도 다른 입력을 막지 않도록 따로 띄운다. */
+        private fun loadArtStyles() {
+            if (artStylesJob?.isActive == true) return
+            artStylesJob =
+                viewModelScope.launch {
+                    dispatchEvent(CreateAdditionalInfoEvent.ArtStylesRequested)
+                    dispatchEvent(
+                        when (val result = storyCreationRepository.artStyles()) {
+                            is DomainResult.Success -> CreateAdditionalInfoEvent.ArtStylesLoaded(result.value)
+                            is DomainResult.Failure -> CreateAdditionalInfoEvent.ArtStylesFailed
+                        },
+                    )
+                }
+        }
+
+        private fun mirrorProgress(state: CreateAdditionalInfoUiState) {
+            storylineGenerationStore.updateAdditionalInfoProgress(
+                inputs = state.additionalInfos.map(AdditionalInfoInput::value),
+                recommendations = state.selectedRecommendations.toList(),
+                artStyle = state.selectedArtStyle,
+            )
         }
 
         @AssistedFactory
@@ -397,6 +460,8 @@ class CreateAdditionalInfoViewModel
                             },
                     )
 
+                is CreateAdditionalInfoEvent.ArtStyleEvent -> state.reduceArtStyle(event)
+
                 CreateAdditionalInfoEvent.SubmissionStarted -> state.copy(isSubmitting = true)
 
                 CreateAdditionalInfoEvent.SubmissionFailed -> state.copy(isSubmitting = false)
@@ -404,8 +469,11 @@ class CreateAdditionalInfoViewModel
                 is CreateAdditionalInfoEvent.SnapshotRestored ->
                     // 복원 스냅숏이 늦게 도착하는 동안 화면 조작은 불가능했으므로 통째로 대체한다.
                     // 되살릴 레코드가 없었더라도 복원 대기는 여기서 끝난다 — 빈 화면으로 남지 않는다.
+                    // 화풍 목록은 복원과 따로 받으므로 먼저 도착한 결과를 지우지 않는다.
                     event.snapshot.copy(
                         isRestoring = false,
+                        artStyles = state.artStyles,
+                        artStylesFailed = state.artStylesFailed,
                         isSubmitting = state.isSubmitting,
                         exitWarning = state.exitWarning,
                         showReselectWarningDialog = state.showReselectWarningDialog,
@@ -418,9 +486,22 @@ class CreateAdditionalInfoViewModel
             }
     }
 
+private fun CreateAdditionalInfoUiState.reduceArtStyle(
+    event: CreateAdditionalInfoEvent.ArtStyleEvent,
+): CreateAdditionalInfoUiState =
+    when (event) {
+        CreateAdditionalInfoEvent.ArtStylesRequested -> copy(artStylesFailed = false)
+        is CreateAdditionalInfoEvent.ArtStylesLoaded -> copy(artStyles = event.artStyles)
+        CreateAdditionalInfoEvent.ArtStylesFailed -> copy(artStylesFailed = true)
+        is CreateAdditionalInfoEvent.ArtStyleSelected ->
+            copy(selectedArtStyle = event.code, showArtStyleRequired = false)
+        CreateAdditionalInfoEvent.ArtStyleRequired -> copy(showArtStyleRequired = true)
+    }
+
 /**
  * 같은 페이로드의 재시도는 requestId 를 재사용한다 — 서버가 이미 완성했다면 AI 재호출 없이
- * 저장된 결과를 돌려받아 중복 생성·중복 과금이 없다(멱등 계약). [previous] 는 영속 실패 뒤의
+ * 저장된 결과를 돌려받아 중복 생성·중복 과금이 없다(멱등 계약). 화풍만 바꿔도 다른 페이로드다.
+ * 이전 requestId 로 보내면 이전 화풍으로 만든 결과가 돌아온다. [previous] 는 영속 실패 뒤의
  * 재시도와 이전 버전 임시 저장본이 남긴 마지막 명령이다.
  */
 private fun buildCompletionCommand(
@@ -428,19 +509,22 @@ private fun buildCompletionCommand(
     simpleCreationId: Long,
     storylineId: Long,
     additionalInfos: List<String>,
+    artStyle: String,
 ): StoryCompletionCommand {
     val reusableRequestId =
         previous
             ?.takeIf {
                 it.simpleCreationId == simpleCreationId &&
                     it.storylineId == storylineId &&
-                    it.additionalInfos == additionalInfos
+                    it.additionalInfos == additionalInfos &&
+                    it.artStyle == artStyle
             }?.requestId
     return StoryCompletionCommand(
         requestId = reusableRequestId ?: UUID.randomUUID().toString(),
         simpleCreationId = simpleCreationId,
         storylineId = storylineId,
         additionalInfos = additionalInfos,
+        artStyle = artStyle,
     )
 }
 
@@ -495,5 +579,6 @@ internal fun StorylineGenerationStore.toAdditionalInfoSnapshot(): CreateAddition
             progress.selectedRecommendations.filterTo(mutableSetOf()) { it in availableRecommendations },
         additionalInfos = inputs,
         nextInputId = inputs.size.toLong(),
+        selectedArtStyle = progress.artStyle,
     )
 }

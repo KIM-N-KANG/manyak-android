@@ -1,5 +1,6 @@
 package app.manyak.create.data.api
 
+import app.manyak.create.data.api.dto.ArtStyleDto
 import app.manyak.create.data.api.dto.GenreCatalogDto
 import app.manyak.create.data.api.dto.SimpleStoryTagDto
 import retrofit2.Response
@@ -15,4 +16,7 @@ interface SimpleStoryApi {
 
     @GET("stories/simple/tags")
     suspend fun tags(): Response<List<SimpleStoryTagDto>>
+
+    @GET("stories/art-styles")
+    suspend fun artStyles(): Response<List<ArtStyleDto>>
 }

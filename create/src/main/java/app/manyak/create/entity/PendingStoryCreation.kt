@@ -12,6 +12,8 @@ data class CreationProgress(
     val additionalInfoInputs: List<String> = emptyList(),
     /** 추천 추가 정보의 선택 텍스트. 자유 텍스트와 분리해 토글 상태 그대로 복원한다. */
     val selectedRecommendations: List<String> = emptyList(),
+    /** 고른 화풍 code. 스토리라인과 무관한 선택이라 스토리라인을 다시 골라도 남는다. */
+    val artStyle: String? = null,
 )
 
 /**
