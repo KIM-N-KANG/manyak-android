@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -19,10 +20,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import app.manyak.create.entity.ArtStyle
-import app.manyak.create.keyword.presentation.TagsLoadFailure
+import app.manyak.create.keyword.presentation.TagsReloadButton
 import app.manyak.create.presentation.component.KeywordSectionLabel
 import app.manyak.designsystem.component.STORY_THUMBNAIL_ASPECT_RATIO
 import app.manyak.designsystem.component.SkeletonPlaceholder
@@ -49,13 +51,7 @@ internal fun ArtStyleSection(
     ) {
         KeywordSectionLabel(text = stringResource(CreateR.string.create_art_style_label), required = true)
         when {
-            failed ->
-                TagsLoadFailure(
-                    // 라벨 아래에 바로 붙으면 실패 안내가 섹션 제목처럼 읽혀 한 칸 띄운다.
-                    modifier = Modifier.padding(vertical = ManyakTheme.spacing.gutter),
-                    title = stringResource(CreateR.string.create_art_style_load_failed),
-                    onRetry = onRetry,
-                )
+            failed -> ArtStyleLoadFailure(onRetry = onRetry)
 
             artStyles == null -> {
                 val alpha = rememberSkeletonPulseAlpha()
@@ -147,6 +143,27 @@ private fun ArtStyleTile(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
+    }
+}
+
+/** 한 줄 안내 아래에 키워드 단계와 같은 "다시 불러오기" 버튼을 둔다. */
+@Composable
+private fun ArtStyleLoadFailure(
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth().padding(vertical = ManyakTheme.spacing.compact),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
+    ) {
+        Text(
+            text = stringResource(CreateR.string.create_art_style_load_failed),
+            style = ManyakTheme.typography.bodyMedium,
+            color = ManyakTheme.colors.textSubtle,
+            textAlign = TextAlign.Center,
+        )
+        TagsReloadButton(onClick = onRetry)
     }
 }
 
