@@ -63,7 +63,7 @@ private fun CardPlaceholder(
         SkeletonPlaceholder(
             modifier = Modifier.fillMaxWidth().aspectRatio(STORY_THUMBNAIL_ASPECT_RATIO),
             alpha = alpha,
-            shape = ManyakTheme.shapes.thumbnail,
+            shape = ManyakTheme.shapes.card,
         )
         Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.hairline)) {
             SkeletonPlaceholder(

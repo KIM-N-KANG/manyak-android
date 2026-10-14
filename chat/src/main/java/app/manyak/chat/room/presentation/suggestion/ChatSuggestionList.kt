@@ -306,7 +306,7 @@ private fun ChoicesFailure(
             modifier =
                 Modifier
                     .heightIn(min = ManyakTheme.sizes.input)
-                    .clip(ManyakTheme.shapes.control)
+                    .clip(ManyakTheme.shapes.menuItem)
                     .background(ManyakTheme.colors.backgroundNeutral)
                     .clickable(role = Role.Button, onClickLabel = label, onClick = onRetry)
                     .padding(horizontal = ManyakTheme.spacing.controlHorizontal),

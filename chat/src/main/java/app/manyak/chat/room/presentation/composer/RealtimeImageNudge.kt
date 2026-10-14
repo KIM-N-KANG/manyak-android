@@ -171,7 +171,7 @@ private fun NudgeCard(
     Column(
         modifier =
             modifier
-                .clip(ManyakTheme.shapes.card)
+                .clip(ManyakTheme.shapes.control)
                 .pointerInput(Unit) { detectTapGestures {} }
                 .background(ManyakTheme.colors.surfaceRaised)
                 .verticalScroll(rememberScrollState())
@@ -191,7 +191,7 @@ private fun NudgeCard(
         Button(
             onClick = onDismiss,
             modifier = Modifier.align(Alignment.End).padding(top = ManyakTheme.spacing.component),
-            shape = ManyakTheme.shapes.control,
+            shape = ManyakTheme.shapes.menuItem,
             colors =
                 ButtonDefaults.buttonColors(
                     containerColor = ManyakTheme.colors.brand,

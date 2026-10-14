@@ -181,7 +181,7 @@ private fun TourCard(
                 .graphicsLayer {
                     alpha = entrance.value
                     translationY = (1f - entrance.value) * rise.toPx()
-                }.clip(ManyakTheme.shapes.card)
+                }.clip(ManyakTheme.shapes.control)
                 .background(ManyakTheme.colors.surfaceRaised)
                 .verticalScroll(rememberScrollState())
                 .padding(ManyakTheme.spacing.gutter),
@@ -203,7 +203,7 @@ private fun TourCard(
         ) {
             TourStepDots(stepIndex = stepIndex, stepCount = stepCount)
             Spacer(modifier = Modifier.weight(1f))
-            ManyakTextButton(onClick = onSkip) {
+            ManyakTextButton(onClick = onSkip, shape = ManyakTheme.shapes.menuItem) {
                 Text(
                     text = stringResource(ChatR.string.chat_tour_skip),
                     style = ManyakTheme.typography.labelLarge,
@@ -212,7 +212,7 @@ private fun TourCard(
             }
             Button(
                 onClick = onNext,
-                shape = ManyakTheme.shapes.control,
+                shape = ManyakTheme.shapes.menuItem,
                 colors =
                     ButtonDefaults.buttonColors(
                         containerColor = ManyakTheme.colors.brand,
