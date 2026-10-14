@@ -19,6 +19,8 @@
     <string name="create_additional_max_count">(최대 %1$d개)</string>
     <string name="create_additional_recommended_label">추천 추가 정보</string>
     <string name="create_additional_title">스토리라인에 더하고 싶은\n정보를 자유롭게 입력해주세요</string>
+    <string name="create_art_style_label">이미지 스타일</string>
+    <string name="create_art_style_load_failed">이미지 스타일 목록을 불러오지 못했어요</string>
     <string name="create_character_random_hint">비워두면 랜덤으로 설정해요</string>
     <string name="create_close_funnel">만들기 닫기</string>
     <string name="create_completion_credit_cost_amount">%1$s 이프</string>
@@ -37,6 +39,7 @@
     <string name="create_draft_saved">임시 저장했어요</string>
     <string name="create_error_duplicate_name">이미 사용한 이름이에요</string>
     <string name="create_error_duplicate_name_footer">인물 이름이 겹치지 않게 해주세요</string>
+    <string name="create_error_select_art_style">이미지 스타일을 선택해주세요</string>
     <string name="create_error_select_keyword">키워드를 하나 이상 선택해주세요</string>
     <string name="create_exit_warning_description">지금 나가면 만들고 있는 내용이 사라져요</string>
     <string name="create_exit_warning_leave">그만 만들기</string>

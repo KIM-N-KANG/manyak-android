@@ -182,6 +182,7 @@ private fun CreateAdditionalInfoContent(
                     if (!imeVisible) {
                         CreateAdditionalInfoFooter(
                             storylineIndex = storylineIndex,
+                            showArtStyleRequired = state.showArtStyleRequired,
                             onIntent = onIntent,
                         )
                     }
@@ -239,6 +240,16 @@ internal fun AdditionalInfoList(
                     onClick = { onIntent(CreateAdditionalInfoIntent.AddInput) },
                 )
             }
+        }
+        item {
+            ArtStyleSection(
+                modifier = Modifier.padding(top = ManyakTheme.spacing.section),
+                artStyles = state.artStyles,
+                failed = state.artStylesFailed,
+                selectedCode = state.selectedArtStyle,
+                onSelect = { code -> onIntent(CreateAdditionalInfoIntent.SelectArtStyle(code)) },
+                onRetry = { onIntent(CreateAdditionalInfoIntent.RetryArtStyles) },
+            )
         }
         item { Spacer(modifier = Modifier.height(ManyakTheme.spacing.gutter)) }
     }
@@ -303,6 +314,7 @@ private fun AdditionalInfoStepTitle(modifier: Modifier = Modifier) {
 @Composable
 private fun CreateAdditionalInfoFooter(
     storylineIndex: Int,
+    showArtStyleRequired: Boolean,
     onIntent: (CreateAdditionalInfoIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -310,11 +322,20 @@ private fun CreateAdditionalInfoFooter(
         modifier =
             modifier
                 .fillMaxWidth()
-                // 이 푸터에는 오류 문구가 없어 위를 띄우지 않는다 — 콘텐츠와의 경계는 페이드가 맡는다.
+                // 오류 문구는 비용 행 아래에 오므로 위를 띄우지 않는다. 콘텐츠와의 경계는 페이드가 맡는다.
                 .padding(bottom = ManyakTheme.spacing.gutter),
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
     ) {
         StoryCompletionCostRow()
+        // 키워드 단계의 선택 안내와 같은 자리와 모양이다.
+        if (showArtStyleRequired) {
+            Text(
+                modifier = Modifier.padding(horizontal = ManyakTheme.spacing.gutter),
+                text = stringResource(CreateR.string.create_error_select_art_style),
+                style = ManyakTheme.typography.bodyMedium,
+                color = ManyakTheme.colors.textDanger,
+            )
+        }
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = ManyakTheme.spacing.gutter),
             horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),

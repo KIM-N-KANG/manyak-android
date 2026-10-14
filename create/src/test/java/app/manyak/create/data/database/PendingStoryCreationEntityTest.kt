@@ -107,6 +107,24 @@ class PendingStoryCreationEntityTest {
     }
 
     @Test
+    fun `화풍 선택 이전에 저장한 초안은 화풍 없이 읽힌다`() {
+        val entity =
+            PendingStoryCreation
+                .Draft(generationCommand = null, generation = generation(), progress = CreationProgress())
+                .toEntity("draft-1")
+                .copy(
+                    progress = """{"selectedStorylineIndex":0}""",
+                    completionCommand =
+                        """{"requestId":"req-2","simpleCreationId":7,"storylineId":21,"additionalInfos":[]}""",
+                )
+
+        val draft = entity.toDomainOrNull() as PendingStoryCreation.Draft
+
+        assertNull(draft.progress.artStyle)
+        assertNull(draft.lastCompletionCommand?.artStyle)
+    }
+
+    @Test
     fun `깨진 JSON 은 없는 것으로 취급한다`() {
         val entity =
             PendingStoryCreationEntity(draftId = "draft-1", stage = "KEYWORD_DRAFT", keywordSnapshot = "{ not json")
@@ -137,6 +155,7 @@ class PendingStoryCreationEntityTest {
             simpleCreationId = 7L,
             storylineId = 21L,
             additionalInfos = listOf("배경은 현대의 서울"),
+            artStyle = "ANIME",
         )
 
     private fun generation() =
@@ -158,6 +177,7 @@ class PendingStoryCreationEntityTest {
             activeStorylineIndex = 1,
             additionalInfoInputs = listOf("입력", ""),
             selectedRecommendations = listOf("추천 정보"),
+            artStyle = "ANIME",
         )
 
     private fun keywordSnapshot() =

@@ -233,22 +233,31 @@ internal fun TagsLoadFailure(
                 textAlign = TextAlign.Center,
             )
         }
-        Button(
-            modifier = Modifier.height(ManyakTheme.sizes.control),
-            onClick = onRetry,
-            shape = ManyakTheme.shapes.control,
-            border = BorderStroke(1.dp, ManyakTheme.colors.border),
-            colors =
-                ButtonDefaults.buttonColors(
-                    containerColor = ManyakTheme.colors.surfaceRaised,
-                    contentColor = ManyakTheme.colors.text,
-                ),
-        ) {
-            Text(
-                text = stringResource(CreateR.string.create_tags_reload),
-                style = ManyakTheme.typography.labelLarge,
-            )
-        }
+        TagsReloadButton(onClick = onRetry)
+    }
+}
+
+/** 목록 조회 실패의 "다시 불러오기". 키워드, 장르, 화풍 목록이 같은 버튼으로 다시 받는다. */
+@Composable
+internal fun TagsReloadButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Button(
+        modifier = modifier.height(ManyakTheme.sizes.control),
+        onClick = onClick,
+        shape = ManyakTheme.shapes.control,
+        border = BorderStroke(1.dp, ManyakTheme.colors.border),
+        colors =
+            ButtonDefaults.buttonColors(
+                containerColor = ManyakTheme.colors.surfaceRaised,
+                contentColor = ManyakTheme.colors.text,
+            ),
+    ) {
+        Text(
+            text = stringResource(CreateR.string.create_tags_reload),
+            style = ManyakTheme.typography.labelLarge,
+        )
     }
 }
 

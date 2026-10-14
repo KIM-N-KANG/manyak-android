@@ -353,7 +353,7 @@ components:
   funnel-header:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.text}"
-    typography: "{typography.title-large}"
+    typography: "{typography.body-large-strong}"
     minHeight: 64dp
   detail-header:
     backgroundColor: "{colors.surface}"
@@ -820,11 +820,13 @@ components:
 
 **`story-cover`**: 표지가 없는 상세 히어로와 홈, 제작, 채팅 카드는 초안 카드와 같은 `ic_manyak_symbol`을 사용합니다. 배경은 `{colors.background-neutral}`, 심벌은 `{colors.text-disabled}`이며 기존 32dp 크기를 유지합니다. 상세 헤더는 기본 심벌 위에서도 투명하게 시작하고 아이콘은 `{colors.text}`를 사용합니다. 별도 헤더 그라데이션은 두지 않습니다.
 
+**표지 위 뱃지**: 목록 카드의 좋아요 수와 턴 수 뱃지, ORIGINAL 태그, 화풍 이름, 상세 인물 카드의 이전·다음 버튼은 웹의 `backdrop-blur-md`처럼 뒤 그림을 흐려 바탕에 깝니다(`coverBackdrop`). 흐림은 웹과 같은 표준편차 12dp이고 그 위에 검정 20%를, ORIGINAL 태그는 도안 색 #111414 20%를 덮습니다. 뒤 그림을 흐릴 수 없는 API 31 미만은 흐림 대신 #111414 70%를 깝니다. 상세 히어로의 좋아요 수와 턴 수 뱃지도 같은 흐린 바탕입니다. 웹 상세는 흐림 없는 검정 70%라 이 자리만 웹과 다릅니다. 턴 수 아이콘은 웹과 같은 말풍선(Hugeicons BubbleChat)입니다.
+
 **스토리 상세 하단 배경**: 스크롤 끝에 가까워질수록 CTA와 위쪽 페이드의 색상을 `{colors.surface}`에서 메타 정보의 `{colors.background-neutral}`로 부드럽게 전환합니다. 맨 아래에서는 메타 정보와 CTA 배경이 같은 색으로 이어지며, 위로 스크롤하면 원래 색으로 돌아갑니다. 메타 정보가 없는 상세는 `{colors.surface}`를 유지합니다. 메타 정보가 처음 보일 때 전환을 0부터 시작하고 `{motion.element-enter}`(200ms)로 진행률을 부드럽게 따라갑니다.
 
 **스토리 상세 구획 간격**: 본문 구획(주요 내용, 채팅 시작 상황, 주변 인물) 사이는 `{spacing.block}`(32dp)이고, 끝의 메타 블록은 바로 위 구획과 `{spacing.gutter}`(16dp)만 띄웁니다. 간격은 목록의 일정 간격이 아니라 항목이 각자 걸며, 메타 블록 위 간격은 블록 안 여백이 아닌 별도 항목이라 하단 배경 전환이 회색 블록이 보일 때 시작합니다. 시작 상황의 "상황 이름"과 "엔딩" 제목 옆에는 같은 정보 툴팁 버튼을 둡니다.
 
-**스토리 상세 주변 인물**: 한 번에 한 인물을 보입니다. 인물이 둘 이상이면 제목 아래에 4:3 썸네일 줄을 화면 끝까지 가로 스크롤로 두고, 썸네일 폭은 화면에 세 장 반이 보이도록 잡습니다(간격 `{spacing.compact}`, 모서리 `{rounded.thumbnail}`, `{colors.border}` 1dp 경계, 이미지는 잘라 채움). 고른 썸네일은 바깥쪽에 `{sizes.selection-border-width}` 두께 `{colors.text}` 테두리를 그리고, 나머지는 50% 투명도입니다. 선택이 바뀌면 앞 인물의 테두리와 투명도, 새 인물의 테두리와 투명도가 같은 `{motion.screen-transition}` 동안 함께 바뀌고(테두리는 이미지 투명도와 분리해 늘 진한 색으로 차오름), 선택 변화 자체가 반응이라 눌림 리플은 그리지 않습니다. 스크롤할 인물이 남은 쪽 가장자리는 40dp를 투명하게 지우고, 썸네일을 고르면 그 썸네일이 줄 가운데로 오게 스크롤합니다(처음과 끝은 스크롤 끝에서 멈춤). 줄과 카드 사이는 테두리 여백을 빼고 `{spacing.dense}`로 둬 눈에 보이는 간격이 썸네일 사이와 같습니다. 고른 인물은 제작 방식 선택지와 같은 카드(`{rounded.overlay}`, `{colors.border}` 1dp, `{colors.surface-raised}`)에 담고, 위쪽은 4:3 인물 이미지(원본 전체 표시, 누르면 `FullscreenImageViewer`), 구분선 아래는 좌우 `{spacing.gutter}`·위아래 `{spacing.control-horizontal}` 여백에 이름 `{typography.body-large-strong}`과 `{spacing.inline}` 아래 소개 `{typography.body-medium}` + `{colors.text}`(어절 단위 줄바꿈)입니다. 이미지 좌우 가운데에는 표지 뱃지와 같은 반투명 바탕(`StoryOverlayScrim`)의 `{sizes.control-small}` 원형 이전·다음 버튼을 두고 첫 인물과 마지막 인물에서는 해당 버튼을 숨깁니다. 이미지가 없거나 불러오지 못하면 `CharacterImage`처럼 자리를 지우지 않고 `story-cover`와 같은 기본 심벌을 남깁니다 — 인물마다 카드 높이가 달라지면 고를 때마다 아래 내용이 튑니다. 카드와 제작 방식 선택지는 장면·채팅 인물 이미지(`CharacterImage`)와 같은 `{rounded.overlay}`(20dp) 모서리라 같은 화면의 큰 이미지와 곡률이 맞고, 작은 썸네일만 `{rounded.thumbnail}`(12dp)입니다.
+**스토리 상세 주변 인물**: 한 번에 한 인물을 보입니다. 인물이 둘 이상이면 제목 아래에 4:3 썸네일 줄을 화면 끝까지 가로 스크롤로 두고, 썸네일 폭은 화면에 세 장 반이 보이도록 잡습니다(간격 `{spacing.compact}`, 모서리 `{rounded.thumbnail}`, `{colors.border}` 1dp 경계, 이미지는 잘라 채움). 고른 썸네일은 바깥쪽에 `{sizes.selection-border-width}` 두께 `{colors.text}` 테두리를 그리고, 나머지는 50% 투명도입니다. 선택이 바뀌면 앞 인물의 테두리와 투명도, 새 인물의 테두리와 투명도가 같은 `{motion.screen-transition}` 동안 함께 바뀌고(테두리는 이미지 투명도와 분리해 늘 진한 색으로 차오름), 선택 변화 자체가 반응이라 눌림 리플은 그리지 않습니다. 스크롤할 인물이 남은 쪽 가장자리는 40dp를 투명하게 지우고, 썸네일을 고르면 그 썸네일이 줄 가운데로 오게 스크롤합니다(처음과 끝은 스크롤 끝에서 멈춤). 줄과 카드 사이는 테두리 여백을 빼고 `{spacing.dense}`로 둬 눈에 보이는 간격이 썸네일 사이와 같습니다. 고른 인물은 제작 방식 선택지와 같은 카드(`{rounded.overlay}`, `{colors.border}` 1dp, `{colors.surface-raised}`)에 담고, 위쪽은 4:3 인물 이미지(원본 전체 표시, 누르면 `FullscreenImageViewer`), 구분선 아래는 좌우 `{spacing.gutter}`·위아래 `{spacing.control-horizontal}` 여백에 이름 `{typography.body-large-strong}`과 `{spacing.inline}` 아래 소개 `{typography.body-medium}` + `{colors.text}`(어절 단위 줄바꿈)입니다. 이미지 좌우 가운데에는 표지 뱃지와 같이 인물 이미지를 흐린 바탕의 `{sizes.control-small}` 원형 이전·다음 버튼을 두고 첫 인물과 마지막 인물에서는 해당 버튼을 숨깁니다. 이미지가 없거나 불러오지 못하면 `CharacterImage`처럼 자리를 지우지 않고 `story-cover`와 같은 기본 심벌을 남깁니다 — 인물마다 카드 높이가 달라지면 고를 때마다 아래 내용이 튑니다. 카드와 제작 방식 선택지는 장면·채팅 인물 이미지(`CharacterImage`)와 같은 `{rounded.overlay}`(20dp) 모서리라 같은 화면의 큰 이미지와 곡률이 맞고, 작은 썸네일만 `{rounded.thumbnail}`(12dp)입니다.
 
 ### 퍼널
 
@@ -837,7 +839,7 @@ components:
 
 **`fab`** — 제작 탭 우측 하단의 제작 진입 버튼. **원형**(`{rounded.pill}`)이고 배경은 주 버튼(`{component.button-primary}`)과 같은 브랜드 원색 `{colors.brand}`, 아이콘 `{colors.text-inverse}`, 크기 56dp(M3 FAB 기본). **고도(그림자)를 0으로 없앤다** — 이 시스템은 층을 표면 색으로만 나눈다. 하단 바에 초록을 두지 않는 것과 어긋나지 않는다 — FAB 은 상시 chrome 이 아니라 화면의 주 동작 그 자체라서, 초록이 "지금 누를 것"을 가리킨다는 규칙 그대로다.
 
-**`funnel-header`** — 섹션 헤더처럼 M3 `TopAppBar` 위에 색만 얹고, 로고 대신 화면 제목(`{typography.title-large}`)과 오른쪽의 임시 저장·닫기 버튼을 둔다. 높이는 앱 바 기본 64dp 다. 구분선과 그림자를 두지 않는다.
+**`funnel-header`** — 섹션 헤더처럼 M3 `TopAppBar` 위에 색만 얹고, 로고 대신 화면 제목(`{typography.body-large-strong}`)과 오른쪽의 임시 저장·닫기 버튼을 둔다. 제목은 웹 제작 헤더(16px SemiBold)에 맞춰 하위 화면 헤더와 같은 크기다. 높이는 앱 바 기본 64dp 다. 구분선과 그림자를 두지 않는다.
 
 **`detail-header`** — 셸을 두르지 않는 하위 화면(스토리 상세·채팅방·친구 초대·피드백)의 앱 바. 같은 `TopAppBar` 위에 뒤로가기 버튼과 제목(`{typography.body-large-strong}`)을 둔다. **섹션·퍼널 헤더보다 한 단 작은 것은 이 자리의 제목이 화면 이름이 아니라 지금 보고 있는 것의 이름이기 때문이다** — 스토리 제목처럼 길어질 수 있는 값이라 한 줄로 자르고, 고정된 화면 이름과 위계도 갈린다.
 
@@ -853,7 +855,7 @@ components:
 
 **스토리라인 단계** — 순번 탭(첫·두·세 번째)은 카테고리 탭과 같은 스타일을 그대로 쓰되 잠금과 필수 표시가 없다. 본문은 `story-body`(`{typography.body-reading}`)로 그린다 — 스토리라인은 스토리 본문의 미리보기라서 서사 서체의 자리다. 본문 마크업은 웹과 같은 규칙으로 파싱한다 — `**…**`는 볼드, 단일 `*…*`(내레이션·속마음)는 `{colors.text-narration}`. 평가 버튼(좋아요·별로예요)은 `{sizes.input}` 정사각 아이콘 칩으로, 아이콘은 기본 크기(`{sizes.icon}`) 대신 16dp 로 한 단계 줄여 본문 옆 보조 동작으로 물러나게 하고, 키워드 칩과 같은 선택 문법을 쓴다 — 기본은 `{component.chip}`(흰 배경 + `{colors.border}` 1dp 경계 + `{colors.text}` 아이콘), 활성 시 좋아요는 `{component.chip-selected}`(브랜드 subtle 채움 + 브랜드 경계 + 브랜드 아이콘), 별로예요는 같은 문법의 danger 변형(`{colors.background-danger-subtle}` + `{colors.border-danger}` + `{colors.text-danger}`)이다. 아이콘은 `ic_thumb_up`·`ic_thumb_down`. 하단 CTA 쌍(다시 만들기·선택하기)은 퍼널 CTA 규칙 그대로다. 웹의 선택 키워드 드로어 트리거는 앱에서는 두지 않는다.
 
-**추가 정보 단계** — 선택한 스토리라인 본문은 `{colors.background-neutral}` 상자에 `{typography.body-reading}`으로 놓고, 기본은 한 줄로 접어 말줄임으로 끝낸 뒤 가운데의 더보기·접기(`{colors.text-subtle}` + 16dp 셰브론)로 펼친다 — 웹의 그라디언트 페이드 대신 말줄임을 쓴다. 추천 추가 정보는 키워드 칩과 같은 선택 문법의 칩을 폭을 채워 왼쪽 정렬로 세로 나열한다 — 문장 전체가 들어가는 다중행 칩이다. 자유 입력은 텍스트 필드 문법(`{component.text-field}`) 그대로 여러 줄을 허용하고 오른쪽 아래에 글자 수 카운터를 둔다. 행 오른쪽의 삭제(X)는 `{colors.text-subtle}` 고스트 아이콘 버튼이고, "정보 추가" 트리거는 인물 추가와 같은 모양으로 가운데에 놓인다. 하단 CTA 쌍(다시 선택하기·스토리 완성하기)은 퍼널 CTA 규칙 그대로다.
+**추가 정보 단계** — 선택한 스토리라인 본문은 `{colors.background-neutral}` 상자에 `{typography.body-reading}`으로 놓고, 기본은 한 줄로 접어 말줄임으로 끝낸 뒤 가운데의 더보기·접기(`{colors.text-subtle}` + 16dp 셰브론)로 펼친다 — 웹의 그라디언트 페이드 대신 말줄임을 쓴다. 추천 추가 정보는 키워드 칩과 같은 선택 문법의 칩을 폭을 채워 왼쪽 정렬로 세로 나열한다 — 문장 전체가 들어가는 다중행 칩이다. 자유 입력은 텍스트 필드 문법(`{component.text-field}`) 그대로 여러 줄을 허용하고 오른쪽 아래에 글자 수 카운터를 둔다. 행 오른쪽의 삭제(X)는 `{colors.text-subtle}` 고스트 아이콘 버튼이고, "정보 추가" 트리거는 인물 추가와 같은 모양으로 가운데에 놓인다. 자유 입력 아래 이미지 스타일은 서버가 준 순서의 3열 그리드(칸 사이 `{spacing.compact}`)다. 칸은 `{colors.border}` 1dp 경계의 3:4 `story-cover`(미리보기가 없으면 기본 심벌)이고, 아래 가운데에 표지 뱃지와 같은 흐린 알약 바탕으로 이름(`{typography.label-small}` + `{colors.text-inverse}`)을 얹는다. 고른 칸은 바깥쪽에 `{sizes.selection-border-width}` 두께 `{colors.border-brand}` 테두리를 `{motion.screen-transition}` 동안 채우고, 고르지 않은 칸을 흐리게 하지 않으며 눌림 리플을 그리지 않는다. 받는 동안은 같은 비율의 골격 칸 여섯 개를, 받지 못하면 가운데에 `{colors.text-subtle}` 한 줄 안내를, 그 아래에 키워드 단계 조회 실패와 같은 "다시 불러오기" 버튼을 둔다. 고르지 않고 완성을 누르면 키워드 단계 선택 안내와 같은 `{colors.text-danger}` 문구를 비용 행과 CTA 사이에 띄운다. 선택 스토리라인·추천·자유 입력·이미지 스타일 섹션 사이는 `{spacing.section}`, 섹션 제목과 내용 사이는 `{spacing.compact}`다. 하단 CTA 쌍(다시 선택하기·스토리 완성하기)은 퍼널 CTA 규칙 그대로다.
 
 ### 로고
 

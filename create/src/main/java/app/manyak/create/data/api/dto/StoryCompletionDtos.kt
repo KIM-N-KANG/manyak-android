@@ -10,6 +10,7 @@ data class StoryCompletionRequestDto(
     val simpleCreationId: Long,
     val storylineId: Long,
     val additionalInfos: List<String>,
+    val artStyle: String? = null,
 )
 
 fun StoryCompletionCommand.toRequestDto(): StoryCompletionRequestDto =
@@ -18,6 +19,7 @@ fun StoryCompletionCommand.toRequestDto(): StoryCompletionRequestDto =
         simpleCreationId = simpleCreationId,
         storylineId = storylineId,
         additionalInfos = additionalInfos,
+        artStyle = artStyle,
     )
 
 /** 응답의 시작 설정·엔딩 등은 채팅 진입 연동 전까지 쓰지 않아 역직렬화하지 않는다. */

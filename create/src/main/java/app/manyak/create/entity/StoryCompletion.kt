@@ -12,6 +12,8 @@ data class StoryCompletionCommand(
     val storylineId: Long,
     /** 추천 채택분이 자유 입력보다 앞에 실린다. 합산 최대 13개·각 100자. */
     val additionalInfos: List<String>,
+    /** 고른 화풍 code. 화풍 선택 이전에 저장한 명령은 null 이고, 서버는 이를 ANIME 로 처리한다. */
+    val artStyle: String? = null,
 )
 
 /** 완성된 스토리. 채팅 진입이 연동되기 전까지는 식별자만 쓴다. */
