@@ -1,6 +1,8 @@
 package app.manyak.create.additionalinfo.presentation
 
 import app.manyak.analytics.domain.NoOpAnalytics
+import app.manyak.common.domain.error.DomainError
+import app.manyak.common.domain.error.DomainResult
 import app.manyak.create.entity.CreationProgress
 import app.manyak.create.entity.PendingStoryCreation
 import app.manyak.create.presentation.state.FunnelExitWarning
@@ -10,6 +12,7 @@ import app.manyak.create.testing.FakePendingStoryCreationStore
 import app.manyak.create.testing.FakeStoryCompletionSubmitter
 import app.manyak.create.testing.FakeStoryCreationRepository
 import app.manyak.create.testing.TEST_DRAFT_ID
+import app.manyak.create.testing.sampleArtStyles
 import app.manyak.create.testing.sampleGenerationInput
 import app.manyak.create.testing.sampleStorylineGeneration
 import kotlinx.coroutines.Dispatchers
@@ -25,6 +28,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -55,11 +59,13 @@ class CreateAdditionalInfoViewModelTest {
                 FakeStoryCompletionSubmitter(),
                 this,
             ).bind(TEST_DRAFT_ID),
+            repository,
             NoOpAnalytics,
         )
     }
 
     private class LoadedFixture(
+        val repository: FakeStoryCreationRepository,
         val submitter: FakeStoryCompletionSubmitter,
         val pendingStore: FakePendingStoryCreationStore,
         val store: StorylineGenerationStore,
@@ -79,10 +85,11 @@ class CreateAdditionalInfoViewModelTest {
         // "선택하기"로 추가 정보 단계에 들어온 상태를 만든다. 재개 지점이 이 값으로 갈린다.
         selectedStorylineIndex?.let(store::markStorylineSelected)
         return LoadedFixture(
+            repository = repository,
             submitter = submitter,
             pendingStore = pendingStore,
             store = store,
-            viewModel = CreateAdditionalInfoViewModel(TEST_DRAFT_ID, store, NoOpAnalytics),
+            viewModel = CreateAdditionalInfoViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics),
         )
     }
 
@@ -118,6 +125,7 @@ class CreateAdditionalInfoViewModelTest {
                     .first()
                     .id
             viewModel.onIntent(CreateAdditionalInfoIntent.ChangeInput(inputId, " 배경은 현대의 서울로 해줘 "))
+            viewModel.onIntent(CreateAdditionalInfoIntent.SelectArtStyle("ANIME"))
             advanceUntilIdle()
             viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
             advanceUntilIdle()
@@ -129,6 +137,7 @@ class CreateAdditionalInfoViewModelTest {
             assertEquals(10L, command.simpleCreationId)
             assertEquals(1L, command.storylineId)
             assertEquals(listOf("폐허를 자세히 그려줘", "배경은 현대의 서울로 해줘"), command.additionalInfos)
+            assertEquals("ANIME", command.artStyle)
             // 영속에 성공하면 서버 응답을 기다리지 않고 제작 탭으로 돌아간다.
             assertEquals(
                 CreateAdditionalInfoEffect.ReturnToStudioAfterSubmission,
@@ -141,6 +150,8 @@ class CreateAdditionalInfoViewModelTest {
     fun `제출 연타는 요청 하나로 처리한다`() =
         runTest(dispatcher) {
             val fixture = loadedViewModel()
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.SelectArtStyle("ANIME"))
+            advanceUntilIdle()
 
             fixture.viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
             fixture.viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
@@ -159,6 +170,7 @@ class CreateAdditionalInfoViewModelTest {
                     .first()
                     .id
             viewModel.onIntent(CreateAdditionalInfoIntent.ChangeInput(inputId, "배경은 서울"))
+            viewModel.onIntent(CreateAdditionalInfoIntent.SelectArtStyle("ANIME"))
             advanceUntilIdle()
 
             viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
@@ -308,6 +320,7 @@ class CreateAdditionalInfoViewModelTest {
                                     activeStorylineIndex = 0,
                                     additionalInfoInputs = listOf("배경은 서울", ""),
                                     selectedRecommendations = listOf("폐허를 자세히 그려줘", "사라진 추천"),
+                                    artStyle = "ANIME",
                                 ),
                         ),
                 )
@@ -319,7 +332,7 @@ class CreateAdditionalInfoViewModelTest {
                     this,
                 ).bind(TEST_DRAFT_ID)
             val viewModel =
-                CreateAdditionalInfoViewModel(TEST_DRAFT_ID, store, NoOpAnalytics)
+                CreateAdditionalInfoViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics)
             advanceUntilIdle()
 
             val state = viewModel.uiState.value
@@ -327,6 +340,9 @@ class CreateAdditionalInfoViewModelTest {
             assertEquals(listOf("배경은 서울", ""), state.additionalInfos.map { it.value })
             // 현재 생성 결과에 없는 추천 선택은 복원하지 않는다 — 완성 요청에 섞여 실리지 않게 한다.
             assertEquals(setOf("폐허를 자세히 그려줘"), state.selectedRecommendations)
+            assertEquals("ANIME", state.selectedArtStyle)
+            // 복원보다 먼저 받은 화풍 목록이 복원 스냅숏에 덮이지 않는다.
+            assertEquals(sampleArtStyles(), state.artStyles)
         }
 
     @Test
@@ -351,7 +367,7 @@ class CreateAdditionalInfoViewModelTest {
                 ).bind(TEST_DRAFT_ID)
 
             val viewModel =
-                CreateAdditionalInfoViewModel(TEST_DRAFT_ID, store, NoOpAnalytics)
+                CreateAdditionalInfoViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics)
 
             // 복원 결과가 오기 전 첫 프레임. 여기서 입력 화면을 그리면 본문 없는 화면이 스쳐 지나간다.
             assertTrue(viewModel.uiState.value.isRestoring)
@@ -395,7 +411,7 @@ class CreateAdditionalInfoViewModelTest {
                     this,
                 ).bind(TEST_DRAFT_ID)
 
-            CreateAdditionalInfoViewModel(TEST_DRAFT_ID, store, NoOpAnalytics)
+            CreateAdditionalInfoViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics)
             advanceUntilIdle()
 
             assertEquals(inputs, store.progress.additionalInfoInputs)
@@ -423,10 +439,11 @@ class CreateAdditionalInfoViewModelTest {
         }
 
     @Test
-    fun `임시 저장하면 선택 순번과 입력이 담긴 저장본이 남는다`() =
+    fun `임시 저장하면 선택 순번과 입력과 화풍이 담긴 저장본이 남는다`() =
         runTest(dispatcher) {
             val fixture = loadedViewModel(selectedStorylineIndex = 1)
             fixture.viewModel.onIntent(CreateAdditionalInfoIntent.ChangeInput(inputId = 0, value = "배경은 서울"))
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.SelectArtStyle("ANIME"))
             advanceUntilIdle()
 
             fixture.viewModel.onIntent(CreateAdditionalInfoIntent.SaveDraft)
@@ -434,7 +451,8 @@ class CreateAdditionalInfoViewModelTest {
 
             val record = fixture.pendingStore.read(TEST_DRAFT_ID) as PendingStoryCreation.Draft
             assertEquals(1, record.progress.selectedStorylineIndex)
-            assertEquals(listOf("배경은 서울", "", ""), record.progress.additionalInfoInputs)
+            assertEquals(listOf("배경은 서울"), record.progress.additionalInfoInputs)
+            assertEquals("ANIME", record.progress.artStyle)
         }
 
     @Test
@@ -545,5 +563,103 @@ class CreateAdditionalInfoViewModelTest {
                     .value,
             )
             assertEquals(0, fixture.store.progress.selectedStorylineIndex)
+        }
+
+    @Test
+    fun `화풍 목록은 서버 순서 그대로 받고 처음에는 입력 한 칸에 아무 화풍도 고르지 않는다`() =
+        runTest(dispatcher) {
+            val viewModel = loadedViewModel().viewModel
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertEquals(sampleArtStyles(), state.artStyles)
+            assertNull(state.selectedArtStyle)
+            assertEquals(1, state.additionalInfos.size)
+        }
+
+    @Test
+    fun `화풍을 고르지 않고 완성하면 요청하지 않고 안내를 띄우며 고르면 안내가 사라진다`() =
+        runTest(dispatcher) {
+            val fixture = loadedViewModel()
+
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
+            advanceUntilIdle()
+
+            assertTrue(fixture.submitter.submitted.isEmpty())
+            assertTrue(fixture.viewModel.uiState.value.showArtStyleRequired)
+            assertFalse(fixture.viewModel.uiState.value.isSubmitting)
+
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.SelectArtStyle("NONE"))
+            advanceUntilIdle()
+
+            assertFalse(fixture.viewModel.uiState.value.showArtStyleRequired)
+        }
+
+    @Test
+    fun `화풍을 바꾼 재시도는 새 요청 ID 를 쓴다`() =
+        runTest(dispatcher) {
+            val fixture = loadedViewModel(submitter = FakeStoryCompletionSubmitter(submitSucceeds = false))
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.SelectArtStyle("ANIME"))
+            advanceUntilIdle()
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
+            advanceUntilIdle()
+            val firstRequestId = fixture.store.lastCompletionCommand?.requestId
+
+            fixture.submitter.submitSucceeds = true
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.SelectArtStyle("NONE"))
+            advanceUntilIdle()
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
+            advanceUntilIdle()
+
+            val command =
+                fixture.submitter.submitted
+                    .single()
+                    .command
+            assertEquals("NONE", command.artStyle)
+            assertNotEquals(firstRequestId, command.requestId)
+        }
+
+    @Test
+    fun `화풍 목록 조회에 실패하면 다시 시도로 다시 받는다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryCreationRepository()
+            repository.queuedArtStylesResults.add(DomainResult.Failure(DomainError.Network))
+            val store =
+                StorylineGenerationStore(
+                    repository,
+                    FakePendingStoryCreationStore(),
+                    FakeStoryCompletionSubmitter(),
+                    this,
+                ).bind(TEST_DRAFT_ID)
+            val viewModel = CreateAdditionalInfoViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics)
+            advanceUntilIdle()
+
+            assertTrue(viewModel.uiState.value.artStylesFailed)
+            assertNull(viewModel.uiState.value.artStyles)
+
+            viewModel.onIntent(CreateAdditionalInfoIntent.RetryArtStyles)
+            advanceUntilIdle()
+
+            assertFalse(viewModel.uiState.value.artStylesFailed)
+            assertEquals(sampleArtStyles(), viewModel.uiState.value.artStyles)
+            assertEquals(2, repository.artStylesCalls)
+        }
+
+    @Test
+    fun `화풍만 고른 상태의 다시 선택하기는 경고 없이 돌아가고 화풍은 남는다`() =
+        runTest(dispatcher) {
+            val fixture = loadedViewModel(selectedStorylineIndex = 0)
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.SelectArtStyle("ANIME"))
+            advanceUntilIdle()
+
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.ReselectStoryline)
+            advanceUntilIdle()
+
+            assertFalse(fixture.viewModel.uiState.value.showReselectWarningDialog)
+            assertEquals(
+                CreateAdditionalInfoEffect.NavigateBackToStoryline,
+                fixture.viewModel.uiEffect.first(),
+            )
+            assertEquals("ANIME", fixture.store.progress.artStyle)
         }
 }

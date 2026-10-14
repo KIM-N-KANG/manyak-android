@@ -36,6 +36,7 @@ internal data class CompletionCommandDto(
     val simpleCreationId: Long,
     val storylineId: Long,
     val additionalInfos: List<String>,
+    val artStyle: String? = null,
 )
 
 @Serializable
@@ -63,6 +64,7 @@ internal data class ProgressDto(
     val activeStorylineIndex: Int = 0,
     val additionalInfoInputs: List<String> = emptyList(),
     val selectedRecommendations: List<String> = emptyList(),
+    val artStyle: String? = null,
 )
 
 internal fun StorylineGenerationCommand.toDto(): GenerationCommandDto {
@@ -109,6 +111,7 @@ internal fun StoryCompletionCommand.toDto(): CompletionCommandDto =
         simpleCreationId = simpleCreationId,
         storylineId = storylineId,
         additionalInfos = additionalInfos,
+        artStyle = artStyle,
     )
 
 internal fun CompletionCommandDto.toDomain(): StoryCompletionCommand =
@@ -117,6 +120,7 @@ internal fun CompletionCommandDto.toDomain(): StoryCompletionCommand =
         simpleCreationId = simpleCreationId,
         storylineId = storylineId,
         additionalInfos = additionalInfos,
+        artStyle = artStyle,
     )
 
 internal fun StorylineGeneration.toDto(): GenerationSnapshotDto =
@@ -153,6 +157,7 @@ internal fun CreationProgress.toDto(): ProgressDto =
         activeStorylineIndex = activeStorylineIndex,
         additionalInfoInputs = additionalInfoInputs,
         selectedRecommendations = selectedRecommendations,
+        artStyle = artStyle,
     )
 
 internal fun ProgressDto.toDomain(): CreationProgress =
@@ -161,4 +166,5 @@ internal fun ProgressDto.toDomain(): CreationProgress =
         activeStorylineIndex = activeStorylineIndex,
         additionalInfoInputs = additionalInfoInputs,
         selectedRecommendations = selectedRecommendations,
+        artStyle = artStyle,
     )

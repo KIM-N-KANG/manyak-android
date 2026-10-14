@@ -3,6 +3,7 @@ package app.manyak.create.testing
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.create.domain.PendingStoryCreationStore
 import app.manyak.create.domain.StoryCreationRepository
+import app.manyak.create.entity.ArtStyle
 import app.manyak.create.entity.CompletedStory
 import app.manyak.create.entity.CreationRequestSnapshot
 import app.manyak.create.entity.GenreCatalog
@@ -37,6 +38,12 @@ internal fun sampleStorylineGeneration(simpleCreationId: Long = 10): StorylineGe
                 Storyline(id = 2, storyline = "두 번째 스토리라인", recommendedInfos = emptyList()),
                 Storyline(id = 3, storyline = "세 번째 스토리라인", recommendedInfos = emptyList()),
             ),
+    )
+
+internal fun sampleArtStyles(): List<ArtStyle> =
+    listOf(
+        ArtStyle(code = "NONE", name = "없음", previewImageUrl = null),
+        ArtStyle(code = "ANIME", name = "애니메이션", previewImageUrl = "https://cdn.manyak.app/art-styles/ANIME.webp"),
     )
 
 internal fun sampleGenerationInput(): StorylineGenerationInput =
@@ -75,6 +82,15 @@ internal open class FakeStoryCreationRepository(
     val queuedRatingResults = ArrayDeque<DomainResult<Unit>>()
 
     override suspend fun tags(): DomainResult<List<StoryTag>> = tagsResult
+
+    /** 꺼낼 결과가 남아 있으면 순서대로 쓰고, 비면 샘플 목록을 돌려준다. */
+    val queuedArtStylesResults = ArrayDeque<DomainResult<List<ArtStyle>>>()
+    var artStylesCalls = 0
+
+    override suspend fun artStyles(): DomainResult<List<ArtStyle>> {
+        artStylesCalls++
+        return queuedArtStylesResults.removeFirstOrNull() ?: DomainResult.Success(sampleArtStyles())
+    }
 
     override suspend fun generateStorylines(command: StorylineGenerationCommand): DomainResult<StorylineGeneration> {
         // 실제 네트워크 호출처럼 반드시 한 번 양보한다 — 관찰자가 Generating 전이를 볼 수 있어야 한다.

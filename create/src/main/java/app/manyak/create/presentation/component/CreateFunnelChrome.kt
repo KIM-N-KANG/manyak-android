@@ -69,7 +69,7 @@ internal fun CreateFunnelHeader(
         title = {
             Text(
                 text = title,
-                style = ManyakTheme.typography.titleLarge,
+                style = ManyakTheme.typography.bodyLargeStrong,
                 color = ManyakTheme.colors.text,
             )
         },

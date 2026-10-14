@@ -21,11 +21,11 @@ data class ManyakShapes(
     val checkbox: CornerBasedShape,
     /** 10dp — 셀렉트 메뉴 항목·라벨 없는 아이콘 버튼 */
     val menuItem: CornerBasedShape,
-    /** 12dp — 썸네일·작은 아이콘 컨테이너 */
+    /** 12dp: 채팅 목록 표지처럼 작은 썸네일, 작은 아이콘 컨테이너 */
     val thumbnail: CornerBasedShape,
     /** 14dp — 버튼·입력창·탭 */
     val control: CornerBasedShape,
-    /** 16dp — 카드·리스트 항목 */
+    /** 16dp: 카드, 리스트 항목, 홈과 제작 탭처럼 목록 카드의 표지 */
     val card: CornerBasedShape,
     /** 20dp — 다이얼로그 */
     val overlay: CornerBasedShape,

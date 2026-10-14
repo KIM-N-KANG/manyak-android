@@ -80,6 +80,27 @@ class StorylineGenerationStoreTest {
         }
 
     @Test
+    fun `재생성 결과는 이전 스토리라인의 편집을 비우되 고른 화풍은 남긴다`() =
+        runTest {
+            val store =
+                StorylineGenerationStore(
+                    FakeStoryCreationRepository(),
+                    FakePendingStoryCreationStore(),
+                    FakeStoryCompletionSubmitter(),
+                    this,
+                ).bind(TEST_DRAFT_ID)
+            store.generate(sampleGenerationInput())
+            advanceUntilIdle()
+            store.markStorylineSelected(0)
+            store.updateAdditionalInfoProgress(listOf("배경은 서울"), listOf("폐허를 자세히 그려줘"), artStyle = "ANIME")
+
+            store.regenerate()
+            advanceUntilIdle()
+
+            assertEquals(CreationProgress(artStyle = "ANIME"), store.progress)
+        }
+
+    @Test
     fun `실패 후 다시 만들기는 같은 요청 ID 로 재시도한다`() =
         runTest {
             val repository = FakeStoryCreationRepository()
@@ -504,7 +525,7 @@ class StorylineGenerationStoreTest {
                 ).bind(TEST_DRAFT_ID)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
-            store.updateAdditionalInfoProgress(listOf("배경은 서울"), emptyList())
+            store.updateAdditionalInfoProgress(listOf("배경은 서울"), emptyList(), artStyle = null)
 
             val generation = sampleStorylineGeneration()
             val command =
@@ -541,7 +562,7 @@ class StorylineGenerationStoreTest {
                 ).bind(TEST_DRAFT_ID)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
-            store.updateAdditionalInfoProgress(listOf("배경은 서울"), emptyList())
+            store.updateAdditionalInfoProgress(listOf("배경은 서울"), emptyList(), artStyle = null)
 
             val generation = sampleStorylineGeneration()
             val command =

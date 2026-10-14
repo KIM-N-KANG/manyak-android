@@ -19,8 +19,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -34,6 +32,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.toRect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathOperation
 import androidx.compose.ui.graphics.addOutline
@@ -48,7 +47,7 @@ import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.toSize
-import app.manyak.designsystem.component.ManyakTextButton
+import app.manyak.chat.room.presentation.ChatSmallButton
 import app.manyak.designsystem.theme.ManyakTheme
 import kotlin.math.roundToInt
 import app.manyak.chat.R as ChatR
@@ -181,7 +180,7 @@ private fun TourCard(
                 .graphicsLayer {
                     alpha = entrance.value
                     translationY = (1f - entrance.value) * rise.toPx()
-                }.clip(ManyakTheme.shapes.card)
+                }.clip(ManyakTheme.shapes.control)
                 .background(ManyakTheme.colors.surfaceRaised)
                 .verticalScroll(rememberScrollState())
                 .padding(ManyakTheme.spacing.gutter),
@@ -199,31 +198,21 @@ private fun TourCard(
         )
         Row(
             modifier = Modifier.fillMaxWidth().padding(top = ManyakTheme.spacing.component),
+            horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             TourStepDots(stepIndex = stepIndex, stepCount = stepCount)
             Spacer(modifier = Modifier.weight(1f))
-            ManyakTextButton(onClick = onSkip) {
-                Text(
-                    text = stringResource(ChatR.string.chat_tour_skip),
-                    style = ManyakTheme.typography.labelLarge,
-                    color = ManyakTheme.colors.textSubtle,
-                )
-            }
-            Button(
+            ChatSmallButton(
+                text = stringResource(ChatR.string.chat_tour_skip),
+                onClick = onSkip,
+                containerColor = Color.Transparent,
+                contentColor = ManyakTheme.colors.text,
+            )
+            ChatSmallButton(
+                text = stringResource(if (hasNext) ChatR.string.chat_tour_next else ChatR.string.chat_tour_done),
                 onClick = onNext,
-                shape = ManyakTheme.shapes.control,
-                colors =
-                    ButtonDefaults.buttonColors(
-                        containerColor = ManyakTheme.colors.brand,
-                        contentColor = ManyakTheme.colors.textInverse,
-                    ),
-            ) {
-                Text(
-                    text = stringResource(if (hasNext) ChatR.string.chat_tour_next else ChatR.string.chat_tour_done),
-                    style = ManyakTheme.typography.labelLarge,
-                )
-            }
+            )
         }
     }
 }
