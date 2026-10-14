@@ -788,12 +788,8 @@ internal fun CreateKeywordUiState.toGenerationInput(): StorylineGenerationInput 
         genreTagIds = selectedGenreTagIds.toList(),
         customGenreTags = emptyList(),
         protagonist = protagonist.toCharacterInput(),
-        // 퍼널 진입 시 놓이는 빈 주변 인물 섹션을 그대로 보내면 의도하지 않은 인물이 AI 로
-        // 채워지므로, 아무것도 입력하지 않은 섹션은 인원 의사가 없는 것으로 보고 제외한다.
-        supportingCharacters =
-            supportingCharacters
-                .map(KeywordCharacter::toCharacterInput)
-                .filterNot(StoryCharacterInput::isEmpty),
+        // 비워 둔 인물도 한 명으로 세어 AI 가 그 자리를 채우므로 걸러내지 않는다.
+        supportingCharacters = supportingCharacters.map(KeywordCharacter::toCharacterInput),
     )
 
 private fun KeywordCharacter.toCharacterInput(): StoryCharacterInput =
@@ -803,9 +799,6 @@ private fun KeywordCharacter.toCharacterInput(): StoryCharacterInput =
         featureTagIds = selectedTagIds.toList(),
         customTags = customTags.filter(CustomTag::selected).map(CustomTag::name),
     )
-
-private fun StoryCharacterInput.isEmpty(): Boolean =
-    name == null && gender == null && featureTagIds.isEmpty() && customTags.isEmpty()
 
 val StoryTagCategory.previous: StoryTagCategory? get() = StoryTagCategory.entries.getOrNull(ordinal - 1)
 val StoryTagCategory.next: StoryTagCategory? get() = StoryTagCategory.entries.getOrNull(ordinal + 1)
