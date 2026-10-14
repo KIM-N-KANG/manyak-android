@@ -146,7 +146,7 @@ private fun ProgressCover(
         StoryCover(thumbnailUrl = kind.thumbnailUrl, modifier = modifier, showBorder = true)
         return
     }
-    val shape = ManyakTheme.shapes.thumbnail
+    val shape = ManyakTheme.shapes.card
     Box(
         modifier =
             modifier

@@ -62,7 +62,7 @@ private fun CardPlaceholder(
         SkeletonPlaceholder(
             modifier = Modifier.width(CoverWidth).height(CoverHeight),
             alpha = alpha,
-            shape = ManyakTheme.shapes.thumbnail,
+            shape = ManyakTheme.shapes.card,
         )
         Column(
             modifier =

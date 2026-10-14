@@ -59,7 +59,7 @@ internal fun ArtStyleSection(
                     SkeletonPlaceholder(
                         modifier = cellModifier.aspectRatio(STORY_THUMBNAIL_ASPECT_RATIO),
                         alpha = alpha,
-                        shape = ManyakTheme.shapes.thumbnail,
+                        shape = ManyakTheme.shapes.card,
                     )
                 }
             }
@@ -116,7 +116,7 @@ private fun ArtStyleTile(
                     selection = selection,
                     color = ManyakTheme.colors.borderBrand,
                     width = ManyakTheme.sizes.selectionBorderWidth,
-                    shape = ManyakTheme.shapes.thumbnail,
+                    shape = ManyakTheme.shapes.card,
                 )
                 // 선택 변화 자체가 반응이라 눌림 리플을 그리지 않는다(키워드 칩과 같다).
                 .selectable(

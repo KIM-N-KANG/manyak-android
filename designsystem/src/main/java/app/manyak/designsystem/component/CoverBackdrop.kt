@@ -161,7 +161,7 @@ private class CoverBackdropNode(
 fun Modifier.originalTagBackdrop(backdrop: CoverBackdrop?): Modifier =
     coverBackdrop(backdrop, OriginalTagShape, OriginalTagTint)
 
-private val OriginalTagShape = RoundedCornerShape(topStart = 11.dp, bottomEnd = 6.dp)
+private val OriginalTagShape = RoundedCornerShape(topStart = 15.dp, bottomEnd = 6.dp)
 
 private val OriginalTagTint = Color(0xFF111414).copy(alpha = 0.2f)
 

@@ -49,7 +49,7 @@ fun StoryThumbnail(
     turnCount: Long,
     modifier: Modifier = Modifier,
     badgeScale: StoryBadgeScale = StoryBadgeScale.Compact,
-    shape: Shape = ManyakTheme.shapes.thumbnail,
+    shape: Shape = ManyakTheme.shapes.card,
     showBorder: Boolean = false,
     overlay: @Composable CoverOverlayScope.() -> Unit = {},
 ) {
@@ -100,7 +100,7 @@ fun StoryThumbnail(
 fun StoryCover(
     thumbnailUrl: String?,
     modifier: Modifier = Modifier,
-    shape: Shape = ManyakTheme.shapes.thumbnail,
+    shape: Shape = ManyakTheme.shapes.card,
     showBorder: Boolean = false,
     overlay: @Composable CoverOverlayScope.() -> Unit = {},
 ) {

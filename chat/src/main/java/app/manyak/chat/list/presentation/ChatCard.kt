@@ -91,6 +91,8 @@ private fun ChatCardContent(
             thumbnailUrl = chat.thumbnailUrl,
             // 표지는 카드의 텍스트 줄이 이미 말하는 것을 되풀이하므로 낭독 대상이 아니다.
             modifier = Modifier.width(CoverWidth).clearAndSetSemantics { },
+            // 작은 표지라 목록 카드 표지보다 곡률을 한 단계 줄인다.
+            shape = ManyakTheme.shapes.thumbnail,
             showBorder = true,
         )
         Column(

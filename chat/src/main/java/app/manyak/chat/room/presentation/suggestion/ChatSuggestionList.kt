@@ -35,6 +35,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
+import app.manyak.chat.room.presentation.ChatSmallButton
 import app.manyak.designsystem.component.SkeletonPlaceholder
 import app.manyak.designsystem.component.rememberSkeletonPulseAlpha
 import app.manyak.designsystem.text.storyAnnotatedString
@@ -291,7 +292,6 @@ private fun ChoicesFailure(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val label = stringResource(DesignsystemR.string.common_retry)
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
@@ -302,18 +302,13 @@ private fun ChoicesFailure(
             style = ManyakTheme.typography.bodySmall,
             color = ManyakTheme.colors.textSubtle,
         )
-        Box(
-            modifier =
-                Modifier
-                    .heightIn(min = ManyakTheme.sizes.input)
-                    .clip(ManyakTheme.shapes.control)
-                    .background(ManyakTheme.colors.backgroundNeutral)
-                    .clickable(role = Role.Button, onClickLabel = label, onClick = onRetry)
-                    .padding(horizontal = ManyakTheme.spacing.controlHorizontal),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(text = label, style = ManyakTheme.typography.labelLarge, color = ManyakTheme.colors.text)
-        }
+        ChatSmallButton(
+            text = stringResource(DesignsystemR.string.common_retry),
+            onClick = onRetry,
+            containerColor = ManyakTheme.colors.surfaceRaised,
+            contentColor = ManyakTheme.colors.text,
+            borderColor = ManyakTheme.colors.border,
+        )
     }
 }
 
