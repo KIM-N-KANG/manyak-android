@@ -353,7 +353,7 @@ components:
   funnel-header:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.text}"
-    typography: "{typography.title-large}"
+    typography: "{typography.body-large-strong}"
     minHeight: 64dp
   detail-header:
     backgroundColor: "{colors.surface}"
@@ -839,7 +839,7 @@ components:
 
 **`fab`** — 제작 탭 우측 하단의 제작 진입 버튼. **원형**(`{rounded.pill}`)이고 배경은 주 버튼(`{component.button-primary}`)과 같은 브랜드 원색 `{colors.brand}`, 아이콘 `{colors.text-inverse}`, 크기 56dp(M3 FAB 기본). **고도(그림자)를 0으로 없앤다** — 이 시스템은 층을 표면 색으로만 나눈다. 하단 바에 초록을 두지 않는 것과 어긋나지 않는다 — FAB 은 상시 chrome 이 아니라 화면의 주 동작 그 자체라서, 초록이 "지금 누를 것"을 가리킨다는 규칙 그대로다.
 
-**`funnel-header`** — 섹션 헤더처럼 M3 `TopAppBar` 위에 색만 얹고, 로고 대신 화면 제목(`{typography.title-large}`)과 오른쪽의 임시 저장·닫기 버튼을 둔다. 높이는 앱 바 기본 64dp 다. 구분선과 그림자를 두지 않는다.
+**`funnel-header`** — 섹션 헤더처럼 M3 `TopAppBar` 위에 색만 얹고, 로고 대신 화면 제목(`{typography.body-large-strong}`)과 오른쪽의 임시 저장·닫기 버튼을 둔다. 제목은 웹 제작 헤더(16px SemiBold)에 맞춰 하위 화면 헤더와 같은 크기다. 높이는 앱 바 기본 64dp 다. 구분선과 그림자를 두지 않는다.
 
 **`detail-header`** — 셸을 두르지 않는 하위 화면(스토리 상세·채팅방·친구 초대·피드백)의 앱 바. 같은 `TopAppBar` 위에 뒤로가기 버튼과 제목(`{typography.body-large-strong}`)을 둔다. **섹션·퍼널 헤더보다 한 단 작은 것은 이 자리의 제목이 화면 이름이 아니라 지금 보고 있는 것의 이름이기 때문이다** — 스토리 제목처럼 길어질 수 있는 값이라 한 줄로 자르고, 고정된 화면 이름과 위계도 갈린다.
 
