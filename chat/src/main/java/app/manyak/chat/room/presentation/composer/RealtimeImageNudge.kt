@@ -13,8 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -44,6 +42,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
+import app.manyak.chat.room.presentation.ChatSmallButton
 import app.manyak.chat.room.presentation.tour.ChatSpotlightDim
 import app.manyak.designsystem.theme.ManyakTheme
 import kotlin.math.roundToInt
@@ -188,21 +187,11 @@ private fun NudgeCard(
             style = ManyakTheme.typography.bodyMedium,
             color = ManyakTheme.colors.textSubtle,
         )
-        Button(
+        ChatSmallButton(
+            text = stringResource(ChatR.string.chat_realtime_image_nudge_confirm),
             onClick = onDismiss,
             modifier = Modifier.align(Alignment.End).padding(top = ManyakTheme.spacing.component),
-            shape = ManyakTheme.shapes.menuItem,
-            colors =
-                ButtonDefaults.buttonColors(
-                    containerColor = ManyakTheme.colors.brand,
-                    contentColor = ManyakTheme.colors.textInverse,
-                ),
-        ) {
-            Text(
-                stringResource(ChatR.string.chat_realtime_image_nudge_confirm),
-                style = ManyakTheme.typography.labelLarge,
-            )
-        }
+        )
     }
 }
 

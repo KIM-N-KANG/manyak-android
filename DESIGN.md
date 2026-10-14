@@ -367,7 +367,7 @@ components:
     descriptionTypography: "{typography.body-medium}"
     descriptionColor: "{colors.text-subtle}"
     rounded: "{rounded.control}"
-    buttonRounded: "{rounded.menu-item}"
+    button: "{component.chat-small-button}"
     highlightRounded: "{rounded.control}"
     highlightPadding: "{spacing.dense}"
     gap: "{spacing.component}"
@@ -376,6 +376,13 @@ components:
     dotSize: "{sizes.tour-step-dot}"
     dotActiveColor: "{colors.text-subtle}"
     dotInactiveColor: "{colors.border}"
+  chat-small-button:
+    backgroundColor: "{colors.brand}"
+    textColor: "{colors.text-inverse}"
+    typography: "{typography.label-small}"
+    rounded: "{rounded.menu-item}"
+    height: "{sizes.control-small}"
+    padding: "0 {spacing.component}"
   step-indicator:
     completedColor: "{colors.text-disabled}"
     activeColor: "{colors.step-indicator-active}"
@@ -775,9 +782,11 @@ components:
 
 **`sheet`** — 바텀시트. 배경 `{colors.surface-raised}`, 모서리는 `{rounded.sheet}`로 위쪽 두 곳만 깎습니다 — 아래쪽은 화면 끝에 붙어 있어 깎으면 그 틈으로 스크림이 비칩니다. 내부 여백은 좌·우·아래 `{spacing.gutter}`이고 **위쪽은 두지 않습니다** — 드래그 핸들이 자체 여백을 갖고 있어 겹칩니다. 하단 안전 영역과 키보드 높이는 그 아래로 시트가 직접 낍니다. **하단 닫기는 `button-text` 규칙의 전체 폭·최소 높이 `{sizes.control}`(48dp)·주 동작 버튼과 같은 글자 스타일(`{typography.label-large}`)·보조색 텍스트 버튼이며, 위에 주 동작 버튼이 있을 때만 그 짝으로 둡니다.** 신고·초대 코드 온보딩·광고 알림 동의 시트가 그렇습니다. **주 동작 버튼이 없는 시트 — 읽기 전용(선택한 키워드·채팅 설정)과 항목을 고르는 옵션 시트(카드 옵션·상세 옵션·채팅 메뉴) — 에는 닫기 버튼을 두지 않고** 스크림·끌어내리기·뒤로가기로만 닫습니다(2026-09-18) — 닫기 하나뿐인 줄은 자리만 차지합니다. **닫힘을 막은 시트는 핸들 드래그도 잠급니다**(2026-09-20) — 끌리기만 하고 닫히지 않는 튕김이 "닫을 수 있다"는 신호가 됩니다. 끌어내리기가 아예 없는 시트(필수 동의)는 핸들 자체를 두지 않고 위쪽 여백을 `{spacing.gutter}`로 채우며, 전송 중처럼 잠깐 잠그는 시트는 핸들이 사라졌다 나타나지 않게 그대로 둡니다.
 
-**`chat-realtime-image-nudge`**: 시트가 완전히 펼쳐진 뒤 화면 전체를 `{colors.tour-scrim}`으로 덮고, 실시간 이미지 행을 `{rounded.control}`로 뚫습니다. 하이라이트는 시트 좌우에서 `{spacing.compact}`(8dp) 안쪽이며 행 내용까지 같은 여백을 둡니다. 카드는 행 아래 `{spacing.component}` 간격, `{sizes.tour-card-width}` 폭, `{colors.surface-raised}` 배경과 `{rounded.control}` 모서리, `{spacing.gutter}` 내부 여백을 사용합니다. 제목과 설명은 투어와 같은 타이포를 쓰고 오른쪽 아래 확인 버튼(`{rounded.menu-item}`)을 둡니다. 모션은 `nudge-dim-enter`, `nudge-card-delay`, `nudge-card-enter`, `nudge-exit`을 따릅니다. 카드가 아래 공간보다 길면 카드 안에서 스크롤합니다.
+**`chat-realtime-image-nudge`**: 시트가 완전히 펼쳐진 뒤 화면 전체를 `{colors.tour-scrim}`으로 덮고, 실시간 이미지 행을 `{rounded.control}`로 뚫습니다. 하이라이트는 시트 좌우에서 `{spacing.compact}`(8dp) 안쪽이며 행 내용까지 같은 여백을 둡니다. 카드는 행 아래 `{spacing.component}` 간격, `{sizes.tour-card-width}` 폭, `{colors.surface-raised}` 배경과 `{rounded.control}` 모서리, `{spacing.gutter}` 내부 여백을 사용합니다. 제목과 설명은 투어와 같은 타이포를 쓰고 오른쪽 아래 확인 버튼(`chat-small-button` 주 동작)을 둡니다. 모션은 `nudge-dim-enter`, `nudge-card-delay`, `nudge-card-enter`, `nudge-exit`을 따릅니다. 카드가 아래 공간보다 길면 카드 안에서 스크롤합니다.
 
-**`chat-tour-card`** — 채팅 첫 진입 안내 투어. 딤 `{colors.tour-scrim}`은 대상 버튼을 `{spacing.dense}`만큼 넓힌 `{rounded.control}` 모양으로 뚫고, 카드는 `{colors.surface-raised}` · `{rounded.control}` · 내부 여백 `{spacing.gutter}` · 폭 `{sizes.tour-card-width}`(좁으면 좌우 `{spacing.gutter}`를 남기고 줄어듦)입니다. 카드는 하이라이트와 `{spacing.component}` 떨어져 아래에, 아래 공간이 모자라면 위에 놓이고 가로는 하이라이트 중앙이 기본이며 가장자리에서는 그쪽 변에 맞춥니다. 제목 `{typography.body-large-strong}`, 설명 `{typography.body-medium}` + `{colors.text-subtle}`, 아래 줄에 스텝 점(`{sizes.tour-step-dot}`, 현재 `{colors.text-subtle}` · 나머지 `{colors.border}`)과 건너뛰기(텍스트 버튼)·다음/완료(주 버튼)를 둡니다. 두 버튼은 웹의 작은 버튼과 같은 `{rounded.menu-item}`입니다. 그림자는 두지 않습니다. 구멍은 스텝이 바뀔 때 `{motion.element-enter}`로 다음 대상에 옮겨 가고, 카드는 같은 시간에 `{spacing.compact}` 아래에서 올라오며 나타납니다.
+**`chat-tour-card`** — 채팅 첫 진입 안내 투어. 딤 `{colors.tour-scrim}`은 대상 버튼을 `{spacing.dense}`만큼 넓힌 `{rounded.control}` 모양으로 뚫고, 카드는 `{colors.surface-raised}` · `{rounded.control}` · 내부 여백 `{spacing.gutter}` · 폭 `{sizes.tour-card-width}`(좁으면 좌우 `{spacing.gutter}`를 남기고 줄어듦)입니다. 카드는 하이라이트와 `{spacing.component}` 떨어져 아래에, 아래 공간이 모자라면 위에 놓이고 가로는 하이라이트 중앙이 기본이며 가장자리에서는 그쪽 변에 맞춥니다. 제목 `{typography.body-large-strong}`, 설명 `{typography.body-medium}` + `{colors.text-subtle}`, 아래 줄에 스텝 점(`{sizes.tour-step-dot}`, 현재 `{colors.text-subtle}` · 나머지 `{colors.border}`)과 건너뛰기(`chat-small-button` 글자형), 다음/완료(`chat-small-button` 주 동작)를 둡니다. 점과 버튼 사이는 `{spacing.inline}`입니다. 그림자는 두지 않습니다.
+
+**`chat-small-button`** — 채팅방 안내 카드와 실패 안내 아래의 작은 버튼. 웹의 작은 버튼(`size="sm"`)과 같게 최소 높이 `{sizes.control-small}`, 가로 여백 `{spacing.component}`, `{typography.label-small}`, `{rounded.menu-item}`입니다. 주 동작은 `{colors.brand}` 바탕에 `{colors.text-inverse}`, 테두리형(선택지 실패의 다시 시도)은 `{colors.surface-raised}` 바탕에 `{colors.border}` 1dp 경계와 `{colors.text}`, 글자형(투어 건너뛰기)은 바탕 없이 `{colors.text}`입니다. M3 `Button`은 최소 높이 40dp가 붙어 쓰지 않습니다. 구멍은 스텝이 바뀔 때 `{motion.element-enter}`로 다음 대상에 옮겨 가고, 카드는 같은 시간에 `{spacing.compact}` 아래에서 올라오며 나타납니다.
 
 **`badge`** — 배경 `{colors.background-brand-subtle}`, 텍스트 `{colors.text-brand}` + `{typography.body-small}`, 모서리 `{rounded.pill}`, 여백 세로 `{spacing.hairline}` · 가로 `{spacing.compact}`.
 
