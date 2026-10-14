@@ -2,6 +2,7 @@ package app.manyak.designsystem.component
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.Dp
 import app.manyak.designsystem.theme.ManyakTheme
 
@@ -24,7 +25,7 @@ enum class StoryBadgeScale {
         get() =
             when (this) {
                 Compact -> ManyakTheme.typography.labelSmall
-                Large -> ManyakTheme.typography.labelLarge
+                Large -> ManyakTheme.typography.labelLarge.copy(lineHeightStyle = FullLineHeight)
             }
 
     internal val horizontalPadding: Dp
@@ -43,3 +44,13 @@ enum class StoryBadgeScale {
                 Large -> ManyakTheme.spacing.inline
             }
 }
+
+/**
+ * Compose 기본 `Trim.Both` 는 한 줄 글자의 행간 여유를 잘라 뱃지가 글꼴 높이만큼 낮아진다.
+ * 웹과 같은 높이가 나오도록 CSS `line-height` 처럼 줄 상자 전체를 남긴다.
+ */
+private val FullLineHeight =
+    LineHeightStyle(
+        alignment = LineHeightStyle.Alignment.Center,
+        trim = LineHeightStyle.Trim.None,
+    )
