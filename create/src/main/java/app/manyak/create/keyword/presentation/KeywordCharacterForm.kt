@@ -206,10 +206,12 @@ internal fun KeywordChipArea(
     }
 }
 
+/** 목록 조회 실패. 키워드, 장르, 화풍 목록이 같은 모양으로 알리고 아래 버튼으로 다시 받는다. */
 @Composable
 internal fun TagsLoadFailure(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
+    title: String = stringResource(CreateR.string.create_tags_load_failed),
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -221,7 +223,7 @@ internal fun TagsLoadFailure(
             verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
         ) {
             Text(
-                text = stringResource(CreateR.string.create_tags_load_failed),
+                text = title,
                 style = ManyakTheme.typography.titleMedium,
                 color = ManyakTheme.colors.textDanger,
                 textAlign = TextAlign.Center,

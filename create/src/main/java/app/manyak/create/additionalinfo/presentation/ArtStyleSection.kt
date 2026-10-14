@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -24,8 +22,8 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import app.manyak.create.entity.ArtStyle
+import app.manyak.create.keyword.presentation.TagsLoadFailure
 import app.manyak.create.presentation.component.KeywordSectionLabel
-import app.manyak.designsystem.component.ManyakNeutralButton
 import app.manyak.designsystem.component.STORY_THUMBNAIL_ASPECT_RATIO
 import app.manyak.designsystem.component.SkeletonPlaceholder
 import app.manyak.designsystem.component.StoryCover
@@ -34,7 +32,6 @@ import app.manyak.designsystem.component.rememberSkeletonPulseAlpha
 import app.manyak.designsystem.component.selectionRing
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.create.R as CreateR
-import app.manyak.designsystem.R as DesignsystemR
 
 /** 이미지 스타일 선택. 목록 순서와 이름은 서버가 준 그대로다. [artStyles] 가 null 이면 받는 중이다. */
 @Composable
@@ -52,7 +49,13 @@ internal fun ArtStyleSection(
     ) {
         KeywordSectionLabel(text = stringResource(CreateR.string.create_art_style_label), required = true)
         when {
-            failed -> ArtStyleLoadFailure(onRetry = onRetry)
+            failed ->
+                TagsLoadFailure(
+                    // 라벨 아래에 바로 붙으면 실패 안내가 섹션 제목처럼 읽혀 한 칸 띄운다.
+                    modifier = Modifier.padding(vertical = ManyakTheme.spacing.gutter),
+                    title = stringResource(CreateR.string.create_art_style_load_failed),
+                    onRetry = onRetry,
+                )
 
             artStyles == null -> {
                 val alpha = rememberSkeletonPulseAlpha()
@@ -143,30 +146,6 @@ private fun ArtStyleTile(
             color = ManyakTheme.colors.textInverse,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-        )
-    }
-}
-
-@Composable
-private fun ArtStyleLoadFailure(
-    onRetry: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
-    ) {
-        Text(
-            modifier = Modifier.weight(1f),
-            text = stringResource(CreateR.string.create_art_style_load_failed),
-            style = ManyakTheme.typography.bodyMedium,
-            color = ManyakTheme.colors.textSubtle,
-        )
-        ManyakNeutralButton(
-            modifier = Modifier.height(ManyakTheme.sizes.controlCompact),
-            label = stringResource(DesignsystemR.string.common_retry),
-            onClick = onRetry,
         )
     }
 }
