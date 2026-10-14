@@ -36,14 +36,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
@@ -58,9 +56,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.manyak.designsystem.component.CHARACTER_IMAGE_ASPECT_RATIO
+import app.manyak.designsystem.component.CoverBackdrop
 import app.manyak.designsystem.component.ScrollEdgeFadeHeight
-import app.manyak.designsystem.component.StoryOverlayScrim
+import app.manyak.designsystem.component.coverBackdrop
+import app.manyak.designsystem.component.coverBackdropSource
 import app.manyak.designsystem.component.isAllowedCharacterImageUrl
+import app.manyak.designsystem.component.rememberCoverBackdrop
+import app.manyak.designsystem.component.selectionRing
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.story.detail.presentation.preview.previewCharacters
 import app.manyak.story.entity.StoryCharacter
@@ -228,23 +230,8 @@ private fun CharacterThumbnail(
         modifier =
             modifier
                 .aspectRatio(CHARACTER_IMAGE_ASPECT_RATIO)
-                // 선택 테두리는 썸네일 바깥에 그려 이미지를 가리지 않고, 선택이 바뀌어도 자리가 흔들리지 않게 한다.
                 // 이미지의 반투명과 분리해 테두리 자체는 늘 진한 색으로 차오른다.
-                .drawWithContent {
-                    drawContent()
-                    if (selection > 0f) {
-                        val stroke = ringWidth.toPx()
-                        val radius = shape.topStart.toPx(size, this) + stroke / 2
-                        drawRoundRect(
-                            color = ringColor,
-                            topLeft = Offset(-stroke / 2, -stroke / 2),
-                            size = Size(size.width + stroke, size.height + stroke),
-                            cornerRadius = CornerRadius(radius),
-                            style = Stroke(stroke),
-                            alpha = selection,
-                        )
-                    }
-                }
+                .selectionRing(selection = selection, color = ringColor, width = ringWidth, shape = shape)
                 // 선택 변화 자체가 반응이라 눌림 리플을 그리지 않는다(키워드 칩과 같다).
                 .selectable(
                     selected = selected,
@@ -340,6 +327,7 @@ private fun CharacterCardImage(
     val viewableUrl = imageUrl?.takeIf { !failed && isAllowedCharacterImageUrl(it) }
     val openLabel = stringResource(DesignsystemR.string.character_image_open, character.name)
     val missingLabel = stringResource(StoryR.string.story_detail_character_image_missing, character.name)
+    val backdrop = rememberCoverBackdrop()
 
     Box(
         modifier =
@@ -349,13 +337,15 @@ private fun CharacterCardImage(
     ) {
         CharacterPicture(
             modifier =
-                if (viewableUrl == null) {
-                    Modifier.semantics { contentDescription = missingLabel }
-                } else {
-                    Modifier
-                        .clickable(role = Role.Button, onClick = { onImageClick(viewableUrl) })
-                        .semantics { contentDescription = openLabel }
-                },
+                Modifier.coverBackdropSource(backdrop).then(
+                    if (viewableUrl == null) {
+                        Modifier.semantics { contentDescription = missingLabel }
+                    } else {
+                        Modifier
+                            .clickable(role = Role.Button, onClick = { onImageClick(viewableUrl) })
+                            .semantics { contentDescription = openLabel }
+                    },
+                ),
             imageUrl = viewableUrl,
             contentScale = ContentScale.Fit,
             onError = { failed = true },
@@ -365,6 +355,7 @@ private fun CharacterCardImage(
                 modifier = Modifier.align(Alignment.CenterStart),
                 contentDescription = stringResource(StoryR.string.story_detail_character_previous),
                 flipped = true,
+                backdrop = backdrop,
                 onClick = it,
             )
         }
@@ -373,17 +364,19 @@ private fun CharacterCardImage(
                 modifier = Modifier.align(Alignment.CenterEnd),
                 contentDescription = stringResource(StoryR.string.story_detail_character_next),
                 flipped = false,
+                backdrop = backdrop,
                 onClick = it,
             )
         }
     }
 }
 
-/** 인물 이미지 위 좌우의 이전·다음 버튼. 표지 뱃지와 같은 반투명 바탕이라 밝은 이미지 위에서도 읽힌다. */
+/** 인물 이미지 위 좌우의 이전, 다음 버튼. 표지 뱃지와 같이 뒤의 인물 이미지를 흐려 바탕에 깐다. */
 @Composable
 private fun CharacterStepButton(
     contentDescription: String,
     flipped: Boolean,
+    backdrop: CoverBackdrop?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -393,7 +386,7 @@ private fun CharacterStepButton(
                 .padding(ManyakTheme.spacing.compact)
                 .size(ManyakTheme.sizes.controlSmall)
                 .clip(ManyakTheme.shapes.pill)
-                .background(StoryOverlayScrim)
+                .coverBackdrop(backdrop, ManyakTheme.shapes.pill)
                 .clickable(role = Role.Button, onClick = onClick)
                 .semantics { this.contentDescription = contentDescription },
         contentAlignment = Alignment.Center,

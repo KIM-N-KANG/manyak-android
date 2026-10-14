@@ -5,7 +5,6 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -52,7 +51,7 @@ fun StoryThumbnail(
     badgeScale: StoryBadgeScale = StoryBadgeScale.Compact,
     shape: Shape = ManyakTheme.shapes.thumbnail,
     showBorder: Boolean = false,
-    overlay: @Composable BoxScope.() -> Unit = {},
+    overlay: @Composable CoverOverlayScope.() -> Unit = {},
 ) {
     StoryCover(
         thumbnailUrl = thumbnailUrl,
@@ -61,6 +60,8 @@ fun StoryThumbnail(
         showBorder = showBorder,
     ) {
         overlay()
+        // 뱃지 줄의 RowScope 안에서는 표지 자리의 receiver 를 암묵적으로 쓸 수 없어 미리 꺼낸다.
+        val coverBackdrop = backdrop
         Row(
             modifier = Modifier.align(Alignment.BottomEnd).padding(ManyakTheme.spacing.compact),
             verticalAlignment = Alignment.CenterVertically,
@@ -71,12 +72,14 @@ fun StoryThumbnail(
                 count = likeCount,
                 descriptionRes = DesignsystemR.string.story_like_count_description,
                 scale = badgeScale,
+                backdrop = coverBackdrop,
             )
             CountBadge(
                 iconRes = DesignsystemR.drawable.ic_dialog,
                 count = turnCount,
                 descriptionRes = DesignsystemR.string.story_turn_count_description,
                 scale = badgeScale,
+                backdrop = coverBackdrop,
             )
         }
     }
@@ -84,7 +87,8 @@ fun StoryThumbnail(
 
 /**
  * 3:4 표지 본체. 원본이 없으면 placeholder 아이콘을 그린다. 표지 위에 얹는 것은 전부 [overlay] 가
- * 맡으므로 이 컴포넌트 자체는 무엇이 위에 오는지 알지 않는다.
+ * 맡으므로 이 컴포넌트 자체는 무엇이 위에 오는지 알지 않는다. [overlay] 는 [CoverOverlayScope.backdrop]
+ * 으로 뒤의 표지를 흐린 바탕을 깔 수 있다.
  *
  * 화면 폭을 꽉 채우는 자리에서는 [shape] 를 각지게 바꾼다 — 가장자리에 닿은 둥근 모서리는
  * 화면이 잘린 것처럼 보인다.
@@ -98,7 +102,7 @@ fun StoryCover(
     modifier: Modifier = Modifier,
     shape: Shape = ManyakTheme.shapes.thumbnail,
     showBorder: Boolean = false,
-    overlay: @Composable BoxScope.() -> Unit = {},
+    overlay: @Composable CoverOverlayScope.() -> Unit = {},
 ) {
     // 표지는 선 두께만큼 안으로 들이고 **반지름도 그만큼 줄여** 테두리와 동심원으로 맞춘다.
     // 반지름을 그대로 두면 곡률에서만 표지가 선 쪽으로 파고들어 그 부분이 진해 보인다.
@@ -123,50 +127,68 @@ fun StoryCover(
                     if (showBorder) ManyakTheme.colors.border else ManyakTheme.colors.backgroundNeutral,
                 ),
     ) {
+        val backdrop = rememberCoverBackdrop()
         Box(
             modifier =
                 Modifier
                     .matchParentSize()
-                    .then(coverModifier)
-                    .background(ManyakTheme.colors.backgroundNeutral),
+                    .then(coverModifier),
             contentAlignment = Alignment.Center,
         ) {
-            if (thumbnailUrl == null) {
-                Icon(
-                    modifier = Modifier.size(ThumbnailPlaceholderSize),
-                    painter = painterResource(DesignsystemR.drawable.ic_manyak_symbol),
-                    contentDescription = stringResource(DesignsystemR.string.story_thumbnail_placeholder),
-                    tint = ManyakTheme.colors.textDisabled,
-                )
-            } else {
-                val context = LocalPlatformContext.current
-                // 받는 동안의 빈 바탕에서 그림이 한 프레임에 튀어나오지 않게 서서히 드러낸다.
-                // 메모리 캐시에서 바로 나오는 표지는 Coil 이 페이드 없이 그린다.
-                val request =
-                    remember(context, thumbnailUrl) {
-                        ImageRequest
-                            .Builder(context)
-                            .data(thumbnailUrl)
-                            .crossfade(true)
-                            .build()
-                    }
-                AsyncImage(
-                    modifier = Modifier.fillMaxSize(),
-                    model = request,
-                    // 표지는 카드의 텍스트 줄이 이미 말하는 것을 되풀이하므로 낭독 대상이 아니다.
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                )
+            // 흐림 원천은 표지 그림만 담는다. 겹침 요소까지 담으면 뱃지가 자기 자신을 흐려 깐다.
+            Box(
+                modifier =
+                    Modifier
+                        .matchParentSize()
+                        .coverBackdropSource(backdrop)
+                        .background(ManyakTheme.colors.backgroundNeutral),
+                contentAlignment = Alignment.Center,
+            ) {
+                CoverPicture(thumbnailUrl = thumbnailUrl)
             }
-            // 겹침 요소도 테두리 안쪽에 둔다 — 바깥에 두면 표지 위에 얹히면서 테두리까지 덮는다.
-            overlay()
+            // 겹침 요소도 테두리 안쪽에 둔다. 바깥에 두면 표지 위에 얹히면서 테두리까지 덮는다.
+            val overlayScope = remember(this, backdrop) { CoverOverlayScopeImpl(this, backdrop) }
+            overlayScope.overlay()
         }
+    }
+}
+
+/** 표지 그림. 주소가 없으면 기본 심벌을 그린다. */
+@Composable
+private fun CoverPicture(thumbnailUrl: String?) {
+    if (thumbnailUrl == null) {
+        Icon(
+            modifier = Modifier.size(ThumbnailPlaceholderSize),
+            painter = painterResource(DesignsystemR.drawable.ic_manyak_symbol),
+            contentDescription = stringResource(DesignsystemR.string.story_thumbnail_placeholder),
+            tint = ManyakTheme.colors.textDisabled,
+        )
+    } else {
+        val context = LocalPlatformContext.current
+        // 받는 동안의 빈 바탕에서 그림이 한 프레임에 튀어나오지 않게 서서히 드러낸다.
+        // 메모리 캐시에서 바로 나오는 표지는 Coil 이 페이드 없이 그린다.
+        val request =
+            remember(context, thumbnailUrl) {
+                ImageRequest
+                    .Builder(context)
+                    .data(thumbnailUrl)
+                    .crossfade(true)
+                    .build()
+            }
+        AsyncImage(
+            modifier = Modifier.fillMaxSize(),
+            model = request,
+            // 표지는 카드의 텍스트 줄이 이미 말하는 것을 되풀이하므로 낭독 대상이 아니다.
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+        )
     }
 }
 
 /**
  * 표지 위 지표 뱃지 하나. 좋아요 수와 누적 턴 수가 같은 모양을 쓰므로 아이콘과 문구만 갈린다.
- * 표지 위에 놓이므로 색은 테마가 아니라 표지 대비로 정한다.
+ * 표지 위에 놓이므로 색은 테마가 아니라 표지 대비로 정한다. 목록 카드와 상세 히어로 모두 웹 목록 카드처럼
+ * 뒤의 표지를 흐려 깐다. 웹 상세는 흐림 없는 진한 바탕이지만 앱은 두 자리를 같은 결로 맞췄다.
  */
 @Composable
 private fun CountBadge(
@@ -174,6 +196,7 @@ private fun CountBadge(
     count: Long,
     @StringRes descriptionRes: Int,
     scale: StoryBadgeScale,
+    backdrop: CoverBackdrop?,
     modifier: Modifier = Modifier,
 ) {
     val formatted = remember(count) { formatCompactCount(count) }
@@ -182,8 +205,7 @@ private fun CountBadge(
     Row(
         modifier =
             modifier
-                .clip(ManyakTheme.shapes.pill)
-                .background(StoryOverlayScrim)
+                .coverBackdrop(backdrop, ManyakTheme.shapes.pill)
                 .padding(
                     horizontal = scale.horizontalPadding,
                     vertical = scale.verticalPadding,
@@ -220,15 +242,9 @@ private val ThumbnailPlaceholderSize = 32.dp
 private val ThumbnailBorderWidth = 1.dp
 
 /**
- * 표지 위 겹침 요소(턴 수 뱃지와 [overlay] 의 카드별 요소)가 함께 쓰는 반투명 필드.
- * 태그 도안도 같은 필드를 그려 겹침 요소끼리 질감이 맞는다.
- * 값을 바꾸면 `ic_story_original_tag` 의 `fillAlpha` 도 같이 바꿔야 한다.
- *
- * 웹은 여기에 backdrop blur 를 더하지만 앱은 반투명만 쓴다 — 뒤 콘텐츠를 흐리는 수단이
- * `RenderEffect`(API 31+) 뿐이라 minSdk 24 의 전 기기에 걸리지 않고, 스크롤되는 그리드에서
- * 카드마다 레이어를 기록하는 비용도 크다. 블러가 표지의 잔무늬를 지워 주지 않는 만큼 웹의 20% 보다
- * 진하게 가려야 흰 글자가 읽힌다.
+ * 뒤 그림을 흐릴 수 없는 API 31 미만에서 표지 위 겹침 요소가 흐림 대신 까는 필드([coverBackdrop]).
+ * 흐림이 표지의 잔무늬를 지워 주지 않으므로 웹의 20% 그대로는 흰 글자가 읽히지 않아 70% 로 가린다.
  */
-val StoryOverlayScrim = Color(0xFF111414).copy(alpha = OVERLAY_SCRIM_ALPHA)
+internal val StoryOverlayScrim = Color(0xFF111414).copy(alpha = OVERLAY_SCRIM_ALPHA)
 
 private const val OVERLAY_SCRIM_ALPHA = 0.7f
