@@ -62,6 +62,25 @@ class ChatListViewModelTest {
         }
 
     @Test
+    fun `채팅방에서 턴이 확정되면 가려진 동안 골격 없이 목록을 다시 읽는다`() =
+        runTest(dispatcher) {
+            val repository = FakeChatRepository()
+            val viewModel = ChatListViewModel(repository, FakeReportRepository(), NoOpAnalytics)
+            viewModel.onIntent(ChatListIntent.ScreenShown)
+            advanceUntilIdle()
+            // 방금 대화한 아래 채팅이 서버 목록 맨 위로 올라온다.
+            repository.queuedMyChatsResults += DomainResult.Success(sampleChats().reversed())
+
+            repository.myChatsChanges.emit(Unit)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertEquals(2, repository.myChatsCallCount)
+            assertFalse(state.isLoading)
+            assertEquals(listOf("chat-2", "chat-1"), state.chats.map { chat -> chat.id })
+        }
+
+    @Test
     fun `화면이 보이면 조회해 서버가 준 순서 그대로 목록을 만든다`() =
         runTest(dispatcher) {
             val repository = FakeChatRepository()

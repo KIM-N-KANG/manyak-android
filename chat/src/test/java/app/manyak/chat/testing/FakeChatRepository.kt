@@ -13,6 +13,7 @@ import app.manyak.common.entity.chat.CreatedChat
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.yield
 
@@ -67,6 +68,9 @@ internal class FakeChatRepository : ChatRepository {
 
     /** 조회가 응답 전에 멈춰 있어야 하는 테스트가 채운다 — 취소되면 여기서 던진다. */
     var myChatsGate: CompletableDeferred<Unit>? = null
+
+    /** 테스트가 턴 확정 신호를 직접 보낸다. */
+    override val myChatsChanges = MutableSharedFlow<Unit>()
 
     override suspend fun myChats(): DomainResult<List<ChatSummary>> {
         yield()

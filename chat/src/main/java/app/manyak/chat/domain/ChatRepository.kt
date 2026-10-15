@@ -7,6 +7,7 @@ import app.manyak.chat.entity.UserSource
 import app.manyak.common.domain.chat.ChatStarter
 import app.manyak.common.domain.error.DomainResult
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 
 interface ChatRepository : ChatStarter {
     /**
@@ -16,6 +17,14 @@ interface ChatRepository : ChatStarter {
      * 배치로 조회하는 경로는 두지 않는다.
      */
     suspend fun myChats(): DomainResult<List<ChatSummary>>
+
+    /**
+     * 내 채팅 목록이 바뀌었다는 신호. 턴이 확정되면 그 채팅이 맨 위로 오르고 미리보기·턴 수·시각이 바뀐다.
+     *
+     * 채팅방은 셸 위에 쌓여 목록을 가린다. 목록은 이 신호로 가려진 동안 미리 다시 읽어, 돌아온 첫
+     * 화면부터 바뀐 순서로 그린다.
+     */
+    val myChatsChanges: Flow<Unit> get() = emptyFlow()
 
     /** 채팅 상세 — 스토리 제목·프롤로그·턴 이력·추천 입력. */
     suspend fun chatDetail(chatId: String): DomainResult<ChatDetail>

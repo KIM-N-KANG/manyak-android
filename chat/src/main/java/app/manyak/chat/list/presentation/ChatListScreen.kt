@@ -1,6 +1,8 @@
 package app.manyak.chat.list.presentation
 
 import android.widget.Toast
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,6 +23,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -241,6 +244,7 @@ private fun Chats(
     val analytics = LocalAnalytics.current
     val impressions = rememberImpressionTracker()
     val listState = rememberLazyListState()
+    val motion = ManyakTheme.motion
     // 다른 탭에서 만든 채팅은 돌아와 다시 읽을 때 목록 앞에 붙는데, 목록은 보던 첫 카드를 따라가 그만큼
     // 아래에 선다. 맨 위를 보던 중이었으면 맨 위에 남긴다. 스크롤해 둔 자리는 그대로 둔다.
     val firstChatId = chats.first().id
@@ -271,10 +275,19 @@ private fun Chats(
                         onOpenChat(chat.id)
                     },
                     onLongClick = { onIntent(ChatListIntent.OpenOptions(chat)) },
+                    // 보는 중에 순서가 바뀌면 카드가 순간이동하지 않고 새 자리로 미끄러진다(기본 배치 스프링, 웹과 같은
+                    // 튕김 없는 약 0.3초). 위 카드일수록 앞에 쌓고 바탕을 칠해 맨 위로 오르는 카드가 내려가는
+                    // 카드를 덮고 지나가 글자가 겹치지 않는다.
                     modifier =
-                        Modifier.trackImpression(impressions, key = chat.id) {
-                            analytics.track(AnalyticsEvent.ChatCardImpressed(chat.id, index))
-                        },
+                        Modifier
+                            .animateItem(
+                                fadeInSpec = tween(motion.elementEnterMillis),
+                                fadeOutSpec = tween(motion.elementExitMillis),
+                            ).zIndex((chats.size - index).toFloat())
+                            .background(ManyakTheme.colors.surface)
+                            .trackImpression(impressions, key = chat.id) {
+                                analytics.track(AnalyticsEvent.ChatCardImpressed(chat.id, index))
+                            },
                 )
             }
         }
