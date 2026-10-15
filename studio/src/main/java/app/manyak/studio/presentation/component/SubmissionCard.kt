@@ -46,7 +46,7 @@ internal fun SubmissionCard(
                 Modifier
                     .weight(1f)
                     .heightIn(min = CoverHeight)
-                    .padding(bottom = ManyakTheme.spacing.hairline),
+                    .padding(vertical = ManyakTheme.spacing.inline),
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline)) {

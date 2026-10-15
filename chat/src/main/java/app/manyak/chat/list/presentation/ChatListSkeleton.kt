@@ -80,7 +80,7 @@ private fun RowPlaceholder(
             shape = ManyakTheme.shapes.thumbnail,
         )
         Column(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).padding(vertical = ManyakTheme.spacing.hairline),
             verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
         ) {
             SkeletonPlaceholder(

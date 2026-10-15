@@ -69,7 +69,7 @@ private fun CardPlaceholder(
                 Modifier
                     .weight(1f)
                     .heightIn(min = CoverHeight)
-                    .padding(vertical = ManyakTheme.spacing.hairline),
+                    .padding(vertical = ManyakTheme.spacing.inline),
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
             TextLinesPlaceholder(alpha = alpha)

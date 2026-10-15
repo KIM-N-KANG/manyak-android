@@ -89,8 +89,8 @@ internal fun MyStoryCard(
                     .weight(1f)
                     // 글 영역이 표지 높이를 최소치로 삼아야 메타 줄이 표지 아랫변에 맞는다.
                     .heightIn(min = CoverHeight)
-                    // 위는 행간 여유가 이미 띄우므로 아랫변만 글줄 상자와 표지 사이를 벌린다.
-                    .padding(bottom = ManyakTheme.spacing.hairline),
+                    // 글줄이 표지 윗변과 아랫변에 바로 붙어 보이지 않게 위아래를 함께 띄운다.
+                    .padding(vertical = ManyakTheme.spacing.inline),
         )
     }
 }

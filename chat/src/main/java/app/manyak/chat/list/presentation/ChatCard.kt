@@ -96,7 +96,7 @@ private fun ChatCardContent(
             showBorder = true,
         )
         Column(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).padding(vertical = ManyakTheme.spacing.hairline),
             verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
         ) {
             val titleStyle = ManyakTheme.typography.bodyLargeStrong
