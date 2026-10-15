@@ -66,7 +66,7 @@ internal fun StoryCard(
         Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.hairline)) {
             Text(
                 text = story.title,
-                style = ManyakTheme.typography.bodyLarge,
+                style = ManyakTheme.typography.bodyLargeStrong,
                 color = ManyakTheme.colors.text,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
