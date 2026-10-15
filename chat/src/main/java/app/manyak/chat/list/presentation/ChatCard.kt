@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
@@ -26,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import app.manyak.chat.entity.ChatSummary
 import app.manyak.designsystem.component.ManyakMoreButton
 import app.manyak.designsystem.component.MetaChip
+import app.manyak.designsystem.component.STORY_THUMBNAIL_ASPECT_RATIO
 import app.manyak.designsystem.component.StoryCover
 import app.manyak.designsystem.component.moreButtonTitleAlignment
 import app.manyak.designsystem.theme.ManyakTheme
@@ -95,25 +97,37 @@ private fun ChatCardContent(
             shape = ManyakTheme.shapes.thumbnail,
             showBorder = true,
         )
+        // 제목과 미리보기는 위에 붙고 메타 줄만 아래 끝으로 내려가 표지 아랫변에 맞는다. 내 스토리 카드와 같은 배치다.
         Column(
-            modifier = Modifier.weight(1f).padding(vertical = ManyakTheme.spacing.hairline),
-            verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .heightIn(min = CoverHeight)
+                    .padding(vertical = ManyakTheme.spacing.hairline),
+            verticalArrangement = Arrangement.SpaceBetween,
         ) {
-            val titleStyle = ManyakTheme.typography.bodyLargeStrong
-            Row(horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact)) {
-                StoryTitle(
-                    title = chat.storyTitle,
-                    style = titleStyle,
-                    modifier = Modifier.weight(1f).alignBy(FirstBaseline),
-                )
-                ManyakMoreButton(
-                    contentDescription = stringResource(ChatR.string.chat_list_card_options),
-                    onClick = onOptionsClick,
-                    modifier = moreButtonTitleAlignment(titleStyle),
-                )
+            Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline)) {
+                val titleStyle = ManyakTheme.typography.bodyLargeStrong
+                Row(horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact)) {
+                    StoryTitle(
+                        title = chat.storyTitle,
+                        style = titleStyle,
+                        modifier = Modifier.weight(1f).alignBy(FirstBaseline),
+                    )
+                    ManyakMoreButton(
+                        contentDescription = stringResource(ChatR.string.chat_list_card_options),
+                        onClick = onOptionsClick,
+                        modifier = moreButtonTitleAlignment(titleStyle),
+                    )
+                }
+                LastStoryPreview(preview = chat.lastStoryPreview)
             }
-            LastStoryPreview(preview = chat.lastStoryPreview)
-            ChatMeta(turnCount = chat.turnCount, updatedAtEpochMillis = chat.updatedAtEpochMillis)
+            ChatMeta(
+                turnCount = chat.turnCount,
+                updatedAtEpochMillis = chat.updatedAtEpochMillis,
+                // 남는 자리가 없을 때도 제목과 미리보기 사이보다 넓게 띄워 메타 줄이 따로 읽히게 한다.
+                modifier = Modifier.padding(top = ManyakTheme.spacing.compact),
+            )
         }
     }
 }
@@ -194,5 +208,8 @@ private fun ChatMeta(
     }
 }
 
-/** 카드에서 표지가 차지하는 폭. 3:4 라 높이는 약 69dp 가 된다. */
-internal val CoverWidth: Dp = 52.dp
+/** 카드에서 표지가 차지하는 폭. 표지가 글 영역보다 높아야 메타 줄을 아래 끝으로 내릴 자리가 생긴다. */
+internal val CoverWidth: Dp = 56.dp
+
+/** 표지 높이. 3:4 라 폭에서 따라오고(약 75dp), 글 영역이 이 높이를 최소치로 삼는다. */
+internal val CoverHeight: Dp = CoverWidth / STORY_THUMBNAIL_ASPECT_RATIO
