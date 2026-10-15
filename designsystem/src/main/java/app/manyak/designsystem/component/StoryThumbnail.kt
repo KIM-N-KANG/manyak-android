@@ -5,6 +5,7 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -62,10 +63,11 @@ fun StoryThumbnail(
         overlay()
         // 뱃지 줄의 RowScope 안에서는 표지 자리의 receiver 를 암묵적으로 쓸 수 없어 미리 꺼낸다.
         val coverBackdrop = backdrop
-        Row(
+        // 제작 탭 카드처럼 표지가 좁은 자리에서 큰 수 둘이 한 줄에 들지 않으면 뱃지 단위로 줄을 바꾼다.
+        FlowRow(
             modifier = Modifier.align(Alignment.BottomEnd).padding(ManyakTheme.spacing.compact),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
+            horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline, Alignment.End),
+            verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
         ) {
             CountBadge(
                 iconRes = DesignsystemR.drawable.ic_heart_outline,

@@ -28,4 +28,6 @@ data class StorySummary(
     val createdAtMillis: Long? = null,
     /** 마냑 공식 계정의 스토리. 홈 카드가 선택한 필터와 무관하게 이 값으로 ORIGINAL 태그를 그린다. */
     val isOriginal: Boolean,
+    /** 공개 범위. 제작 탭 카드가 메타 줄에 그린다. 서버 값이 없거나 모르는 값이면 `null` 이라 그 항목만 생략한다. */
+    val visibility: StoryVisibility? = null,
 )

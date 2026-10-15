@@ -15,9 +15,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import app.manyak.common.entity.story.StoryVisibility
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.story.entity.StoryDetail
-import app.manyak.story.entity.StoryVisibility
 import app.manyak.story.R as StoryR
 
 /** 본문 마지막 메타 정보. 제작자, 생성일, 소유자의 공개 범위를 한 바탕에 표시한다. */

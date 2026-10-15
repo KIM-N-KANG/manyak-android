@@ -38,6 +38,7 @@ import app.manyak.common.entity.story.CreationProgressSummary
 import app.manyak.common.entity.story.CreationResumePoint
 import app.manyak.common.entity.story.CreationStage
 import app.manyak.common.entity.story.StorySummary
+import app.manyak.common.entity.story.StoryVisibility
 import app.manyak.designsystem.component.LoadFailedContent
 import app.manyak.designsystem.component.ManyakPullToRefreshBox
 import app.manyak.designsystem.component.rememberDelayedProgressVisibility
@@ -46,6 +47,7 @@ import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.studio.presentation.component.CreateStoryFab
 import app.manyak.studio.presentation.component.MyStoriesSkeleton
 import app.manyak.studio.presentation.component.MyStoryCard
+import app.manyak.studio.presentation.component.MyStoryPlaceholders
 import app.manyak.studio.presentation.component.StudioDialogs
 import kotlinx.coroutines.launch
 import app.manyak.common.R as CommonR
@@ -165,6 +167,7 @@ private fun StudioContent(
                     contentPadding = contentPadding,
                     onOpenStory = onOpenStory,
                     onIntent = onIntent,
+                    showSkeleton = state.isLoading && showSkeleton,
                 )
 
             state.isLoading ->
@@ -233,7 +236,7 @@ private fun StoriesStatus(
 
 /**
  * 초안 → 검수 제출본 → 완성 요청 → 완성된 스토리 순의 한 목록. 초안과 완성 요청은 각각 처음 임시 저장 최신순이다. 키는 종류별 접두사로 나눠 로컬 카드와
- * 서버 스토리가 겹치지 않는다. 서버 목록 조회가 실패했으면 로컬 카드 아래에 재시도를 둔다.
+ * 서버 스토리가 겹치지 않는다. 서버 목록을 처음 읽는 동안은 로컬 카드 아래에 골격을, 조회가 실패했으면 재시도를 둔다.
  */
 @Composable
 private fun MyStories(
@@ -243,6 +246,7 @@ private fun MyStories(
     onOpenStory: (String) -> Unit,
     onIntent: (StudioIntent) -> Unit,
     modifier: Modifier = Modifier,
+    showSkeleton: Boolean = false,
 ) {
     val analytics = LocalAnalytics.current
     val impressions = rememberImpressionTracker()
@@ -259,6 +263,9 @@ private fun MyStories(
             contentPadding = contentPadding.withRowListMargins(),
         ) {
             progressCards(state, onOpenStory, onIntent)
+            if (showSkeleton) {
+                item(key = SKELETON_KEY) { MyStoryPlaceholders() }
+            }
             itemsIndexed(state.stories, key = { _, story -> "$STORY_KEY_PREFIX${story.id}" }) { index, story ->
                 MyStoryCard(
                     story = story,
@@ -305,6 +312,7 @@ private fun EmptyStories(modifier: Modifier = Modifier) {
 
 private const val STORY_KEY_PREFIX = "story:"
 private const val LOAD_FAILED_KEY = "load-failed"
+private const val SKELETON_KEY = "skeleton"
 
 @Preview(showBackground = true, name = "제작 · 목록")
 @Composable
@@ -433,4 +441,5 @@ private fun previewStory(
         turnCount = turnCount,
         createdDate = createdDate,
         isOriginal = false,
+        visibility = StoryVisibility.PUBLIC,
     )

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.runtime.Composable
@@ -65,7 +66,10 @@ private fun CardPlaceholder(
             alpha = alpha,
             shape = ManyakTheme.shapes.card,
         )
-        Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.hairline)) {
+        Column(
+            modifier = Modifier.padding(horizontal = ManyakTheme.spacing.inline),
+            verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.hairline),
+        ) {
             SkeletonPlaceholder(
                 modifier = Modifier.fillMaxWidth(TITLE_WIDTH_FRACTION).height(TitleLineHeight),
                 alpha = alpha,

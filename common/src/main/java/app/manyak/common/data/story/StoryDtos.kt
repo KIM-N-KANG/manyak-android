@@ -3,6 +3,7 @@ package app.manyak.common.data.story
 import app.manyak.common.data.time.toDisplayDate
 import app.manyak.common.data.time.toEpochMillisOrNull
 import app.manyak.common.entity.story.StorySummary
+import app.manyak.common.entity.story.StoryVisibility
 import kotlinx.serialization.Serializable
 
 /**
@@ -24,6 +25,7 @@ data class StorySummaryDto(
     val turnCount: Long = 0,
     val createdAt: String? = null,
     val isOriginal: Boolean = false,
+    val visibility: String? = null,
 )
 
 @Serializable
@@ -44,4 +46,5 @@ fun StorySummaryDto.toDomain(): StorySummary =
         createdDate = createdAt?.toDisplayDate(),
         createdAtMillis = createdAt?.toEpochMillisOrNull(),
         isOriginal = isOriginal,
+        visibility = StoryVisibility.entries.firstOrNull { it.name == visibility },
     )
