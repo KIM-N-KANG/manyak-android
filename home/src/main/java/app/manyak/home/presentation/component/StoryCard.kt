@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -63,10 +64,13 @@ internal fun StoryCard(
                 )
             }
         }
-        Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.hairline)) {
+        Column(
+            modifier = Modifier.padding(horizontal = ManyakTheme.spacing.inline),
+            verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.hairline),
+        ) {
             Text(
                 text = story.title,
-                style = ManyakTheme.typography.bodyLarge,
+                style = ManyakTheme.typography.bodyLargeStrong,
                 color = ManyakTheme.colors.text,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

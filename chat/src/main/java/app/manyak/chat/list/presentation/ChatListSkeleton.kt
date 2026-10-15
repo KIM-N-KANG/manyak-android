@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -80,19 +81,25 @@ private fun RowPlaceholder(
             shape = ManyakTheme.shapes.thumbnail,
         )
         Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .heightIn(min = CoverHeight)
+                    .padding(vertical = ManyakTheme.spacing.hairline),
+            verticalArrangement = Arrangement.SpaceBetween,
         ) {
-            SkeletonPlaceholder(
-                modifier = Modifier.fillMaxWidth(TITLE_WIDTH_FRACTION).height(titleHeight),
-                alpha = alpha,
-            )
-            SkeletonPlaceholder(
-                modifier = Modifier.fillMaxWidth().height(previewHeight),
-                alpha = alpha,
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline)) {
+                SkeletonPlaceholder(
+                    modifier = Modifier.fillMaxWidth(TITLE_WIDTH_FRACTION).height(titleHeight),
+                    alpha = alpha,
+                )
+                SkeletonPlaceholder(
+                    modifier = Modifier.fillMaxWidth().height(previewHeight),
+                    alpha = alpha,
+                )
+            }
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().padding(top = ManyakTheme.spacing.compact),
                 horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact, Alignment.End),
             ) {
                 SkeletonPlaceholder(modifier = Modifier.width(MetaNarrowWidth).height(metaHeight), alpha = alpha)

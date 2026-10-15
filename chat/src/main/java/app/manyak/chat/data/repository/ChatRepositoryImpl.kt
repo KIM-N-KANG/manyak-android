@@ -19,7 +19,11 @@ import app.manyak.common.entity.chat.CreatedChat
 import app.manyak.network.data.api.apiCall
 import app.manyak.network.data.api.emptyBodyApiCall
 import app.manyak.network.data.di.DataLayerConfig
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.onEach
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -33,6 +37,10 @@ class ChatRepositoryImpl
         private val sseSource: ChatSseSource,
         private val config: DataLayerConfig,
     ) : ChatRepository {
+        private val changes =
+            MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+        override val myChatsChanges = changes.asSharedFlow()
+
         override suspend fun createChat(
             storyId: String,
             startSettingId: String?,
@@ -59,25 +67,32 @@ class ChatRepositoryImpl
             choiceOrder: Int?,
             realtimeImage: Boolean,
         ): Flow<ChatStreamEvent> =
-            sseSource.streamTurn(
-                chatId = chatId,
-                request =
-                    ChatTurnStreamRequestDto(
-                        userInput = userInput,
-                        userSource = userSource.wireValue,
-                        // 원본 턴이 없으면 순번도 뜻이 없다. 한쪽만 실어 보내지 않는다.
-                        sourceTurnId = sourceTurnId,
-                        choiceOrder = choiceOrder.takeIf { sourceTurnId != null },
-                        realtimeImage = realtimeImage,
-                    ),
-            )
+            sseSource
+                .streamTurn(
+                    chatId = chatId,
+                    request =
+                        ChatTurnStreamRequestDto(
+                            userInput = userInput,
+                            userSource = userSource.wireValue,
+                            // 원본 턴이 없으면 순번도 뜻이 없다. 한쪽만 실어 보내지 않는다.
+                            sourceTurnId = sourceTurnId,
+                            choiceOrder = choiceOrder.takeIf { sourceTurnId != null },
+                            realtimeImage = realtimeImage,
+                        ),
+                ).notifyOnCompleted()
 
         override fun regenerateTurn(
             chatId: String,
             turnId: Long,
             realtimeImage: Boolean,
         ): Flow<ChatStreamEvent> =
-            sseSource.regenerateTurn(chatId, ChatRegenerateRequestDto(turnId = turnId, realtimeImage = realtimeImage))
+            sseSource
+                .regenerateTurn(chatId, ChatRegenerateRequestDto(turnId = turnId, realtimeImage = realtimeImage))
+                .notifyOnCompleted()
+
+        /** 서버가 턴을 확정해야 목록이 바뀐다. 실패·끊김은 저장 여부를 몰라 알리지 않고 목록 복귀 조회에 맡긴다. */
+        private fun Flow<ChatStreamEvent>.notifyOnCompleted() =
+            onEach { event -> if (event == ChatStreamEvent.Completed) changes.tryEmit(Unit) }
 
         override suspend fun generateChoices(
             chatId: String,

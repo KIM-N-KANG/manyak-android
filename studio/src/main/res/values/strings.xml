@@ -28,6 +28,8 @@
     <string name="studio_story_created_just_now">방금 전</string>
     <string name="studio_story_created_minutes">%1$d분 전</string>
     <string name="studio_story_created_hours">%1$d시간 전</string>
+    <string name="studio_story_visibility_public">공개</string>
+    <string name="studio_story_visibility_private">비공개</string>
     <string name="studio_story_more">더보기</string>
     <string name="studio_story_options">스토리 옵션</string>
     <string name="studio_submission_fallback_title">등록을 요청한 스토리</string>

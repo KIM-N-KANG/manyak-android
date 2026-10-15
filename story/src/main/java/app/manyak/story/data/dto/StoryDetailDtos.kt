@@ -2,10 +2,10 @@ package app.manyak.story.data.dto
 
 import app.manyak.common.data.story.StoryAuthorDto
 import app.manyak.common.data.time.toDisplayDate
+import app.manyak.common.entity.story.StoryVisibility
 import app.manyak.story.entity.StoryCharacter
 import app.manyak.story.entity.StoryDetail
 import app.manyak.story.entity.StoryStartSetting
-import app.manyak.story.entity.StoryVisibility
 import kotlinx.serialization.Serializable
 
 /**

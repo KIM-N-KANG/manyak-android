@@ -1,6 +1,6 @@
 package app.manyak.story.data.dto
 
-import app.manyak.story.entity.StoryVisibility
+import app.manyak.common.entity.story.StoryVisibility
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull

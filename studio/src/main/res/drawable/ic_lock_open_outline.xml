@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    공개 스토리. 내 스토리 카드 메타 줄이 그린다.
+    색은 사용처에서 tint 하므로 자산 자체는 단색으로 둔다.
+    원본: circle-unlock-01-stroke-rounded.svg (24×24).
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <path
+        android:pathData="M5 15C5 11.134 8.13401 8 12 8C15.866 8 19 11.134 19 15C19 18.866 15.866 22 12 22C8.13401 22 5 18.866 5 15Z"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="1.5" />
+
+    <path
+        android:pathData="M7.5 9.5V6.5C7.5 4.01472 9.51472 2 12 2C13.5602 2 14.935 2.79401 15.7422 4"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round" />
+
+    <path
+        android:pathData="M12.125 15H12M12.25 15C12.25 15.1381 12.1381 15.25 12 15.25C11.8619 15.25 11.75 15.1381 11.75 15C11.75 14.8619 11.8619 14.75 12 14.75C12.1381 14.75 12.25 14.8619 12.25 15Z"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>
