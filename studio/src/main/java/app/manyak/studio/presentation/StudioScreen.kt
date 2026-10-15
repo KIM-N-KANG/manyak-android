@@ -38,6 +38,7 @@ import app.manyak.common.entity.story.CreationProgressSummary
 import app.manyak.common.entity.story.CreationResumePoint
 import app.manyak.common.entity.story.CreationStage
 import app.manyak.common.entity.story.StorySummary
+import app.manyak.common.entity.story.StoryVisibility
 import app.manyak.designsystem.component.LoadFailedContent
 import app.manyak.designsystem.component.ManyakPullToRefreshBox
 import app.manyak.designsystem.component.rememberDelayedProgressVisibility
@@ -433,4 +434,5 @@ private fun previewStory(
         turnCount = turnCount,
         createdDate = createdDate,
         isOriginal = false,
+        visibility = StoryVisibility.PUBLIC,
     )

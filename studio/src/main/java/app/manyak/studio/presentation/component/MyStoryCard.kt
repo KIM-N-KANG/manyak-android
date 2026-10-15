@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -23,13 +22,13 @@ import androidx.compose.ui.text.intl.LocaleList
 import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextOverflow
 import app.manyak.common.entity.story.StorySummary
+import app.manyak.common.entity.story.StoryVisibility
 import app.manyak.designsystem.component.ManyakMoreButton
 import app.manyak.designsystem.component.MetaChip
 import app.manyak.designsystem.component.STORY_THUMBNAIL_ASPECT_RATIO
 import app.manyak.designsystem.component.StoryBadgeScale
-import app.manyak.designsystem.component.StoryCover
+import app.manyak.designsystem.component.StoryThumbnail
 import app.manyak.designsystem.component.moreButtonTitleAlignment
-import app.manyak.designsystem.text.formatCompactCount
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.designsystem.R as DesignsystemR
 import app.manyak.studio.R as StudioR
@@ -42,8 +41,8 @@ import app.manyak.studio.R as StudioR
  * 텍스트 길이와도, 창 크기와도 무관하게 같다. 텍스트 영역에 고정 높이를 두면 시스템 글자 크기를 키웠을 때
  * 잘리므로 높이를 지정하지 않는다.
  *
- * 제목은 두 줄, 한 줄 소개도 두 줄까지 쓰고 넘치면 자른다. 좋아요 수·누적 턴 수는 표지 위 뱃지가 아니라
- * 제작일과 함께 오른쪽 메타 줄이 맡는다 — 표지가 커져 뱃지가 그림을 가린다. ORIGINAL 태그는
+ * 제목은 두 줄, 한 줄 소개도 두 줄까지 쓰고 넘치면 자른다. 좋아요 수·누적 턴 수는 홈 카드처럼 표지 위
+ * 뱃지가 맡고, 그 자리를 비운 메타 줄에는 공개 범위와 제작일을 둔다. ORIGINAL 태그는
  * 공식 스토리 표시라 붙이지 않는다.
  */
 @Composable
@@ -76,8 +75,10 @@ internal fun MyStoryCard(
         // 텍스트는 표지보다 짧아 가운데 정렬하면 제목이 표지 한가운데에서 시작한다.
         verticalAlignment = Alignment.Top,
     ) {
-        StoryCover(
+        StoryThumbnail(
             thumbnailUrl = story.thumbnailUrl,
+            likeCount = story.likeCount,
+            turnCount = story.turnCount,
             modifier = Modifier.width(CoverWidth),
             showBorder = true,
         )
@@ -140,8 +141,7 @@ private fun StoryInfo(
             }
         }
         StoryMeta(
-            likeCount = story.likeCount,
-            turnCount = story.turnCount,
+            visibility = story.visibility,
             createdDate = story.createdDate,
             createdAtMillis = story.createdAtMillis,
             // 글이 길어 남는 자리가 없을 때도 뱃지와 붙지 않을 만큼은 띄운다.
@@ -151,37 +151,41 @@ private fun StoryInfo(
 }
 
 /**
- * 좋아요 수·누적 턴 수·제작일. 채팅 목록 카드와 같이 오른쪽 끝에 붙는다 — 왼쪽에서 읽어 내려오는
+ * 공개 범위·제작일. 채팅 목록 카드와 같이 오른쪽 끝에 붙는다 — 왼쪽에서 읽어 내려오는
  * 제목·소개와 성질이 달라 같은 줄머리에 두면 소개의 연장으로 읽힌다.
  *
- * 제작일은 서버 값을 읽을 수 없을 때 그 칩만 빠지고 앞의 두 수는 남는다.
+ * 둘 다 서버 값을 읽을 수 없으면 그 칩만 빠진다.
  */
 @Composable
 private fun StoryMeta(
-    likeCount: Long,
-    turnCount: Long,
+    visibility: StoryVisibility?,
     createdDate: String?,
     createdAtMillis: Long?,
     modifier: Modifier = Modifier,
 ) {
-    val formattedLikeCount = remember(likeCount) { formatCompactCount(likeCount) }
-    val formattedTurnCount = remember(turnCount) { formatCompactCount(turnCount) }
-
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact, Alignment.End),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        MetaChip(
-            iconRes = DesignsystemR.drawable.ic_heart_outline,
-            text = formattedLikeCount,
-            description = stringResource(DesignsystemR.string.story_like_count_description, formattedLikeCount),
-        )
-        MetaChip(
-            iconRes = DesignsystemR.drawable.ic_dialog,
-            text = formattedTurnCount,
-            description = stringResource(DesignsystemR.string.story_turn_count_description, formattedTurnCount),
-        )
+        visibility?.let { value ->
+            val label =
+                stringResource(
+                    when (value) {
+                        StoryVisibility.PUBLIC -> StudioR.string.studio_story_visibility_public
+                        StoryVisibility.PRIVATE -> StudioR.string.studio_story_visibility_private
+                    },
+                )
+            MetaChip(
+                iconRes =
+                    when (value) {
+                        StoryVisibility.PUBLIC -> StudioR.drawable.ic_lock_open_outline
+                        StoryVisibility.PRIVATE -> StudioR.drawable.ic_lock_outline
+                    },
+                text = label,
+                description = label,
+            )
+        }
         val sameDay = createdAtMillis?.let { sameDayElapsedOf(it, System.currentTimeMillis()) }
         (sameDay?.label() ?: createdDate)?.let { date ->
             MetaChip(

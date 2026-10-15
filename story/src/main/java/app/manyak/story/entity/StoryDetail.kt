@@ -1,5 +1,7 @@
 package app.manyak.story.entity
 
+import app.manyak.common.entity.story.StoryVisibility
+
 /**
  * 스토리 상세 화면이 그리는 스토리 한 건.
  *
@@ -43,11 +45,6 @@ data class StoryDetail(
     val isOwner: Boolean,
     val visibility: StoryVisibility? = null,
 )
-
-enum class StoryVisibility {
-    PUBLIC,
-    PRIVATE,
-}
 
 /** 스토리에 등장하는 인물의 이름, 이미지, 소개. 이미지와 소개는 각각 생략될 수 있다. */
 data class StoryCharacter(
