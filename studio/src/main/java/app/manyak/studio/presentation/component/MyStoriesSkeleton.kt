@@ -31,15 +31,23 @@ import app.manyak.studio.R as StudioR
  */
 @Composable
 internal fun MyStoriesSkeleton(modifier: Modifier = Modifier) {
-    val description = stringResource(StudioR.string.studio_loading)
-    val alpha = rememberSkeletonPulseAlpha()
-
     LazyColumn(
-        modifier = modifier.fillMaxSize().semantics { contentDescription = description },
+        modifier = modifier.fillMaxSize(),
         // 아직 아무것도 없는 자리이므로 스크롤로 더 볼 것이 없다.
         userScrollEnabled = false,
     ) {
-        items(PLACEHOLDER_CARD_COUNT) {
+        item { MyStoryPlaceholders() }
+    }
+}
+
+/** 카드 골격 묶음. 초안 같은 로컬 카드가 먼저 그려진 목록에서는 그 아래 한 항목으로 서버 목록 자리를 잡는다. */
+@Composable
+internal fun MyStoryPlaceholders(modifier: Modifier = Modifier) {
+    val description = stringResource(StudioR.string.studio_loading)
+    val alpha = rememberSkeletonPulseAlpha()
+
+    Column(modifier = modifier.semantics { contentDescription = description }) {
+        repeat(PLACEHOLDER_CARD_COUNT) {
             CardPlaceholder(alpha = alpha)
         }
     }
