@@ -4,11 +4,14 @@ import androidx.lifecycle.viewModelScope
 import app.manyak.analytics.domain.NoOpAnalytics
 import app.manyak.auth.domain.SessionGate
 import app.manyak.common.domain.chat.ChatStarter
+import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.entity.chat.CreatedChat
 import app.manyak.create.entity.StoryTag
 import app.manyak.create.entity.StoryTagCategory
 import app.manyak.create.general.data.GeneralReviewWatch
+import app.manyak.create.general.entity.GeneralDraftOpen
+import app.manyak.create.general.entity.GeneralDraftSave
 import app.manyak.create.testing.FakeStoryCreationRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -47,7 +50,7 @@ class GeneralStoryViewModelTest {
     @Test
     fun database_load_failure_does_not_open_a_blank_editable_draft() =
         runTest(dispatcher) {
-            val drafts = GeneralDraftStoreFake().apply { readFails = true }
+            val drafts = GeneralDraftStoreFake().apply { openResult = DomainResult.Failure(DomainError.Network) }
             val model = model(drafts = drafts)
             advanceUntilIdle()
             assertTrue(model.uiState.value.loadFailed)
@@ -61,7 +64,14 @@ class GeneralStoryViewModelTest {
     @Test
     fun closing_an_untouched_new_draft_leaves_without_asking_but_input_asks_first() =
         runTest(dispatcher) {
-            val model = model(drafts = GeneralDraftStoreFake().apply { stored = false })
+            val model =
+                model(
+                    drafts =
+                        GeneralDraftStoreFake().apply {
+                            openResult =
+                                DomainResult.Success(GeneralDraftOpen.NotFound)
+                        },
+                )
             advanceUntilIdle()
             model.onIntent(GeneralEditorIntent.Close)
             advanceUntilIdle()
@@ -164,13 +174,90 @@ class GeneralStoryViewModelTest {
             assertEquals(0, repository.posts)
         }
 
+    @Test
+    fun saves_chain_the_server_version_and_submit_names_the_draft() =
+        runTest(dispatcher) {
+            val repository = GeneralEditorRepositoryFake()
+            val drafts = GeneralDraftStoreFake()
+            val model = model(repository, drafts)
+            advanceUntilIdle()
+            model.onIntent(GeneralEditorIntent.SaveDraft())
+            advanceUntilIdle()
+            advanceTimeBy(2_001)
+            model.onIntent(GeneralEditorIntent.SaveDraft(false))
+            advanceUntilIdle()
+            assertEquals(listOf(3, 4), drafts.baseVersions)
+            model.onIntent(GeneralEditorIntent.Submit)
+            advanceUntilIdle()
+            assertEquals(listOf<String?>("draft"), repository.draftIds)
+        }
+
+    @Test
+    fun a_conflict_asks_first_and_overwrite_uses_the_server_version() =
+        runTest(dispatcher) {
+            val drafts = GeneralDraftStoreFake().apply { saveResults += GeneralDraftSave.Conflict(7) }
+            val model = model(drafts = drafts)
+            advanceUntilIdle()
+            model.onIntent(GeneralEditorIntent.SaveDraft())
+            advanceUntilIdle()
+            assertEquals(7, model.uiState.value.draftConflictVersion)
+            model.onIntent(GeneralEditorIntent.ResolveDraftConflict(overwrite = true))
+            advanceUntilIdle()
+            assertEquals(listOf(3, 7), drafts.baseVersions)
+            assertEquals(null, model.uiState.value.draftConflictVersion)
+            assertEquals(
+                GeneralEditorEffect.Message(GeneralEditorMessage.DRAFT_SAVED),
+                model.uiEffect.first(),
+            )
+        }
+
+    @Test
+    fun a_background_save_failure_stays_silent() =
+        runTest(dispatcher) {
+            val drafts =
+                GeneralDraftStoreFake().apply {
+                    saveResults += GeneralDraftSave.Conflict(7)
+                    saveResults += GeneralDraftSave.LimitExceeded
+                }
+            val model = model(drafts = drafts)
+            advanceUntilIdle()
+            model.onIntent(GeneralEditorIntent.SaveDraft(false))
+            advanceUntilIdle()
+            assertEquals(null, model.uiState.value.draftConflictVersion)
+            model.onIntent(GeneralEditorIntent.SaveDraft())
+            advanceUntilIdle()
+            assertEquals(GeneralEditorEffect.Message(GeneralEditorMessage.DRAFT_LIMIT), model.uiEffect.first())
+        }
+
+    @Test
+    fun a_missing_draft_is_announced_only_when_resumed_from_a_card() =
+        runTest(dispatcher) {
+            val missing = DomainResult.Success(GeneralDraftOpen.NotFound)
+            val resumed =
+                model(
+                    drafts = GeneralDraftStoreFake().apply { openResult = missing },
+                    entry = GeneralEditorEntry.Draft("draft", resume = true),
+                )
+            advanceUntilIdle()
+            assertEquals(GeneralEditorEffect.Message(GeneralEditorMessage.DRAFT_NOT_FOUND), resumed.uiEffect.first())
+            assertFalse(resumed.uiState.value.form.hasInput)
+            assertTrue(resumed.uiState.value.inputsEnabled)
+
+            val fresh = model(drafts = GeneralDraftStoreFake().apply { openResult = missing })
+            advanceUntilIdle()
+            fresh.onIntent(GeneralEditorIntent.Close)
+            advanceUntilIdle()
+            assertEquals(GeneralEditorEffect.Close, fresh.uiEffect.first())
+        }
+
     private fun TestScope.model(
         repository: GeneralEditorRepositoryFake = GeneralEditorRepositoryFake(),
         drafts: GeneralDraftStoreFake = GeneralDraftStoreFake(),
         gate: SessionGate = SessionGate(),
+        entry: GeneralEditorEntry = GeneralEditorEntry.Draft("draft"),
     ): GeneralStoryViewModel =
         GeneralStoryViewModel(
-            entry = GeneralEditorEntry.Draft("draft"),
+            entry = entry,
             repository = repository,
             drafts = drafts,
             catalog =

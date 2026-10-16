@@ -15,6 +15,8 @@ data class GeneralStoryRequestDto(
     val visibility: String,
     val thumbnailObjectKey: String?,
     val characters: List<GeneralCharacterRequestDto>,
+    /** 접수와 함께 서버가 지울 임시 저장본. 없거나 남의 것이면 서버가 넘어간다. */
+    val draftId: String? = null,
 )
 
 @Serializable

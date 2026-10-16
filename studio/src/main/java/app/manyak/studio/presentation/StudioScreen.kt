@@ -13,7 +13,10 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -250,6 +253,15 @@ private fun MyStories(
 ) {
     val analytics = LocalAnalytics.current
     val impressions = rememberImpressionTracker()
+    // 서버 초안은 목록보다 늦게 와 맨 앞에 붙는데, 목록은 보던 첫 카드를 따라가 새 카드가 화면 위로 숨는다.
+    // 맨 위를 보던 중이었으면 맨 위에 남긴다. 스크롤해 둔 자리는 그대로 둔다.
+    val firstDraftId = state.drafts.firstOrNull()?.draftId
+    val shownFirstDraftId = remember { mutableStateOf(firstDraftId) }
+    SideEffect {
+        val atTop = listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0
+        if (shownFirstDraftId.value != firstDraftId && atTop) listState.requestScrollToItem(0)
+        shownFirstDraftId.value = firstDraftId
+    }
     ManyakPullToRefreshBox(
         modifier = modifier,
         isRefreshing = state.isRefreshing,

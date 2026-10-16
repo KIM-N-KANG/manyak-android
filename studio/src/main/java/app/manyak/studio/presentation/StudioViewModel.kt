@@ -255,6 +255,7 @@ class StudioViewModel
         private var loadJob: Job? = null
         private var deleteJob: Job? = null
         private var requestRefreshJob: Job? = null
+        private var draftRefreshJob: Job? = null
         private var submissionRefreshJob: Job? = null
         private val submissionMutex = Mutex()
         private var knownSubmissions: List<StorySubmission> = emptyList()
@@ -530,8 +531,11 @@ class StudioViewModel
                 }
         }
 
-        /** 요청 상태 조회는 목록 조회와 나란히 돈다. 이미 도는 조회가 있으면 겹쳐 시작하지 않는다. */
+        /** 요청 상태와 서버 초안 조회는 목록 조회와 나란히 돈다. 이미 도는 조회가 있으면 겹쳐 시작하지 않는다. */
         private fun refreshRequests() {
+            if (draftRefreshJob?.isActive != true) {
+                draftRefreshJob = viewModelScope.launch { creationProgress.refreshDrafts() }
+            }
             if (requestRefreshJob?.isActive == true) return
             requestRefreshJob = viewModelScope.launch { creationProgress.refreshCompletionRequests() }
         }
@@ -598,7 +602,7 @@ class StudioViewModel
 
                         is StudioCard.Submission -> deleteSubmission(target.submission)
 
-                        // 로컬 초안·요청은 서버 삭제 API 를 부르지 않는다. 실패하면 카드와 입력이 그대로 남는다.
+                        // 실패하면 카드와 입력이 그대로 남는다.
                         is StudioCard.Draft -> finishLocalDelete(creationProgress.discard(target.draftId))
 
                         is StudioCard.FailedRequest ->

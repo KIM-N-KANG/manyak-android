@@ -3,7 +3,7 @@ package app.manyak.create.general.data
 import app.manyak.create.general.data.database.GeneralDraftDao
 import app.manyak.create.general.data.database.GeneralDraftEntity
 import app.manyak.create.general.data.database.GeneralDraftSnapshot
-import app.manyak.create.general.data.database.toDomain
+import app.manyak.create.general.data.database.toForm
 import app.manyak.create.general.entity.GeneralStoryForm
 import app.manyak.create.general.entity.GeneralStoryImage
 import kotlinx.coroutines.flow.Flow
@@ -57,13 +57,13 @@ class GeneralDraftDaoTest {
         val json = Json { ignoreUnknownKeys = true }
         val form = GeneralStoryForm(title = "제목", cover = GeneralStoryImage("key", "file:///image.png", "/image.png"))
         val entity = GeneralDraftEntity("a", "draft", json.encodeToString(GeneralDraftSnapshot(form = form)), 12)
-        assertEquals(form, entity.toDomain(json)?.form)
-        assertNull(entity.copy(snapshot = "invalid").toDomain(json))
-        assertNull(entity.copy(acceptedSubmissionId = "accepted").toDomain(json))
+        assertEquals(form, entity.toForm(json))
+        assertNull(entity.copy(snapshot = "invalid").toForm(json))
+        assertNull(entity.copy(acceptedSubmissionId = "accepted").toForm(json))
     }
 }
 
-private class FakeGeneralDraftDao : GeneralDraftDao {
+internal class FakeGeneralDraftDao : GeneralDraftDao {
     private val rows = mutableMapOf<Pair<String, String>, GeneralDraftEntity>()
 
     override fun observe(ownerId: String): Flow<List<GeneralDraftEntity>> =

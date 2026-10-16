@@ -47,6 +47,7 @@ class RouteRestorationTest {
                 MainTabsRoute,
                 CreateMethodRoute,
                 GeneralCreateRoute("draft"),
+                GeneralCreateRoute("resumed", resume = true),
                 GeneralSubmissionRoute("submission"),
                 StoryEditRoute("story"),
             )

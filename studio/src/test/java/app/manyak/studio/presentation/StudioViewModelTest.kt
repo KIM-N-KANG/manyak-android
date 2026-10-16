@@ -412,10 +412,12 @@ class StudioViewModelTest {
             assertTrue(viewModel.uiState.value.hasLocalCards)
             assertEquals(2, viewModel.uiState.value.completionRequests.size)
             assertEquals(1, store.refreshCount)
+            assertEquals(1, store.draftRefreshCount)
 
             viewModel.onIntent(StudioIntent.Refresh)
             advanceUntilIdle()
             assertEquals(2, store.refreshCount)
+            assertEquals(2, store.draftRefreshCount)
 
             viewModel.onIntent(StudioIntent.CreateStory)
             advanceUntilIdle()

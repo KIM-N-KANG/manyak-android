@@ -21,6 +21,7 @@ import app.manyak.create.general.domain.restoreGeneralStoryForm
 import app.manyak.create.general.domain.shouldDeleteGeneralThumbnail
 import app.manyak.create.general.domain.validateGeneralStoryEdit
 import app.manyak.create.general.domain.validateGeneralStoryForm
+import app.manyak.create.general.entity.GeneralDraftSave
 import app.manyak.create.general.entity.GeneralErrorReason
 import app.manyak.create.general.entity.GeneralFieldError
 import app.manyak.create.general.entity.GeneralFieldTarget
@@ -69,7 +70,7 @@ class GeneralStoryViewModel
         ) {
         private var editBase: GeneralStoryEditBase? = null
         private var initialForm: GeneralStoryForm? = null
-        private var lastSavedForm: GeneralStoryForm? = null
+        private val draft = (entry as? GeneralEditorEntry.Draft)?.let { GeneralDraftSession(drafts, it.draftId) }
         private var writeJob: Job? = null
         private var saveJob: Job? = null
         private var loadJob: Job? = null
@@ -143,15 +144,17 @@ class GeneralStoryViewModel
                 GeneralEditorIntent.Submit -> submit()
                 is GeneralEditorIntent.SaveDraft -> saveDraft(intent.showToast)
                 GeneralEditorIntent.Retry -> retry()
-                is GeneralEditorIntent.SearchGenres -> genres.query(intent.query)
-                is GeneralEditorIntent.ExpandGenres -> genres.expand(intent.expanded)
-                GeneralEditorIntent.RetryGenres -> genres.retry()
+                is GeneralEditorIntent.SearchGenres,
+                is GeneralEditorIntent.ExpandGenres,
+                GeneralEditorIntent.RetryGenres,
+                -> genres.handle(intent)
                 GeneralEditorIntent.Close -> requestClose()
                 GeneralEditorIntent.ConfirmClose -> {
                     dispatchEvent(GeneralEditorEvent.Exit(false))
                     dispatchEffect(GeneralEditorEffect.Close)
                 }
                 GeneralEditorIntent.DismissClose -> dispatchEvent(GeneralEditorEvent.Exit(false))
+                is GeneralEditorIntent.ResolveDraftConflict -> resolveDraftConflict(intent.overwrite)
             }
         }
 
@@ -195,7 +198,7 @@ class GeneralStoryViewModel
                     try {
                         withEditorAuth(Unit) { work ->
                             when (val current = entry) {
-                                is GeneralEditorEntry.Draft -> loadDraft(current.draftId, work)
+                                is GeneralEditorEntry.Draft -> loadDraft(current, work)
                                 is GeneralEditorEntry.Submission ->
                                     loadRemote(
                                         repository.submission(current.submissionId),
@@ -212,9 +215,10 @@ class GeneralStoryViewModel
         }
 
         private suspend fun loadDraft(
-            draftId: String,
+            entry: GeneralEditorEntry.Draft,
             work: AuthWork,
         ) {
+            val draftId = entry.draftId
             val submissionId = drafts.acceptedSubmissionId(draftId)
             if (submissionId != null) {
                 acceptedId = submissionId
@@ -222,12 +226,17 @@ class GeneralStoryViewModel
                 recordAcceptance(work, draftId, submissionId)
                 loadRemote(repository.submission(submissionId), restoringAccepted = true)
             } else {
-                val stored = drafts.read(draftId)
-                val form = stored?.form ?: uiState.value.form
+                val stored =
+                    when (val result = checkNotNull(draft).open()) {
+                        is DomainResult.Failure -> return updateIfAlive(GeneralEditorEvent.LoadFailed)
+                        is DomainResult.Success -> result.value
+                    }
+                // 이어서 열려던 초안이 다른 곳에서 등록되거나 지워졌다. 같은 ID로 새로 시작해도 서버에 겹치는 초안이 없다.
+                if (stored == null && entry.resume) message(GeneralEditorMessage.DRAFT_NOT_FOUND)
+                val form = stored ?: uiState.value.form
                 initialForm = form
-                lastSavedForm = stored?.form
                 retainImages(form)
-                updateIfAlive(GeneralEditorEvent.Loaded(form, stored?.form))
+                updateIfAlive(GeneralEditorEvent.Loaded(form, stored))
             }
         }
 
@@ -312,8 +321,12 @@ class GeneralStoryViewModel
             }
         }
 
-        private fun saveDraft(showToast: Boolean) {
-            val draft = entry as? GeneralEditorEntry.Draft ?: return
+        /** [announceSaved]는 헤더 버튼을 거치지 않은 저장(충돌 뒤 덮어쓰기)의 성공을 직접 알릴 때 쓴다. */
+        private fun saveDraft(
+            showToast: Boolean,
+            announceSaved: Boolean = false,
+        ) {
+            val draft = draft ?: return
             val state = uiState.value
             if (!canSaveGeneralDraft(state, acceptedId) || saveJob?.isActive == true) return
             val form = state.form
@@ -322,14 +335,14 @@ class GeneralStoryViewModel
                     updateIfAlive(GeneralEditorEvent.Saving(true))
                     var saved = false
                     try {
-                        saved =
-                            withEditorAuth(false) { work ->
-                                gate.commit(work) { drafts.save(draft.draftId, form) }
-                                    ?: false
+                        val result =
+                            withEditorAuth<GeneralDraftSave>(GeneralDraftSave.Failed) { work ->
+                                gate.commit(work) { draft.save(form) } ?: GeneralDraftSave.Failed
                             }
-                        if (saved) lastSavedForm = form
-                        // 성공 안내는 헤더의 임시 저장 버튼이 맡는다. 간편 제작과 같은 버튼을 쓰기 위해서다.
-                        if (showToast && !saved) message(GeneralEditorMessage.DRAFT_FAILED)
+                        saved = result is GeneralDraftSave.Saved
+                        // 백그라운드 전환 저장(showToast 가 거짓)은 실패도 알리지 않는다.
+                        result.conflictVersion(showToast)?.let { updateIfAlive(GeneralEditorEvent.DraftConflict(it)) }
+                        result.toastMessage(showToast, announceSaved)?.let { message(it) }
                     } catch (cancelled: CancellationException) {
                         throw cancelled
                     } catch (_: Exception) {
@@ -346,6 +359,15 @@ class GeneralStoryViewModel
                         }
                     }
                 }
+        }
+
+        /** 덮어쓰기는 충돌 응답의 현재 버전을 기준으로 지금 입력을 다시 보낸다. 남겨두면 서버 내용을 그대로 둔다. */
+        private suspend fun resolveDraftConflict(overwrite: Boolean) {
+            val version = uiState.value.draftConflictVersion ?: return
+            dispatchEvent(GeneralEditorEvent.DraftConflict(null))
+            if (!overwrite) return
+            draft?.version = version
+            saveDraft(showToast = true, announceSaved = true)
         }
 
         private suspend fun submit() {
@@ -382,7 +404,10 @@ class GeneralStoryViewModel
                                 updateStory(entry.storyId, form)
                             } else {
                                 val content = buildGeneralStoryContent(form)
-                                acceptedId?.let { repository.resubmit(it, content) } ?: repository.submit(content)
+                                // 접수와 함께 서버가 이 임시 저장본을 지우도록 초안 ID를 함께 보낸다.
+                                val draftId = (entry as? GeneralEditorEntry.Draft)?.draftId
+                                acceptedId?.let { repository.resubmit(it, content, draftId) }
+                                    ?: repository.submit(content, draftId)
                             }
                         if (!gate.isCurrentGeneration(generation)) return@withEditorAuth
                         when (result) {
@@ -658,15 +683,12 @@ class GeneralStoryViewModel
             writeScope.launch {
                 saveJob?.join()
                 writeJob?.join()
+                // 서버 초안의 미리보기는 다시 열 때 서버 URL로 받으므로 기기 안 저장본이 남은 경우만 파일을 둔다.
                 val retained =
                     if (acceptedId != null && acceptanceRecorded) {
                         emptySet()
                     } else {
-                        lastSavedForm
-                            ?.localImages()
-                            .orEmpty()
-                            .mapNotNull { it.localPath }
-                            .toSet()
+                        draft?.localImagePaths.orEmpty()
                     }
                 candidates.filterNot { it.localPath in retained }.forEach { repository.discardImage(it) }
             }

@@ -412,7 +412,7 @@ private fun MutableList<NavKey>.addCreationResumeChain(
     resumePoint: CreationResumePoint,
 ) {
     when (resumePoint) {
-        CreationResumePoint.GeneralStep -> push(GeneralCreateRoute(draftId))
+        CreationResumePoint.GeneralStep -> push(GeneralCreateRoute(draftId, resume = true))
         CreationResumePoint.KeywordStep -> push(CreateKeywordRoute(draftId))
         CreationResumePoint.StorylineStep -> push(CreateStorylineRoute(draftId))
         is CreationResumePoint.AdditionalInfoStep -> {

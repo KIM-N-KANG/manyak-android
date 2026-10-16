@@ -22,6 +22,7 @@ internal class FakeCreationProgressAccess(
     val currentDrafts: List<CreationProgressSummary> get() = draftState.value
     val currentRequests: List<CompletionRequestSummary> get() = requestState.value
     var refreshCount = 0
+    var draftRefreshCount = 0
     val retriedRequestIds = mutableListOf<String>()
     val deletedRequestIds = mutableListOf<String>()
     var discardSucceeds = true
@@ -35,6 +36,10 @@ internal class FakeCreationProgressAccess(
         if (!discardSucceeds) return false
         draftState.value = draftState.value.filterNot { it.draftId == draftId }
         return true
+    }
+
+    override suspend fun refreshDrafts() {
+        draftRefreshCount++
     }
 
     override suspend fun refreshCompletionRequests() {

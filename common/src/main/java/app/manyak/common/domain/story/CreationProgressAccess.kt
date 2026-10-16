@@ -16,6 +16,9 @@ interface CreationProgressAccess {
     /** 완성 요청. 처음 임시 저장한 시각 최신순이고, 시각이 없는 이전 요청은 제출 최신순으로 맨 뒤다. */
     val completionRequests: Flow<List<CompletionRequestSummary>>
 
+    /** 서버에 둔 초안 목록을 다시 받는다. 받지 못해도 기기 안 초안은 그대로 보인다. */
+    suspend fun refreshDrafts() {}
+
     /** 편집 초안 하나만 폐기한다. 다른 초안과 완성 요청은 건드리지 않는다. */
     suspend fun discard(draftId: String): Boolean
 

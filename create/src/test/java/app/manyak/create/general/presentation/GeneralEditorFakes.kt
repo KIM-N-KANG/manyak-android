@@ -5,6 +5,8 @@ import app.manyak.common.domain.error.DomainResult
 import app.manyak.create.general.domain.GeneralDraftStore
 import app.manyak.create.general.domain.GeneralStoryRepository
 import app.manyak.create.general.entity.GeneralCharacter
+import app.manyak.create.general.entity.GeneralDraftOpen
+import app.manyak.create.general.entity.GeneralDraftSave
 import app.manyak.create.general.entity.GeneralGender
 import app.manyak.create.general.entity.GeneralImageKind
 import app.manyak.create.general.entity.GeneralStartSetting
@@ -28,9 +30,14 @@ internal open class GeneralEditorRepositoryFake : GeneralStoryRepository {
         DomainResult.Failure(DomainError.Unknown)
     }
     val discarded = mutableListOf<GeneralStoryImage>()
+    val draftIds = mutableListOf<String?>()
 
-    override suspend fun submit(content: GeneralStoryContent): DomainResult<GeneralStorySaveResult.Accepted> {
+    override suspend fun submit(
+        content: GeneralStoryContent,
+        draftId: String?,
+    ): DomainResult<GeneralStorySaveResult.Accepted> {
         posts++
+        draftIds += draftId
         return submitResult()
     }
 
@@ -41,8 +48,10 @@ internal open class GeneralEditorRepositoryFake : GeneralStoryRepository {
     override suspend fun resubmit(
         submissionId: String,
         content: GeneralStoryContent,
+        draftId: String?,
     ): DomainResult<GeneralStorySaveResult.Accepted> {
         puts++
+        draftIds += draftId
         return submitResult()
     }
 
@@ -67,29 +76,32 @@ internal open class GeneralEditorRepositoryFake : GeneralStoryRepository {
 internal class GeneralDraftStoreFake : GeneralDraftStore {
     override val drafts = MutableStateFlow(emptyList<GeneralStoredDraft>())
     var form = validGeneralForm()
-    var stored = true
-    var readFails = false
+    var openResult: DomainResult<GeneralDraftOpen> = DomainResult.Success(GeneralDraftOpen.Server(form, 3))
     var saveFails = false
+
+    /** 비어 있으면 저장마다 버전을 하나씩 올려 성공한다. */
+    val saveResults = ArrayDeque<GeneralDraftSave>()
     var acceptedSucceeds = true
-    var saves = 0
+    val baseVersions = mutableListOf<Int?>()
+    val saves get() = baseVersions.size
     var acceptedWrites = 0
     var acceptedId: String? = null
 
-    override suspend fun read(draftId: String): GeneralStoredDraft? {
-        if (readFails) error("database unavailable")
-        return GeneralStoredDraft(draftId, form, 0).takeIf { stored }
-    }
+    override suspend fun refresh() = Unit
+
+    override suspend fun open(draftId: String): DomainResult<GeneralDraftOpen> = openResult
 
     override suspend fun acceptedSubmissionId(draftId: String): String? = acceptedId
 
     override suspend fun save(
         draftId: String,
         form: GeneralStoryForm,
-    ): Boolean {
-        saves++
-        if (saveFails) error("database unavailable")
+        baseVersion: Int?,
+    ): GeneralDraftSave {
+        baseVersions += baseVersion
+        if (saveFails) error("network unavailable")
         this.form = form
-        return true
+        return saveResults.removeFirstOrNull() ?: GeneralDraftSave.Saved((baseVersion ?: 0) + 1)
     }
 
     override suspend fun markAccepted(

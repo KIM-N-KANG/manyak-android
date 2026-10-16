@@ -64,9 +64,11 @@ data class CreateKeywordRoute(
 @Serializable
 data object CreateMethodRoute : NavKey
 
+/** [resume]은 제작 탭 카드로 이어서 연 경우다. 그 초안이 없으면 새로 시작한다고 알린다. */
 @Serializable
 data class GeneralCreateRoute(
     val draftId: String,
+    val resume: Boolean = false,
 ) : NavKey
 
 @Serializable

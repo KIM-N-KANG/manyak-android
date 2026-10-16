@@ -11,6 +11,7 @@ import app.manyak.create.general.domain.GeneralStoryRepository
 import app.manyak.create.general.entity.GeneralStoredDraft
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
 class CreationProgressRepository
@@ -28,9 +29,15 @@ class CreationProgressRepository
                     .sortedWith(compareByDescending<CreationProgressSummary> { it.createdAt })
             }
 
+        override suspend fun refreshDrafts() = general.refresh()
+
         override suspend fun discard(draftId: String): Boolean =
             try {
-                if (general.read(draftId) != null) general.delete(draftId) else simple.discard(draftId)
+                if (general.drafts.first().any { it.draftId == draftId }) {
+                    general.delete(draftId)
+                } else {
+                    simple.discard(draftId)
+                }
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: SQLiteException) {
@@ -46,7 +53,7 @@ private fun GeneralStoredDraft.toSummary(): CreationProgressSummary =
         stage = CreationStage.GENERAL_DRAFT,
         resumePoint = CreationResumePoint.GeneralStep,
         createdAt = createdAt,
-        title = form.title,
-        oneLineIntro = form.oneLineIntro,
-        thumbnailUrl = form.cover?.previewUrl,
+        title = title,
+        oneLineIntro = oneLineIntro,
+        thumbnailUrl = thumbnailUrl,
     )

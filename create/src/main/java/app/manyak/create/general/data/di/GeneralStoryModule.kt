@@ -1,12 +1,13 @@
 package app.manyak.create.general.data.di
 
 import app.manyak.common.domain.story.ReviewWatch
+import app.manyak.create.general.data.GeneralDraftServerStore
 import app.manyak.create.general.data.GeneralReviewWatch
 import app.manyak.create.general.data.GeneralStoryRepositoryImpl
 import app.manyak.create.general.data.api.GeneralImageUploadApi
 import app.manyak.create.general.data.api.GeneralStoryApi
 import app.manyak.create.general.data.api.GeneralSubmissionInterceptor
-import app.manyak.create.general.data.database.GeneralDraftRoomStore
+import app.manyak.create.general.data.api.StoryDraftApi
 import app.manyak.create.general.domain.GeneralDraftStore
 import app.manyak.create.general.domain.GeneralStoryRepository
 import app.manyak.network.data.di.AuthenticatedClient
@@ -31,7 +32,7 @@ abstract class GeneralStoryModule {
 
     @Binds
     @Singleton
-    abstract fun bindGeneralDraftStore(impl: GeneralDraftRoomStore): GeneralDraftStore
+    abstract fun bindGeneralDraftStore(impl: GeneralDraftServerStore): GeneralDraftStore
 
     @Binds
     @Singleton
@@ -56,6 +57,14 @@ abstract class GeneralStoryModule {
                 config,
                 json,
             ).create(GeneralStoryApi::class.java)
+
+        @Provides
+        @Singleton
+        fun provideStoryDraftApi(
+            @AuthenticatedClient client: OkHttpClient,
+            config: DataLayerConfig,
+            json: Json,
+        ): StoryDraftApi = retrofit(client, config, json).create(StoryDraftApi::class.java)
 
         @Provides
         @Singleton

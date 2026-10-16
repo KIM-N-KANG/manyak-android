@@ -37,10 +37,13 @@ class GeneralStoryRepositoryImpl
             MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
         override val submissionChanges = changes.asSharedFlow()
 
-        override suspend fun submit(content: GeneralStoryContent): DomainResult<GeneralStorySaveResult.Accepted> =
+        override suspend fun submit(
+            content: GeneralStoryContent,
+            draftId: String?,
+        ): DomainResult<GeneralStorySaveResult.Accepted> =
             apiCall {
                 api.submit(
-                    content.toRequest(),
+                    content.toRequest(draftId),
                 )
             }.map { GeneralStorySaveResult.Accepted(it.submissionId) }.notifyChange()
 
@@ -53,11 +56,12 @@ class GeneralStoryRepositoryImpl
         override suspend fun resubmit(
             submissionId: String,
             content: GeneralStoryContent,
+            draftId: String?,
         ): DomainResult<GeneralStorySaveResult.Accepted> =
             apiCall {
                 api.resubmit(
                     submissionId,
-                    content.toRequest(),
+                    content.toRequest(draftId),
                 )
             }.map { GeneralStorySaveResult.Accepted(it.submissionId) }.notifyChange()
 

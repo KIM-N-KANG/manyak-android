@@ -188,6 +188,12 @@
     <string name="general_editor_exit_close">닫기</string>
     <string name="general_editor_exit_leave">나가기</string>
     <string name="general_editor_draft_failed">작성 내용을 저장하지 못했어요</string>
+    <string name="general_editor_draft_limit">임시 저장은 5개까지 할 수 있어요</string>
+    <string name="general_editor_draft_too_large">내용이 길어서 임시 저장하지 못했어요</string>
+    <string name="general_editor_draft_not_found">만들던 스토리를 찾지 못했어요</string>
+    <string name="general_editor_draft_conflict_title">다른 곳에서 먼저 저장한 내용이 있어요</string>
+    <string name="general_editor_draft_conflict_description">지금 내용으로 저장하면 다른 곳에서 저장한 내용은 사라져요</string>
+    <string name="general_editor_draft_conflict_save">저장하기</string>
     <string name="general_editor_chat_failed">채팅을 시작하지 못했어요</string>
     <string name="general_editor_acceptance_failed">등록은 접수됐지만 기기에 접수 상태를 저장하지 못했어요. 다시 시도해 주세요</string>
     <string name="general_editor_tab_reason">%1$s: %2$s</string>
