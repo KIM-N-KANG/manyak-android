@@ -8,6 +8,7 @@ import app.manyak.create.entity.KeywordCharacterSnapshot
 import app.manyak.create.entity.KeywordCustomTagSnapshot
 import app.manyak.create.entity.KeywordDraftSnapshot
 import app.manyak.create.entity.PendingStoryCreation
+import app.manyak.create.entity.ServerDraftLink
 import app.manyak.create.entity.StoredCreationDraft
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -34,9 +35,15 @@ data class PendingStoryCreationEntity(
     @ColumnInfo(defaultValue = "") val ownerId: String = UNOWNED,
     /** 처음 임시 저장한 시각(epoch millis). 행이 생길 때 한 번 정하고, 여러 초안 이전에 저장한 행은 null 이다. */
     val createdAt: Long? = null,
+    /**
+     * 서버 초안 세션의 진행 기록이면 그때의 서버 버전이다. 아직 서버에 저장한 적이 없으면 [NOT_SAVED_ON_SERVER]이고,
+     * null 은 기기 안에만 저장하는 세션의 기록이다.
+     */
+    val serverDraftVersion: Int? = null,
 ) {
     companion object {
         const val UNOWNED: String = ""
+        const val NOT_SAVED_ON_SERVER: Int = 0
     }
 }
 
@@ -60,6 +67,7 @@ internal fun PendingStoryCreation.toEntity(
                 createdAt = createdAt,
                 stage = STAGE_STORYLINE_GENERATION,
                 generationCommand = encode(command.toDto()),
+                serverDraftVersion = serverDraft.toColumn(),
             )
 
         is PendingStoryCreation.Draft ->
@@ -72,6 +80,7 @@ internal fun PendingStoryCreation.toEntity(
                 completionCommand = lastCompletionCommand?.let { encode(it.toDto()) },
                 generation = encode(generation.toDto()),
                 progress = encode(progress.toDto()),
+                serverDraftVersion = serverDraft.toColumn(),
             )
 
         is PendingStoryCreation.KeywordDraft ->
@@ -88,7 +97,12 @@ internal fun PendingStoryCreationEntity.toDomainOrNull(): PendingStoryCreation? 
     when (stage) {
         STAGE_STORYLINE_GENERATION ->
             decodeOrNull<GenerationCommandDto>(generationCommand)
-                ?.let { PendingStoryCreation.GeneratingStorylines(it.toDomain()) }
+                ?.let {
+                    PendingStoryCreation.GeneratingStorylines(
+                        it.toDomain(),
+                        serverDraftVersion.toServerDraftLink(),
+                    )
+                }
 
         STAGE_STORY_DRAFT ->
             decodeOrNull<GenerationSnapshotDto>(generation)?.let { snapshot ->
@@ -97,6 +111,7 @@ internal fun PendingStoryCreationEntity.toDomainOrNull(): PendingStoryCreation? 
                     generation = snapshot.toDomain(),
                     progress = (decodeOrNull<ProgressDto>(progress) ?: ProgressDto()).toDomain(),
                     lastCompletionCommand = decodeOrNull<CompletionCommandDto>(completionCommand)?.toDomain(),
+                    serverDraft = serverDraftVersion.toServerDraftLink(),
                 )
             }
 
@@ -106,6 +121,12 @@ internal fun PendingStoryCreationEntity.toDomainOrNull(): PendingStoryCreation? 
 
         else -> null
     }
+
+internal fun ServerDraftLink?.toColumn(): Int? =
+    this?.let { it.baseVersion ?: PendingStoryCreationEntity.NOT_SAVED_ON_SERVER }
+
+internal fun Int?.toServerDraftLink(): ServerDraftLink? =
+    this?.let { ServerDraftLink(it.takeIf { version -> version != PendingStoryCreationEntity.NOT_SAVED_ON_SERVER }) }
 
 internal fun PendingStoryCreationEntity.toStoredDraftOrNull(): StoredCreationDraft? =
     toDomainOrNull()?.let { record -> StoredCreationDraft(draftId = draftId, createdAt = createdAt, record = record) }

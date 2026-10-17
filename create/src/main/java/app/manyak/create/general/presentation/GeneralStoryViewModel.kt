@@ -11,6 +11,7 @@ import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.story.ReviewWatch
 import app.manyak.common.presentation.mvi.MviViewModel
 import app.manyak.create.domain.StoryCreationRepository
+import app.manyak.create.entity.StoryDraftSave
 import app.manyak.create.general.domain.GeneralDraftStore
 import app.manyak.create.general.domain.GeneralStoryRepository
 import app.manyak.create.general.domain.buildGeneralStoryContent
@@ -21,7 +22,6 @@ import app.manyak.create.general.domain.restoreGeneralStoryForm
 import app.manyak.create.general.domain.shouldDeleteGeneralThumbnail
 import app.manyak.create.general.domain.validateGeneralStoryEdit
 import app.manyak.create.general.domain.validateGeneralStoryForm
-import app.manyak.create.general.entity.GeneralDraftSave
 import app.manyak.create.general.entity.GeneralErrorReason
 import app.manyak.create.general.entity.GeneralFieldError
 import app.manyak.create.general.entity.GeneralFieldTarget
@@ -336,10 +336,10 @@ class GeneralStoryViewModel
                     var saved = false
                     try {
                         val result =
-                            withEditorAuth<GeneralDraftSave>(GeneralDraftSave.Failed) { work ->
-                                gate.commit(work) { draft.save(form) } ?: GeneralDraftSave.Failed
+                            withEditorAuth<StoryDraftSave>(StoryDraftSave.Failed) { work ->
+                                gate.commit(work) { draft.save(form) } ?: StoryDraftSave.Failed
                             }
-                        saved = result is GeneralDraftSave.Saved
+                        saved = result is StoryDraftSave.Saved
                         // 백그라운드 전환 저장(showToast 가 거짓)은 실패도 알리지 않는다.
                         result.conflictVersion(showToast)?.let { updateIfAlive(GeneralEditorEvent.DraftConflict(it)) }
                         result.toastMessage(showToast, announceSaved)?.let { message(it) }

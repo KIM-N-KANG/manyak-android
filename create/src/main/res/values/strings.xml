@@ -37,6 +37,7 @@
     <string name="create_dialog_close">닫기</string>
     <string name="create_draft_save">임시 저장</string>
     <string name="create_draft_saved">임시 저장했어요</string>
+    <string name="create_draft_load_failed">작성 내용을 불러오지 못했어요</string>
     <string name="create_error_duplicate_name">이미 사용한 이름이에요</string>
     <string name="create_error_duplicate_name_footer">인물 이름이 겹치지 않게 해주세요</string>
     <string name="create_error_select_art_style">이미지 스타일을 선택해주세요</string>

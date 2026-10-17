@@ -4,8 +4,10 @@ import app.manyak.common.domain.story.CreationProgressAccess
 import app.manyak.create.data.completion.StoryCompletionExecutor
 import app.manyak.create.data.database.PendingStoryCreationRoomStore
 import app.manyak.create.data.database.StoryCompletionRequestRoomStore
+import app.manyak.create.data.draft.SimpleDraftServerStore
 import app.manyak.create.data.repository.StoryCreationRepositoryImpl
 import app.manyak.create.domain.PendingStoryCreationStore
+import app.manyak.create.domain.SimpleDraftStore
 import app.manyak.create.domain.StoryCompletionRequestStore
 import app.manyak.create.domain.StoryCompletionSubmitter
 import app.manyak.create.domain.StoryCreationRepository
@@ -30,6 +32,10 @@ abstract class CreateModule {
     @Binds
     @Singleton
     abstract fun bindStoryCompletionRequestStore(impl: StoryCompletionRequestRoomStore): StoryCompletionRequestStore
+
+    @Binds
+    @Singleton
+    abstract fun bindSimpleDraftStore(impl: SimpleDraftServerStore): SimpleDraftStore
 
     @Binds
     @Singleton

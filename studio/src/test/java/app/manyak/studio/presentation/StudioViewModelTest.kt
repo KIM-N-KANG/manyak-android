@@ -535,6 +535,37 @@ class StudioViewModelTest {
             assertEquals(listOf("f"), store.deletedRequestIds)
             assertEquals(listOf(pendingRequest("a")), store.currentRequests)
         }
+
+    @Test
+    fun `같은 ID 의 기기 안 카드와 서버 카드는 이어서 만들기와 삭제를 따로 한다`() =
+        runTest(dispatcher) {
+            val local = CreationProgressSummary("same", CreationStage.STORY_DRAFT, CreationResumePoint.StorylineStep)
+            val server =
+                local.copy(
+                    stage = CreationStage.KEYWORD_DRAFT,
+                    resumePoint = CreationResumePoint.KeywordStep,
+                    onServer = true,
+                )
+            val access = FakeCreationProgressAccess(listOf(local, server))
+            val viewModel = studioViewModel(access, FakeStoryRepository(), NoOpAnalytics)
+            viewModel.onIntent(StudioIntent.ScreenShown)
+            advanceUntilIdle()
+
+            viewModel.onIntent(StudioIntent.ResumeCreation("same", onServer = true))
+            advanceUntilIdle()
+            assertEquals(
+                StudioEffect.NavigateToResume("same", CreationResumePoint.KeywordStep, onServer = true),
+                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
+            )
+
+            viewModel.onIntent(StudioIntent.OpenCardOptions(StudioCard.Draft("same", onServer = true)))
+            advanceUntilIdle()
+            viewModel.onIntent(StudioIntent.RequestDelete)
+            advanceUntilIdle()
+            viewModel.onIntent(StudioIntent.ConfirmDelete)
+            advanceUntilIdle()
+            assertEquals(listOf("same" to true), access.discarded)
+        }
 }
 
 private const val GENERATING_DRAFT_ID = "draft-generating"

@@ -26,15 +26,20 @@ internal class FakeCreationProgressAccess(
     val retriedRequestIds = mutableListOf<String>()
     val deletedRequestIds = mutableListOf<String>()
     var discardSucceeds = true
+    val discarded = mutableListOf<Pair<String, Boolean>>()
     var deleteSucceeds = true
 
     fun emitRequests(requests: List<CompletionRequestSummary>) {
         requestState.value = requests
     }
 
-    override suspend fun discard(draftId: String): Boolean {
+    override suspend fun discard(
+        draftId: String,
+        onServer: Boolean,
+    ): Boolean {
         if (!discardSucceeds) return false
-        draftState.value = draftState.value.filterNot { it.draftId == draftId }
+        discarded += draftId to onServer
+        draftState.value = draftState.value.filterNot { it.draftId == draftId && it.onServer == onServer }
         return true
     }
 

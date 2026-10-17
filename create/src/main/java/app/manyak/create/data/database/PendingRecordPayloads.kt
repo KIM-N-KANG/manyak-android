@@ -37,6 +37,7 @@ internal data class CompletionCommandDto(
     val storylineId: Long,
     val additionalInfos: List<String>,
     val artStyle: String? = null,
+    val draftId: String? = null,
 )
 
 @Serializable
@@ -112,6 +113,7 @@ internal fun StoryCompletionCommand.toDto(): CompletionCommandDto =
         storylineId = storylineId,
         additionalInfos = additionalInfos,
         artStyle = artStyle,
+        draftId = draftId,
     )
 
 internal fun CompletionCommandDto.toDomain(): StoryCompletionCommand =
@@ -121,6 +123,7 @@ internal fun CompletionCommandDto.toDomain(): StoryCompletionCommand =
         storylineId = storylineId,
         additionalInfos = additionalInfos,
         artStyle = artStyle,
+        draftId = draftId,
     )
 
 internal fun StorylineGeneration.toDto(): GenerationSnapshotDto =

@@ -47,7 +47,7 @@ interface StoryCompletionRequestDao {
         draftId: String,
     ) {
         val draft = findDraft(draftId, entity.ownerId)
-        upsert(entity.copy(createdAt = if (draft == null) entity.submittedAt else draft.createdAt))
+        upsert(entity.copy(createdAt = if (draft == null) entity.createdAt ?: entity.submittedAt else draft.createdAt))
         releaseDraft(draftId, entity.ownerId)
     }
 

@@ -9,6 +9,7 @@ import app.manyak.create.presentation.state.FunnelExitWarning
 import app.manyak.create.presentation.state.StorylineGenerationState
 import app.manyak.create.presentation.state.StorylineGenerationStore
 import app.manyak.create.testing.FakePendingStoryCreationStore
+import app.manyak.create.testing.FakeSimpleDraftStore
 import app.manyak.create.testing.FakeStoryCompletionSubmitter
 import app.manyak.create.testing.FakeStoryCreationRepository
 import app.manyak.create.testing.TEST_DRAFT_ID
@@ -58,6 +59,7 @@ class CreateAdditionalInfoViewModelTest {
                 pendingStore,
                 FakeStoryCompletionSubmitter(),
                 this,
+                FakeSimpleDraftStore(),
             ).bind(TEST_DRAFT_ID),
             repository,
             NoOpAnalytics,
@@ -79,7 +81,14 @@ class CreateAdditionalInfoViewModelTest {
     ): LoadedFixture {
         val repository = FakeStoryCreationRepository()
         val pendingStore = FakePendingStoryCreationStore()
-        val store = StorylineGenerationStore(repository, pendingStore, submitter, this).bind(TEST_DRAFT_ID)
+        val store =
+            StorylineGenerationStore(
+                repository,
+                pendingStore,
+                submitter,
+                this,
+                FakeSimpleDraftStore(),
+            ).bind(TEST_DRAFT_ID)
         store.generate(sampleGenerationInput())
         advanceUntilIdle()
         // "선택하기"로 추가 정보 단계에 들어온 상태를 만든다. 재개 지점이 이 값으로 갈린다.
@@ -330,6 +339,7 @@ class CreateAdditionalInfoViewModelTest {
                     pendingStore,
                     FakeStoryCompletionSubmitter(),
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
             val viewModel =
                 CreateAdditionalInfoViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics)
@@ -364,6 +374,7 @@ class CreateAdditionalInfoViewModelTest {
                     pendingStore,
                     FakeStoryCompletionSubmitter(),
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
 
             val viewModel =
@@ -409,6 +420,7 @@ class CreateAdditionalInfoViewModelTest {
                     pendingStore,
                     FakeStoryCompletionSubmitter(),
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
 
             CreateAdditionalInfoViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics)
@@ -630,6 +642,7 @@ class CreateAdditionalInfoViewModelTest {
                     FakePendingStoryCreationStore(),
                     FakeStoryCompletionSubmitter(),
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
             val viewModel = CreateAdditionalInfoViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics)
             advanceUntilIdle()

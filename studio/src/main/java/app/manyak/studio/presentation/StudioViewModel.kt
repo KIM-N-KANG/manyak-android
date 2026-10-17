@@ -46,9 +46,10 @@ sealed interface StudioCard {
         val story: StorySummary,
     ) : StudioCard
 
-    /** 편집 중 초안. 삭제는 그 로컬 초안만 지우고 서버를 부르지 않는다. */
+    /** 편집 중 초안. [onServer]는 같은 ID 의 기기 안 카드와 따로 보이는 서버 간편 제작 초안이다. */
     data class Draft(
         val draftId: String,
+        val onServer: Boolean = false,
     ) : StudioCard
 
     /** 완성에 실패한 요청. 삭제는 그 요청 행만 지운다. */
@@ -100,6 +101,7 @@ sealed interface StudioIntent {
     /** 초안 카드의 "이어서 만들기". */
     data class ResumeCreation(
         val draftId: String,
+        val onServer: Boolean = false,
     ) : StudioIntent
 
     /** 화면이 다시 보였다. 떠난 사이 바뀐 목록과 요청 상태를 서버와 맞춘다. */
@@ -218,6 +220,7 @@ sealed interface StudioEffect {
     data class NavigateToResume(
         val draftId: String,
         val resumePoint: CreationResumePoint,
+        val onServer: Boolean = false,
     ) : StudioEffect
 
     data object ShowStoryDeleted : StudioEffect
@@ -400,10 +403,14 @@ class StudioViewModel
                 StudioIntent.EditStory, is StudioIntent.EditSubmission -> editSelectedCard(intent, state)
 
                 is StudioIntent.ResumeCreation ->
-                    state.drafts.firstOrNull { it.draftId == intent.draftId }?.let { draft ->
-                        draft.toStage()?.let { analytics.track(AnalyticsEvent.ContinueBannerClicked(it)) }
-                        dispatchEffect(StudioEffect.NavigateToResume(draft.draftId, draft.resumePoint))
-                    }
+                    state.drafts
+                        .firstOrNull { it.draftId == intent.draftId && it.onServer == intent.onServer }
+                        ?.let { draft ->
+                            draft.toStage()?.let { analytics.track(AnalyticsEvent.ContinueBannerClicked(it)) }
+                            dispatchEffect(
+                                StudioEffect.NavigateToResume(draft.draftId, draft.resumePoint, draft.onServer),
+                            )
+                        }
 
                 is StudioIntent.RetryCompletion -> creationProgress.retryCompletionRequest(intent.requestId)
             }
@@ -603,7 +610,10 @@ class StudioViewModel
                         is StudioCard.Submission -> deleteSubmission(target.submission)
 
                         // 실패하면 카드와 입력이 그대로 남는다.
-                        is StudioCard.Draft -> finishLocalDelete(creationProgress.discard(target.draftId))
+                        is StudioCard.Draft ->
+                            finishLocalDelete(
+                                creationProgress.discard(target.draftId, target.onServer),
+                            )
 
                         is StudioCard.FailedRequest ->
                             finishLocalDelete(creationProgress.deleteCompletionRequest(target.requestId))
@@ -719,9 +729,9 @@ class StudioViewModel
 
                 is StudioEvent.DraftsChanged -> {
                     // 시트·다이얼로그가 열린 사이 그 초안이 사라졌으면 물을 대상도 없다.
-                    val draftIds = event.drafts.mapTo(mutableSetOf()) { it.draftId }
+                    val drafts = event.drafts.mapTo(mutableSetOf()) { StudioCard.Draft(it.draftId, it.onServer) }
 
-                    fun StudioCard?.isGone() = this is StudioCard.Draft && draftId !in draftIds
+                    fun StudioCard?.isGone() = this is StudioCard.Draft && this !in drafts
                     state.copy(
                         drafts = event.drafts,
                         optionsTarget = state.optionsTarget.takeUnless { it.isGone() },

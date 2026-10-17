@@ -74,7 +74,7 @@ fun StudioScreen(
     contentPadding: PaddingValues,
     onOpenStory: (String) -> Unit,
     onCreateStory: () -> Unit,
-    onResumeCreation: (draftId: String, CreationResumePoint) -> Unit,
+    onResumeCreation: (draftId: String, CreationResumePoint, onServer: Boolean) -> Unit,
     modifier: Modifier = Modifier,
     refreshRequest: Int = 0,
     onEditStory: (String) -> Unit = {},
@@ -96,7 +96,8 @@ fun StudioScreen(
                     StudioEffect.NavigateToCreate -> currentOnCreateStory()
                     is StudioEffect.NavigateToEdit -> currentOnEditStory(effect.storyId)
                     is StudioEffect.NavigateToSubmission -> currentOnEditSubmission(effect.submissionId)
-                    is StudioEffect.NavigateToResume -> currentOnResumeCreation(effect.draftId, effect.resumePoint)
+                    is StudioEffect.NavigateToResume ->
+                        currentOnResumeCreation(effect.draftId, effect.resumePoint, effect.onServer)
 
                     StudioEffect.ShowSubmissionCanceled ->
                         Toast.makeText(context, StudioR.string.studio_submission_canceled, Toast.LENGTH_SHORT).show()

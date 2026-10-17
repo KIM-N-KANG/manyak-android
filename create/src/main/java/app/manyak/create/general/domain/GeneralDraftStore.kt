@@ -1,8 +1,8 @@
 package app.manyak.create.general.domain
 
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.create.entity.StoryDraftSave
 import app.manyak.create.general.entity.GeneralDraftOpen
-import app.manyak.create.general.entity.GeneralDraftSave
 import app.manyak.create.general.entity.GeneralStoredDraft
 import app.manyak.create.general.entity.GeneralStoryForm
 import kotlinx.coroutines.flow.Flow
@@ -24,7 +24,7 @@ interface GeneralDraftStore {
         draftId: String,
         form: GeneralStoryForm,
         baseVersion: Int?,
-    ): GeneralDraftSave
+    ): StoryDraftSave
 
     /** 접수한 초안을 기록해, 복원된 화면을 제출본으로 잇고 늦은 저장이 초안을 되살리지 못하게 한다. */
     suspend fun markAccepted(

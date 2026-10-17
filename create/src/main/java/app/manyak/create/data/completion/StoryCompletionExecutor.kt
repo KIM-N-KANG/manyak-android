@@ -66,7 +66,10 @@ class StoryCompletionExecutor
         override val completionRequests: Flow<List<CompletionRequestSummary>> =
             requestStore.requests.map { requests -> requests.map(StoryCompletionRequest::toSummary) }
 
-        override suspend fun discard(draftId: String): Boolean = draftStore.clear(draftId)
+        override suspend fun discard(
+            draftId: String,
+            onServer: Boolean,
+        ): Boolean = draftStore.clear(draftId)
 
         override suspend fun submit(
             request: StoryCompletionRequest,

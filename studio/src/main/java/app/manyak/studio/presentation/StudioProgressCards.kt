@@ -14,7 +14,10 @@ internal fun LazyListScope.progressCards(
     onOpenStory: (String) -> Unit,
     onIntent: (StudioIntent) -> Unit,
 ) {
-    items(state.drafts, key = { draft -> "$DRAFT_KEY_PREFIX${draft.draftId}" }) { draft ->
+    // 기기 안 기록 뒤에 다른 곳에서 저장한 서버 초안은 같은 ID 로 따로 보인다.
+    items(state.drafts, key = { draft ->
+        "$DRAFT_KEY_PREFIX${if (draft.onServer) "server:" else ""}${draft.draftId}"
+    }) { draft ->
         CreationProgressCard(
             kind =
                 CreationProgressCardKind.Draft(
@@ -25,8 +28,12 @@ internal fun LazyListScope.progressCards(
                     draft.thumbnailUrl,
                 ),
             savedAt = draft.createdAt,
-            onPrimaryAction = { onIntent(StudioIntent.ResumeCreation(draft.draftId)) },
-            onOptionsClick = { onIntent(StudioIntent.OpenCardOptions(StudioCard.Draft(draft.draftId))) },
+            onPrimaryAction = { onIntent(StudioIntent.ResumeCreation(draft.draftId, draft.onServer)) },
+            onOptionsClick = {
+                onIntent(
+                    StudioIntent.OpenCardOptions(StudioCard.Draft(draft.draftId, draft.onServer)),
+                )
+            },
         )
     }
     items(state.submissions, key = { "submission:${it.id}" }) { submission ->

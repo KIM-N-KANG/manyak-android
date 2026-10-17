@@ -31,6 +31,11 @@ data class CreationProgressSummary(
     val title: String? = null,
     val oneLineIntro: String? = null,
     val thumbnailUrl: String? = null,
+    /**
+     * 서버 간편 제작 초안 카드면 true. 이 기기의 진행 기록을 남긴 뒤 다른 곳에서 다시 저장한 서버 초안은 같은 [draftId]의
+     * 기기 안 카드와 따로 보이므로, 이어서 만들기와 삭제가 어느 쪽인지 이 값으로 가른다.
+     */
+    val onServer: Boolean = false,
 )
 
 enum class CompletionRequestStatus {

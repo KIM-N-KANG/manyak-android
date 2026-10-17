@@ -2,11 +2,11 @@ package app.manyak.create.general.presentation
 
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.create.entity.StoryDraftSave
 import app.manyak.create.general.domain.GeneralDraftStore
 import app.manyak.create.general.domain.GeneralStoryRepository
 import app.manyak.create.general.entity.GeneralCharacter
 import app.manyak.create.general.entity.GeneralDraftOpen
-import app.manyak.create.general.entity.GeneralDraftSave
 import app.manyak.create.general.entity.GeneralGender
 import app.manyak.create.general.entity.GeneralImageKind
 import app.manyak.create.general.entity.GeneralStartSetting
@@ -80,7 +80,7 @@ internal class GeneralDraftStoreFake : GeneralDraftStore {
     var saveFails = false
 
     /** 비어 있으면 저장마다 버전을 하나씩 올려 성공한다. */
-    val saveResults = ArrayDeque<GeneralDraftSave>()
+    val saveResults = ArrayDeque<StoryDraftSave>()
     var acceptedSucceeds = true
     val baseVersions = mutableListOf<Int?>()
     val saves get() = baseVersions.size
@@ -97,11 +97,11 @@ internal class GeneralDraftStoreFake : GeneralDraftStore {
         draftId: String,
         form: GeneralStoryForm,
         baseVersion: Int?,
-    ): GeneralDraftSave {
+    ): StoryDraftSave {
         baseVersions += baseVersion
         if (saveFails) error("network unavailable")
         this.form = form
-        return saveResults.removeFirstOrNull() ?: GeneralDraftSave.Saved((baseVersion ?: 0) + 1)
+        return saveResults.removeFirstOrNull() ?: StoryDraftSave.Saved((baseVersion ?: 0) + 1)
     }
 
     override suspend fun markAccepted(

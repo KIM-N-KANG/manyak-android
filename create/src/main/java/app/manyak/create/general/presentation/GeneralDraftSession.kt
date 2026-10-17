@@ -2,9 +2,9 @@ package app.manyak.create.general.presentation
 
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.error.map
+import app.manyak.create.entity.StoryDraftSave
 import app.manyak.create.general.domain.GeneralDraftStore
 import app.manyak.create.general.entity.GeneralDraftOpen
-import app.manyak.create.general.entity.GeneralDraftSave
 import app.manyak.create.general.entity.GeneralStoryForm
 
 /**
@@ -39,9 +39,9 @@ internal class GeneralDraftSession(
             }
         }
 
-    suspend fun save(form: GeneralStoryForm): GeneralDraftSave =
+    suspend fun save(form: GeneralStoryForm): StoryDraftSave =
         store.save(draftId, form, version).also {
-            if (it is GeneralDraftSave.Saved) {
+            if (it is StoryDraftSave.Saved) {
                 version = it.version
                 localForm = null
             }
@@ -49,18 +49,18 @@ internal class GeneralDraftSession(
 }
 
 /** 충돌은 다이얼로그로 묻는다. 알리지 않는 저장이면 null 이다. */
-internal fun GeneralDraftSave.conflictVersion(notify: Boolean): Int? =
-    (this as? GeneralDraftSave.Conflict)?.version?.takeIf { notify }
+internal fun StoryDraftSave.conflictVersion(notify: Boolean): Int? =
+    (this as? StoryDraftSave.Conflict)?.version?.takeIf { notify }
 
 /** 성공은 헤더 버튼이 알려 [announceSaved]일 때만 직접 알린다. 실패는 [notify]일 때만 알린다. */
-internal fun GeneralDraftSave.toastMessage(
+internal fun StoryDraftSave.toastMessage(
     notify: Boolean,
     announceSaved: Boolean,
 ): GeneralEditorMessage? =
     when (this) {
-        is GeneralDraftSave.Saved -> GeneralEditorMessage.DRAFT_SAVED.takeIf { announceSaved }
-        is GeneralDraftSave.Conflict -> null
-        GeneralDraftSave.LimitExceeded -> GeneralEditorMessage.DRAFT_LIMIT.takeIf { notify }
-        GeneralDraftSave.TooLarge -> GeneralEditorMessage.DRAFT_TOO_LARGE.takeIf { notify }
-        GeneralDraftSave.Failed -> GeneralEditorMessage.DRAFT_FAILED.takeIf { notify }
+        is StoryDraftSave.Saved -> GeneralEditorMessage.DRAFT_SAVED.takeIf { announceSaved }
+        is StoryDraftSave.Conflict -> null
+        StoryDraftSave.LimitExceeded -> GeneralEditorMessage.DRAFT_LIMIT.takeIf { notify }
+        StoryDraftSave.TooLarge -> GeneralEditorMessage.DRAFT_TOO_LARGE.takeIf { notify }
+        StoryDraftSave.Failed -> GeneralEditorMessage.DRAFT_FAILED.takeIf { notify }
     }

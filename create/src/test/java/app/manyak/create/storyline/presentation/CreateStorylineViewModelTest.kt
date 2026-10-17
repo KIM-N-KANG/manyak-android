@@ -9,6 +9,7 @@ import app.manyak.create.entity.StorylineRating
 import app.manyak.create.presentation.state.FunnelExitWarning
 import app.manyak.create.presentation.state.StorylineGenerationStore
 import app.manyak.create.testing.FakePendingStoryCreationStore
+import app.manyak.create.testing.FakeSimpleDraftStore
 import app.manyak.create.testing.FakeStoryCompletionSubmitter
 import app.manyak.create.testing.FakeStoryCreationRepository
 import app.manyak.create.testing.TEST_DRAFT_ID
@@ -72,6 +73,7 @@ class CreateStorylineViewModelTest {
                     FakePendingStoryCreationStore(),
                     FakeStoryCompletionSubmitter(),
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
@@ -244,6 +246,7 @@ class CreateStorylineViewModelTest {
                     pendingStore,
                     FakeStoryCompletionSubmitter(),
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
@@ -276,6 +279,7 @@ class CreateStorylineViewModelTest {
                     pendingStore,
                     FakeStoryCompletionSubmitter(),
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
@@ -310,6 +314,7 @@ class CreateStorylineViewModelTest {
                     pendingStore,
                     FakeStoryCompletionSubmitter(),
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
@@ -339,6 +344,7 @@ class CreateStorylineViewModelTest {
                     pendingStore,
                     FakeStoryCompletionSubmitter(),
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
@@ -368,6 +374,7 @@ class CreateStorylineViewModelTest {
                     pendingStore,
                     FakeStoryCompletionSubmitter(),
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
@@ -398,6 +405,7 @@ class CreateStorylineViewModelTest {
                     pendingStore,
                     FakeStoryCompletionSubmitter(),
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
@@ -434,6 +442,7 @@ class CreateStorylineViewModelTest {
                     pendingStore,
                     FakeStoryCompletionSubmitter(),
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
 
             val viewModel = CreateStorylineViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics)
@@ -456,6 +465,7 @@ class CreateStorylineViewModelTest {
                     FakePendingStoryCreationStore(),
                     FakeStoryCompletionSubmitter(),
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
             // 키워드 화면이 생성을 시작한 직후 — 아직 응답 전이라 스토어는 생성 중이다.
             store.generate(sampleGenerationInput())
@@ -478,6 +488,7 @@ class CreateStorylineViewModelTest {
                 FakePendingStoryCreationStore(),
                 FakeStoryCompletionSubmitter(),
                 this,
+                FakeSimpleDraftStore(),
             ).bind(TEST_DRAFT_ID)
         store.generate(sampleGenerationInput())
         advanceUntilIdle()

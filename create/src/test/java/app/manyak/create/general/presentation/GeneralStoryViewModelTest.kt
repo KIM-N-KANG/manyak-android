@@ -7,11 +7,11 @@ import app.manyak.common.domain.chat.ChatStarter
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.entity.chat.CreatedChat
+import app.manyak.create.entity.StoryDraftSave
 import app.manyak.create.entity.StoryTag
 import app.manyak.create.entity.StoryTagCategory
 import app.manyak.create.general.data.GeneralReviewWatch
 import app.manyak.create.general.entity.GeneralDraftOpen
-import app.manyak.create.general.entity.GeneralDraftSave
 import app.manyak.create.testing.FakeStoryCreationRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -195,7 +195,7 @@ class GeneralStoryViewModelTest {
     @Test
     fun a_conflict_asks_first_and_overwrite_uses_the_server_version() =
         runTest(dispatcher) {
-            val drafts = GeneralDraftStoreFake().apply { saveResults += GeneralDraftSave.Conflict(7) }
+            val drafts = GeneralDraftStoreFake().apply { saveResults += StoryDraftSave.Conflict(7) }
             val model = model(drafts = drafts)
             advanceUntilIdle()
             model.onIntent(GeneralEditorIntent.SaveDraft())
@@ -216,8 +216,8 @@ class GeneralStoryViewModelTest {
         runTest(dispatcher) {
             val drafts =
                 GeneralDraftStoreFake().apply {
-                    saveResults += GeneralDraftSave.Conflict(7)
-                    saveResults += GeneralDraftSave.LimitExceeded
+                    saveResults += StoryDraftSave.Conflict(7)
+                    saveResults += StoryDraftSave.LimitExceeded
                 }
             val model = model(drafts = drafts)
             advanceUntilIdle()

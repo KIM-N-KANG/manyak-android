@@ -45,7 +45,7 @@ class StudioSubmissionUiTest {
         restoration.setContent {
             ManyakTheme(darkTheme = dark.value) {
                 Surface {
-                    StudioScreen(PaddingValues(16.dp), {}, {}, { _, _ -> }, viewModel = vm)
+                    StudioScreen(PaddingValues(16.dp), {}, {}, { _, _, _ -> }, viewModel = vm)
                 }
             }
         }
@@ -123,7 +123,10 @@ private object EmptyCreationProgress : CreationProgressAccess {
     override val drafts = MutableStateFlow(emptyList<CreationProgressSummary>())
     override val completionRequests = MutableStateFlow(emptyList<CompletionRequestSummary>())
 
-    override suspend fun discard(draftId: String) = false
+    override suspend fun discard(
+        draftId: String,
+        onServer: Boolean,
+    ) = false
 
     override suspend fun refreshCompletionRequests() = Unit
 

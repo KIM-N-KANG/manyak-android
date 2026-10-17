@@ -34,6 +34,18 @@ interface PendingStoryCreationDao {
         upsert(if (existing == null) entity else entity.copy(createdAt = existing.createdAt))
     }
 
+    /** 같은 ID 의 행을 [newId]로 옮기고 서버 초안 연결을 버린다. 처음 저장 시각과 내용은 그대로다. */
+    @Transaction
+    suspend fun detach(
+        draftId: String,
+        ownerId: String,
+        newId: String,
+    ) {
+        val existing = find(draftId, ownerId) ?: return
+        upsert(existing.copy(draftId = newId, serverDraftVersion = null))
+        clear(draftId, ownerId)
+    }
+
     @Query("DELETE FROM pending_story_creation WHERE draftId = :draftId AND ownerId = :ownerId")
     suspend fun clear(
         draftId: String,

@@ -54,11 +54,15 @@ data class StoryDetailRoute(
  * 퍼널 단계는 각각 목적지이며, 이 화면은 셸 없이 [MainTabsRoute] 위에 쌓인다.
  *
  * 세 단계 모두 [draftId] 를 싣는다 — 초안이 여러 개라 프로세스 재시작 뒤 어느 초안을 복원할지
- * 라우트가 알아야 한다. 새 제작은 진입할 때 새 ID 를, 초안 카드는 그 초안의 ID 를 싣는다.
+ * 라우트가 알아야 한다. 새 제작은 진입할 때 새 ID 를, 초안 카드는 그 초안의 ID 를 싣는다. [resume]은 제작 탭
+ * 카드로 이어서 연 경우라, 그 초안을 찾지 못했을 때만 새로 시작한다고 알린다. [server]는 같은 ID 의 기기 안 카드와
+ * 따로 보이던 서버 초안 카드로 연 경우다.
  */
 @Serializable
 data class CreateKeywordRoute(
     val draftId: String,
+    val resume: Boolean = false,
+    val server: Boolean = false,
 ) : NavKey
 
 @Serializable
@@ -85,6 +89,8 @@ data class StoryEditRoute(
 @Serializable
 data class CreateStorylineRoute(
     val draftId: String,
+    val resume: Boolean = false,
+    val server: Boolean = false,
 ) : NavKey
 
 /**

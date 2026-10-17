@@ -1,5 +1,6 @@
-package app.manyak.create.general.data.api
+package app.manyak.create.data.api
 
+import app.manyak.create.data.api.dto.CreationRequestStatusDto
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 import retrofit2.Response
@@ -36,20 +37,26 @@ data class StoryDraftCardDto(
     val kind: String? = null,
     val draftId: String? = null,
     val mode: String? = null,
+    val stage: String? = null,
+    val version: Int? = null,
     val title: String? = null,
     val oneLineIntro: String? = null,
     val thumbnailUrl: String? = null,
     val createdAt: String? = null,
 )
 
+/** [generation]은 스토리라인 초안이 가리키는 생성 요청의 복구 조회 결과다. */
 @Serializable
 data class StoryDraftDetailDto(
     val draftId: String,
     val mode: String,
+    val stage: String? = null,
     val version: Int,
     val schemaVersion: Int,
     val payload: JsonObject,
     val imageUrls: Map<String, String> = emptyMap(),
+    val generation: CreationRequestStatusDto? = null,
+    val createdAt: String? = null,
 )
 
 /** 기본값은 직렬화되지 않으므로 모드와 단계도 매번 값으로 채운다. */
@@ -63,11 +70,13 @@ data class PutStoryDraftDto(
     val title: String?,
     val oneLineIntro: String?,
     val thumbnailObjectKey: String?,
+    val generationRequestId: String?,
 )
 
 @Serializable
 data class StoryDraftSavedDto(
     val version: Int,
+    val createdAt: String? = null,
 )
 
 @Serializable

@@ -19,8 +19,11 @@ interface CreationProgressAccess {
     /** 서버에 둔 초안 목록을 다시 받는다. 받지 못해도 기기 안 초안은 그대로 보인다. */
     suspend fun refreshDrafts() {}
 
-    /** 편집 초안 하나만 폐기한다. 다른 초안과 완성 요청은 건드리지 않는다. */
-    suspend fun discard(draftId: String): Boolean
+    /** 편집 초안 하나만 폐기한다. 다른 초안과 완성 요청은 건드리지 않는다. [onServer]는 카드의 [CreationProgressSummary.onServer]다. */
+    suspend fun discard(
+        draftId: String,
+        onServer: Boolean = false,
+    ): Boolean
 
     /** 미확정 요청의 서버 상태를 조회하고 미접수 요청을 재전송한다. 요청별 실패는 서로 격리된다. */
     suspend fun refreshCompletionRequests()

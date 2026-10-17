@@ -1,5 +1,6 @@
 package app.manyak.create.keyword.presentation
 
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
@@ -33,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -44,11 +46,14 @@ import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.create.entity.StoryTagCategory
 import app.manyak.create.presentation.component.CreateFunnelHeader
 import app.manyak.create.presentation.component.CreateStepIndicator
+import app.manyak.create.presentation.component.DraftConflictDialog
+import app.manyak.create.presentation.component.FunnelEntryStatus
 import app.manyak.create.presentation.component.FunnelExitWarningDialog
 import app.manyak.create.presentation.component.FunnelNeutralButton
 import app.manyak.create.presentation.component.FunnelPrimaryButton
 import app.manyak.create.presentation.component.SaveDraftWhenBackgrounded
 import app.manyak.create.presentation.component.labelRes
+import app.manyak.create.presentation.component.resource
 import app.manyak.create.presentation.component.scrollToCenter
 import app.manyak.create.presentation.preview.previewKeywordState
 import app.manyak.designsystem.component.FocusScrollMargin
@@ -65,23 +70,26 @@ import app.manyak.create.R as CreateR
 @Composable
 fun CreateKeywordScreen(
     draftId: String,
+    resume: Boolean,
+    server: Boolean,
     onLeaveFunnel: () -> Unit,
     onOpenStorylineStep: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: CreateKeywordViewModel =
         hiltViewModel<CreateKeywordViewModel, CreateKeywordViewModel.Factory>(
-            creationCallback = { factory -> factory.create(draftId) },
+            creationCallback = { factory -> factory.create(draftId, resume, server) },
         ),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val currentOnOpenStorylineStep by rememberUpdatedState(onOpenStorylineStep)
     val currentOnLeaveFunnel by rememberUpdatedState(onLeaveFunnel)
     val lifecycleOwner = LocalLifecycleOwner.current
+    val context = LocalContext.current
 
     // 시스템 뒤로가기도 헤더 닫기와 같은 이탈 처리를 거친다.
     BackHandler { viewModel.onIntent(CreateKeywordIntent.LeaveFunnel) }
 
-    SaveDraftWhenBackgrounded { viewModel.onIntent(CreateKeywordIntent.SaveDraft) }
+    SaveDraftWhenBackgrounded { viewModel.onIntent(CreateKeywordIntent.SaveDraftInBackground) }
 
     LaunchedEffect(viewModel, lifecycleOwner) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -90,6 +98,14 @@ fun CreateKeywordScreen(
                     CreateKeywordEffect.NavigateToStoryline -> currentOnOpenStorylineStep()
 
                     is CreateKeywordEffect.ExitFunnel -> currentOnLeaveFunnel()
+
+                    is CreateKeywordEffect.ShowDraftMessage ->
+                        Toast.makeText(context, effect.message.resource(), Toast.LENGTH_SHORT).show()
+
+                    CreateKeywordEffect.ShowDraftNotFound ->
+                        Toast
+                            .makeText(context, CreateR.string.general_editor_draft_not_found, Toast.LENGTH_SHORT)
+                            .show()
                 }
             }
         }
@@ -110,6 +126,10 @@ fun CreateKeywordScreen(
             onConfirm = { viewModel.onIntent(CreateKeywordIntent.ConfirmRemoveSupportingCharacter) },
             onDismiss = { viewModel.onIntent(CreateKeywordIntent.DismissRemoveSupportingCharacter) },
         )
+    }
+
+    if (state.draftConflictVersion != null) {
+        DraftConflictDialog { overwrite -> viewModel.onIntent(CreateKeywordIntent.ResolveDraftConflict(overwrite)) }
     }
 
     state.exitWarning?.let { warning ->
@@ -143,6 +163,14 @@ private fun CreateKeywordContent(
                 onSaveDraft = { onIntent(CreateKeywordIntent.SaveDraft) },
                 onClose = { onIntent(CreateKeywordIntent.LeaveFunnel) },
             )
+            if (state.isRestoring) {
+                FunnelEntryStatus(
+                    failed = state.entryFailed,
+                    onRetry = { onIntent(CreateKeywordIntent.RetryEntry) },
+                    modifier = Modifier.weight(1f),
+                )
+                return@Column
+            }
             CreateStepIndicator(
                 currentStep = 0,
                 stepNameRes = CreateR.string.create_step_keyword,

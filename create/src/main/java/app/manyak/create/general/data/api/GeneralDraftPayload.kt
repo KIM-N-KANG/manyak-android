@@ -1,5 +1,6 @@
 package app.manyak.create.general.data.api
 
+import app.manyak.create.data.api.PutStoryDraftDto
 import app.manyak.create.general.entity.GeneralStartSetting
 import app.manyak.create.general.entity.GeneralStoryForm
 import app.manyak.create.general.entity.GeneralStoryImage
@@ -29,6 +30,7 @@ internal fun GeneralStoryForm.toDraftRequest(baseVersion: Int?): PutStoryDraftDt
         title = title.trim().ifEmpty { null },
         oneLineIntro = oneLineIntro.trim().ifEmpty { null },
         thumbnailObjectKey = cover?.objectKey,
+        generationRequestId = null,
     )
 
 internal fun GeneralStoryForm.toDraftPayload(): JsonObject =

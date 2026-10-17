@@ -92,6 +92,9 @@ internal fun CreationProgressCard(
                             ?: stringResource(kind.descriptionRes()),
                     style = ManyakTheme.typography.bodyMedium,
                     color = ManyakTheme.colors.textSubtle,
+                    // 서버 스토리라인 초안은 고른 스토리라인 본문이 와서 길다.
+                    maxLines = DESCRIPTION_MAX_LINES,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
             val actionRes = kind.primaryActionRes()?.takeIf { onPrimaryAction != null }
@@ -295,6 +298,8 @@ private val CoverBorderWidth: Dp = 1.dp
 private val SymbolSize = 32.dp
 
 private const val TITLE_MAX_LINES = 2
+
+private const val DESCRIPTION_MAX_LINES = 2
 
 private const val SAVED_AT_PATTERN = "yyyy-MM-dd HH:mm"
 

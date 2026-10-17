@@ -8,28 +8,29 @@ import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.user.UserProfileRepository
 import app.manyak.common.entity.user.AccountStatus
 import app.manyak.common.entity.user.UserProfile
+import app.manyak.create.data.api.PutStoryDraftDto
+import app.manyak.create.data.api.StoryDraftApi
+import app.manyak.create.data.api.StoryDraftCardDto
+import app.manyak.create.data.api.StoryDraftDetailDto
+import app.manyak.create.data.api.StoryDraftSavedDto
 import app.manyak.create.data.database.ManyakDatabase
+import app.manyak.create.data.draft.StoryDraftRemote
 import app.manyak.create.domain.StoryCreationRepository
 import app.manyak.create.entity.ArtStyle
 import app.manyak.create.entity.CompletedStory
 import app.manyak.create.entity.CreationRequestSnapshot
 import app.manyak.create.entity.GenreCatalog
 import app.manyak.create.entity.StoryCompletionCommand
+import app.manyak.create.entity.StoryDraftSave
 import app.manyak.create.entity.StoryTag
 import app.manyak.create.entity.StoryTagCategory
 import app.manyak.create.entity.StorylineGeneration
 import app.manyak.create.entity.StorylineGenerationCommand
 import app.manyak.create.entity.StorylineRating
-import app.manyak.create.general.data.api.PutStoryDraftDto
-import app.manyak.create.general.data.api.StoryDraftApi
-import app.manyak.create.general.data.api.StoryDraftCardDto
-import app.manyak.create.general.data.api.StoryDraftDetailDto
-import app.manyak.create.general.data.api.StoryDraftSavedDto
 import app.manyak.create.general.data.api.toDraftPayload
 import app.manyak.create.general.data.database.GeneralDraftEntity
 import app.manyak.create.general.data.database.GeneralDraftSnapshot
 import app.manyak.create.general.entity.GeneralDraftOpen
-import app.manyak.create.general.entity.GeneralDraftSave
 import app.manyak.create.general.entity.GeneralStoryForm
 import app.manyak.create.general.entity.GeneralStoryImage
 import kotlinx.coroutines.Dispatchers
@@ -99,19 +100,19 @@ class GeneralDraftStorageTest {
             val opened = (store.open("draft") as DomainResult.Success).value as GeneralDraftOpen.Server
             assertEquals(1, opened.version)
 
-            assertEquals(GeneralDraftSave.Saved(2), store.save("draft", GeneralStoryForm(title = "둘"), 1))
-            assertEquals(GeneralDraftSave.Conflict(2), store.save("draft", GeneralStoryForm(title = "셋"), 1))
-            assertEquals(GeneralDraftSave.Saved(3), store.save("draft", GeneralStoryForm(title = "셋"), 2))
+            assertEquals(StoryDraftSave.Saved(2), store.save("draft", GeneralStoryForm(title = "둘"), 1))
+            assertEquals(StoryDraftSave.Conflict(2), store.save("draft", GeneralStoryForm(title = "셋"), 1))
+            assertEquals(StoryDraftSave.Saved(3), store.save("draft", GeneralStoryForm(title = "셋"), 2))
 
             server.drafts.remove("draft")
-            assertEquals(GeneralDraftSave.Saved(1), store.save("draft", GeneralStoryForm(title = "되살림"), 3))
+            assertEquals(StoryDraftSave.Saved(1), store.save("draft", GeneralStoryForm(title = "되살림"), 3))
             assertEquals(listOf(1, 1, 2, 3, null), server.puts.map { it.second })
 
             server.limit = 1
-            assertEquals(GeneralDraftSave.LimitExceeded, store.save("new", GeneralStoryForm(title = "새"), null))
+            assertEquals(StoryDraftSave.LimitExceeded, store.save("new", GeneralStoryForm(title = "새"), null))
 
             assertTrue(store.markAccepted("draft", "submission"))
-            assertEquals(GeneralDraftSave.Failed, store.save("draft", GeneralStoryForm(title = "늦은 저장"), 1))
+            assertEquals(StoryDraftSave.Failed, store.save("draft", GeneralStoryForm(title = "늦은 저장"), 1))
         }
 
     @Test
@@ -159,7 +160,15 @@ class GeneralDraftStorageTest {
         }
 
     private fun store() =
-        GeneralDraftServerStore(server, room.generalDraftDao(), profile, catalog, json, Dispatchers.IO, files)
+        GeneralDraftServerStore(
+            StoryDraftRemote(server, json),
+            room.generalDraftDao(),
+            profile,
+            catalog,
+            json,
+            Dispatchers.IO,
+            files,
+        )
 
     private suspend fun legacy(
         draftId: String,
@@ -178,7 +187,7 @@ class GeneralDraftStorageTest {
 private fun request(
     payload: JsonObject,
     schemaVersion: Int = 1,
-) = PutStoryDraftDto("GENERAL", "GENERAL_DRAFT", schemaVersion, payload, null, null, null, null)
+) = PutStoryDraftDto("GENERAL", "GENERAL_DRAFT", schemaVersion, payload, null, null, null, null, null)
 
 private fun webGenrePayload(): JsonObject =
     buildJsonObject {
@@ -216,13 +225,11 @@ private class FakeStoryDraftApi : StoryDraftApi {
             Response.success(
                 drafts.entries.mapIndexed { index, (id, draft) ->
                     StoryDraftCardDto(
-                        "DRAFT",
-                        id,
-                        "GENERAL",
-                        draft.second.title,
-                        null,
-                        null,
-                        "2026-10-16T00:00:0${9 - index}Z",
+                        kind = "DRAFT",
+                        draftId = id,
+                        mode = "GENERAL",
+                        title = draft.second.title,
+                        createdAt = "2026-10-16T00:00:0${9 - index}Z",
                     )
                 },
             )
@@ -231,7 +238,13 @@ private class FakeStoryDraftApi : StoryDraftApi {
     override suspend fun detail(draftId: String): Response<StoryDraftDetailDto> =
         drafts[draftId]?.let { (version, request) ->
             Response.success(
-                StoryDraftDetailDto(draftId, request.mode, version, request.schemaVersion, request.payload),
+                StoryDraftDetailDto(
+                    draftId = draftId,
+                    mode = request.mode,
+                    version = version,
+                    schemaVersion = request.schemaVersion,
+                    payload = request.payload,
+                ),
             )
         } ?: Response.error(404, "{}".toResponseBody())
 

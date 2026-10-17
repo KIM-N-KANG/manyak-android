@@ -6,13 +6,14 @@ import app.manyak.common.data.time.toEpochMillisOrNull
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.user.UserProfileRepository
+import app.manyak.create.data.api.StoryDraftCardDto
+import app.manyak.create.data.api.StoryDraftDetailDto
+import app.manyak.create.data.draft.StoryDraftRemote
+import app.manyak.create.data.draft.isNotFound
 import app.manyak.create.domain.StoryCreationRepository
+import app.manyak.create.entity.StoryDraftSave
 import app.manyak.create.general.data.api.GENERAL_DRAFT_SCHEMA_VERSION
 import app.manyak.create.general.data.api.GENERAL_MODE
-import app.manyak.create.general.data.api.StoryDraftApi
-import app.manyak.create.general.data.api.StoryDraftCardDto
-import app.manyak.create.general.data.api.StoryDraftDetailDto
-import app.manyak.create.general.data.api.StoryDraftErrorDto
 import app.manyak.create.general.data.api.draftGenreTagIds
 import app.manyak.create.general.data.api.toDraftRequest
 import app.manyak.create.general.data.api.toGeneralStoryForm
@@ -20,11 +21,8 @@ import app.manyak.create.general.data.database.GeneralDraftDao
 import app.manyak.create.general.data.database.toForm
 import app.manyak.create.general.domain.GeneralDraftStore
 import app.manyak.create.general.entity.GeneralDraftOpen
-import app.manyak.create.general.entity.GeneralDraftSave
 import app.manyak.create.general.entity.GeneralStoredDraft
 import app.manyak.create.general.entity.GeneralStoryForm
-import app.manyak.network.data.api.apiCall
-import app.manyak.network.data.api.emptyBodyApiCall
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -40,9 +38,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
-import java.io.IOException
 import javax.inject.Inject
 
 /**
@@ -53,7 +49,7 @@ import javax.inject.Inject
 class GeneralDraftServerStore
     @Inject
     constructor(
-        private val api: StoryDraftApi,
+        private val remote: StoryDraftRemote,
         private val dao: GeneralDraftDao,
         private val profileRepository: UserProfileRepository,
         private val catalog: StoryCreationRepository,
@@ -62,7 +58,6 @@ class GeneralDraftServerStore
         private val files: GeneralImageFiles,
     ) : GeneralDraftStore {
         private val accepted = MutableStateFlow<Map<Pair<String, String>, String>>(emptyMap())
-        private val listed = MutableStateFlow<Pair<String, List<GeneralStoredDraft>>?>(null)
         private val refreshing = Mutex()
 
         private val ownerId: String? get() = profileRepository.profile.value?.id
@@ -74,11 +69,11 @@ class GeneralDraftServerStore
                     if (ownerId == null) {
                         flowOf(emptyList())
                     } else {
-                        combine(dao.observe(ownerId), accepted, listed) { rows, consumed, server ->
-                            val remote = server?.takeIf { it.first == ownerId }?.second.orEmpty()
-                            val remoteIds = remote.mapTo(mutableSetOf()) { it.draftId }
+                        combine(dao.observe(ownerId), accepted, remote.cards(ownerId)) { rows, consumed, cards ->
+                            val server = cards.mapNotNull { it.toGeneralDraft() }
+                            val serverIds = server.mapTo(mutableSetOf()) { it.draftId }
                             val local =
-                                rows.filter { it.draftId !in remoteIds }.mapNotNull { row ->
+                                rows.filter { it.draftId !in serverIds }.mapNotNull { row ->
                                     row.toForm(json)?.let { form ->
                                         GeneralStoredDraft(
                                             row.draftId,
@@ -89,7 +84,7 @@ class GeneralDraftServerStore
                                         )
                                     }
                                 }
-                            (remote + local).filter { (ownerId to it.draftId) !in consumed }
+                            (server + local).filter { (ownerId to it.draftId) !in consumed }
                         }
                     }
                 }.flowOn(ioDispatcher)
@@ -97,19 +92,19 @@ class GeneralDraftServerStore
         override suspend fun refresh() {
             val ownerId = ownerId ?: return
             refreshing.withLock {
-                if (!list(ownerId)) return
+                if (!remote.refresh(ownerId)) return
                 val legacy = stored { dao.observe(ownerId).first() }.orEmpty()
                 val moved = mutableListOf<Pair<String, GeneralStoryForm>>()
                 for ((draftId, form) in legacy.mapNotNull { row -> row.toForm(json)?.let { row.draftId to it } }) {
                     when (put(draftId, form, null)) {
                         // 409는 같은 ID가 이미 서버에 있다는 뜻이라 기기 안 사본은 더 둘 이유가 없다.
-                        is GeneralDraftSave.Saved, is GeneralDraftSave.Conflict -> moved += draftId to form
-                        GeneralDraftSave.LimitExceeded -> break
-                        GeneralDraftSave.TooLarge, GeneralDraftSave.Failed -> Unit
+                        is StoryDraftSave.Saved, is StoryDraftSave.Conflict -> moved += draftId to form
+                        StoryDraftSave.LimitExceeded -> break
+                        StoryDraftSave.TooLarge, StoryDraftSave.Failed -> Unit
                     }
                 }
                 // 서버 카드를 받은 뒤에 지워 카드가 잠깐 사라지지 않게 한다. 못 받으면 다음에 같은 내용을 다시 보내 지운다.
-                if (moved.isNotEmpty() && list(ownerId)) {
+                if (moved.isNotEmpty() && remote.refresh(ownerId)) {
                     moved.forEach { (draftId, form) -> stored { deleteLocal(ownerId, draftId, form) } }
                 }
             }
@@ -121,7 +116,7 @@ class GeneralDraftServerStore
                 return local.toForm(json)?.let { DomainResult.Success(GeneralDraftOpen.Local(it)) }
                     ?: DomainResult.Failure(DomainError.Serialization)
             }
-            return when (val result = apiCall { api.detail(draftId) }) {
+            return when (val result = remote.detail(draftId)) {
                 is DomainResult.Failure ->
                     if (result.error.isNotFound()) DomainResult.Success(GeneralDraftOpen.NotFound) else result
                 is DomainResult.Success -> result.value.toOpen()
@@ -138,19 +133,12 @@ class GeneralDraftServerStore
             draftId: String,
             form: GeneralStoryForm,
             baseVersion: Int?,
-        ): GeneralDraftSave {
-            val ownerId = ownerId ?: return GeneralDraftSave.Failed
-            if (acceptedSubmissionId(draftId) != null) return GeneralDraftSave.Failed
-            var result = put(draftId, form, baseVersion)
-            // 열어 둔 초안이 다른 곳에서 지워지면 서버는 기준 버전이 있는 저장을 거절한다.
-            if (result == GeneralDraftSave.Failed &&
-                baseVersion != null &&
-                (apiCall { api.detail(draftId) } as? DomainResult.Failure)?.error?.isNotFound() == true
-            ) {
-                result = put(draftId, form, null)
-            }
+        ): StoryDraftSave {
+            val ownerId = ownerId ?: return StoryDraftSave.Failed
+            if (acceptedSubmissionId(draftId) != null) return StoryDraftSave.Failed
+            val result = put(draftId, form, baseVersion)
             // 이어서 연 기기 안 저장본은 서버로 옮겨졌다. 이미지 파일은 화면이 아직 미리보기로 쓰고 있어 화면 수명이 정리한다.
-            if (result is GeneralDraftSave.Saved) stored { dao.deleteEditable(ownerId, draftId) }
+            if (result is StoryDraftSave.Saved) stored { dao.deleteEditable(ownerId, draftId) }
             return result
         }
 
@@ -169,67 +157,18 @@ class GeneralDraftServerStore
 
         override suspend fun delete(draftId: String): Boolean {
             val ownerId = ownerId ?: return false
-            if (emptyBodyApiCall { api.delete(draftId) } is DomainResult.Failure) return false
-            listed.update { server ->
-                server?.let {
-                    it.first to
-                        it.second.filterNot { draft -> draft.draftId == draftId }
-                }
-            }
+            if (!remote.delete(draftId)) return false
             return stored {
                 val form = dao.find(ownerId, draftId)?.toForm(json)
                 deleteLocal(ownerId, draftId, form)
             } != null
         }
 
-        private suspend fun list(ownerId: String): Boolean =
-            when (val result = apiCall { api.list() }) {
-                is DomainResult.Success -> {
-                    listed.value = ownerId to result.value.mapNotNull { it.toGeneralDraft() }
-                    true
-                }
-                is DomainResult.Failure -> {
-                    // 다른 계정의 목록이 남아 이 계정의 카드로 보이지 않게 한다.
-                    listed.update { it?.takeIf { server -> server.first == ownerId } }
-                    false
-                }
-            }
-
         private suspend fun put(
             draftId: String,
             form: GeneralStoryForm,
             baseVersion: Int?,
-        ): GeneralDraftSave {
-            val response =
-                try {
-                    api.put(draftId, form.toDraftRequest(baseVersion))
-                } catch (_: IOException) {
-                    return GeneralDraftSave.Failed
-                } catch (_: SerializationException) {
-                    return GeneralDraftSave.Failed
-                }
-            response.body()?.takeIf { response.isSuccessful }?.let { return GeneralDraftSave.Saved(it.version) }
-            val error =
-                try {
-                    response.errorBody()?.string()?.let { json.decodeFromString<StoryDraftErrorDto>(it) }
-                } catch (_: IOException) {
-                    null
-                } catch (_: SerializationException) {
-                    null
-                }
-            return when (error?.code) {
-                "DRAFT_VERSION_CONFLICT" ->
-                    error.details
-                        .firstOrNull { it.field == "version" }
-                        ?.message
-                        ?.toIntOrNull()
-                        ?.let(GeneralDraftSave::Conflict)
-                        ?: GeneralDraftSave.Failed
-                "DRAFT_LIMIT_EXCEEDED" -> GeneralDraftSave.LimitExceeded
-                "DRAFT_PAYLOAD_TOO_LARGE" -> GeneralDraftSave.TooLarge
-                else -> GeneralDraftSave.Failed
-            }
-        }
+        ): StoryDraftSave = remote.save(draftId, baseVersion) { form.toDraftRequest(it) }
 
         private suspend fun StoryDraftDetailDto.toOpen(): DomainResult<GeneralDraftOpen> {
             // 모르는 스키마 버전을 읽어 다시 저장하면 그 버전에만 있는 필드가 지워진다.
@@ -273,11 +212,7 @@ class GeneralDraftServerStore
             }
     }
 
-private fun DomainError.isNotFound(): Boolean = (this as? DomainError.Server)?.status == HTTP_NOT_FOUND
-
 private fun StoryDraftCardDto.toGeneralDraft(): GeneralStoredDraft? =
     draftId?.takeIf { kind == "DRAFT" && mode == GENERAL_MODE }?.let {
         GeneralStoredDraft(it, createdAt?.toEpochMillisOrNull(), title, oneLineIntro, thumbnailUrl)
     }
-
-private const val HTTP_NOT_FOUND = 404

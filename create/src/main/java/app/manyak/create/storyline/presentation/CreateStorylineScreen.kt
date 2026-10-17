@@ -46,6 +46,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.create.entity.StorylineRating
 import app.manyak.create.presentation.component.CreateFunnelHeader
 import app.manyak.create.presentation.component.CreateStepIndicator
+import app.manyak.create.presentation.component.DraftSaveFeedback
+import app.manyak.create.presentation.component.FunnelEntryStatus
 import app.manyak.create.presentation.component.FunnelExitWarningDialog
 import app.manyak.create.presentation.component.FunnelNeutralButton
 import app.manyak.create.presentation.component.FunnelPrimaryButton
@@ -66,25 +68,35 @@ import app.manyak.create.R as CreateR
 @Composable
 fun CreateStorylineScreen(
     draftId: String,
+    resume: Boolean,
+    server: Boolean,
     onLeaveFunnel: () -> Unit,
     onOpenAdditionalInfoStep: (storylineIndex: Int) -> Unit,
+    onRestartAtKeyword: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: CreateStorylineViewModel =
         hiltViewModel<CreateStorylineViewModel, CreateStorylineViewModel.Factory>(
-            creationCallback = { factory -> factory.create(draftId) },
+            creationCallback = { factory -> factory.create(draftId, resume, server) },
         ),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val draftSave by viewModel.draftSave.collectAsStateWithLifecycle()
     val currentOnOpenAdditionalInfoStep by rememberUpdatedState(onOpenAdditionalInfoStep)
     val currentOnLeaveFunnel by rememberUpdatedState(onLeaveFunnel)
+    val currentOnRestartAtKeyword by rememberUpdatedState(onRestartAtKeyword)
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
 
     // 시스템 뒤로가기도 헤더 닫기와 같은 이탈 처리를 거친다.
     BackHandler { viewModel.onIntent(CreateStorylineIntent.LeaveFunnel) }
 
-    SaveDraftWhenBackgrounded { viewModel.onIntent(CreateStorylineIntent.SaveDraft) }
+    SaveDraftWhenBackgrounded { viewModel.onIntent(CreateStorylineIntent.SaveDraftInBackground) }
+
+    DraftSaveFeedback(
+        draftSave = draftSave,
+        messages = viewModel.draftMessages,
+        onResolveConflict = { overwrite -> viewModel.onIntent(CreateStorylineIntent.ResolveDraftConflict(overwrite)) },
+    )
 
     // 응답을 못 받은 생성 요청의 복구 폴링. STARTED 동안만 돌아 백그라운드에서 멈추고 복귀 시 재개된다.
     LaunchedEffect(viewModel, lifecycleOwner) {
@@ -106,6 +118,15 @@ fun CreateStorylineScreen(
                             .show()
 
                     is CreateStorylineEffect.ExitFunnel -> currentOnLeaveFunnel()
+
+                    is CreateStorylineEffect.RestartAtKeyword -> {
+                        if (effect.notFound) {
+                            Toast
+                                .makeText(context, CreateR.string.general_editor_draft_not_found, Toast.LENGTH_SHORT)
+                                .show()
+                        }
+                        currentOnRestartAtKeyword()
+                    }
                 }
             }
         }
@@ -145,14 +166,22 @@ private fun CreateStorylineContent(
             onSaveDraft = { onIntent(CreateStorylineIntent.SaveDraft) },
             onClose = { onIntent(CreateStorylineIntent.LeaveFunnel) },
         )
+        // 복원 결과를 기다리는 동안은 단계 화면을 그리지 않는다 — 로딩과 결과 중 무엇을 그려도 곧
+        // 다른 쪽으로 바뀌어 재개 진입에서 화면이 번쩍인다. 서버 초안을 기다리는 동안만 늦게 스피너가 뜬다.
+        if (state.content == StorylineContent.Restoring) {
+            FunnelEntryStatus(
+                failed = state.entryFailed,
+                onRetry = { onIntent(CreateStorylineIntent.RetryEntry) },
+                modifier = Modifier.weight(1f),
+            )
+            return@Column
+        }
         CreateStepIndicator(
             currentStep = 1,
             stepNameRes = CreateR.string.create_step_storyline,
         )
         when (state.content) {
-            // 복원 결과를 기다리는 동안은 본문을 비워 둔다 — 로딩과 결과 중 무엇을 그려도 곧
-            // 다른 쪽으로 바뀌어 재개 진입에서 화면이 번쩍인다.
-            StorylineContent.Restoring -> Spacer(modifier = Modifier.weight(1f))
+            StorylineContent.Restoring -> Unit
 
             StorylineContent.Generating -> StorylineGeneratingContent(modifier = Modifier.weight(1f))
 
