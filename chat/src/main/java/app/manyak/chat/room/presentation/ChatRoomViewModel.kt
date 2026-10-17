@@ -632,6 +632,9 @@ class ChatRoomViewModel
                             if (generating != null) {
                                 // 들어오자마자 생성 중 화면을 보이고 이어받는다. 입력은 받는 동안과 같이 잠긴다.
                                 streamJob = viewModelScope.launch { follow(first = null, generating = generating) }
+                            } else {
+                                // 나가 있는 동안 저장된 턴은 선택지 없이 남아 있을 수 있다.
+                                generateChoices()
                             }
                             if (turns.isEmpty()) scheduleTour()
                         }
