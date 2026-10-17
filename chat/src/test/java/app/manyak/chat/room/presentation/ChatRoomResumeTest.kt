@@ -218,6 +218,66 @@ class ChatRoomResumeTest {
             assertEquals(ChatRoomEffect.ShowStreamFailure(null), viewModel.uiEffect.first())
         }
 
+    @Test
+    fun `백그라운드로 가면 수신을 멈추고 돌아오면 아직 생성 중인 생성을 다시 받는다`() =
+        runTest(dispatcher) {
+            val repository = FakeChatRepository()
+            val viewModel = sending(repository)
+            repository.streamEvents.send(ChatStreamEvent.Started("gen-1"))
+            advanceUntilIdle()
+
+            viewModel.onIntent(ChatRoomIntent.Backgrounded)
+            advanceUntilIdle()
+            // 멈춘 수신은 끊김을 받아도 다시 붙지 않는다.
+            repository.streamEvents.send(ChatStreamEvent.Interrupted)
+            advanceUntilIdle()
+            assertEquals(emptyList<String>(), repository.resumedGenerationIds)
+
+            repository.queuedChatDetailResults += DomainResult.Success(detail(generating = continuing("gen-1")))
+            viewModel.onIntent(ChatRoomIntent.Foregrounded)
+            advanceUntilIdle()
+
+            assertEquals(listOf("gen-1"), repository.resumedGenerationIds)
+            assertTrue(viewModel.uiState.value.isStreaming)
+            assertNoEffect(viewModel)
+        }
+
+    @Test
+    fun `백그라운드에 있는 동안 끝났으면 돌아와서 안내 없이 저장된 턴을 보인다`() =
+        runTest(dispatcher) {
+            val repository = FakeChatRepository()
+            val viewModel = sending(repository)
+            repository.streamEvents.send(ChatStreamEvent.Started("gen-1"))
+            advanceUntilIdle()
+            viewModel.onIntent(ChatRoomIntent.Backgrounded)
+            advanceUntilIdle()
+
+            repository.queuedChatDetailResults += DomainResult.Success(detail(twoTurns()))
+            viewModel.onIntent(ChatRoomIntent.Foregrounded)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertEquals(2, state.turns.size)
+            assertNull(state.streaming)
+            assertFalse(state.isStreaming)
+            assertNoEffect(viewModel)
+        }
+
+    @Test
+    fun `받는 중이 아니면 백그라운드를 오가도 아무것도 하지 않는다`() =
+        runTest(dispatcher) {
+            val repository = FakeChatRepository()
+            val viewModel = viewModel(repository)
+            advanceUntilIdle()
+            val reads = repository.chatDetailIds.size
+
+            viewModel.onIntent(ChatRoomIntent.Backgrounded)
+            viewModel.onIntent(ChatRoomIntent.Foregrounded)
+            advanceUntilIdle()
+
+            assertEquals(reads, repository.chatDetailIds.size)
+        }
+
     private suspend fun assertNoEffect(viewModel: ChatRoomViewModel) {
         assertNull(withTimeoutOrNull(100) { viewModel.uiEffect.first() })
     }

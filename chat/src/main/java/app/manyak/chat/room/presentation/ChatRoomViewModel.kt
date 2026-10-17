@@ -201,6 +201,12 @@ sealed interface ChatRoomIntent {
     /** 확인 다이얼로그에서 삭제를 확정했다. */
     data object DeleteConfirmed : ChatRoomIntent
 
+    /** 앱이 백그라운드로 갔다. 회전 같은 구성 변경은 들어오지 않는다. */
+    data object Backgrounded : ChatRoomIntent
+
+    /** 앱이 다시 보인다. 처음 보일 때와 구성 변경 뒤에도 들어온다. */
+    data object Foregrounded : ChatRoomIntent
+
     /** 헤더의 채팅 메뉴를 열었다. 이프 카드가 낡은 잔액을 보이지 않게 프로필을 다시 읽는다. */
     data object MenuOpened : ChatRoomIntent
 
@@ -468,6 +474,12 @@ class ChatRoomViewModel
         /** 재생성 중인 턴. 실패 복구가 이어쓰기와 갈리는 지점을 이 값이 가른다. */
         private var regeneratingTurnId: Long? = null
 
+        /** 생성의 사건을 받는 중인지. 결과를 확정하는 동안은 끊지 않으려고 [isStreaming] 과 따로 둔다. */
+        private var receiving = false
+
+        /** 백그라운드로 가며 수신을 멈췄는지. 돌아오면 상세로 다시 맞춘다. */
+        private var receivingPaused = false
+
         private val random = Random.Default
 
         private val suggestions: ChatSuggestions
@@ -571,6 +583,9 @@ class ChatRoomViewModel
                 ChatRoomIntent.CloseImageViewer -> dispatchEvent(ChatRoomEvent.ImageViewerChanged(null))
 
                 ChatRoomIntent.DeleteConfirmed -> delete()
+
+                ChatRoomIntent.Backgrounded, ChatRoomIntent.Foregrounded ->
+                    onForegroundChanged(foreground = intent == ChatRoomIntent.Foregrounded)
 
                 // 실패는 캐시된 잔액을 그대로 두는 것으로 흡수한다.
                 ChatRoomIntent.MenuOpened -> viewModelScope.launch { profileRepository.refresh() }
@@ -888,6 +903,29 @@ class ChatRoomViewModel
         }
 
         /**
+         * 백그라운드에서는 기기가 프로세스를 얼리거나 연결을 끊어 재연결이 헛돌고, 그 실패 안내가 돌아온 화면에
+         * 뜬다. 방을 나갈 때처럼 수신만 멈추고(서버는 생성을 계속한다) 돌아오면 상세로 다시 맞춘다.
+         */
+        private fun onForegroundChanged(foreground: Boolean) {
+            if (!foreground) {
+                if (receiving) {
+                    streamJob?.cancel()
+                    receivingPaused = true
+                }
+                return
+            }
+            if (!receivingPaused) return
+            receivingPaused = false
+            streamJob =
+                viewModelScope.launch {
+                    // 나가 있는 동안의 결과를 모르니 끝내 받지 못한 것과 같이 상세로 판단하되, 같은 생성도 다시
+                    // 따라간다.
+                    settleLost(lostGenerationId = null, baseTurnCount = turns.size)
+                        ?.let { generating -> follow(first = null, generating = generating) }
+                }
+        }
+
+        /**
          * 생성을 끝까지 따라가 결과로 화면을 확정한다. 끝난 자리에서 다른 생성이 진행 중이면 그 생성을
          * 이어받는다.
          *
@@ -906,16 +944,21 @@ class ChatRoomViewModel
                 next?.let { target -> beginResume(target) }
                 // 끊긴 뒤 새 턴이 저장됐는지 가리는 기준이다. 받는 동안 확정 목록은 바뀌지 않는다.
                 val baseTurnCount = turns.size
+                receiving = true
                 val end =
-                    followGeneration(
-                        first = connection,
-                        generationId = next?.generationId,
-                        resume = { generationId -> chatRepository.resumeGeneration(chatId, generationId) },
-                        findGenerationId = {
-                            chatRepository.chatDetail(chatId).map { detail -> detail.generatingTurn?.generationId }
-                        },
-                        onEvent = { event -> event.progressEvent()?.let { progress -> dispatchEvent(progress) } },
-                    )
+                    try {
+                        followGeneration(
+                            first = connection,
+                            generationId = next?.generationId,
+                            resume = { generationId -> chatRepository.resumeGeneration(chatId, generationId) },
+                            findGenerationId = {
+                                chatRepository.chatDetail(chatId).map { detail -> detail.generatingTurn?.generationId }
+                            },
+                            onEvent = { event -> event.progressEvent()?.let { progress -> dispatchEvent(progress) } },
+                        )
+                    } finally {
+                        receiving = false
+                    }
                 next = settle(end, baseTurnCount) ?: return
                 connection = null
             }
