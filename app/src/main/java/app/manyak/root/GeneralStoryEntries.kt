@@ -29,7 +29,7 @@ internal fun EntryProviderScope<NavKey>.generalStoryEntries(
     }
     entry<GeneralCreateRoute> { route ->
         GeneralStoryScreen(
-            entry = GeneralEditorEntry.Draft(route.draftId),
+            entry = GeneralEditorEntry.Draft(route.draftId, route.resume),
             onClose = {
                 backStack.popToMainTabs()
                 onSelectStudio()

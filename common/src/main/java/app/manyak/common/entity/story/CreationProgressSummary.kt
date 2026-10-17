@@ -31,12 +31,17 @@ data class CreationProgressSummary(
     val title: String? = null,
     val oneLineIntro: String? = null,
     val thumbnailUrl: String? = null,
+    /**
+     * 서버 간편 제작 초안 카드면 true. 이 기기의 진행 기록을 남긴 뒤 다른 곳에서 다시 저장한 서버 초안은 같은 [draftId]의
+     * 기기 안 카드와 따로 보이므로, 이어서 만들기와 삭제가 어느 쪽인지 이 값으로 가른다.
+     */
+    val onServer: Boolean = false,
 )
 
+/** 완성에 실패한 요청은 카드로 남지 않고 그 초안의 추가 정보 단계 편집 초안으로 되돌아간다. */
 enum class CompletionRequestStatus {
     PENDING,
     COMPLETED,
-    FAILED,
 }
 
 /** 제작 탭이 완성 요청 카드를 그리는 데 쓰는 최소 정보. 입력 원문은 제작 기능이 소유한다. */

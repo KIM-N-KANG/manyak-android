@@ -303,8 +303,8 @@ private fun MainNavDisplay(
                         onEditStory = { backStack.push(StoryEditRoute(it)) },
                         onEditSubmission = { backStack.push(GeneralSubmissionRoute(it)) },
                         // 재개·복구 진입 — 레코드가 가리키는 단계까지 체인을 쌓는다.
-                        onResumeCreation = { draftId, resumePoint ->
-                            backStack.addCreationResumeChain(draftId, resumePoint)
+                        onResumeCreation = { draftId, resumePoint, onServer ->
+                            backStack.addCreationResumeChain(draftId, resumePoint, onServer)
                         },
                         // 마이 하위 목적지들 — 셸 위에 쌓이는 전체 화면이고 뒤로가기는 마이 탭으로 돌아온다.
                         onOpenInvite = { backStack.push(MyInviteRoute) },
@@ -410,13 +410,14 @@ private fun EntryProviderScope<NavKey>.myDestinationEntries(backStack: MutableLi
 private fun MutableList<NavKey>.addCreationResumeChain(
     draftId: String,
     resumePoint: CreationResumePoint,
+    onServer: Boolean,
 ) {
     when (resumePoint) {
-        CreationResumePoint.GeneralStep -> push(GeneralCreateRoute(draftId))
-        CreationResumePoint.KeywordStep -> push(CreateKeywordRoute(draftId))
-        CreationResumePoint.StorylineStep -> push(CreateStorylineRoute(draftId))
+        CreationResumePoint.GeneralStep -> push(GeneralCreateRoute(draftId, resume = true))
+        CreationResumePoint.KeywordStep -> push(CreateKeywordRoute(draftId, resume = true, server = onServer))
+        CreationResumePoint.StorylineStep -> push(CreateStorylineRoute(draftId, resume = true, server = onServer))
         is CreationResumePoint.AdditionalInfoStep -> {
-            push(CreateStorylineRoute(draftId))
+            push(CreateStorylineRoute(draftId, resume = true))
             push(CreateAdditionalInfoRoute(draftId, resumePoint.storylineIndex))
         }
     }
@@ -432,6 +433,8 @@ private fun EntryProviderScope<NavKey>.creationFunnelEntries(
     entry<CreateKeywordRoute> { route ->
         CreateKeywordScreen(
             draftId = route.draftId,
+            resume = route.resume,
+            server = route.server,
             onLeaveFunnel = { backStack.pop() },
             // 스토리라인 단계는 키워드 목적지를 대체한다 — 그 화면의 뒤로가기가
             // 홈 복귀(퍼널 이탈)가 되도록 한다.
@@ -444,10 +447,14 @@ private fun EntryProviderScope<NavKey>.creationFunnelEntries(
     entry<CreateStorylineRoute> { route ->
         CreateStorylineScreen(
             draftId = route.draftId,
+            resume = route.resume,
+            server = route.server,
             onLeaveFunnel = { backStack.pop() },
             onOpenAdditionalInfoStep = { storylineIndex ->
                 backStack.push(CreateAdditionalInfoRoute(route.draftId, storylineIndex))
             },
+            // 이어 갈 스토리라인이 없으면 같은 초안을 키워드 단계부터 시작한다.
+            onRestartAtKeyword = { backStack.replaceTop(CreateKeywordRoute(route.draftId)) },
         )
     }
     entry<CreateAdditionalInfoRoute> { route ->

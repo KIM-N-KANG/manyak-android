@@ -3,6 +3,7 @@ package app.manyak.studio.testing
 import app.manyak.common.domain.story.CreationProgressAccess
 import app.manyak.common.entity.story.CompletionRequestSummary
 import app.manyak.common.entity.story.CreationProgressSummary
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,31 +19,39 @@ internal class FakeCreationProgressAccess(
     override val drafts: Flow<List<CreationProgressSummary>> = draftState
     override val completionRequests: Flow<List<CompletionRequestSummary>> = requestState
     override val submissionChanges = MutableSharedFlow<Unit>()
+    override val completionFailures = MutableSharedFlow<Unit>()
 
     val currentDrafts: List<CreationProgressSummary> get() = draftState.value
     val currentRequests: List<CompletionRequestSummary> get() = requestState.value
     var refreshCount = 0
-    val retriedRequestIds = mutableListOf<String>()
+    var draftRefreshCount = 0
     val deletedRequestIds = mutableListOf<String>()
     var discardSucceeds = true
+    var draftRefreshGate: CompletableDeferred<Unit>? = null
+    val discarded = mutableListOf<Pair<String, Boolean>>()
     var deleteSucceeds = true
 
     fun emitRequests(requests: List<CompletionRequestSummary>) {
         requestState.value = requests
     }
 
-    override suspend fun discard(draftId: String): Boolean {
+    override suspend fun discard(
+        draftId: String,
+        onServer: Boolean,
+    ): Boolean {
         if (!discardSucceeds) return false
-        draftState.value = draftState.value.filterNot { it.draftId == draftId }
+        discarded += draftId to onServer
+        draftState.value = draftState.value.filterNot { it.draftId == draftId && it.onServer == onServer }
         return true
+    }
+
+    override suspend fun refreshDrafts() {
+        draftRefreshCount++
+        draftRefreshGate?.await()
     }
 
     override suspend fun refreshCompletionRequests() {
         refreshCount++
-    }
-
-    override suspend fun retryCompletionRequest(requestId: String) {
-        retriedRequestIds += requestId
     }
 
     override suspend fun deleteCompletionRequest(requestId: String): Boolean {

@@ -44,6 +44,8 @@ import app.manyak.common.presentation.credit.LocalTrials
 import app.manyak.common.presentation.credit.creditAmountText
 import app.manyak.create.presentation.component.CreateFunnelHeader
 import app.manyak.create.presentation.component.CreateStepIndicator
+import app.manyak.create.presentation.component.DraftSaveFeedback
+import app.manyak.create.presentation.component.FunnelEntryStatus
 import app.manyak.create.presentation.component.FunnelExitWarningDialog
 import app.manyak.create.presentation.component.FunnelNeutralButton
 import app.manyak.create.presentation.component.FunnelPrimaryButton
@@ -90,7 +92,15 @@ fun CreateAdditionalInfoScreen(
     // 디바이스 뒤로가기도 앱 바 닫기와 같은 이탈 처리를 거친다.
     BackHandler { viewModel.onIntent(CreateAdditionalInfoIntent.LeaveFunnel) }
 
-    SaveDraftWhenBackgrounded { viewModel.onIntent(CreateAdditionalInfoIntent.SaveDraft) }
+    SaveDraftWhenBackgrounded { viewModel.onIntent(CreateAdditionalInfoIntent.SaveDraftInBackground) }
+
+    DraftSaveFeedback(
+        draftSave = draftSave,
+        messages = viewModel.draftMessages,
+        onResolveConflict = { overwrite ->
+            viewModel.onIntent(CreateAdditionalInfoIntent.ResolveDraftConflict(overwrite))
+        },
+    )
 
     LaunchedEffect(viewModel, lifecycleOwner) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -158,14 +168,22 @@ private fun CreateAdditionalInfoContent(
                 onSaveDraft = { onIntent(CreateAdditionalInfoIntent.SaveDraft) },
                 onClose = { onIntent(CreateAdditionalInfoIntent.LeaveFunnel) },
             )
+            // 복원 결과를 기다리는 동안은 단계 화면을 그리지 않는다 — 고른 스토리라인도 입력도 아직
+            // 모르는 채로 그리면 재개 진입에서 빈 입력 화면이 번쩍인다.
+            if (state.isRestoring) {
+                FunnelEntryStatus(
+                    failed = state.entryFailed,
+                    onRetry = { onIntent(CreateAdditionalInfoIntent.RetryEntry) },
+                    modifier = Modifier.weight(1f),
+                )
+                return@Column
+            }
             CreateStepIndicator(
                 currentStep = 2,
                 stepNameRes = CreateR.string.create_step_additional_info,
             )
             when {
-                // 복원 결과를 기다리는 동안은 본문을 비워 둔다 — 고른 스토리라인도 입력도 아직
-                // 모르는 채로 그리면 재개 진입에서 빈 입력 화면이 번쩍인다.
-                state.isRestoring -> Spacer(modifier = Modifier.weight(1f))
+                state.isRestoring -> Unit
 
                 else -> {
                     // 스크롤 본문이 푸터 경계에서 딱 잘리므로 바닥에 페이드를 겹친다.

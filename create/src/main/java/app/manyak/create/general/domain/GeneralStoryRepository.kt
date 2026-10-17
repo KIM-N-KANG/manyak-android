@@ -13,7 +13,10 @@ import kotlinx.coroutines.flow.emptyFlow
 interface GeneralStoryRepository {
     val submissionChanges: Flow<Unit> get() = emptyFlow()
 
-    suspend fun submit(content: GeneralStoryContent): DomainResult<GeneralStorySaveResult.Accepted>
+    suspend fun submit(
+        content: GeneralStoryContent,
+        draftId: String? = null,
+    ): DomainResult<GeneralStorySaveResult.Accepted>
 
     suspend fun submission(submissionId: String): DomainResult<GeneralStoryEditor>
 
@@ -22,6 +25,7 @@ interface GeneralStoryRepository {
     suspend fun resubmit(
         submissionId: String,
         content: GeneralStoryContent,
+        draftId: String? = null,
     ): DomainResult<GeneralStorySaveResult.Accepted>
 
     suspend fun update(

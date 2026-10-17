@@ -1,7 +1,6 @@
 package app.manyak.create.general.data.database
 
 import androidx.room.Entity
-import app.manyak.create.general.entity.GeneralStoredDraft
 import app.manyak.create.general.entity.GeneralStoryForm
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
@@ -22,12 +21,10 @@ internal data class GeneralDraftSnapshot(
     val form: GeneralStoryForm,
 )
 
-internal fun GeneralDraftEntity.toDomain(json: Json): GeneralStoredDraft? {
+internal fun GeneralDraftEntity.toForm(json: Json): GeneralStoryForm? {
     if (acceptedSubmissionId != null || snapshot == null) return null
     return try {
-        val saved = json.decodeFromString<GeneralDraftSnapshot>(snapshot)
-        if (saved.version != 1) return null
-        GeneralStoredDraft(draftId, saved.form, createdAt)
+        json.decodeFromString<GeneralDraftSnapshot>(snapshot).takeIf { it.version == 1 }?.form
     } catch (_: SerializationException) {
         null
     }

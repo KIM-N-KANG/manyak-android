@@ -98,6 +98,7 @@ fun GeneralStoryScreen(
         }
     }
     if (state.showExit) GeneralExitDialog(state, editing, onIntent)
+    if (state.draftConflictVersion != null) GeneralDraftConflictDialog(onIntent)
 }
 
 @Composable
@@ -370,6 +371,19 @@ private fun GeneralExitDialog(
     )
 }
 
+/** 덮어쓰면 다른 곳에서 저장한 내용을 잃어 파괴적 확인으로 묻는다. 바깥 누르기와 뒤로가기는 서버 내용을 그대로 둔다. */
+@Composable
+private fun GeneralDraftConflictDialog(onIntent: (GeneralEditorIntent) -> Unit) {
+    ManyakDestructiveDialog(
+        title = stringResource(R.string.general_editor_draft_conflict_title),
+        description = stringResource(R.string.general_editor_draft_conflict_description),
+        confirmLabel = stringResource(R.string.general_editor_draft_conflict_save),
+        cancelLabel = stringResource(R.string.general_editor_exit_close),
+        onConfirm = { onIntent(GeneralEditorIntent.ResolveDraftConflict(overwrite = true)) },
+        onDismiss = { onIntent(GeneralEditorIntent.ResolveDraftConflict(overwrite = false)) },
+    )
+}
+
 @Suppress("CyclomaticComplexMethod")
 @StringRes
 internal fun GeneralEditorMessage.resource(): Int =
@@ -392,5 +406,9 @@ internal fun GeneralEditorMessage.resource(): Int =
         GeneralEditorMessage.IMAGE_ERROR -> R.string.general_editor_image_error
         GeneralEditorMessage.SUBMIT_UNKNOWN -> R.string.general_editor_submit_unknown
         GeneralEditorMessage.DRAFT_FAILED -> R.string.general_editor_draft_failed
+        GeneralEditorMessage.DRAFT_SAVED -> R.string.create_draft_saved
+        GeneralEditorMessage.DRAFT_LIMIT -> R.string.general_editor_draft_limit
+        GeneralEditorMessage.DRAFT_TOO_LARGE -> R.string.general_editor_draft_too_large
+        GeneralEditorMessage.DRAFT_NOT_FOUND -> R.string.general_editor_draft_not_found
         GeneralEditorMessage.CHAT_FAILED -> R.string.general_editor_chat_failed
     }

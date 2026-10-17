@@ -25,6 +25,7 @@ sealed interface PendingStoryCreation {
     /** 스토리라인 생성 요청을 보냈고 결과를 아직 화면에 반영하지 못했다. */
     data class GeneratingStorylines(
         val command: StorylineGenerationCommand,
+        val serverDraft: ServerDraftLink? = null,
     ) : PendingStoryCreation
 
     /** 생성 성공 직후와 이후 편집 변경에 맞춰 갱신되는 임시 저장본. */
@@ -34,6 +35,7 @@ sealed interface PendingStoryCreation {
         val progress: CreationProgress,
         /** 같은 페이로드의 완성 재시도가 requestId 를 재사용하도록 남기는 마지막 완성 명령(이전 버전 호환). */
         val lastCompletionCommand: StoryCompletionCommand? = null,
+        val serverDraft: ServerDraftLink? = null,
     ) : PendingStoryCreation
 
     /**
@@ -46,6 +48,17 @@ sealed interface PendingStoryCreation {
     data class KeywordDraft(
         val snapshot: KeywordDraftSnapshot,
     ) : PendingStoryCreation
+}
+
+/**
+ * 기기 안 진행 기록이 가리키는 같은 제작의 서버 초안. 초안 ID는 기록의 draftId와 같고, [baseVersion]은 기록을 남길
+ * 때의 서버 버전이다. 아직 서버에 저장한 적이 없으면 null 이다. 연결이 없는 기록은 기기 안에만 저장하는 세션의 것이다.
+ */
+data class ServerDraftLink(
+    val baseVersion: Int?,
+) {
+    /** 기록을 남긴 뒤 서버 초안이 다시 저장되지 않았으면(다른 기기의 저장이 없으면) 같은 제작의 오래된 카드다. */
+    fun hides(serverVersion: Int): Boolean = serverVersion <= (baseVersion ?: 0)
 }
 
 /** 저장소에 있는 초안 한 건. 제작 탭이 카드로 그리고 [draftId] 로 재개·삭제한다. */

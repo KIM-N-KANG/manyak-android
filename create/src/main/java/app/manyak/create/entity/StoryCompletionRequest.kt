@@ -14,6 +14,8 @@ data class StoryCompletionRequest(
     val outcome: CompletionOutcome = CompletionOutcome.Pending,
     /** 제출한 초안을 처음 임시 저장한 시각(epoch millis). 제출할 때 저장소가 초안에서 이어받는다. */
     val createdAt: Long? = null,
+    /** 서버 초안 세션에서 제출했으면 그 초안. 서버가 완성 요청을 기록하며 지우기 전까지 같은 제작의 카드를 가린다. */
+    val serverDraft: ServerDraftLink? = null,
 ) {
     val requestId: String get() = command.requestId
 }

@@ -8,6 +8,7 @@ import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
 import androidx.test.platform.app.InstrumentationRegistry
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class GeneralDraftMigrationTest {
@@ -15,7 +16,7 @@ class GeneralDraftMigrationTest {
     fun supportedVersionsPreserveSimpleDraftsAndCompletionRequests() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val context = instrumentation.targetContext
-        for (version in 1..4) {
+        for (version in 1..5) {
             val name = "general-migration-$version.db"
             context.deleteDatabase(name)
             try {
@@ -23,15 +24,23 @@ class GeneralDraftMigrationTest {
                 val room =
                     Room
                         .databaseBuilder(context, ManyakDatabase::class.java, name)
-                        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
-                        .build()
+                        .addMigrations(
+                            MIGRATION_1_2,
+                            MIGRATION_2_3,
+                            MIGRATION_3_4,
+                            MIGRATION_4_5,
+                            MIGRATION_5_6,
+                        ).build()
                 try {
                     val db = room.openHelper.writableDatabase
                     assertDraftPreserved(db, version)
                     if (version > 1) {
-                        db.query("SELECT completionCommand FROM story_completion_request").use { cursor ->
+                        val completion = "SELECT completionCommand, serverDraftVersion FROM story_completion_request"
+                        db.query(completion).use { cursor ->
                             check(cursor.moveToFirst())
                             assertEquals("completion-payload", cursor.getString(0))
+                            // 기존 요청은 서버 초안 연결이 없는 기기 안 세션의 것으로 남는다.
+                            assertTrue(cursor.isNull(1))
                         }
                     }
                     assertOwnerKeyIsolated(db)
@@ -66,8 +75,8 @@ class GeneralDraftMigrationTest {
                             entity.getString("createSql").replace("\${TABLE_NAME}", entity.getString("tableName")),
                         )
                     }
-                    val idColumn = if (version == 4) "draftId" else "id"
-                    val id = if (version == 4) "'old-draft'" else "0"
+                    val idColumn = if (version >= 4) "draftId" else "id"
+                    val id = if (version >= 4) "'old-draft'" else "0"
                     db.execSQL(
                         "INSERT INTO pending_story_creation ($idColumn, stage, keywordSnapshot) " +
                             "VALUES ($id, 'KEYWORD_DRAFT', 'original-keyword-payload')",
@@ -101,11 +110,14 @@ class GeneralDraftMigrationTest {
         db: SupportSQLiteDatabase,
         version: Int,
     ) {
-        db.query("SELECT draftId, keywordSnapshot, ownerId FROM pending_story_creation").use { cursor ->
+        val draft = "SELECT draftId, keywordSnapshot, ownerId, serverDraftVersion FROM pending_story_creation"
+        db.query(draft).use { cursor ->
             check(cursor.moveToFirst())
-            assertEquals(if (version == 4) "old-draft" else "legacy-0", cursor.getString(0))
+            assertEquals(if (version >= 4) "old-draft" else "legacy-0", cursor.getString(0))
             assertEquals("original-keyword-payload", cursor.getString(1))
             assertEquals("", cursor.getString(2))
+            // 기존 초안은 서버로 옮기지 않고 기기 안 세션으로 연다.
+            assertTrue(cursor.isNull(3))
         }
     }
 

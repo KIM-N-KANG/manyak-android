@@ -46,14 +46,10 @@ sealed interface StudioCard {
         val story: StorySummary,
     ) : StudioCard
 
-    /** 편집 중 초안. 삭제는 그 로컬 초안만 지우고 서버를 부르지 않는다. */
+    /** 편집 중 초안. [onServer]는 같은 ID 의 기기 안 카드와 따로 보이는 서버 간편 제작 초안이다. */
     data class Draft(
         val draftId: String,
-    ) : StudioCard
-
-    /** 완성에 실패한 요청. 삭제는 그 요청 행만 지운다. */
-    data class FailedRequest(
-        val requestId: String,
+        val onServer: Boolean = false,
     ) : StudioCard
 }
 
@@ -69,6 +65,10 @@ data class StudioUiState(
     val drafts: List<CreationProgressSummary> = emptyList(),
     /** 처음 임시 저장 최신순 완성 요청. 완료된 요청은 목록에 같은 스토리가 실리면 사라진다. */
     val completionRequests: List<CompletionRequestSummary> = emptyList(),
+    /** 서버 초안 목록을 처음으로 한 번 받아 봤는지(실패 포함). */
+    val draftsReady: Boolean = false,
+    /** 검수 제출본 목록을 처음으로 한 번 받아 봤는지(실패 포함). */
+    val submissionsReady: Boolean = false,
     /** 더보기·길게 누르기로 옵션 시트를 연 카드. null 이면 시트가 없다. */
     val optionsTarget: StudioCard? = null,
     /** 삭제 확인을 묻는 대상. null 이면 다이얼로그가 없다. */
@@ -79,7 +79,13 @@ data class StudioUiState(
     /** 신고 시트가 열려 있는 동안의 대상. 옵션 시트가 닫혀도 신고가 어느 스토리인지 남아야 한다. */
     val reportStoryId: String? = null,
 ) {
-    val showCreateFab: Boolean get() = hasProgressCards || (!isLoading && !loadFailed)
+    val showCreateFab: Boolean get() = hasProgressCards || (!isListLoading && !loadFailed)
+
+    /**
+     * 첫 조회 중. 내 스토리, 만들고 있는 스토리, 검수 제출본이 모두 준비될 때까지 한 스켈레톤으로 덮어 카드가 따로 끼어들어
+     * 목록이 밀리지 않게 한다. 완성 중 카드는 기기 안 요청이라 바로 보인다.
+     */
+    val isListLoading: Boolean get() = isLoading || !draftsReady || !submissionsReady
 
     /** 서버 스토리 목록이 비어도 초안, 제출본, 완성 요청은 목록에 유지한다. */
     val hasProgressCards: Boolean get() = hasLocalCards || submissions.isNotEmpty()
@@ -100,6 +106,7 @@ sealed interface StudioIntent {
     /** 초안 카드의 "이어서 만들기". */
     data class ResumeCreation(
         val draftId: String,
+        val onServer: Boolean = false,
     ) : StudioIntent
 
     /** 화면이 다시 보였다. 떠난 사이 바뀐 목록과 요청 상태를 서버와 맞춘다. */
@@ -129,11 +136,6 @@ sealed interface StudioIntent {
     data object ConfirmDelete : StudioIntent
 
     data object DismissDeleteDialog : StudioIntent
-
-    /** 실패 카드의 다시 시도 — 같은 requestId 로 재전송한다. */
-    data class RetryCompletion(
-        val requestId: String,
-    ) : StudioIntent
 }
 
 sealed interface StudioEvent {
@@ -196,6 +198,9 @@ sealed interface StudioEvent {
     data class CompletionRequestsChanged(
         val requests: List<CompletionRequestSummary>,
     ) : StudioEvent
+
+    /** 서버 초안 목록 조회가 끝났다(실패 포함). */
+    data object DraftsRefreshed : StudioEvent
 }
 
 sealed interface StudioEffect {
@@ -205,6 +210,12 @@ sealed interface StudioEffect {
 
     /** 새 스토리의 제작 방식 선택으로 진입한다. */
     data object NavigateToCreate : StudioEffect
+
+    /** 만들고 있는 스토리 카드가 가득 차 새로 만들지 않는다. */
+    data object ShowDraftLimit : StudioEffect
+
+    /** 완성에 실패한 요청이 추가 정보 단계 초안으로 되돌아왔다. */
+    data object ShowCompletionFailed : StudioEffect
 
     data class NavigateToEdit(
         val storyId: String,
@@ -218,6 +229,7 @@ sealed interface StudioEffect {
     data class NavigateToResume(
         val draftId: String,
         val resumePoint: CreationResumePoint,
+        val onServer: Boolean = false,
     ) : StudioEffect
 
     data object ShowStoryDeleted : StudioEffect
@@ -255,6 +267,7 @@ class StudioViewModel
         private var loadJob: Job? = null
         private var deleteJob: Job? = null
         private var requestRefreshJob: Job? = null
+        private var draftRefreshJob: Job? = null
         private var submissionRefreshJob: Job? = null
         private val submissionMutex = Mutex()
         private var knownSubmissions: List<StorySubmission> = emptyList()
@@ -297,6 +310,9 @@ class StudioViewModel
                     shownDraftStages.keys.retainAll(drafts.mapTo(mutableSetOf()) { it.draftId })
                     dispatchEvent(StudioEvent.DraftsChanged(drafts))
                 }
+            }
+            viewModelScope.launch {
+                creationProgress.completionFailures.collect { dispatchEffect(StudioEffect.ShowCompletionFailed) }
             }
             viewModelScope.launch {
                 creationProgress.completionRequests.collect { requests ->
@@ -394,17 +410,23 @@ class StudioViewModel
                 -> handleCardIntent(intent, state)
 
                 // 초안은 여러 개를 둘 수 있어 새 제작 전에 묻지 않는다. 이어 만들기는 초안 카드가 맡는다.
-                StudioIntent.CreateStory -> dispatchEffect(StudioEffect.NavigateToCreate)
+                // 카드가 상한이면 새 제작의 첫 저장에 서버 자리가 없어 들어가지 않는다. 서버 목록을 받지 못했으면 보이는 카드만 센다.
+                StudioIntent.CreateStory -> {
+                    val full = state.drafts.size >= DRAFT_CARD_LIMIT
+                    dispatchEffect(if (full) StudioEffect.ShowDraftLimit else StudioEffect.NavigateToCreate)
+                }
 
                 StudioIntent.EditStory, is StudioIntent.EditSubmission -> editSelectedCard(intent, state)
 
                 is StudioIntent.ResumeCreation ->
-                    state.drafts.firstOrNull { it.draftId == intent.draftId }?.let { draft ->
-                        draft.toStage()?.let { analytics.track(AnalyticsEvent.ContinueBannerClicked(it)) }
-                        dispatchEffect(StudioEffect.NavigateToResume(draft.draftId, draft.resumePoint))
-                    }
-
-                is StudioIntent.RetryCompletion -> creationProgress.retryCompletionRequest(intent.requestId)
+                    state.drafts
+                        .firstOrNull { it.draftId == intent.draftId && it.onServer == intent.onServer }
+                        ?.let { draft ->
+                            draft.toStage()?.let { analytics.track(AnalyticsEvent.ContinueBannerClicked(it)) }
+                            dispatchEffect(
+                                StudioEffect.NavigateToResume(draft.draftId, draft.resumePoint, draft.onServer),
+                            )
+                        }
             }
         }
 
@@ -530,8 +552,15 @@ class StudioViewModel
                 }
         }
 
-        /** 요청 상태 조회는 목록 조회와 나란히 돈다. 이미 도는 조회가 있으면 겹쳐 시작하지 않는다. */
+        /** 요청 상태와 서버 초안 조회는 목록 조회와 나란히 돈다. 이미 도는 조회가 있으면 겹쳐 시작하지 않는다. */
         private fun refreshRequests() {
+            if (draftRefreshJob?.isActive != true) {
+                draftRefreshJob =
+                    viewModelScope.launch {
+                        creationProgress.refreshDrafts()
+                        dispatchEvent(StudioEvent.DraftsRefreshed)
+                    }
+            }
             if (requestRefreshJob?.isActive == true) return
             requestRefreshJob = viewModelScope.launch { creationProgress.refreshCompletionRequests() }
         }
@@ -598,11 +627,11 @@ class StudioViewModel
 
                         is StudioCard.Submission -> deleteSubmission(target.submission)
 
-                        // 로컬 초안·요청은 서버 삭제 API 를 부르지 않는다. 실패하면 카드와 입력이 그대로 남는다.
-                        is StudioCard.Draft -> finishLocalDelete(creationProgress.discard(target.draftId))
-
-                        is StudioCard.FailedRequest ->
-                            finishLocalDelete(creationProgress.deleteCompletionRequest(target.requestId))
+                        // 실패하면 카드와 입력이 그대로 남는다.
+                        is StudioCard.Draft ->
+                            finishLocalDelete(
+                                creationProgress.discard(target.draftId, target.onServer),
+                            )
                     }
                 }
         }
@@ -669,20 +698,10 @@ class StudioViewModel
             event: StudioEvent,
         ): StudioUiState =
             when (event) {
-                is StudioEvent.SubmissionsLoaded -> state.withSubmissions(event.submissions)
-
-                StudioEvent.SubmissionsLoadFailed ->
-                    state.copy(
-                        submissions = emptyList(),
-                        optionsTarget =
-                            state.optionsTarget.takeUnless { it is StudioCard.Submission },
-                    )
-
-                is StudioEvent.SubmissionDeleted ->
-                    state
-                        .copy(isDeleting = false, deleteTarget = null)
-                        .withSubmissions(state.submissions.filterNot { it.id == event.submissionId })
-                        .copy(hasPendingSubmissions = event.hasPendingSubmissions)
+                is StudioEvent.SubmissionsLoaded,
+                StudioEvent.SubmissionsLoadFailed,
+                is StudioEvent.SubmissionDeleted,
+                -> reduceSubmissionEvent(state, event)
 
                 StudioEvent.LoadStarted -> state.copy(isLoading = true, loadFailed = false, isRefreshing = false)
 
@@ -715,9 +734,9 @@ class StudioViewModel
 
                 is StudioEvent.DraftsChanged -> {
                     // 시트·다이얼로그가 열린 사이 그 초안이 사라졌으면 물을 대상도 없다.
-                    val draftIds = event.drafts.mapTo(mutableSetOf()) { it.draftId }
+                    val drafts = event.drafts.mapTo(mutableSetOf()) { StudioCard.Draft(it.draftId, it.onServer) }
 
-                    fun StudioCard?.isGone() = this is StudioCard.Draft && draftId !in draftIds
+                    fun StudioCard?.isGone() = this is StudioCard.Draft && this !in drafts
                     state.copy(
                         drafts = event.drafts,
                         optionsTarget = state.optionsTarget.takeUnless { it.isGone() },
@@ -726,6 +745,8 @@ class StudioViewModel
                 }
 
                 is StudioEvent.CompletionRequestsChanged -> state.copy(completionRequests = event.requests)
+
+                StudioEvent.DraftsRefreshed -> state.copy(draftsReady = true)
             }
     }
 
@@ -743,6 +764,30 @@ private fun StudioUiState.withSubmissions(items: List<StorySubmission>): StudioU
         deleteTarget = if (isDeleting) deleteTarget else deleteTarget.updated(),
     )
 }
+
+/** 검수 제출본 목록의 상태 전이. 첫 조회는 실패해도 준비된 것으로 본다. */
+private fun reduceSubmissionEvent(
+    state: StudioUiState,
+    event: StudioEvent,
+): StudioUiState =
+    when (event) {
+        is StudioEvent.SubmissionsLoaded -> state.withSubmissions(event.submissions).copy(submissionsReady = true)
+
+        StudioEvent.SubmissionsLoadFailed ->
+            state.copy(
+                submissionsReady = true,
+                submissions = emptyList(),
+                optionsTarget = state.optionsTarget.takeUnless { it is StudioCard.Submission },
+            )
+
+        is StudioEvent.SubmissionDeleted ->
+            state
+                .copy(isDeleting = false, deleteTarget = null)
+                .withSubmissions(state.submissions.filterNot { it.id == event.submissionId })
+                .copy(hasPendingSubmissions = event.hasPendingSubmissions)
+
+        else -> state
+    }
 
 /** 카드 옵션 시트에서 갈라지는 상태 전이 — 신고와 삭제. 순수 함수라 [MviViewModel.reduce] 와 같은 규칙을 따른다. */
 private fun reduceCardEvent(
@@ -780,6 +825,9 @@ private fun reduceCardEvent(
 
         else -> state
     }
+
+/** 만들고 있는 스토리 카드 상한. 서버 초안 상한(회원당 5개)과 같고, 서버 초안 하나는 카드 많아야 한 장이다. */
+private const val DRAFT_CARD_LIMIT = 5
 
 /** 완성 중 카드가 보이는 동안의 요청 상태 조회 간격. 완성은 보통 1~4분 걸려 더 촘촘할 이유가 없다. */
 private const val PENDING_POLL_INTERVAL_MS = 5_000L

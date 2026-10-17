@@ -35,6 +35,15 @@ internal class GeneralGenreSearch(
     private var expanded = false
     private val cached = linkedMapOf<String, List<String>>()
 
+    fun handle(intent: GeneralEditorIntent) {
+        when (intent) {
+            is GeneralEditorIntent.SearchGenres -> query(intent.query)
+            is GeneralEditorIntent.ExpandGenres -> expand(intent.expanded)
+            GeneralEditorIntent.RetryGenres -> retry()
+            else -> Unit
+        }
+    }
+
     fun loadCatalog() {
         scope.launch { fetchCatalog() }
     }

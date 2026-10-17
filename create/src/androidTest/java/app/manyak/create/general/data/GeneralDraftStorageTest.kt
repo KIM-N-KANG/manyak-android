@@ -1,6 +1,5 @@
 package app.manyak.create.general.data
 
-import android.database.sqlite.SQLiteException
 import android.net.Uri
 import androidx.room.Room
 import androidx.test.platform.app.InstrumentationRegistry
@@ -9,9 +8,29 @@ import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.user.UserProfileRepository
 import app.manyak.common.entity.user.AccountStatus
 import app.manyak.common.entity.user.UserProfile
+import app.manyak.create.data.api.PutStoryDraftDto
+import app.manyak.create.data.api.StoryDraftApi
+import app.manyak.create.data.api.StoryDraftCardDto
+import app.manyak.create.data.api.StoryDraftDetailDto
+import app.manyak.create.data.api.StoryDraftSavedDto
 import app.manyak.create.data.database.ManyakDatabase
-import app.manyak.create.general.data.database.GeneralDraftDao
-import app.manyak.create.general.data.database.GeneralDraftRoomStore
+import app.manyak.create.data.draft.StoryDraftRemote
+import app.manyak.create.domain.StoryCreationRepository
+import app.manyak.create.entity.ArtStyle
+import app.manyak.create.entity.CompletedStory
+import app.manyak.create.entity.CreationRequestSnapshot
+import app.manyak.create.entity.GenreCatalog
+import app.manyak.create.entity.StoryCompletionCommand
+import app.manyak.create.entity.StoryDraftSave
+import app.manyak.create.entity.StoryTag
+import app.manyak.create.entity.StoryTagCategory
+import app.manyak.create.entity.StorylineGeneration
+import app.manyak.create.entity.StorylineGenerationCommand
+import app.manyak.create.entity.StorylineRating
+import app.manyak.create.general.data.api.toDraftPayload
+import app.manyak.create.general.data.database.GeneralDraftEntity
+import app.manyak.create.general.data.database.GeneralDraftSnapshot
+import app.manyak.create.general.entity.GeneralDraftOpen
 import app.manyak.create.general.entity.GeneralStoryForm
 import app.manyak.create.general.entity.GeneralStoryImage
 import kotlinx.coroutines.Dispatchers
@@ -19,109 +38,287 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonArray
+import kotlinx.serialization.json.putJsonObject
+import okhttp3.ResponseBody.Companion.toResponseBody
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import retrofit2.Response
 import java.io.File
 import java.util.UUID
 
 class GeneralDraftStorageTest {
+    private val context = InstrumentationRegistry.getInstrumentation().targetContext
+    private val owner = "storage-test-${UUID.randomUUID()}"
+    private val profile = StorageProfileRepository(owner)
+    private val files = GeneralImageFiles(context, Dispatchers.IO)
+    private val room = Room.inMemoryDatabaseBuilder(context, ManyakDatabase::class.java).build()
+    private val server = FakeStoryDraftApi()
+    private val catalog = FakeGenreCatalog()
+    private val created = mutableListOf<File>()
+    private val json = Json
+
+    @After fun tearDown() {
+        room.close()
+        created.forEach { it.delete() }
+        created.firstOrNull()?.parentFile?.delete()
+    }
+
     @Test
-    fun accountIsolationAndImageLifetimeSurviveDraftRestore() =
+    fun legacyDraftsMoveToTheServerUntilTheLimitAndOnlyMovedOnesLeaveTheDevice() =
         runBlocking {
-            val context = InstrumentationRegistry.getInstrumentation().targetContext
-            val owner = "storage-test-${UUID.randomUUID()}"
-            val profile = StorageProfileRepository(owner)
-            val files = GeneralImageFiles(context, Dispatchers.IO)
-            val created = mutableListOf<File>()
-            val room = Room.inMemoryDatabaseBuilder(context, ManyakDatabase::class.java).build()
-            try {
-                val store = GeneralDraftRoomStore(room.generalDraftDao(), profile, Json, Dispatchers.IO, files)
-                val first = files.persist(owner, byteArrayOf(1, 2, 3), "image/png").also(created::add)
-                val image = first.asImage()
-                val form = GeneralStoryForm(title = "보존할 초안", cover = image)
-                assertTrue(store.save("draft", form))
-                assertEquals(form, store.read("draft")?.form)
-                profile.profile.value = null
-                assertNull(store.read("draft"))
-                assertTrue(store.drafts.first().isEmpty())
-                assertTrue(first.exists())
+            val store = store()
+            val image = files.persist(owner, byteArrayOf(1, 2, 3), "image/png").also(created::add)
+            legacy("conflict", GeneralStoryForm(title = "기기 안"), 30)
+            legacy("moved", GeneralStoryForm(title = "옮길 초안", cover = image.asImage()), 20)
+            legacy("full", GeneralStoryForm(title = "상한"), 10)
+            legacy("other", GeneralStoryForm(title = "다른 계정"), 10, ownerId = "$owner-other")
+            server.seed("conflict", GeneralStoryForm(title = "서버"))
+            server.limit = 2
 
-                profile.switchTo("$owner-other")
-                assertNull(store.read("draft"))
-                assertTrue(store.save("draft", GeneralStoryForm(title = "다른 계정")))
-                profile.switchTo(owner)
-                assertEquals(form, store.read("draft")?.form)
-                val second = files.persist(owner, byteArrayOf(4, 5, 6), "image/png").also(created::add)
-                val changed = form.copy(cover = second.asImage())
-                assertTrue(store.save("draft", changed))
-                assertFalse(first.exists())
-                assertTrue(second.exists())
+            store.refresh()
 
-                assertTrue(store.markAccepted("draft", "submission"))
-                assertNull(store.read("draft"))
-                assertTrue(store.drafts.first().isEmpty())
-                assertFalse(store.save("draft", changed))
-                assertTrue(second.exists())
-                val restored = GeneralDraftRoomStore(room.generalDraftDao(), profile, Json, Dispatchers.IO, files)
-                assertEquals("submission", restored.acceptedSubmissionId("draft"))
-                assertFalse(restored.save("draft", changed))
-                files.discard(second.asImage())
-                assertFalse(second.exists())
-                profile.switchTo("$owner-other")
-                assertEquals("다른 계정", restored.read("draft")?.form?.title)
-            } finally {
-                room.close()
-                created.forEach { it.delete() }
-                created.firstOrNull()?.parentFile?.delete()
-            }
+            assertEquals(listOf("conflict", "moved", "full"), server.puts.map { it.first })
+            assertEquals(listOf("서버", "옮길 초안", "상한"), store.drafts.first().map { it.title })
+            assertFalse(image.exists())
+            assertTrue(room.generalDraftDao().find("$owner-other", "other") != null)
+            assertTrue(store.open("full").let { (it as DomainResult.Success).value is GeneralDraftOpen.Local })
         }
 
     @Test
-    fun acceptedResponseStillBlocksResubmitWhileDatabaseIsUnavailable() =
+    fun savesChainVersionsResolveConflictsAndRecreateADraftDeletedElsewhere() =
         runBlocking {
-            val context = InstrumentationRegistry.getInstrumentation().targetContext
-            val room = Room.inMemoryDatabaseBuilder(context, ManyakDatabase::class.java).build()
-            var attempted = false
-            val dao =
-                object : GeneralDraftDao by room.generalDraftDao() {
-                    override suspend fun accept(
-                        ownerId: String,
-                        draftId: String,
-                        submissionId: String,
-                        now: Long,
-                    ) {
-                        attempted = true
-                        throw SQLiteException("DB unavailable")
-                    }
-                }
-            try {
-                val store =
-                    GeneralDraftRoomStore(
-                        dao,
-                        StorageProfileRepository("owner"),
-                        Json,
-                        Dispatchers.IO,
-                        GeneralImageFiles(context, Dispatchers.IO),
-                    )
-                assertFalse(store.markAccepted("draft", "accepted"))
-                assertTrue(attempted)
-                assertEquals("accepted", store.acceptedSubmissionId("draft"))
-                assertFalse(store.save("draft", GeneralStoryForm(title = "이전 입력")))
-            } finally {
-                room.close()
-            }
+            val store = store()
+            server.seed("draft", GeneralStoryForm(title = "처음"))
+            val opened = (store.open("draft") as DomainResult.Success).value as GeneralDraftOpen.Server
+            assertEquals(1, opened.version)
+
+            assertEquals(StoryDraftSave.Saved(2), store.save("draft", GeneralStoryForm(title = "둘"), 1))
+            assertEquals(StoryDraftSave.Conflict(2), store.save("draft", GeneralStoryForm(title = "셋"), 1))
+            assertEquals(StoryDraftSave.Saved(3), store.save("draft", GeneralStoryForm(title = "셋"), 2))
+
+            server.drafts.remove("draft")
+            assertEquals(StoryDraftSave.Saved(1), store.save("draft", GeneralStoryForm(title = "되살림"), 3))
+            assertEquals(listOf(1, 1, 2, 3, null), server.puts.map { it.second })
+
+            server.limit = 1
+            assertEquals(StoryDraftSave.LimitExceeded, store.save("new", GeneralStoryForm(title = "새"), null))
+
+            assertTrue(store.markAccepted("draft", "submission"))
+            assertEquals(StoryDraftSave.Failed, store.save("draft", GeneralStoryForm(title = "늦은 저장"), 1))
         }
+
+    @Test
+    fun openingReadsWebGenresAndRefusesUnknownSchemas() =
+        runBlocking {
+            val store = store()
+            assertEquals(DomainResult.Success(GeneralDraftOpen.NotFound), store.open("missing"))
+
+            server.drafts["web"] = 1 to request(webGenrePayload())
+            val form = ((store.open("web") as DomainResult.Success).value as GeneralDraftOpen.Server).form
+            assertEquals(listOf("판타지"), form.genres)
+
+            catalog.fails = true
+            assertTrue(store.open("web") is DomainResult.Failure)
+
+            server.drafts["future"] = 1 to request(JsonObject(emptyMap()), schemaVersion = 2)
+            assertTrue(store.open("future") is DomainResult.Failure)
+        }
+
+    @Test
+    fun listFailureKeepsTheLastCardsOfTheSameAccountOnly() =
+        runBlocking {
+            val store = store()
+            server.seed("draft", GeneralStoryForm(title = "서버"))
+            store.refresh()
+            server.listFails = true
+            store.refresh()
+            assertEquals(listOf("draft"), store.drafts.first().map { it.draftId })
+
+            profile.switchTo("$owner-other")
+            store.refresh()
+            assertTrue(store.drafts.first().isEmpty())
+        }
+
+    @Test
+    fun deletingRemovesTheServerDraftAndTheDeviceCopy() =
+        runBlocking {
+            val store = store()
+            server.seed("draft", GeneralStoryForm(title = "서버"))
+            legacy("draft", GeneralStoryForm(title = "기기 안"), 10)
+
+            assertTrue(store.delete("draft"))
+            assertTrue(store.drafts.first().isEmpty())
+            assertTrue(server.drafts.isEmpty())
+        }
+
+    private fun store() =
+        GeneralDraftServerStore(
+            StoryDraftRemote(server, json),
+            room.generalDraftDao(),
+            profile,
+            catalog,
+            json,
+            Dispatchers.IO,
+            files,
+        )
+
+    private suspend fun legacy(
+        draftId: String,
+        form: GeneralStoryForm,
+        createdAt: Long,
+        ownerId: String = owner,
+    ) {
+        val snapshot = json.encodeToString(GeneralDraftSnapshot.serializer(), GeneralDraftSnapshot(form = form))
+        room.generalDraftDao().save(GeneralDraftEntity(ownerId, draftId, snapshot, createdAt))
+    }
+
+    private fun File.asImage(): GeneralStoryImage =
+        GeneralStoryImage("thumbnails/uploaded/$name", Uri.fromFile(this).toString(), absolutePath)
 }
 
-private fun File.asImage(): GeneralStoryImage =
-    GeneralStoryImage(
-        objectKey = "uploaded/$name",
-        previewUrl = Uri.fromFile(this).toString(),
-        localPath = absolutePath,
-    )
+private fun request(
+    payload: JsonObject,
+    schemaVersion: Int = 1,
+) = PutStoryDraftDto("GENERAL", "GENERAL_DRAFT", schemaVersion, payload, null, null, null, null, null)
+
+private fun webGenrePayload(): JsonObject =
+    buildJsonObject {
+        putJsonObject("genres") {
+            putJsonArray("selected") {
+                add(
+                    buildJsonObject {
+                        put("kind", "tag")
+                        put("id", JsonPrimitive(3))
+                    },
+                )
+            }
+            putJsonArray("customTags") {}
+        }
+    }
+
+/** 서버의 저장 규칙(같은 내용 재전송, 기준 버전 비교, 상한)만 흉내 낸다. */
+private class FakeStoryDraftApi : StoryDraftApi {
+    val drafts = linkedMapOf<String, Pair<Int, PutStoryDraftDto>>()
+    val puts = mutableListOf<Pair<String, Int?>>()
+    var limit = 5
+    var listFails = false
+
+    fun seed(
+        draftId: String,
+        form: GeneralStoryForm,
+    ) {
+        drafts[draftId] = 1 to request(form.toDraftPayload()).copy(title = form.title)
+    }
+
+    override suspend fun list(): Response<List<StoryDraftCardDto>> =
+        if (listFails) {
+            Response.error(500, "{}".toResponseBody())
+        } else {
+            Response.success(
+                drafts.entries.mapIndexed { index, (id, draft) ->
+                    StoryDraftCardDto(
+                        kind = "DRAFT",
+                        draftId = id,
+                        mode = "GENERAL",
+                        title = draft.second.title,
+                        createdAt = "2026-10-16T00:00:0${9 - index}Z",
+                    )
+                },
+            )
+        }
+
+    override suspend fun detail(draftId: String): Response<StoryDraftDetailDto> =
+        drafts[draftId]?.let { (version, request) ->
+            Response.success(
+                StoryDraftDetailDto(
+                    draftId = draftId,
+                    mode = request.mode,
+                    version = version,
+                    schemaVersion = request.schemaVersion,
+                    payload = request.payload,
+                ),
+            )
+        } ?: Response.error(404, "{}".toResponseBody())
+
+    override suspend fun put(
+        draftId: String,
+        request: PutStoryDraftDto,
+    ): Response<StoryDraftSavedDto> {
+        puts += draftId to request.baseVersion
+        val current = drafts[draftId]
+        val stored = request.copy(baseVersion = null)
+        return when {
+            current == null && request.baseVersion != null -> error(400, """{"code":"INVALID_INPUT"}""")
+            current == null && drafts.size >= limit -> error(400, """{"code":"DRAFT_LIMIT_EXCEEDED"}""")
+            current == null -> saved(draftId, 1, stored)
+            current.second == stored -> Response.success(StoryDraftSavedDto(current.first))
+            request.baseVersion != current.first ->
+                error(
+                    409,
+                    """{"code":"DRAFT_VERSION_CONFLICT","details":[{"field":"version","message":"${current.first}"}]}""",
+                )
+            else -> saved(draftId, current.first + 1, stored)
+        }
+    }
+
+    override suspend fun delete(draftId: String): Response<Unit> {
+        drafts.remove(draftId)
+        return Response.success(204, Unit)
+    }
+
+    private fun saved(
+        draftId: String,
+        version: Int,
+        request: PutStoryDraftDto,
+    ): Response<StoryDraftSavedDto> {
+        drafts[draftId] = version to request
+        return Response.success(StoryDraftSavedDto(version))
+    }
+
+    private fun error(
+        code: Int,
+        body: String,
+    ): Response<StoryDraftSavedDto> = Response.error(code, body.toResponseBody())
+}
+
+private class FakeGenreCatalog : StoryCreationRepository {
+    var fails = false
+
+    override suspend fun genres(query: String): DomainResult<GenreCatalog> =
+        if (fails) {
+            DomainResult.Failure(DomainError.Network)
+        } else {
+            DomainResult.Success(GenreCatalog(listOf(StoryTag(3, "판타지", StoryTagCategory.GENRE)), emptyList()))
+        }
+
+    override suspend fun tags(): DomainResult<List<StoryTag>> = unused()
+
+    override suspend fun artStyles(): DomainResult<List<ArtStyle>> = unused()
+
+    override suspend fun generateStorylines(command: StorylineGenerationCommand): DomainResult<StorylineGeneration> =
+        unused()
+
+    override suspend fun completeStory(command: StoryCompletionCommand): DomainResult<CompletedStory> = unused()
+
+    override suspend fun creationRequest(requestId: String): DomainResult<CreationRequestSnapshot> = unused()
+
+    override suspend fun rateStoryline(
+        storylineId: Long,
+        rating: StorylineRating,
+    ): DomainResult<Unit> = unused()
+
+    override suspend fun clearStorylineRating(storylineId: Long): DomainResult<Unit> = unused()
+
+    private fun unused(): Nothing = throw UnsupportedOperationException()
+}
 
 private class StorageProfileRepository(
     ownerId: String,

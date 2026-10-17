@@ -169,12 +169,28 @@ internal class FakePendingStoryCreationStore(
     override suspend fun write(
         draftId: String,
         record: PendingStoryCreation,
+        createdAt: Long?,
     ): Boolean {
         if (!writeSucceeds) return false
         writes += record
         val existing = state.value.firstOrNull { it.draftId == draftId }
-        val createdAt = if (existing == null) writes.size.toLong() else existing.createdAt
-        state.value = state.value.filterNot { it.draftId == draftId } + StoredCreationDraft(draftId, createdAt, record)
+        val firstSavedAt = if (existing == null) createdAt ?: writes.size.toLong() else existing.createdAt
+        state.value =
+            state.value.filterNot { it.draftId == draftId } + StoredCreationDraft(draftId, firstSavedAt, record)
+        return true
+    }
+
+    override suspend fun detach(draftId: String): Boolean {
+        val existing = state.value.firstOrNull { it.draftId == draftId } ?: return true
+        val detached =
+            when (val record = existing.record) {
+                is PendingStoryCreation.GeneratingStorylines -> record.copy(serverDraft = null)
+                is PendingStoryCreation.Draft -> record.copy(serverDraft = null)
+                is PendingStoryCreation.KeywordDraft -> record
+            }
+        state.value =
+            state.value.filterNot { it.draftId == draftId } +
+            existing.copy(draftId = "detached-$draftId", record = detached)
         return true
     }
 

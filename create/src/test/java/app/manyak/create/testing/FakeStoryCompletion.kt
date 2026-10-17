@@ -2,6 +2,7 @@ package app.manyak.create.testing
 
 import app.manyak.create.domain.StoryCompletionRequestStore
 import app.manyak.create.domain.StoryCompletionSubmitter
+import app.manyak.create.domain.toReturnedDraft
 import app.manyak.create.entity.CompletedStory
 import app.manyak.create.entity.CompletionOutcome
 import app.manyak.create.entity.StoryCompletionRequest
@@ -57,11 +58,16 @@ internal class FakeStoryCompletionRequestStore(
         story: CompletedStory,
     ): Boolean = update(requestId) { it.copy(outcome = CompletionOutcome.Completed(story)) }
 
-    override suspend fun markFailed(requestId: String): Boolean =
-        update(requestId) { it.copy(outcome = CompletionOutcome.Failed) }
-
-    override suspend fun markPending(requestId: String): Boolean =
-        update(requestId) { it.copy(outcome = CompletionOutcome.Pending) }
+    override suspend fun demoteToDraft(requestId: String): Boolean {
+        val request = state.value.firstOrNull { it.requestId == requestId } ?: return false
+        draftStore?.write(
+            request.command.draftId ?: "returned-$requestId",
+            request.toReturnedDraft(),
+            request.createdAt,
+        )
+        state.value = state.value.filterNot { it.requestId == requestId }
+        return true
+    }
 
     override suspend fun delete(requestId: String): Boolean {
         state.value = state.value.filterNot { it.requestId == requestId }

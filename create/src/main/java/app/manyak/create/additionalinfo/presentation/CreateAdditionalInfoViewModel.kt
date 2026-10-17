@@ -10,6 +10,7 @@ import app.manyak.common.presentation.mvi.MviViewModel
 import app.manyak.create.domain.StoryCreationRepository
 import app.manyak.create.entity.ArtStyle
 import app.manyak.create.entity.StoryCompletionCommand
+import app.manyak.create.presentation.state.FunnelEntryOutcome
 import app.manyak.create.presentation.state.FunnelExitWarning
 import app.manyak.create.presentation.state.StorylineGenerationState
 import app.manyak.create.presentation.state.StorylineGenerationStore
@@ -43,6 +44,8 @@ data class CreateAdditionalInfoUiState(
      * 않게 한다.
      */
     val isRestoring: Boolean = false,
+    /** 서버 초안을 읽지 못해 진입 판정이 끝나지 않았다. 다시 시도를 그린다. */
+    val entryFailed: Boolean = false,
     /** 완성 요청에 싣는 간편 제작 진행 ID. 복원 전 잠깐을 제외하면 항상 있다. */
     val simpleCreationId: Long? = null,
     /** 생성 결과 스냅숏. 이 화면에 머무는 동안 재생성은 일어나지 않는다. */
@@ -105,8 +108,22 @@ sealed interface CreateAdditionalInfoIntent {
         val storylineIndex: Int,
     ) : CreateAdditionalInfoIntent
 
-    /** 헤더의 임시 저장 버튼과 백그라운드 전환. */
-    data object SaveDraft : CreateAdditionalInfoIntent
+    /** 진입 판정과 임시 저장. */
+    sealed interface DraftIntent : CreateAdditionalInfoIntent
+
+    /** 헤더의 임시 저장 버튼. */
+    data object SaveDraft : DraftIntent
+
+    /** 앱 백그라운드 전환. 실패와 충돌을 알리지 않는다. */
+    data object SaveDraftInBackground : DraftIntent
+
+    /** 진입 판정 실패 화면의 다시 시도. */
+    data object RetryEntry : DraftIntent
+
+    /** 저장 충돌 확인의 응답. 저장하기는 지금 내용으로 덮어쓴다. */
+    data class ResolveDraftConflict(
+        val overwrite: Boolean,
+    ) : DraftIntent
 
     sealed interface FunnelNavigation : CreateAdditionalInfoIntent
 
@@ -169,6 +186,10 @@ sealed interface CreateAdditionalInfoEvent {
         val snapshot: CreateAdditionalInfoUiState,
     ) : CreateAdditionalInfoEvent
 
+    data class EntryFailedChanged(
+        val failed: Boolean,
+    ) : CreateAdditionalInfoEvent
+
     data class ExitWarningChanged(
         val warning: FunnelExitWarning?,
     ) : CreateAdditionalInfoEvent
@@ -218,20 +239,13 @@ class CreateAdditionalInfoViewModel
 
         val draftSave = storylineGenerationStore.draftSave
 
+        /** 서버 저장의 실패와 충돌 뒤 덮어쓰기 성공 안내. */
+        val draftMessages = storylineGenerationStore.draftMessages
+
         init {
             analytics.track(AnalyticsEvent.StoryCreateStepViewed(CreateStep.ADDITIONAL_INFO))
             loadArtStyles()
-            viewModelScope.launch {
-                // 프로세스 재시작·재개 진입이면 진행 레코드에서 스토어를 먼저 복원한다.
-                storylineGenerationStore.ensureRestored()
-                if (uiState.value.isRestoring) {
-                    dispatchEvent(
-                        CreateAdditionalInfoEvent.SnapshotRestored(
-                            storylineGenerationStore.toAdditionalInfoSnapshot(),
-                        ),
-                    )
-                }
-            }
+            viewModelScope.launch { resolveEntry() }
             viewModelScope.launch {
                 // 입력, 추천 선택, 화풍을 스토어에 미러링해 이탈 시 임시 저장 재료로 쓴다.
                 uiState.collect { state ->
@@ -239,6 +253,28 @@ class CreateAdditionalInfoViewModel
                     if (state.isRestoring || isLeaving) return@collect
                     mirrorProgress(state)
                 }
+            }
+        }
+
+        /** 프로세스 재시작·재개 진입이면 진행 레코드나 서버 초안에서 스토어를 먼저 복원한다. */
+        private suspend fun resolveEntry() {
+            val outcome = storylineGenerationStore.ensureRestored()
+            dispatchEvent(CreateAdditionalInfoEvent.EntryFailedChanged(outcome == FunnelEntryOutcome.FAILED))
+            if (outcome == FunnelEntryOutcome.FAILED) return
+            // 이 단계에 와 있으니 스토리라인 단계가 다시 이 단계로 넘기지 않게 한다.
+            storylineGenerationStore.takeResumeStorylineIndex()
+            if (storylineGenerationStore.state.value.resultOrNull() == null) {
+                // 이어 갈 생성 결과가 없으면 스토리라인 단계가 새로 시작할지 정한다.
+                isLeaving = true
+                dispatchEffect(CreateAdditionalInfoEffect.NavigateBackToStoryline)
+                return
+            }
+            if (uiState.value.isRestoring) {
+                dispatchEvent(
+                    CreateAdditionalInfoEvent.SnapshotRestored(
+                        storylineGenerationStore.toAdditionalInfoSnapshot(),
+                    ),
+                )
             }
         }
 
@@ -278,14 +314,30 @@ class CreateAdditionalInfoViewModel
 
                 is CreateAdditionalInfoIntent.CompleteStory -> completeStory(state, intent.storylineIndex)
 
-                CreateAdditionalInfoIntent.SaveDraft -> {
-                    analytics.track(AnalyticsEvent.DraftSaved(CreateStep.ADDITIONAL_INFO))
-                    // 미러링 수집이 UiState 보다 늦게 돌아도 저장에는 지금 입력이 들어가야 한다.
-                    mirrorProgress(state)
-                    storylineGenerationStore.saveDraft()
-                }
+                is CreateAdditionalInfoIntent.DraftIntent -> handleDraftIntent(intent, state)
 
                 is CreateAdditionalInfoIntent.FunnelNavigation -> handleFunnelNavigation(intent, state)
+            }
+        }
+
+        private suspend fun handleDraftIntent(
+            intent: CreateAdditionalInfoIntent.DraftIntent,
+            state: CreateAdditionalInfoUiState,
+        ) {
+            when (intent) {
+                CreateAdditionalInfoIntent.SaveDraft, CreateAdditionalInfoIntent.SaveDraftInBackground -> {
+                    analytics.track(AnalyticsEvent.DraftSaved(CreateStep.ADDITIONAL_INFO))
+                    // 미러링 수집이 UiState 보다 늦게 돌아도 저장에는 지금 입력이 들어가야 한다.
+                    if (!state.isRestoring) mirrorProgress(state)
+                    storylineGenerationStore.saveDraft(notify = intent == CreateAdditionalInfoIntent.SaveDraft)
+                }
+
+                CreateAdditionalInfoIntent.RetryEntry -> if (state.entryFailed) resolveEntry()
+
+                is CreateAdditionalInfoIntent.ResolveDraftConflict ->
+                    storylineGenerationStore.resolveConflict(
+                        intent.overwrite,
+                    )
             }
         }
 
@@ -480,6 +532,8 @@ class CreateAdditionalInfoViewModel
                     )
 
                 is CreateAdditionalInfoEvent.ExitWarningChanged -> state.copy(exitWarning = event.warning)
+
+                is CreateAdditionalInfoEvent.EntryFailedChanged -> state.copy(entryFailed = event.failed)
 
                 is CreateAdditionalInfoEvent.ReselectWarningVisibleChanged ->
                     state.copy(showReselectWarningDialog = event.visible)

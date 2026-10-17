@@ -14,7 +14,7 @@ import app.manyak.create.general.data.database.GeneralDraftEntity
  */
 @Database(
     entities = [PendingStoryCreationEntity::class, StoryCompletionRequestEntity::class, GeneralDraftEntity::class],
-    version = 5,
+    version = 6,
     exportSchema = true,
 )
 abstract class ManyakDatabase : RoomDatabase() {

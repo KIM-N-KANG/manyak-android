@@ -9,6 +9,7 @@ import app.manyak.create.entity.StoryCharacterInput
 import app.manyak.create.entity.StoryCompletionCommand
 import app.manyak.create.entity.StorylineGenerationCommand
 import app.manyak.create.testing.FakePendingStoryCreationStore
+import app.manyak.create.testing.FakeSimpleDraftStore
 import app.manyak.create.testing.FakeStoryCompletionSubmitter
 import app.manyak.create.testing.FakeStoryCreationRepository
 import app.manyak.create.testing.TEST_DRAFT_ID
@@ -39,6 +40,7 @@ class StorylineGenerationStoreTest {
                     FakePendingStoryCreationStore(),
                     FakeStoryCompletionSubmitter(),
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
 
             store.generate(sampleGenerationInput())
@@ -64,6 +66,7 @@ class StorylineGenerationStoreTest {
                     FakePendingStoryCreationStore(),
                     FakeStoryCompletionSubmitter(),
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
 
             store.generate(sampleGenerationInput())
@@ -88,6 +91,7 @@ class StorylineGenerationStoreTest {
                     FakePendingStoryCreationStore(),
                     FakeStoryCompletionSubmitter(),
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
@@ -111,6 +115,7 @@ class StorylineGenerationStoreTest {
                     FakePendingStoryCreationStore(),
                     FakeStoryCompletionSubmitter(),
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
 
             store.generate(sampleGenerationInput())
@@ -138,6 +143,7 @@ class StorylineGenerationStoreTest {
                     FakePendingStoryCreationStore(),
                     FakeStoryCompletionSubmitter(),
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
 
             store.generate(sampleGenerationInput())
@@ -163,6 +169,7 @@ class StorylineGenerationStoreTest {
                     FakePendingStoryCreationStore(),
                     FakeStoryCompletionSubmitter(),
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
 
             store.generate(sampleGenerationInput())
@@ -190,6 +197,7 @@ class StorylineGenerationStoreTest {
                     FakePendingStoryCreationStore(),
                     FakeStoryCompletionSubmitter(),
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
 
             store.regenerate()
@@ -210,6 +218,7 @@ class StorylineGenerationStoreTest {
                     FakePendingStoryCreationStore(),
                     FakeStoryCompletionSubmitter(),
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
 
             store.generate(sampleGenerationInput())
@@ -233,6 +242,7 @@ class StorylineGenerationStoreTest {
                     pendingStore,
                     FakeStoryCompletionSubmitter(),
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
 
             store.generate(sampleGenerationInput())
@@ -257,6 +267,7 @@ class StorylineGenerationStoreTest {
                     pendingStore,
                     FakeStoryCompletionSubmitter(),
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
 
             repository.queuedGenerationResults += DomainResult.Failure(DomainError.Network)
@@ -282,6 +293,7 @@ class StorylineGenerationStoreTest {
                     pendingStore,
                     FakeStoryCompletionSubmitter(),
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
             repository.queuedGenerationResults += DomainResult.Failure(DomainError.Network)
             store.generate(sampleGenerationInput())
@@ -323,6 +335,7 @@ class StorylineGenerationStoreTest {
                     pendingStore,
                     FakeStoryCompletionSubmitter(),
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
 
             store.ensureRestored()
@@ -363,6 +376,7 @@ class StorylineGenerationStoreTest {
                     pendingStore,
                     FakeStoryCompletionSubmitter(),
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
 
             store.ensureRestored()
@@ -390,6 +404,7 @@ class StorylineGenerationStoreTest {
                     pendingStore,
                     FakeStoryCompletionSubmitter(),
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
@@ -420,6 +435,7 @@ class StorylineGenerationStoreTest {
                     pendingStore,
                     FakeStoryCompletionSubmitter(),
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
@@ -452,6 +468,7 @@ class StorylineGenerationStoreTest {
                     FakePendingStoryCreationStore(),
                     FakeStoryCompletionSubmitter(),
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
             store.generate(sampleGenerationInput())
             advanceTimeBy(DRAFT_SAVE_LOCK_MS - 1)
@@ -477,6 +494,7 @@ class StorylineGenerationStoreTest {
                     pendingStore,
                     FakeStoryCompletionSubmitter(),
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
 
             store.generate(sampleGenerationInput())
@@ -501,6 +519,7 @@ class StorylineGenerationStoreTest {
                     pendingStore,
                     FakeStoryCompletionSubmitter(),
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
 
             store.generate(sampleGenerationInput())
@@ -522,6 +541,7 @@ class StorylineGenerationStoreTest {
                     pendingStore,
                     submitter,
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
@@ -540,7 +560,8 @@ class StorylineGenerationStoreTest {
 
             val request = submitter.submitted.single()
             assertEquals(TEST_DRAFT_ID, submitter.submittedDraftIds.single())
-            assertEquals(command, request.command)
+            // 완성 요청은 세션 초안 ID 를 싣는다.
+            assertEquals(command.copy(draftId = TEST_DRAFT_ID), request.command)
             assertEquals(generation, request.generation)
             assertEquals(listOf("배경은 서울"), request.progress.additionalInfoInputs)
             // 제출 뒤 스토어는 다음 편집을 위해 비고, 임시 저장도 잠긴다.
@@ -559,6 +580,7 @@ class StorylineGenerationStoreTest {
                     pendingStore,
                     submitter,
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
@@ -579,7 +601,7 @@ class StorylineGenerationStoreTest {
             assertEquals(listOf("배경은 서울"), store.progress.additionalInfoInputs)
             assertTrue(store.draftSave.value.canSave)
             // 다음 시도는 같은 명령의 requestId 를 승계할 수 있다.
-            assertEquals(command, store.lastCompletionCommand)
+            assertEquals(command.copy(draftId = TEST_DRAFT_ID), store.lastCompletionCommand)
             assertTrue(pendingStore.current is PendingStoryCreation.Draft)
         }
 
@@ -593,6 +615,7 @@ class StorylineGenerationStoreTest {
                     pendingStore,
                     FakeStoryCompletionSubmitter(),
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind("draft-a")
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
@@ -619,6 +642,7 @@ class StorylineGenerationStoreTest {
                     pendingStore,
                     FakeStoryCompletionSubmitter(),
                     this,
+                    FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
 
             // 저장하지 않은 탭 변경은 마지막 저장 스냅숏을 덮지 않는다.

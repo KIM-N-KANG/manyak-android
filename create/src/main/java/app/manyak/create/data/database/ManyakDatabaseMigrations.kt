@@ -109,6 +109,15 @@ internal val MIGRATION_4_5 =
         }
     }
 
+/** 진행 기록과 완성 요청이 가리키는 서버 초안 버전. 기존 행은 null 이라 기기 안 세션의 기록으로 남는다. */
+internal val MIGRATION_5_6 =
+    object : Migration(5, 6) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `pending_story_creation` ADD COLUMN `serverDraftVersion` INTEGER")
+            db.execSQL("ALTER TABLE `story_completion_request` ADD COLUMN `serverDraftVersion` INTEGER")
+        }
+    }
+
 /**
  * v1 완성 행을 요청 행으로 바꾼다. 명령과 생성 결과를 해석할 수 있어야 하며, 서버 처리 여부를 모르므로
  * 상태는 PENDING 으로 두어 다음 새로고침이 복구 조회로 확정한다. 진행 JSON 은 없으면 빈 값으로 채운다.
