@@ -148,6 +148,7 @@ class ChatRoomStreamTest {
             val repository = FakeChatRepository()
             val viewModel = startStreaming(repository)
 
+            repository.streamEvents.send(ChatStreamEvent.Started("gen-1"))
             repository.streamEvents.send(
                 ChatStreamEvent.Failed(app.manyak.common.domain.error.DomainError.Unknown, "생성에 실패했어요"),
             )

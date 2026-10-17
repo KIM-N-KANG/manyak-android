@@ -3,9 +3,11 @@ package app.manyak.chat.data.api.dto
 import app.manyak.chat.entity.ChatDetail
 import app.manyak.chat.entity.ChatSummary
 import app.manyak.chat.entity.ChatTurn
+import app.manyak.chat.entity.GeneratingTurn
 import app.manyak.common.data.time.toEpochMillisOrNull
 import app.manyak.common.entity.chat.CreatedChat
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 
 /**
  * [startSettingId] 가 null 이면 직렬화에서 빠지고 서버가 첫 시작 설정으로 폴백한다. [personaId] 가 null 이면
@@ -26,6 +28,10 @@ data class ChatCreateRequestDto(
  *
  * [realtimeImage] 는 기본값을 두지 않는다 — 서버 기본이 켬이라 빠뜨리면 끈 사용자에게도 이미지가
  * 만들어지고 이프가 빠져나간다. 항상 명시해 보낸다.
+ *
+ * [lastTurnId] 는 화면이 본 마지막 턴이고, 서버의 마지막 턴과 다르면 409 로 거절된다. 첫 턴은 명시적
+ * `null` 이어야 하는데 빠지면 서버가 비교를 건너뛴다. 공용 직렬화가 `null` 필드를 빼므로 `JsonNull` 을
+ * 값으로 싣도록 [JsonElement] 로 둔다.
  */
 @Serializable
 data class ChatTurnStreamRequestDto(
@@ -34,6 +40,7 @@ data class ChatTurnStreamRequestDto(
     val sourceTurnId: Long? = null,
     val choiceOrder: Int? = null,
     val realtimeImage: Boolean,
+    val lastTurnId: JsonElement,
 )
 
 /** 재생성 요청. 서버가 보는 마지막 턴과 다르면 409 다. [realtimeImage] 규칙은 턴 진행과 같다. */
@@ -105,6 +112,16 @@ data class ChatDetailResponseDto(
     val prologue: String = "",
     val turns: List<ChatTurnDto> = emptyList(),
     val suggestedInputs: List<String> = emptyList(),
+    val generatingTurn: GeneratingTurnDto? = null,
+)
+
+/** 진행 중인 생성. [type] 은 `CONTINUE`(이어쓰기) 또는 `REGENERATE`(재생성)다. */
+@Serializable
+data class GeneratingTurnDto(
+    val generationId: String,
+    val type: String = "",
+    val userInput: String = "",
+    val targetTurnId: Long? = null,
 )
 
 @Serializable
@@ -133,4 +150,14 @@ fun ChatDetailResponseDto.toDomain(): ChatDetail =
                 )
             },
         suggestedInputs = suggestedInputs,
+        generatingTurn =
+            generatingTurn?.let { generating ->
+                GeneratingTurn(
+                    generationId = generating.generationId,
+                    userInput = generating.userInput,
+                    regeneratingTurnId = generating.targetTurnId.takeIf { generating.type == TYPE_REGENERATE },
+                )
+            },
     )
+
+private const val TYPE_REGENERATE = "REGENERATE"

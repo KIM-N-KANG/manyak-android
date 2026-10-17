@@ -21,8 +21,15 @@ class ChatSseEventMapperTest {
     }
 
     @Test
-    fun `started 는 그대로 사건이 된다`() {
-        assertEquals(ChatStreamEvent.Started, chatStreamEventOf("started", ""))
+    fun `started 는 재연결에 쓸 생성 ID 를 싣는다`() {
+        assertEquals(
+            ChatStreamEvent.Started("5e7b9a10-2c34-4d56-8e90-123456789abc"),
+            chatStreamEventOf(
+                "started",
+                """{"chatId":"chat-1","generationId":"5e7b9a10-2c34-4d56-8e90-123456789abc"}""",
+            ),
+        )
+        assertEquals(ChatStreamEvent.Started(null), chatStreamEventOf("started", ""))
     }
 
     @Test
