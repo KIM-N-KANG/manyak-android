@@ -96,6 +96,8 @@ fun StudioScreen(
                     StudioEffect.NavigateToCreate -> currentOnCreateStory()
                     StudioEffect.ShowDraftLimit ->
                         Toast.makeText(context, StudioR.string.studio_draft_limit, Toast.LENGTH_SHORT).show()
+                    StudioEffect.ShowCompletionFailed ->
+                        Toast.makeText(context, StudioR.string.studio_completion_failed, Toast.LENGTH_SHORT).show()
                     is StudioEffect.NavigateToEdit -> currentOnEditStory(effect.storyId)
                     is StudioEffect.NavigateToSubmission -> currentOnEditSubmission(effect.submissionId)
                     is StudioEffect.NavigateToResume ->
@@ -415,7 +417,6 @@ private fun StudioScreenProgressCardsPreview() {
                                 submittedAt = 2,
                                 status = CompletionRequestStatus.PENDING,
                             ),
-                            CompletionRequestSummary("req-2", submittedAt = 1, status = CompletionRequestStatus.FAILED),
                         ),
                 ),
             contentPadding = PaddingValues(0.dp),

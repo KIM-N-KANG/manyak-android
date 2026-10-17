@@ -130,7 +130,5 @@ private object EmptyCreationProgress : CreationProgressAccess {
 
     override suspend fun refreshCompletionRequests() = Unit
 
-    override suspend fun retryCompletionRequest(requestId: String) = Unit
-
     override suspend fun deleteCompletionRequest(requestId: String) = false
 }

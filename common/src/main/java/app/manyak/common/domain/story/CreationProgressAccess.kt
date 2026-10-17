@@ -10,6 +10,9 @@ interface CreationProgressAccess {
     /** 폼을 떠난 뒤 완료된 등록과 수정도 열려 있는 제작 목록에 알린다. */
     val submissionChanges: Flow<Unit> get() = emptyFlow()
 
+    /** 완성에 실패한 요청이 추가 정보 단계 초안으로 되돌아왔다. 보고 있는 제작 탭이 안내한다. */
+    val completionFailures: Flow<Unit> get() = emptyFlow()
+
     /** 편집 초안. 처음 임시 저장한 시각 최신순이고, 시각이 없는 이전 초안은 맨 뒤다. */
     val drafts: Flow<List<CreationProgressSummary>>
 
@@ -28,9 +31,6 @@ interface CreationProgressAccess {
     /** 미확정 요청의 서버 상태를 조회하고 미접수 요청을 재전송한다. 요청별 실패는 서로 격리된다. */
     suspend fun refreshCompletionRequests()
 
-    /** 실패한 요청을 같은 requestId 로 다시 보낸다. */
-    suspend fun retryCompletionRequest(requestId: String)
-
-    /** 요청 하나를 지운다. 완료된 요청이 목록의 일반 카드로 바뀐 뒤와 실패 요청 삭제에 쓴다. */
+    /** 요청 하나를 지운다. 완료된 요청이 목록의 일반 카드로 바뀐 뒤에 쓴다. */
     suspend fun deleteCompletionRequest(requestId: String): Boolean
 }

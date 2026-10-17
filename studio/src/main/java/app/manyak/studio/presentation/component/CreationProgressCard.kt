@@ -131,13 +131,10 @@ sealed interface CreationProgressCardKind {
     data class Completed(
         val title: String,
     ) : CreationProgressCardKind
-
-    /** 확정 실패 — 같은 요청으로 다시 시도하거나 삭제한다. */
-    data object Failed : CreationProgressCardKind
 }
 
 /**
- * 회색 3:4 표지. 초안·실패는 가운데에 더 진한 회색 캐릭터 심벌을, 완성 중에는 마스코트가 연기하는 무대를 둔다.
+ * 회색 3:4 표지. 초안은 가운데에 더 진한 회색 캐릭터 심벌을, 완성 중에는 마스코트가 연기하는 무대를 둔다.
  * 테두리 처리는 목록 표지와 같다 — 밝은 표지의 가장자리가 배경에 묻히지 않게 바탕으로 그린다.
  */
 @Composable
@@ -257,14 +254,12 @@ private fun CreationProgressCardKind.titleRes(): Int =
         is CreationProgressCardKind.Draft -> StudioR.string.studio_progress_draft_title
         CreationProgressCardKind.Completing -> StudioR.string.studio_progress_completing_title
         is CreationProgressCardKind.Completed -> StudioR.string.studio_progress_completed_title
-        CreationProgressCardKind.Failed -> StudioR.string.studio_progress_failed_title
     }
 
 private fun CreationProgressCardKind.descriptionRes(): Int =
     when (this) {
         CreationProgressCardKind.Completing -> StudioR.string.studio_progress_completing_description
         is CreationProgressCardKind.Completed -> StudioR.string.studio_progress_completed_description
-        CreationProgressCardKind.Failed -> StudioR.string.studio_progress_failed_description
         // 초안이 멈춘 단계를 알린다. 스토리라인 생성은 서버에서 실제로 도는 중이라 현재형이다.
         is CreationProgressCardKind.Draft ->
             when (stage) {
@@ -283,7 +278,6 @@ private fun CreationProgressCardKind.descriptionRes(): Int =
 private fun CreationProgressCardKind.primaryActionRes(): Int? =
     when (this) {
         is CreationProgressCardKind.Draft -> StudioR.string.studio_progress_resume
-        CreationProgressCardKind.Failed -> StudioR.string.studio_progress_retry
         CreationProgressCardKind.Completing, is CreationProgressCardKind.Completed -> null
     }
 
@@ -322,7 +316,6 @@ private fun CreationProgressCardPreviews() {
             )
             CreationProgressCard(kind = CreationProgressCardKind.Completing, savedAt = PREVIEW_SAVED_AT)
             CreationProgressCard(kind = CreationProgressCardKind.Completed("잿빛 왕관"), onClick = {})
-            CreationProgressCard(kind = CreationProgressCardKind.Failed, onPrimaryAction = {}, onOptionsClick = {})
         }
     }
 }

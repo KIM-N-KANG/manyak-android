@@ -38,10 +38,10 @@ data class CreationProgressSummary(
     val onServer: Boolean = false,
 )
 
+/** 완성에 실패한 요청은 카드로 남지 않고 그 초안의 추가 정보 단계 편집 초안으로 되돌아간다. */
 enum class CompletionRequestStatus {
     PENDING,
     COMPLETED,
-    FAILED,
 }
 
 /** 제작 탭이 완성 요청 카드를 그리는 데 쓰는 최소 정보. 입력 원문은 제작 기능이 소유한다. */

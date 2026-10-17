@@ -26,6 +26,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -64,7 +65,11 @@ class StoryCompletionExecutor
             draftStore.drafts.map { drafts -> drafts.map { it.toProgressSummary() } }
 
         override val completionRequests: Flow<List<CompletionRequestSummary>> =
-            requestStore.requests.map { requests -> requests.map(StoryCompletionRequest::toSummary) }
+            requestStore.requests.map { requests -> requests.mapNotNull(StoryCompletionRequest::toSummary) }
+
+        private val failures = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+        override val completionFailures: Flow<Unit> = failures
 
         override suspend fun discard(
             draftId: String,
@@ -88,12 +93,6 @@ class StoryCompletionExecutor
                         ?: applicationScope.launch { refreshAll() }.also { refreshJob = it }
                 }
             job.join()
-        }
-
-        override suspend fun retryCompletionRequest(requestId: String) {
-            val request = requestStore.readAll().firstOrNull { it.requestId == requestId } ?: return
-            if (request.outcome != CompletionOutcome.Failed) return
-            if (requestStore.markPending(requestId)) send(request.command)
         }
 
         override suspend fun deleteCompletionRequest(requestId: String): Boolean = requestStore.delete(requestId)
@@ -160,6 +159,11 @@ class StoryCompletionExecutor
                 // 제작 탭 새로고침이 로그인 뒤 첫 접점이다 — 소유자 없는 이전 버전 행을 지금 회원이 넘겨받는다.
                 draftStore.claimUnowned()
                 requestStore.claimUnowned()
+                // 이전 버전이 실패로 남긴 요청도 지금처럼 초안으로 되돌린다.
+                requestStore
+                    .readAll()
+                    .filter { it.outcome == CompletionOutcome.Failed }
+                    .forEach { demote(work, it.requestId) }
                 val pending =
                     requestStore.readAll().filter { request ->
                         request.outcome == CompletionOutcome.Pending && !isInFlight(request.requestId)
@@ -193,18 +197,29 @@ class StoryCompletionExecutor
                         // 단계가 어긋난 결과는 계약 위반이라 실패로 합류한다.
                         is CreationRequestSnapshot.StorylinesReady,
                         CreationRequestSnapshot.Failed,
-                        -> gate.commit(work) { requestStore.markFailed(requestId) }
+                        -> demote(work, requestId)
                     }
 
                 is DomainResult.Failure ->
                     if (result.error.isNotFound()) {
                         if (notReceivedIsFailure) {
-                            gate.commit(work) { requestStore.markFailed(requestId) }
+                            demote(work, requestId)
                         } else {
                             send(command)
                         }
                     }
             }
+        }
+
+        /**
+         * 확정된 완성 실패는 요청을 지우고 입력을 그 초안의 추가 정보 단계로 되돌린다. 되돌리지 못하면 요청이 그대로 남아
+         * 다음 새로고침이 다시 판정한다.
+         */
+        private suspend fun demote(
+            work: AuthWork,
+            requestId: String,
+        ) {
+            if (gate.commit(work) { requestStore.demoteToDraft(requestId) } == true) failures.tryEmit(Unit)
         }
     }
 

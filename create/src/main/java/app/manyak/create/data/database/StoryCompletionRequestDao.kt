@@ -64,6 +64,19 @@ interface StoryCompletionRequestDao {
 
     @Query("DELETE FROM story_completion_request WHERE requestId = :requestId")
     suspend fun delete(requestId: String)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertDraft(entity: PendingStoryCreationEntity)
+
+    /** 실패한 요청을 지우고 편집 초안으로 되돌리는 것은 한 트랜잭션이다 — 둘 중 하나만 남으면 입력을 잃거나 카드가 겹친다. */
+    @Transaction
+    suspend fun demote(
+        requestId: String,
+        draft: PendingStoryCreationEntity,
+    ) {
+        upsertDraft(draft)
+        delete(requestId)
+    }
 }
 
 private const val ORDER_BY_CREATED = "ORDER BY createdAt IS NULL, createdAt DESC, submittedAt DESC"

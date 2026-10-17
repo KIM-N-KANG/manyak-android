@@ -515,29 +515,6 @@ class StudioViewModelTest {
         }
 
     @Test
-    fun `실패 카드는 같은 요청으로 재시도하고 삭제는 그 요청만 지운다`() =
-        runTest(dispatcher) {
-            val failed = pendingRequest("f").copy(status = CompletionRequestStatus.FAILED)
-            val store = FakeCreationProgressAccess(requests = listOf(failed, pendingRequest("a")))
-            val viewModel = studioViewModel(store, FakeStoryRepository(), NoOpAnalytics)
-            viewModel.onIntent(StudioIntent.ScreenShown)
-            advanceUntilIdle()
-
-            viewModel.onIntent(StudioIntent.RetryCompletion("f"))
-            advanceUntilIdle()
-            assertEquals(listOf("f"), store.retriedRequestIds)
-
-            viewModel.onIntent(StudioIntent.OpenCardOptions(StudioCard.FailedRequest("f")))
-            advanceUntilIdle()
-            viewModel.onIntent(StudioIntent.RequestDelete)
-            advanceUntilIdle()
-            viewModel.onIntent(StudioIntent.ConfirmDelete)
-            advanceUntilIdle()
-            assertEquals(listOf("f"), store.deletedRequestIds)
-            assertEquals(listOf(pendingRequest("a")), store.currentRequests)
-        }
-
-    @Test
     fun `만들고 있는 스토리 카드가 5장이면 새로 만들지 않고 안내한다`() =
         runTest(dispatcher) {
             val viewModel = studioViewModel(FakeCreationProgressAccess(drafts(5)), FakeStoryRepository(), NoOpAnalytics)
@@ -625,6 +602,19 @@ class StudioViewModelTest {
             viewModel.onIntent(StudioIntent.ConfirmDelete)
             advanceUntilIdle()
             assertEquals(listOf("same" to true), access.discarded)
+        }
+
+    @Test
+    fun `완성에 실패해 초안으로 되돌아오면 안내한다`() =
+        runTest(dispatcher) {
+            val access = FakeCreationProgressAccess()
+            val viewModel = studioViewModel(access, FakeStoryRepository(), NoOpAnalytics)
+            advanceUntilIdle()
+
+            access.completionFailures.emit(Unit)
+            advanceUntilIdle()
+
+            assertEquals(StudioEffect.ShowCompletionFailed, withTimeoutOrNull(1_000) { viewModel.uiEffect.first() })
         }
 
     private fun drafts(count: Int): List<CreationProgressSummary> =

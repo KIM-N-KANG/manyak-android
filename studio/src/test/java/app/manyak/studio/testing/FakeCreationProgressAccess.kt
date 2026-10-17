@@ -19,12 +19,12 @@ internal class FakeCreationProgressAccess(
     override val drafts: Flow<List<CreationProgressSummary>> = draftState
     override val completionRequests: Flow<List<CompletionRequestSummary>> = requestState
     override val submissionChanges = MutableSharedFlow<Unit>()
+    override val completionFailures = MutableSharedFlow<Unit>()
 
     val currentDrafts: List<CreationProgressSummary> get() = draftState.value
     val currentRequests: List<CompletionRequestSummary> get() = requestState.value
     var refreshCount = 0
     var draftRefreshCount = 0
-    val retriedRequestIds = mutableListOf<String>()
     val deletedRequestIds = mutableListOf<String>()
     var discardSucceeds = true
     var draftRefreshGate: CompletableDeferred<Unit>? = null
@@ -52,10 +52,6 @@ internal class FakeCreationProgressAccess(
 
     override suspend fun refreshCompletionRequests() {
         refreshCount++
-    }
-
-    override suspend fun retryCompletionRequest(requestId: String) {
-        retriedRequestIds += requestId
     }
 
     override suspend fun deleteCompletionRequest(requestId: String): Boolean {

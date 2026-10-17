@@ -49,16 +49,15 @@ internal fun LazyListScope.progressCards(
     items(state.completionRequests, key = { request ->
         "$COMPLETION_KEY_PREFIX${request.requestId}"
     }) { request ->
-        CompletionRequestRow(request = request, onOpenStory = onOpenStory, onIntent = onIntent)
+        CompletionRequestRow(request = request, onOpenStory = onOpenStory)
     }
 }
 
-/** 요청 상태별 카드. 완성 중에는 아무 동작도 없고, 완료·실패만 각각 상세 진입과 재시도·삭제를 연다. */
+/** 요청 상태별 카드. 완성 중에는 아무 동작도 없고, 완료는 상세 진입을 연다. 실패한 요청은 초안 카드로 되돌아간다. */
 @Composable
 private fun CompletionRequestRow(
     request: CompletionRequestSummary,
     onOpenStory: (String) -> Unit,
-    onIntent: (StudioIntent) -> Unit,
 ) {
     when (request.status) {
         CompletionRequestStatus.PENDING ->
@@ -68,16 +67,6 @@ private fun CompletionRequestRow(
             CreationProgressCard(
                 kind = CreationProgressCardKind.Completed(request.storyTitle.orEmpty()),
                 onClick = request.storyId?.let { storyId -> { onOpenStory(storyId) } },
-            )
-
-        CompletionRequestStatus.FAILED ->
-            CreationProgressCard(
-                kind = CreationProgressCardKind.Failed,
-                savedAt = request.createdAt,
-                onPrimaryAction = { onIntent(StudioIntent.RetryCompletion(request.requestId)) },
-                onOptionsClick = {
-                    onIntent(StudioIntent.OpenCardOptions(StudioCard.FailedRequest(request.requestId)))
-                },
             )
     }
 }

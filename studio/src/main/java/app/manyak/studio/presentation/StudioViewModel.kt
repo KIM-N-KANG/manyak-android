@@ -51,11 +51,6 @@ sealed interface StudioCard {
         val draftId: String,
         val onServer: Boolean = false,
     ) : StudioCard
-
-    /** 완성에 실패한 요청. 삭제는 그 요청 행만 지운다. */
-    data class FailedRequest(
-        val requestId: String,
-    ) : StudioCard
 }
 
 data class StudioUiState(
@@ -141,11 +136,6 @@ sealed interface StudioIntent {
     data object ConfirmDelete : StudioIntent
 
     data object DismissDeleteDialog : StudioIntent
-
-    /** 실패 카드의 다시 시도 — 같은 requestId 로 재전송한다. */
-    data class RetryCompletion(
-        val requestId: String,
-    ) : StudioIntent
 }
 
 sealed interface StudioEvent {
@@ -223,6 +213,9 @@ sealed interface StudioEffect {
 
     /** 만들고 있는 스토리 카드가 가득 차 새로 만들지 않는다. */
     data object ShowDraftLimit : StudioEffect
+
+    /** 완성에 실패한 요청이 추가 정보 단계 초안으로 되돌아왔다. */
+    data object ShowCompletionFailed : StudioEffect
 
     data class NavigateToEdit(
         val storyId: String,
@@ -317,6 +310,9 @@ class StudioViewModel
                     shownDraftStages.keys.retainAll(drafts.mapTo(mutableSetOf()) { it.draftId })
                     dispatchEvent(StudioEvent.DraftsChanged(drafts))
                 }
+            }
+            viewModelScope.launch {
+                creationProgress.completionFailures.collect { dispatchEffect(StudioEffect.ShowCompletionFailed) }
             }
             viewModelScope.launch {
                 creationProgress.completionRequests.collect { requests ->
@@ -431,8 +427,6 @@ class StudioViewModel
                                 StudioEffect.NavigateToResume(draft.draftId, draft.resumePoint, draft.onServer),
                             )
                         }
-
-                is StudioIntent.RetryCompletion -> creationProgress.retryCompletionRequest(intent.requestId)
             }
         }
 
@@ -638,9 +632,6 @@ class StudioViewModel
                             finishLocalDelete(
                                 creationProgress.discard(target.draftId, target.onServer),
                             )
-
-                        is StudioCard.FailedRequest ->
-                            finishLocalDelete(creationProgress.deleteCompletionRequest(target.requestId))
                     }
                 }
         }
