@@ -70,6 +70,10 @@ data class StudioUiState(
     val drafts: List<CreationProgressSummary> = emptyList(),
     /** 처음 임시 저장 최신순 완성 요청. 완료된 요청은 목록에 같은 스토리가 실리면 사라진다. */
     val completionRequests: List<CompletionRequestSummary> = emptyList(),
+    /** 서버 초안 목록을 처음으로 한 번 받아 봤는지(실패 포함). */
+    val draftsReady: Boolean = false,
+    /** 검수 제출본 목록을 처음으로 한 번 받아 봤는지(실패 포함). */
+    val submissionsReady: Boolean = false,
     /** 더보기·길게 누르기로 옵션 시트를 연 카드. null 이면 시트가 없다. */
     val optionsTarget: StudioCard? = null,
     /** 삭제 확인을 묻는 대상. null 이면 다이얼로그가 없다. */
@@ -80,7 +84,13 @@ data class StudioUiState(
     /** 신고 시트가 열려 있는 동안의 대상. 옵션 시트가 닫혀도 신고가 어느 스토리인지 남아야 한다. */
     val reportStoryId: String? = null,
 ) {
-    val showCreateFab: Boolean get() = hasProgressCards || (!isLoading && !loadFailed)
+    val showCreateFab: Boolean get() = hasProgressCards || (!isListLoading && !loadFailed)
+
+    /**
+     * 첫 조회 중. 내 스토리, 만들고 있는 스토리, 검수 제출본이 모두 준비될 때까지 한 스켈레톤으로 덮어 카드가 따로 끼어들어
+     * 목록이 밀리지 않게 한다. 완성 중 카드는 기기 안 요청이라 바로 보인다.
+     */
+    val isListLoading: Boolean get() = isLoading || !draftsReady || !submissionsReady
 
     /** 서버 스토리 목록이 비어도 초안, 제출본, 완성 요청은 목록에 유지한다. */
     val hasProgressCards: Boolean get() = hasLocalCards || submissions.isNotEmpty()
@@ -198,6 +208,9 @@ sealed interface StudioEvent {
     data class CompletionRequestsChanged(
         val requests: List<CompletionRequestSummary>,
     ) : StudioEvent
+
+    /** 서버 초안 목록 조회가 끝났다(실패 포함). */
+    data object DraftsRefreshed : StudioEvent
 }
 
 sealed interface StudioEffect {
@@ -548,7 +561,11 @@ class StudioViewModel
         /** 요청 상태와 서버 초안 조회는 목록 조회와 나란히 돈다. 이미 도는 조회가 있으면 겹쳐 시작하지 않는다. */
         private fun refreshRequests() {
             if (draftRefreshJob?.isActive != true) {
-                draftRefreshJob = viewModelScope.launch { creationProgress.refreshDrafts() }
+                draftRefreshJob =
+                    viewModelScope.launch {
+                        creationProgress.refreshDrafts()
+                        dispatchEvent(StudioEvent.DraftsRefreshed)
+                    }
             }
             if (requestRefreshJob?.isActive == true) return
             requestRefreshJob = viewModelScope.launch { creationProgress.refreshCompletionRequests() }
@@ -690,20 +707,10 @@ class StudioViewModel
             event: StudioEvent,
         ): StudioUiState =
             when (event) {
-                is StudioEvent.SubmissionsLoaded -> state.withSubmissions(event.submissions)
-
-                StudioEvent.SubmissionsLoadFailed ->
-                    state.copy(
-                        submissions = emptyList(),
-                        optionsTarget =
-                            state.optionsTarget.takeUnless { it is StudioCard.Submission },
-                    )
-
-                is StudioEvent.SubmissionDeleted ->
-                    state
-                        .copy(isDeleting = false, deleteTarget = null)
-                        .withSubmissions(state.submissions.filterNot { it.id == event.submissionId })
-                        .copy(hasPendingSubmissions = event.hasPendingSubmissions)
+                is StudioEvent.SubmissionsLoaded,
+                StudioEvent.SubmissionsLoadFailed,
+                is StudioEvent.SubmissionDeleted,
+                -> reduceSubmissionEvent(state, event)
 
                 StudioEvent.LoadStarted -> state.copy(isLoading = true, loadFailed = false, isRefreshing = false)
 
@@ -747,6 +754,8 @@ class StudioViewModel
                 }
 
                 is StudioEvent.CompletionRequestsChanged -> state.copy(completionRequests = event.requests)
+
+                StudioEvent.DraftsRefreshed -> state.copy(draftsReady = true)
             }
     }
 
@@ -764,6 +773,30 @@ private fun StudioUiState.withSubmissions(items: List<StorySubmission>): StudioU
         deleteTarget = if (isDeleting) deleteTarget else deleteTarget.updated(),
     )
 }
+
+/** 검수 제출본 목록의 상태 전이. 첫 조회는 실패해도 준비된 것으로 본다. */
+private fun reduceSubmissionEvent(
+    state: StudioUiState,
+    event: StudioEvent,
+): StudioUiState =
+    when (event) {
+        is StudioEvent.SubmissionsLoaded -> state.withSubmissions(event.submissions).copy(submissionsReady = true)
+
+        StudioEvent.SubmissionsLoadFailed ->
+            state.copy(
+                submissionsReady = true,
+                submissions = emptyList(),
+                optionsTarget = state.optionsTarget.takeUnless { it is StudioCard.Submission },
+            )
+
+        is StudioEvent.SubmissionDeleted ->
+            state
+                .copy(isDeleting = false, deleteTarget = null)
+                .withSubmissions(state.submissions.filterNot { it.id == event.submissionId })
+                .copy(hasPendingSubmissions = event.hasPendingSubmissions)
+
+        else -> state
+    }
 
 /** 카드 옵션 시트에서 갈라지는 상태 전이 — 신고와 삭제. 순수 함수라 [MviViewModel.reduce] 와 같은 규칙을 따른다. */
 private fun reduceCardEvent(

@@ -3,6 +3,7 @@ package app.manyak.studio.testing
 import app.manyak.common.domain.story.CreationProgressAccess
 import app.manyak.common.entity.story.CompletionRequestSummary
 import app.manyak.common.entity.story.CreationProgressSummary
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,6 +27,7 @@ internal class FakeCreationProgressAccess(
     val retriedRequestIds = mutableListOf<String>()
     val deletedRequestIds = mutableListOf<String>()
     var discardSucceeds = true
+    var draftRefreshGate: CompletableDeferred<Unit>? = null
     val discarded = mutableListOf<Pair<String, Boolean>>()
     var deleteSucceeds = true
 
@@ -45,6 +47,7 @@ internal class FakeCreationProgressAccess(
 
     override suspend fun refreshDrafts() {
         draftRefreshCount++
+        draftRefreshGate?.await()
     }
 
     override suspend fun refreshCompletionRequests() {

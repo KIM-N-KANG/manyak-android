@@ -14,8 +14,11 @@ internal fun LazyListScope.progressCards(
     onOpenStory: (String) -> Unit,
     onIntent: (StudioIntent) -> Unit,
 ) {
+    // 첫 조회 중에는 초안과 제출본을 스켈레톤 뒤에 두었다가 내 스토리와 함께 보인다.
+    val drafts = if (state.isListLoading) emptyList() else state.drafts
+    val submissions = if (state.isListLoading) emptyList() else state.submissions
     // 기기 안 기록 뒤에 다른 곳에서 저장한 서버 초안은 같은 ID 로 따로 보인다.
-    items(state.drafts, key = { draft ->
+    items(drafts, key = { draft ->
         "$DRAFT_KEY_PREFIX${if (draft.onServer) "server:" else ""}${draft.draftId}"
     }) { draft ->
         CreationProgressCard(
@@ -36,7 +39,7 @@ internal fun LazyListScope.progressCards(
             },
         )
     }
-    items(state.submissions, key = { "submission:${it.id}" }) { submission ->
+    items(submissions, key = { "submission:${it.id}" }) { submission ->
         SubmissionCard(
             submission = submission,
             onEdit = { onIntent(StudioIntent.EditSubmission(submission.id)) },

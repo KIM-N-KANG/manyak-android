@@ -53,7 +53,8 @@ class StudioViewModelTest {
     fun `제작 FAB는 로컬 카드 없는 로딩과 오류에서 숨긴다`() {
         assertFalse(StudioUiState().showCreateFab)
         assertFalse(StudioUiState(isLoading = false, loadFailed = true).showCreateFab)
-        assertTrue(StudioUiState(isLoading = false).showCreateFab)
+        assertFalse(StudioUiState(isLoading = false).showCreateFab)
+        assertTrue(StudioUiState(isLoading = false, draftsReady = true, submissionsReady = true).showCreateFab)
         val local = CreationProgressSummary("draft", CreationStage.KEYWORD_DRAFT, CreationResumePoint.KeywordStep)
         assertTrue(StudioUiState(drafts = listOf(local)).showCreateFab)
         assertTrue(StudioUiState(loadFailed = true, drafts = listOf(local)).showCreateFab)
@@ -560,6 +561,39 @@ class StudioViewModelTest {
             advanceUntilIdle()
 
             assertEquals(StudioEffect.NavigateToCreate, withTimeoutOrNull(1_000) { viewModel.uiEffect.first() })
+        }
+
+    @Test
+    fun `첫 조회는 내 스토리, 초안 목록, 검수 제출본을 모두 받을 때까지 한 스켈레톤으로 덮는다`() =
+        runTest(dispatcher) {
+            val access = FakeCreationProgressAccess(drafts(1))
+            val draftGate = CompletableDeferred<Unit>()
+            access.draftRefreshGate = draftGate
+            val viewModel = studioViewModel(access, FakeStoryRepository(), NoOpAnalytics)
+
+            viewModel.onIntent(StudioIntent.ScreenShown)
+            advanceUntilIdle()
+            assertFalse(viewModel.uiState.value.isLoading)
+            assertTrue(viewModel.uiState.value.isListLoading)
+
+            draftGate.complete(Unit)
+            advanceUntilIdle()
+            assertFalse(viewModel.uiState.value.isListLoading)
+        }
+
+    @Test
+    fun `다시 돌아올 때는 덮지 않고 조용히 바꾼다`() =
+        runTest(dispatcher) {
+            val access = FakeCreationProgressAccess(drafts(1))
+            val viewModel = studioViewModel(access, FakeStoryRepository(), NoOpAnalytics)
+            viewModel.onIntent(StudioIntent.ScreenShown)
+            advanceUntilIdle()
+
+            access.draftRefreshGate = CompletableDeferred()
+            viewModel.onIntent(StudioIntent.ScreenShown)
+            advanceUntilIdle()
+
+            assertFalse(viewModel.uiState.value.isListLoading)
         }
 
     @Test
