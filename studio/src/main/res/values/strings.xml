@@ -20,6 +20,7 @@
     <string name="studio_progress_draft_title">만들고 있는 스토리</string>
     <string name="studio_progress_failed_description">다시 시도하거나 삭제할 수 있어요</string>
     <string name="studio_progress_failed_title">스토리를 완성하지 못했어요</string>
+    <string name="studio_draft_limit">만들고 있는 스토리는 5개까지 둘 수 있어요</string>
     <string name="studio_progress_resume">이어서 만들기</string>
     <string name="studio_progress_retry">다시 시도하기</string>
     <string name="studio_progress_saved_at_description">처음 임시 저장한 시각 %1$s</string>

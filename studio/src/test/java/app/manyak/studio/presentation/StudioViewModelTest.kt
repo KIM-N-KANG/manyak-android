@@ -537,6 +537,32 @@ class StudioViewModelTest {
         }
 
     @Test
+    fun `만들고 있는 스토리 카드가 5장이면 새로 만들지 않고 안내한다`() =
+        runTest(dispatcher) {
+            val viewModel = studioViewModel(FakeCreationProgressAccess(drafts(5)), FakeStoryRepository(), NoOpAnalytics)
+            viewModel.onIntent(StudioIntent.ScreenShown)
+            advanceUntilIdle()
+
+            viewModel.onIntent(StudioIntent.CreateStory)
+            advanceUntilIdle()
+
+            assertEquals(StudioEffect.ShowDraftLimit, withTimeoutOrNull(1_000) { viewModel.uiEffect.first() })
+        }
+
+    @Test
+    fun `카드가 4장이면 새로 만든다`() =
+        runTest(dispatcher) {
+            val viewModel = studioViewModel(FakeCreationProgressAccess(drafts(4)), FakeStoryRepository(), NoOpAnalytics)
+            viewModel.onIntent(StudioIntent.ScreenShown)
+            advanceUntilIdle()
+
+            viewModel.onIntent(StudioIntent.CreateStory)
+            advanceUntilIdle()
+
+            assertEquals(StudioEffect.NavigateToCreate, withTimeoutOrNull(1_000) { viewModel.uiEffect.first() })
+        }
+
+    @Test
     fun `같은 ID 의 기기 안 카드와 서버 카드는 이어서 만들기와 삭제를 따로 한다`() =
         runTest(dispatcher) {
             val local = CreationProgressSummary("same", CreationStage.STORY_DRAFT, CreationResumePoint.StorylineStep)
@@ -566,6 +592,9 @@ class StudioViewModelTest {
             advanceUntilIdle()
             assertEquals(listOf("same" to true), access.discarded)
         }
+
+    private fun drafts(count: Int): List<CreationProgressSummary> =
+        (1..count).map { CreationProgressSummary("d$it", CreationStage.KEYWORD_DRAFT, CreationResumePoint.KeywordStep) }
 }
 
 private const val GENERATING_DRAFT_ID = "draft-generating"

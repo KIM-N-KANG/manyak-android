@@ -208,6 +208,9 @@ sealed interface StudioEffect {
     /** 새 스토리의 제작 방식 선택으로 진입한다. */
     data object NavigateToCreate : StudioEffect
 
+    /** 만들고 있는 스토리 카드가 가득 차 새로 만들지 않는다. */
+    data object ShowDraftLimit : StudioEffect
+
     data class NavigateToEdit(
         val storyId: String,
     ) : StudioEffect
@@ -398,7 +401,11 @@ class StudioViewModel
                 -> handleCardIntent(intent, state)
 
                 // 초안은 여러 개를 둘 수 있어 새 제작 전에 묻지 않는다. 이어 만들기는 초안 카드가 맡는다.
-                StudioIntent.CreateStory -> dispatchEffect(StudioEffect.NavigateToCreate)
+                // 카드가 상한이면 새 제작의 첫 저장에 서버 자리가 없어 들어가지 않는다. 서버 목록을 받지 못했으면 보이는 카드만 센다.
+                StudioIntent.CreateStory -> {
+                    val full = state.drafts.size >= DRAFT_CARD_LIMIT
+                    dispatchEffect(if (full) StudioEffect.ShowDraftLimit else StudioEffect.NavigateToCreate)
+                }
 
                 StudioIntent.EditStory, is StudioIntent.EditSubmission -> editSelectedCard(intent, state)
 
@@ -794,6 +801,9 @@ private fun reduceCardEvent(
 
         else -> state
     }
+
+/** 만들고 있는 스토리 카드 상한. 서버 초안 상한(회원당 5개)과 같고, 서버 초안 하나는 카드 많아야 한 장이다. */
+private const val DRAFT_CARD_LIMIT = 5
 
 /** 완성 중 카드가 보이는 동안의 요청 상태 조회 간격. 완성은 보통 1~4분 걸려 더 촘촘할 이유가 없다. */
 private const val PENDING_POLL_INTERVAL_MS = 5_000L

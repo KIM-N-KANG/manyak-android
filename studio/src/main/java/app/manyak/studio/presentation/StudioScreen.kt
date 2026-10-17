@@ -94,6 +94,8 @@ fun StudioScreen(
             viewModel.uiEffect.collect { effect ->
                 when (effect) {
                     StudioEffect.NavigateToCreate -> currentOnCreateStory()
+                    StudioEffect.ShowDraftLimit ->
+                        Toast.makeText(context, StudioR.string.studio_draft_limit, Toast.LENGTH_SHORT).show()
                     is StudioEffect.NavigateToEdit -> currentOnEditStory(effect.storyId)
                     is StudioEffect.NavigateToSubmission -> currentOnEditSubmission(effect.submissionId)
                     is StudioEffect.NavigateToResume ->
