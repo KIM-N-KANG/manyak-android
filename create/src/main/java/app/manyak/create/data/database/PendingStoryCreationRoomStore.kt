@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -60,10 +61,17 @@ class PendingStoryCreationRoomStore
         override suspend fun write(
             draftId: String,
             record: PendingStoryCreation,
+            createdAt: Long?,
         ): Boolean {
             val ownerId = ownerId() ?: return false
-            val entity = record.toEntity(draftId, ownerId, createdAt = System.currentTimeMillis())
+            val entity = record.toEntity(draftId, ownerId, createdAt = createdAt ?: System.currentTimeMillis())
             return withContext(ioDispatcher) { runCatching { dao.save(entity) }.isSuccess }
+        }
+
+        override suspend fun detach(draftId: String): Boolean {
+            val ownerId = ownerId() ?: return false
+            val newId = UUID.randomUUID().toString()
+            return withContext(ioDispatcher) { runCatching { dao.detach(draftId, ownerId, newId) }.isSuccess }
         }
 
         override suspend fun clear(draftId: String): Boolean {

@@ -17,11 +17,21 @@ interface PendingStoryCreationStore {
 
     suspend fun read(draftId: String): PendingStoryCreation?
 
-    /** 레코드가 영속 저장소에 반영됐을 때만 true. 처음 쓰는 초안이면 지금이 처음 저장 시각이 된다. */
+    /**
+     * 레코드가 영속 저장소에 반영됐을 때만 true. 처음 쓰는 초안이면 [createdAt](서버 초안의 처음 저장 시각), 없으면 지금이
+     * 처음 저장 시각이 된다.
+     */
     suspend fun write(
         draftId: String,
         record: PendingStoryCreation,
+        createdAt: Long? = null,
     ): Boolean
+
+    /**
+     * 같은 ID 의 기록을 새 ID 의 기기 안 초안으로 옮기고 서버 초안 연결을 버린다. 옮길 기록이 없거나 옮겼으면 true.
+     * 처음 저장 시각과 내용은 그대로다.
+     */
+    suspend fun detach(draftId: String): Boolean
 
     /** 초안이 비워졌을 때만 true. 다른 초안은 건드리지 않는다. */
     suspend fun clear(draftId: String): Boolean

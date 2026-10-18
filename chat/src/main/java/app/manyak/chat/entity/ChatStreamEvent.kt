@@ -12,8 +12,14 @@ import app.manyak.common.domain.error.DomainError
  * 흘리면 이탈할 때마다 실패 안내가 뜬다.
  */
 sealed interface ChatStreamEvent {
-    /** 서버가 생성을 시작했다. 화면이 할 일은 없다. */
-    data object Started : ChatStreamEvent
+    /**
+     * 서버가 생성을 시작했다. 다시 붙은 연결도 이 사건부터 처음부터 다시 보낸다.
+     *
+     * [generationId] 는 끊겼을 때 같은 생성에 다시 붙는 데 쓴다. 서버가 싣지 않았으면 `null` 이다.
+     */
+    data class Started(
+        val generationId: String? = null,
+    ) : ChatStreamEvent
 
     /** 이어 붙일 본문 조각. */
     data class Token(
@@ -38,7 +44,8 @@ sealed interface ChatStreamEvent {
      * 실패로 끝났다. [message] 는 서버가 준 문구이고 없으면 화면이 기본 문구를 쓴다.
      *
      * 서버가 보내는 실패 사건에는 HTTP 상태가 없어 [DomainError.Unknown] 으로 올린다. 상태가 있는
-     * 실패(스트림을 열지 못한 경우)는 그 상태를 실은 오류가 들어온다.
+     * 실패(스트림을 열지 못한 경우)는 그 상태를 실은 오류가 들어온다. 열린 뒤 읽다가 끊긴 것은 실패가
+     * 아니라 [Interrupted] 다.
      */
     data class Failed(
         val error: DomainError,
@@ -48,7 +55,8 @@ sealed interface ChatStreamEvent {
     /**
      * 종단 사건 없이 스트림이 끊겼다.
      *
-     * 서버 저장 여부가 불명이므로 화면은 임의로 복원하지 않고 상세를 다시 읽어 확정 상태를 표시한다.
+     * 서버는 연결이 끊겨도 생성을 계속하므로 화면은 같은 생성에 다시 붙는다. 끝내 받지 못하면 저장
+     * 여부가 불명이라 임의로 복원하지 않고 상세를 다시 읽어 확정 상태를 표시한다.
      */
     data object Interrupted : ChatStreamEvent
 }

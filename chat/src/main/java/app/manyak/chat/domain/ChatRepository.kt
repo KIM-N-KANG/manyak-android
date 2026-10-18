@@ -38,6 +38,7 @@ interface ChatRepository : ChatStarter {
      * @param sourceTurnId 고른 선택지가 달린 턴. 시작 추천처럼 원본 턴이 없으면 `null`
      * @param choiceOrder 고른 선택지의 순번(1부터). [sourceTurnId] 와 짝이다
      * @param realtimeImage 이 턴에서 인물 이미지를 실시간으로 만들지. 서버 기본이 켬이라 항상 보낸다
+     * @param lastTurnId 화면이 본 마지막 턴. 첫 턴이면 `null` 이고, 서버의 마지막 턴과 다르면 409 다
      */
     fun streamTurn(
         chatId: String,
@@ -46,6 +47,7 @@ interface ChatRepository : ChatStarter {
         sourceTurnId: Long? = null,
         choiceOrder: Int? = null,
         realtimeImage: Boolean,
+        lastTurnId: Long?,
     ): Flow<ChatStreamEvent>
 
     /**
@@ -57,6 +59,15 @@ interface ChatRepository : ChatStarter {
         chatId: String,
         turnId: Long,
         realtimeImage: Boolean,
+    ): Flow<ChatStreamEvent>
+
+    /**
+     * 진행 중이거나 막 끝난 생성에 다시 붙는다. 사건을 처음부터 다시 받으며 사건 계약은 [streamTurn] 과 같다.
+     * 생성과 과금은 반복되지 않는다.
+     */
+    fun resumeGeneration(
+        chatId: String,
+        generationId: String,
     ): Flow<ChatStreamEvent>
 
     /**

@@ -148,13 +148,27 @@ class ChatRoomSuggestionTest {
         }
 
     @Test
-    fun `진입에서는 선택지를 만들지 않는다`() =
+    fun `진입했는데 마지막 턴에 선택지가 없으면 만든다`() =
         runTest(dispatcher) {
+            // 나가 있는 동안 저장된 턴은 선택지 없이 남는다.
             val repository = FakeChatRepository()
             viewModel(repository)
             advanceUntilIdle()
 
-            assertEquals(emptyList<Long>(), repository.generatedChoiceTurnIds)
+            assertEquals(listOf(1L), repository.generatedChoiceTurnIds)
+        }
+
+    @Test
+    fun `진입했어도 선택지가 이미 있거나 꺼져 있으면 만들지 않는다`() =
+        runTest(dispatcher) {
+            val withChoices = FakeChatRepository()
+            loadedWithChoices(withChoices)
+            val switchedOff = FakeChatRepository()
+            viewModel(switchedOff, FakeChatPreferencesRepository(choices = false))
+            advanceUntilIdle()
+
+            assertEquals(emptyList<Long>(), withChoices.generatedChoiceTurnIds)
+            assertEquals(emptyList<Long>(), switchedOff.generatedChoiceTurnIds)
         }
 
     @Test
@@ -197,6 +211,7 @@ class ChatRoomSuggestionTest {
             val repository = FakeChatRepository()
             val viewModel = viewModel(repository)
             advanceUntilIdle()
+            repository.generatedChoiceTurnIds.clear()
 
             viewModel.onIntent(ChatRoomIntent.ChoicesEnabledChanged(false))
             advanceUntilIdle()
@@ -214,6 +229,7 @@ class ChatRoomSuggestionTest {
             val repository = FakeChatRepository()
             val viewModel = viewModel(repository)
             advanceUntilIdle()
+            repository.generatedChoiceTurnIds.clear()
 
             viewModel.onIntent(ChatRoomIntent.ChoicesEnabledChanged(false))
             viewModel.onIntent(ChatRoomIntent.ChoicesEnabledChanged(true))
@@ -275,6 +291,7 @@ class ChatRoomSuggestionTest {
 
     /** 턴 하나를 보내고 스트림이 열린 상태. */
     private fun TestScope.streaming(repository: FakeChatRepository): ChatRoomViewModel {
+        repository.queuedChatDetailResults += DomainResult.Success(detail(turnsWithChoices()))
         val viewModel = viewModel(repository)
         advanceUntilIdle()
         viewModel.onIntent(

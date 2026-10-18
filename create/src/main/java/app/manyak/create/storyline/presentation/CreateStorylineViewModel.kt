@@ -12,6 +12,7 @@ import app.manyak.create.entity.StoryTagCategory
 import app.manyak.create.entity.Storyline
 import app.manyak.create.entity.StorylineGenerationCommand
 import app.manyak.create.entity.StorylineRating
+import app.manyak.create.presentation.state.FunnelEntryOutcome
 import app.manyak.create.presentation.state.FunnelExitWarning
 import app.manyak.create.presentation.state.StorylineGenerationState
 import app.manyak.create.presentation.state.StorylineGenerationStore
@@ -64,6 +65,8 @@ sealed interface SelectedKeywords {
 
 data class CreateStorylineUiState(
     val content: StorylineContent = StorylineContent.Restoring,
+    /** 서버 초안을 읽지 못해 진입 판정이 끝나지 않았다. 다시 시도를 그린다. */
+    val entryFailed: Boolean = false,
     /** 생성·재생성 실패. 직전 결과가 남아 있으면 그대로 보여 주며 인라인 오류만 덧붙인다. */
     val hasGenerationError: Boolean = false,
     /** 이탈을 막고 띄운 경고. */
@@ -100,8 +103,22 @@ sealed interface CreateStorylineIntent {
 
     data object DismissSelectedKeywords : CreateStorylineIntent
 
-    /** 헤더의 임시 저장 버튼과 백그라운드 전환. */
-    data object SaveDraft : CreateStorylineIntent
+    /** 진입 판정과 임시 저장. */
+    sealed interface DraftIntent : CreateStorylineIntent
+
+    /** 헤더의 임시 저장 버튼. */
+    data object SaveDraft : DraftIntent
+
+    /** 앱 백그라운드 전환. 실패와 충돌을 알리지 않는다. */
+    data object SaveDraftInBackground : DraftIntent
+
+    /** 진입 판정 실패 화면의 다시 시도. */
+    data object RetryEntry : DraftIntent
+
+    /** 저장 충돌 확인의 응답. 저장하기는 지금 내용으로 덮어쓴다. */
+    data class ResolveDraftConflict(
+        val overwrite: Boolean,
+    ) : DraftIntent
 
     /** 시스템·헤더 뒤로가기 — 퍼널 이탈(이 단계가 키워드를 대체하므로 홈 복귀). */
     data object LeaveFunnel : CreateStorylineIntent
@@ -138,6 +155,10 @@ sealed interface CreateStorylineEvent {
     data class ExitWarningChanged(
         val warning: FunnelExitWarning?,
     ) : CreateStorylineEvent
+
+    data class EntryFailedChanged(
+        val failed: Boolean,
+    ) : CreateStorylineEvent
 }
 
 sealed interface CreateStorylineEffect {
@@ -151,6 +172,14 @@ sealed interface CreateStorylineEffect {
 
     /** 퍼널 이탈 확정. */
     data object ExitFunnel : CreateStorylineEffect
+
+    /**
+     * 이어 갈 스토리라인이 없어(초안을 찾지 못했거나 아직 키워드 단계) 같은 초안의 키워드 단계로 새로 시작한다.
+     * [notFound]면 제작 탭 카드로 연 초안을 찾지 못했다고 알린다.
+     */
+    data class RestartAtKeyword(
+        val notFound: Boolean,
+    ) : CreateStorylineEffect
 }
 
 @HiltViewModel(assistedFactory = CreateStorylineViewModel.Factory::class)
@@ -161,6 +190,8 @@ class CreateStorylineViewModel
         private val storylineGenerationStore: StorylineGenerationStore,
         private val storyCreationRepository: StoryCreationRepository,
         private val analytics: Analytics,
+        @Assisted private val resume: Boolean = false,
+        @Assisted("server") private val server: Boolean = false,
     ) : MviViewModel<CreateStorylineIntent, CreateStorylineUiState, CreateStorylineEvent, CreateStorylineEffect>(
             storylineGenerationStore.bind(draftId).toStorylineSnapshot(),
         ) {
@@ -183,14 +214,45 @@ class CreateStorylineViewModel
 
         val draftSave = storylineGenerationStore.draftSave
 
+        /** 서버 저장의 실패와 충돌 뒤 덮어쓰기 성공 안내. */
+        val draftMessages = storylineGenerationStore.draftMessages
+
         init {
             analytics.track(AnalyticsEvent.StoryCreateStepViewed(CreateStep.STORYLINE_SELECT))
+            enter()
+        }
+
+        /**
+         * 프로세스 재시작·재개 진입으로 스토어가 비어 있으면 진행 레코드나 서버 초안에서 먼저 복원한 뒤 생성 상태를 따른다.
+         * 이어 갈 스토리라인이 없으면 키워드 단계로 새로 시작하고, 추가 정보 단계에서 저장한 서버 초안을 카드로 열었으면
+         * 그 단계까지 넘어간다.
+         */
+        private fun enter() {
             viewModelScope.launch {
-                // 프로세스 재시작·재개 진입으로 스토어가 비어 있으면 진행 레코드에서 먼저 복원한다.
-                storylineGenerationStore.ensureRestored()
+                val outcome = storylineGenerationStore.ensureRestored(resume, server)
+                dispatchEvent(CreateStorylineEvent.EntryFailedChanged(outcome == FunnelEntryOutcome.FAILED))
+                if (outcome == FunnelEntryOutcome.FAILED) return@launch
+                if (storylineGenerationStore.state.value is StorylineGenerationState.Idle) {
+                    dispatchEffect(
+                        CreateStorylineEffect.RestartAtKeyword(
+                            notFound =
+                                outcome == FunnelEntryOutcome.NOT_FOUND,
+                        ),
+                    )
+                    return@launch
+                }
+                storylineGenerationStore.takeResumeStorylineIndex()?.let { index ->
+                    dispatchEffect(CreateStorylineEffect.NavigateToAdditionalInfo(index))
+                }
                 storylineGenerationStore.state.collect { generation ->
                     if (isLeaving) return@collect
-                    if (generation is StorylineGenerationState.Generated) resetRatingSync()
+                    // 새 생성 결과가 오면 이전 스토리라인의 평가 동기화는 의미가 없다.
+                    if (generation is StorylineGenerationState.Generated) {
+                        ratingSyncTimers.values.forEach(Job::cancel)
+                        ratingSyncTimers.clear()
+                        desiredRatings.clear()
+                        syncedRatings.clear()
+                    }
                     dispatchEvent(
                         CreateStorylineEvent.GenerationStateChanged(
                             generation = generation,
@@ -212,7 +274,7 @@ class CreateStorylineViewModel
 
         override suspend fun handleIntent(intent: CreateStorylineIntent) {
             val state = uiState.value
-            intent.analyticsEvent(state, creationId())?.let(analytics::track)
+            intent.analyticsEvent(state, storylineGenerationStore.creationId())?.let(analytics::track)
             when (intent) {
                 is CreateStorylineIntent.SelectStoryline ->
                     if (intent.index in state.storylines.indices) {
@@ -226,7 +288,7 @@ class CreateStorylineViewModel
                 // 스토어가 상태 전이를 동기로 수행해 중복 탭을 막고, 실행은 퍼널 스코프가 담는다.
                 CreateStorylineIntent.Regenerate -> storylineGenerationStore.regenerate()
 
-                CreateStorylineIntent.SaveDraft -> storylineGenerationStore.saveDraft()
+                is CreateStorylineIntent.DraftIntent -> handleDraftIntent(intent, state)
 
                 CreateStorylineIntent.LeaveFunnel -> leaveFunnel(confirmed = false)
 
@@ -362,24 +424,28 @@ class CreateStorylineViewModel
             }
         }
 
-        /** 분석 이벤트의 `creation_id`. 생성 결과가 없으면 프로퍼티를 채울 수 없어 이벤트를 내지 않는다. */
-        private fun creationId(): String? =
-            storylineGenerationStore.state.value
-                .resultOrNull()
-                ?.simpleCreationId
-                ?.toString()
-
-        /** 새 생성 결과가 오면 이전 스토리라인의 평가 동기화는 의미가 없다. */
-        private fun resetRatingSync() {
-            ratingSyncTimers.values.forEach(Job::cancel)
-            ratingSyncTimers.clear()
-            desiredRatings.clear()
-            syncedRatings.clear()
+        private fun handleDraftIntent(
+            intent: CreateStorylineIntent.DraftIntent,
+            state: CreateStorylineUiState,
+        ) {
+            when (intent) {
+                CreateStorylineIntent.SaveDraft -> storylineGenerationStore.saveDraft()
+                CreateStorylineIntent.SaveDraftInBackground -> storylineGenerationStore.saveDraft(notify = false)
+                CreateStorylineIntent.RetryEntry -> if (state.entryFailed) enter()
+                is CreateStorylineIntent.ResolveDraftConflict ->
+                    storylineGenerationStore.resolveConflict(
+                        intent.overwrite,
+                    )
+            }
         }
 
         @AssistedFactory
         interface Factory {
-            fun create(draftId: String): CreateStorylineViewModel
+            fun create(
+                draftId: String,
+                resume: Boolean,
+                @Assisted("server") server: Boolean,
+            ): CreateStorylineViewModel
         }
 
         override fun reduce(
@@ -406,6 +472,8 @@ class CreateStorylineViewModel
                     state.copy(selectedKeywords = event.keywords)
 
                 is CreateStorylineEvent.ExitWarningChanged -> state.copy(exitWarning = event.warning)
+
+                is CreateStorylineEvent.EntryFailedChanged -> state.copy(entryFailed = event.failed)
             }
 
         companion object {
@@ -526,7 +594,8 @@ private fun CreateStorylineIntent.analyticsEvent(
                 ?.takeIf { index in state.storylines.indices }
                 ?.let { AnalyticsEvent.StorylineTabSelected(it, index) }
         CreateStorylineIntent.Regenerate -> creationId?.let(AnalyticsEvent::RegenerateStorylineButtonClicked)
-        CreateStorylineIntent.SaveDraft -> AnalyticsEvent.DraftSaved(CreateStep.STORYLINE_SELECT)
+        CreateStorylineIntent.SaveDraft, CreateStorylineIntent.SaveDraftInBackground ->
+            AnalyticsEvent.DraftSaved(CreateStep.STORYLINE_SELECT)
         CreateStorylineIntent.ConfirmLeaveFunnel -> AnalyticsEvent.CreateExitButtonClicked(CreateStep.STORYLINE_SELECT)
         CreateStorylineIntent.ShowSelectedKeywords -> creationId?.let(AnalyticsEvent::SelectedTagsButtonClicked)
         CreateStorylineIntent.ConfirmSelection ->
@@ -535,3 +604,10 @@ private fun CreateStorylineIntent.analyticsEvent(
                 ?.let { AnalyticsEvent.StorylineOptionSelected(it, state.activeIndex) }
         else -> null
     }
+
+/** 분석 이벤트의 `creation_id`. 생성 결과가 없으면 프로퍼티를 채울 수 없어 이벤트를 내지 않는다. */
+private fun StorylineGenerationStore.creationId(): String? =
+    state.value
+        .resultOrNull()
+        ?.simpleCreationId
+        ?.toString()

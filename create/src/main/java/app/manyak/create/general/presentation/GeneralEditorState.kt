@@ -8,6 +8,7 @@ import app.manyak.create.general.entity.GeneralSubmission
 sealed interface GeneralEditorEntry {
     data class Draft(
         val draftId: String,
+        val resume: Boolean = false,
     ) : GeneralEditorEntry
 
     data class Submission(
@@ -42,6 +43,8 @@ data class GeneralEditorState(
     val showExit: Boolean = false,
     val uncertainSubmission: Boolean = false,
     val acceptanceRecordFailed: Boolean = false,
+    /** 다른 곳에서 먼저 저장해 버전이 어긋났다. 덮어쓰면 이 버전을 기준으로 다시 보낸다. */
+    val draftConflictVersion: Int? = null,
 ) {
     val reviewing: Boolean get() = submission?.status == "PENDING"
     val inputsEnabled: Boolean get() =
@@ -77,6 +80,10 @@ enum class GeneralEditorMessage {
     IMAGE_ERROR,
     SUBMIT_UNKNOWN,
     DRAFT_FAILED,
+    DRAFT_SAVED,
+    DRAFT_LIMIT,
+    DRAFT_TOO_LARGE,
+    DRAFT_NOT_FOUND,
     CHAT_FAILED,
 }
 
@@ -117,6 +124,10 @@ sealed interface GeneralEditorIntent {
     data object ConfirmClose : GeneralEditorIntent
 
     data object DismissClose : GeneralEditorIntent
+
+    data class ResolveDraftConflict(
+        val overwrite: Boolean,
+    ) : GeneralEditorIntent
 }
 
 sealed interface GeneralEditorEffect {
@@ -204,6 +215,10 @@ sealed interface GeneralEditorEvent {
     data class AcceptanceRecord(
         val failed: Boolean,
     ) : GeneralEditorEvent
+
+    data class DraftConflict(
+        val version: Int?,
+    ) : GeneralEditorEvent
 }
 
 @Suppress("CyclomaticComplexMethod", "LongMethod")
@@ -274,4 +289,5 @@ internal fun reduceGeneralEditor(
             )
         is GeneralEditorEvent.Uncertain -> state.copy(uncertainSubmission = event.value, submitting = false)
         is GeneralEditorEvent.AcceptanceRecord -> state.copy(acceptanceRecordFailed = event.failed)
+        is GeneralEditorEvent.DraftConflict -> state.copy(draftConflictVersion = event.version)
     }

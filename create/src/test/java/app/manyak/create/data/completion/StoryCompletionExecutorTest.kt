@@ -9,6 +9,7 @@ import app.manyak.create.entity.CompletedStory
 import app.manyak.create.entity.CompletionOutcome
 import app.manyak.create.entity.CreationProgress
 import app.manyak.create.entity.CreationRequestSnapshot
+import app.manyak.create.entity.PendingStoryCreation
 import app.manyak.create.entity.StoryCompletionCommand
 import app.manyak.create.entity.StoryCompletionRequest
 import app.manyak.create.testing.FakePendingStoryCreationStore
@@ -18,6 +19,7 @@ import app.manyak.create.testing.FakeTrialsRepository
 import app.manyak.create.testing.sampleStorylineGeneration
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -30,6 +32,7 @@ import org.junit.Test
 class StoryCompletionExecutorTest {
     private class Fixture(
         val repository: FakeStoryCreationRepository,
+        val draftStore: FakePendingStoryCreationStore,
         val requestStore: FakeStoryCompletionRequestStore,
         val gate: SessionGate,
         val executor: StoryCompletionExecutor,
@@ -52,6 +55,7 @@ class StoryCompletionExecutorTest {
         val analytics = RecordingAnalytics()
         return Fixture(
             repository = repository,
+            draftStore = draftStore,
             requestStore = requestStore,
             gate = gate,
             executor =
@@ -150,20 +154,22 @@ class StoryCompletionExecutorTest {
         }
 
     @Test
-    fun `거절 응답은 복구 조회로 판정하고 서버가 모르는 요청만 실패로 확정한다`() =
+    fun `거절 응답은 복구 조회로 판정하고 서버가 모르는 요청만 추가 정보 단계 초안으로 되돌린다`() =
         runTest {
             val fixture = fixture()
+            val failures = mutableListOf<Unit>()
+            backgroundScope.launch { fixture.executor.completionFailures.collect { failures += it } }
             fixture.repository.queuedCompletionResults +=
                 DomainResult.Failure(DomainError.Server(status = 402, code = null, requestId = null))
             fixture.repository.queuedCreationRequestResults += DomainResult.Failure(notFound())
-            fixture.executor.submit(request("a"), "draft-a")
+            val submitted = request("a", draftId = "draft-a")
+            fixture.executor.submit(submitted, "draft-a")
             advanceUntilIdle()
-            assertEquals(
-                CompletionOutcome.Failed,
-                fixture.requestStore.current
-                    .single()
-                    .outcome,
-            )
+            assertTrue(fixture.requestStore.current.isEmpty())
+            val returned = fixture.draftStore.record("draft-a") as PendingStoryCreation.Draft
+            assertEquals(submitted.command, returned.lastCompletionCommand)
+            assertEquals(0, returned.progress.selectedStorylineIndex)
+            assertEquals(1, failures.size)
 
             // 409 인데 서버가 진행 중이면 실패가 아니라 미확정이다.
             fixture.repository.queuedCompletionResults +=
@@ -180,15 +186,15 @@ class StoryCompletionExecutorTest {
         }
 
     @Test
-    fun `실패 재시도는 같은 requestId 로 다시 보내고 조회 실패는 다른 요청 판정을 막지 않는다`() =
+    fun `새로고침은 이전에 실패로 남은 요청도 초안으로 되돌리고 조회 실패는 다른 요청 판정을 막지 않는다`() =
         runTest {
             val fixture =
                 fixture(
                     initial =
                         listOf(
-                            request("a").copy(outcome = CompletionOutcome.Failed),
-                            request("b"),
-                            request("c"),
+                            request("a", draftId = "draft-a").copy(outcome = CompletionOutcome.Failed),
+                            request("b", draftId = "draft-b"),
+                            request("c", draftId = "draft-c"),
                         ),
                 )
             fixture.repository.queuedCreationRequestResults += DomainResult.Failure(DomainError.Network)
@@ -196,19 +202,12 @@ class StoryCompletionExecutorTest {
 
             fixture.executor.refreshCompletionRequests()
             advanceUntilIdle()
-            val outcomes = fixture.requestStore.current.associate { it.requestId to it.outcome }
-            assertEquals(CompletionOutcome.Failed, outcomes["a"])
-            assertEquals(2, outcomes.values.count { it == CompletionOutcome.Failed })
-            assertEquals(1, outcomes.values.count { it == CompletionOutcome.Pending })
 
-            fixture.executor.retryCompletionRequest("a")
-            advanceUntilIdle()
-            assertEquals(listOf("a"), fixture.repository.completionCommands.map { it.requestId })
-            assertTrue(
-                fixture.requestStore.current
-                    .single { it.requestId == "a" }
-                    .outcome is CompletionOutcome.Completed,
-            )
+            val pending = fixture.requestStore.current.single()
+            assertEquals(CompletionOutcome.Pending, pending.outcome)
+            val returned = listOf("draft-a", "draft-b", "draft-c").filter { fixture.draftStore.record(it) != null }
+            assertEquals(2, returned.size)
+            assertTrue("draft-a" in returned)
         }
 
     @Test
@@ -262,7 +261,10 @@ class StoryCompletionExecutorTest {
             )
         }
 
-    private fun request(id: String): StoryCompletionRequest =
+    private fun request(
+        id: String,
+        draftId: String? = null,
+    ): StoryCompletionRequest =
         StoryCompletionRequest(
             command =
                 StoryCompletionCommand(
@@ -270,6 +272,7 @@ class StoryCompletionExecutorTest {
                     simpleCreationId = 10,
                     storylineId = 1,
                     additionalInfos = emptyList(),
+                    draftId = draftId,
                 ),
             generationCommand = null,
             generation = sampleStorylineGeneration(),

@@ -11,6 +11,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonPrimitive
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
@@ -133,6 +135,7 @@ class ChatSseSourceTest {
                                 sourceTurnId = 7,
                                 choiceOrder = 2,
                                 realtimeImage = false,
+                                lastTurnId = JsonPrimitive(7),
                             ),
                         ).collect { }
                 }
@@ -142,11 +145,46 @@ class ChatSseSourceTest {
             assertEquals("text/event-stream, application/json", request.header("Accept"))
             assertEquals(
                 """{"userInput":"문을 연다","userSource":"choice","sourceTurnId":7,"choiceOrder":2,""" +
-                    """"realtimeImage":false}""",
+                    """"realtimeImage":false,"lastTurnId":7}""",
                 request.bodyText(),
             )
 
             job.cancelAndJoin()
+        }
+
+    @Test
+    fun `재연결은 생성 ID 경로로 본문 없이 GET 한다`() =
+        runTest {
+            val factory = FakeEventSourceFactory()
+            val source = source(factory)
+
+            val job = launch(dispatcher()) { source.resumeGeneration(CHAT_ID, "gen-1").collect { } }
+
+            assertEquals(
+                "https://example.com/api/v1/chats/chat-1/generations/gen-1/stream",
+                factory.request.url.toString(),
+            )
+            assertEquals("GET", factory.request.method)
+            assertEquals("text/event-stream, application/json", factory.request.header("Accept"))
+
+            job.cancelAndJoin()
+        }
+
+    @Test
+    fun `열린 뒤 읽다가 끊기면 실패가 아니라 중단으로 올린다`() =
+        runTest {
+            // 서버는 연결이 끊겨도 생성을 계속하므로 화면이 같은 생성에 다시 붙어야 한다.
+            val factory = FakeEventSourceFactory()
+            val source = source(factory)
+            val events = mutableListOf<ChatStreamEvent>()
+
+            val job = launch(dispatcher()) { source.streamTurn(CHAT_ID, request()).toList(events) }
+            factory.listener.onOpen(factory.eventSource, response(HTTP_OK))
+            factory.emit("token", """{"text":"문이"}""")
+            factory.listener.onFailure(factory.eventSource, IOException("reset"), response(HTTP_OK))
+            job.join()
+
+            assertEquals(listOf(ChatStreamEvent.Token("문이"), ChatStreamEvent.Interrupted), events)
         }
 
     @Test
@@ -157,8 +195,9 @@ class ChatSseSourceTest {
 
             val job = launch(dispatcher()) { source.streamTurn(CHAT_ID, request()).collect { } }
 
+            // 첫 턴의 마지막 턴은 빠지지 않고 null 로 간다. 빠지면 서버가 마지막 턴 비교를 건너뛴다.
             assertEquals(
-                """{"userInput":"문을 연다","userSource":"typed","realtimeImage":true}""",
+                """{"userInput":"문을 연다","userSource":"typed","realtimeImage":true,"lastTurnId":null}""",
                 factory.request.bodyText(),
             )
 
@@ -181,7 +220,13 @@ class ChatSseSourceTest {
             ioDispatcher = dispatcher(),
         )
 
-    private fun request() = ChatTurnStreamRequestDto(userInput = "문을 연다", userSource = "typed", realtimeImage = true)
+    private fun request() =
+        ChatTurnStreamRequestDto(
+            userInput = "문을 연다",
+            userSource = "typed",
+            realtimeImage = true,
+            lastTurnId = JsonNull,
+        )
 
     private fun Request.bodyText(): String = Buffer().also { buffer -> body?.writeTo(buffer) }.readUtf8()
 
@@ -196,6 +241,7 @@ class ChatSseSourceTest {
 
     private companion object {
         const val CHAT_ID = "chat-1"
+        const val HTTP_OK = 200
         const val HTTP_PAYMENT_REQUIRED = 402
     }
 }

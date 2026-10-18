@@ -76,7 +76,7 @@ internal fun StudioDialogs(
     }
 }
 
-/** 스토리 카드는 신고·삭제, 초안·실패 요청 카드는 삭제만 있다. 완성 중 카드는 옵션 자체가 없다. */
+/** 스토리 카드는 신고·삭제, 초안 카드는 삭제만 있다. 완성 중 카드는 옵션 자체가 없다. */
 @Composable
 private fun CardOptionsSheet(
     card: StudioCard,
@@ -102,7 +102,6 @@ private fun CardOptionsSheet(
                                 stringResource(StudioR.string.studio_submission_fallback_title)
                             }
                         is StudioCard.Draft -> stringResource(StudioR.string.studio_progress_draft_title)
-                        is StudioCard.FailedRequest -> stringResource(StudioR.string.studio_progress_failed_title)
                     },
             )
         },

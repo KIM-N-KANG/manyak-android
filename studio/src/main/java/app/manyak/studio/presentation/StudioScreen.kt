@@ -13,7 +13,10 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -71,7 +74,7 @@ fun StudioScreen(
     contentPadding: PaddingValues,
     onOpenStory: (String) -> Unit,
     onCreateStory: () -> Unit,
-    onResumeCreation: (draftId: String, CreationResumePoint) -> Unit,
+    onResumeCreation: (draftId: String, CreationResumePoint, onServer: Boolean) -> Unit,
     modifier: Modifier = Modifier,
     refreshRequest: Int = 0,
     onEditStory: (String) -> Unit = {},
@@ -91,9 +94,14 @@ fun StudioScreen(
             viewModel.uiEffect.collect { effect ->
                 when (effect) {
                     StudioEffect.NavigateToCreate -> currentOnCreateStory()
+                    StudioEffect.ShowDraftLimit ->
+                        Toast.makeText(context, StudioR.string.studio_draft_limit, Toast.LENGTH_SHORT).show()
+                    StudioEffect.ShowCompletionFailed ->
+                        Toast.makeText(context, StudioR.string.studio_completion_failed, Toast.LENGTH_SHORT).show()
                     is StudioEffect.NavigateToEdit -> currentOnEditStory(effect.storyId)
                     is StudioEffect.NavigateToSubmission -> currentOnEditSubmission(effect.submissionId)
-                    is StudioEffect.NavigateToResume -> currentOnResumeCreation(effect.draftId, effect.resumePoint)
+                    is StudioEffect.NavigateToResume ->
+                        currentOnResumeCreation(effect.draftId, effect.resumePoint, effect.onServer)
 
                     StudioEffect.ShowSubmissionCanceled ->
                         Toast.makeText(context, StudioR.string.studio_submission_canceled, Toast.LENGTH_SHORT).show()
@@ -151,56 +159,20 @@ private fun StudioContent(
     onIntent: (StudioIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val showSkeleton = rememberDelayedProgressVisibility(state.isLoading)
+    val showSkeleton = rememberDelayedProgressVisibility(state.isListLoading)
     val analytics = LocalAnalytics.current
     // 목록이 맨 위에 있는 동안만 FAB 이 라벨을 펼친다. 상태 화면(조회 중·실패·빈 목록)은 스크롤이 없어 늘 펼친다.
     val listState = rememberLazyListState()
 
     Box(modifier = modifier.fillMaxSize()) {
-        when {
-            // 로컬 카드가 하나라도 있으면 서버 목록이 없거나 실패해도 목록으로 그린다 — 그래야 스크롤과
-            // 당겨서 새로고침이 살아 완성을 확인할 수 있다.
-            state.hasProgressCards ->
-                MyStories(
-                    state = state,
-                    listState = listState,
-                    contentPadding = contentPadding,
-                    onOpenStory = onOpenStory,
-                    onIntent = onIntent,
-                    showSkeleton = state.isLoading && showSkeleton,
-                )
-
-            state.isLoading ->
-                StoriesStatus(contentPadding = contentPadding) {
-                    if (showSkeleton) {
-                        MyStoriesSkeleton()
-                    }
-                    // 금방 끝나는 조회에서 자리만 잡았다 사라지는 깜빡임을 만들지 않는다.
-                }
-
-            state.loadFailed ->
-                StoriesStatus(contentPadding = contentPadding) {
-                    LoadFailedContent(
-                        message = stringResource(CommonR.string.story_load_failed),
-                        onRetry = { onIntent(StudioIntent.Retry) },
-                        modifier = Modifier.fillMaxSize().padding(horizontal = ManyakTheme.spacing.gutter),
-                    )
-                }
-
-            state.stories.isEmpty() ->
-                StoriesStatus(contentPadding = contentPadding) {
-                    EmptyStories(modifier = Modifier.fillMaxSize())
-                }
-
-            else ->
-                MyStories(
-                    state = state,
-                    listState = listState,
-                    contentPadding = contentPadding,
-                    onOpenStory = onOpenStory,
-                    onIntent = onIntent,
-                )
-        }
+        StudioList(
+            state = state,
+            listState = listState,
+            showSkeleton = showSkeleton,
+            contentPadding = contentPadding,
+            onOpenStory = onOpenStory,
+            onIntent = onIntent,
+        )
 
         if (state.showCreateFab) {
             CreateStoryFab(
@@ -220,6 +192,71 @@ private fun StudioContent(
     }
 
     StudioDialogs(state = state, onIntent = onIntent)
+}
+
+/** 첫 조회 스켈레톤, 목록, 실패, 빈 상태 중 지금 그릴 하나. */
+@Composable
+private fun StudioList(
+    state: StudioUiState,
+    listState: LazyListState,
+    showSkeleton: Boolean,
+    contentPadding: PaddingValues,
+    onOpenStory: (String) -> Unit,
+    onIntent: (StudioIntent) -> Unit,
+) {
+    when {
+        // 첫 조회는 모든 카드 묶음이 준비될 때까지 한 스켈레톤으로 덮는다. 완성 중 카드만 위에 둔다.
+        state.isListLoading && state.completionRequests.isEmpty() ->
+            StoriesStatus(contentPadding = contentPadding) {
+                if (showSkeleton) {
+                    MyStoriesSkeleton()
+                }
+                // 금방 끝나는 조회에서 자리만 잡았다 사라지는 깜빡임을 만들지 않는다.
+            }
+
+        // 로컬 카드가 하나라도 있으면 서버 목록이 없거나 실패해도 목록으로 그린다 — 그래야 스크롤과
+        // 당겨서 새로고침이 살아 완성을 확인할 수 있다.
+        state.hasProgressCards ->
+            MyStories(
+                state = state,
+                listState = listState,
+                contentPadding = contentPadding,
+                onOpenStory = onOpenStory,
+                onIntent = onIntent,
+                showSkeleton = state.isListLoading && showSkeleton,
+            )
+
+        state.isLoading ->
+            StoriesStatus(contentPadding = contentPadding) {
+                if (showSkeleton) {
+                    MyStoriesSkeleton()
+                }
+                // 금방 끝나는 조회에서 자리만 잡았다 사라지는 깜빡임을 만들지 않는다.
+            }
+
+        state.loadFailed ->
+            StoriesStatus(contentPadding = contentPadding) {
+                LoadFailedContent(
+                    message = stringResource(CommonR.string.story_load_failed),
+                    onRetry = { onIntent(StudioIntent.Retry) },
+                    modifier = Modifier.fillMaxSize().padding(horizontal = ManyakTheme.spacing.gutter),
+                )
+            }
+
+        state.stories.isEmpty() ->
+            StoriesStatus(contentPadding = contentPadding) {
+                EmptyStories(modifier = Modifier.fillMaxSize())
+            }
+
+        else ->
+            MyStories(
+                state = state,
+                listState = listState,
+                contentPadding = contentPadding,
+                onOpenStory = onOpenStory,
+                onIntent = onIntent,
+            )
+    }
 }
 
 /** 목록이 없는 상태(조회 중·실패·빈 목록)의 자리. 스크롤할 것이 없으므로 chrome 여백을 화면에 씌운다. */
@@ -250,6 +287,15 @@ private fun MyStories(
 ) {
     val analytics = LocalAnalytics.current
     val impressions = rememberImpressionTracker()
+    // 서버 초안은 목록보다 늦게 와 맨 앞에 붙는데, 목록은 보던 첫 카드를 따라가 새 카드가 화면 위로 숨는다.
+    // 맨 위를 보던 중이었으면 맨 위에 남긴다. 스크롤해 둔 자리는 그대로 둔다.
+    val firstDraftId = state.drafts.firstOrNull()?.draftId
+    val shownFirstDraftId = remember { mutableStateOf(firstDraftId) }
+    SideEffect {
+        val atTop = listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0
+        if (shownFirstDraftId.value != firstDraftId && atTop) listState.requestScrollToItem(0)
+        shownFirstDraftId.value = firstDraftId
+    }
     ManyakPullToRefreshBox(
         modifier = modifier,
         isRefreshing = state.isRefreshing,
@@ -266,7 +312,8 @@ private fun MyStories(
             if (showSkeleton) {
                 item(key = SKELETON_KEY) { MyStoryPlaceholders() }
             }
-            itemsIndexed(state.stories, key = { _, story -> "$STORY_KEY_PREFIX${story.id}" }) { index, story ->
+            val stories = if (state.isListLoading) emptyList() else state.stories
+            itemsIndexed(stories, key = { _, story -> "$STORY_KEY_PREFIX${story.id}" }) { index, story ->
                 MyStoryCard(
                     story = story,
                     onClick = {
@@ -282,7 +329,7 @@ private fun MyStories(
                         },
                 )
             }
-            if (state.loadFailed) {
+            if (state.loadFailed && !state.isListLoading) {
                 item(key = LOAD_FAILED_KEY) {
                     LoadFailedContent(
                         message = stringResource(CommonR.string.story_load_failed),
@@ -370,7 +417,6 @@ private fun StudioScreenProgressCardsPreview() {
                                 submittedAt = 2,
                                 status = CompletionRequestStatus.PENDING,
                             ),
-                            CompletionRequestSummary("req-2", submittedAt = 1, status = CompletionRequestStatus.FAILED),
                         ),
                 ),
             contentPadding = PaddingValues(0.dp),

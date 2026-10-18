@@ -53,7 +53,8 @@ class StudioViewModelTest {
     fun `제작 FAB는 로컬 카드 없는 로딩과 오류에서 숨긴다`() {
         assertFalse(StudioUiState().showCreateFab)
         assertFalse(StudioUiState(isLoading = false, loadFailed = true).showCreateFab)
-        assertTrue(StudioUiState(isLoading = false).showCreateFab)
+        assertFalse(StudioUiState(isLoading = false).showCreateFab)
+        assertTrue(StudioUiState(isLoading = false, draftsReady = true, submissionsReady = true).showCreateFab)
         val local = CreationProgressSummary("draft", CreationStage.KEYWORD_DRAFT, CreationResumePoint.KeywordStep)
         assertTrue(StudioUiState(drafts = listOf(local)).showCreateFab)
         assertTrue(StudioUiState(loadFailed = true, drafts = listOf(local)).showCreateFab)
@@ -412,10 +413,12 @@ class StudioViewModelTest {
             assertTrue(viewModel.uiState.value.hasLocalCards)
             assertEquals(2, viewModel.uiState.value.completionRequests.size)
             assertEquals(1, store.refreshCount)
+            assertEquals(1, store.draftRefreshCount)
 
             viewModel.onIntent(StudioIntent.Refresh)
             advanceUntilIdle()
             assertEquals(2, store.refreshCount)
+            assertEquals(2, store.draftRefreshCount)
 
             viewModel.onIntent(StudioIntent.CreateStory)
             advanceUntilIdle()
@@ -512,27 +515,110 @@ class StudioViewModelTest {
         }
 
     @Test
-    fun `실패 카드는 같은 요청으로 재시도하고 삭제는 그 요청만 지운다`() =
+    fun `만들고 있는 스토리 카드가 5장이면 새로 만들지 않고 안내한다`() =
         runTest(dispatcher) {
-            val failed = pendingRequest("f").copy(status = CompletionRequestStatus.FAILED)
-            val store = FakeCreationProgressAccess(requests = listOf(failed, pendingRequest("a")))
-            val viewModel = studioViewModel(store, FakeStoryRepository(), NoOpAnalytics)
+            val viewModel = studioViewModel(FakeCreationProgressAccess(drafts(5)), FakeStoryRepository(), NoOpAnalytics)
             viewModel.onIntent(StudioIntent.ScreenShown)
             advanceUntilIdle()
 
-            viewModel.onIntent(StudioIntent.RetryCompletion("f"))
+            viewModel.onIntent(StudioIntent.CreateStory)
             advanceUntilIdle()
-            assertEquals(listOf("f"), store.retriedRequestIds)
 
-            viewModel.onIntent(StudioIntent.OpenCardOptions(StudioCard.FailedRequest("f")))
+            assertEquals(StudioEffect.ShowDraftLimit, withTimeoutOrNull(1_000) { viewModel.uiEffect.first() })
+        }
+
+    @Test
+    fun `카드가 4장이면 새로 만든다`() =
+        runTest(dispatcher) {
+            val viewModel = studioViewModel(FakeCreationProgressAccess(drafts(4)), FakeStoryRepository(), NoOpAnalytics)
+            viewModel.onIntent(StudioIntent.ScreenShown)
+            advanceUntilIdle()
+
+            viewModel.onIntent(StudioIntent.CreateStory)
+            advanceUntilIdle()
+
+            assertEquals(StudioEffect.NavigateToCreate, withTimeoutOrNull(1_000) { viewModel.uiEffect.first() })
+        }
+
+    @Test
+    fun `첫 조회는 내 스토리, 초안 목록, 검수 제출본을 모두 받을 때까지 한 스켈레톤으로 덮는다`() =
+        runTest(dispatcher) {
+            val access = FakeCreationProgressAccess(drafts(1))
+            val draftGate = CompletableDeferred<Unit>()
+            access.draftRefreshGate = draftGate
+            val viewModel = studioViewModel(access, FakeStoryRepository(), NoOpAnalytics)
+
+            viewModel.onIntent(StudioIntent.ScreenShown)
+            advanceUntilIdle()
+            assertFalse(viewModel.uiState.value.isLoading)
+            assertTrue(viewModel.uiState.value.isListLoading)
+
+            draftGate.complete(Unit)
+            advanceUntilIdle()
+            assertFalse(viewModel.uiState.value.isListLoading)
+        }
+
+    @Test
+    fun `다시 돌아올 때는 덮지 않고 조용히 바꾼다`() =
+        runTest(dispatcher) {
+            val access = FakeCreationProgressAccess(drafts(1))
+            val viewModel = studioViewModel(access, FakeStoryRepository(), NoOpAnalytics)
+            viewModel.onIntent(StudioIntent.ScreenShown)
+            advanceUntilIdle()
+
+            access.draftRefreshGate = CompletableDeferred()
+            viewModel.onIntent(StudioIntent.ScreenShown)
+            advanceUntilIdle()
+
+            assertFalse(viewModel.uiState.value.isListLoading)
+        }
+
+    @Test
+    fun `같은 ID 의 기기 안 카드와 서버 카드는 이어서 만들기와 삭제를 따로 한다`() =
+        runTest(dispatcher) {
+            val local = CreationProgressSummary("same", CreationStage.STORY_DRAFT, CreationResumePoint.StorylineStep)
+            val server =
+                local.copy(
+                    stage = CreationStage.KEYWORD_DRAFT,
+                    resumePoint = CreationResumePoint.KeywordStep,
+                    onServer = true,
+                )
+            val access = FakeCreationProgressAccess(listOf(local, server))
+            val viewModel = studioViewModel(access, FakeStoryRepository(), NoOpAnalytics)
+            viewModel.onIntent(StudioIntent.ScreenShown)
+            advanceUntilIdle()
+
+            viewModel.onIntent(StudioIntent.ResumeCreation("same", onServer = true))
+            advanceUntilIdle()
+            assertEquals(
+                StudioEffect.NavigateToResume("same", CreationResumePoint.KeywordStep, onServer = true),
+                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
+            )
+
+            viewModel.onIntent(StudioIntent.OpenCardOptions(StudioCard.Draft("same", onServer = true)))
             advanceUntilIdle()
             viewModel.onIntent(StudioIntent.RequestDelete)
             advanceUntilIdle()
             viewModel.onIntent(StudioIntent.ConfirmDelete)
             advanceUntilIdle()
-            assertEquals(listOf("f"), store.deletedRequestIds)
-            assertEquals(listOf(pendingRequest("a")), store.currentRequests)
+            assertEquals(listOf("same" to true), access.discarded)
         }
+
+    @Test
+    fun `완성에 실패해 초안으로 되돌아오면 안내한다`() =
+        runTest(dispatcher) {
+            val access = FakeCreationProgressAccess()
+            val viewModel = studioViewModel(access, FakeStoryRepository(), NoOpAnalytics)
+            advanceUntilIdle()
+
+            access.completionFailures.emit(Unit)
+            advanceUntilIdle()
+
+            assertEquals(StudioEffect.ShowCompletionFailed, withTimeoutOrNull(1_000) { viewModel.uiEffect.first() })
+        }
+
+    private fun drafts(count: Int): List<CreationProgressSummary> =
+        (1..count).map { CreationProgressSummary("d$it", CreationStage.KEYWORD_DRAFT, CreationResumePoint.KeywordStep) }
 }
 
 private const val GENERATING_DRAFT_ID = "draft-generating"

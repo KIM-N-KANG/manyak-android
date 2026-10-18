@@ -7,7 +7,7 @@ import app.manyak.create.general.entity.GeneralStoryContent
 import app.manyak.create.general.entity.GeneralStoryPatch
 import app.manyak.create.general.entity.GeneralStorySettings
 
-internal fun GeneralStoryContent.toRequest(): GeneralStoryRequestDto =
+internal fun GeneralStoryContent.toRequest(draftId: String? = null): GeneralStoryRequestDto =
     GeneralStoryRequestDto(
         title = title,
         oneLineIntro = oneLineIntro,
@@ -20,6 +20,7 @@ internal fun GeneralStoryContent.toRequest(): GeneralStoryRequestDto =
         visibility = visibility,
         thumbnailObjectKey = thumbnailImage?.objectKey,
         characters = characters.map { it.toDto() },
+        draftId = draftId,
     )
 
 internal fun GeneralStoryPatch.toRequest(): GeneralStoryPatchDto =

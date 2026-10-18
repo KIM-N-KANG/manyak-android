@@ -115,6 +115,7 @@ internal class FakeChatRepository : ChatRepository {
     val streamedInputs = mutableListOf<String>()
     val streamedOrigins = mutableListOf<Triple<UserSource, Long?, Int?>>()
     val streamedRealtimeImages = mutableListOf<Boolean>()
+    val streamedLastTurnIds = mutableListOf<Long?>()
 
     override fun streamTurn(
         chatId: String,
@@ -123,11 +124,25 @@ internal class FakeChatRepository : ChatRepository {
         sourceTurnId: Long?,
         choiceOrder: Int?,
         realtimeImage: Boolean,
+        lastTurnId: Long?,
     ): Flow<ChatStreamEvent> {
         streamedInputs += userInput
         streamedOrigins += Triple(userSource, sourceTurnId, choiceOrder)
         streamedRealtimeImages += realtimeImage
+        streamedLastTurnIds += lastTurnId
         return streamEvents.receiveAsFlow()
+    }
+
+    /** 재연결은 부를 때마다 같은 통로에서 사건을 이어 받는다. 연결 하나는 종단 사건에서 끝난다. */
+    val resumeEvents = Channel<ChatStreamEvent>(Channel.UNLIMITED)
+    val resumedGenerationIds = mutableListOf<String>()
+
+    override fun resumeGeneration(
+        chatId: String,
+        generationId: String,
+    ): Flow<ChatStreamEvent> {
+        resumedGenerationIds += generationId
+        return resumeEvents.receiveAsFlow()
     }
 
     /** 재생성은 이어쓰기와 다른 통로를 쓴다 — 한 테스트에서 둘을 섞어 보내는 경우가 있다. */

@@ -16,6 +16,7 @@ import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
@@ -24,6 +25,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -74,13 +76,14 @@ class ChatRoomRegenerateTest {
         }
 
     @Test
-    fun `오류로 실패하면 기존 본문이 돌아온다`() =
+    fun `오류로 실패하면 기존 본문이 돌아오고 확정 상태를 다시 읽는다`() =
         runTest(dispatcher) {
-            // 서버가 교체하지 않았음이 보장되는 실패라 다시 읽지 않는다.
             val repository = FakeChatRepository()
             val viewModel = regenerating(repository)
             val readsBefore = repository.chatDetailIds.size
 
+            repository.regenerateEvents.send(ChatStreamEvent.Started("gen-1"))
+            repository.regenerateEvents.send(ChatStreamEvent.Token("다시 쓰던"))
             repository.regenerateEvents.send(
                 ChatStreamEvent.Failed(DomainError.Unknown, "생성에 실패했어요"),
             )
@@ -91,7 +94,8 @@ class ChatRoomRegenerateTest {
             assertNull(state.regeneratingTurnId)
             assertFalse(state.isStreaming)
             assertEquals(ORIGINAL_OUTPUT, state.turns.single().aiOutput)
-            assertEquals(readsBefore, repository.chatDetailIds.size)
+            assertTrue(repository.chatDetailIds.size > readsBefore)
+            assertEquals(ChatRoomEffect.ShowStreamFailure("생성에 실패했어요"), viewModel.uiEffect.first())
         }
 
     @Test
@@ -116,7 +120,7 @@ class ChatRoomRegenerateTest {
         }
 
     @Test
-    fun `409 면 복원하지 않고 확정 상태를 다시 읽는다`() =
+    fun `409 면 안내 없이 확정 상태를 다시 읽는다`() =
         runTest(dispatcher) {
             // 이미 새 턴이 붙은 낡은 화면이라 되살릴 기존 본문이 정본이 아니다.
             val repository = FakeChatRepository()
@@ -132,6 +136,7 @@ class ChatRoomRegenerateTest {
             assertTrue(repository.chatDetailIds.size > readsBefore)
             assertEquals(2, viewModel.uiState.value.turns.size)
             assertNull(viewModel.uiState.value.regeneratingTurnId)
+            assertNull(withTimeoutOrNull(100) { viewModel.uiEffect.first() })
         }
 
     @Test

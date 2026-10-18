@@ -27,9 +27,11 @@ interface StoryCompletionRequestStore {
         story: CompletedStory,
     ): Boolean
 
-    suspend fun markFailed(requestId: String): Boolean
-
-    suspend fun markPending(requestId: String): Boolean
+    /**
+     * 완성에 실패한 요청을 지우고 제출한 입력 그대로 그 초안의 추가 정보 단계 편집 초안으로 되돌린다. 두 쓰기는 한
+     * 트랜잭션이며 되돌렸을 때만 true. 요청이 이미 없으면 false.
+     */
+    suspend fun demoteToDraft(requestId: String): Boolean
 
     suspend fun delete(requestId: String): Boolean
 }

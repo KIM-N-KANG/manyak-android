@@ -3,6 +3,7 @@ package app.manyak.create.data.database
 import app.manyak.common.data.di.IoDispatcher
 import app.manyak.common.domain.user.UserProfileRepository
 import app.manyak.create.domain.StoryCompletionRequestStore
+import app.manyak.create.domain.toReturnedDraft
 import app.manyak.create.entity.CompletedStory
 import app.manyak.create.entity.StoryCompletionRequest
 import kotlinx.coroutines.CoroutineDispatcher
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -74,11 +76,20 @@ class StoryCompletionRequestRoomStore
                 storyTitle = story.title,
             )
 
-        override suspend fun markFailed(requestId: String): Boolean =
-            update(requestId, StoryCompletionRequestEntity.STATUS_FAILED, storyId = null, storyTitle = null)
-
-        override suspend fun markPending(requestId: String): Boolean =
-            update(requestId, StoryCompletionRequestEntity.STATUS_PENDING, storyId = null, storyTitle = null)
+        override suspend fun demoteToDraft(requestId: String): Boolean {
+            val ownerId = ownerId() ?: return false
+            return withContext(ioDispatcher) {
+                runCatching {
+                    val request =
+                        dao.findAll(ownerId).firstOrNull { it.requestId == requestId }?.toDomainOrNull()
+                            ?: return@runCatching false
+                    // 이 기능 전의 요청은 초안 ID 를 몰라 새 ID 의 기기 안 초안이 된다.
+                    val draftId = request.command.draftId ?: UUID.randomUUID().toString()
+                    dao.demote(requestId, request.toReturnedDraft().toEntity(draftId, ownerId, request.createdAt))
+                    true
+                }.getOrDefault(false)
+            }
+        }
 
         override suspend fun delete(requestId: String): Boolean =
             withContext(ioDispatcher) { runCatching { dao.delete(requestId) }.isSuccess }

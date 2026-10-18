@@ -37,6 +37,10 @@ internal fun reduceKeywordState(
 
         is CreateKeywordEvent.ExitWarningChanged -> state.copy(exitWarning = event.warning)
 
+        is CreateKeywordEvent.EntryFailedChanged -> state.copy(entryFailed = event.failed)
+
+        is CreateKeywordEvent.DraftConflictChanged -> state.copy(draftConflictVersion = event.version)
+
         else -> reduceKeywordContent(state, event)
     }
 

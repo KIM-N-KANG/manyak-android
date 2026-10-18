@@ -14,6 +14,8 @@ data class StoryCompletionCommand(
     val additionalInfos: List<String>,
     /** 고른 화풍 code. 화풍 선택 이전에 저장한 명령은 null 이고, 서버는 이를 ANIME 로 처리한다. */
     val artStyle: String? = null,
+    /** 완성 요청을 기록할 때 서버가 지울 초안. 퍼널 세션의 초안 ID 이며, 서버에 없는 ID 는 조용히 넘어간다. */
+    val draftId: String? = null,
 )
 
 /** 완성된 스토리. 채팅 진입이 연동되기 전까지는 식별자만 쓴다. */

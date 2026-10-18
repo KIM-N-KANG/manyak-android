@@ -31,6 +31,17 @@ data class ChatDetail(
     val turns: List<ChatTurn>,
     /** 첫 입력 후보. 턴이 0개일 때만 채워져 온다. */
     val suggestedInputs: List<String>,
+    /** 서버가 아직 만들고 있는 턴. 나가 있는 동안에도 생성이 이어지므로 들어온 화면이 이어받는다. */
+    val generatingTurn: GeneratingTurn? = null,
+)
+
+/** 진행 중인 생성. 이어쓰기와 재생성을 합쳐 채팅마다 하나만 돈다. */
+data class GeneratingTurn(
+    /** 재연결 경로에 싣는 생성 ID. */
+    val generationId: String,
+    val userInput: String,
+    /** 재생성이면 교체 중인 턴, 이어쓰기면 `null` 이다. */
+    val regeneratingTurnId: Long?,
 )
 
 /** 턴 하나 — 사용자 입력과 그에 대한 AI 출력의 짝. */

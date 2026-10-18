@@ -26,6 +26,8 @@ data class StoryCompletionRequestEntity(
     @ColumnInfo(defaultValue = "") val ownerId: String = UNOWNED,
     /** 제출한 초안을 처음 임시 저장한 시각(epoch millis). 여러 초안 이전에 제출한 요청은 null 이다. */
     val createdAt: Long? = null,
+    /** 서버 초안 세션에서 제출한 요청이면 그때의 서버 버전이다. 표기는 진행 기록의 같은 열과 같다. */
+    val serverDraftVersion: Int? = null,
 ) {
     companion object {
         const val STATUS_PENDING: String = "PENDING"
@@ -53,6 +55,7 @@ internal fun StoryCompletionRequest.toEntity(ownerId: String): StoryCompletionRe
         storyId = (outcome as? CompletionOutcome.Completed)?.story?.id,
         storyTitle = (outcome as? CompletionOutcome.Completed)?.story?.title,
         createdAt = createdAt,
+        serverDraftVersion = serverDraft.toColumn(),
     )
 
 /** 명령이나 생성 결과를 해석할 수 없으면 null — 재전송할 재료가 없어 화면에 올릴 수 없다. 행은 지우지 않는다. */
@@ -76,5 +79,6 @@ internal fun StoryCompletionRequestEntity.toDomainOrNull(): StoryCompletionReque
         submittedAt = submittedAt,
         outcome = outcome,
         createdAt = createdAt,
+        serverDraft = serverDraftVersion.toServerDraftLink(),
     )
 }
