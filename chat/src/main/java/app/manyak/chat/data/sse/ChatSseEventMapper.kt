@@ -22,7 +22,7 @@ internal fun chatStreamEventOf(
     data: String,
 ): ChatStreamEvent? =
     when (type) {
-        EVENT_STARTED -> ChatStreamEvent.Started
+        EVENT_STARTED -> ChatStreamEvent.Started(data.stringField(FIELD_GENERATION_ID))
         EVENT_TOKEN -> data.tokenText()?.let(ChatStreamEvent::Token)
         EVENT_CHARACTER_IMAGE -> data.characterImage()
         EVENT_COMPLETED -> ChatStreamEvent.Completed
@@ -82,3 +82,4 @@ private const val FIELD_TEXT = "text"
 private const val FIELD_NAME = "name"
 private const val FIELD_IMAGE_URL = "imageUrl"
 private const val FIELD_MESSAGE = "message"
+private const val FIELD_GENERATION_ID = "generationId"

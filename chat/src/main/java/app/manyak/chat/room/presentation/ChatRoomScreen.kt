@@ -72,6 +72,7 @@ fun ChatRoomScreen(
     var menuOpen by rememberSaveable { mutableStateOf(false) }
     var confirmingDelete by rememberSaveable { mutableStateOf(false) }
 
+    ChatRoomForegroundEffects(viewModel)
     ChatRoomEffects(
         viewModel = viewModel,
         storyTitle = state.storyTitle,

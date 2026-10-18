@@ -1,6 +1,7 @@
 package app.manyak.chat.room.presentation
 
 import android.content.Context
+import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -8,6 +9,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.chat.presentation.chatShareMessage
@@ -70,6 +73,26 @@ internal fun ChatRoomEffects(
                 }
                 effect.toastText(context)?.let(toast::show)
             }
+        }
+    }
+}
+
+/**
+ * 앱의 백그라운드 전환과 복귀를 채팅방에 알린다.
+ *
+ * 회전, 다크 모드, 글자 크기 변경도 Activity 를 멈추지만 백그라운드 진입이 아니므로 거른다. 거르지 않으면
+ * 화면을 돌릴 때마다 받던 응답을 끊고 처음부터 다시 받는다.
+ */
+@Composable
+internal fun ChatRoomForegroundEffects(viewModel: ChatRoomViewModel) {
+    val activity = LocalActivity.current
+    val activityLifecycleOwner = activity as? LifecycleOwner
+    if (activity != null && activityLifecycleOwner != null) {
+        LifecycleEventEffect(Lifecycle.Event.ON_STOP, activityLifecycleOwner) {
+            if (!activity.isChangingConfigurations) viewModel.onIntent(ChatRoomIntent.Backgrounded)
+        }
+        LifecycleEventEffect(Lifecycle.Event.ON_START, activityLifecycleOwner) {
+            viewModel.onIntent(ChatRoomIntent.Foregrounded)
         }
     }
 }

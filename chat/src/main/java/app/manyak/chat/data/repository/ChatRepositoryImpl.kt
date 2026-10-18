@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.onEach
+import kotlinx.serialization.json.JsonPrimitive
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -66,6 +67,7 @@ class ChatRepositoryImpl
             sourceTurnId: Long?,
             choiceOrder: Int?,
             realtimeImage: Boolean,
+            lastTurnId: Long?,
         ): Flow<ChatStreamEvent> =
             sseSource
                 .streamTurn(
@@ -78,6 +80,7 @@ class ChatRepositoryImpl
                             sourceTurnId = sourceTurnId,
                             choiceOrder = choiceOrder.takeIf { sourceTurnId != null },
                             realtimeImage = realtimeImage,
+                            lastTurnId = JsonPrimitive(lastTurnId),
                         ),
                 ).notifyOnCompleted()
 
@@ -89,6 +92,11 @@ class ChatRepositoryImpl
             sseSource
                 .regenerateTurn(chatId, ChatRegenerateRequestDto(turnId = turnId, realtimeImage = realtimeImage))
                 .notifyOnCompleted()
+
+        override fun resumeGeneration(
+            chatId: String,
+            generationId: String,
+        ): Flow<ChatStreamEvent> = sseSource.resumeGeneration(chatId, generationId).notifyOnCompleted()
 
         /** 서버가 턴을 확정해야 목록이 바뀐다. 실패·끊김은 저장 여부를 몰라 알리지 않고 목록 복귀 조회에 맡긴다. */
         private fun Flow<ChatStreamEvent>.notifyOnCompleted() =

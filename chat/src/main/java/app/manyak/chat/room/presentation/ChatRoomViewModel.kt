@@ -8,8 +8,10 @@ import app.manyak.analytics.entity.MessageInputMode
 import app.manyak.analytics.entity.ReportSource
 import app.manyak.chat.domain.ChatPreferencesRepository
 import app.manyak.chat.domain.ChatRepository
+import app.manyak.chat.entity.ChatDetail
 import app.manyak.chat.entity.ChatInputMode
 import app.manyak.chat.entity.ChatStreamEvent
+import app.manyak.chat.entity.GeneratingTurn
 import app.manyak.chat.room.presentation.composer.ChatComposerState
 import app.manyak.chat.room.presentation.composer.InputBlockType
 import app.manyak.chat.room.presentation.composer.addBlock
@@ -33,6 +35,7 @@ import app.manyak.common.domain.credit.CreditPolicyRepository
 import app.manyak.common.domain.credit.TrialsRepository
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.error.map
 import app.manyak.common.domain.user.UserProfileRepository
 import app.manyak.common.presentation.mvi.MviViewModel
 import app.manyak.designsystem.component.isAllowedCharacterImageUrl
@@ -198,6 +201,12 @@ sealed interface ChatRoomIntent {
     /** 확인 다이얼로그에서 삭제를 확정했다. */
     data object DeleteConfirmed : ChatRoomIntent
 
+    /** 앱이 백그라운드로 갔다. 회전 같은 구성 변경은 들어오지 않는다. */
+    data object Backgrounded : ChatRoomIntent
+
+    /** 앱이 다시 보인다. 처음 보일 때와 구성 변경 뒤에도 들어온다. */
+    data object Foregrounded : ChatRoomIntent
+
     /** 헤더의 채팅 메뉴를 열었다. 이프 카드가 낡은 잔액을 보이지 않게 프로필을 다시 읽는다. */
     data object MenuOpened : ChatRoomIntent
 
@@ -268,12 +277,20 @@ sealed interface ChatRoomEvent {
         val realtimeImage: Boolean,
     ) : ChatRoomEvent
 
-    /** 대상 턴을 진행 블록으로 **대체한다**. 사용자 입력은 그 턴의 것을 그대로 쓴다. */
-    data class RegenerateStarted(
-        val turnId: Long,
+    /**
+     * 컴포저를 거치지 않는 생성의 진행 블록을 연다. 재생성과 다른 곳에서 시작한 생성의 이어받기다.
+     * [regeneratingTurnId] 가 있으면 그 턴을 진행 블록으로 **대체한다**. 이어받는 생성은 서버 확정 목록과
+     * 함께 오므로 [turns] 도 같은 사건으로 바꾼다.
+     */
+    data class GenerationStarted(
+        val turns: List<ChatRoomTurn>,
         val userInput: String,
         val realtimeImage: Boolean,
+        val regeneratingTurnId: Long?,
     ) : ChatRoomEvent
+
+    /** 다시 붙은 연결이 사건을 처음부터 다시 보낸다. 쌓아 둔 본문을 비운다. */
+    data object StreamRestarted : ChatRoomEvent
 
     data class TokensAppended(
         val text: String,
@@ -379,11 +396,12 @@ sealed interface ChatRoomEffect {
 }
 
 /**
- * 채팅방. 상세 조회 렌더에 더해 턴 진행(SSE)과 추천 입력·선택지를 맡는다.
+ * 채팅방. 상세 조회 렌더에 더해 턴 진행(SSE)과 재생성, 끊긴 생성의 이어받기, 추천 입력과 선택지를 맡는다.
  *
- * 재생성·삭제는 다음 단계에서 붙는다.
+ * 턴 진행, 재생성, 이어받기가 확정 목록과 전송 잠금을 함께 바꾸므로 한 클래스에 둔다. 나누면 같은 정본을
+ * 여러 곳이 고치게 된다.
  */
-@Suppress("TooManyFunctions")
+@Suppress("TooManyFunctions", "LargeClass")
 @HiltViewModel(assistedFactory = ChatRoomViewModel.Factory::class)
 class ChatRoomViewModel
     @AssistedInject
@@ -455,6 +473,12 @@ class ChatRoomViewModel
 
         /** 재생성 중인 턴. 실패 복구가 이어쓰기와 갈리는 지점을 이 값이 가른다. */
         private var regeneratingTurnId: Long? = null
+
+        /** 생성의 사건을 받는 중인지. 결과를 확정하는 동안은 끊지 않으려고 [isStreaming] 과 따로 둔다. */
+        private var receiving = false
+
+        /** 백그라운드로 가며 수신을 멈췄는지. 돌아오면 상세로 다시 맞춘다. */
+        private var receivingPaused = false
 
         private val random = Random.Default
 
@@ -540,7 +564,7 @@ class ChatRoomViewModel
                     val userInput = composer.toUserInput()
                     val origin = composerOrigin(userInput, filled)
                     startTurn(userInput, inputMode = composer.mode.messageInputMode) { realtimeImage ->
-                        chatRepository.turnStream(chatId, userInput, origin, realtimeImage)
+                        chatRepository.turnStream(chatId, userInput, origin, realtimeImage, turns.lastOrNull()?.id)
                     }
                 }
 
@@ -559,6 +583,9 @@ class ChatRoomViewModel
                 ChatRoomIntent.CloseImageViewer -> dispatchEvent(ChatRoomEvent.ImageViewerChanged(null))
 
                 ChatRoomIntent.DeleteConfirmed -> delete()
+
+                ChatRoomIntent.Backgrounded, ChatRoomIntent.Foregrounded ->
+                    onForegroundChanged(foreground = intent == ChatRoomIntent.Foregrounded)
 
                 // 실패는 캐시된 잔액을 그대로 두는 것으로 흡수한다.
                 ChatRoomIntent.MenuOpened -> viewModelScope.launch { profileRepository.refresh() }
@@ -599,6 +626,8 @@ class ChatRoomViewModel
                     dispatchEvent(ChatRoomEvent.LoadStarted)
                     // 힌트 노출 판정이 기기 설정에 기대므로 설정을 먼저 읽는다.
                     preferencesJob?.join()
+                    // 화면에 들어올 때마다 새로 읽는다. 나가 있는 동안 서버가 생성을 이어 가므로 이전에 받은 상세로는
+                    // 생성 중인 턴과 새로 저장된 턴을 알 수 없다.
                     when (val result = chatRepository.chatDetail(chatId)) {
                         is DomainResult.Success -> {
                             turns = result.value.turns.map { turn -> turn.toUi() }
@@ -614,6 +643,14 @@ class ChatRoomViewModel
                             )
                             // 보이는 순간 열람으로 기록한다. 상태는 그대로 둬 이 방에서는 계속 보인다.
                             if (hintUnseen && turns.isEmpty()) preferences.markChoicesHintSeen()
+                            val generating = result.value.generatingTurn
+                            if (generating != null) {
+                                // 들어오자마자 생성 중 화면을 보이고 이어받는다. 입력은 받는 동안과 같이 잠긴다.
+                                streamJob = viewModelScope.launch { follow(first = null, generating = generating) }
+                            } else {
+                                // 나가 있는 동안 저장된 턴은 선택지 없이 남아 있을 수 있다.
+                                generateChoices()
+                            }
                             if (turns.isEmpty()) scheduleTour()
                         }
 
@@ -711,7 +748,7 @@ class ChatRoomViewModel
                         AnalyticsEvent.ChoiceOptionSelected(chatId, turns.nextTurnNumber(), intent.position),
                     )
                     startTurn(userInput, inputMode = MessageInputMode.CHOICE) { realtimeImage ->
-                        chatRepository.turnStream(chatId, userInput, origin, realtimeImage)
+                        chatRepository.turnStream(chatId, userInput, origin, realtimeImage, turns.lastOrNull()?.id)
                     }
                 }
 
@@ -852,16 +889,96 @@ class ChatRoomViewModel
                                 realtimeImage = realtimeImage,
                             )
                         } else {
-                            ChatRoomEvent.RegenerateStarted(
-                                turnId = regeneratedTurnId,
+                            ChatRoomEvent.GenerationStarted(
+                                turns = turns,
                                 userInput = userInput,
                                 realtimeImage = realtimeImage,
+                                regeneratingTurnId = regeneratedTurnId,
                             )
                         },
                     )
-                    events.collectBatched { event -> handleStreamEvent(event) }
+                    follow(first = events, generating = null)
                     regenerateCooldownJob = viewModelScope.launch { delay(REGENERATE_COOLDOWN_MILLIS) }
                 }
+        }
+
+        /**
+         * 백그라운드에서는 기기가 프로세스를 얼리거나 연결을 끊어 재연결이 헛돌고, 그 실패 안내가 돌아온 화면에
+         * 뜬다. 방을 나갈 때처럼 수신만 멈추고(서버는 생성을 계속한다) 돌아오면 상세로 다시 맞춘다.
+         */
+        private fun onForegroundChanged(foreground: Boolean) {
+            if (!foreground) {
+                if (receiving) {
+                    streamJob?.cancel()
+                    receivingPaused = true
+                }
+                return
+            }
+            if (!receivingPaused) return
+            receivingPaused = false
+            streamJob =
+                viewModelScope.launch {
+                    // 나가 있는 동안의 결과를 모르니 끝내 받지 못한 것과 같이 상세로 판단하되, 같은 생성도 다시
+                    // 따라간다.
+                    settleLost(lostGenerationId = null, baseTurnCount = turns.size)
+                        ?.let { generating -> follow(first = null, generating = generating) }
+                }
+        }
+
+        /**
+         * 생성을 끝까지 따라가 결과로 화면을 확정한다. 끝난 자리에서 다른 생성이 진행 중이면 그 생성을
+         * 이어받는다.
+         *
+         * 방을 나가면 수신만 멈춘다. 이 작업이 취소될 뿐 서버는 생성을 계속하고, 다시 들어오면 상세의
+         * 생성 중인 턴으로 이어받는다.
+         *
+         * @param first 처음 연결. `null` 이면 [generating] 에 재연결부터 붙는다
+         */
+        private suspend fun follow(
+            first: Flow<ChatStreamEvent>?,
+            generating: GeneratingTurn?,
+        ) {
+            var connection = first
+            var next = generating
+            while (true) {
+                next?.let { target -> beginResume(target) }
+                // 끊긴 뒤 새 턴이 저장됐는지 가리는 기준이다. 받는 동안 확정 목록은 바뀌지 않는다.
+                val baseTurnCount = turns.size
+                receiving = true
+                val end =
+                    try {
+                        followGeneration(
+                            first = connection,
+                            generationId = next?.generationId,
+                            resume = { generationId -> chatRepository.resumeGeneration(chatId, generationId) },
+                            findGenerationId = {
+                                chatRepository.chatDetail(chatId).map { detail -> detail.generatingTurn?.generationId }
+                            },
+                            onEvent = { event -> event.progressEvent()?.let { progress -> dispatchEvent(progress) } },
+                        )
+                    } finally {
+                        receiving = false
+                    }
+                next = settle(end, baseTurnCount) ?: return
+                connection = null
+            }
+        }
+
+        private suspend fun beginResume(target: GeneratingTurn) {
+            regeneratingTurnId = target.regeneratingTurnId
+            sent = null
+            isStreaming = true
+            choicesJob?.cancel()
+            realtimeImageNudgeJob?.cancel()
+            dispatchEvent(
+                ChatRoomEvent.GenerationStarted(
+                    turns = turns,
+                    userInput = target.userInput,
+                    // 서버가 알려 주지 않아 지금 설정을 따른다. 진행 블록의 로딩 모양에만 쓰인다.
+                    realtimeImage = realtimeImageEnabled,
+                    regeneratingTurnId = target.regeneratingTurnId,
+                ),
+            )
         }
 
         /**
@@ -876,112 +993,175 @@ class ChatRoomViewModel
             return balance < required
         }
 
-        private suspend fun handleStreamEvent(event: ChatStreamEvent) {
-            when (event) {
-                ChatStreamEvent.Started -> Unit
-
-                is ChatStreamEvent.Token -> dispatchEvent(ChatRoomEvent.TokensAppended(event.text))
-
-                is ChatStreamEvent.CharacterImage ->
-                    dispatchEvent(ChatRoomEvent.CharacterImageAppended(event.name, event.imageUrl))
-
-                ChatStreamEvent.Completed -> {
-                    if (!isStreaming) return
-                    isStreaming = false
-                    // 완료 순간의 설정으로 판단한다. 저장을 기다리는 중 토글이 바뀌어도 다시 판단하지 않는다.
-                    val imageWasEnabled = realtimeImageEnabled
-                    if (regeneratingTurnId == null && preferences.recordCompletedTurn() == NUDGE_TURN_COUNT) {
-                        realtimeImageNudgePending = !imageWasEnabled
-                    }
-                    // 완료된 턴이 체험 한 회와 이프를 썼을 수 있다. 다음 턴의 배지와 잔액 선검사가 낡은 값을
-                    // 보지 않게 둘 다 다시 읽는다.
-                    viewModelScope.launch { trialsRepository.refresh() }
-                    viewModelScope.launch { profileRepository.refresh() }
-                    refreshTurns(confirmed = true)
-                    regeneratingTurnId = null
-                    scheduleRealtimeImageNudge()
+        /** 끝난 결과로 화면을 확정한다. 이어받을 다른 생성이 있으면 돌려준다. */
+        private suspend fun settle(
+            end: GenerationEnd,
+            baseTurnCount: Int,
+        ): GeneratingTurn? =
+            when (end) {
+                GenerationEnd.Completed -> {
+                    completeTurn(reloadTurns())
+                    null
                 }
 
-                is ChatStreamEvent.Failed -> handleStreamFailure(event)
-
-                ChatStreamEvent.Interrupted -> {
-                    isStreaming = false
-                    analytics.track(AnalyticsEvent.StreamErrorShown(chatId, turns.activeTurnNumber(regeneratingTurnId)))
-                    dispatchEvent(ChatRoomEvent.StreamCleared)
-                    dispatchEffect(ChatRoomEffect.ShowStreamFailure(null))
-                    // 서버 저장·교체 여부가 불명이라 임의로 복원하지 않고 확정 상태를 다시 읽는다.
-                    refreshTurns(confirmed = false)
-                    regeneratingTurnId = null
-                    scheduleRealtimeImageNudge()
+                is GenerationEnd.Failed -> {
+                    failTurn(end.message)
+                    null
                 }
+
+                is GenerationEnd.Rejected -> settleRejected(end.error)
+
+                is GenerationEnd.Lost -> settleLost(end.generationId, baseTurnCount)
             }
+
+        /**
+         * 턴이 저장됐다. [detail] 을 읽지 못했으면 **진행 블록을 걷지 않고 잠금만 푼다.** 턴은 이미
+         * 저장됐으므로 블록을 지우면 방금 받은 이야기가 화면에서 사라진다.
+         */
+        private suspend fun completeTurn(detail: ChatDetail?) {
+            isStreaming = false
+            sent = null
+            // 완료 순간의 설정으로 판단한다. 저장을 기다리는 중 토글이 바뀌어도 다시 판단하지 않는다.
+            val imageWasEnabled = realtimeImageEnabled
+            if (regeneratingTurnId == null && preferences.recordCompletedTurn() == NUDGE_TURN_COUNT) {
+                realtimeImageNudgePending = !imageWasEnabled
+            }
+            // 완료된 턴이 체험 한 회와 이프를 썼을 수 있다. 다음 턴의 배지와 잔액 선검사가 낡은 값을
+            // 보지 않게 둘 다 다시 읽는다.
+            viewModelScope.launch { trialsRepository.refresh() }
+            viewModelScope.launch { profileRepository.refresh() }
+            if (detail != null) {
+                dispatchEvent(ChatRoomEvent.TurnConfirmed(turns))
+                generateChoices()
+            } else {
+                // 재생성은 대상 턴이 목록에 그대로 있어 블록만 걷으면 기존 본문이 돌아온다.
+                dispatchEvent(
+                    if (regeneratingTurnId != null) ChatRoomEvent.StreamCleared else ChatRoomEvent.StreamSettled,
+                )
+                dispatchEffect(ChatRoomEffect.ShowStreamFailure(null))
+            }
+            finishStream()
         }
 
         /**
-         * `error` 사건의 복구.
+         * 서버가 생성을 실패로 끝냈다(`error` 사건).
          *
          * **블록을 걷는 것이 곧 복원이다** — 이어쓰기면 낙관적으로 붙였던 밴드가 사라지고, 재생성이면
-         * 자리를 지키고 있던 대상 턴이 그대로 다시 보인다. 서버가 교체하지 않았음이 보장되는 실패라
-         * 다시 읽지 않는다.
-         *
-         * 다만 **409 는 이미 새 턴이 붙은 낡은 화면**이라 되살릴 기존 본문이 정본이 아니다. 그때만
-         * 확정 상태를 다시 읽는다.
+         * 자리를 지키고 있던 대상 턴이 그대로 다시 보인다. 실패로 끝나도 저장된 턴이 있을 수 있어 확정
+         * 상태를 다시 읽은 뒤 알린다.
          */
-        private suspend fun handleStreamFailure(event: ChatStreamEvent.Failed) {
+        private suspend fun failTurn(message: String?) {
+            clearStream()
+            showTurns(reloadTurns())
+            showStreamFailure(message)
+            finishStream()
+        }
+
+        /**
+         * 처음 연결이 열리지 못했다. 402 는 이프 안내로 끝난다.
+         *
+         * 그 밖에는 요청이 서버에 닿았거나 다른 곳의 생성과 부딪혔을 수 있어 상세를 다시 읽고, 생성이
+         * 진행 중이면 그 생성을 이어받는다. 409 는 서버가 받지 않은 요청이라 안내 없이 최신 상태만 보인다.
+         * 생성 중(`CHAT_TURN_IN_PROGRESS`)이면 상세에 생성 중인 턴이 있어 이어받고, 낡은 화면
+         * (`CHAT_TURN_STALE`)이나 엔딩 도달(`CHAT_ENDED`)이면 최신 턴이 보인다.
+         */
+        private suspend fun settleRejected(error: DomainError): GeneratingTurn? {
+            clearStream()
+            val status = (error as? DomainError.Server)?.status
+            if (status == HTTP_PAYMENT_REQUIRED) {
+                analytics.track(AnalyticsEvent.CreditShortageShown(CreditShortageTrigger.CHAT_TURN))
+                dispatchEffect(ChatRoomEffect.ShowCreditRequired)
+                finishStream()
+                return null
+            }
+            val detail = reloadTurns()
+            detail?.generatingTurn?.let { generating -> return generating }
+            showTurns(detail)
+            if (status != HTTP_CONFLICT) showStreamFailure(null)
+            finishStream()
+            return null
+        }
+
+        /**
+         * 다시 붙어도 끝내 받지 못했다. 상세로 판단한다.
+         *
+         * 다른 생성이 진행 중이면 그 생성을 이어받는다. 따라가던 생성이 아직 진행 중이어도 곧바로 다시
+         * 따라가지 않는다. 시도를 다 쓴 생성을 또 따라가면 끝없이 반복하고, 재진입이나 다시 보내기(409)로
+         * 이어받을 수 있다. 이어쓰기는 새 턴이 저장됐으면 실패 안내 없이 완료로 보인다. 재생성은 상세만으로
+         * 성공과 실패를 가리지 못해 확정 본문만 보인다.
+         */
+        private suspend fun settleLost(
+            lostGenerationId: String?,
+            baseTurnCount: Int,
+        ): GeneratingTurn? {
+            val detail = reloadTurns()
+            val generating = detail?.generatingTurn
+            if (generating != null && generating.generationId != lostGenerationId) return generating
+            // 서버에 닿은 입력이라 컴포저로 되돌리지 않는다.
+            sent = null
+            when {
+                regeneratingTurnId != null -> {
+                    isStreaming = false
+                    if (detail != null) {
+                        dispatchEvent(ChatRoomEvent.TurnConfirmed(turns))
+                        generateChoices()
+                    } else {
+                        dispatchEvent(ChatRoomEvent.StreamCleared)
+                    }
+                    finishStream()
+                }
+
+                detail != null && turns.size > baseTurnCount -> completeTurn(detail)
+
+                else -> {
+                    clearStream()
+                    showTurns(detail)
+                    showStreamFailure(null)
+                    finishStream()
+                }
+            }
+            return null
+        }
+
+        /** 진행 블록을 걷고 잠금을 푼다. 열지 못한 턴의 입력은 컴포저로 되돌린다. */
+        private suspend fun clearStream() {
             isStreaming = false
             dispatchEvent(ChatRoomEvent.StreamCleared)
-            // 열지 못한 턴의 입력은 컴포저로 되돌린다 — 이프가 모자라거나 요청이 닿지 못한 실패에
-            // 사용자가 쓴 문장을 없앨 이유가 없다. 받는 동안 컴포저는 잠겨 있어 새 초안을 덮지 않는다.
+            // 이프가 모자라거나 요청이 닿지 못한 실패에 사용자가 쓴 문장을 없앨 이유가 없다. 받는 동안
+            // 컴포저는 잠겨 있어 새 초안을 덮지 않는다.
             sent?.let { restored ->
                 sent = null
                 filled = restored.filled
                 updateComposer(restored.composer)
             }
-            val status = (event.error as? DomainError.Server)?.status
-            if (status == HTTP_PAYMENT_REQUIRED) {
-                analytics.track(AnalyticsEvent.CreditShortageShown(CreditShortageTrigger.CHAT_TURN))
-                dispatchEffect(ChatRoomEffect.ShowCreditRequired)
-            } else {
-                analytics.track(AnalyticsEvent.StreamErrorShown(chatId, turns.activeTurnNumber(regeneratingTurnId)))
-                dispatchEffect(ChatRoomEffect.ShowStreamFailure(event.message))
-            }
-            if (regeneratingTurnId != null && status == HTTP_CONFLICT) refreshTurns(confirmed = false)
+        }
+
+        private fun finishStream() {
             regeneratingTurnId = null
             scheduleRealtimeImageNudge()
         }
 
-        /**
-         * 서버 확정본으로 목록을 맞춘다.
-         *
-         * [confirmed] 는 응답을 끝까지 받았는지다. 끝까지 받았는데 목록을 읽지 못하면 **진행 블록을
-         * 걷지 않고 잠금만 푼다** — 턴은 이미 저장됐으므로 블록을 지우면 방금 받은 이야기가 화면에서
-         * 사라진다.
-         */
-        private suspend fun refreshTurns(confirmed: Boolean) {
-            when (val result = chatRepository.chatDetail(chatId)) {
-                is DomainResult.Success -> {
-                    turns = result.value.turns.map { turn -> turn.toUi() }
-                    suggestedInputs = result.value.suggestedInputs
-                    dispatchEvent(
-                        if (confirmed) ChatRoomEvent.TurnConfirmed(turns) else ChatRoomEvent.TurnsRefreshed(turns),
-                    )
-                    generateChoices()
-                }
+        private suspend fun showStreamFailure(message: String?) {
+            analytics.track(AnalyticsEvent.StreamErrorShown(chatId, turns.activeTurnNumber(regeneratingTurnId)))
+            dispatchEffect(ChatRoomEffect.ShowStreamFailure(message))
+        }
 
-                is DomainResult.Failure ->
-                    if (confirmed) {
-                        // 재생성은 대상 턴이 목록에 그대로 있어 블록만 걷으면 기존 본문이 돌아온다.
-                        // 이어쓰기는 새 턴이 목록에 없으므로 블록을 남기고 잠금만 푼다.
-                        dispatchEvent(
-                            if (regeneratingTurnId != null) {
-                                ChatRoomEvent.StreamCleared
-                            } else {
-                                ChatRoomEvent.StreamSettled
-                            },
-                        )
-                        dispatchEffect(ChatRoomEffect.ShowStreamFailure(null))
-                    }
-            }
+        /**
+         * 상세를 다시 읽어 확정 목록을 맞춘다. 읽지 못하면 목록을 그대로 두고 `null` 이다. 이전 값을 새
+         * 응답처럼 쓰면 끝난 생성을 진행 중으로 보고 다시 붙는다.
+         */
+        private suspend fun reloadTurns(): ChatDetail? {
+            val detail = (chatRepository.chatDetail(chatId) as? DomainResult.Success)?.value ?: return null
+            turns = detail.turns.map { turn -> turn.toUi() }
+            suggestedInputs = detail.suggestedInputs
+            return detail
+        }
+
+        /** 다시 읽은 확정 목록을 보이고 마지막 턴의 선택지를 만든다. */
+        private suspend fun showTurns(detail: ChatDetail?) {
+            if (detail == null) return
+            dispatchEvent(ChatRoomEvent.TurnsRefreshed(turns))
+            generateChoices()
         }
 
         /**
@@ -1039,7 +1219,7 @@ class ChatRoomViewModel
             /** 이프가 모자랄 때의 응답. */
             const val HTTP_PAYMENT_REQUIRED = 402
 
-            /** 서버가 보는 마지막 턴과 재생성 대상이 다를 때의 응답. */
+            /** 서버가 받지 않은 요청. 다른 생성이 진행 중이거나 화면의 마지막 턴이 낡았거나 엔딩에 도달했다. */
             const val HTTP_CONFLICT = 409
 
             const val CHOICES_TOGGLE_DEBOUNCE_MILLIS = 500L
@@ -1139,13 +1319,16 @@ private fun reduceTurn(
                 choicesProgress = null,
             )
 
-        is ChatRoomEvent.RegenerateStarted ->
+        is ChatRoomEvent.GenerationStarted ->
             state.copy(
+                turns = event.turns,
                 streaming = StreamingTurn(userInput = event.userInput, realtimeImage = event.realtimeImage),
                 isStreaming = true,
-                regeneratingTurnId = event.turnId,
+                regeneratingTurnId = event.regeneratingTurnId,
                 choicesProgress = null,
             )
+
+        ChatRoomEvent.StreamRestarted -> state.copy(streaming = state.streaming?.copy(segments = emptyList()))
 
         is ChatRoomEvent.TokensAppended ->
             state.copy(
@@ -1197,12 +1380,22 @@ private fun reduceChoices(
         else -> state
     }
 
+/** 진행 블록에 쌓을 사건. 다시 붙은 연결은 `started` 부터 처음부터 다시 보내므로 쌓아 둔 본문을 비운다. */
+private fun ChatStreamEvent.progressEvent(): ChatRoomEvent? =
+    when (this) {
+        is ChatStreamEvent.Started -> ChatRoomEvent.StreamRestarted
+        is ChatStreamEvent.Token -> ChatRoomEvent.TokensAppended(text)
+        is ChatStreamEvent.CharacterImage -> ChatRoomEvent.CharacterImageAppended(name, imageUrl)
+        else -> null
+    }
+
 /** 이어쓰기 스트림. 출처는 서버가 선택 결과를 기록하는 데만 쓰인다. */
 private fun ChatRepository.turnStream(
     chatId: String,
     userInput: String,
     origin: SuggestionOrigin,
     realtimeImage: Boolean,
+    lastTurnId: Long?,
 ): Flow<ChatStreamEvent> =
     streamTurn(
         chatId = chatId,
@@ -1211,6 +1404,7 @@ private fun ChatRepository.turnStream(
         sourceTurnId = origin.sourceTurnId,
         choiceOrder = origin.choiceOrder,
         realtimeImage = realtimeImage,
+        lastTurnId = lastTurnId,
     )
 
 private fun app.manyak.chat.entity.ChatTurn.toUi(): ChatRoomTurn =
