@@ -62,7 +62,7 @@ class UserProfileRepositoryImpl
         }
     }
 
-private fun MeResponseDto.toDomain(): UserProfile =
+internal fun MeResponseDto.toDomain(): UserProfile =
     UserProfile(
         id = id,
         nickname = nickname,
