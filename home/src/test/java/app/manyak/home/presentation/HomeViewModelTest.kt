@@ -3,6 +3,9 @@ package app.manyak.home.presentation
 import app.manyak.analytics.domain.NoOpAnalytics
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.user.UserProfileRepository
+import app.manyak.common.entity.user.AccountStatus
+import app.manyak.common.entity.user.UserProfile
 import app.manyak.home.entity.StoryListFilter
 import app.manyak.home.entity.StoryListQuery
 import app.manyak.home.entity.StoryListSort
@@ -12,6 +15,8 @@ import app.manyak.home.testing.sampleStories
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -45,7 +50,7 @@ class HomeViewModelTest {
     fun `좋아요 성공은 목록 순서와 스크롤 버전을 유지하며 같은 카드만 갱신한다`() =
         runTest(dispatcher) {
             val repository = FakeStoryRepository()
-            val viewModel = HomeViewModel(repository, NoOpAnalytics)
+            val viewModel = HomeViewModel(repository, NoOpAnalytics, FakeProfiles())
             advanceUntilIdle()
             val before = viewModel.uiState.value
             repository.likeCountUpdates.emit("story-1" to 13L)
@@ -74,7 +79,7 @@ class HomeViewModelTest {
     fun `조회 중 성공한 좋아요는 늦게 도착한 목록에 덮이지 않고 다음 새로고침은 서버 값을 쓴다`() =
         runTest(dispatcher) {
             val repository = FakeStoryRepository()
-            val viewModel = HomeViewModel(repository, NoOpAnalytics)
+            val viewModel = HomeViewModel(repository, NoOpAnalytics, FakeProfiles())
             advanceUntilIdle()
             val gate = CompletableDeferred<Unit>()
             repository.inFlightGate = gate
@@ -105,7 +110,12 @@ class HomeViewModelTest {
     fun `진입 시 전체·인기순 첫 페이지를 조회해 서버 순서 그대로 상태에 담는다`() =
         runTest(dispatcher) {
             val repository = FakeStoryRepository()
-            val viewModel = HomeViewModel(storyRepository = repository, analytics = NoOpAnalytics)
+            val viewModel =
+                HomeViewModel(
+                    storyRepository = repository,
+                    analytics = NoOpAnalytics,
+                    userProfileRepository = FakeProfiles(),
+                )
             advanceUntilIdle()
 
             assertEquals(
@@ -123,7 +133,12 @@ class HomeViewModelTest {
         runTest(dispatcher) {
             val repository = FakeStoryRepository()
             repository.queuedResults += DomainResult.Success(StoryPage(emptyList(), nextCursor = null))
-            val viewModel = HomeViewModel(storyRepository = repository, analytics = NoOpAnalytics)
+            val viewModel =
+                HomeViewModel(
+                    storyRepository = repository,
+                    analytics = NoOpAnalytics,
+                    userProfileRepository = FakeProfiles(),
+                )
             advanceUntilIdle()
 
             val state = viewModel.uiState.value
@@ -137,7 +152,12 @@ class HomeViewModelTest {
         runTest(dispatcher) {
             val repository = FakeStoryRepository()
             repository.queuedResults += DomainResult.Failure(DomainError.Network)
-            val viewModel = HomeViewModel(storyRepository = repository, analytics = NoOpAnalytics)
+            val viewModel =
+                HomeViewModel(
+                    storyRepository = repository,
+                    analytics = NoOpAnalytics,
+                    userProfileRepository = FakeProfiles(),
+                )
             advanceUntilIdle()
 
             assertTrue(viewModel.uiState.value.loadFailed)
@@ -158,7 +178,12 @@ class HomeViewModelTest {
             val repository = FakeStoryRepository()
             val gate = CompletableDeferred<Unit>()
             repository.inFlightGate = gate
-            val viewModel = HomeViewModel(storyRepository = repository, analytics = NoOpAnalytics)
+            val viewModel =
+                HomeViewModel(
+                    storyRepository = repository,
+                    analytics = NoOpAnalytics,
+                    userProfileRepository = FakeProfiles(),
+                )
             advanceUntilIdle()
 
             // 진입 조회가 아직 응답을 기다리는 동안 재시도를 눌렀을 때다.
@@ -172,10 +197,38 @@ class HomeViewModelTest {
         }
 
     @Test
+    fun `내 닉네임이 바뀌면 알리지 않고 목록을 다시 읽는다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryRepository()
+            val profiles = FakeProfiles()
+            profiles.nickname("낭만적인표류자")
+            val viewModel = HomeViewModel(repository, NoOpAnalytics, profiles)
+            advanceUntilIdle()
+            assertEquals(1, repository.requests.size)
+
+            profiles.nickname("낭만적인표류자")
+            advanceUntilIdle()
+            assertEquals(1, repository.requests.size)
+
+            // 사용자가 시키지 않은 새로고침이라 실패해도 토스트를 띄우지 않고 목록을 둔다.
+            repository.queuedResults += DomainResult.Failure(DomainError.Network)
+            profiles.nickname("달빛작가")
+            advanceUntilIdle()
+            assertEquals(2, repository.requests.size)
+            assertEquals(null, withTimeoutOrNull(1_000L) { viewModel.uiEffect.first() })
+            assertEquals(sampleStories(), viewModel.uiState.value.stories)
+        }
+
+    @Test
     fun `당겨서 새로고침은 골격 없이 목록을 다시 읽는다`() =
         runTest(dispatcher) {
             val repository = FakeStoryRepository()
-            val viewModel = HomeViewModel(storyRepository = repository, analytics = NoOpAnalytics)
+            val viewModel =
+                HomeViewModel(
+                    storyRepository = repository,
+                    analytics = NoOpAnalytics,
+                    userProfileRepository = FakeProfiles(),
+                )
             advanceUntilIdle()
 
             val gate = CompletableDeferred<Unit>()
@@ -201,7 +254,12 @@ class HomeViewModelTest {
     fun `새로고침 실패는 목록을 그대로 두고 실패 안내를 보낸다`() =
         runTest(dispatcher) {
             val repository = FakeStoryRepository()
-            val viewModel = HomeViewModel(storyRepository = repository, analytics = NoOpAnalytics)
+            val viewModel =
+                HomeViewModel(
+                    storyRepository = repository,
+                    analytics = NoOpAnalytics,
+                    userProfileRepository = FakeProfiles(),
+                )
             advanceUntilIdle()
 
             repository.queuedResults += DomainResult.Failure(DomainError.Network)
@@ -226,7 +284,12 @@ class HomeViewModelTest {
             val third = first.copy(id = "story-3")
             repository.queuedResults += DomainResult.Success(StoryPage(listOf(first, second), nextCursor = "c1"))
             repository.queuedResults += DomainResult.Success(StoryPage(listOf(second, third), nextCursor = null))
-            val viewModel = HomeViewModel(storyRepository = repository, analytics = NoOpAnalytics)
+            val viewModel =
+                HomeViewModel(
+                    storyRepository = repository,
+                    analytics = NoOpAnalytics,
+                    userProfileRepository = FakeProfiles(),
+                )
             advanceUntilIdle()
 
             viewModel.onIntent(HomeIntent.LoadMore)
@@ -246,7 +309,12 @@ class HomeViewModelTest {
             val repository = FakeStoryRepository()
             repository.queuedResults += DomainResult.Success(StoryPage(sampleStories(), nextCursor = "c1"))
             repository.queuedResults += DomainResult.Failure(DomainError.Network)
-            val viewModel = HomeViewModel(storyRepository = repository, analytics = NoOpAnalytics)
+            val viewModel =
+                HomeViewModel(
+                    storyRepository = repository,
+                    analytics = NoOpAnalytics,
+                    userProfileRepository = FakeProfiles(),
+                )
             advanceUntilIdle()
 
             viewModel.onIntent(HomeIntent.LoadMore)
@@ -269,7 +337,12 @@ class HomeViewModelTest {
         runTest(dispatcher) {
             val repository = FakeStoryRepository()
             repository.queuedResults += DomainResult.Success(StoryPage(sampleStories(), nextCursor = "c1"))
-            val viewModel = HomeViewModel(storyRepository = repository, analytics = NoOpAnalytics)
+            val viewModel =
+                HomeViewModel(
+                    storyRepository = repository,
+                    analytics = NoOpAnalytics,
+                    userProfileRepository = FakeProfiles(),
+                )
             advanceUntilIdle()
 
             viewModel.onIntent(HomeIntent.SelectFilter(StoryListFilter.ORIGINAL))
@@ -290,7 +363,12 @@ class HomeViewModelTest {
         runTest(dispatcher) {
             val repository = FakeStoryRepository()
             repository.queuedResults += DomainResult.Success(StoryPage(sampleStories(), nextCursor = "c1"))
-            val viewModel = HomeViewModel(storyRepository = repository, analytics = NoOpAnalytics)
+            val viewModel =
+                HomeViewModel(
+                    storyRepository = repository,
+                    analytics = NoOpAnalytics,
+                    userProfileRepository = FakeProfiles(),
+                )
             advanceUntilIdle()
 
             val gate = CompletableDeferred<Unit>()
@@ -321,7 +399,12 @@ class HomeViewModelTest {
     fun `이미 선택한 필터를 다시 고르면 다시 읽지 않는다`() =
         runTest(dispatcher) {
             val repository = FakeStoryRepository()
-            val viewModel = HomeViewModel(storyRepository = repository, analytics = NoOpAnalytics)
+            val viewModel =
+                HomeViewModel(
+                    storyRepository = repository,
+                    analytics = NoOpAnalytics,
+                    userProfileRepository = FakeProfiles(),
+                )
             advanceUntilIdle()
 
             viewModel.onIntent(HomeIntent.SelectFilter(StoryListFilter.ALL))
@@ -335,7 +418,12 @@ class HomeViewModelTest {
         runTest(dispatcher) {
             val repository = FakeStoryRepository()
             repository.queuedResults += DomainResult.Success(StoryPage(sampleStories(), nextCursor = "c1"))
-            val viewModel = HomeViewModel(storyRepository = repository, analytics = NoOpAnalytics)
+            val viewModel =
+                HomeViewModel(
+                    storyRepository = repository,
+                    analytics = NoOpAnalytics,
+                    userProfileRepository = FakeProfiles(),
+                )
             advanceUntilIdle()
 
             val gate = CompletableDeferred<Unit>()
@@ -359,4 +447,27 @@ class HomeViewModelTest {
             assertFalse(state.isLoading)
             assertFalse(state.isLoadingMore)
         }
+}
+
+/** 닉네임만 바꿔 넣는 프로필 보관소. */
+private class FakeProfiles : UserProfileRepository {
+    private val state = MutableStateFlow<UserProfile?>(null)
+
+    override val profile: StateFlow<UserProfile?> = state
+
+    fun nickname(value: String) {
+        state.value =
+            UserProfile(
+                id = "user-1",
+                nickname = value,
+                profileImageUrl = null,
+                profileThumbnailBase64 = null,
+                status = AccountStatus.ACTIVE,
+                creditBalance = 0,
+                attendedToday = false,
+                linkedProviders = emptyList(),
+            )
+    }
+
+    override suspend fun refresh(): DomainResult<UserProfile> = DomainResult.Failure(DomainError.Network)
 }
