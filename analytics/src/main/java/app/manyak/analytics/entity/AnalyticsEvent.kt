@@ -508,6 +508,17 @@ sealed class AnalyticsEvent(
 
     data object PersonaEditCompleted : AnalyticsEvent("client_personaEdit_completed")
 
+    // profileEdit. 닉네임과 프리셋 키는 사용자 입력이라 싣지 않는다
+    data object ProfileEditViewed : AnalyticsEvent("client_profileEdit_viewed")
+
+    data class ProfileEditCompleted(
+        val nicknameChanged: Boolean,
+        val imageChanged: Boolean,
+    ) : AnalyticsEvent(
+            "client_profileEdit_completed",
+            mapOf("nickname_changed" to nicknameChanged, "image_changed" to imageChanged),
+        )
+
     // feedback
     data object FeedbackViewed : AnalyticsEvent("client_feedback_viewed")
 

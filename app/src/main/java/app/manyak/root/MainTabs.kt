@@ -58,6 +58,7 @@ internal fun MainTabsScreen(
     onOpenCreditCharge: () -> Unit,
     onOpenPersonas: () -> Unit,
     onOpenNotificationSettings: () -> Unit,
+    onOpenProfileEdit: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val backStacks = rememberTabBackStacks()
@@ -103,6 +104,7 @@ internal fun MainTabsScreen(
             onOpenCreditCharge = onOpenCreditCharge,
             onOpenPersonas = onOpenPersonas,
             onOpenNotificationSettings = onOpenNotificationSettings,
+            onOpenProfileEdit = onOpenProfileEdit,
         )
     }
 }
@@ -152,6 +154,7 @@ private fun MainTabsContent(
     onOpenCreditCharge: () -> Unit,
     onOpenPersonas: () -> Unit,
     onOpenNotificationSettings: () -> Unit,
+    onOpenProfileEdit: () -> Unit,
 ) {
     // 목적지는 백스택이 바뀔 때만 다시 만들어지므로, 그 사이에 바뀌는 여백을 값으로 붙잡으면 오래된 값이
     // 화면에 남는다. 상태로 넘겨 화면이 그릴 때마다 현재 값을 읽게 한다.
@@ -196,6 +199,7 @@ private fun MainTabsContent(
                     onOpenCreditCharge = onOpenCreditCharge,
                     onOpenPersonas = onOpenPersonas,
                     onOpenNotificationSettings = onOpenNotificationSettings,
+                    onOpenProfileEdit = onOpenProfileEdit,
                 )
             }
         }
