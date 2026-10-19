@@ -1,7 +1,5 @@
 package app.manyak.my.profile.presentation.component
 
-import android.graphics.BitmapFactory
-import android.util.Base64
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -17,9 +15,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,13 +27,13 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.manyak.common.entity.auth.AuthProvider
@@ -47,27 +45,38 @@ import app.manyak.my.presentation.component.chipLogoTint
 import app.manyak.my.presentation.component.labelRes
 import app.manyak.my.presentation.component.logoRes
 import coil3.compose.AsyncImage
+import app.manyak.designsystem.R as DesignsystemR
 import app.manyak.my.R as MyR
 
 @Composable
 internal fun ProfileHeader(
     profile: UserProfile?,
     onLinkAccount: (AuthProvider) -> Unit,
+    onOpenEdit: () -> Unit,
     isLoading: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
+    // 영역 전체가 수정 진입이다. 안쪽 연동 버튼은 자기 클릭이 먼저 받아 그대로 동작한다.
+    // 사방 여백을 클릭 안쪽에 둬 눌림이 메뉴 줄처럼 화면 폭 전체와 위아래 여백까지 번진다.
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clickable(
+                    enabled = profile != null,
+                    onClickLabel = stringResource(MyR.string.my_profile_edit_action),
+                    role = Role.Button,
+                    onClick = onOpenEdit,
+                ).padding(ManyakTheme.spacing.gutter),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
     ) {
         ProfileAvatar(profile = profile)
-        Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline)) {
-            Text(
-                text = profile?.nickname.orEmpty(),
-                style = ManyakTheme.typography.titleMediumStrong,
-                color = ManyakTheme.colors.text,
-            )
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
+        ) {
+            NicknameRow(nickname = profile?.nickname.orEmpty(), showsChevron = profile != null)
             if (isLoading && profile == null) {
                 val alpha = rememberSkeletonPulseAlpha()
                 Row(horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline)) {
@@ -87,6 +96,35 @@ internal fun ProfileHeader(
             profile?.linkedProviders?.takeIf { it.isNotEmpty() }?.let { linked ->
                 LinkedAccountRow(linked = linked, onLinkAccount = onLinkAccount)
             }
+        }
+    }
+}
+
+/** 웹과 같이 꺾쇠를 닉네임 바로 뒤에 붙인다. 긴 닉네임은 줄이고 꺾쇠는 남긴다. */
+@Composable
+private fun NicknameRow(
+    nickname: String,
+    showsChevron: Boolean,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
+    ) {
+        Text(
+            text = nickname,
+            modifier = Modifier.weight(1f, fill = false),
+            style = ManyakTheme.typography.titleMediumStrong,
+            color = ManyakTheme.colors.text,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        if (showsChevron) {
+            Icon(
+                painter = painterResource(DesignsystemR.drawable.ic_chevron_right),
+                contentDescription = null,
+                modifier = Modifier.size(ManyakTheme.sizes.iconSmall),
+                tint = ManyakTheme.colors.textSubtlest,
+            )
         }
     }
 }
@@ -122,17 +160,6 @@ private fun ProfileAvatar(
         else -> Box(modifier = avatarModifier.background(ManyakTheme.colors.backgroundNeutral))
     }
 }
-
-@Composable
-private fun rememberProfileThumbnail(base64: String?): ImageBitmap? =
-    remember(base64) {
-        base64?.let { encoded ->
-            runCatching {
-                val bytes = Base64.decode(encoded, Base64.DEFAULT)
-                BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
-            }.getOrNull()
-        }
-    }
 
 /**
  * 연동된 제공자는 실선 칩, 아직 아닌 제공자는 같은 모양의 점선 버튼이다. 둘 다 연동하면 버튼이 사라져

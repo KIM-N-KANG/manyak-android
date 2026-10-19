@@ -78,6 +78,16 @@ class AnalyticsEventContractTest {
         )
     }
 
+    @Test
+    fun `profile edit completion carries only what changed`() {
+        assertEvent(AnalyticsEvent.ProfileEditViewed, "client_profileEdit_viewed", emptyMap())
+        assertEvent(
+            AnalyticsEvent.ProfileEditCompleted(nicknameChanged = true, imageChanged = false),
+            "client_profileEdit_completed",
+            mapOf("nickname_changed" to true, "image_changed" to false),
+        )
+    }
+
     private fun assertEvent(
         event: AnalyticsEvent,
         name: String,

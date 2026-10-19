@@ -60,6 +60,7 @@ fun MyScreen(
     onOpenCreditCharge: () -> Unit,
     onOpenPersonas: () -> Unit,
     onOpenNotificationSettings: () -> Unit,
+    onOpenProfileEdit: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MyViewModel = hiltViewModel(),
 ) {
@@ -110,6 +111,7 @@ fun MyScreen(
         onOpenCreditCharge = onOpenCreditCharge,
         onOpenPersonas = onOpenPersonas,
         onOpenNotificationSettings = onOpenNotificationSettings,
+        onOpenProfileEdit = onOpenProfileEdit,
         contentPadding = contentPadding,
         modifier = modifier,
     )
@@ -156,6 +158,7 @@ private fun MyContent(
     onOpenCreditCharge: () -> Unit,
     onOpenPersonas: () -> Unit,
     onOpenNotificationSettings: () -> Unit,
+    onOpenProfileEdit: () -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
 ) {
@@ -169,7 +172,7 @@ private fun MyContent(
                 .padding(bottom = ManyakTheme.spacing.compact),
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.block),
     ) {
-        MyProfileSummary(state = state, onIntent = onIntent, onOpenCreditCharge = onOpenCreditCharge)
+        MyProfileSummary(state, onIntent, onOpenCreditCharge, onOpenProfileEdit)
         MySection(labelRes = MyR.string.my_section_persona) {
             MyMenuItem(
                 iconRes = DesignsystemR.drawable.ic_personal_card,
@@ -223,23 +226,22 @@ private fun MyProfileSummary(
     state: MyUiState,
     onIntent: (MyIntent) -> Unit,
     onOpenCreditCharge: () -> Unit,
+    onOpenProfileEdit: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier =
-            modifier.padding(
-                start = ManyakTheme.spacing.gutter,
-                top = ManyakTheme.spacing.gutter,
-                end = ManyakTheme.spacing.gutter,
-            ),
-        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
-    ) {
+    // 헤더가 사방 gutter 여백을 눌림 영역 안에 품어 카드까지의 간격도 헤더가 만든다.
+    Column(modifier = modifier) {
         ProfileHeader(
             profile = state.profile,
             isLoading = state.isRefreshingProfile,
             onLinkAccount = { provider -> onIntent(MyIntent.RequestAccountLink(provider)) },
+            onOpenEdit = onOpenProfileEdit,
         )
-        MyCreditBalanceCard(balance = state.profile?.creditBalance, onOpenCreditCharge = onOpenCreditCharge)
+        MyCreditBalanceCard(
+            balance = state.profile?.creditBalance,
+            onOpenCreditCharge = onOpenCreditCharge,
+            modifier = Modifier.padding(horizontal = ManyakTheme.spacing.gutter),
+        )
     }
 }
 
@@ -248,9 +250,11 @@ private fun MyProfileSummary(
 private fun MyCreditBalanceCard(
     balance: Long?,
     onOpenCreditCharge: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val analytics = LocalAnalytics.current
     CreditBalanceCard(
+        modifier = modifier,
         balance = balance,
         onOpenCharge = {
             analytics.track(AnalyticsEvent.CreditChargeButtonClicked)
@@ -392,6 +396,7 @@ private fun MyScreenPreview() {
             onOpenCreditCharge = {},
             onOpenPersonas = {},
             onOpenNotificationSettings = {},
+            onOpenProfileEdit = {},
             contentPadding = PaddingValues(0.dp),
         )
     }

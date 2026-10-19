@@ -179,4 +179,24 @@
     <string name="persona_delete_title">페르소나를 삭제할까요?</string>
     <string name="persona_delete_description">이 페르소나로 진행 중인 채팅은 그대로 이어갈 수 있어요</string>
     <string name="persona_delete_cancel">남겨두기</string>
+    <string name="my_profile_edit_action">프로필 수정</string>
+    <string name="profile_edit_header">프로필 수정</string>
+    <string name="profile_edit_image_button">프로필 이미지 바꾸기</string>
+    <string name="profile_edit_nickname">닉네임</string>
+    <string name="profile_edit_nickname_hint">한글, 영문, 숫자로 2~20자까지 쓸 수 있어요</string>
+    <string name="profile_edit_submit">저장하기</string>
+    <string name="profile_edit_submitting">프로필 저장 중</string>
+    <string name="profile_edit_load_failed">프로필을 불러오지 못했어요</string>
+    <string name="profile_edit_saved">프로필을 저장했어요</string>
+    <string name="profile_edit_save_failed">프로필을 저장하지 못했어요</string>
+    <string name="profile_edit_error_too_short">닉네임은 2자 이상 입력해 주세요</string>
+    <string name="profile_edit_error_invalid_character">한글, 영문, 숫자만 쓸 수 있어요</string>
+    <string name="profile_edit_error_taken">이미 사용 중인 닉네임이에요</string>
+    <string name="profile_edit_error_rejected">쓸 수 없는 닉네임이에요</string>
+    <string name="profile_edit_exit_title">저장하지 않은 내용이 있어요</string>
+    <string name="profile_edit_exit_description">지금 나가면 수정한 내용이 사라져요</string>
+    <string name="profile_edit_exit_close">닫기</string>
+    <string name="profile_edit_exit_leave">나가기</string>
+    <string name="profile_preset_sheet_title">프로필 이미지</string>
+    <string name="profile_preset_load_failed">이미지를 불러오지 못했어요</string>
 </resources>
