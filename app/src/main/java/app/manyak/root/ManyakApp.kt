@@ -59,6 +59,7 @@ import app.manyak.core.navigation.MyPersonasRoute
 import app.manyak.core.navigation.NotificationSettingsRoute
 import app.manyak.core.navigation.PersonaCreateRoute
 import app.manyak.core.navigation.PersonaEditRoute
+import app.manyak.core.navigation.ProfileEditRoute
 import app.manyak.core.navigation.StoryDetailRoute
 import app.manyak.core.navigation.StoryEditRoute
 import app.manyak.core.navigation.StudioRoute
@@ -82,6 +83,7 @@ import app.manyak.my.invite.presentation.InviteScreen
 import app.manyak.my.licenses.presentation.OpenSourceLicenseScreen
 import app.manyak.my.persona.presentation.PersonaFormScreen
 import app.manyak.my.persona.presentation.PersonaListScreen
+import app.manyak.my.profile.presentation.ProfileEditScreen
 import app.manyak.my.withdrawal.presentation.WithdrawalScreen
 import app.manyak.notification.settings.presentation.NotificationSettingsScreen
 import app.manyak.R as AppR
@@ -315,6 +317,7 @@ private fun MainNavDisplay(
                         onOpenCreditCharge = { backStack.push(MyCreditChargeRoute) },
                         onOpenPersonas = { backStack.push(MyPersonasRoute) },
                         onOpenNotificationSettings = { backStack.push(NotificationSettingsRoute) },
+                        onOpenProfileEdit = { backStack.push(ProfileEditRoute) },
                     )
                 }
                 myDestinationEntries(backStack)
@@ -374,6 +377,9 @@ private fun EntryProviderScope<NavKey>.myDestinationEntries(backStack: MutableLi
     }
     entry<WithdrawalRoute> {
         WithdrawalScreen(onBack = { backStack.pop() })
+    }
+    entry<ProfileEditRoute> {
+        ProfileEditScreen(onBack = { backStack.pop() }, onDone = { backStack.pop() })
     }
     entry<MyPersonasRoute> {
         PersonaListScreen(

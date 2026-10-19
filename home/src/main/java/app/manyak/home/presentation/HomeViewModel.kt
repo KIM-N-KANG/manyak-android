@@ -5,6 +5,7 @@ import app.manyak.analytics.domain.Analytics
 import app.manyak.analytics.entity.AnalyticsEvent
 import app.manyak.analytics.entity.StoryListSection
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.user.UserProfileRepository
 import app.manyak.common.entity.story.StorySummary
 import app.manyak.common.presentation.mvi.MviViewModel
 import app.manyak.home.domain.HomeRepository
@@ -14,6 +15,9 @@ import app.manyak.home.entity.StoryListSort
 import app.manyak.home.entity.StoryPage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -107,6 +111,7 @@ class HomeViewModel
     constructor(
         private val storyRepository: HomeRepository,
         private val analytics: Analytics,
+        private val userProfileRepository: UserProfileRepository,
     ) : MviViewModel<HomeIntent, HomeUiState, HomeEvent, HomeEffect>(HomeUiState()) {
         /** 첫 페이지와 다음 페이지를 합쳐 한 번에 하나만 둔다. 선택을 바꾸면 이전 조건의 응답이 섞이지 않게 취소한다. */
         private var pageJob: Job? = null
@@ -126,6 +131,15 @@ class HomeViewModel
                     if (pageJob?.isActive == true) likesDuringLoad[storyId] = likeCount
                     dispatchEvent(HomeEvent.LikeCountChanged(storyId, likeCount))
                 }
+            }
+            // 카드의 작성자 닉네임은 목록을 받은 시점 값이다. 내 닉네임이 바뀌면 내 스토리 카드가 낡으므로 다시 읽는다.
+            // 첫 값은 지금 보이는 닉네임이라 건너뛴다.
+            viewModelScope.launch {
+                userProfileRepository.profile
+                    .mapNotNull { it?.nickname }
+                    .distinctUntilChanged()
+                    .drop(1)
+                    .collect { loadFirstPage(refresh = true, quiet = true) }
             }
             analytics.track(AnalyticsEvent.StoryListViewed(StoryListSection.ORIGINAL))
             loadFirstPage(refresh = false)
@@ -151,8 +165,12 @@ class HomeViewModel
 
         /**
          * @param refresh 당겨서 새로고침이면 true. 실패를 화면이 아니라 토스트로 알린다.
+         * @param quiet 사용자가 시키지 않은 새로고침이면 true. 실패해도 보고 있던 목록을 두고 알리지 않는다.
          */
-        private fun loadFirstPage(refresh: Boolean) {
+        private fun loadFirstPage(
+            refresh: Boolean,
+            quiet: Boolean = false,
+        ) {
             pageJob?.cancel()
             likesDuringLoad.clear()
             val requested = query
@@ -164,7 +182,7 @@ class HomeViewModel
                         is DomainResult.Failure ->
                             if (refresh) {
                                 dispatchEvent(HomeEvent.RefreshFailed)
-                                dispatchEffect(HomeEffect.ShowRefreshFailed)
+                                if (!quiet) dispatchEffect(HomeEffect.ShowRefreshFailed)
                             } else {
                                 analytics.track(AnalyticsEvent.StoryListLoadErrorShown(StoryListSection.ORIGINAL))
                                 dispatchEvent(HomeEvent.LoadFailed)

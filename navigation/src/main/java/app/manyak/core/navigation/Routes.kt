@@ -131,6 +131,10 @@ data object MyOpenSourceLicenseRoute : NavKey
 @Serializable
 data object WithdrawalRoute : NavKey
 
+/** 프로필 수정. 마이의 프로필 영역이 진입점이다. */
+@Serializable
+data object ProfileEditRoute : NavKey
+
 /** 페르소나 관리 목록. 마이의 페르소나 섹션이 진입점이다. */
 @Serializable
 data object MyPersonasRoute : NavKey
