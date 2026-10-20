@@ -50,6 +50,8 @@ fun authProperty(
     return localProperties.getProperty(key) ?: System.getenv(key) ?: ""
 }
 
+fun metaProperty(name: String): String = localProperties.getProperty(name) ?: System.getenv(name) ?: ""
+
 // 업로드 키는 저장소에 두지 않는다. local.properties(추적 제외)나 CI 환경변수에서 읽고,
 // 하나라도 비면 signingConfig 를 붙이지 않는다 — 반쯤 채워진 값으로 서명이 조용히 어긋나는 것보다
 // 서명되지 않은 산출물이 업로드 단계에서 바로 거부되는 편이 낫다.
@@ -80,6 +82,11 @@ android {
         versionName = "1.6.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Meta 앱은 환경 구분 없이 하나라 빌드 타입 접미사를 붙이지 않는다. 비어 있으면 SDK 가 초기화 실패를
+        // 로그로만 남기고 앱은 그대로 동작한다.
+        manifestPlaceholders["metaAppId"] = metaProperty("META_APP_ID")
+        manifestPlaceholders["metaClientToken"] = metaProperty("META_CLIENT_TOKEN")
 
         // 약관·개인정보처리방침은 웹 페이지를 그대로 연다(docs/plans/login.md 결정 1).
         // 본문 정본이 웹 하나뿐이라 환경과 무관하게 운영 웹을 가리킨다.
@@ -184,6 +191,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
+    implementation(libs.facebook.core)
     testImplementation(libs.androidx.datastore.preferences)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
