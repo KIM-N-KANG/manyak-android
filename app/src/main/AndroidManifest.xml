@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Meta SDK 가 광고 식별자로 설치를 광고에 귀속한다. Android 13 이상은 이 권한 없이는 ID 를 0 으로 받는다. -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
 
     <application
         android:name=".ManyakApplication"
@@ -14,6 +16,22 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.ManyakAndroid">
+        <!--
+            Meta 앱 이벤트. 초기화와 설치, 실행 이벤트 전송은 SDK 가 자동으로 한다.
+            앱 ID 는 "fb" 접두어가 있어야 한다. 숫자만 넣으면 aapt 가 정수로 읽어 값이 깨진다.
+        -->
+        <meta-data
+            android:name="com.facebook.sdk.ApplicationId"
+            android:value="fb${metaAppId}" />
+        <meta-data
+            android:name="com.facebook.sdk.ClientToken"
+            android:value="${metaClientToken}" />
+        <meta-data
+            android:name="com.facebook.sdk.AutoLogAppEventsEnabled"
+            android:value="true" />
+        <meta-data
+            android:name="com.facebook.sdk.AdvertiserIDCollectionEnabled"
+            android:value="true" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
