@@ -29,6 +29,7 @@ amplitude = "1.30.1"
 firebaseBom = "34.18.0"
 googleServices = "4.5.0"
 firebaseCrashlytics = "3.0.8"
+facebook = "18.0.3"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -74,6 +75,7 @@ amplitude-analytics-android = { group = "com.amplitude", name = "analytics-andro
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }
 firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging" }
+facebook-core = { group = "com.facebook.android", name = "facebook-core", version.ref = "facebook" }
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 
