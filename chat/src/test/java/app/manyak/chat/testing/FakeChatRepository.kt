@@ -4,6 +4,7 @@ import app.manyak.chat.domain.ChatPreferencesRepository
 import app.manyak.chat.domain.ChatRepository
 import app.manyak.chat.entity.ChatDetail
 import app.manyak.chat.entity.ChatInputMode
+import app.manyak.chat.entity.ChatModel
 import app.manyak.chat.entity.ChatStreamEvent
 import app.manyak.chat.entity.ChatSummary
 import app.manyak.chat.entity.ChatTurn
@@ -32,6 +33,7 @@ internal fun sampleChatDetail(
         prologue = "*낡은 시계탑 아래.* 당신은 문 앞에 선다.",
         turns = turns,
         suggestedInputs = suggestedInputs,
+        model = "LITE",
     )
 
 /** 서버가 최근 활동순으로 준 목록. 순서를 그대로 지키는지 보려고 제목을 시각 순서와 어긋나게 둔다. */
@@ -178,6 +180,24 @@ internal class FakeChatRepository : ChatRepository {
 
     val sharedChatIds = mutableListOf<String>()
     val queuedShareResults = ArrayDeque<DomainResult<String>>()
+
+    var models = listOf(ChatModel("LITE", "라이트", 20), ChatModel("AURORA", "오로라", 50))
+    val changedModels = mutableListOf<String>()
+    val queuedChangeModelResults = ArrayDeque<DomainResult<Unit>>()
+
+    override suspend fun chatModels(): DomainResult<List<ChatModel>> {
+        yield()
+        return DomainResult.Success(models)
+    }
+
+    override suspend fun changeModel(
+        chatId: String,
+        model: String,
+    ): DomainResult<Unit> {
+        yield()
+        changedModels += model
+        return queuedChangeModelResults.removeFirstOrNull() ?: DomainResult.Success(Unit)
+    }
 
     override suspend fun createShareLink(chatId: String): DomainResult<String> {
         yield()

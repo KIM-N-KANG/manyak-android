@@ -33,6 +33,19 @@ data class ChatDetail(
     val suggestedInputs: List<String>,
     /** 서버가 아직 만들고 있는 턴. 나가 있는 동안에도 생성이 이어지므로 들어온 화면이 이어받는다. */
     val generatingTurn: GeneratingTurn? = null,
+    /** 이 채팅의 모델 코드. 다음 턴부터 이 모델의 가격으로 차감된다. */
+    val model: String? = null,
+)
+
+/**
+ * 고를 수 있는 채팅 모델. 목록과 이름, 가격은 서버가 정하며 [code] 가 모델 변경 요청의 값이다.
+ *
+ * @property turnCost 턴 체험을 다 쓴 뒤 한 턴(재생성 포함)에 드는 이프.
+ */
+data class ChatModel(
+    val code: String,
+    val name: String,
+    val turnCost: Long,
 )
 
 /** 진행 중인 생성. 이어쓰기와 재생성을 합쳐 채팅마다 하나만 돈다. */
