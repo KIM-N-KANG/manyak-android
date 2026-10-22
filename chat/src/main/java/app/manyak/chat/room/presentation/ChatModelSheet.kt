@@ -141,9 +141,9 @@ private fun ChatModelOption(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .clip(ManyakTheme.shapes.control)
+                .clip(ManyakTheme.shapes.overlay)
                 .background(if (selected) colors.backgroundBrandSubtle else colors.surfaceRaised)
-                .border(1.dp, if (selected) colors.borderBrand else colors.border, ManyakTheme.shapes.control)
+                .border(1.dp, if (selected) colors.borderBrand else colors.border, ManyakTheme.shapes.overlay)
                 .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
                 .padding(ManyakTheme.spacing.gutter),
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
