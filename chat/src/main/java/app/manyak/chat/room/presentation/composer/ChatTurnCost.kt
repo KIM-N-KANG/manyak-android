@@ -19,15 +19,23 @@ data class ChatTurnCost(
 }
 
 /**
+ * 고급 모델의 턴 비용. 서버 정책 응답에 고급 비용이 생기기 전까지 쓰는 임시 값이며, AI 의 고급 등급
+ * 실험 조건과 같다.
+ */
+internal const val ADVANCED_CHAT_TURN_COST = 50L
+
+/**
  * 정가는 턴 비용에 실시간 이미지가 켜져 있으면 이미지 비용을 더한 값이고, 적용가는 체험이 남은 항목의
  * 비용을 0 으로 뺀 값이다. 이미지 항목의 정책값·잔여는 실시간 이미지를 합산할 때만 요구한다.
+ * 고급 모델은 턴 비용이 [ADVANCED_CHAT_TURN_COST] 이고 턴 체험을 적용하지 않는다.
  */
 fun chatTurnCost(
     policy: CreditPolicy?,
     trials: Trials?,
     withRealtimeImage: Boolean,
+    advancedModel: Boolean = false,
 ): ChatTurnCost {
-    val turnCost = policy?.chatTurnCost
+    val turnCost = if (advancedModel) ADVANCED_CHAT_TURN_COST else policy?.chatTurnCost
     val imageCost = if (withRealtimeImage) policy?.chatImageCost else 0L
     if (turnCost == null || imageCost == null) return ChatTurnCost(full = null, discounted = null)
     val full = turnCost + imageCost
@@ -39,7 +47,7 @@ fun chatTurnCost(
     }
 
     val discounted =
-        (if (turnTrial.isFree) 0L else turnCost) +
+        (if (!advancedModel && turnTrial.isFree) 0L else turnCost) +
             (if (imageTrial?.isFree == true) 0L else imageCost)
     return ChatTurnCost(full = full, discounted = discounted)
 }

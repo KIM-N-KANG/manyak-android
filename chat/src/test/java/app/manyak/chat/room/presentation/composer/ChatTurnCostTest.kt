@@ -52,6 +52,13 @@ class ChatTurnCostTest {
     }
 
     @Test
+    fun `고급 모델은 턴 체험을 적용하지 않고 이미지 체험만 적용한다`() {
+        val trials = Trials(chatTurn = left, chatImage = left)
+        val cost = chatTurnCost(policy, trials, withRealtimeImage = true, advancedModel = true)
+        assertEquals(ChatTurnCost(full = 110, discounted = 50), cost)
+    }
+
+    @Test
     fun `이미지 정책값이 없으면 켰을 때만 숫자를 보이지 않는다`() {
         val noImage = CreditPolicy(chatTurnCost = 20)
         assertEquals(ChatTurnCost(null, null), chatTurnCost(noImage, Trials(chatTurn = left), withRealtimeImage = true))

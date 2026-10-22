@@ -89,6 +89,8 @@ data class ChatRoomUiState(
     val composer: ChatComposerState = ChatComposerState(),
     val choicesEnabled: Boolean = true,
     val realtimeImageEnabled: Boolean = false,
+    /** 채팅 본문을 고급 모델로 만들지. 헤더의 AI 모델 선택이 바꾼다. */
+    val advancedModel: Boolean = false,
     val settingsOpen: Boolean = false,
     val realtimeImageNudgeOpen: Boolean = false,
     /** 턴이 0개인 방의 첫 입력 후보. */
@@ -165,6 +167,10 @@ sealed interface ChatRoomIntent {
     ) : ChatRoomIntent
 
     data class RealtimeImageEnabledChanged(
+        val enabled: Boolean,
+    ) : ChatRoomIntent
+
+    data class AdvancedModelChanged(
         val enabled: Boolean,
     ) : ChatRoomIntent
 
@@ -256,6 +262,7 @@ sealed interface ChatRoomEvent {
         val composer: ChatComposerState,
         val choicesEnabled: Boolean,
         val realtimeImageEnabled: Boolean,
+        val advancedModel: Boolean,
         val hintUnseen: Boolean,
     ) : ChatRoomEvent
 
@@ -268,6 +275,10 @@ sealed interface ChatRoomEvent {
     ) : ChatRoomEvent
 
     data class RealtimeImageEnabledChanged(
+        val enabled: Boolean,
+    ) : ChatRoomEvent
+
+    data class AdvancedModelChanged(
         val enabled: Boolean,
     ) : ChatRoomEvent
 
@@ -455,6 +466,7 @@ class ChatRoomViewModel
         private var suggestedInputs: List<String> = emptyList()
         private var choicesEnabled = true
         private var realtimeImageEnabled = false
+        private var advancedModel = false
         private var hintUnseen = false
         private var tourUnseen = false
         private var tourOpen = false
@@ -492,6 +504,7 @@ class ChatRoomViewModel
                     composer = composer.convertTo(preferences.inputMode())
                     choicesEnabled = preferences.choicesEnabled()
                     realtimeImageEnabled = preferences.realtimeImageEnabled()
+                    advancedModel = preferences.advancedModelEnabled()
                     hintUnseen = !preferences.isChoicesHintSeen()
                     tourUnseen = !preferences.isChatTourSeen()
                     dispatchEvent(
@@ -499,6 +512,7 @@ class ChatRoomViewModel
                             composer = composer,
                             choicesEnabled = choicesEnabled,
                             realtimeImageEnabled = realtimeImageEnabled,
+                            advancedModel = advancedModel,
                             hintUnseen = hintUnseen,
                         ),
                     )
@@ -586,6 +600,12 @@ class ChatRoomViewModel
 
                 ChatRoomIntent.Backgrounded, ChatRoomIntent.Foregrounded ->
                     onForegroundChanged(foreground = intent == ChatRoomIntent.Foregrounded)
+
+                is ChatRoomIntent.AdvancedModelChanged -> {
+                    advancedModel = intent.enabled
+                    dispatchEvent(ChatRoomEvent.AdvancedModelChanged(intent.enabled))
+                    preferences.setAdvancedModelEnabled(intent.enabled)
+                }
 
                 // 실패는 캐시된 잔액을 그대로 두는 것으로 흡수한다.
                 ChatRoomIntent.MenuOpened -> viewModelScope.launch { profileRepository.refresh() }
@@ -988,7 +1008,12 @@ class ChatRoomViewModel
         private fun isCreditShort(): Boolean {
             val balance = profileRepository.profile.value?.creditBalance ?: return false
             val cost =
-                chatTurnCost(creditPolicyRepository.policy.value, trialsRepository.trials.value, realtimeImageEnabled)
+                chatTurnCost(
+                    creditPolicyRepository.policy.value,
+                    trialsRepository.trials.value,
+                    realtimeImageEnabled,
+                    advancedModel,
+                )
             val required = cost.discounted ?: cost.full ?: return false
             return balance < required
         }
@@ -1261,6 +1286,7 @@ private fun reduceChatRoom(
                 composer = event.composer,
                 choicesEnabled = event.choicesEnabled,
                 realtimeImageEnabled = event.realtimeImageEnabled,
+                advancedModel = event.advancedModel,
                 choicesHintUnseen = event.hintUnseen,
             )
 
@@ -1269,6 +1295,8 @@ private fun reduceChatRoom(
         is ChatRoomEvent.ChoicesEnabledChanged -> state.copy(choicesEnabled = event.enabled)
 
         is ChatRoomEvent.RealtimeImageEnabledChanged -> state.copy(realtimeImageEnabled = event.enabled)
+
+        is ChatRoomEvent.AdvancedModelChanged -> state.copy(advancedModel = event.enabled)
 
         ChatRoomEvent.DeleteStarted,
         ChatRoomEvent.DeleteFailed,

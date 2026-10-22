@@ -201,6 +201,7 @@ internal class FakeChatPreferencesRepository(
     private var choices: Boolean = true,
     private var hintSeen: Boolean = true,
     private var realtimeImage: Boolean = false,
+    private var advancedModel: Boolean = false,
     private var tourSeen: Boolean = true,
     var completedTurnCount: Int = 0,
     var failsRecordingTurn: Boolean = false,
@@ -208,6 +209,7 @@ internal class FakeChatPreferencesRepository(
     val savedModes = mutableListOf<ChatInputMode>()
     val savedChoices = mutableListOf<Boolean>()
     val savedRealtimeImages = mutableListOf<Boolean>()
+    val savedAdvancedModels = mutableListOf<Boolean>()
 
     override suspend fun recordCompletedTurn(): Int? {
         if (failsRecordingTurn) return null
@@ -220,6 +222,13 @@ internal class FakeChatPreferencesRepository(
     override suspend fun setRealtimeImageEnabled(enabled: Boolean) {
         realtimeImage = enabled
         savedRealtimeImages += enabled
+    }
+
+    override suspend fun advancedModelEnabled(): Boolean = advancedModel
+
+    override suspend fun setAdvancedModelEnabled(enabled: Boolean) {
+        advancedModel = enabled
+        savedAdvancedModels += enabled
     }
 
     override suspend fun inputMode(): ChatInputMode = mode

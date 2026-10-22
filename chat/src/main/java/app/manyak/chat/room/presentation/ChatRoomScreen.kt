@@ -70,6 +70,7 @@ fun ChatRoomScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     // 메뉴 시트·확인 다이얼로그 노출 여부. 구성 변경에서 되돌아가면 안 되는 진행 상태다.
     var menuOpen by rememberSaveable { mutableStateOf(false) }
+    var modelOpen by rememberSaveable { mutableStateOf(false) }
     var confirmingDelete by rememberSaveable { mutableStateOf(false) }
 
     ChatRoomForegroundEffects(viewModel)
@@ -90,8 +91,21 @@ fun ChatRoomScreen(
             menuOpen = true
             viewModel.onIntent(ChatRoomIntent.MenuOpened)
         },
+        onOpenModel = { modelOpen = true },
         modifier = modifier,
     )
+
+    if (modelOpen) {
+        ChatModelSheet(
+            advancedModel = state.advancedModel,
+            realtimeImageEnabled = state.realtimeImageEnabled,
+            onSelect = { advanced ->
+                modelOpen = false
+                viewModel.onIntent(ChatRoomIntent.AdvancedModelChanged(advanced))
+            },
+            onDismiss = { modelOpen = false },
+        )
+    }
 
     if (menuOpen) {
         ChatMenuSheet(
@@ -121,6 +135,7 @@ private fun ChatRoomContent(
     onIntent: (ChatRoomIntent) -> Unit,
     onOpenMenu: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenModel: () -> Unit = {},
 ) {
     val showProgress = rememberDelayedProgressVisibility(state.isLoading)
     // 덮어쓰기 확인 대상. 구성 변경에서 되돌아가면 안 되는 진행 상태다.
@@ -171,10 +186,10 @@ private fun ChatRoomContent(
             ChatRoomHeaderOverlay(
                 // 투어 중에는 숨겨 둔 헤더도 보인다 — 딤 아래에서 화면이 어디인지 알려 준다.
                 visible = !headerHidden || phase != ChatRoomPhase.CONTENT || state.tourOpen,
-                title = state.storyTitle,
-                phase = phase,
+                state = state,
                 onBack = onBack,
                 onOpenMenu = onOpenMenu,
+                onOpenModel = onOpenModel,
             )
         }
         FullscreenImageViewer(state.imageViewerUrl, onClose = { onIntent(ChatRoomIntent.CloseImageViewer) })
@@ -234,6 +249,7 @@ private fun ColumnScope.ChatRoomLoaded(
         state = state.composer,
         choicesEnabled = state.choicesEnabled,
         realtimeImageEnabled = state.realtimeImageEnabled,
+        advancedModel = state.advancedModel,
         hasSuggestions = state.suggestions.hasCandidate,
         isStreaming = state.isStreaming,
         actions = composerActions(onIntent, onOpenSettings = { onIntent(ChatRoomIntent.SettingsOpened) }),
@@ -291,10 +307,10 @@ private fun ReplaceDraftDialog(
 @Composable
 private fun ChatRoomHeaderOverlay(
     visible: Boolean,
-    title: String,
-    phase: ChatRoomPhase,
+    state: ChatRoomUiState,
     onBack: () -> Unit,
     onOpenMenu: () -> Unit,
+    onOpenModel: () -> Unit,
 ) {
     val millis = ManyakTheme.motion.elementEnterMillis
     AnimatedVisibility(
@@ -302,14 +318,18 @@ private fun ChatRoomHeaderOverlay(
         enter = fadeIn(tween(millis, easing = LinearOutSlowInEasing)),
         exit = fadeOut(tween(millis, easing = LinearOutSlowInEasing)),
     ) {
-        // 방을 아직 열지 못한 상태에서는 메뉴를 두지 않는다.
+        val title = state.storyTitle
+        val phase = chatRoomPhase(state)
+        // 방을 아직 열지 못한 상태에서는 모델 선택과 메뉴를 두지 않는다.
         ChatRoomHeader(
             title = title,
             // 방을 연 뒤에도 제목이 비어 있으면 참조 스토리가 삭제된 것이다 — 목록 카드와 같은 문구로 알린다.
             isStoryDeleted = phase == ChatRoomPhase.CONTENT && title.isBlank(),
             showsMenu = phase == ChatRoomPhase.CONTENT,
+            advancedModel = state.advancedModel,
             onBack = onBack,
             onOpenMenu = onOpenMenu,
+            onOpenModel = onOpenModel,
         )
     }
 }
@@ -320,8 +340,10 @@ private fun ChatRoomHeader(
     title: String,
     isStoryDeleted: Boolean,
     showsMenu: Boolean,
+    advancedModel: Boolean,
     onBack: () -> Unit,
     onOpenMenu: () -> Unit,
+    onOpenModel: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     TopAppBar(
@@ -342,9 +364,9 @@ private fun ChatRoomHeader(
                 onClick = onBack,
             )
         },
-        // 오른쪽에는 메뉴 버튼 하나만 둔다 — 웹 헤더의 공유 버튼은 앱 범위 밖이다.
         actions = {
             if (showsMenu) {
+                ChatModelButton(advancedModel = advancedModel, onClick = onOpenModel)
                 ManyakIconButton(
                     iconRes = DesignsystemR.drawable.ic_more_horizontal,
                     contentDescription = stringResource(ChatR.string.chat_room_menu),

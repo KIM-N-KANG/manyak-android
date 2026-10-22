@@ -48,6 +48,21 @@ class ChatRoomSettingsTest {
         }
 
     @Test
+    fun `저장된 고급 모델 선택을 진입 시 올리고 바꾸면 기기에 저장한다`() =
+        runTest(dispatcher) {
+            val preferences = FakeChatPreferencesRepository(advancedModel = true)
+            val viewModel = viewModel(FakeChatRepository(), preferences)
+            advanceUntilIdle()
+            assertTrue(viewModel.uiState.value.advancedModel)
+
+            viewModel.onIntent(ChatRoomIntent.AdvancedModelChanged(false))
+            advanceUntilIdle()
+
+            assertFalse(viewModel.uiState.value.advancedModel)
+            assertEquals(listOf(false), preferences.savedAdvancedModels)
+        }
+
+    @Test
     fun `토글을 끄면 이어쓰기 요청에 false 를 싣고 기기에 저장한다`() =
         runTest(dispatcher) {
             val repository = FakeChatRepository()

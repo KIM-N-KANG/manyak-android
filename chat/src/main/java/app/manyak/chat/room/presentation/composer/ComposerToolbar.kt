@@ -28,6 +28,7 @@ internal fun ComposerToolbar(
     canAddBlock: Boolean,
     enabled: Boolean,
     realtimeImageEnabled: Boolean,
+    advancedModel: Boolean,
     sendState: SendButtonState,
     actions: ChatComposerActions,
     onInsertEmphasis: () -> Unit,
@@ -77,7 +78,8 @@ internal fun ComposerToolbar(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             // 전송 버튼 상태(전송·랜덤·대기)가 바뀌어도 자리가 그대로다.
-            val cost = chatTurnCost(LocalCreditPolicy.current, LocalTrials.current, realtimeImageEnabled)
+            val cost =
+                chatTurnCost(LocalCreditPolicy.current, LocalTrials.current, realtimeImageEnabled, advancedModel)
             CreditAmountText(
                 amount = stringResource(ChatR.string.chat_composer_turn_credit_cost, creditAmountText(cost.discounted)),
                 fullAmount = cost.full?.takeIf { cost.isDiscounted }?.let(::creditAmountText),
