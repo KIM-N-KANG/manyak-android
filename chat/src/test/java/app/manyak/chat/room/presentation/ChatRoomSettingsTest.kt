@@ -52,6 +52,21 @@ class ChatRoomSettingsTest {
         }
 
     @Test
+    fun `저장된 긴 응답 설정을 올리고 바꾸면 기기에 저장한다`() =
+        runTest(dispatcher) {
+            val preferences = FakeChatPreferencesRepository().apply { longResponse = true }
+            val viewModel = viewModel(FakeChatRepository(), preferences)
+            advanceUntilIdle()
+            assertTrue(viewModel.uiState.value.longResponseEnabled)
+
+            viewModel.onIntent(ChatRoomIntent.LongResponseEnabledChanged(false))
+            advanceUntilIdle()
+
+            assertFalse(viewModel.uiState.value.longResponseEnabled)
+            assertFalse(preferences.longResponse)
+        }
+
+    @Test
     fun `채팅의 모델과 모델 목록을 올리고 고르면 서버에 저장한다`() =
         runTest(dispatcher) {
             val repository = FakeChatRepository()

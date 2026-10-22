@@ -242,6 +242,14 @@ internal class FakeChatPreferencesRepository(
         savedRealtimeImages += enabled
     }
 
+    var longResponse = false
+
+    override suspend fun longResponseEnabled(): Boolean = longResponse
+
+    override suspend fun setLongResponseEnabled(enabled: Boolean) {
+        longResponse = enabled
+    }
+
     override suspend fun inputMode(): ChatInputMode = mode
 
     override suspend fun setInputMode(mode: ChatInputMode) {

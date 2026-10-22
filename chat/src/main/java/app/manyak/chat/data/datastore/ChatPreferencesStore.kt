@@ -53,6 +53,11 @@ class ChatPreferencesStore
         override suspend fun setRealtimeImageEnabled(enabled: Boolean) =
             write { it[REALTIME_IMAGE_ENABLED_KEY] = enabled }
 
+        override suspend fun longResponseEnabled(): Boolean = read(LONG_RESPONSE_ENABLED_KEY) ?: false
+
+        override suspend fun setLongResponseEnabled(enabled: Boolean) =
+            write { it[LONG_RESPONSE_ENABLED_KEY] = enabled }
+
         override suspend fun recordCompletedTurn(): Int? =
             withContext(ioDispatcher) {
                 try {
@@ -92,6 +97,7 @@ class ChatPreferencesStore
             val CHOICES_HINT_SEEN_KEY = booleanPreferencesKey("chat_choices_hint_seen")
             val CHAT_TOUR_SEEN_KEY = booleanPreferencesKey("chat_tour_seen")
             val REALTIME_IMAGE_ENABLED_KEY = booleanPreferencesKey("chat_realtime_image_enabled")
+            val LONG_RESPONSE_ENABLED_KEY = booleanPreferencesKey("chat_long_response_enabled")
 
             /** 웹과 같은 기본값이다. 처음 들어온 사용자가 두 클라이언트에서 다른 화면을 보면 안 된다. */
             val DEFAULT_INPUT_MODE = ChatInputMode.BLOCK

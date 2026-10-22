@@ -101,9 +101,13 @@ fun ChatRoomScreen(
             models = state.models,
             selected = state.model,
             realtimeImageEnabled = state.realtimeImageEnabled,
+            longResponseEnabled = state.longResponseEnabled,
             onSelect = { model ->
                 modelOpen = false
                 viewModel.onIntent(ChatRoomIntent.ModelSelected(model))
+            },
+            onLongResponseEnabledChange = { enabled ->
+                viewModel.onIntent(ChatRoomIntent.LongResponseEnabledChanged(enabled))
             },
             onDismiss = { modelOpen = false },
         )
