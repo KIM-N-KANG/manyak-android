@@ -17,6 +17,14 @@
     <string name="chat_composer_situation_placeholder">어떤 상황을 묘사할까요?</string>
     <string name="chat_composer_streaming">응답을 받는 중</string>
     <string name="chat_composer_turn_credit_cost">%1$s 이프</string>
+    <string name="chat_turn_cost_info_open">이프 안내</string>
+    <string name="chat_turn_cost_info_title">한 턴에 쓰는 이프</string>
+    <string name="chat_turn_cost_info_total">합계</string>
+    <string name="chat_turn_cost_info_trial_exhausted">무료 체험 모두 사용</string>
+    <string name="chat_turn_cost_info_trial_model_note">무료 체험 턴은 %1$s 모델로 답해요</string>
+    <string name="chat_turn_cost_info_trial_remaining">무료 체험 %1$d회 남음</string>
+    <string name="chat_turn_cost_info_trial_unlimited">무료 체험 무제한</string>
+    <string name="chat_turn_cost_info_turn">AI 응답</string>
     <string name="chat_list_card_action">채팅 보기</string>
     <string name="chat_list_card_kind">채팅</string>
     <string name="chat_list_card_options">채팅 옵션</string>

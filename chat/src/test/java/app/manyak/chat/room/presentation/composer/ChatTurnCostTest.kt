@@ -74,4 +74,11 @@ class ChatTurnCostTest {
         )
         assertEquals(ChatTurnCost(20, 0), chatTurnCost(20, noImage, Trials(chatTurn = left), withRealtimeImage = false))
     }
+
+    @Test
+    fun `남은 체험 횟수는 한도에서 사용량을 빼고 0 아래로 내려가지 않으며 무제한은 null`() {
+        assertEquals(2L, left.remaining)
+        assertEquals(0L, TrialUsage(used = 4, limit = 3).remaining)
+        assertEquals(null, TrialUsage(used = 4, limit = null).remaining)
+    }
 }
