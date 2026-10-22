@@ -19,15 +19,18 @@ data class ChatTurnCost(
 }
 
 /**
- * 정가는 턴 비용에 실시간 이미지가 켜져 있으면 이미지 비용을 더한 값이고, 적용가는 체험이 남은 항목의
- * 비용을 0 으로 뺀 값이다. 이미지 항목의 정책값·잔여는 실시간 이미지를 합산할 때만 요구한다.
+ * 정가는 고른 모델의 턴 가격에 실시간 이미지가 켜져 있으면 이미지 비용을 더한 값이고, 적용가는 체험이 남은
+ * 항목의 비용을 0 으로 뺀 값이다. 턴 체험이 남은 턴은 서버가 고른 모델과 무관하게 무료로 처리한다.
+ * 이미지 항목의 정책값·잔여는 실시간 이미지를 합산할 때만 요구한다.
+ *
+ * @param turnCost 고른 모델의 턴 가격. 모델 목록을 아직 못 받았으면 null.
  */
 fun chatTurnCost(
+    turnCost: Long?,
     policy: CreditPolicy?,
     trials: Trials?,
     withRealtimeImage: Boolean,
 ): ChatTurnCost {
-    val turnCost = policy?.chatTurnCost
     val imageCost = if (withRealtimeImage) policy?.chatImageCost else 0L
     if (turnCost == null || imageCost == null) return ChatTurnCost(full = null, discounted = null)
     val full = turnCost + imageCost

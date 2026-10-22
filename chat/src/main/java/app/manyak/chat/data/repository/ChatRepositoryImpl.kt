@@ -2,6 +2,7 @@ package app.manyak.chat.data.repository
 
 import app.manyak.chat.data.api.ChatApi
 import app.manyak.chat.data.api.ChatUserApi
+import app.manyak.chat.data.api.dto.ChangeChatModelRequestDto
 import app.manyak.chat.data.api.dto.ChatCreateRequestDto
 import app.manyak.chat.data.api.dto.ChatRegenerateRequestDto
 import app.manyak.chat.data.api.dto.ChatTurnStreamRequestDto
@@ -9,6 +10,7 @@ import app.manyak.chat.data.api.dto.toDomain
 import app.manyak.chat.data.sse.ChatSseSource
 import app.manyak.chat.domain.ChatRepository
 import app.manyak.chat.entity.ChatDetail
+import app.manyak.chat.entity.ChatModel
 import app.manyak.chat.entity.ChatStreamEvent
 import app.manyak.chat.entity.ChatSummary
 import app.manyak.chat.entity.UserSource
@@ -28,6 +30,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import javax.inject.Inject
 import javax.inject.Singleton
 
+@Suppress("TooManyFunctions") // 채팅 API 경로마다 하나씩이다.
 @Singleton
 class ChatRepositoryImpl
     @Inject
@@ -59,6 +62,14 @@ class ChatRepositoryImpl
 
         override suspend fun chatDetail(chatId: String): DomainResult<ChatDetail> =
             apiCall { chatApi.chatDetail(chatId) }.map { it.toDomain() }
+
+        override suspend fun chatModels(): DomainResult<List<ChatModel>> =
+            apiCall { chatApi.chatModels() }.map { models -> models.map { model -> model.toDomain() } }
+
+        override suspend fun changeModel(
+            chatId: String,
+            model: String,
+        ): DomainResult<Unit> = emptyBodyApiCall { chatApi.changeModel(chatId, ChangeChatModelRequestDto(model)) }
 
         override fun streamTurn(
             chatId: String,

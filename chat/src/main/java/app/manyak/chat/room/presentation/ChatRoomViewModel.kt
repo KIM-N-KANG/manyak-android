@@ -10,6 +10,7 @@ import app.manyak.chat.domain.ChatPreferencesRepository
 import app.manyak.chat.domain.ChatRepository
 import app.manyak.chat.entity.ChatDetail
 import app.manyak.chat.entity.ChatInputMode
+import app.manyak.chat.entity.ChatModel
 import app.manyak.chat.entity.ChatStreamEvent
 import app.manyak.chat.entity.GeneratingTurn
 import app.manyak.chat.room.presentation.composer.ChatComposerState
@@ -36,6 +37,7 @@ import app.manyak.common.domain.credit.TrialsRepository
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.error.map
+import app.manyak.common.domain.error.valueOrNull
 import app.manyak.common.domain.user.UserProfileRepository
 import app.manyak.common.presentation.mvi.MviViewModel
 import app.manyak.designsystem.component.isAllowedCharacterImageUrl
@@ -89,6 +91,10 @@ data class ChatRoomUiState(
     val composer: ChatComposerState = ChatComposerState(),
     val choicesEnabled: Boolean = true,
     val realtimeImageEnabled: Boolean = false,
+    /** 고를 수 있는 채팅 모델. 받기 전이나 실패했으면 비어 있고 헤더에 모델 버튼을 두지 않는다. */
+    val models: List<ChatModel> = emptyList(),
+    /** 이 채팅의 모델 코드. 헤더의 AI 모델 선택이 바꾼다. */
+    val model: String? = null,
     val settingsOpen: Boolean = false,
     val realtimeImageNudgeOpen: Boolean = false,
     /** 턴이 0개인 방의 첫 입력 후보. */
@@ -119,6 +125,9 @@ data class ChatRoomUiState(
     /** 투어가 보이고 있는 스텝의 자리. 열린 직후 화면이 첫 스텝을 고르기 전에는 null 이다. */
     val tourStep: Int? = null,
 ) {
+    val selectedModel: ChatModel?
+        get() = models.firstOrNull { candidate -> candidate.code == model }
+
     /** 참조 스토리가 남아 있어야 신고·새 채팅을 둘 수 있다. */
     val hasStory: Boolean
         get() = !storyId.isNullOrBlank() && storyTitle.isNotBlank()
@@ -166,6 +175,10 @@ sealed interface ChatRoomIntent {
 
     data class RealtimeImageEnabledChanged(
         val enabled: Boolean,
+    ) : ChatRoomIntent
+
+    data class ModelSelected(
+        val model: String,
     ) : ChatRoomIntent
 
     data object SettingsOpened : ChatRoomIntent
@@ -248,6 +261,7 @@ sealed interface ChatRoomEvent {
         val prologue: String,
         val turns: List<ChatRoomTurn>,
         val suggestedInputs: List<String>,
+        val model: String?,
     ) : ChatRoomEvent
 
     data object LoadFailed : ChatRoomEvent
@@ -269,6 +283,14 @@ sealed interface ChatRoomEvent {
 
     data class RealtimeImageEnabledChanged(
         val enabled: Boolean,
+    ) : ChatRoomEvent
+
+    data class ModelsLoaded(
+        val models: List<ChatModel>,
+    ) : ChatRoomEvent
+
+    data class ModelChanged(
+        val model: String?,
     ) : ChatRoomEvent
 
     data class SendStarted(
@@ -385,6 +407,8 @@ sealed interface ChatRoomEffect {
 
     data object ShowShareFailed : ChatRoomEffect
 
+    data object ShowModelChangeFailed : ChatRoomEffect
+
     data object ShowDeleteFailed : ChatRoomEffect
 
     /** 응답 생성 중에 입력창을 눌렀다. 끝나면 입력할 수 있다고 알린다. */
@@ -455,6 +479,8 @@ class ChatRoomViewModel
         private var suggestedInputs: List<String> = emptyList()
         private var choicesEnabled = true
         private var realtimeImageEnabled = false
+        private var model: String? = null
+        private var models: List<ChatModel> = emptyList()
         private var hintUnseen = false
         private var tourUnseen = false
         private var tourOpen = false
@@ -587,6 +613,8 @@ class ChatRoomViewModel
                 ChatRoomIntent.Backgrounded, ChatRoomIntent.Foregrounded ->
                     onForegroundChanged(foreground = intent == ChatRoomIntent.Foregrounded)
 
+                is ChatRoomIntent.ModelSelected -> changeModel(intent.model)
+
                 // 실패는 캐시된 잔액을 그대로 두는 것으로 흡수한다.
                 ChatRoomIntent.MenuOpened -> viewModelScope.launch { profileRepository.refresh() }
 
@@ -624,6 +652,7 @@ class ChatRoomViewModel
             loadJob =
                 viewModelScope.launch {
                     dispatchEvent(ChatRoomEvent.LoadStarted)
+                    if (models.isEmpty()) loadModels()
                     // 힌트 노출 판정이 기기 설정에 기대므로 설정을 먼저 읽는다.
                     preferencesJob?.join()
                     // 화면에 들어올 때마다 새로 읽는다. 나가 있는 동안 서버가 생성을 이어 가므로 이전에 받은 상세로는
@@ -632,6 +661,7 @@ class ChatRoomViewModel
                         is DomainResult.Success -> {
                             turns = result.value.turns.map { turn -> turn.toUi() }
                             suggestedInputs = result.value.suggestedInputs
+                            model = result.value.model
                             dispatchEvent(
                                 ChatRoomEvent.Loaded(
                                     storyId = result.value.storyId,
@@ -639,6 +669,7 @@ class ChatRoomViewModel
                                     prologue = result.value.prologue,
                                     turns = turns,
                                     suggestedInputs = suggestedInputs,
+                                    model = model,
                                 ),
                             )
                             // 보이는 순간 열람으로 기록한다. 상태는 그대로 둬 이 방에서는 계속 보인다.
@@ -711,6 +742,33 @@ class ChatRoomViewModel
                         }
                     }
                 }
+        }
+
+        /** 모델 목록은 방을 그리는 데 꼭 필요하지 않아 실패해도 방을 열고, 다시 시도할 때 함께 다시 읽는다. */
+        private fun loadModels() {
+            viewModelScope.launch {
+                val loaded = chatRepository.chatModels().valueOrNull() ?: return@launch
+                models = loaded
+                dispatchEvent(ChatRoomEvent.ModelsLoaded(loaded))
+            }
+        }
+
+        /**
+         * 고른 모델을 먼저 보이고 서버에 저장한다. 저장에 실패하면 그 사이 다른 모델을 고르지 않았을 때만
+         * 되돌린다 — 나중 선택을 앞선 실패가 덮으면 안 된다.
+         */
+        private suspend fun changeModel(next: String) {
+            val previous = model
+            if (next == previous) return
+            model = next
+            dispatchEvent(ChatRoomEvent.ModelChanged(next))
+            viewModelScope.launch {
+                if (chatRepository.changeModel(chatId, next) is DomainResult.Failure && model == next) {
+                    model = previous
+                    dispatchEvent(ChatRoomEvent.ModelChanged(previous))
+                    dispatchEffect(ChatRoomEffect.ShowModelChangeFailed)
+                }
+            }
         }
 
         /** 발급은 서버가 멱등이라 연타를 막는 것은 요청을 아끼기 위해서다. 실패해도 시트는 남아 다시 누를 수 있다. */
@@ -988,7 +1046,12 @@ class ChatRoomViewModel
         private fun isCreditShort(): Boolean {
             val balance = profileRepository.profile.value?.creditBalance ?: return false
             val cost =
-                chatTurnCost(creditPolicyRepository.policy.value, trialsRepository.trials.value, realtimeImageEnabled)
+                chatTurnCost(
+                    models.firstOrNull { candidate -> candidate.code == model }?.turnCost,
+                    creditPolicyRepository.policy.value,
+                    trialsRepository.trials.value,
+                    realtimeImageEnabled,
+                )
             val required = cost.discounted ?: cost.full ?: return false
             return balance < required
         }
@@ -1250,6 +1313,7 @@ private fun reduceChatRoom(
                 prologue = event.prologue,
                 turns = event.turns,
                 suggestedInputs = event.suggestedInputs,
+                model = event.model,
             )
 
         is ChatRoomEvent.Report -> state.copy(report = state.report.reduceReport(event.change))
@@ -1275,6 +1339,8 @@ private fun reduceChatRoom(
         is ChatRoomEvent.CreditBalanceChanged,
         is ChatRoomEvent.NewChatStartChanged,
         is ChatRoomEvent.ShareChanged,
+        is ChatRoomEvent.ModelsLoaded,
+        is ChatRoomEvent.ModelChanged,
         -> reduceMenu(state, event)
 
         else -> reduceTurn(state, event)
@@ -1295,6 +1361,10 @@ private fun reduceMenu(
         is ChatRoomEvent.NewChatStartChanged -> state.copy(isStartingNewChat = event.inProgress)
 
         is ChatRoomEvent.ShareChanged -> state.copy(isSharing = event.inProgress)
+
+        is ChatRoomEvent.ModelsLoaded -> state.copy(models = event.models)
+
+        is ChatRoomEvent.ModelChanged -> state.copy(model = event.model)
 
         else -> state
     }
