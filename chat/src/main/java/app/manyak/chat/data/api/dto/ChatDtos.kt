@@ -1,6 +1,7 @@
 package app.manyak.chat.data.api.dto
 
 import app.manyak.chat.entity.ChatDetail
+import app.manyak.chat.entity.ChatModel
 import app.manyak.chat.entity.ChatSummary
 import app.manyak.chat.entity.ChatTurn
 import app.manyak.chat.entity.GeneratingTurn
@@ -113,6 +114,20 @@ data class ChatDetailResponseDto(
     val turns: List<ChatTurnDto> = emptyList(),
     val suggestedInputs: List<String> = emptyList(),
     val generatingTurn: GeneratingTurnDto? = null,
+    /** 유효 모델 코드. 보관한 모델이 내려갔으면 서버가 기본 모델로 바꿔 준다. */
+    val model: String? = null,
+)
+
+@Serializable
+data class ChatModelDto(
+    val code: String,
+    val name: String,
+    val turnCost: Long,
+)
+
+@Serializable
+data class ChangeChatModelRequestDto(
+    val model: String,
 )
 
 /** 진행 중인 생성. [type] 은 `CONTINUE`(이어쓰기) 또는 `REGENERATE`(재생성)다. */
@@ -150,6 +165,7 @@ fun ChatDetailResponseDto.toDomain(): ChatDetail =
                 )
             },
         suggestedInputs = suggestedInputs,
+        model = model,
         generatingTurn =
             generatingTurn?.let { generating ->
                 GeneratingTurn(
@@ -161,3 +177,5 @@ fun ChatDetailResponseDto.toDomain(): ChatDetail =
     )
 
 private const val TYPE_REGENERATE = "REGENERATE"
+
+fun ChatModelDto.toDomain(): ChatModel = ChatModel(code = code, name = name, turnCost = turnCost)

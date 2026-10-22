@@ -1,6 +1,7 @@
 package app.manyak.chat.domain
 
 import app.manyak.chat.entity.ChatDetail
+import app.manyak.chat.entity.ChatModel
 import app.manyak.chat.entity.ChatStreamEvent
 import app.manyak.chat.entity.ChatSummary
 import app.manyak.chat.entity.UserSource
@@ -28,6 +29,15 @@ interface ChatRepository : ChatStarter {
 
     /** 채팅 상세 — 스토리 제목·프롤로그·턴 이력·추천 입력. */
     suspend fun chatDetail(chatId: String): DomainResult<ChatDetail>
+
+    /** 고를 수 있는 채팅 모델. 서버가 정한 노출 순서 그대로다. */
+    suspend fun chatModels(): DomainResult<List<ChatModel>>
+
+    /** 이 채팅의 모델을 바꾼다. 다음 이어쓰기와 재생성부터 적용된다. */
+    suspend fun changeModel(
+        chatId: String,
+        model: String,
+    ): DomainResult<Unit>
 
     /**
      * 사용자 입력으로 다음 턴을 진행한다.

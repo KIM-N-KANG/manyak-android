@@ -47,7 +47,7 @@ internal fun ChatComposer(
     isStreaming: Boolean,
     actions: ChatComposerActions,
     modifier: Modifier = Modifier,
-    advancedModel: Boolean = false,
+    turnCost: Long? = null,
     tourTargets: ChatTourTargets? = null,
 ) {
     val sendState =
@@ -70,7 +70,7 @@ internal fun ChatComposer(
             canAddBlock = state.blocks.canAddBlock(),
             enabled = !isStreaming,
             realtimeImageEnabled = realtimeImageEnabled,
-            advancedModel = advancedModel,
+            turnCost = turnCost,
             sendState = sendState,
             actions = actions,
             onInsertEmphasis = {

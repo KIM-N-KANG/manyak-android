@@ -26,6 +26,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import app.manyak.chat.entity.ChatModel
 import app.manyak.chat.room.presentation.composer.chatTurnCost
 import app.manyak.common.presentation.credit.LocalCreditPolicy
 import app.manyak.common.presentation.credit.LocalTrials
@@ -42,11 +43,11 @@ import app.manyak.designsystem.R as DesignsystemR
  */
 @Composable
 internal fun ChatModelButton(
-    advancedModel: Boolean,
+    model: ChatModel,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val label = stringResource(modelLabel(advancedModel))
+    val label = model.name
     val description = stringResource(ChatR.string.chat_model_open, label)
     Row(
         modifier =
@@ -78,9 +79,10 @@ internal fun ChatModelButton(
  */
 @Composable
 internal fun ChatModelSheet(
-    advancedModel: Boolean,
+    models: List<ChatModel>,
+    selected: String?,
     realtimeImageEnabled: Boolean,
-    onSelect: (Boolean) -> Unit,
+    onSelect: (String) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -105,12 +107,12 @@ internal fun ChatModelSheet(
             modifier = Modifier.selectableGroup(),
             verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.component),
         ) {
-            listOf(false, true).forEach { advanced ->
+            models.forEach { model ->
                 ChatModelOption(
-                    advanced = advanced,
-                    selected = advanced == advancedModel,
+                    model = model,
+                    selected = model.code == selected,
                     realtimeImageEnabled = realtimeImageEnabled,
-                    onClick = { onSelect(advanced) },
+                    onClick = { onSelect(model.code) },
                 )
             }
         }
@@ -120,7 +122,7 @@ internal fun ChatModelSheet(
 /** 모델 한 칸. 고른 칸은 키워드 칩과 같은 선택 표현을 쓴다. */
 @Composable
 private fun ChatModelOption(
-    advanced: Boolean,
+    model: ChatModel,
     selected: Boolean,
     realtimeImageEnabled: Boolean,
     onClick: () -> Unit,
@@ -142,19 +144,19 @@ private fun ChatModelOption(
             horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
         ) {
             Text(
-                text = stringResource(modelLabel(advanced)),
+                text = model.name,
                 style = ManyakTheme.typography.bodyLargeStrong,
                 color = ManyakTheme.colors.text,
             )
-            ChatModelCostBadge(advanced = advanced, selected = selected, realtimeImageEnabled = realtimeImageEnabled)
+            ChatModelCostBadge(model = model, selected = selected, realtimeImageEnabled = realtimeImageEnabled)
         }
-        val descriptionRes =
-            if (advanced) ChatR.string.chat_model_advanced_description else ChatR.string.chat_model_basic_description
-        Text(
-            text = stringResource(descriptionRes),
-            style = ManyakTheme.typography.bodyMedium,
-            color = ManyakTheme.colors.textSubtle,
-        )
+        modelDescription(model.code)?.let { descriptionRes ->
+            Text(
+                text = stringResource(descriptionRes),
+                style = ManyakTheme.typography.bodyMedium,
+                color = ManyakTheme.colors.textSubtle,
+            )
+        }
     }
 }
 
@@ -164,11 +166,11 @@ private fun ChatModelOption(
  */
 @Composable
 private fun ChatModelCostBadge(
-    advanced: Boolean,
+    model: ChatModel,
     selected: Boolean,
     realtimeImageEnabled: Boolean,
 ) {
-    val cost = chatTurnCost(LocalCreditPolicy.current, LocalTrials.current, realtimeImageEnabled, advanced)
+    val cost = chatTurnCost(model.turnCost, LocalCreditPolicy.current, LocalTrials.current, realtimeImageEnabled)
     CreditAmountText(
         modifier =
             Modifier
@@ -184,15 +186,32 @@ private fun ChatModelCostBadge(
     )
 }
 
+/** 이름과 가격은 서버가 주지만 설명은 앱 문구다. 앱이 모르는 새 모델은 설명 없이 보인다. */
 @StringRes
-private fun modelLabel(advanced: Boolean): Int =
-    if (advanced) ChatR.string.chat_model_advanced else ChatR.string.chat_model_basic
+private fun modelDescription(code: String): Int? =
+    when (code) {
+        "LITE" -> ChatR.string.chat_model_lite_description
+        "AURORA" -> ChatR.string.chat_model_aurora_description
+        else -> null
+    }
+
+private val PreviewModels =
+    listOf(
+        ChatModel(code = "LITE", name = "라이트", turnCost = 20),
+        ChatModel(code = "AURORA", name = "오로라", turnCost = 50),
+    )
 
 @Preview(name = "AI 모델 선택 · 라이트")
 @Composable
 private fun ChatModelSheetPreview() {
     ManyakTheme(darkTheme = false) {
-        ChatModelSheet(advancedModel = false, realtimeImageEnabled = true, onSelect = {}, onDismiss = {})
+        ChatModelSheet(
+            models = PreviewModels,
+            selected = "AURORA",
+            realtimeImageEnabled = true,
+            onSelect = {},
+            onDismiss = {},
+        )
     }
 }
 
@@ -200,6 +219,6 @@ private fun ChatModelSheetPreview() {
 @Composable
 private fun ChatModelButtonPreview() {
     ManyakTheme(darkTheme = false) {
-        ChatModelButton(advancedModel = true, onClick = {})
+        ChatModelButton(model = PreviewModels.last(), onClick = {})
     }
 }

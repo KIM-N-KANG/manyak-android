@@ -1,14 +1,17 @@
 package app.manyak.chat.data.api
 
+import app.manyak.chat.data.api.dto.ChangeChatModelRequestDto
 import app.manyak.chat.data.api.dto.ChatChoicesResponseDto
 import app.manyak.chat.data.api.dto.ChatCreateRequestDto
 import app.manyak.chat.data.api.dto.ChatCreateResponseDto
 import app.manyak.chat.data.api.dto.ChatDetailResponseDto
+import app.manyak.chat.data.api.dto.ChatModelDto
 import app.manyak.chat.data.api.dto.ChatShareResponseDto
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Path
 
@@ -26,6 +29,16 @@ interface ChatApi {
     suspend fun chatDetail(
         @Path("chatId") chatId: String,
     ): Response<ChatDetailResponseDto>
+
+    @GET("chats/models")
+    suspend fun chatModels(): Response<List<ChatModelDto>>
+
+    /** 다음 턴부터 쓸 모델을 바꾼다. 생성 중에도 받으며 진행 중인 턴은 시작 때 모델로 끝난다. */
+    @PATCH("chats/{chatId}")
+    suspend fun changeModel(
+        @Path("chatId") chatId: String,
+        @Body body: ChangeChatModelRequestDto,
+    ): Response<Unit>
 
     /**
      * 마지막 턴의 선택지를 생성해 저장한다. 이어쓰기와 달리 동기 JSON 이고 이프를 쓰지 않는다.

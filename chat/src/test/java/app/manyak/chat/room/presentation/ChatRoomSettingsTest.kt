@@ -9,13 +9,17 @@ import app.manyak.chat.testing.FakeCreditPolicyRepository
 import app.manyak.chat.testing.FakeReportRepository
 import app.manyak.chat.testing.FakeTrialsRepository
 import app.manyak.chat.testing.FakeUserProfileRepository
+import app.manyak.common.domain.error.DomainError
+import app.manyak.common.domain.error.DomainResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -48,18 +52,41 @@ class ChatRoomSettingsTest {
         }
 
     @Test
-    fun `저장된 고급 모델 선택을 진입 시 올리고 바꾸면 기기에 저장한다`() =
+    fun `채팅의 모델과 모델 목록을 올리고 고르면 서버에 저장한다`() =
         runTest(dispatcher) {
-            val preferences = FakeChatPreferencesRepository(advancedModel = true)
-            val viewModel = viewModel(FakeChatRepository(), preferences)
+            val repository = FakeChatRepository()
+            val viewModel = viewModel(repository)
             advanceUntilIdle()
-            assertTrue(viewModel.uiState.value.advancedModel)
+            assertEquals(
+                "LITE",
+                viewModel.uiState.value.selectedModel
+                    ?.code,
+            )
 
-            viewModel.onIntent(ChatRoomIntent.AdvancedModelChanged(false))
+            viewModel.onIntent(ChatRoomIntent.ModelSelected("AURORA"))
             advanceUntilIdle()
 
-            assertFalse(viewModel.uiState.value.advancedModel)
-            assertEquals(listOf(false), preferences.savedAdvancedModels)
+            assertEquals(
+                50L,
+                viewModel.uiState.value.selectedModel
+                    ?.turnCost,
+            )
+            assertEquals(listOf("AURORA"), repository.changedModels)
+        }
+
+    @Test
+    fun `모델 저장에 실패하면 이전 모델로 되돌리고 알린다`() =
+        runTest(dispatcher) {
+            val repository = FakeChatRepository()
+            repository.queuedChangeModelResults += DomainResult.Failure(DomainError.Network)
+            val viewModel = viewModel(repository)
+            advanceUntilIdle()
+
+            viewModel.onIntent(ChatRoomIntent.ModelSelected("AURORA"))
+            advanceUntilIdle()
+
+            assertEquals("LITE", viewModel.uiState.value.model)
+            assertEquals(ChatRoomEffect.ShowModelChangeFailed, withTimeoutOrNull(1_000) { viewModel.uiEffect.first() })
         }
 
     @Test

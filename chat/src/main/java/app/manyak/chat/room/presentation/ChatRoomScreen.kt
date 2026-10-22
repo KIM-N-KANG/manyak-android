@@ -34,6 +34,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.manyak.chat.entity.ChatModel
 import app.manyak.chat.list.presentation.label
 import app.manyak.chat.room.presentation.composer.ChatComposer
 import app.manyak.chat.room.presentation.composer.ChatComposerActions
@@ -97,11 +98,12 @@ fun ChatRoomScreen(
 
     if (modelOpen) {
         ChatModelSheet(
-            advancedModel = state.advancedModel,
+            models = state.models,
+            selected = state.model,
             realtimeImageEnabled = state.realtimeImageEnabled,
-            onSelect = { advanced ->
+            onSelect = { model ->
                 modelOpen = false
-                viewModel.onIntent(ChatRoomIntent.AdvancedModelChanged(advanced))
+                viewModel.onIntent(ChatRoomIntent.ModelSelected(model))
             },
             onDismiss = { modelOpen = false },
         )
@@ -249,7 +251,7 @@ private fun ColumnScope.ChatRoomLoaded(
         state = state.composer,
         choicesEnabled = state.choicesEnabled,
         realtimeImageEnabled = state.realtimeImageEnabled,
-        advancedModel = state.advancedModel,
+        turnCost = state.selectedModel?.turnCost,
         hasSuggestions = state.suggestions.hasCandidate,
         isStreaming = state.isStreaming,
         actions = composerActions(onIntent, onOpenSettings = { onIntent(ChatRoomIntent.SettingsOpened) }),
@@ -326,7 +328,7 @@ private fun ChatRoomHeaderOverlay(
             // 방을 연 뒤에도 제목이 비어 있으면 참조 스토리가 삭제된 것이다 — 목록 카드와 같은 문구로 알린다.
             isStoryDeleted = phase == ChatRoomPhase.CONTENT && title.isBlank(),
             showsMenu = phase == ChatRoomPhase.CONTENT,
-            advancedModel = state.advancedModel,
+            selectedModel = state.selectedModel,
             onBack = onBack,
             onOpenMenu = onOpenMenu,
             onOpenModel = onOpenModel,
@@ -340,7 +342,7 @@ private fun ChatRoomHeader(
     title: String,
     isStoryDeleted: Boolean,
     showsMenu: Boolean,
-    advancedModel: Boolean,
+    selectedModel: ChatModel?,
     onBack: () -> Unit,
     onOpenMenu: () -> Unit,
     onOpenModel: () -> Unit,
@@ -366,7 +368,8 @@ private fun ChatRoomHeader(
         },
         actions = {
             if (showsMenu) {
-                ChatModelButton(advancedModel = advancedModel, onClick = onOpenModel)
+                // 모델 목록을 못 받았으면 고를 것이 없어 버튼을 두지 않는다.
+                if (selectedModel != null) ChatModelButton(model = selectedModel, onClick = onOpenModel)
                 ManyakIconButton(
                     iconRes = DesignsystemR.drawable.ic_more_horizontal,
                     contentDescription = stringResource(ChatR.string.chat_room_menu),
