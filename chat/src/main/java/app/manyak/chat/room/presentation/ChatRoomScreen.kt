@@ -260,6 +260,7 @@ private fun ColumnScope.ChatRoomLoaded(
         realtimeImageEnabled = state.realtimeImageEnabled,
         turnCost = state.selectedModel?.turnCost,
         modelName = state.selectedModel?.name,
+        longResponseEnabled = state.longResponseEnabled,
         trialModelName =
             state.models
                 .firstOrNull { candidate -> candidate.code == CHAT_TRIAL_MODEL_CODE }

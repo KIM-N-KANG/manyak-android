@@ -56,6 +56,7 @@ import app.manyak.designsystem.R as DesignsystemR
  * 영수증처럼 보인다. 버튼 수치와 팝오버 합계는 같은 [chatTurnCost] 로 계산해 어긋나지 않는다.
  *
  * @param modelName 지금 고른 모델 이름. AI 응답 줄 옆에 보조 글씨로 붙는다.
+ * @param longResponseEnabled 긴 응답이 켜져 있으면 모델 이름 뒤에 함께 적는다. 비용은 바뀌지 않는다.
  * @param trialModelName 고른 모델이 체험 모델이 아닐 때의 체험 모델 이름. 턴 체험이 남았으면 체험 턴은
  *   이 모델로 답한다고 안내한다.
  */
@@ -64,6 +65,7 @@ internal fun ChatTurnCostButton(
     turnCost: Long?,
     realtimeImageEnabled: Boolean,
     modelName: String?,
+    longResponseEnabled: Boolean,
     trialModelName: String?,
     modifier: Modifier = Modifier,
 ) {
@@ -105,6 +107,7 @@ internal fun ChatTurnCostButton(
             trials = trials,
             realtimeImageEnabled = realtimeImageEnabled,
             modelName = modelName,
+            longResponseEnabled = longResponseEnabled,
             trialModelName = trialModelName?.takeIf { trials?.chatTurn?.isFree == true },
         )
     }
@@ -121,6 +124,7 @@ private fun ChatTurnCostPopover(
     trials: Trials?,
     realtimeImageEnabled: Boolean,
     modelName: String?,
+    longResponseEnabled: Boolean,
     trialModelName: String?,
 ) {
     val gapPx = with(LocalDensity.current) { ManyakTheme.spacing.compact.roundToPx() }
@@ -140,6 +144,7 @@ private fun ChatTurnCostPopover(
             trials = trials,
             realtimeImageEnabled = realtimeImageEnabled,
             modelName = modelName,
+            longResponseEnabled = longResponseEnabled,
             trialModelName = trialModelName,
         )
     }
@@ -172,6 +177,7 @@ private fun ChatTurnCostPanel(
     trials: Trials?,
     realtimeImageEnabled: Boolean,
     modelName: String?,
+    longResponseEnabled: Boolean,
     trialModelName: String?,
     modifier: Modifier = Modifier,
 ) {
@@ -193,7 +199,14 @@ private fun ChatTurnCostPanel(
         )
         CostRow(
             label = stringResource(ChatR.string.chat_turn_cost_info_turn),
-            detail = modelName,
+            detail =
+                modelName?.let { name ->
+                    if (longResponseEnabled) {
+                        stringResource(ChatR.string.chat_turn_cost_info_model_long_response, name)
+                    } else {
+                        name
+                    }
+                },
             cost = turnCost,
             trial = trials?.chatTurn,
         )
@@ -260,7 +273,7 @@ private fun TotalRow(
 
 /**
  * 비용 내역 한 줄. 라벨 아래에 남은 무료 체험을 적고, 체험이 남은 항목은 정가에 취소선을 긋고 0 을 보인다.
- * 체험 줄은 무료로 적용되면 브랜드 색, 다 썼으면 옅은 글씨로 금액과 이어 읽히게 한다.
+ * 체험 줄은 브랜드 색으로 금액과 이어 읽히게 하고, 체험을 다 쓴 항목은 정가만 보이면 되므로 그리지 않는다.
  */
 @Composable
 private fun CostRow(
@@ -289,11 +302,11 @@ private fun CostRow(
                     )
                 }
             }
-            trial?.let {
+            trial?.takeIf { isFree }?.let {
                 Text(
                     text = trialText(it),
                     style = ManyakTheme.typography.bodySmall,
-                    color = if (isFree) ManyakTheme.colors.textBrand else ManyakTheme.colors.textSubtlest,
+                    color = ManyakTheme.colors.textBrand,
                 )
             }
         }
@@ -326,7 +339,6 @@ private fun trialText(trial: TrialUsage): String {
     val remaining = trial.remaining
     return when {
         remaining == null -> stringResource(ChatR.string.chat_turn_cost_info_trial_unlimited)
-        remaining == 0L -> stringResource(ChatR.string.chat_turn_cost_info_trial_exhausted)
         else -> stringResource(ChatR.string.chat_turn_cost_info_trial_remaining, remaining)
     }
 }
@@ -335,7 +347,7 @@ private val PanelWidth = 256.dp
 private val PanelShadowElevation = 4.dp
 private val PanelBorderWidth = 1.dp
 
-@Preview(showBackground = true, name = "이프 안내 · 턴 체험 남음, 이미지 체험 다 씀")
+@Preview(showBackground = true, name = "이프 안내, 턴 체험 남음, 이미지 체험 다 씀, 긴 응답")
 @Composable
 private fun ChatTurnCostPanelPreview() {
     ManyakTheme(darkTheme = false) {
@@ -349,6 +361,7 @@ private fun ChatTurnCostPanelPreview() {
             trials = trials,
             realtimeImageEnabled = true,
             modelName = "오로라",
+            longResponseEnabled = true,
             trialModelName = "라이트",
         )
     }

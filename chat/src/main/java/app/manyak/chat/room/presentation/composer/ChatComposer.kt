@@ -49,6 +49,7 @@ internal fun ChatComposer(
     modifier: Modifier = Modifier,
     turnCost: Long? = null,
     modelName: String? = null,
+    longResponseEnabled: Boolean = false,
     trialModelName: String? = null,
     tourTargets: ChatTourTargets? = null,
 ) {
@@ -74,6 +75,7 @@ internal fun ChatComposer(
             realtimeImageEnabled = realtimeImageEnabled,
             turnCost = turnCost,
             modelName = modelName,
+            longResponseEnabled = longResponseEnabled,
             trialModelName = trialModelName,
             sendState = sendState,
             actions = actions,

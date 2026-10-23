@@ -26,6 +26,7 @@ internal fun ComposerToolbar(
     realtimeImageEnabled: Boolean,
     turnCost: Long?,
     modelName: String?,
+    longResponseEnabled: Boolean,
     trialModelName: String?,
     sendState: SendButtonState,
     actions: ChatComposerActions,
@@ -80,6 +81,7 @@ internal fun ComposerToolbar(
                 turnCost = turnCost,
                 realtimeImageEnabled = realtimeImageEnabled,
                 modelName = modelName,
+                longResponseEnabled = longResponseEnabled,
                 trialModelName = trialModelName,
             )
             ComposerSendButton(
