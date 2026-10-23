@@ -164,8 +164,14 @@ private fun LoginHeadline(modifier: Modifier = Modifier) {
         Text(
             modifier = Modifier.padding(top = ManyakTheme.spacing.component),
             text = stringResource(LoginR.string.login_headline),
-            style = ManyakTheme.typography.titleLarge.copy(shadow = headlineShadow()),
+            style = ManyakTheme.typography.headlineSmall.copy(shadow = headlineShadow()),
             color = ManyakTheme.colors.text,
+        )
+        Text(
+            modifier = Modifier.padding(top = ManyakTheme.spacing.component),
+            text = stringResource(LoginR.string.login_subheadline),
+            style = ManyakTheme.typography.titleMedium.copy(shadow = headlineShadow()),
+            color = ManyakTheme.colors.textSubtle,
         )
     }
 }
