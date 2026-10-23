@@ -116,6 +116,8 @@ data class ChatDetailResponseDto(
     val generatingTurn: GeneratingTurnDto? = null,
     /** 유효 모델 코드. 보관한 모델이 내려갔으면 서버가 기본 모델로 바꿔 준다. */
     val model: String? = null,
+    /** 출력 분량. true 면 긴 응답이다. */
+    val longResponse: Boolean = false,
 )
 
 @Serializable
@@ -125,9 +127,11 @@ data class ChatModelDto(
     val turnCost: Long,
 )
 
+/** 채팅 설정 변경. 서버가 null 을 거절하므로 바꾸지 않을 필드는 null 로 둬 직렬화에서 빠지게 한다. */
 @Serializable
-data class ChangeChatModelRequestDto(
-    val model: String,
+data class ChangeChatSettingsRequestDto(
+    val model: String? = null,
+    val longResponse: Boolean? = null,
 )
 
 /** 진행 중인 생성. [type] 은 `CONTINUE`(이어쓰기) 또는 `REGENERATE`(재생성)다. */
@@ -166,6 +170,7 @@ fun ChatDetailResponseDto.toDomain(): ChatDetail =
             },
         suggestedInputs = suggestedInputs,
         model = model,
+        longResponse = longResponse,
         generatingTurn =
             generatingTurn?.let { generating ->
                 GeneratingTurn(

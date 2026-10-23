@@ -154,7 +154,7 @@ private fun RealtimeImageSetting(
 }
 
 @Composable
-private fun ChatSettingsGroup(
+internal fun ChatSettingsGroup(
     @StringRes labelRes: Int,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
@@ -269,7 +269,7 @@ private fun NoticePopover(
  * @param labelAddon 라벨 오른쪽에 붙는 보조 표시(비용 배지 등).
  */
 @Composable
-private fun ChatSettingRow(
+internal fun ChatSettingRow(
     @DrawableRes iconRes: Int,
     @StringRes labelRes: Int,
     @StringRes descriptionRes: Int,

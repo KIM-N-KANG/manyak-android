@@ -12,6 +12,10 @@ data class TrialUsage(
     /** 체험이 남아 이 항목이 무료인지. 무제한도 무료다. */
     val isFree: Boolean
         get() = limit == null || limit - used > 0
+
+    /** 남은 횟수. 무제한이면 null 이고, 서버 사용량이 한도를 넘어도 0 아래로 내려가지 않는다. */
+    val remaining: Long?
+        get() = limit?.let { (it - used).coerceAtLeast(0) }
 }
 
 /** `GET /users/me/trials` 응답. 항목이 null 이면 서버가 그 항목을 내려주지 않은 것이다. */

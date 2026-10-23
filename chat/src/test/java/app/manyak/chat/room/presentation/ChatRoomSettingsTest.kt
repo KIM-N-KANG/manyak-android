@@ -9,6 +9,7 @@ import app.manyak.chat.testing.FakeCreditPolicyRepository
 import app.manyak.chat.testing.FakeReportRepository
 import app.manyak.chat.testing.FakeTrialsRepository
 import app.manyak.chat.testing.FakeUserProfileRepository
+import app.manyak.chat.testing.sampleChatDetail
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import kotlinx.coroutines.Dispatchers
@@ -49,6 +50,40 @@ class ChatRoomSettingsTest {
             advanceUntilIdle()
 
             assertFalse(viewModel.uiState.value.realtimeImageEnabled)
+        }
+
+    @Test
+    fun `채팅의 긴 응답 설정을 올리고 바꾸면 서버에 저장한다`() =
+        runTest(dispatcher) {
+            val repository = FakeChatRepository()
+            repository.queuedChatDetailResults += DomainResult.Success(sampleChatDetail().copy(longResponse = true))
+            val viewModel = viewModel(repository)
+            advanceUntilIdle()
+            assertTrue(viewModel.uiState.value.longResponseEnabled)
+
+            viewModel.onIntent(ChatRoomIntent.LongResponseEnabledChanged(false))
+            advanceUntilIdle()
+
+            assertFalse(viewModel.uiState.value.longResponseEnabled)
+            assertEquals(listOf(false), repository.changedLongResponses)
+        }
+
+    @Test
+    fun `긴 응답 저장에 실패하면 되돌리고 알린다`() =
+        runTest(dispatcher) {
+            val repository = FakeChatRepository()
+            repository.queuedChangeLongResponseResults += DomainResult.Failure(DomainError.Network)
+            val viewModel = viewModel(repository)
+            advanceUntilIdle()
+
+            viewModel.onIntent(ChatRoomIntent.LongResponseEnabledChanged(true))
+            advanceUntilIdle()
+
+            assertFalse(viewModel.uiState.value.longResponseEnabled)
+            assertEquals(
+                ChatRoomEffect.ShowLongResponseChangeFailed,
+                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
+            )
         }
 
     @Test

@@ -25,6 +25,8 @@ import androidx.compose.ui.window.PopupProperties
  * 앵커 아래에 뜨는 메뉴와 팝오버. 앵커 쪽 위 변에서 살짝 작고 위에 있던 판이 튕김 없는 스프링으로 자리를 잡고,
  * 투명도는 그보다 먼저 차올라 판이 움직이는 동안 이미 읽힌다. 닫을 때는 짧게 흐려지며 조금만 줄어든다 —
  * 볼 일이 끝난 판이 길게 남으면 기다리게 만든다. 닫는 동작이 끝날 때까지 창을 남겨 두므로 [visible] 로만 여닫는다.
+ *
+ * @param slideFromBelow 앵커 위에 뜨는 판이면 true. 판이 앵커 쪽(아래)에서 올라오게 미끄러지는 방향을 뒤집는다.
  */
 @Composable
 fun ManyakPopup(
@@ -33,6 +35,7 @@ fun ManyakPopup(
     onDismissRequest: () -> Unit,
     properties: PopupProperties = PopupProperties(),
     transformOrigin: TransformOrigin = TransformOrigin(pivotFractionX = 0.5f, pivotFractionY = 0f),
+    slideFromBelow: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val state = remember { MutableTransitionState(false) }
@@ -49,7 +52,7 @@ fun ManyakPopup(
             enter =
                 fadeIn(tween(POPUP_FADE_IN_MILLIS, easing = LinearOutSlowInEasing)) +
                     scaleIn(popupSpring(), POPUP_ENTER_SCALE, transformOrigin) +
-                    slideInVertically(popupSpring()) { -slidePx },
+                    slideInVertically(popupSpring()) { if (slideFromBelow) slidePx else -slidePx },
             exit =
                 fadeOut(tween(POPUP_EXIT_MILLIS, easing = FastOutLinearInEasing)) +
                     scaleOut(

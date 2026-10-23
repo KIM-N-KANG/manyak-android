@@ -109,6 +109,7 @@ private fun ChatRoomEffect.toastText(context: Context): String? =
         ChatRoomEffect.ShowNewChatFailed -> context.getString(ChatR.string.chat_room_new_chat_failed)
         ChatRoomEffect.ShowShareFailed -> context.getString(ChatR.string.chat_room_share_failed)
         ChatRoomEffect.ShowModelChangeFailed -> context.getString(ChatR.string.chat_model_change_failed)
+        ChatRoomEffect.ShowLongResponseChangeFailed -> context.getString(ChatR.string.chat_response_long_change_failed)
         ChatRoomEffect.ShowComposerLocked -> context.getString(ChatR.string.chat_composer_locked_streaming)
         is ChatRoomEffect.NavigateToChat, is ChatRoomEffect.ShareLink -> null
     }

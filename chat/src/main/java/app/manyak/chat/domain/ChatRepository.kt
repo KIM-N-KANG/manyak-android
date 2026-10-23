@@ -39,6 +39,12 @@ interface ChatRepository : ChatStarter {
         model: String,
     ): DomainResult<Unit>
 
+    /** 이 채팅의 출력 분량을 바꾼다. 모델과 같이 다음 이어쓰기와 재생성부터 적용된다. */
+    suspend fun changeLongResponse(
+        chatId: String,
+        enabled: Boolean,
+    ): DomainResult<Unit>
+
     /**
      * 사용자 입력으로 다음 턴을 진행한다.
      *

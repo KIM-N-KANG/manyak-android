@@ -91,6 +91,8 @@ data class ChatRoomUiState(
     val composer: ChatComposerState = ChatComposerState(),
     val choicesEnabled: Boolean = true,
     val realtimeImageEnabled: Boolean = false,
+    /** 이 채팅의 출력 분량. 채팅 응답 시트의 긴 응답 스위치가 바꾼다. */
+    val longResponseEnabled: Boolean = false,
     /** 고를 수 있는 채팅 모델. 받기 전이나 실패했으면 비어 있고 헤더에 모델 버튼을 두지 않는다. */
     val models: List<ChatModel> = emptyList(),
     /** 이 채팅의 모델 코드. 헤더의 AI 모델 선택이 바꾼다. */
@@ -174,6 +176,10 @@ sealed interface ChatRoomIntent {
     ) : ChatRoomIntent
 
     data class RealtimeImageEnabledChanged(
+        val enabled: Boolean,
+    ) : ChatRoomIntent
+
+    data class LongResponseEnabledChanged(
         val enabled: Boolean,
     ) : ChatRoomIntent
 
@@ -262,6 +268,7 @@ sealed interface ChatRoomEvent {
         val turns: List<ChatRoomTurn>,
         val suggestedInputs: List<String>,
         val model: String?,
+        val longResponse: Boolean,
     ) : ChatRoomEvent
 
     data object LoadFailed : ChatRoomEvent
@@ -282,6 +289,10 @@ sealed interface ChatRoomEvent {
     ) : ChatRoomEvent
 
     data class RealtimeImageEnabledChanged(
+        val enabled: Boolean,
+    ) : ChatRoomEvent
+
+    data class LongResponseEnabledChanged(
         val enabled: Boolean,
     ) : ChatRoomEvent
 
@@ -409,6 +420,8 @@ sealed interface ChatRoomEffect {
 
     data object ShowModelChangeFailed : ChatRoomEffect
 
+    data object ShowLongResponseChangeFailed : ChatRoomEffect
+
     data object ShowDeleteFailed : ChatRoomEffect
 
     /** 응답 생성 중에 입력창을 눌렀다. 끝나면 입력할 수 있다고 알린다. */
@@ -480,6 +493,7 @@ class ChatRoomViewModel
         private var choicesEnabled = true
         private var realtimeImageEnabled = false
         private var model: String? = null
+        private var longResponse = false
         private var models: List<ChatModel> = emptyList()
         private var hintUnseen = false
         private var tourUnseen = false
@@ -613,6 +627,8 @@ class ChatRoomViewModel
                 ChatRoomIntent.Backgrounded, ChatRoomIntent.Foregrounded ->
                     onForegroundChanged(foreground = intent == ChatRoomIntent.Foregrounded)
 
+                is ChatRoomIntent.LongResponseEnabledChanged -> changeLongResponse(intent.enabled)
+
                 is ChatRoomIntent.ModelSelected -> changeModel(intent.model)
 
                 // 실패는 캐시된 잔액을 그대로 두는 것으로 흡수한다.
@@ -629,16 +645,18 @@ class ChatRoomViewModel
                         uiState.value.report,
                     )
 
-                is ChatRoomIntent.RegenerateRequested -> {
-                    // 화면이 본 마지막 턴과 지금 마지막 턴이 다르면 낡은 클릭이다.
-                    val turn = turns.lastOrNull()?.takeIf { last -> last.id == intent.turnId } ?: return
-                    analytics.track(AnalyticsEvent.RegenerateTurnButtonClicked(chatId, turnNumber = turns.size))
-                    startTurn(userInput = turn.userInput, regeneratedTurnId = turn.id) { realtimeImage ->
-                        chatRepository.regenerateTurn(chatId, turn.id, realtimeImage)
-                    }
-                }
+                is ChatRoomIntent.RegenerateRequested -> regenerate(intent.turnId)
 
                 else -> handleSuggestion(intent)
+            }
+        }
+
+        private suspend fun regenerate(turnId: Long) {
+            // 화면이 본 마지막 턴과 지금 마지막 턴이 다르면 낡은 클릭이다.
+            val turn = turns.lastOrNull()?.takeIf { last -> last.id == turnId } ?: return
+            analytics.track(AnalyticsEvent.RegenerateTurnButtonClicked(chatId, turnNumber = turns.size))
+            startTurn(userInput = turn.userInput, regeneratedTurnId = turn.id) { realtimeImage ->
+                chatRepository.regenerateTurn(chatId, turn.id, realtimeImage)
             }
         }
 
@@ -662,6 +680,7 @@ class ChatRoomViewModel
                             turns = result.value.turns.map { turn -> turn.toUi() }
                             suggestedInputs = result.value.suggestedInputs
                             model = result.value.model
+                            longResponse = result.value.longResponse
                             dispatchEvent(
                                 ChatRoomEvent.Loaded(
                                     storyId = result.value.storyId,
@@ -670,6 +689,7 @@ class ChatRoomViewModel
                                     turns = turns,
                                     suggestedInputs = suggestedInputs,
                                     model = model,
+                                    longResponse = longResponse,
                                 ),
                             )
                             // 보이는 순간 열람으로 기록한다. 상태는 그대로 둬 이 방에서는 계속 보인다.
@@ -767,6 +787,20 @@ class ChatRoomViewModel
                     model = previous
                     dispatchEvent(ChatRoomEvent.ModelChanged(previous))
                     dispatchEffect(ChatRoomEffect.ShowModelChangeFailed)
+                }
+            }
+        }
+
+        /** 모델과 같이 먼저 보이고 저장하며, 실패하면 그 사이 다시 바꾸지 않았을 때만 되돌린다. */
+        private suspend fun changeLongResponse(next: Boolean) {
+            if (next == longResponse) return
+            longResponse = next
+            dispatchEvent(ChatRoomEvent.LongResponseEnabledChanged(next))
+            viewModelScope.launch {
+                if (chatRepository.changeLongResponse(chatId, next) is DomainResult.Failure && longResponse == next) {
+                    longResponse = !next
+                    dispatchEvent(ChatRoomEvent.LongResponseEnabledChanged(!next))
+                    dispatchEffect(ChatRoomEffect.ShowLongResponseChangeFailed)
                 }
             }
         }
@@ -1314,6 +1348,7 @@ private fun reduceChatRoom(
                 turns = event.turns,
                 suggestedInputs = event.suggestedInputs,
                 model = event.model,
+                longResponseEnabled = event.longResponse,
             )
 
         is ChatRoomEvent.Report -> state.copy(report = state.report.reduceReport(event.change))
@@ -1333,6 +1368,8 @@ private fun reduceChatRoom(
         is ChatRoomEvent.ChoicesEnabledChanged -> state.copy(choicesEnabled = event.enabled)
 
         is ChatRoomEvent.RealtimeImageEnabledChanged -> state.copy(realtimeImageEnabled = event.enabled)
+
+        is ChatRoomEvent.LongResponseEnabledChanged -> state.copy(longResponseEnabled = event.enabled)
 
         ChatRoomEvent.DeleteStarted,
         ChatRoomEvent.DeleteFailed,

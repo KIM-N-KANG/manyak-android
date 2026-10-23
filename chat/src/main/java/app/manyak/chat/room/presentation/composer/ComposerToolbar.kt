@@ -12,11 +12,7 @@ import app.manyak.chat.entity.ChatInputMode
 import app.manyak.chat.room.presentation.tour.ChatTourTarget
 import app.manyak.chat.room.presentation.tour.ChatTourTargets
 import app.manyak.chat.room.presentation.tour.chatTourTarget
-import app.manyak.common.presentation.credit.LocalCreditPolicy
-import app.manyak.common.presentation.credit.LocalTrials
-import app.manyak.common.presentation.credit.creditAmountText
 import app.manyak.designsystem.component.ManyakDestructiveDialog
-import app.manyak.designsystem.credit.CreditAmountText
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.chat.R as ChatR
 import app.manyak.designsystem.R as DesignsystemR
@@ -29,6 +25,8 @@ internal fun ComposerToolbar(
     enabled: Boolean,
     realtimeImageEnabled: Boolean,
     turnCost: Long?,
+    modelName: String?,
+    trialModelName: String?,
     sendState: SendButtonState,
     actions: ChatComposerActions,
     onInsertEmphasis: () -> Unit,
@@ -74,17 +72,15 @@ internal fun ComposerToolbar(
         // 남은 자리를 밀어내 비용과 전송만 오른쪽 끝에 세운다.
         Spacer(modifier = Modifier.weight(1f))
         Row(
-            horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+            horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             // 전송 버튼 상태(전송·랜덤·대기)가 바뀌어도 자리가 그대로다.
-            val cost = chatTurnCost(turnCost, LocalCreditPolicy.current, LocalTrials.current, realtimeImageEnabled)
-            CreditAmountText(
-                amount = stringResource(ChatR.string.chat_composer_turn_credit_cost, creditAmountText(cost.discounted)),
-                fullAmount = cost.full?.takeIf { cost.isDiscounted }?.let(::creditAmountText),
-                pending = cost.discounted == null,
-                style = ManyakTheme.typography.bodySmall,
-                color = ManyakTheme.colors.textSubtle,
+            ChatTurnCostButton(
+                turnCost = turnCost,
+                realtimeImageEnabled = realtimeImageEnabled,
+                modelName = modelName,
+                trialModelName = trialModelName,
             )
             ComposerSendButton(
                 modifier = Modifier.chatTourTarget(tourTargets, ChatTourTarget.SEND),

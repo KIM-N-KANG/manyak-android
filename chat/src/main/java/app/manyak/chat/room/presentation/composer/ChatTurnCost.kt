@@ -4,6 +4,11 @@ import app.manyak.common.entity.credit.CreditPolicy
 import app.manyak.common.entity.credit.Trials
 
 /**
+ * 턴 체험이 남은 턴에 서버가 쓰는 모델 코드. 고른 모델과 무관하게 이 모델로 무료 응답한다.
+ */
+internal const val CHAT_TRIAL_MODEL_CODE = "LITE"
+
+/**
  * 전송 버튼 옆 배지에 보일 턴 비용.
  *
  * @property full 체험 없이 낼 정가. 필요한 정책값을 못 받았으면 null.
