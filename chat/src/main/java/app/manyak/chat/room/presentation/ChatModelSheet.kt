@@ -84,7 +84,6 @@ internal fun ChatModelButton(
 internal fun ChatModelSheet(
     models: List<ChatModel>,
     selected: String?,
-    realtimeImageEnabled: Boolean,
     longResponseEnabled: Boolean,
     onSelect: (String) -> Unit,
     onLongResponseEnabledChange: (Boolean) -> Unit,
@@ -110,7 +109,6 @@ internal fun ChatModelSheet(
                     ChatModelOption(
                         model = model,
                         selected = model.code == selected,
-                        realtimeImageEnabled = realtimeImageEnabled,
                         onClick = { onSelect(model.code) },
                     )
                 }
@@ -133,7 +131,6 @@ internal fun ChatModelSheet(
 private fun ChatModelOption(
     model: ChatModel,
     selected: Boolean,
-    realtimeImageEnabled: Boolean,
     onClick: () -> Unit,
 ) {
     val colors = ManyakTheme.colors
@@ -157,7 +154,7 @@ private fun ChatModelOption(
                 style = ManyakTheme.typography.bodyLargeStrong,
                 color = ManyakTheme.colors.text,
             )
-            ChatModelCostBadge(model = model, selected = selected, realtimeImageEnabled = realtimeImageEnabled)
+            ChatModelCostBadge(model = model, selected = selected)
         }
         modelDescription(model.code)?.let { descriptionRes ->
             Text(
@@ -170,14 +167,14 @@ private fun ChatModelOption(
 }
 
 /**
- * 그 칸의 모델로 계산한 한 턴 비용. 설정 시트의 실시간 이미지 배지와 같은 모양이다. 고른 칸의 연한 브랜드
- * 배경 위에서는 회색 캡슐이 탁해 보여 화면 배경색 캡슐에 브랜드 글씨로 바꾼다.
+ * 그 칸의 모델이 한 턴에 쓰는 이프. 모델끼리 비교하는 자리라 실시간 이미지 비용은 더하지 않는다.
+ * 설정 시트의 실시간 이미지 배지와 같은 모양이다. 고른 칸의 연한 브랜드 배경 위에서는 회색 캡슐이 탁해 보여
+ * 화면 배경색 캡슐에 브랜드 글씨로 바꾼다.
  */
 @Composable
 private fun ChatModelCostBadge(
     model: ChatModel,
     selected: Boolean,
-    realtimeImageEnabled: Boolean,
 ) {
     val cost =
         chatTurnCost(
@@ -185,7 +182,7 @@ private fun ChatModelCostBadge(
             model.code,
             LocalCreditPolicy.current,
             LocalTrials.current,
-            realtimeImageEnabled,
+            withRealtimeImage = false,
         )
     CreditAmountText(
         modifier =
@@ -224,7 +221,6 @@ private fun ChatModelSheetPreview() {
         ChatModelSheet(
             models = PreviewModels,
             selected = "AURORA",
-            realtimeImageEnabled = true,
             longResponseEnabled = false,
             onSelect = {},
             onLongResponseEnabledChange = {},

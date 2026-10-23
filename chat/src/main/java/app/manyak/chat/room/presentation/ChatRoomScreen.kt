@@ -102,7 +102,6 @@ fun ChatRoomScreen(
         ChatModelSheet(
             models = state.models,
             selected = state.model,
-            realtimeImageEnabled = state.realtimeImageEnabled,
             longResponseEnabled = state.longResponseEnabled,
             onSelect = { model ->
                 modelOpen = false
