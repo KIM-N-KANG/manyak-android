@@ -199,6 +199,18 @@ internal class FakeChatRepository : ChatRepository {
         return queuedChangeModelResults.removeFirstOrNull() ?: DomainResult.Success(Unit)
     }
 
+    val changedLongResponses = mutableListOf<Boolean>()
+    val queuedChangeLongResponseResults = ArrayDeque<DomainResult<Unit>>()
+
+    override suspend fun changeLongResponse(
+        chatId: String,
+        enabled: Boolean,
+    ): DomainResult<Unit> {
+        yield()
+        changedLongResponses += enabled
+        return queuedChangeLongResponseResults.removeFirstOrNull() ?: DomainResult.Success(Unit)
+    }
+
     override suspend fun createShareLink(chatId: String): DomainResult<String> {
         yield()
         sharedChatIds += chatId
@@ -240,14 +252,6 @@ internal class FakeChatPreferencesRepository(
     override suspend fun setRealtimeImageEnabled(enabled: Boolean) {
         realtimeImage = enabled
         savedRealtimeImages += enabled
-    }
-
-    var longResponse = false
-
-    override suspend fun longResponseEnabled(): Boolean = longResponse
-
-    override suspend fun setLongResponseEnabled(enabled: Boolean) {
-        longResponse = enabled
     }
 
     override suspend fun inputMode(): ChatInputMode = mode

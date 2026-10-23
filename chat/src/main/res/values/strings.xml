@@ -42,6 +42,7 @@
     <string name="chat_model_title">채팅 응답</string>
     <string name="chat_response_length_group">응답 길이</string>
     <string name="chat_response_long">긴 응답</string>
+    <string name="chat_response_long_change_failed">긴 응답 설정을 바꾸지 못했어요</string>
     <string name="chat_response_long_description">한 번에 더 많은 장면을 보여줘요</string>
     <string name="chat_room_ai_notice">이 채팅은 AI로 생성된 가상의 내용이에요</string>
     <string name="chat_room_choices_error">선택지를 만들지 못했어요</string>

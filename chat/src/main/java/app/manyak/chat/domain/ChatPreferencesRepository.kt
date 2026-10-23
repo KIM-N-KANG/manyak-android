@@ -12,7 +12,6 @@ import app.manyak.chat.entity.ChatInputMode
  * 상태를 먼저 바꾼 뒤 저장한다 — **저장에 실패해도 지금 세션의 선택은 유지되어야 하기 때문**이다.
  * 저장소를 정본으로 삼아 흐름을 구독하면 저장이 실패한 순간 사용자가 방금 누른 선택이 되돌아간다.
  */
-@Suppress("TooManyFunctions") // 기기 설정마다 읽기·쓰기 한 쌍이다.
 interface ChatPreferencesRepository {
     /** 읽지 못하면 [ChatInputMode.BLOCK]. */
     suspend fun inputMode(): ChatInputMode
@@ -28,11 +27,6 @@ interface ChatPreferencesRepository {
     suspend fun realtimeImageEnabled(): Boolean
 
     suspend fun setRealtimeImageEnabled(enabled: Boolean)
-
-    /** 응답을 길게 받을지. 읽지 못하면 끔. */
-    suspend fun longResponseEnabled(): Boolean
-
-    suspend fun setLongResponseEnabled(enabled: Boolean)
 
     /** 정상 전송 완료를 원자적으로 더해 3에서 멈춘다. 읽기나 저장 실패는 null이다. */
     suspend fun recordCompletedTurn(): Int?

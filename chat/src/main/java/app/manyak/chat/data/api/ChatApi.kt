@@ -1,6 +1,6 @@
 package app.manyak.chat.data.api
 
-import app.manyak.chat.data.api.dto.ChangeChatModelRequestDto
+import app.manyak.chat.data.api.dto.ChangeChatSettingsRequestDto
 import app.manyak.chat.data.api.dto.ChatChoicesResponseDto
 import app.manyak.chat.data.api.dto.ChatCreateRequestDto
 import app.manyak.chat.data.api.dto.ChatCreateResponseDto
@@ -33,11 +33,14 @@ interface ChatApi {
     @GET("chats/models")
     suspend fun chatModels(): Response<List<ChatModelDto>>
 
-    /** 다음 턴부터 쓸 모델을 바꾼다. 생성 중에도 받으며 진행 중인 턴은 시작 때 모델로 끝난다. */
+    /**
+     * 다음 턴부터 쓸 모델과 출력 분량을 바꾼다. 보낸 필드만 바뀐다. 생성 중에도 받으며 진행 중인 턴은
+     * 시작 때 설정으로 끝난다.
+     */
     @PATCH("chats/{chatId}")
-    suspend fun changeModel(
+    suspend fun changeSettings(
         @Path("chatId") chatId: String,
-        @Body body: ChangeChatModelRequestDto,
+        @Body body: ChangeChatSettingsRequestDto,
     ): Response<Unit>
 
     /**
