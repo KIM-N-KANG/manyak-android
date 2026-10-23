@@ -56,20 +56,21 @@ import app.manyak.designsystem.R as DesignsystemR
  * 영수증처럼 보인다. 버튼 수치와 팝오버 합계는 같은 [chatTurnCost] 로 계산해 어긋나지 않는다.
  *
  * @param modelName 지금 고른 모델 이름. AI 응답 줄 옆에 보조 글씨로 붙는다.
- * @param trialModelName 고른 모델이 체험 모델이 아닐 때의 체험 모델 이름. 턴 체험이 남았으면 체험 턴은
- *   이 모델로 답한다고 안내한다.
+ * @param longResponseEnabled 긴 응답이 켜져 있으면 모델 이름 뒤에 함께 적는다. 비용은 바뀌지 않는다.
+ * @param modelCode 지금 고른 모델 코드. 턴 체험은 체험 모델에만 적용한다.
  */
 @Composable
 internal fun ChatTurnCostButton(
     turnCost: Long?,
     realtimeImageEnabled: Boolean,
     modelName: String?,
-    trialModelName: String?,
+    longResponseEnabled: Boolean,
+    modelCode: String?,
     modifier: Modifier = Modifier,
 ) {
     val policy = LocalCreditPolicy.current
     val trials = LocalTrials.current
-    val cost = chatTurnCost(turnCost, policy, trials, realtimeImageEnabled)
+    val cost = chatTurnCost(turnCost, modelCode, policy, trials, realtimeImageEnabled)
     var open by rememberSaveable { mutableStateOf(false) }
     Box(modifier = modifier) {
         Row(
@@ -105,7 +106,8 @@ internal fun ChatTurnCostButton(
             trials = trials,
             realtimeImageEnabled = realtimeImageEnabled,
             modelName = modelName,
-            trialModelName = trialModelName?.takeIf { trials?.chatTurn?.isFree == true },
+            longResponseEnabled = longResponseEnabled,
+            modelCode = modelCode,
         )
     }
 }
@@ -121,7 +123,8 @@ private fun ChatTurnCostPopover(
     trials: Trials?,
     realtimeImageEnabled: Boolean,
     modelName: String?,
-    trialModelName: String?,
+    longResponseEnabled: Boolean,
+    modelCode: String?,
 ) {
     val gapPx = with(LocalDensity.current) { ManyakTheme.spacing.compact.roundToPx() }
     val positionProvider = remember(gapPx) { AboveEndPositionProvider(gapPx) }
@@ -140,7 +143,8 @@ private fun ChatTurnCostPopover(
             trials = trials,
             realtimeImageEnabled = realtimeImageEnabled,
             modelName = modelName,
-            trialModelName = trialModelName,
+            longResponseEnabled = longResponseEnabled,
+            modelCode = modelCode,
         )
     }
 }
@@ -161,7 +165,7 @@ private class AboveEndPositionProvider(
 }
 
 /**
- * 팝오버 판. 항목을 먼저 적고 구분선 아래에 합계, 필요할 때만 맨 아래에 체험 모델 안내를 둔다.
+ * 팝오버 판. 항목을 먼저 적고 구분선 아래에 합계를 둔다.
  * 판 모양은 정렬·셀렉트 메뉴(`ManyakSelectMenu`)와 같다 — 같은 화면에서 뜨는 판끼리 모양이 갈리지 않게 한다.
  */
 @Composable
@@ -172,7 +176,8 @@ private fun ChatTurnCostPanel(
     trials: Trials?,
     realtimeImageEnabled: Boolean,
     modelName: String?,
-    trialModelName: String?,
+    longResponseEnabled: Boolean,
+    modelCode: String?,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -193,9 +198,16 @@ private fun ChatTurnCostPanel(
         )
         CostRow(
             label = stringResource(ChatR.string.chat_turn_cost_info_turn),
-            detail = modelName,
+            detail =
+                modelName?.let { name ->
+                    if (longResponseEnabled) {
+                        stringResource(ChatR.string.chat_turn_cost_info_model_long_response, name)
+                    } else {
+                        name
+                    }
+                },
             cost = turnCost,
-            trial = trials?.chatTurn,
+            trial = trials?.chatTurnFor(modelCode),
         )
         if (realtimeImageEnabled) {
             CostRow(
@@ -205,18 +217,6 @@ private fun ChatTurnCostPanel(
             )
         }
         TotalRow(cost = cost)
-        if (trialModelName != null) {
-            Text(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .background(ManyakTheme.colors.backgroundNeutral, ManyakTheme.shapes.menuItem)
-                        .padding(horizontal = ManyakTheme.spacing.component, vertical = ManyakTheme.spacing.compact),
-                text = stringResource(ChatR.string.chat_turn_cost_info_trial_model_note, trialModelName),
-                style = ManyakTheme.typography.bodySmall,
-                color = ManyakTheme.colors.textSubtle,
-            )
-        }
     }
 }
 
@@ -260,7 +260,7 @@ private fun TotalRow(
 
 /**
  * 비용 내역 한 줄. 라벨 아래에 남은 무료 체험을 적고, 체험이 남은 항목은 정가에 취소선을 긋고 0 을 보인다.
- * 체험 줄은 무료로 적용되면 브랜드 색, 다 썼으면 옅은 글씨로 금액과 이어 읽히게 한다.
+ * 체험 줄은 브랜드 색으로 금액과 이어 읽히게 하고, 체험을 다 쓴 항목은 정가만 보이면 되므로 그리지 않는다.
  */
 @Composable
 private fun CostRow(
@@ -289,11 +289,11 @@ private fun CostRow(
                     )
                 }
             }
-            trial?.let {
+            trial?.takeIf { isFree }?.let {
                 Text(
                     text = trialText(it),
                     style = ManyakTheme.typography.bodySmall,
-                    color = if (isFree) ManyakTheme.colors.textBrand else ManyakTheme.colors.textSubtlest,
+                    color = ManyakTheme.colors.textBrand,
                 )
             }
         }
@@ -326,7 +326,6 @@ private fun trialText(trial: TrialUsage): String {
     val remaining = trial.remaining
     return when {
         remaining == null -> stringResource(ChatR.string.chat_turn_cost_info_trial_unlimited)
-        remaining == 0L -> stringResource(ChatR.string.chat_turn_cost_info_trial_exhausted)
         else -> stringResource(ChatR.string.chat_turn_cost_info_trial_remaining, remaining)
     }
 }
@@ -335,7 +334,7 @@ private val PanelWidth = 256.dp
 private val PanelShadowElevation = 4.dp
 private val PanelBorderWidth = 1.dp
 
-@Preview(showBackground = true, name = "이프 안내 · 턴 체험 남음, 이미지 체험 다 씀")
+@Preview(showBackground = true, name = "이프 안내, 턴 체험 남음, 이미지 체험 다 씀, 긴 응답")
 @Composable
 private fun ChatTurnCostPanelPreview() {
     ManyakTheme(darkTheme = false) {
@@ -343,13 +342,14 @@ private fun ChatTurnCostPanelPreview() {
             Trials(chatTurn = TrialUsage(used = 2, limit = 5), chatImage = TrialUsage(used = 5, limit = 5))
         val policy = CreditPolicy(chatImageCost = 30)
         ChatTurnCostPanel(
-            cost = chatTurnCost(50, policy, trials, withRealtimeImage = true),
+            cost = chatTurnCost(50, CHAT_TRIAL_MODEL_CODE, policy, trials, withRealtimeImage = true),
             turnCost = 50,
             policy = policy,
             trials = trials,
             realtimeImageEnabled = true,
-            modelName = "오로라",
-            trialModelName = "라이트",
+            modelName = "라이트",
+            longResponseEnabled = true,
+            modelCode = CHAT_TRIAL_MODEL_CODE,
         )
     }
 }
