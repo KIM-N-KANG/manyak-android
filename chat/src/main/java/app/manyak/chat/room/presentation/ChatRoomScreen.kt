@@ -7,9 +7,11 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -100,10 +102,13 @@ fun ChatRoomScreen(
         ChatModelSheet(
             models = state.models,
             selected = state.model,
-            realtimeImageEnabled = state.realtimeImageEnabled,
+            longResponseEnabled = state.longResponseEnabled,
             onSelect = { model ->
                 modelOpen = false
                 viewModel.onIntent(ChatRoomIntent.ModelSelected(model))
+            },
+            onLongResponseEnabledChange = { enabled ->
+                viewModel.onIntent(ChatRoomIntent.LongResponseEnabledChanged(enabled))
             },
             onDismiss = { modelOpen = false },
         )
@@ -252,6 +257,9 @@ private fun ColumnScope.ChatRoomLoaded(
         choicesEnabled = state.choicesEnabled,
         realtimeImageEnabled = state.realtimeImageEnabled,
         turnCost = state.selectedModel?.turnCost,
+        modelName = state.selectedModel?.name,
+        longResponseEnabled = state.longResponseEnabled,
+        modelCode = state.model,
         hasSuggestions = state.suggestions.hasCandidate,
         isStreaming = state.isStreaming,
         actions = composerActions(onIntent, onOpenSettings = { onIntent(ChatRoomIntent.SettingsOpened) }),
@@ -368,13 +376,19 @@ private fun ChatRoomHeader(
         },
         actions = {
             if (showsMenu) {
-                // 모델 목록을 못 받았으면 고를 것이 없어 버튼을 두지 않는다.
-                if (selectedModel != null) ChatModelButton(model = selectedModel, onClick = onOpenModel)
-                ManyakIconButton(
-                    iconRes = DesignsystemR.drawable.ic_more_horizontal,
-                    contentDescription = stringResource(ChatR.string.chat_room_menu),
-                    onClick = onOpenMenu,
-                )
+                // actions 슬롯의 Row 는 간격을 주지 않아 제작 헤더처럼 직접 감싸 버튼 사이 간격을 더한다.
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
+                ) {
+                    // 모델 목록을 못 받았으면 고를 것이 없어 버튼을 두지 않는다.
+                    if (selectedModel != null) ChatModelButton(model = selectedModel, onClick = onOpenModel)
+                    ManyakIconButton(
+                        iconRes = DesignsystemR.drawable.ic_more_horizontal,
+                        contentDescription = stringResource(ChatR.string.chat_room_menu),
+                        onClick = onOpenMenu,
+                    )
+                }
             }
         },
         // 화면 루트에서 적용한 safeDrawing 인셋이 중복되지 않게 한다.

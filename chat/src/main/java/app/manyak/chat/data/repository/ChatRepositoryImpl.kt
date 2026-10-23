@@ -2,7 +2,7 @@ package app.manyak.chat.data.repository
 
 import app.manyak.chat.data.api.ChatApi
 import app.manyak.chat.data.api.ChatUserApi
-import app.manyak.chat.data.api.dto.ChangeChatModelRequestDto
+import app.manyak.chat.data.api.dto.ChangeChatSettingsRequestDto
 import app.manyak.chat.data.api.dto.ChatCreateRequestDto
 import app.manyak.chat.data.api.dto.ChatRegenerateRequestDto
 import app.manyak.chat.data.api.dto.ChatTurnStreamRequestDto
@@ -69,7 +69,14 @@ class ChatRepositoryImpl
         override suspend fun changeModel(
             chatId: String,
             model: String,
-        ): DomainResult<Unit> = emptyBodyApiCall { chatApi.changeModel(chatId, ChangeChatModelRequestDto(model)) }
+        ): DomainResult<Unit> =
+            emptyBodyApiCall { chatApi.changeSettings(chatId, ChangeChatSettingsRequestDto(model = model)) }
+
+        override suspend fun changeLongResponse(
+            chatId: String,
+            enabled: Boolean,
+        ): DomainResult<Unit> =
+            emptyBodyApiCall { chatApi.changeSettings(chatId, ChangeChatSettingsRequestDto(longResponse = enabled)) }
 
         override fun streamTurn(
             chatId: String,

@@ -35,6 +35,8 @@ data class ChatDetail(
     val generatingTurn: GeneratingTurn? = null,
     /** 이 채팅의 모델 코드. 다음 턴부터 이 모델의 가격으로 차감된다. */
     val model: String? = null,
+    /** 이 채팅의 출력 분량. true 면 긴 응답이다. */
+    val longResponse: Boolean = false,
 )
 
 /**

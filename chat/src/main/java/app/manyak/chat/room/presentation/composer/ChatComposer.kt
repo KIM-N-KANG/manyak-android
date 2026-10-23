@@ -48,6 +48,9 @@ internal fun ChatComposer(
     actions: ChatComposerActions,
     modifier: Modifier = Modifier,
     turnCost: Long? = null,
+    modelName: String? = null,
+    longResponseEnabled: Boolean = false,
+    modelCode: String? = null,
     tourTargets: ChatTourTargets? = null,
 ) {
     val sendState =
@@ -71,6 +74,9 @@ internal fun ChatComposer(
             enabled = !isStreaming,
             realtimeImageEnabled = realtimeImageEnabled,
             turnCost = turnCost,
+            modelName = modelName,
+            longResponseEnabled = longResponseEnabled,
+            modelCode = modelCode,
             sendState = sendState,
             actions = actions,
             onInsertEmphasis = {

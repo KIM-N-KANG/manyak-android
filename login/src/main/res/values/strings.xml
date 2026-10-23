@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="login_google">Google로 시작하기</string>
-    <string name="login_headline">키워드 몇 개로\n나만의 세계를 만들어 보세요</string>
+    <string name="login_headline">키워드 몇 개로\n상상 속 인물이 내 스토리 안에</string>
+    <string name="login_subheadline">간단하게 스토리 만들고\nAI와 함께 나만의 스토리로 이어가보세요</string>
     <string name="login_in_progress">로그인하는 중</string>
     <string name="login_kakao">카카오로 시작하기</string>
     <string name="login_legal_links">%1$s · %2$s</string>
