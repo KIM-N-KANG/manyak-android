@@ -38,7 +38,6 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.manyak.chat.entity.ChatModel
 import app.manyak.chat.list.presentation.label
-import app.manyak.chat.room.presentation.composer.CHAT_TRIAL_MODEL_CODE
 import app.manyak.chat.room.presentation.composer.ChatComposer
 import app.manyak.chat.room.presentation.composer.ChatComposerActions
 import app.manyak.chat.room.presentation.composer.ChatSettingsSheet
@@ -261,11 +260,7 @@ private fun ColumnScope.ChatRoomLoaded(
         turnCost = state.selectedModel?.turnCost,
         modelName = state.selectedModel?.name,
         longResponseEnabled = state.longResponseEnabled,
-        trialModelName =
-            state.models
-                .firstOrNull { candidate -> candidate.code == CHAT_TRIAL_MODEL_CODE }
-                ?.takeIf { trialModel -> trialModel.code != state.model }
-                ?.name,
+        modelCode = state.model,
         hasSuggestions = state.suggestions.hasCandidate,
         isStreaming = state.isStreaming,
         actions = composerActions(onIntent, onOpenSettings = { onIntent(ChatRoomIntent.SettingsOpened) }),

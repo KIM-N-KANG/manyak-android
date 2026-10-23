@@ -57,8 +57,7 @@ import app.manyak.designsystem.R as DesignsystemR
  *
  * @param modelName 지금 고른 모델 이름. AI 응답 줄 옆에 보조 글씨로 붙는다.
  * @param longResponseEnabled 긴 응답이 켜져 있으면 모델 이름 뒤에 함께 적는다. 비용은 바뀌지 않는다.
- * @param trialModelName 고른 모델이 체험 모델이 아닐 때의 체험 모델 이름. 턴 체험이 남았으면 체험 턴은
- *   이 모델로 답한다고 안내한다.
+ * @param modelCode 지금 고른 모델 코드. 턴 체험은 체험 모델에만 적용한다.
  */
 @Composable
 internal fun ChatTurnCostButton(
@@ -66,12 +65,12 @@ internal fun ChatTurnCostButton(
     realtimeImageEnabled: Boolean,
     modelName: String?,
     longResponseEnabled: Boolean,
-    trialModelName: String?,
+    modelCode: String?,
     modifier: Modifier = Modifier,
 ) {
     val policy = LocalCreditPolicy.current
     val trials = LocalTrials.current
-    val cost = chatTurnCost(turnCost, policy, trials, realtimeImageEnabled)
+    val cost = chatTurnCost(turnCost, modelCode, policy, trials, realtimeImageEnabled)
     var open by rememberSaveable { mutableStateOf(false) }
     Box(modifier = modifier) {
         Row(
@@ -108,7 +107,7 @@ internal fun ChatTurnCostButton(
             realtimeImageEnabled = realtimeImageEnabled,
             modelName = modelName,
             longResponseEnabled = longResponseEnabled,
-            trialModelName = trialModelName?.takeIf { trials?.chatTurn?.isFree == true },
+            modelCode = modelCode,
         )
     }
 }
@@ -125,7 +124,7 @@ private fun ChatTurnCostPopover(
     realtimeImageEnabled: Boolean,
     modelName: String?,
     longResponseEnabled: Boolean,
-    trialModelName: String?,
+    modelCode: String?,
 ) {
     val gapPx = with(LocalDensity.current) { ManyakTheme.spacing.compact.roundToPx() }
     val positionProvider = remember(gapPx) { AboveEndPositionProvider(gapPx) }
@@ -145,7 +144,7 @@ private fun ChatTurnCostPopover(
             realtimeImageEnabled = realtimeImageEnabled,
             modelName = modelName,
             longResponseEnabled = longResponseEnabled,
-            trialModelName = trialModelName,
+            modelCode = modelCode,
         )
     }
 }
@@ -166,7 +165,7 @@ private class AboveEndPositionProvider(
 }
 
 /**
- * 팝오버 판. 항목을 먼저 적고 구분선 아래에 합계, 필요할 때만 맨 아래에 체험 모델 안내를 둔다.
+ * 팝오버 판. 항목을 먼저 적고 구분선 아래에 합계를 둔다.
  * 판 모양은 정렬·셀렉트 메뉴(`ManyakSelectMenu`)와 같다 — 같은 화면에서 뜨는 판끼리 모양이 갈리지 않게 한다.
  */
 @Composable
@@ -178,7 +177,7 @@ private fun ChatTurnCostPanel(
     realtimeImageEnabled: Boolean,
     modelName: String?,
     longResponseEnabled: Boolean,
-    trialModelName: String?,
+    modelCode: String?,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -208,7 +207,7 @@ private fun ChatTurnCostPanel(
                     }
                 },
             cost = turnCost,
-            trial = trials?.chatTurn,
+            trial = trials?.chatTurnFor(modelCode),
         )
         if (realtimeImageEnabled) {
             CostRow(
@@ -218,18 +217,6 @@ private fun ChatTurnCostPanel(
             )
         }
         TotalRow(cost = cost)
-        if (trialModelName != null) {
-            Text(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .background(ManyakTheme.colors.backgroundNeutral, ManyakTheme.shapes.menuItem)
-                        .padding(horizontal = ManyakTheme.spacing.component, vertical = ManyakTheme.spacing.compact),
-                text = stringResource(ChatR.string.chat_turn_cost_info_trial_model_note, trialModelName),
-                style = ManyakTheme.typography.bodySmall,
-                color = ManyakTheme.colors.textSubtle,
-            )
-        }
     }
 }
 
@@ -355,14 +342,14 @@ private fun ChatTurnCostPanelPreview() {
             Trials(chatTurn = TrialUsage(used = 2, limit = 5), chatImage = TrialUsage(used = 5, limit = 5))
         val policy = CreditPolicy(chatImageCost = 30)
         ChatTurnCostPanel(
-            cost = chatTurnCost(50, policy, trials, withRealtimeImage = true),
+            cost = chatTurnCost(50, CHAT_TRIAL_MODEL_CODE, policy, trials, withRealtimeImage = true),
             turnCost = 50,
             policy = policy,
             trials = trials,
             realtimeImageEnabled = true,
-            modelName = "오로라",
+            modelName = "라이트",
             longResponseEnabled = true,
-            trialModelName = "라이트",
+            modelCode = CHAT_TRIAL_MODEL_CODE,
         )
     }
 }

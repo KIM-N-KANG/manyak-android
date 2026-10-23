@@ -50,7 +50,7 @@ internal fun ChatComposer(
     turnCost: Long? = null,
     modelName: String? = null,
     longResponseEnabled: Boolean = false,
-    trialModelName: String? = null,
+    modelCode: String? = null,
     tourTargets: ChatTourTargets? = null,
 ) {
     val sendState =
@@ -76,7 +76,7 @@ internal fun ChatComposer(
             turnCost = turnCost,
             modelName = modelName,
             longResponseEnabled = longResponseEnabled,
-            trialModelName = trialModelName,
+            modelCode = modelCode,
             sendState = sendState,
             actions = actions,
             onInsertEmphasis = {

@@ -1082,6 +1082,7 @@ class ChatRoomViewModel
             val cost =
                 chatTurnCost(
                     models.firstOrNull { candidate -> candidate.code == model }?.turnCost,
+                    model,
                     creditPolicyRepository.policy.value,
                     trialsRepository.trials.value,
                     realtimeImageEnabled,

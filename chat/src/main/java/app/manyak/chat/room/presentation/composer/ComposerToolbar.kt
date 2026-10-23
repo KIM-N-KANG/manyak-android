@@ -27,7 +27,7 @@ internal fun ComposerToolbar(
     turnCost: Long?,
     modelName: String?,
     longResponseEnabled: Boolean,
-    trialModelName: String?,
+    modelCode: String?,
     sendState: SendButtonState,
     actions: ChatComposerActions,
     onInsertEmphasis: () -> Unit,
@@ -82,7 +82,7 @@ internal fun ComposerToolbar(
                 realtimeImageEnabled = realtimeImageEnabled,
                 modelName = modelName,
                 longResponseEnabled = longResponseEnabled,
-                trialModelName = trialModelName,
+                modelCode = modelCode,
             )
             ComposerSendButton(
                 modifier = Modifier.chatTourTarget(tourTargets, ChatTourTarget.SEND),

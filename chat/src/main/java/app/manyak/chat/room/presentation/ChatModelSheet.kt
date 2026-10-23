@@ -179,7 +179,14 @@ private fun ChatModelCostBadge(
     selected: Boolean,
     realtimeImageEnabled: Boolean,
 ) {
-    val cost = chatTurnCost(model.turnCost, LocalCreditPolicy.current, LocalTrials.current, realtimeImageEnabled)
+    val cost =
+        chatTurnCost(
+            model.turnCost,
+            model.code,
+            LocalCreditPolicy.current,
+            LocalTrials.current,
+            realtimeImageEnabled,
+        )
     CreditAmountText(
         modifier =
             Modifier

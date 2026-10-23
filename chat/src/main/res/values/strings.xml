@@ -21,7 +21,6 @@
     <string name="chat_turn_cost_info_title">한 턴에 쓰는 이프</string>
     <string name="chat_turn_cost_info_total">합계</string>
     <string name="chat_turn_cost_info_model_long_response">%1$s, 긴 응답</string>
-    <string name="chat_turn_cost_info_trial_model_note">무료 체험 턴은 %1$s 모델로 답해요</string>
     <string name="chat_turn_cost_info_trial_remaining">무료 체험 %1$d회 남음</string>
     <string name="chat_turn_cost_info_trial_unlimited">무료 체험 무제한</string>
     <string name="chat_turn_cost_info_turn">AI 응답</string>
