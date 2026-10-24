@@ -97,6 +97,7 @@ private fun NoticeBody(
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.passage),
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact)) {
+            NoticeTagBadge(notice.tag)
             Text(text = notice.title, style = ManyakTheme.typography.titleLarge, color = ManyakTheme.colors.text)
             NoticeDates(notice)
         }

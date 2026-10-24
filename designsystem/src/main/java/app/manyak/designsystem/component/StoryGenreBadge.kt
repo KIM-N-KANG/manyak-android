@@ -23,6 +23,7 @@ fun StoryGenreBadge(
     scale: StoryBadgeScale = StoryBadgeScale.Compact,
     // 회색 상자 위에 놓일 때는 바탕과 같은 색이라 묻히므로, 그 자리만 밝은 알약을 쓴다.
     containerColor: Color = ManyakTheme.colors.backgroundNeutral,
+    contentColor: Color = ManyakTheme.colors.textSubtle,
 ) {
     Text(
         modifier =
@@ -35,7 +36,7 @@ fun StoryGenreBadge(
                 ),
         text = text,
         style = scale.textStyle,
-        color = ManyakTheme.colors.textSubtle,
+        color = contentColor,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
     )

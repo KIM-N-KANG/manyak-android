@@ -50,6 +50,7 @@ import app.manyak.designsystem.component.LoadFailedContent
 import app.manyak.designsystem.component.LoadMoreFooter
 import app.manyak.designsystem.component.ManyakPullToRefreshBox
 import app.manyak.designsystem.component.SkeletonPlaceholder
+import app.manyak.designsystem.component.StoryBadgeScale
 import app.manyak.designsystem.component.rememberDelayedProgressVisibility
 import app.manyak.designsystem.component.rememberSkeletonPulseAlpha
 import app.manyak.designsystem.component.withRowListMargins
@@ -224,6 +225,7 @@ private fun NoticeRow(
                 ).padding(horizontal = ManyakTheme.spacing.gutter, vertical = ManyakTheme.spacing.compact),
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
     ) {
+        NoticeTagBadge(notice.tag, scale = StoryBadgeScale.Compact)
         Text(
             text =
                 buildAnnotatedString {
