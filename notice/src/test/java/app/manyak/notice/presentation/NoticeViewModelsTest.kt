@@ -7,9 +7,11 @@ import app.manyak.notice.entity.NoticePage
 import app.manyak.notice.entity.NoticeSummary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -111,6 +113,35 @@ class NoticeViewModelsTest {
             assertTrue(state.loadMoreFailed)
             assertFalse(state.isLoadingMore)
             assertFalse(state.loadFailed)
+        }
+
+    @Test
+    fun `당김 새로고침 실패는 보던 목록을 두고 토스트만 알린다`() =
+        runTest {
+            val repository = FakeNoticeRepository(pages = mapOf(null to DomainResult.Success(firstPage)))
+            val viewModel = NoticeListViewModel(repository, FakeNoticeReadRepository())
+            advanceUntilIdle()
+            val effects = mutableListOf<NoticeListEffect>()
+            backgroundScope.launch { viewModel.uiEffect.collect(effects::add) }
+
+            repository.pages = emptyMap()
+            viewModel.onIntent(NoticeListIntent.Refresh)
+            advanceUntilIdle()
+            runCurrent()
+
+            assertEquals(2, viewModel.uiState.value.notices.size)
+            assertFalse(viewModel.uiState.value.loadFailed)
+            assertFalse(viewModel.uiState.value.isRefreshing)
+            assertEquals(listOf(NoticeListEffect.ShowRefreshFailed), effects)
+
+            repository.pages = mapOf(null to DomainResult.Success(secondPage))
+            viewModel.onIntent(NoticeListIntent.Refresh)
+            advanceUntilIdle()
+            assertEquals(
+                listOf("third"),
+                viewModel.uiState.value.notices
+                    .map { it.id },
+            )
         }
 
     @Test

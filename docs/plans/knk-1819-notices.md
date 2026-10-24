@@ -23,7 +23,8 @@
 6. **딥링크 상세는 목록을 먼저 쌓는다.** `openExternalDestination` 이 `NoticeDetailRoute` 를 받으면 `NoticeListRoute` 를 깔아 뒤로가기가 목록으로 간다. `DeepLink` 는 `/notices` 와 `/notices/{id}` 를 더 안다.
 7. **목록 줄 점은 `InlineTextContent`.** 두 줄 말줄임 뒤 제목 끝에 붙어야 하므로 `Row` 가 아니라 인라인 자리다. 보조 기술 이름 "새 공지".
 8. **디자인 토큰.** `sizes.unread-dot`(8dp)·`unread-dot-inline`(6dp), 컴포넌트 `badge-danger`·`unread-dot` 을 `DESIGN.md` 와 `ManyakSizes` 에 추가. 색은 기존 `background-danger-bold`·`background-danger-subtle`·`text-danger`.
-9. **아이콘.** 헤더는 마이 알림 설정과 같은 `ic_bell`, 마이 공지 메뉴는 사용자가 준 `megaphone-03-stroke-rounded.svg` 를 옮긴 `ic_megaphone`.
+9. **당김 새로고침.** 채팅 목록과 같은 `ManyakPullToRefreshBox`. 목록이 그려진 상태에서만 두고, 실패는 보던 목록을 지우지 않고 공통 "새로고침하지 못했어요" 토스트로 알린다.
+10. **아이콘.** 헤더는 마이 알림 설정과 같은 `ic_bell`, 마이 공지 메뉴는 사용자가 준 `megaphone-03-stroke-rounded.svg` 를 옮긴 `ic_megaphone`.
 
 `ponytail:` 안 읽음 판정은 첫 페이지 20건만 본다. 20건 안에 30일 안 공지가 다 들어오지 않으면 그때 두 페이지를 읽는다.
 
@@ -45,4 +46,5 @@
   - `09_not_found` 없는 ID → "공지를 찾을 수 없어요" + "공지사항 목록으로".
   - `10_home_all_read` 3건 모두 연 뒤 헤더 점 없음(접근 이름 "공지사항").
   - `11_list_load_failed` 비행기 모드 → "공지사항을 불러오지 못했어요" + "다시 시도" → `12_list_retry` 해제 후 재시도로 목록 복구.
+  - `16_list_ripple` 줄 눌림 리플, `19_list_row_margins` 채팅·제작과 같은 여백, `21_list_pull` 당김 표시자, `22_list_refresh_failed_toast` 오프라인 당김 실패 토스트(목록 유지).
 - 하지 않은 것: 다음 페이지 이어 붙이기·실패 자리는 dev 공지가 3건(`nextCursor: null`)이라 화면에서 보지 못했고 `NoticeViewModelsTest` 로만 고정했다. "수정 YYYY-MM-DD" 표시도 dev 공지에 날짜가 다른 수정이 없어 `NoticeDateTest` 로만 확인했다. 실제 FCM 공지 푸시 탭은 발송하지 않았고, 같은 `deepLink` 를 받는 앱 열기 링크로 경로를 확인했다.

@@ -1,5 +1,6 @@
 package app.manyak.notice.presentation
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -28,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -40,9 +42,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.designsystem.component.LoadFailedContent
 import app.manyak.designsystem.component.LoadMoreFooter
+import app.manyak.designsystem.component.ManyakPullToRefreshBox
 import app.manyak.designsystem.component.SkeletonPlaceholder
 import app.manyak.designsystem.component.rememberDelayedProgressVisibility
 import app.manyak.designsystem.component.rememberSkeletonPulseAlpha
@@ -51,6 +57,7 @@ import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.notice.domain.isUnread
 import app.manyak.notice.entity.NoticeSummary
 import kotlinx.coroutines.flow.distinctUntilChanged
+import app.manyak.common.R as CommonR
 import app.manyak.notice.R as NoticeR
 
 /**
@@ -65,6 +72,18 @@ fun NoticeListScreen(
     viewModel: NoticeListViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val context = LocalContext.current
+    LaunchedEffect(viewModel, lifecycleOwner) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            viewModel.uiEffect.collect { effect ->
+                when (effect) {
+                    NoticeListEffect.ShowRefreshFailed ->
+                        Toast.makeText(context, CommonR.string.story_refresh_failed, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
     Column(modifier = modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
         NoticeTopBar(onBack = onBack)
         NoticeListContent(
@@ -118,8 +137,33 @@ private fun NoticeRows(
     val listState = rememberLazyListState()
     val now = remember(state.notices) { System.currentTimeMillis() }
     LoadMoreWhenListEnds(listState = listState, state = state, onLoadMore = { onIntent(NoticeListIntent.LoadMore) })
+    // 당김 새로고침은 그릴 목록이 있을 때만 — 골격·빈 상태·실패 자리는 당길 이유가 없다.
+    ManyakPullToRefreshBox(
+        modifier = modifier,
+        isRefreshing = state.isRefreshing,
+        onRefresh = { onIntent(NoticeListIntent.Refresh) },
+        contentPadding = PaddingValues(0.dp),
+    ) {
+        NoticeLazyColumn(
+            state = state,
+            listState = listState,
+            now = now,
+            onOpenNotice = onOpenNotice,
+            onIntent = onIntent,
+        )
+    }
+}
+
+@Composable
+private fun NoticeLazyColumn(
+    state: NoticeListUiState,
+    listState: LazyListState,
+    now: Long,
+    onOpenNotice: (String) -> Unit,
+    onIntent: (NoticeListIntent) -> Unit,
+) {
     LazyColumn(
-        modifier = modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxSize(),
         state = listState,
         // 채팅·제작 목록과 같은 리듬 — 위 여백 없이 줄 여백만, 아래는 줄 여백과 같은 값.
         contentPadding = PaddingValues(0.dp).withRowListMargins(),
@@ -149,7 +193,7 @@ private fun LoadMoreWhenListEnds(
     state: NoticeListUiState,
     onLoadMore: () -> Unit,
 ) {
-    val canLoadMore = state.hasMore && !state.isLoadingMore && !state.loadMoreFailed
+    val canLoadMore = state.hasMore && !state.isLoadingMore && !state.loadMoreFailed && !state.isRefreshing
     LaunchedEffect(listState, canLoadMore) {
         if (!canLoadMore) return@LaunchedEffect
         snapshotFlow {

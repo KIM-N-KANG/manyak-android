@@ -16,6 +16,8 @@ data class NoticeListUiState(
     val isLoading: Boolean = true,
     val notices: List<NoticeSummary> = emptyList(),
     val loadFailed: Boolean = false,
+    /** 목록을 그린 채로 다시 읽는 중. 골격이 아니라 당김 표시자가 이 상태를 말한다. */
+    val isRefreshing: Boolean = false,
     val nextCursor: String? = null,
     val isLoadingMore: Boolean = false,
     val loadMoreFailed: Boolean = false,
@@ -27,6 +29,9 @@ data class NoticeListUiState(
 
 sealed interface NoticeListIntent {
     data object Retry : NoticeListIntent
+
+    /** 목록을 당겨서 새로고침. 실패해도 보고 있던 목록을 지우지 않고 토스트로만 알린다. */
+    data object Refresh : NoticeListIntent
 
     /** 목록 끝에 닿았거나 목록 끝의 다시 시도를 눌렀다. */
     data object LoadMore : NoticeListIntent
@@ -41,6 +46,10 @@ sealed interface NoticeListEvent {
 
     data object LoadFailed : NoticeListEvent
 
+    data object RefreshStarted : NoticeListEvent
+
+    data object RefreshFailed : NoticeListEvent
+
     data object LoadMoreStarted : NoticeListEvent
 
     data class MoreLoaded(
@@ -54,6 +63,10 @@ sealed interface NoticeListEvent {
     ) : NoticeListEvent
 }
 
+sealed interface NoticeListEffect {
+    data object ShowRefreshFailed : NoticeListEffect
+}
+
 /** 공지 목록. 게시 최신순 커서 페이지를 이어 읽는다. 목록을 보는 것은 읽음이 아니라 여기서는 읽음을 기록하지 않는다. */
 @HiltViewModel
 class NoticeListViewModel
@@ -61,7 +74,7 @@ class NoticeListViewModel
     constructor(
         private val noticeRepository: NoticeRepository,
         readRepository: NoticeReadRepository,
-    ) : MviViewModel<NoticeListIntent, NoticeListUiState, NoticeListEvent, Nothing>(NoticeListUiState()) {
+    ) : MviViewModel<NoticeListIntent, NoticeListUiState, NoticeListEvent, NoticeListEffect>(NoticeListUiState()) {
         private var pageJob: Job? = null
 
         init {
@@ -74,18 +87,25 @@ class NoticeListViewModel
         override suspend fun handleIntent(intent: NoticeListIntent) {
             when (intent) {
                 NoticeListIntent.Retry -> if (pageJob?.isActive != true) loadFirstPage()
+                NoticeListIntent.Refresh -> loadFirstPage(refresh = true)
                 NoticeListIntent.LoadMore -> loadNextPage()
             }
         }
 
-        private fun loadFirstPage() {
+        private fun loadFirstPage(refresh: Boolean = false) {
             pageJob?.cancel()
             pageJob =
                 viewModelScope.launch {
-                    dispatchEvent(NoticeListEvent.LoadStarted)
+                    dispatchEvent(if (refresh) NoticeListEvent.RefreshStarted else NoticeListEvent.LoadStarted)
                     when (val result = noticeRepository.notices()) {
                         is DomainResult.Success -> dispatchEvent(NoticeListEvent.Loaded(result.value))
-                        is DomainResult.Failure -> dispatchEvent(NoticeListEvent.LoadFailed)
+                        is DomainResult.Failure ->
+                            if (refresh) {
+                                dispatchEvent(NoticeListEvent.RefreshFailed)
+                                dispatchEffect(NoticeListEffect.ShowRefreshFailed)
+                            } else {
+                                dispatchEvent(NoticeListEvent.LoadFailed)
+                            }
                     }
                 }
         }
@@ -110,7 +130,20 @@ class NoticeListViewModel
         ): NoticeListUiState =
             when (event) {
                 NoticeListEvent.LoadStarted ->
-                    state.copy(isLoading = true, loadFailed = false, isLoadingMore = false, loadMoreFailed = false)
+                    state.copy(
+                        isLoading = true,
+                        loadFailed = false,
+                        isRefreshing = false,
+                        isLoadingMore = false,
+                        loadMoreFailed = false,
+                    )
+
+                // 진행 중이던 다음 페이지는 취소됐다.
+                NoticeListEvent.RefreshStarted ->
+                    state.copy(isRefreshing = true, isLoadingMore = false, loadMoreFailed = false)
+
+                // 새로고침 실패는 보고 있던 목록을 건드리지 않는다 — 알림은 토스트가 맡는다.
+                NoticeListEvent.RefreshFailed -> state.copy(isRefreshing = false)
 
                 is NoticeListEvent.Loaded ->
                     state.copy(
@@ -118,10 +151,17 @@ class NoticeListViewModel
                         notices = event.page.items.distinctBy { it.id },
                         nextCursor = event.page.nextCursor,
                         loadFailed = false,
+                        isRefreshing = false,
                     )
 
                 NoticeListEvent.LoadFailed ->
-                    state.copy(isLoading = false, notices = emptyList(), nextCursor = null, loadFailed = true)
+                    state.copy(
+                        isLoading = false,
+                        notices = emptyList(),
+                        nextCursor = null,
+                        loadFailed = true,
+                        isRefreshing = false,
+                    )
 
                 NoticeListEvent.LoadMoreStarted -> state.copy(isLoadingMore = true, loadMoreFailed = false)
 
