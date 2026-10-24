@@ -27,9 +27,11 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.notification.inbox.entity.InboxNotification
-import java.time.Instant
-import java.time.ZoneId
-import java.time.temporal.ChronoUnit
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
+import java.util.concurrent.TimeUnit
 import app.manyak.notification.R as NotificationR
 
 @Composable
@@ -144,12 +146,13 @@ internal data class NotificationTime(
 internal fun notificationTimeValue(
     at: Long,
     now: Long,
-    zone: ZoneId = ZoneId.systemDefault(),
+    zone: TimeZone = TimeZone.getDefault(),
 ): NotificationTime {
     val minutes = ((now - at) / MILLIS_PER_MINUTE).coerceAtLeast(0)
-    val date = Instant.ofEpochMilli(at).atZone(zone).toLocalDate()
-    val today = Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
-    val days = ChronoUnit.DAYS.between(date, today)
+    val dayMillis = TimeUnit.DAYS.toMillis(1)
+    val days =
+        Math.floorDiv(now + zone.getOffset(now), dayMillis) -
+            Math.floorDiv(at + zone.getOffset(at), dayMillis)
     return when {
         minutes < 1 -> NotificationTime(NotificationR.string.inbox_just_now)
         minutes < MINUTES_PER_HOUR -> NotificationTime(NotificationR.string.inbox_minutes_ago, minutes)
@@ -161,7 +164,10 @@ internal fun notificationTimeValue(
         days == 0L -> NotificationTime(NotificationR.string.inbox_today)
         days == 1L -> NotificationTime(NotificationR.string.inbox_yesterday)
         days < RELATIVE_DAY_LIMIT -> NotificationTime(NotificationR.string.inbox_days_ago, days)
-        else -> NotificationTime(date = date.toString())
+        else ->
+            NotificationTime(
+                date = SimpleDateFormat("yyyy-MM-dd", Locale.US).apply { timeZone = zone }.format(Date(at)),
+            )
     }
 }
 

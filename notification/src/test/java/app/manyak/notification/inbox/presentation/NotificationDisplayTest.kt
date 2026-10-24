@@ -9,7 +9,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 import java.time.Instant
-import java.time.ZoneId
+import java.util.TimeZone
 import app.manyak.notification.R as NotificationR
 
 class NotificationDisplayTest {
@@ -33,8 +33,32 @@ class NotificationDisplayTest {
         assertNull(item.copy(type = "UNKNOWN").labelRes())
     }
 
+    @Test fun `일광 절약 시간 전환과 연도 경계에서도 달력 날짜 차이를 사용한다`() {
+        fun time(
+            at: String,
+            now: String,
+            zone: String,
+        ) = notificationTimeValue(
+            Instant.parse(at).toEpochMilli(),
+            Instant.parse(now).toEpochMilli(),
+            TimeZone.getTimeZone(zone),
+        )
+        assertEquals(
+            NotificationR.string.inbox_yesterday,
+            time("2026-03-08T05:30:00Z", "2026-03-09T04:15:00Z", "America/New_York").label,
+        )
+        assertEquals(
+            NotificationR.string.inbox_yesterday,
+            time("2026-11-01T04:30:00Z", "2026-11-02T05:15:00Z", "America/New_York").label,
+        )
+        assertEquals(
+            NotificationR.string.inbox_yesterday,
+            time("2025-12-31T01:00:00Z", "2026-01-01T01:00:00Z", "Asia/Seoul").label,
+        )
+    }
+
     @Test fun `웹과 같은 상대 시각 경계를 표시한다`() {
-        val zone = ZoneId.of("Asia/Seoul")
+        val zone = TimeZone.getTimeZone("Asia/Seoul")
         val now = Instant.parse("2026-10-24T14:00:00Z").toEpochMilli()
 
         fun at(minutes: Long) = notificationTimeValue(now - minutes * 60_000, now, zone)

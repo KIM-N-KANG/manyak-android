@@ -22,7 +22,7 @@
 
 - notification, notice, navigation, app의 `ktlintCheck`, `detekt`, Kotlin 컴파일 통과
 - `checkModuleArchitecture` 통과
-- 단위 테스트 91개 통과: notification 45개, notice 15개, navigation 15개, app 16개
+- 단위 테스트 92개 통과: notification 46개, notice 15개, navigation 15개, app 16개
 - `installDebug`로 Pixel 10 에뮬레이터에 설치했습니다.
 - `NotificationInboxUiTest`의 기본 흐름 통과: 소식과 활동 전환, 화면 상태 복원, 다크 모드, 모두 읽음, 알림 설정과 공지 목적지 콜백
 - 테스트 Repository 데이터로 UI를 확인하고 `adb exec-out screencap -p`로 복원 전후, 테마 전후, 읽음 전후를 캡처해 비교했습니다. Activity 회전이나 실제 회원 API를 통한 전체 흐름은 확인하지 않았습니다.
@@ -43,3 +43,5 @@
 - compact 버튼 변경 후 designsystem과 notification의 ktlintCheck, detekt 및 installDebug가 통과했습니다. 에뮬레이터 화면 캡처로 버튼 크기를 확인했습니다.
 
 - PR 준비 시 로딩, 조회 실패 후 재시도, 빈 목록의 UI 검증과 캡처를 추가했습니다.
+
+- CI의 Android API 24 호환성 검사에서 발견한 java.time 사용을 기존 날짜 처리 방식인 SimpleDateFormat과 TimeZone으로 교체했습니다. 일광 절약 시간과 연도 경계 회귀 테스트를 추가했습니다.
