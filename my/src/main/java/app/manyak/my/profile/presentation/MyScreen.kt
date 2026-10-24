@@ -1,12 +1,10 @@
 package app.manyak.my.profile.presentation
 
 import android.widget.Toast
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -41,6 +39,8 @@ import app.manyak.my.profile.presentation.component.InviteMenuItem
 import app.manyak.my.profile.presentation.component.LinkedToOtherUserDialog
 import app.manyak.my.profile.presentation.component.MenuTrailingIcon
 import app.manyak.my.profile.presentation.component.MyMenuItem
+import app.manyak.my.profile.presentation.component.MySection
+import app.manyak.my.profile.presentation.component.NotificationSection
 import app.manyak.my.profile.presentation.component.ProfileHeader
 import app.manyak.common.R as CommonR
 import app.manyak.designsystem.R as DesignsystemR
@@ -60,7 +60,10 @@ fun MyScreen(
     onOpenCreditCharge: () -> Unit,
     onOpenPersonas: () -> Unit,
     onOpenNotificationSettings: () -> Unit,
+    onOpenNotices: () -> Unit,
     onOpenProfileEdit: () -> Unit,
+    /** 안 읽은 공지가 있으면 공지사항 메뉴에 "새 공지" 배지. 판정은 셸이 소유해 헤더 점과 같은 값이다. */
+    hasUnreadNotice: Boolean,
     modifier: Modifier = Modifier,
     viewModel: MyViewModel = hiltViewModel(),
 ) {
@@ -111,7 +114,9 @@ fun MyScreen(
         onOpenCreditCharge = onOpenCreditCharge,
         onOpenPersonas = onOpenPersonas,
         onOpenNotificationSettings = onOpenNotificationSettings,
+        onOpenNotices = onOpenNotices,
         onOpenProfileEdit = onOpenProfileEdit,
+        hasUnreadNotice = hasUnreadNotice,
         contentPadding = contentPadding,
         modifier = modifier,
     )
@@ -158,7 +163,9 @@ private fun MyContent(
     onOpenCreditCharge: () -> Unit,
     onOpenPersonas: () -> Unit,
     onOpenNotificationSettings: () -> Unit,
+    onOpenNotices: () -> Unit,
     onOpenProfileEdit: () -> Unit,
+    hasUnreadNotice: Boolean,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
 ) {
@@ -187,14 +194,11 @@ private fun MyContent(
         MySection(labelRes = MyR.string.my_section_display) {
             ThemeMenuItem(themeMode = state.themeMode, onClick = { onIntent(MyIntent.CycleTheme) })
         }
-        MySection(labelRes = MyR.string.my_section_notification) {
-            MyMenuItem(
-                iconRes = DesignsystemR.drawable.ic_bell,
-                labelRes = MyR.string.my_notification_settings,
-                onClick = onOpenNotificationSettings,
-                trailing = { MenuTrailingIcon(iconRes = DesignsystemR.drawable.ic_chevron_right) },
-            )
-        }
+        NotificationSection(
+            hasUnreadNotice = hasUnreadNotice,
+            onOpenNotificationSettings = onOpenNotificationSettings,
+            onOpenNotices = onOpenNotices,
+        )
         MySection(labelRes = MyR.string.my_section_etc) {
             MyMenuItem(
                 iconRes = DesignsystemR.drawable.ic_info,
@@ -293,26 +297,6 @@ private fun AccountSection(
 }
 
 @Composable
-private fun MySection(
-    @StringRes labelRes: Int,
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
-    Column(modifier = modifier.fillMaxWidth()) {
-        Text(
-            modifier =
-                Modifier
-                    .padding(horizontal = ManyakTheme.spacing.gutter)
-                    .padding(bottom = ManyakTheme.spacing.compact),
-            text = stringResource(labelRes),
-            style = ManyakTheme.typography.labelLarge,
-            color = ManyakTheme.colors.text,
-        )
-        content()
-    }
-}
-
-@Composable
 private fun AppVersionMenuItem(modifier: Modifier = Modifier) {
     MyMenuItem(
         iconRes = DesignsystemR.drawable.ic_programming,
@@ -396,7 +380,9 @@ private fun MyScreenPreview() {
             onOpenCreditCharge = {},
             onOpenPersonas = {},
             onOpenNotificationSettings = {},
+            onOpenNotices = {},
             onOpenProfileEdit = {},
+            hasUnreadNotice = true,
             contentPadding = PaddingValues(0.dp),
         )
     }

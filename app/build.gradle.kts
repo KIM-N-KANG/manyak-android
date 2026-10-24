@@ -178,6 +178,7 @@ dependencies {
     implementation(projects.create)
     implementation(projects.story)
     implementation(projects.notification)
+    implementation(projects.notice)
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)

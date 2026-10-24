@@ -56,6 +56,7 @@ import app.manyak.core.navigation.MyFeedbackRoute
 import app.manyak.core.navigation.MyInviteRoute
 import app.manyak.core.navigation.MyOpenSourceLicenseRoute
 import app.manyak.core.navigation.MyPersonasRoute
+import app.manyak.core.navigation.NoticeListRoute
 import app.manyak.core.navigation.NotificationSettingsRoute
 import app.manyak.core.navigation.PersonaCreateRoute
 import app.manyak.core.navigation.PersonaEditRoute
@@ -317,10 +318,12 @@ private fun MainNavDisplay(
                         onOpenCreditCharge = { backStack.push(MyCreditChargeRoute) },
                         onOpenPersonas = { backStack.push(MyPersonasRoute) },
                         onOpenNotificationSettings = { backStack.push(NotificationSettingsRoute) },
+                        onOpenNotices = { backStack.push(NoticeListRoute) },
                         onOpenProfileEdit = { backStack.push(ProfileEditRoute) },
                     )
                 }
                 myDestinationEntries(backStack)
+                noticeEntries(backStack)
                 storyDetailEntry(backStack) { selectedTab = MainTab.STUDIO }
                 generalStoryEntries(backStack) {
                     selectedTab = MainTab.STUDIO
