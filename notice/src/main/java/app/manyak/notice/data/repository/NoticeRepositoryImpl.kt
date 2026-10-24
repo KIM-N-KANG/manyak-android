@@ -31,7 +31,7 @@ class NoticeRepositoryImpl
 private fun NoticePageDto.toEntity() = NoticePage(items = items.map { it.toEntity() }, nextCursor = nextCursor)
 
 private fun NoticeItemDto.toEntity() =
-    NoticeSummary(id = noticeId, title = title, publishedAtMillis = publishedAt?.toEpochMillisOrNull())
+    NoticeSummary(id = noticeId, title = title, publishedAtMillis = publishedAt?.toEpochMillisOrNull(), tag = tag)
 
 private fun NoticeDetailDto.toEntity() =
     NoticeDetail(
@@ -40,4 +40,5 @@ private fun NoticeDetailDto.toEntity() =
         body = body,
         publishedAtMillis = publishedAt?.toEpochMillisOrNull(),
         updatedAtMillis = updatedAt?.toEpochMillisOrNull(),
+        tag = tag,
     )

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="notice_title">공지사항</string>
-    <string name="notice_header_button_unread">새 공지사항 있음</string>
     <string name="notice_new_badge">새 공지</string>
     <string name="notice_list_loading">공지사항을 불러오는 중</string>
     <string name="notice_list_empty">아직 등록된 공지가 없어요</string>
@@ -11,4 +10,9 @@
     <string name="notice_back_to_list">공지사항 목록으로</string>
     <string name="notice_published_at">게시 %1$s</string>
     <string name="notice_updated_at">수정 %1$s</string>
+    <string name="notice_tag_service">서비스</string>
+    <string name="notice_tag_update">업데이트</string>
+    <string name="notice_tag_maintenance">점검</string>
+    <string name="notice_tag_event">이벤트</string>
+    <string name="notice_tag_promotion">혜택</string>
 </resources>

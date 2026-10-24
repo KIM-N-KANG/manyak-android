@@ -12,6 +12,7 @@ data class NoticePageDto(
 data class NoticeItemDto(
     val noticeId: String,
     val title: String,
+    val tag: String? = null,
     val publishedAt: String? = null,
 )
 
@@ -19,6 +20,7 @@ data class NoticeItemDto(
 data class NoticeDetailDto(
     val noticeId: String,
     val title: String,
+    val tag: String? = null,
     val body: String = "",
     val publishedAt: String? = null,
     val updatedAt: String? = null,

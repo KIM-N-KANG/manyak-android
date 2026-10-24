@@ -10,6 +10,7 @@ import java.net.URISyntaxException
  * `android.net.Uri` 가 아니라 `java.net.URI` 를 쓰는 이유는 JVM 유닛 테스트에서 전자가 빈 스텁이라서다.
  */
 object DeepLink {
+    private const val HTTPS_PORT = 443
     private val allowedHosts = setOf("manyak.app", "www.manyak.app")
 
     fun routeOf(url: String): NavKey? {
@@ -20,6 +21,7 @@ object DeepLink {
                 return null
             }
         if (uri.scheme != "https" || uri.host?.lowercase() !in allowedHosts) return null
+        if (uri.userInfo != null || uri.port !in listOf(-1, HTTPS_PORT)) return null
         val segments =
             uri.path
                 .orEmpty()

@@ -42,6 +42,9 @@ class DeepLinkTest {
         assertNull(DeepLink.routeOf("http://manyak.app/stories/s1"))
         assertNull(DeepLink.routeOf("manyak.app/stories/s1"))
         assertNull(DeepLink.routeOf("not a url"))
+        assertNull(DeepLink.routeOf("https://manyak.app:8443/studio"))
+        assertNull(DeepLink.routeOf("https://user@manyak.app/studio"))
+        assertEquals(StudioRoute, DeepLink.routeOf("https://manyak.app:443/studio"))
     }
 
     @Test

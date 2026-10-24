@@ -5,6 +5,7 @@ data class NoticeSummary(
     val id: String,
     val title: String,
     val publishedAtMillis: Long?,
+    val tag: String? = null,
 )
 
 data class NoticePage(
@@ -19,4 +20,5 @@ data class NoticeDetail(
     val body: String,
     val publishedAtMillis: Long?,
     val updatedAtMillis: Long?,
+    val tag: String? = null,
 )
