@@ -115,13 +115,13 @@ private fun NoticeDates(
     Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.component)) {
         Text(
             text = stringResource(NoticeR.string.notice_published_at, formatNoticeDate(published)),
-            style = ManyakTheme.typography.bodySmall,
+            style = ManyakTheme.typography.bodyMedium,
             color = ManyakTheme.colors.textSubtle,
         )
         notice.updatedDateOrNull()?.let { updated ->
             Text(
                 text = stringResource(NoticeR.string.notice_updated_at, updated),
-                style = ManyakTheme.typography.bodySmall,
+                style = ManyakTheme.typography.bodyMedium,
                 color = ManyakTheme.colors.textSubtle,
             )
         }

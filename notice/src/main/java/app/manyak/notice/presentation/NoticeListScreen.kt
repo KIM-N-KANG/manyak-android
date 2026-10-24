@@ -209,7 +209,7 @@ private fun NoticeRow(
         notice.publishedAtMillis?.let { publishedAt ->
             Text(
                 text = formatNoticeDate(publishedAt),
-                style = ManyakTheme.typography.bodySmall,
+                style = ManyakTheme.typography.bodyMedium,
                 color = ManyakTheme.colors.textSubtle,
             )
         }
