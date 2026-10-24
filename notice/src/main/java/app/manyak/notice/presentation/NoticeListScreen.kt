@@ -37,6 +37,7 @@ import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -45,6 +46,7 @@ import app.manyak.designsystem.component.LoadMoreFooter
 import app.manyak.designsystem.component.SkeletonPlaceholder
 import app.manyak.designsystem.component.rememberDelayedProgressVisibility
 import app.manyak.designsystem.component.rememberSkeletonPulseAlpha
+import app.manyak.designsystem.component.withRowListMargins
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.notice.domain.isUnread
 import app.manyak.notice.entity.NoticeSummary
@@ -119,7 +121,8 @@ private fun NoticeRows(
     LazyColumn(
         modifier = modifier.fillMaxWidth(),
         state = listState,
-        contentPadding = PaddingValues(vertical = ManyakTheme.spacing.compact),
+        // 채팅·제작 목록과 같은 리듬 — 위 여백 없이 줄 여백만, 아래는 줄 여백과 같은 값.
+        contentPadding = PaddingValues(0.dp).withRowListMargins(),
     ) {
         items(state.notices, key = NoticeSummary::id) { notice ->
             NoticeRow(
@@ -174,7 +177,7 @@ private fun NoticeRow(
                 .clickable(
                     role = Role.Button,
                     onClick = onClick,
-                ).padding(horizontal = ManyakTheme.spacing.gutter, vertical = ManyakTheme.spacing.component),
+                ).padding(horizontal = ManyakTheme.spacing.gutter, vertical = ManyakTheme.spacing.compact),
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
     ) {
         Text(
@@ -223,7 +226,6 @@ private fun NoticeListSkeleton(modifier: Modifier = Modifier) {
     Column(
         modifier =
             modifier
-                .padding(vertical = ManyakTheme.spacing.compact)
                 .semantics { contentDescription = loading },
     ) {
         repeat(SKELETON_ROWS) { index ->
@@ -231,7 +233,7 @@ private fun NoticeListSkeleton(modifier: Modifier = Modifier) {
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = ManyakTheme.spacing.gutter, vertical = ManyakTheme.spacing.component),
+                        .padding(horizontal = ManyakTheme.spacing.gutter, vertical = ManyakTheme.spacing.compact),
                 verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
             ) {
                 SkeletonPlaceholder(
