@@ -1,6 +1,7 @@
 package app.manyak.designsystem.component
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -13,22 +14,28 @@ import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.designsystem.R as DesignsystemR
 
 /**
- * 로고만 두는 헤더. 홈은 브랜드가 곧 그 자리의 이름이라 "홈" 을 따로 적지 않는다.
+ * 로고를 두는 헤더. 홈은 브랜드가 곧 그 자리의 이름이라 "홈" 을 따로 적지 않는다.
+ *
+ * @param actions 오른쪽 끝의 아이콘 버튼들. 공지사항 버튼처럼 탭과 무관하게 늘 같은 자리에 있는 것만 둔다.
  */
 @Composable
-fun ManyakBrandHeader(modifier: Modifier = Modifier) {
-    HeaderBar(modifier = modifier) { ManyakLogo() }
+fun ManyakBrandHeader(
+    modifier: Modifier = Modifier,
+    actions: @Composable RowScope.() -> Unit = {},
+) {
+    HeaderBar(modifier = modifier, actions = actions) { ManyakLogo() }
 }
 
 /**
- * 현재 섹션 이름만 두는 헤더. 홈이 아닌 탭에서는 로고가 지금 어디인지 알려 주지 않으므로 두지 않는다.
+ * 현재 섹션 이름을 두는 헤더. 홈이 아닌 탭에서는 로고가 지금 어디인지 알려 주지 않으므로 두지 않는다.
  */
 @Composable
 fun ManyakSectionHeader(
     @StringRes titleRes: Int,
     modifier: Modifier = Modifier,
+    actions: @Composable RowScope.() -> Unit = {},
 ) {
-    HeaderBar(modifier = modifier) {
+    HeaderBar(modifier = modifier, actions = actions) {
         Text(
             text = stringResource(titleRes),
             style = ManyakTheme.typography.titleLarge,
@@ -54,11 +61,13 @@ fun ManyakSectionHeader(
 @Composable
 private fun HeaderBar(
     modifier: Modifier = Modifier,
+    actions: @Composable RowScope.() -> Unit = {},
     title: @Composable () -> Unit,
 ) {
     TopAppBar(
         modifier = modifier,
         title = title,
+        actions = actions,
         colors =
             TopAppBarDefaults.topAppBarColors(
                 containerColor = ManyakTheme.colors.surface,

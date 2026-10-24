@@ -157,7 +157,7 @@ class ModuleArchitecture : AutoCloseable {
     companion object {
         private val externalPrefixes = setOf("android.", "androidx.", "okhttp3.", "retrofit2.")
         private val features =
-            setOf("home", "chat", "studio", "story", "login", "legal", "my", "create", "notification")
+            setOf("home", "chat", "studio", "story", "login", "legal", "my", "create", "notification", "notice")
         private val infrastructure = setOf("common", "designsystem", "navigation", "analytics", "network", "auth")
         val allowedDependencies: Map<String, Set<String>> =
             buildMap {

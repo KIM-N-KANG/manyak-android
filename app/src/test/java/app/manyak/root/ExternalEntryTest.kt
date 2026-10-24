@@ -5,6 +5,8 @@ import app.manyak.auth.entity.SessionState
 import app.manyak.common.entity.user.AccountStatus
 import app.manyak.common.entity.user.UserProfile
 import app.manyak.core.navigation.MainTabsRoute
+import app.manyak.core.navigation.NoticeDetailRoute
+import app.manyak.core.navigation.NoticeListRoute
 import app.manyak.core.navigation.PushEntry
 import app.manyak.core.navigation.StoryDetailRoute
 import app.manyak.core.navigation.StudioRoute
@@ -30,6 +32,13 @@ class ExternalEntryTest {
         assertEquals(MainTab.STUDIO, stack.openExternalDestination(StudioRoute))
         assertEquals(listOf(MainTabsRoute), stack)
         assertEquals(MainTab.HOME, stack.openExternalDestination(MainTabsRoute))
+    }
+
+    @Test
+    fun `공지 상세 진입은 목록을 먼저 쌓아 뒤로가기가 목록으로 간다`() {
+        val stack = mutableListOf<NavKey>(MainTabsRoute, StoryDetailRoute("story"))
+        assertNull(stack.openExternalDestination(NoticeDetailRoute("n1")))
+        assertEquals(listOf(MainTabsRoute, NoticeListRoute, NoticeDetailRoute("n1")), stack)
     }
 
     private val entry = PushEntry(PushEntry.TYPE_STORY_COMPLETED, "s1", "me")

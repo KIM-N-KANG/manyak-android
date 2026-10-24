@@ -175,6 +175,8 @@ sizes:
   tour-card-width: 288dp
   tour-step-dot: 6dp
   studio-cover-width: 128dp
+  unread-dot: 8dp
+  unread-dot-inline: 6dp
 
 spacing:
   hairline: 2dp
@@ -294,6 +296,15 @@ components:
     typography: "{typography.body-small}"
     rounded: "{rounded.pill}"
     padding: "{spacing.hairline} {spacing.compact}"
+  badge-danger:
+    backgroundColor: "{colors.background-danger-subtle}"
+    textColor: "{colors.text-danger}"
+    typography: "{typography.body-small}"
+    rounded: "{rounded.pill}"
+    padding: "{spacing.hairline} {spacing.compact}"
+  unread-dot:
+    color: "{colors.background-danger-bold}"
+    ring: "{colors.surface} {spacing.hairline}"
   credit-amount:
     markAsset: "res/drawable-nodpi/if_credit_mark.png"
     markSize: "옆 글자의 fontSize"
@@ -665,6 +676,8 @@ components:
 | `{sizes.tour-card-width}` | 288dp | 채팅 안내 투어 카드의 폭. 좁은 화면에서는 좌우 `{spacing.gutter}`를 남기고 줄어든다 |
 | `{sizes.tour-step-dot}` | 6dp | 채팅 안내 투어 카드의 스텝 점 지름 |
 | `{sizes.studio-cover-width}` | 128dp | 제작 탭의 스토리, 초안, 검수 제출본 표지 폭 |
+| `{sizes.unread-dot}` | 8dp | 헤더 공지 버튼 아이콘 오른쪽 위의 안 읽음 점 지름 |
+| `{sizes.unread-dot-inline}` | 6dp | 공지 목록 제목 끝에 붙는 안 읽음 점 지름 |
 
 `{sizes.tab-icon}`이 `{sizes.icon}`보다 큰 이유는 놓이는 자리가 다르기 때문이다. `{sizes.icon}`은 같은 줄의
 라벨 옆에 붙어 글자 크기에 맞추지만, 탭 아이콘은 라벨 위에 놓인 탭의 주된 시각 요소다. 웹 하단
@@ -882,6 +895,10 @@ components:
 **`credit-amount`** — `res/drawable-nodpi/if_credit_mark.png`(웹 `if-credit-mark.png` 원본 128px). 이프 수치(잔액·채팅 턴 비용·완성 비용·실시간 이미지 비용) 앞에 `{spacing.inline}` 간격으로 붙이고, 크기는 옆 글자의 `fontSize`를 dp로 바꾼 값이라 큰 글자에서 같이 커진다. 장식이라 접근성 이름을 두지 않는다 — 글자가 수치를 읽는다. 체험이 남아 깎인 비용은 정가에 취소선을 긋고 오른쪽에 적용가를 둔다(~~80~~ 0 이프). 정책·잔여를 못 받은 동안은 자리표시 숫자에 골격 맥박을 얹는다. `CreditAmountText`를 쓴다.
 
 **`badge-neutral`** — 채팅 설정 시트의 실시간 이미지 비용처럼 상태가 아니라 정보인 배지. `badge`의 초록 대신 `{colors.background-neutral}` 위에 `{colors.text-subtle}`로, 모양·여백은 같다.
+
+**`badge-danger`** — 마이 공지사항 메뉴의 "새 공지" 처럼 들어가 보라는 신호. `{colors.background-danger-subtle}` 위에 `{colors.text-danger}`로, 모양·여백은 `badge`와 같다. 색만으로 말하지 않도록 글자가 들어간다.
+
+**`unread-dot`** — 안 읽은 공지 표시. 헤더 종 버튼은 아이콘 오른쪽 위에 `{sizes.unread-dot}` 지름의 `{colors.background-danger-bold}` 원을 `{colors.surface}` `{spacing.hairline}` 테두리로 띄워 찍고 접근 이름을 "새 공지사항 있음"으로 바꾼다. 목록 줄은 제목 끝에 `{sizes.unread-dot-inline}` 지름의 같은 색 점을 인라인으로 붙이고 보조 기술 이름은 "새 공지"다. 점만 있는 줄은 두지 않는다. 제목이 함께 굵어진다.
 
 **`logo-kakao`** — `res/drawable/ic_logo_kakao.xml`. 카카오 말풍선 심벌은 노란 컨테이너 `#FEE500` 위에 검정으로 올립니다(로그인 버튼). 이 노랑은 카카오가 정한 값이라 토큰 팔레트에 넣지 않았습니다. **컨테이너 없이 놓을 때는 `{colors.text}` 단색으로 칠합니다**(`{component.provider-chip}`) — 검정 그대로 두면 다크 모드에서 배경에 묻힙니다. 구글 로고와 달리 카카오는 단색 사용을 허용하므로 이 자리에서만 재색칠합니다.
 

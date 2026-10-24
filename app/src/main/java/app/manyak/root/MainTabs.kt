@@ -1,6 +1,7 @@
 package app.manyak.root
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -8,6 +9,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavEntry
@@ -29,6 +33,9 @@ import app.manyak.designsystem.component.ManyakSectionHeader
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.home.presentation.HomeScreen
 import app.manyak.my.profile.presentation.MyScreen
+import app.manyak.notice.presentation.NoticeHeaderButton
+import app.manyak.notice.presentation.NoticeUnreadIntent
+import app.manyak.notice.presentation.NoticeUnreadViewModel
 import app.manyak.studio.presentation.StudioScreen
 
 /**
@@ -58,20 +65,32 @@ internal fun MainTabsScreen(
     onOpenCreditCharge: () -> Unit,
     onOpenPersonas: () -> Unit,
     onOpenNotificationSettings: () -> Unit,
+    onOpenNotices: () -> Unit,
     onOpenProfileEdit: () -> Unit,
     modifier: Modifier = Modifier,
+    noticeUnreadViewModel: NoticeUnreadViewModel = hiltViewModel(),
 ) {
     val backStacks = rememberTabBackStacks()
+    // 안 읽은 공지 판정은 셸 수명이다 — 헤더 점과 마이 배지가 같은 값을 보고, 상세에서 돌아오면 함께 꺼진다.
+    val hasUnreadNotice by noticeUnreadViewModel.uiState.collectAsStateWithLifecycle()
+    LifecycleResumeEffect(noticeUnreadViewModel) {
+        noticeUnreadViewModel.onIntent(NoticeUnreadIntent.Refresh)
+        onPauseOrDispose {}
+    }
 
     Scaffold(
         modifier = modifier,
         containerColor = ManyakTheme.colors.surface,
-        // 홈은 로고가 그 자리의 이름을 대신하고, 나머지 탭은 이름만 둔다.
+        // 홈은 로고가 그 자리의 이름을 대신하고, 나머지 탭은 이름만 둔다. 마이 헤더에는 공지 버튼을 두지 않는다 —
+        // 마이 안의 알림 섹션이 같은 목적지를 연다.
         topBar = {
-            if (selectedTab == MainTab.HOME) {
-                ManyakBrandHeader()
-            } else {
-                ManyakSectionHeader(titleRes = selectedTab.nameRes)
+            val noticeButton: @Composable RowScope.() -> Unit = {
+                NoticeHeaderButton(hasUnread = hasUnreadNotice.hasUnread, onClick = onOpenNotices)
+            }
+            when (selectedTab) {
+                MainTab.HOME -> ManyakBrandHeader(actions = noticeButton)
+                MainTab.MY -> ManyakSectionHeader(titleRes = selectedTab.nameRes)
+                else -> ManyakSectionHeader(titleRes = selectedTab.nameRes, actions = noticeButton)
             }
         },
         bottomBar = {
@@ -104,7 +123,9 @@ internal fun MainTabsScreen(
             onOpenCreditCharge = onOpenCreditCharge,
             onOpenPersonas = onOpenPersonas,
             onOpenNotificationSettings = onOpenNotificationSettings,
+            onOpenNotices = onOpenNotices,
             onOpenProfileEdit = onOpenProfileEdit,
+            hasUnreadNotice = hasUnreadNotice.hasUnread,
         )
     }
 }
@@ -154,12 +175,15 @@ private fun MainTabsContent(
     onOpenCreditCharge: () -> Unit,
     onOpenPersonas: () -> Unit,
     onOpenNotificationSettings: () -> Unit,
+    onOpenNotices: () -> Unit,
     onOpenProfileEdit: () -> Unit,
+    hasUnreadNotice: Boolean,
 ) {
     // 목적지는 백스택이 바뀔 때만 다시 만들어지므로, 그 사이에 바뀌는 여백을 값으로 붙잡으면 오래된 값이
     // 화면에 남는다. 상태로 넘겨 화면이 그릴 때마다 현재 값을 읽게 한다.
     val padding = rememberUpdatedState(contentPadding)
     val studioRefresh = rememberUpdatedState(studioRefreshRequest)
+    val unreadNotice = rememberUpdatedState(hasUnreadNotice)
     val screenTransition = rememberTabCrossfade()
 
     val homeEntries =
@@ -199,7 +223,9 @@ private fun MainTabsContent(
                     onOpenCreditCharge = onOpenCreditCharge,
                     onOpenPersonas = onOpenPersonas,
                     onOpenNotificationSettings = onOpenNotificationSettings,
+                    onOpenNotices = onOpenNotices,
                     onOpenProfileEdit = onOpenProfileEdit,
+                    hasUnreadNotice = unreadNotice.value,
                 )
             }
         }

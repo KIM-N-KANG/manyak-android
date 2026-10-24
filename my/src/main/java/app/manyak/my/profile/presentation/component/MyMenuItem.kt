@@ -2,6 +2,7 @@ package app.manyak.my.profile.presentation.component
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -31,7 +32,8 @@ import app.manyak.my.R as MyR
  * 마이의 메뉴 줄. [onClick] 이 없으면 값만 보여 주는 행이다 — 버전처럼 열 곳이 없는 항목이 여기 해당한다.
  *
  * [subLabel] 은 라벨 아래에 강조색으로 붙어 라벨과 한 문장으로 이어 읽힌다. 아직 확정되지 않은 값을
- * 담고 있으면 [subLabelPending] 으로 알려 맥박을 준다.
+ * 담고 있으면 [subLabelPending] 으로 알려 맥박을 준다. [labelBadge] 는 라벨 오른쪽에 붙는 주의색 배지다 —
+ * 공지사항의 "새 공지" 처럼 들어가 보라는 신호에 쓴다.
  */
 @Composable
 @Suppress("LongParameterList")
@@ -44,6 +46,7 @@ internal fun MyMenuItem(
     contentColor: Color = ManyakTheme.colors.text,
     subLabel: String? = null,
     subLabelPending: Boolean = false,
+    labelBadge: String? = null,
     trailing: (@Composable () -> Unit)? = null,
 ) {
     val clickable =
@@ -68,11 +71,17 @@ internal fun MyMenuItem(
             tint = contentColor,
         )
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = stringResource(labelRes),
-                style = ManyakTheme.typography.bodyLarge,
-                color = contentColor,
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+            ) {
+                Text(
+                    text = stringResource(labelRes),
+                    style = ManyakTheme.typography.bodyLarge,
+                    color = contentColor,
+                )
+                labelBadge?.let { DangerBadge(text = it) }
+            }
             subLabel?.let {
                 Text(
                     modifier = Modifier.alpha(creditAmountAlpha(subLabelPending)),
@@ -84,6 +93,23 @@ internal fun MyMenuItem(
         }
         trailing?.invoke()
     }
+}
+
+/** 연한 빨간 바탕의 작은 배지. 색만으로 말하지 않도록 글자가 들어간다. */
+@Composable
+private fun DangerBadge(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        modifier =
+            modifier
+                .background(ManyakTheme.colors.backgroundDangerSubtle, ManyakTheme.shapes.pill)
+                .padding(horizontal = ManyakTheme.spacing.compact, vertical = ManyakTheme.spacing.hairline),
+        text = text,
+        style = ManyakTheme.typography.bodySmall,
+        color = ManyakTheme.colors.textDanger,
+    )
 }
 
 /** 목적지 이동·바깥 문서 열림을 알리는 오른쪽 끝 표시. */

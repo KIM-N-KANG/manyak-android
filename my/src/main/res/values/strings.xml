@@ -53,6 +53,8 @@
     <string name="my_link_succeeded">%1$s 계정을 연동했어요</string>
     <string name="my_logout">로그아웃</string>
     <string name="my_notification_settings">알림 설정</string>
+    <string name="my_notices">공지사항</string>
+    <string name="my_notice_new_badge">새 공지</string>
     <string name="my_open_source_license">오픈소스 라이선스</string>
     <string name="my_provider_google">Google</string>
     <string name="my_provider_kakao">카카오</string>

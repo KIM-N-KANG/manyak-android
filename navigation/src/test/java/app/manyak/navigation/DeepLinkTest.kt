@@ -2,6 +2,8 @@ package app.manyak.navigation
 
 import app.manyak.core.navigation.DeepLink
 import app.manyak.core.navigation.MyCreditChargeRoute
+import app.manyak.core.navigation.NoticeDetailRoute
+import app.manyak.core.navigation.NoticeListRoute
 import app.manyak.core.navigation.StoryDetailRoute
 import app.manyak.core.navigation.StudioRoute
 import org.junit.Assert.assertEquals
@@ -23,6 +25,14 @@ class DeepLinkTest {
         assertEquals(StoryDetailRoute("s1"), DeepLink.routeOf("https://www.manyak.app/stories/s1/"))
         assertEquals(MyCreditChargeRoute, DeepLink.routeOf("https://manyak.app/my/credits?tab=free"))
         assertEquals(MyCreditChargeRoute, DeepLink.routeOf("https://manyak.app/my/credits"))
+    }
+
+    @Test
+    fun `공지 목록과 상세 경로를 해석한다`() {
+        assertEquals(NoticeListRoute, DeepLink.routeOf("https://manyak.app/notices"))
+        assertEquals(NoticeDetailRoute("n1"), DeepLink.routeOf("https://manyak.app/notices/n1"))
+        assertEquals(NoticeDetailRoute("n1"), DeepLink.routeOf("https://www.manyak.app/notices/n1/?utm=push"))
+        assertNull(DeepLink.routeOf("https://manyak.app/notices/n1/extra"))
     }
 
     @Test

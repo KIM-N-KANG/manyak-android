@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    공지사항(마이 알림 섹션). 색은 사용처에서 tint 하므로 자산 자체는 단색으로 둔다.
+    원본: megaphone-03-stroke-rounded.svg (24×24, stroke 1.5).
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <path
+        android:pathData="M7,9V15"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <path
+        android:pathData="M7,9H6C5.0681,9 4.6022,9 4.2346,9.1522C3.7446,9.3552 3.3552,9.7446 3.1522,10.2346C3,10.6022 3,11.0681 3,12C3,12.9319 3,13.3978 3.1522,13.7654C3.3552,14.2554 3.7446,14.6448 4.2346,14.8478C4.6022,15 5.0681,15 6,15H7L15.0796,17.4239C16.0291,17.7087 16.5039,17.8512 16.9257,18.1014L16.9459,18.1135C17.3663,18.3663 17.7167,18.7167 18.4177,19.4177L18.5858,19.5858C18.7051,19.7051 18.7647,19.7647 18.831,19.8123C18.9561,19.9021 19.1003,19.9619 19.2523,19.9868C19.3327,20 19.4171,20 19.5858,20C19.9713,20 20.1641,20 20.3196,19.9475C20.6155,19.8477 20.8477,19.6155 20.9475,19.3196C21,19.1641 21,18.9713 21,18.5858V5.4142C21,5.0287 21,4.8359 20.9475,4.6804C20.8477,4.3845 20.6155,4.1523 20.3196,4.0525C20.1641,4 19.9713,4 19.5858,4C19.4171,4 19.3327,4 19.2523,4.0132C19.1003,4.0382 18.9561,4.0979 18.831,4.1877C18.7647,4.2353 18.7051,4.2949 18.5858,4.4142L18.4177,4.5823C17.7167,5.2833 17.3663,5.6337 16.9459,5.8865L16.9257,5.8986C16.5039,6.1488 16.0291,6.2913 15.0796,6.5761L7,9Z"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <path
+        android:pathData="M8,15.5V18.0458C8,19.1251 8.8749,20 9.9542,20C10.6075,20 11.2177,19.6735 11.5801,19.1298L13,17"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

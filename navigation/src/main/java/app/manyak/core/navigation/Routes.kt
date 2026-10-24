@@ -158,6 +158,22 @@ data class PersonaEditRoute(
 data object NotificationSettingsRoute : NavKey
 
 /**
+ * 공지사항 목록. 홈·채팅·제작 헤더의 종 버튼과 마이 알림 섹션이 진입점이고 `:notice` 가 화면을 소유한다.
+ * 셸 없이 [MainTabsRoute] 위에 쌓여 뒤로가기는 들어온 탭으로 돌아온다.
+ */
+@Serializable
+data object NoticeListRoute : NavKey
+
+/**
+ * 공지 상세. 목록 줄과 공지 게시 푸시의 `https://manyak.app/notices/{noticeId}` 가 진입점이다.
+ * 푸시로 바로 열 때는 [NoticeListRoute] 를 먼저 쌓아 뒤로가기가 목록으로 가게 한다.
+ */
+@Serializable
+data class NoticeDetailRoute(
+    val noticeId: String,
+) : NavKey
+
+/**
  * 웹이 정본인 공용 문서. **제품 백스택 밖에 두고 양쪽 백스택 모두에 등록해** 인증 상태와 무관하게 연다.
  * 뒤로가기는 진입한 화면으로 돌아가고, 여기서 임의의 메인 목적지로 이동하는 경로는 두지 않는다.
  */
