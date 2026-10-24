@@ -1,6 +1,7 @@
 package app.manyak.designsystem.component
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -21,9 +22,19 @@ fun ManyakNeutralButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    compact: Boolean = false,
 ) {
     Button(
-        modifier = modifier.heightIn(min = ManyakTheme.sizes.control),
+        modifier =
+            modifier.heightIn(
+                min = if (compact) ManyakTheme.sizes.controlCompact else ManyakTheme.sizes.control,
+            ),
+        contentPadding =
+            if (compact) {
+                PaddingValues(horizontal = ManyakTheme.spacing.controlHorizontal)
+            } else {
+                ButtonDefaults.ContentPadding
+            },
         enabled = enabled,
         onClick = onClick,
         shape = ManyakTheme.shapes.control,

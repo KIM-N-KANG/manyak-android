@@ -57,6 +57,7 @@ import app.manyak.core.navigation.MyInviteRoute
 import app.manyak.core.navigation.MyOpenSourceLicenseRoute
 import app.manyak.core.navigation.MyPersonasRoute
 import app.manyak.core.navigation.NoticeListRoute
+import app.manyak.core.navigation.NotificationInboxRoute
 import app.manyak.core.navigation.NotificationSettingsRoute
 import app.manyak.core.navigation.PersonaCreateRoute
 import app.manyak.core.navigation.PersonaEditRoute
@@ -281,6 +282,10 @@ private fun MainNavDisplay(
         if (destination == StudioRoute) studioRefreshRequest++
         onEntryConsumed()
     }
+    val openStudio: () -> Unit = {
+        selectedTab = MainTab.STUDIO
+        studioRefreshRequest++
+    }
     val slide = rememberScreenSlideTransitions()
     NavDisplay(
         backStack = backStack,
@@ -319,16 +324,15 @@ private fun MainNavDisplay(
                         onOpenPersonas = { backStack.push(MyPersonasRoute) },
                         onOpenNotificationSettings = { backStack.push(NotificationSettingsRoute) },
                         onOpenNotices = { backStack.push(NoticeListRoute) },
+                        onOpenNotifications = { backStack.push(NotificationInboxRoute) },
                         onOpenProfileEdit = { backStack.push(ProfileEditRoute) },
                     )
                 }
                 myDestinationEntries(backStack)
                 noticeEntries(backStack)
+                notificationInboxEntry(backStack, openStudio)
                 storyDetailEntry(backStack) { selectedTab = MainTab.STUDIO }
-                generalStoryEntries(backStack) {
-                    selectedTab = MainTab.STUDIO
-                    studioRefreshRequest++
-                }
+                generalStoryEntries(backStack, openStudio)
                 creationFunnelEntries(backStack) { selectedTab = MainTab.STUDIO }
                 chatRoomEntry(backStack) { selectedTab = MainTab.CHAT }
                 legalEntry(backStack)

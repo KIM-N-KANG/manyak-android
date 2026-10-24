@@ -33,9 +33,10 @@ import app.manyak.designsystem.component.ManyakSectionHeader
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.home.presentation.HomeScreen
 import app.manyak.my.profile.presentation.MyScreen
-import app.manyak.notice.presentation.NoticeHeaderButton
 import app.manyak.notice.presentation.NoticeUnreadIntent
 import app.manyak.notice.presentation.NoticeUnreadViewModel
+import app.manyak.notification.inbox.presentation.NotificationHeaderButton
+import app.manyak.notification.inbox.presentation.NotificationUnreadViewModel
 import app.manyak.studio.presentation.StudioScreen
 
 /**
@@ -66,12 +67,19 @@ internal fun MainTabsScreen(
     onOpenPersonas: () -> Unit,
     onOpenNotificationSettings: () -> Unit,
     onOpenNotices: () -> Unit,
+    onOpenNotifications: () -> Unit,
     onOpenProfileEdit: () -> Unit,
     modifier: Modifier = Modifier,
     noticeUnreadViewModel: NoticeUnreadViewModel = hiltViewModel(),
+    notificationUnreadViewModel: NotificationUnreadViewModel = hiltViewModel(),
 ) {
     val backStacks = rememberTabBackStacks()
-    // 안 읽은 공지 판정은 셸 수명이다 — 헤더 점과 마이 배지가 같은 값을 보고, 상세에서 돌아오면 함께 꺼진다.
+    val unreadNotifications by notificationUnreadViewModel.uiState.collectAsStateWithLifecycle()
+    LifecycleResumeEffect(notificationUnreadViewModel) {
+        notificationUnreadViewModel.onIntent(Unit)
+        onPauseOrDispose {}
+    }
+    // 마이의 공지 배지는 서버 알림의 읽음과 별개로 기기 읽음 기록을 사용한다.
     val hasUnreadNotice by noticeUnreadViewModel.uiState.collectAsStateWithLifecycle()
     LifecycleResumeEffect(noticeUnreadViewModel) {
         noticeUnreadViewModel.onIntent(NoticeUnreadIntent.Refresh)
@@ -81,16 +89,15 @@ internal fun MainTabsScreen(
     Scaffold(
         modifier = modifier,
         containerColor = ManyakTheme.colors.surface,
-        // 홈은 로고가 그 자리의 이름을 대신하고, 나머지 탭은 이름만 둔다. 마이 헤더에는 공지 버튼을 두지 않는다 —
-        // 마이 안의 알림 섹션이 같은 목적지를 연다.
+        // 마이 헤더에는 알림함 진입점을 두지 않는다.
         topBar = {
-            val noticeButton: @Composable RowScope.() -> Unit = {
-                NoticeHeaderButton(hasUnread = hasUnreadNotice.hasUnread, onClick = onOpenNotices)
+            val notificationButton: @Composable RowScope.() -> Unit = {
+                NotificationHeaderButton(hasUnread = unreadNotifications.total > 0, onClick = onOpenNotifications)
             }
             when (selectedTab) {
-                MainTab.HOME -> ManyakBrandHeader(actions = noticeButton)
+                MainTab.HOME -> ManyakBrandHeader(actions = notificationButton)
                 MainTab.MY -> ManyakSectionHeader(titleRes = selectedTab.nameRes)
-                else -> ManyakSectionHeader(titleRes = selectedTab.nameRes, actions = noticeButton)
+                else -> ManyakSectionHeader(titleRes = selectedTab.nameRes, actions = notificationButton)
             }
         },
         bottomBar = {

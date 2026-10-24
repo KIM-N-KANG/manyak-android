@@ -1,4 +1,4 @@
-package app.manyak.notice.presentation
+package app.manyak.notification.inbox.presentation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -12,14 +12,10 @@ import androidx.compose.ui.res.stringResource
 import app.manyak.designsystem.component.ManyakIconButton
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.designsystem.R as DesignsystemR
-import app.manyak.notice.R as NoticeR
+import app.manyak.notification.R as NotificationR
 
-/**
- * 홈·채팅·제작 헤더 오른쪽의 공지사항 버튼. 마이의 알림 설정과 같은 종 아이콘이고, 안 읽은 공지가 있으면
- * 아이콘 오른쪽 위에 빨간 점을 찍고 접근 이름을 바꾼다. 점은 색만으로 말하지 않도록 이름이 함께 바뀐다.
- */
 @Composable
-fun NoticeHeaderButton(
+fun NotificationHeaderButton(
     hasUnread: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -29,7 +25,7 @@ fun NoticeHeaderButton(
             iconRes = DesignsystemR.drawable.ic_bell,
             contentDescription =
                 stringResource(
-                    if (hasUnread) NoticeR.string.notice_header_button_unread else NoticeR.string.notice_title,
+                    if (hasUnread) NotificationR.string.inbox_header_unread else NotificationR.string.inbox_title,
                 ),
             onClick = onClick,
         )
