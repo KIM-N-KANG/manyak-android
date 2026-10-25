@@ -46,6 +46,7 @@
     <string name="inbox_review_completed">검토 결과</string>
     <string name="inbox_notice">공지</string>
     <string name="inbox_attendance">출석 체크</string>
+    <string name="inbox_credit_expiry">이프 만료</string>
     <string name="inbox_promotion">이벤트</string>
     <string name="inbox_tag_service">서비스</string>
     <string name="inbox_tag_update">업데이트</string>

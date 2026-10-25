@@ -320,7 +320,7 @@ private fun MainNavDisplay(
                         onOpenFeedback = { backStack.push(MyFeedbackRoute) },
                         onOpenOpenSourceLicense = { backStack.push(MyOpenSourceLicenseRoute) },
                         onOpenWithdrawal = { backStack.push(WithdrawalRoute) },
-                        onOpenCreditCharge = { backStack.push(MyCreditChargeRoute) },
+                        onOpenCreditCharge = { backStack.push(MyCreditChargeRoute()) },
                         onOpenPersonas = { backStack.push(MyPersonasRoute) },
                         onOpenNotificationSettings = { backStack.push(NotificationSettingsRoute) },
                         onOpenNotices = { backStack.push(NoticeListRoute) },
@@ -356,7 +356,7 @@ private fun EntryProviderScope<NavKey>.chatRoomEntry(
                 onSelectChatTab()
             },
             onReplaceChat = { chatId -> backStack.replaceTop(ChatRoomRoute(chatId)) },
-            onOpenCreditCharge = { backStack.push(MyCreditChargeRoute) },
+            onOpenCreditCharge = { backStack.push(MyCreditChargeRoute()) },
         )
     }
 }
@@ -366,8 +366,9 @@ private fun EntryProviderScope<NavKey>.myDestinationEntries(backStack: MutableLi
     entry<MyInviteRoute> {
         InviteScreen(onBack = { backStack.pop() })
     }
-    entry<MyCreditChargeRoute> {
+    entry<MyCreditChargeRoute> { route ->
         CreditChargeScreen(
+            openHistory = route.openHistory,
             onBack = { backStack.pop() },
             // 무료 충전 탭의 초대 줄은 마이와 같은 목적지로 간다.
             onOpenInvite = { backStack.push(MyInviteRoute) },

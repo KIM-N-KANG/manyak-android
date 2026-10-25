@@ -68,6 +68,7 @@ import app.manyak.my.R as MyR
  */
 @Composable
 fun CreditChargeScreen(
+    openHistory: Boolean,
     onBack: () -> Unit,
     onOpenInvite: () -> Unit,
     modifier: Modifier = Modifier,
@@ -100,8 +101,10 @@ fun CreditChargeScreen(
     // 이프는 채팅·제작에서 줄어들고 여기서 출석으로 늘어난다. 화면이 보일 때마다 잔액을 맞춘다.
     LifecycleEventEffect(Lifecycle.Event.ON_START) { viewModel.onIntent(CreditChargeIntent.ScreenShown) }
 
-    // 탭은 목적지가 아니라 화면 상태다. 구성 변경에서만 유지하면 되고 복원할 바깥 맥락이 없다.
-    var selectedTab by rememberSaveable { mutableStateOf(CreditChargeTab.FREE) }
+    // 탭은 목적지가 아니라 화면 상태다. 라우트는 처음 열 탭만 정하고, 이후 선택은 구성 변경에서만 유지한다.
+    var selectedTab by rememberSaveable {
+        mutableStateOf(if (openHistory) CreditChargeTab.HISTORY else CreditChargeTab.FREE)
+    }
 
     Column(
         modifier =

@@ -133,6 +133,7 @@ internal fun InboxNotification.labelRes(): Int? =
                 "STORY_COMPLETED" -> NotificationR.string.inbox_story_completed
                 "STORY_MODERATION_COMPLETED" -> NotificationR.string.inbox_review_completed
                 "ATTENDANCE_REMINDER" -> NotificationR.string.inbox_attendance
+                "CREDIT_EXPIRY_REMINDER" -> NotificationR.string.inbox_credit_expiry
                 else -> null
             }
     }

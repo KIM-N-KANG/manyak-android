@@ -32,8 +32,13 @@ object DeepLink {
             segments == listOf("notices") -> NoticeListRoute
             segments.size == 2 && segments[0] == "notices" -> NoticeDetailRoute(segments[1])
             segments == listOf("studio") -> StudioRoute
-            segments == listOf("my", "credits") -> MyCreditChargeRoute
+            segments == listOf("my", "credits") -> MyCreditChargeRoute(openHistory = uri.queryParameter("tab") == "history")
             else -> null
         }
     }
+
+    private fun URI.queryParameter(name: String): String? =
+        rawQuery
+            ?.split('&')
+            ?.firstNotNullOfOrNull { pair -> pair.split('=', limit = 2).takeIf { it[0] == name }?.getOrNull(1) }
 }
