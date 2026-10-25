@@ -3,6 +3,7 @@ package app.manyak.chat.room.presentation
 import app.manyak.analytics.domain.Analytics
 import app.manyak.analytics.domain.NoOpAnalytics
 import app.manyak.analytics.entity.AnalyticsEvent
+import app.manyak.chat.testing.FakeAttendanceClaimer
 import app.manyak.chat.testing.FakeChatPreferencesRepository
 import app.manyak.chat.testing.FakeChatRepository
 import app.manyak.chat.testing.FakeCreditPolicyRepository
@@ -61,6 +62,7 @@ class ChatRoomViewModelTest {
                     trialsRepository = FakeTrialsRepository(),
                     creditPolicyRepository = FakeCreditPolicyRepository(),
                     profileRepository = FakeUserProfileRepository(),
+                    attendance = FakeAttendanceClaimer(),
                     analytics = NoOpAnalytics,
                 )
             advanceUntilIdle()
@@ -89,6 +91,7 @@ class ChatRoomViewModelTest {
                     trialsRepository = FakeTrialsRepository(),
                     creditPolicyRepository = FakeCreditPolicyRepository(),
                     profileRepository = FakeUserProfileRepository(),
+                    attendance = FakeAttendanceClaimer(),
                     analytics =
                         object : Analytics {
                             override fun track(event: AnalyticsEvent) {
@@ -119,6 +122,7 @@ class ChatRoomViewModelTest {
                     trialsRepository = FakeTrialsRepository(),
                     creditPolicyRepository = FakeCreditPolicyRepository(),
                     profileRepository = FakeUserProfileRepository(),
+                    attendance = FakeAttendanceClaimer(),
                     analytics = NoOpAnalytics,
                 )
             advanceUntilIdle()
@@ -148,6 +152,7 @@ class ChatRoomViewModelTest {
                     trialsRepository = FakeTrialsRepository(),
                     creditPolicyRepository = FakeCreditPolicyRepository(),
                     profileRepository = FakeUserProfileRepository(),
+                    attendance = FakeAttendanceClaimer(),
                     analytics = NoOpAnalytics,
                 )
             advanceUntilIdle()
@@ -183,6 +188,7 @@ class ChatRoomViewModelTest {
                     trialsRepository = FakeTrialsRepository(),
                     creditPolicyRepository = FakeCreditPolicyRepository(),
                     profileRepository = FakeUserProfileRepository(),
+                    attendance = FakeAttendanceClaimer(),
                     analytics = analytics,
                 )
             advanceUntilIdle()

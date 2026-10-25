@@ -6,6 +6,7 @@ import app.manyak.chat.entity.ChatStreamEvent
 import app.manyak.chat.entity.ChatTurn
 import app.manyak.chat.entity.UserSource
 import app.manyak.chat.room.presentation.suggestion.ChoicesProgress
+import app.manyak.chat.testing.FakeAttendanceClaimer
 import app.manyak.chat.testing.FakeChatPreferencesRepository
 import app.manyak.chat.testing.FakeChatRepository
 import app.manyak.chat.testing.FakeCreditPolicyRepository
@@ -278,6 +279,7 @@ class ChatRoomSuggestionTest {
         trialsRepository = FakeTrialsRepository(),
         creditPolicyRepository = FakeCreditPolicyRepository(),
         profileRepository = FakeUserProfileRepository(),
+        attendance = FakeAttendanceClaimer(),
         analytics = NoOpAnalytics,
     )
 

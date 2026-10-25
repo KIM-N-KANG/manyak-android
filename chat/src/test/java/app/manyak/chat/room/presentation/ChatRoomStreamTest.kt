@@ -6,6 +6,7 @@ import app.manyak.chat.entity.ChatInputMode
 import app.manyak.chat.entity.ChatStreamEvent
 import app.manyak.chat.entity.ChatTurn
 import app.manyak.chat.room.presentation.composer.InputBlockType
+import app.manyak.chat.testing.FakeAttendanceClaimer
 import app.manyak.chat.testing.FakeChatPreferencesRepository
 import app.manyak.chat.testing.FakeChatRepository
 import app.manyak.chat.testing.FakeCreditPolicyRepository
@@ -13,8 +14,10 @@ import app.manyak.chat.testing.FakeReportRepository
 import app.manyak.chat.testing.FakeTrialsRepository
 import app.manyak.chat.testing.FakeUserProfileRepository
 import app.manyak.chat.testing.sampleChatDetail
+import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.entity.credit.CreditPolicy
+import app.manyak.common.presentation.credit.AttendanceOutcome
 import app.manyak.designsystem.text.PassageSegment
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -201,7 +204,7 @@ class ChatRoomStreamTest {
         }
 
     @Test
-    fun `아는 잔액이 비용에 못 미치면 턴을 열지 않고 이프 안내만 올린다`() =
+    fun `아는 잔액이 비용에 못 미치면 턴을 열지 않고 이프 부족 시트를 연다`() =
         runTest(dispatcher) {
             val repository = FakeChatRepository()
             val profiles = FakeUserProfileRepository(refreshedBalance = 10)
@@ -225,8 +228,78 @@ class ChatRoomStreamTest {
             assertEquals(emptyList<String>(), repository.streamedInputs)
             assertFalse(state.isStreaming)
             assertTrue(state.composer.hasInput)
-            assertEquals(ChatRoomEffect.ShowCreditRequired, viewModel.uiEffect())
+            // 프로필은 시트를 열 때 다시 읽고, 출석 여부를 알아 출석 버튼을 둔다.
+            assertEquals(2, profiles.refreshCount)
+            assertEquals(true, state.creditShortage?.canClaimAttendance)
         }
+
+    @Test
+    fun `시트의 충전은 입력을 둔 채 이프 충전으로 보내고 시트를 닫는다`() =
+        runTest(dispatcher) {
+            val viewModel = creditShortViewModel()
+
+            viewModel.onIntent(ChatRoomIntent.CreditShortageCharge)
+            advanceUntilIdle()
+
+            assertEquals(ChatRoomEffect.OpenCreditCharge, viewModel.uiEffect())
+            assertNull(viewModel.uiState.value.creditShortage)
+            assertTrue(viewModel.uiState.value.composer.hasInput)
+        }
+
+    @Test
+    fun `시트의 출석이 성공하면 보상을 알리고 시트를 닫는다`() =
+        runTest(dispatcher) {
+            val attendance = FakeAttendanceClaimer()
+            val viewModel = creditShortViewModel(attendance)
+
+            viewModel.onIntent(ChatRoomIntent.CreditShortageAttendance)
+            viewModel.onIntent(ChatRoomIntent.CreditShortageAttendance)
+            advanceUntilIdle()
+
+            assertEquals(1, attendance.calls)
+            assertEquals(ChatRoomEffect.ShowAttendanceOutcome(AttendanceOutcome.Rewarded(250)), viewModel.uiEffect())
+            assertNull(viewModel.uiState.value.creditShortage)
+            assertTrue(viewModel.uiState.value.composer.hasInput)
+        }
+
+    @Test
+    fun `시트의 출석이 실패하면 알리고 시트에 머문다`() =
+        runTest(dispatcher) {
+            val attendance = FakeAttendanceClaimer(DomainResult.Failure(DomainError.Network))
+            val viewModel = creditShortViewModel(attendance)
+
+            viewModel.onIntent(ChatRoomIntent.CreditShortageAttendance)
+            advanceUntilIdle()
+
+            assertEquals(ChatRoomEffect.ShowAttendanceOutcome(AttendanceOutcome.Failed), viewModel.uiEffect())
+            assertEquals(
+                false,
+                viewModel.uiState.value.creditShortage
+                    ?.isClaimingAttendance,
+            )
+        }
+
+    /** 잔액이 모자라 전송이 막혀 이프 부족 시트가 열린 방. */
+    private fun kotlinx.coroutines.test.TestScope.creditShortViewModel(
+        attendance: FakeAttendanceClaimer = FakeAttendanceClaimer(),
+    ): ChatRoomViewModel {
+        val profiles = FakeUserProfileRepository(refreshedBalance = 10)
+        val viewModel =
+            viewModel(
+                FakeChatRepository(),
+                policy = FakeCreditPolicyRepository(CreditPolicy(chatTurnCost = 20, chatImageCost = 0)),
+                profiles = profiles,
+                attendance = attendance,
+            )
+        advanceUntilIdle()
+        viewModel.onIntent(ChatRoomIntent.MenuOpened)
+        viewModel.type("문을 연다")
+        advanceUntilIdle()
+        viewModel.onIntent(ChatRoomIntent.Sent)
+        advanceUntilIdle()
+        assertNotNull(viewModel.uiState.value.creditShortage)
+        return viewModel
+    }
 
     @Test
     fun `보내는 중에 다시 보내도 요청이 하나다`() =
@@ -318,6 +391,7 @@ class ChatRoomStreamTest {
         trials: FakeTrialsRepository = FakeTrialsRepository(),
         policy: FakeCreditPolicyRepository = FakeCreditPolicyRepository(),
         profiles: FakeUserProfileRepository = FakeUserProfileRepository(),
+        attendance: FakeAttendanceClaimer = FakeAttendanceClaimer(),
     ) = ChatRoomViewModel(
         chatId = "chat-1",
         chatRepository = repository,
@@ -326,6 +400,7 @@ class ChatRoomStreamTest {
         trialsRepository = trials,
         creditPolicyRepository = policy,
         profileRepository = profiles,
+        attendance = attendance,
         analytics = NoOpAnalytics,
     )
 

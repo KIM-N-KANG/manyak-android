@@ -485,6 +485,13 @@ private fun EntryProviderScope<NavKey>.creationFunnelEntries(
                 backStack.popToMainTabs()
                 onSelectStudioTab()
             },
+            // 이프 부족 시트의 충전 — 초안을 저장한 퍼널을 걷어내고 그 자리에 이프 충전을 연다. 뒤로가기는
+            // 초안 카드가 있는 제작 탭으로 돌아온다.
+            onOpenCreditCharge = {
+                backStack.popToMainTabs()
+                onSelectStudioTab()
+                backStack.push(MyCreditChargeRoute())
+            },
         )
     }
 }

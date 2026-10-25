@@ -3,6 +3,7 @@ package app.manyak.chat.room.presentation
 import app.manyak.analytics.domain.Analytics
 import app.manyak.analytics.entity.AnalyticsEvent
 import app.manyak.chat.room.presentation.tour.ChatTourStep
+import app.manyak.chat.testing.FakeAttendanceClaimer
 import app.manyak.chat.testing.FakeChatPreferencesRepository
 import app.manyak.chat.testing.FakeChatRepository
 import app.manyak.chat.testing.FakeCreditPolicyRepository
@@ -158,6 +159,7 @@ class ChatRoomTourTest {
         trialsRepository = FakeTrialsRepository(),
         creditPolicyRepository = FakeCreditPolicyRepository(),
         profileRepository = FakeUserProfileRepository(),
+        attendance = FakeAttendanceClaimer(),
         analytics = analytics,
     )
 }

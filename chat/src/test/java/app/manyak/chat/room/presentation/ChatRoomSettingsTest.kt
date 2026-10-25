@@ -3,6 +3,7 @@ package app.manyak.chat.room.presentation
 import app.manyak.analytics.domain.NoOpAnalytics
 import app.manyak.chat.entity.ChatStreamEvent
 import app.manyak.chat.room.presentation.composer.InputBlockType
+import app.manyak.chat.testing.FakeAttendanceClaimer
 import app.manyak.chat.testing.FakeChatPreferencesRepository
 import app.manyak.chat.testing.FakeChatRepository
 import app.manyak.chat.testing.FakeCreditPolicyRepository
@@ -224,6 +225,7 @@ class ChatRoomSettingsTest {
         trialsRepository = FakeTrialsRepository(),
         creditPolicyRepository = FakeCreditPolicyRepository(),
         profileRepository = FakeUserProfileRepository(),
+        attendance = FakeAttendanceClaimer(),
         analytics = NoOpAnalytics,
     )
 

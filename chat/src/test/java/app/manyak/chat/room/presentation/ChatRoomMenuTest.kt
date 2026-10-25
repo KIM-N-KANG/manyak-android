@@ -1,6 +1,7 @@
 package app.manyak.chat.room.presentation
 
 import app.manyak.analytics.domain.NoOpAnalytics
+import app.manyak.chat.testing.FakeAttendanceClaimer
 import app.manyak.chat.testing.FakeChatPreferencesRepository
 import app.manyak.chat.testing.FakeChatRepository
 import app.manyak.chat.testing.FakeCreditPolicyRepository
@@ -165,6 +166,7 @@ class ChatRoomMenuTest {
                 trialsRepository = FakeTrialsRepository(),
                 creditPolicyRepository = FakeCreditPolicyRepository(),
                 profileRepository = profiles,
+                attendance = FakeAttendanceClaimer(),
                 analytics = NoOpAnalytics,
             )
         advanceUntilIdle()

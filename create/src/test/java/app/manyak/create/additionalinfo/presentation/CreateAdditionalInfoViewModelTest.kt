@@ -1,6 +1,5 @@
 package app.manyak.create.additionalinfo.presentation
 
-import app.manyak.analytics.domain.NoOpAnalytics
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.create.entity.CreationProgress
@@ -14,7 +13,6 @@ import app.manyak.create.testing.FakeStoryCompletionSubmitter
 import app.manyak.create.testing.FakeStoryCreationRepository
 import app.manyak.create.testing.TEST_DRAFT_ID
 import app.manyak.create.testing.sampleArtStyles
-import app.manyak.create.testing.sampleGenerationInput
 import app.manyak.create.testing.sampleStorylineGeneration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -52,8 +50,7 @@ class CreateAdditionalInfoViewModelTest {
     private fun TestScope.viewModel(): CreateAdditionalInfoViewModel {
         val repository = FakeStoryCreationRepository()
         val pendingStore = FakePendingStoryCreationStore()
-        return CreateAdditionalInfoViewModel(
-            TEST_DRAFT_ID,
+        return additionalInfoViewModel(
             StorylineGenerationStore(
                 repository,
                 pendingStore,
@@ -62,43 +59,6 @@ class CreateAdditionalInfoViewModelTest {
                 FakeSimpleDraftStore(),
             ).bind(TEST_DRAFT_ID),
             repository,
-            NoOpAnalytics,
-        )
-    }
-
-    private class LoadedFixture(
-        val repository: FakeStoryCreationRepository,
-        val submitter: FakeStoryCompletionSubmitter,
-        val pendingStore: FakePendingStoryCreationStore,
-        val store: StorylineGenerationStore,
-        val viewModel: CreateAdditionalInfoViewModel,
-    )
-
-    /** 스토리라인 생성 성공 결과를 스냅숏한 ViewModel 을 만든다. */
-    private fun TestScope.loadedViewModel(
-        selectedStorylineIndex: Int? = null,
-        submitter: FakeStoryCompletionSubmitter = FakeStoryCompletionSubmitter(),
-    ): LoadedFixture {
-        val repository = FakeStoryCreationRepository()
-        val pendingStore = FakePendingStoryCreationStore()
-        val store =
-            StorylineGenerationStore(
-                repository,
-                pendingStore,
-                submitter,
-                this,
-                FakeSimpleDraftStore(),
-            ).bind(TEST_DRAFT_ID)
-        store.generate(sampleGenerationInput())
-        advanceUntilIdle()
-        // "선택하기"로 추가 정보 단계에 들어온 상태를 만든다. 재개 지점이 이 값으로 갈린다.
-        selectedStorylineIndex?.let(store::markStorylineSelected)
-        return LoadedFixture(
-            repository = repository,
-            submitter = submitter,
-            pendingStore = pendingStore,
-            store = store,
-            viewModel = CreateAdditionalInfoViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics),
         )
     }
 
@@ -342,7 +302,7 @@ class CreateAdditionalInfoViewModelTest {
                     FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
             val viewModel =
-                CreateAdditionalInfoViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics)
+                additionalInfoViewModel(store, repository)
             advanceUntilIdle()
 
             val state = viewModel.uiState.value
@@ -378,7 +338,7 @@ class CreateAdditionalInfoViewModelTest {
                 ).bind(TEST_DRAFT_ID)
 
             val viewModel =
-                CreateAdditionalInfoViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics)
+                additionalInfoViewModel(store, repository)
 
             // 복원 결과가 오기 전 첫 프레임. 여기서 입력 화면을 그리면 본문 없는 화면이 스쳐 지나간다.
             assertTrue(viewModel.uiState.value.isRestoring)
@@ -423,7 +383,7 @@ class CreateAdditionalInfoViewModelTest {
                     FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
 
-            CreateAdditionalInfoViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics)
+            additionalInfoViewModel(store, repository)
             advanceUntilIdle()
 
             assertEquals(inputs, store.progress.additionalInfoInputs)
@@ -644,7 +604,7 @@ class CreateAdditionalInfoViewModelTest {
                     this,
                     FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
-            val viewModel = CreateAdditionalInfoViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics)
+            val viewModel = additionalInfoViewModel(store, repository)
             advanceUntilIdle()
 
             assertTrue(viewModel.uiState.value.artStylesFailed)
