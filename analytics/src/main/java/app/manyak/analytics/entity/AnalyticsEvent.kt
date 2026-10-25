@@ -408,10 +408,18 @@ sealed class AnalyticsEvent(
             mapOf("chat_id" to chatId, "step_number" to stepNumber),
         )
 
-    // creditShortageDialog — 이름은 웹 호환, 실제 UI 는 토스트
+    // creditShortageDialog — 이름은 웹 호환, 실제 UI 는 바텀 시트
     data class CreditShortageShown(
         val trigger: CreditShortageTrigger,
     ) : AnalyticsEvent("client_creditShortageDialog_shown", mapOf("trigger" to trigger.wire))
+
+    data class CreditShortageChargeButtonClicked(
+        val trigger: CreditShortageTrigger,
+    ) : AnalyticsEvent("client_creditShortageDialog_chargeButton_clicked", mapOf("trigger" to trigger.wire))
+
+    data class CreditShortageAttendanceButtonClicked(
+        val trigger: CreditShortageTrigger,
+    ) : AnalyticsEvent("client_creditShortageDialog_attendanceButton_clicked", mapOf("trigger" to trigger.wire))
 
     // report — 네 화면이 시트를 공유하므로 source 로 가른다
     data class ReportSheetOpened(
