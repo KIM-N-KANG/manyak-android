@@ -26,7 +26,7 @@ class PushEntryTest {
             PushEntry(PushEntry.TYPE_STORY_COMPLETED, "s1", "me").routeFor("me"),
         )
         assertEquals(
-            MyCreditChargeRoute,
+            MyCreditChargeRoute(),
             PushEntry(PushEntry.TYPE_ATTENDANCE_REMINDER, "2026-09-08", "me").routeFor("me"),
         )
     }
@@ -55,7 +55,7 @@ class PushEntryTest {
             PushEntry(PushEntry.TYPE_STORY_COMPLETED, "s1", "me", "https://manyak.app/stories/from-url").routeFor("me"),
         )
         assertEquals(
-            MyCreditChargeRoute,
+            MyCreditChargeRoute(),
             PushEntry("SOMETHING_NEW", null, "me", "https://manyak.app/my/credits?tab=free").routeFor("me"),
         )
         assertEquals(

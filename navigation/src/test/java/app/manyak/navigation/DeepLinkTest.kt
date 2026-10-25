@@ -23,8 +23,23 @@ class DeepLinkTest {
     fun `스토리 상세와 이프 충전 경로를 해석한다`() {
         assertEquals(StoryDetailRoute("s1"), DeepLink.routeOf("https://manyak.app/stories/s1"))
         assertEquals(StoryDetailRoute("s1"), DeepLink.routeOf("https://www.manyak.app/stories/s1/"))
-        assertEquals(MyCreditChargeRoute, DeepLink.routeOf("https://manyak.app/my/credits?tab=free"))
-        assertEquals(MyCreditChargeRoute, DeepLink.routeOf("https://manyak.app/my/credits"))
+        assertEquals(MyCreditChargeRoute(), DeepLink.routeOf("https://manyak.app/my/credits"))
+    }
+
+    @Test
+    fun `이프 충전은 tab 쿼리가 history일 때만 내역 탭으로 연다`() {
+        fun route(query: String) = DeepLink.routeOf("https://manyak.app/my/credits?$query")
+        val history = MyCreditChargeRoute(openHistory = true)
+        assertEquals(history, route("tab=history"))
+        assertEquals(history, route("utm_source=push&utm_medium=fcm&tab=history&utm_campaign=credit_expiry"))
+        assertEquals(history, DeepLink.routeOf("https://www.manyak.app/my/credits/?tab=history"))
+        assertEquals(MyCreditChargeRoute(), route("tab=free"))
+        assertEquals(MyCreditChargeRoute(), route("tab=purchase"))
+        assertEquals(MyCreditChargeRoute(), route("tab=HISTORY"))
+        assertEquals(MyCreditChargeRoute(), route("tab="))
+        assertEquals(MyCreditChargeRoute(), route("tab"))
+        assertEquals(MyCreditChargeRoute(), route("utm_source=push"))
+        assertEquals(MyCreditChargeRoute(), route("mytab=history"))
     }
 
     @Test
