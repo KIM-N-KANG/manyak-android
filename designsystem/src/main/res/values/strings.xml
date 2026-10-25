@@ -13,4 +13,13 @@
     <string name="credit_balance_label">내 이프</string>
     <string name="credit_balance_charge">충전</string>
     <string name="delete_in_progress">삭제 중</string>
+    <string name="credit_shortage_title">이프가 부족해요</string>
+    <string name="credit_shortage_description">이프를 충전하면 이어서 할 수 있어요</string>
+    <string name="credit_shortage_charge">이프 충전하기</string>
+    <string name="credit_shortage_attendance">출석 체크하기</string>
+    <string name="credit_shortage_attendance_in_progress">출석 체크 중</string>
+    <string name="credit_shortage_close">닫기</string>
+    <string name="credit_shortage_attendance_rewarded">출석 체크 보상으로 %1$d 이프를 받았어요</string>
+    <string name="credit_shortage_attendance_already">오늘은 이미 출석 체크했어요</string>
+    <string name="credit_shortage_attendance_failed">출석 체크에 실패했어요</string>
 </resources>

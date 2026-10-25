@@ -4,10 +4,10 @@ import app.manyak.analytics.domain.NoOpAnalytics
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.user.UserProfileRepository
+import app.manyak.common.entity.credit.AttendanceResult
 import app.manyak.common.entity.user.AccountStatus
 import app.manyak.common.entity.user.UserProfile
 import app.manyak.my.credit.domain.CreditRepository
-import app.manyak.my.credit.entity.AttendanceResult
 import app.manyak.my.credit.entity.CreditTransactionPage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

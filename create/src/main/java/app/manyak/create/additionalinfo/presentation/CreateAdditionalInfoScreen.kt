@@ -75,6 +75,7 @@ fun CreateAdditionalInfoScreen(
     onLeaveFunnel: () -> Unit,
     onBackToStoryline: () -> Unit,
     onSubmitted: () -> Unit,
+    onOpenCreditCharge: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: CreateAdditionalInfoViewModel =
         hiltViewModel<CreateAdditionalInfoViewModel, CreateAdditionalInfoViewModel.Factory>(
@@ -86,6 +87,7 @@ fun CreateAdditionalInfoScreen(
     val currentOnSubmitted by rememberUpdatedState(onSubmitted)
     val currentOnLeaveFunnel by rememberUpdatedState(onLeaveFunnel)
     val currentOnBackToStoryline by rememberUpdatedState(onBackToStoryline)
+    val currentOnOpenCreditCharge by rememberUpdatedState(onOpenCreditCharge)
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
 
@@ -116,6 +118,10 @@ fun CreateAdditionalInfoScreen(
                     is CreateAdditionalInfoEffect.ExitFunnel -> currentOnLeaveFunnel()
 
                     CreateAdditionalInfoEffect.NavigateBackToStoryline -> currentOnBackToStoryline()
+
+                    CreateAdditionalInfoEffect.OpenCreditCharge -> currentOnOpenCreditCharge()
+
+                    is CreateAdditionalInfoEffect.ShowAttendanceOutcome -> context.showAttendanceToast(effect.outcome)
                 }
             }
         }
@@ -128,6 +134,8 @@ fun CreateAdditionalInfoScreen(
         modifier = modifier,
         draftSave = draftSave,
     )
+
+    state.creditShortage?.let { sheet -> AdditionalInfoCreditShortageSheet(sheet, viewModel::onIntent) }
 
     state.exitWarning?.let { warning ->
         FunnelExitWarningDialog(

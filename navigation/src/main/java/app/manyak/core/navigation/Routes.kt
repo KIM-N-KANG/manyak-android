@@ -119,8 +119,11 @@ data class ChatRoomRoute(
 @Serializable
 data object MyInviteRoute : NavKey
 
+/** [openHistory] 는 처음 열 탭만 정한다. 이후 탭 전환은 화면 상태라 라우트에 다시 쓰지 않는다. */
 @Serializable
-data object MyCreditChargeRoute : NavKey
+data class MyCreditChargeRoute(
+    val openHistory: Boolean = false,
+) : NavKey
 
 @Serializable
 data object MyFeedbackRoute : NavKey

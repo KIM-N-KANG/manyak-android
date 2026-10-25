@@ -1,4 +1,4 @@
-package app.manyak.my.credit.entity
+package app.manyak.common.entity.credit
 
 /**
  * 출석 보상 요청의 결과. 오늘 이미 받았으면 서버가 [rewarded] false 로 200 을 준다(멱등).

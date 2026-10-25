@@ -320,7 +320,7 @@ private fun MainNavDisplay(
                         onOpenFeedback = { backStack.push(MyFeedbackRoute) },
                         onOpenOpenSourceLicense = { backStack.push(MyOpenSourceLicenseRoute) },
                         onOpenWithdrawal = { backStack.push(WithdrawalRoute) },
-                        onOpenCreditCharge = { backStack.push(MyCreditChargeRoute) },
+                        onOpenCreditCharge = { backStack.push(MyCreditChargeRoute()) },
                         onOpenPersonas = { backStack.push(MyPersonasRoute) },
                         onOpenNotificationSettings = { backStack.push(NotificationSettingsRoute) },
                         onOpenNotices = { backStack.push(NoticeListRoute) },
@@ -356,7 +356,7 @@ private fun EntryProviderScope<NavKey>.chatRoomEntry(
                 onSelectChatTab()
             },
             onReplaceChat = { chatId -> backStack.replaceTop(ChatRoomRoute(chatId)) },
-            onOpenCreditCharge = { backStack.push(MyCreditChargeRoute) },
+            onOpenCreditCharge = { backStack.push(MyCreditChargeRoute()) },
         )
     }
 }
@@ -366,8 +366,9 @@ private fun EntryProviderScope<NavKey>.myDestinationEntries(backStack: MutableLi
     entry<MyInviteRoute> {
         InviteScreen(onBack = { backStack.pop() })
     }
-    entry<MyCreditChargeRoute> {
+    entry<MyCreditChargeRoute> { route ->
         CreditChargeScreen(
+            openHistory = route.openHistory,
             onBack = { backStack.pop() },
             // 무료 충전 탭의 초대 줄은 마이와 같은 목적지로 간다.
             onOpenInvite = { backStack.push(MyInviteRoute) },
@@ -483,6 +484,13 @@ private fun EntryProviderScope<NavKey>.creationFunnelEntries(
             onSubmitted = {
                 backStack.popToMainTabs()
                 onSelectStudioTab()
+            },
+            // 이프 부족 시트의 충전 — 초안을 저장한 퍼널을 걷어내고 그 자리에 이프 충전을 연다. 뒤로가기는
+            // 초안 카드가 있는 제작 탭으로 돌아온다.
+            onOpenCreditCharge = {
+                backStack.popToMainTabs()
+                onSelectStudioTab()
+                backStack.push(MyCreditChargeRoute())
             },
         )
     }

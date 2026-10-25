@@ -7,7 +7,9 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import app.manyak.chat.room.presentation.tour.ChatTourOverlay
 import app.manyak.chat.room.presentation.tour.ChatTourTargets
 import app.manyak.chat.room.presentation.tour.chatTourSteps
+import app.manyak.common.presentation.credit.CreditShortageUiState
 import app.manyak.designsystem.component.ManyakDestructiveDialog
+import app.manyak.designsystem.credit.CreditShortageSheet
 import app.manyak.report.presentation.StoryReportUiState
 import app.manyak.report.presentation.component.StoryReportSheet
 import app.manyak.chat.R as ChatR
@@ -42,6 +44,23 @@ internal fun ChatRoomReportSheet(
     StoryReportSheet(
         state = state,
         onAction = { action -> onIntent(ChatRoomIntent.Report(action)) },
+    )
+}
+
+/** 이프 부족 시트. 전송과 재생성의 잔액 선검사나 402 에서 열린다. */
+@Composable
+internal fun ChatRoomCreditShortageSheet(
+    state: CreditShortageUiState?,
+    onIntent: (ChatRoomIntent) -> Unit,
+) {
+    if (state == null) return
+    CreditShortageSheet(
+        attendanceVisible = state.canClaimAttendance,
+        isClaimingAttendance = state.isClaimingAttendance,
+        isCharging = state.isCharging,
+        onCharge = { onIntent(ChatRoomIntent.CreditShortageCharge) },
+        onClaimAttendance = { onIntent(ChatRoomIntent.CreditShortageAttendance) },
+        onDismiss = { onIntent(ChatRoomIntent.CreditShortageDismissed) },
     )
 }
 

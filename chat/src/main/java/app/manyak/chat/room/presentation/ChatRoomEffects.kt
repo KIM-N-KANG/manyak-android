@@ -15,8 +15,10 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.chat.presentation.chatShareMessage
 import app.manyak.chat.presentation.chatShareSubject
+import app.manyak.common.presentation.credit.AttendanceOutcome
 import app.manyak.common.presentation.share.shareText
 import app.manyak.chat.R as ChatR
+import app.manyak.designsystem.R as DesignsystemR
 import app.manyak.report.R as ReportR
 
 /**
@@ -32,6 +34,7 @@ internal fun ChatRoomEffects(
     storyTitle: String,
     onDeleted: () -> Unit,
     onReplaceChat: (String) -> Unit,
+    onOpenCreditCharge: () -> Unit,
     onCloseMenu: () -> Unit,
     onCloseDeleteDialog: () -> Unit,
 ) {
@@ -40,6 +43,7 @@ internal fun ChatRoomEffects(
     val currentStoryTitle by rememberUpdatedState(storyTitle)
     val currentOnDeleted by rememberUpdatedState(onDeleted)
     val currentOnReplaceChat by rememberUpdatedState(onReplaceChat)
+    val currentOnOpenCreditCharge by rememberUpdatedState(onOpenCreditCharge)
     val currentOnCloseMenu by rememberUpdatedState(onCloseMenu)
     val currentOnCloseDeleteDialog by rememberUpdatedState(onCloseDeleteDialog)
     // 채팅방의 토스트는 한 자리에서 띄운다 — 앞 문구가 남아 있으면 지우고 새 문구만 보인다.
@@ -55,6 +59,8 @@ internal fun ChatRoomEffects(
                     }
 
                     ChatRoomEffect.ShowDeleteFailed -> currentOnCloseDeleteDialog()
+
+                    ChatRoomEffect.OpenCreditCharge -> currentOnOpenCreditCharge()
 
                     is ChatRoomEffect.NavigateToChat -> {
                         currentOnCloseMenu()
@@ -101,7 +107,7 @@ internal fun ChatRoomForegroundEffects(viewModel: ChatRoomViewModel) {
 private fun ChatRoomEffect.toastText(context: Context): String? =
     when (this) {
         is ChatRoomEffect.ShowStreamFailure -> message ?: context.getString(ChatR.string.chat_room_stream_error)
-        ChatRoomEffect.ShowCreditRequired -> context.getString(ChatR.string.chat_room_credit_required)
+        is ChatRoomEffect.ShowAttendanceOutcome -> context.attendanceOutcomeText(outcome)
         ChatRoomEffect.ChatDeleted -> context.getString(ChatR.string.chat_room_deleted)
         ChatRoomEffect.ShowDeleteFailed -> context.getString(ChatR.string.chat_room_delete_failed)
         ChatRoomEffect.ShowReportSubmitted -> context.getString(ReportR.string.story_report_submitted)
@@ -111,5 +117,16 @@ private fun ChatRoomEffect.toastText(context: Context): String? =
         ChatRoomEffect.ShowModelChangeFailed -> context.getString(ChatR.string.chat_model_change_failed)
         ChatRoomEffect.ShowLongResponseChangeFailed -> context.getString(ChatR.string.chat_response_long_change_failed)
         ChatRoomEffect.ShowComposerLocked -> context.getString(ChatR.string.chat_composer_locked_streaming)
-        is ChatRoomEffect.NavigateToChat, is ChatRoomEffect.ShareLink -> null
+        is ChatRoomEffect.NavigateToChat, is ChatRoomEffect.ShareLink, ChatRoomEffect.OpenCreditCharge -> null
+    }
+
+private fun Context.attendanceOutcomeText(outcome: AttendanceOutcome): String =
+    when (outcome) {
+        is AttendanceOutcome.Rewarded ->
+            getString(
+                DesignsystemR.string.credit_shortage_attendance_rewarded,
+                outcome.amount,
+            )
+        AttendanceOutcome.AlreadyDone -> getString(DesignsystemR.string.credit_shortage_attendance_already)
+        AttendanceOutcome.Failed -> getString(DesignsystemR.string.credit_shortage_attendance_failed)
     }

@@ -31,7 +31,7 @@ data class PushEntry(
             deepLink != null -> DeepLink.routeOf(deepLink) ?: MainTabsRoute
             type == TYPE_STORY_COMPLETED && !targetId.isNullOrBlank() -> StoryDetailRoute(targetId)
             type == TYPE_STORY_MODERATION_COMPLETED && !targetId.isNullOrBlank() -> StudioRoute
-            type == TYPE_ATTENDANCE_REMINDER -> MyCreditChargeRoute
+            type == TYPE_ATTENDANCE_REMINDER -> MyCreditChargeRoute()
             else -> MainTabsRoute
         }
 

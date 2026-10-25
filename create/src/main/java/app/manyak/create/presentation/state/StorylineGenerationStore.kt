@@ -567,6 +567,13 @@ class StorylineGenerationStore
                 }
         }
 
+        /** 지금 상태를 저장하고 끝날 때까지 기다린다. 저장돼 있으면 참이다. 저장해야만 떠나는 이프 충전이 쓴다. */
+        suspend fun saveDraftAndAwait(): Boolean {
+            saveDraft(notify = true)
+            draftSaveJob?.join()
+            return draftPersisted
+        }
+
         /** 충돌 확인의 응답. 저장하기는 서버의 현재 버전을 기준으로 지금 내용을 덮어쓰고, 닫기는 서버 내용을 그대로 둔다. */
         fun resolveConflict(overwrite: Boolean) {
             val version = conflictVersion ?: return
