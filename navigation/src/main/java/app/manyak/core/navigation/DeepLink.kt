@@ -32,7 +32,8 @@ object DeepLink {
             segments == listOf("notices") -> NoticeListRoute
             segments.size == 2 && segments[0] == "notices" -> NoticeDetailRoute(segments[1])
             segments == listOf("studio") -> StudioRoute
-            segments == listOf("my", "credits") -> MyCreditChargeRoute(openHistory = uri.queryParameter("tab") == "history")
+            segments == listOf("my", "credits") ->
+                MyCreditChargeRoute(openHistory = uri.queryParameter("tab") == "history")
             else -> null
         }
     }
