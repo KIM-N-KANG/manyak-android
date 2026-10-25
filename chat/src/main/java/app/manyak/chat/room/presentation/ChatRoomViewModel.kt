@@ -32,6 +32,7 @@ import app.manyak.chat.room.presentation.suggestion.normalizeSuggestion
 import app.manyak.chat.room.presentation.suggestion.randomSuggestionPosition
 import app.manyak.chat.room.presentation.suggestion.shouldGenerateChoices
 import app.manyak.chat.room.presentation.tour.ChatTourStep
+import app.manyak.common.domain.credit.AttendanceClaimer
 import app.manyak.common.domain.credit.CreditPolicyRepository
 import app.manyak.common.domain.credit.TrialsRepository
 import app.manyak.common.domain.error.DomainError
@@ -39,6 +40,9 @@ import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.error.map
 import app.manyak.common.domain.error.valueOrNull
 import app.manyak.common.domain.user.UserProfileRepository
+import app.manyak.common.presentation.credit.AttendanceOutcome
+import app.manyak.common.presentation.credit.CreditShortageController
+import app.manyak.common.presentation.credit.CreditShortageUiState
 import app.manyak.common.presentation.mvi.MviViewModel
 import app.manyak.designsystem.component.isAllowedCharacterImageUrl
 import app.manyak.designsystem.text.PassageSegment
@@ -118,6 +122,8 @@ data class ChatRoomUiState(
     val report: StoryReportUiState = StoryReportUiState(),
     /** 채팅 메뉴의 내 이프 카드에 보이는 잔액. 프로필을 아직 읽지 못했으면 null 이다. */
     val creditBalance: Long? = null,
+    /** 이프 부족 시트. 닫혀 있으면 null 이다. */
+    val creditShortage: CreditShortageUiState? = null,
     /** 같은 스토리로 새 채팅을 만드는 중. 메뉴 항목을 잠그고 시트 닫기를 막는다. */
     val isStartingNewChat: Boolean = false,
     /** 공유 링크를 발급하는 중. 메뉴 항목을 잠그고 시트 닫기를 막는다. */
@@ -252,6 +258,15 @@ sealed interface ChatRoomIntent {
     data class TourSkipped(
         val index: Int,
     ) : ChatRoomIntent
+
+    /** 이프 부족 시트의 버튼과 닫기. */
+    sealed interface CreditShortage : ChatRoomIntent
+
+    data object CreditShortageCharge : CreditShortage
+
+    data object CreditShortageAttendance : CreditShortage
+
+    data object CreditShortageDismissed : CreditShortage
 }
 
 sealed interface ChatRoomEvent {
@@ -365,6 +380,10 @@ sealed interface ChatRoomEvent {
         val balance: Long?,
     ) : ChatRoomEvent
 
+    data class CreditShortageChanged(
+        val sheet: CreditShortageUiState?,
+    ) : ChatRoomEvent
+
     data class NewChatStartChanged(
         val inProgress: Boolean,
     ) : ChatRoomEvent
@@ -397,8 +416,13 @@ sealed interface ChatRoomEffect {
         val message: String?,
     ) : ChatRoomEffect
 
-    /** 이프가 모자라 턴을 열지 못했다. 앱은 로그인 필수라 402 의 사유가 이것 하나뿐이다. */
-    data object ShowCreditRequired : ChatRoomEffect
+    /** 이프 부족 시트의 충전. 입력은 이 화면의 ViewModel 이 들고 있어 돌아오면 그대로 있다. */
+    data object OpenCreditCharge : ChatRoomEffect
+
+    /** 이프 부족 시트의 출석 결과. */
+    data class ShowAttendanceOutcome(
+        val outcome: AttendanceOutcome,
+    ) : ChatRoomEffect
 
     /** 삭제가 끝났다. 화면이 안내하고 채팅 탭으로 돌아간다. */
     data object ChatDeleted : ChatRoomEffect
@@ -450,6 +474,7 @@ class ChatRoomViewModel
         private val trialsRepository: TrialsRepository,
         private val creditPolicyRepository: CreditPolicyRepository,
         private val profileRepository: UserProfileRepository,
+        attendance: AttendanceClaimer,
         private val analytics: Analytics,
     ) : MviViewModel<ChatRoomIntent, ChatRoomUiState, ChatRoomEvent, ChatRoomEffect>(ChatRoomUiState()) {
         private var preferencesJob: Job? = null
@@ -470,6 +495,17 @@ class ChatRoomViewModel
                     )
                 },
             )
+
+        /** 이프 부족 시트의 출석과 충전은 간편 제작과 같아 공유 컨트롤러가 소유한다. */
+        private val creditShortage =
+            CreditShortageController(
+                scope = viewModelScope,
+                attendance = attendance,
+                profiles = profileRepository,
+                emit = { sheet -> dispatchEvent(ChatRoomEvent.CreditShortageChanged(sheet)) },
+                notify = { outcome -> dispatchEffect(ChatRoomEffect.ShowAttendanceOutcome(outcome)) },
+            )
+
         private var choicesJob: Job? = null
         private var choicesToggleJob: Job? = null
         private var regenerateCooldownJob: Job? = null
@@ -649,6 +685,33 @@ class ChatRoomViewModel
 
                 else -> handleSuggestion(intent)
             }
+        }
+
+        private suspend fun handleCreditShortage(intent: ChatRoomIntent.CreditShortage) {
+            when (intent) {
+                ChatRoomIntent.CreditShortageCharge -> {
+                    analytics.track(AnalyticsEvent.CreditShortageChargeButtonClicked(CreditShortageTrigger.CHAT_TURN))
+                    creditShortage.charge {
+                        dispatchEffect(ChatRoomEffect.OpenCreditCharge)
+                        true
+                    }
+                }
+
+                ChatRoomIntent.CreditShortageAttendance -> {
+                    analytics.track(
+                        AnalyticsEvent.CreditShortageAttendanceButtonClicked(CreditShortageTrigger.CHAT_TURN),
+                    )
+                    creditShortage.claimAttendance()
+                }
+
+                ChatRoomIntent.CreditShortageDismissed -> creditShortage.dismiss()
+            }
+        }
+
+        /** 시트를 연다. 보낸 입력은 이미 컴포저에 그대로 있거나 되돌아가 있다. */
+        private suspend fun showCreditShortage() {
+            analytics.track(AnalyticsEvent.CreditShortageShown(CreditShortageTrigger.CHAT_TURN))
+            creditShortage.open()
         }
 
         private suspend fun regenerate(turnId: Long) {
@@ -869,6 +932,8 @@ class ChatRoomViewModel
 
                 ChatRoomIntent.ChoicesRetried -> generateChoices()
 
+                is ChatRoomIntent.CreditShortage -> handleCreditShortage(intent)
+
                 else -> handleTour(intent)
             }
         }
@@ -944,10 +1009,8 @@ class ChatRoomViewModel
             if (userInput.isBlank()) return
             if (isCreditShort()) {
                 // 서버도 402 로 막지만, 그 뒤에 되돌리면 보낸 모습이 잠깐 보였다 사라진다. 아는 잔액으로
-                // 먼저 걸러 컴포저를 건드리지 않는다. 잔액은 화면이 서버와 어긋났을 수 있어 다시 읽는다.
-                analytics.track(AnalyticsEvent.CreditShortageShown(CreditShortageTrigger.CHAT_TURN))
-                dispatchEffect(ChatRoomEffect.ShowCreditRequired)
-                viewModelScope.launch { profileRepository.refresh() }
+                // 먼저 걸러 컴포저를 건드리지 않는다.
+                showCreditShortage()
                 return
             }
             // 실제로 열리는 턴만 센다 — 잠금·빈 입력으로 걸러진 탭은 전송이 아니다.
@@ -1167,8 +1230,7 @@ class ChatRoomViewModel
             clearStream()
             val status = (error as? DomainError.Server)?.status
             if (status == HTTP_PAYMENT_REQUIRED) {
-                analytics.track(AnalyticsEvent.CreditShortageShown(CreditShortageTrigger.CHAT_TURN))
-                dispatchEffect(ChatRoomEffect.ShowCreditRequired)
+                showCreditShortage()
                 finishStream()
                 return null
             }
@@ -1375,6 +1437,7 @@ private fun reduceChatRoom(
         ChatRoomEvent.DeleteStarted,
         ChatRoomEvent.DeleteFailed,
         is ChatRoomEvent.CreditBalanceChanged,
+        is ChatRoomEvent.CreditShortageChanged,
         is ChatRoomEvent.NewChatStartChanged,
         is ChatRoomEvent.ShareChanged,
         is ChatRoomEvent.ModelsLoaded,
@@ -1395,6 +1458,8 @@ private fun reduceMenu(
         ChatRoomEvent.DeleteFailed -> state.copy(isDeleting = false)
 
         is ChatRoomEvent.CreditBalanceChanged -> state.copy(creditBalance = event.balance)
+
+        is ChatRoomEvent.CreditShortageChanged -> state.copy(creditShortage = event.sheet)
 
         is ChatRoomEvent.NewChatStartChanged -> state.copy(isStartingNewChat = event.inProgress)
 

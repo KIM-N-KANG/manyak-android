@@ -82,6 +82,7 @@ fun ChatRoomScreen(
         storyTitle = state.storyTitle,
         onDeleted = onDeleted,
         onReplaceChat = onReplaceChat,
+        onOpenCreditCharge = onOpenCreditCharge,
         onCloseMenu = { menuOpen = false },
         onCloseDeleteDialog = { confirmingDelete = false },
     )
@@ -133,6 +134,7 @@ fun ChatRoomScreen(
     }
 
     ChatRoomReportSheet(state = state.report, onIntent = viewModel::onIntent)
+    ChatRoomCreditShortageSheet(state = state.creditShortage, onIntent = viewModel::onIntent)
 }
 
 @Composable

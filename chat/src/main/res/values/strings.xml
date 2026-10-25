@@ -46,7 +46,6 @@
     <string name="chat_room_ai_notice">이 채팅은 AI로 생성된 가상의 내용이에요</string>
     <string name="chat_room_choices_error">선택지를 만들지 못했어요</string>
     <string name="chat_room_choices_loading">선택지를 만드는 중</string>
-    <string name="chat_room_credit_required">이프가 부족해요</string>
     <string name="chat_room_delete">삭제하기</string>
     <string name="chat_room_delete_dialog_cancel">닫기</string>
     <string name="chat_room_delete_dialog_description">삭제하면 목록에서 사라지며 되돌릴 수 없어요</string>

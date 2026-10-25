@@ -3,6 +3,7 @@ package app.manyak.chat.room.presentation
 import app.manyak.analytics.domain.NoOpAnalytics
 import app.manyak.chat.entity.ChatStreamEvent
 import app.manyak.chat.room.presentation.composer.InputBlockType
+import app.manyak.chat.testing.FakeAttendanceClaimer
 import app.manyak.chat.testing.FakeChatPreferencesRepository
 import app.manyak.chat.testing.FakeChatRepository
 import app.manyak.chat.testing.FakeCreditPolicyRepository
@@ -23,6 +24,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -100,7 +102,7 @@ class ChatRoomDeleteTest {
         }
 
     @Test
-    fun `402 는 낙관적 밴드를 걷고 이프 안내를 올린다`() =
+    fun `402 는 낙관적 밴드를 걷고 이프 부족 시트를 연다`() =
         runTest(dispatcher) {
             // 앱은 로그인 필수라 402 의 사유가 이프 부족 하나뿐이다.
             val repository = FakeChatRepository()
@@ -113,10 +115,7 @@ class ChatRoomDeleteTest {
 
             assertNull(viewModel.uiState.value.streaming)
             assertFalse(viewModel.uiState.value.isStreaming)
-            assertEquals(
-                ChatRoomEffect.ShowCreditRequired,
-                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
-            )
+            assertNotNull(viewModel.uiState.value.creditShortage)
         }
 
     private fun viewModel(repository: FakeChatRepository) =
@@ -128,6 +127,7 @@ class ChatRoomDeleteTest {
             trialsRepository = FakeTrialsRepository(),
             creditPolicyRepository = FakeCreditPolicyRepository(),
             profileRepository = FakeUserProfileRepository(),
+            attendance = FakeAttendanceClaimer(),
             analytics = NoOpAnalytics,
         )
 
