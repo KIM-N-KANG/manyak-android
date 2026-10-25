@@ -5,7 +5,18 @@ import app.manyak.analytics.domain.Analytics
 import app.manyak.analytics.entity.AnalyticsEvent
 import app.manyak.analytics.entity.CompletionStage
 import app.manyak.analytics.entity.CreateStep
+import app.manyak.analytics.entity.CreditShortageTrigger
+import app.manyak.common.domain.credit.AttendanceClaimer
+import app.manyak.common.domain.credit.CreditPolicyRepository
+import app.manyak.common.domain.credit.TrialsRepository
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.user.UserProfileRepository
+import app.manyak.common.entity.credit.CreditPolicy
+import app.manyak.common.entity.credit.Trials
+import app.manyak.common.entity.user.UserProfile
+import app.manyak.common.presentation.credit.AttendanceOutcome
+import app.manyak.common.presentation.credit.CreditShortageController
+import app.manyak.common.presentation.credit.CreditShortageUiState
 import app.manyak.common.presentation.mvi.MviViewModel
 import app.manyak.create.domain.StoryCreationRepository
 import app.manyak.create.entity.ArtStyle
@@ -68,6 +79,8 @@ data class CreateAdditionalInfoUiState(
     val exitWarning: FunnelExitWarning? = null,
     /** "다시 선택하기"가 추가 정보를 버린다고 알리는 중. */
     val showReselectWarningDialog: Boolean = false,
+    /** 이프 부족 시트. 닫혀 있으면 null 이다. */
+    val creditShortage: CreditShortageUiState? = null,
 ) {
     val canAddInput: Boolean get() = additionalInfos.size < INPUT_MAX_COUNT
 
@@ -142,6 +155,15 @@ sealed interface CreateAdditionalInfoIntent {
     data object ConfirmReselect : FunnelNavigation
 
     data object DismissReselectWarning : FunnelNavigation
+
+    /** 이프 부족 시트의 버튼과 닫기. */
+    sealed interface CreditShortage : CreateAdditionalInfoIntent
+
+    data object CreditShortageCharge : CreditShortage
+
+    data object CreditShortageAttendance : CreditShortage
+
+    data object CreditShortageDismissed : CreditShortage
 }
 
 sealed interface CreateAdditionalInfoEvent {
@@ -197,6 +219,10 @@ sealed interface CreateAdditionalInfoEvent {
     data class ReselectWarningVisibleChanged(
         val visible: Boolean,
     ) : CreateAdditionalInfoEvent
+
+    data class CreditShortageChanged(
+        val sheet: CreditShortageUiState?,
+    ) : CreateAdditionalInfoEvent
 }
 
 sealed interface CreateAdditionalInfoEffect {
@@ -211,6 +237,14 @@ sealed interface CreateAdditionalInfoEffect {
 
     /** "다시 선택하기" 확정 — 스토리라인 단계로 pop 한다. */
     data object NavigateBackToStoryline : CreateAdditionalInfoEffect
+
+    /** 초안을 저장하고 퍼널을 떠났다. 퍼널을 걷어내고 이프 충전을 연다. 돌아와 퍼널을 다시 열지 않는다. */
+    data object OpenCreditCharge : CreateAdditionalInfoEffect
+
+    /** 이프 부족 시트의 출석 결과. */
+    data class ShowAttendanceOutcome(
+        val outcome: AttendanceOutcome,
+    ) : CreateAdditionalInfoEffect
 }
 
 @HiltViewModel(assistedFactory = CreateAdditionalInfoViewModel.Factory::class)
@@ -220,6 +254,10 @@ class CreateAdditionalInfoViewModel
         @Assisted draftId: String,
         private val storylineGenerationStore: StorylineGenerationStore,
         private val storyCreationRepository: StoryCreationRepository,
+        private val profileRepository: UserProfileRepository,
+        private val creditPolicyRepository: CreditPolicyRepository,
+        private val trialsRepository: TrialsRepository,
+        attendance: AttendanceClaimer,
         private val analytics: Analytics,
     ) : MviViewModel<
             CreateAdditionalInfoIntent,
@@ -236,6 +274,16 @@ class CreateAdditionalInfoViewModel
         private var isLeaving = false
 
         private var artStylesJob: Job? = null
+
+        /** 이프 부족 시트의 출석과 충전은 채팅방과 같아 공유 컨트롤러가 소유한다. */
+        private val creditShortage =
+            CreditShortageController(
+                scope = viewModelScope,
+                attendance = attendance,
+                profiles = profileRepository,
+                emit = { sheet -> dispatchEvent(CreateAdditionalInfoEvent.CreditShortageChanged(sheet)) },
+                notify = { outcome -> dispatchEffect(CreateAdditionalInfoEffect.ShowAttendanceOutcome(outcome)) },
+            )
 
         val draftSave = storylineGenerationStore.draftSave
 
@@ -317,6 +365,40 @@ class CreateAdditionalInfoViewModel
                 is CreateAdditionalInfoIntent.DraftIntent -> handleDraftIntent(intent, state)
 
                 is CreateAdditionalInfoIntent.FunnelNavigation -> handleFunnelNavigation(intent, state)
+
+                is CreateAdditionalInfoIntent.CreditShortage -> handleCreditShortage(intent)
+            }
+        }
+
+        private suspend fun handleCreditShortage(intent: CreateAdditionalInfoIntent.CreditShortage) {
+            when (intent) {
+                CreateAdditionalInfoIntent.CreditShortageCharge -> {
+                    analytics.track(
+                        AnalyticsEvent.CreditShortageChargeButtonClicked(CreditShortageTrigger.STORY_CREATE),
+                    )
+                    // 지금 입력을 초안으로 저장하고 퍼널을 떠난다. 저장하지 못하면 떠나지 않는다. 떠난 뒤에는 제작 탭의
+                    // 초안 카드로 이어서 만들고, 충전에서 돌아와 퍼널을 다시 여는 길은 두지 않는다.
+                    creditShortage.charge {
+                        val state = uiState.value
+                        if (!state.isRestoring) mirrorProgress(state)
+                        storylineGenerationStore.saveDraftAndAwait().also { saved ->
+                            if (saved) {
+                                isLeaving = true
+                                storylineGenerationStore.leaveFunnel()
+                                dispatchEffect(CreateAdditionalInfoEffect.OpenCreditCharge)
+                            }
+                        }
+                    }
+                }
+
+                CreateAdditionalInfoIntent.CreditShortageAttendance -> {
+                    analytics.track(
+                        AnalyticsEvent.CreditShortageAttendanceButtonClicked(CreditShortageTrigger.STORY_CREATE),
+                    )
+                    creditShortage.claimAttendance()
+                }
+
+                CreateAdditionalInfoIntent.CreditShortageDismissed -> creditShortage.dismiss()
             }
         }
 
@@ -420,12 +502,23 @@ class CreateAdditionalInfoViewModel
             state: CreateAdditionalInfoUiState,
             storylineIndex: Int,
         ) {
-            if (state.isSubmitting) return
-            val simpleCreationId = state.simpleCreationId ?: return
-            val storylineId = state.storylines.getOrNull(storylineIndex)?.id ?: return
+            val simpleCreationId = state.simpleCreationId
+            val storylineId = state.storylines.getOrNull(storylineIndex)?.id
+            if (state.isSubmitting || simpleCreationId == null || storylineId == null) return
             val artStyle = state.selectedArtStyle
             if (artStyle == null) {
                 dispatchEvent(CreateAdditionalInfoEvent.ArtStyleRequired)
+                return
+            }
+            if (isStoryCreationCreditShort(
+                    profileRepository.profile.value,
+                    creditPolicyRepository.policy.value,
+                    trialsRepository.trials.value,
+                )
+            ) {
+                // 서버도 402 로 막지만 그때는 이미 제작 탭으로 떠난 뒤라 퍼널 안에서 알릴 수 없다.
+                analytics.track(AnalyticsEvent.CreditShortageShown(CreditShortageTrigger.STORY_CREATE))
+                creditShortage.open()
                 return
             }
             dispatchEvent(CreateAdditionalInfoEvent.SubmissionStarted)
@@ -514,9 +607,8 @@ class CreateAdditionalInfoViewModel
 
                 is CreateAdditionalInfoEvent.ArtStyleEvent -> state.reduceArtStyle(event)
 
-                CreateAdditionalInfoEvent.SubmissionStarted -> state.copy(isSubmitting = true)
-
-                CreateAdditionalInfoEvent.SubmissionFailed -> state.copy(isSubmitting = false)
+                CreateAdditionalInfoEvent.SubmissionStarted, CreateAdditionalInfoEvent.SubmissionFailed ->
+                    state.copy(isSubmitting = event == CreateAdditionalInfoEvent.SubmissionStarted)
 
                 is CreateAdditionalInfoEvent.SnapshotRestored ->
                     // 복원 스냅숏이 늦게 도착하는 동안 화면 조작은 불가능했으므로 통째로 대체한다.
@@ -529,6 +621,7 @@ class CreateAdditionalInfoViewModel
                         isSubmitting = state.isSubmitting,
                         exitWarning = state.exitWarning,
                         showReselectWarningDialog = state.showReselectWarningDialog,
+                        creditShortage = state.creditShortage,
                     )
 
                 is CreateAdditionalInfoEvent.ExitWarningChanged -> state.copy(exitWarning = event.warning)
@@ -537,6 +630,8 @@ class CreateAdditionalInfoViewModel
 
                 is CreateAdditionalInfoEvent.ReselectWarningVisibleChanged ->
                     state.copy(showReselectWarningDialog = event.visible)
+
+                is CreateAdditionalInfoEvent.CreditShortageChanged -> state.copy(creditShortage = event.sheet)
             }
     }
 
@@ -580,6 +675,21 @@ private fun buildCompletionCommand(
         additionalInfos = additionalInfos,
         artStyle = artStyle,
     )
+}
+
+/**
+ * 아는 잔액이 스토리 완성 비용에 못 미치는지. 잔액, 정책, 체험 중 하나라도 모르거나 체험이 남았으면 막지 않는다.
+ * 판단은 서버(402) 몫이고, 여기서 막는 것은 확실히 모자랄 때 제작 탭으로 떠나지 않게 하는 것뿐이다.
+ */
+internal fun isStoryCreationCreditShort(
+    profile: UserProfile?,
+    policy: CreditPolicy?,
+    trials: Trials?,
+): Boolean {
+    val balance = profile?.creditBalance ?: return false
+    val cost = policy?.storyCreationCost ?: return false
+    val trial = trials?.storyCreation ?: return false
+    return !trial.isFree && balance < cost
 }
 
 /** 추천 채택분이 앞, 그 뒤로 공백을 정리한 자유 입력이 실린다. 빈 입력은 보내지 않는다. */

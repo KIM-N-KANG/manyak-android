@@ -5,8 +5,10 @@ import app.manyak.common.entity.credit.Trials
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
-class FakeTrialsRepository : TrialsRepository {
-    override val trials: StateFlow<Trials?> = MutableStateFlow(null)
+class FakeTrialsRepository(
+    initial: Trials? = null,
+) : TrialsRepository {
+    override val trials: StateFlow<Trials?> = MutableStateFlow(initial)
 
     var refreshCount = 0
         private set
