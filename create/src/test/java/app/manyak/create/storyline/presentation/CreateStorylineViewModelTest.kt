@@ -88,6 +88,31 @@ class CreateStorylineViewModelTest {
         }
 
     @Test
+    fun `수위로 거절된 생성은 다시 만들기 대신 같은 초안의 키워드 단계로 바꾼다`() =
+        runTest(dispatcher) {
+            val repository = FakeStoryCreationRepository()
+            repository.queuedGenerationResults +=
+                DomainResult.Failure(DomainError.Server(status = 422, code = "CONTENT_REJECTED", requestId = null))
+            val store =
+                StorylineGenerationStore(
+                    repository,
+                    FakePendingStoryCreationStore(),
+                    FakeStoryCompletionSubmitter(),
+                    this,
+                    FakeSimpleDraftStore(),
+                ).bind(TEST_DRAFT_ID)
+            store.generate(sampleGenerationInput())
+            val viewModel = CreateStorylineViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics)
+            advanceUntilIdle()
+
+            assertEquals(
+                CreateStorylineEffect.RestartAtKeyword(notFound = false),
+                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
+            )
+            assertFalse(viewModel.uiState.value.hasGenerationError)
+        }
+
+    @Test
     fun `같은 평가를 다시 누르면 해제되고 다른 평가를 누르면 바뀐다`() =
         runTest(dispatcher) {
             val (_, _, viewModel) = loadedViewModel()

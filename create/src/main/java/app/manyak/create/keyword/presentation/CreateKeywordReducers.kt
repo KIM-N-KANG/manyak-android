@@ -19,6 +19,13 @@ internal fun reduceKeywordState(
         CreateKeywordEvent.RestoreFinished ->
             state.copy(isRestoring = false, savedSnapshot = state.toKeywordSnapshot())
 
+        // 기준선은 아무것도 복원하지 않은 화면이다 — 돌아온 입력은 저장하지 않은 편집으로 센다.
+        is CreateKeywordEvent.ContentRejected ->
+            event.snapshot
+                .toKeywordUiState(state)
+                .copy(savedSnapshot = state.toKeywordSnapshot(), contentRejected = true)
+                .reconcileGenres()
+
         CreateKeywordEvent.DraftSaveStarted -> state.copy(draftSaveStatus = DraftSaveStatus.SAVING)
 
         is CreateKeywordEvent.DraftSaveFinished ->
@@ -59,7 +66,8 @@ private fun reduceKeywordContent(
             )
         is CreateKeywordEvent.ValidationFailed -> state.copy(validationErrorCategory = event.category)
         CreateKeywordEvent.GenerateAttempted -> state.copy(hasAttemptedGenerate = true)
-        CreateKeywordEvent.StorylineGenerationStarted -> state.copy(isGeneratingStorylines = true)
+        CreateKeywordEvent.StorylineGenerationStarted ->
+            state.copy(isGeneratingStorylines = true, contentRejected = false)
         else -> reduceKeywordInput(state, event)
     }
 

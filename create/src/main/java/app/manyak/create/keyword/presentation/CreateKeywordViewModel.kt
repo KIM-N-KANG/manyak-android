@@ -106,6 +106,8 @@ data class CreateKeywordUiState(
     val hasAttemptedGenerate: Boolean = false,
     /** 스토리라인 생성 요청 진행 중. CTA 를 스피너로 바꾸고 중복 요청을 막는다. */
     val isGeneratingStorylines: Boolean = false,
+    /** 직전 생성이 입력 수위로 거절돼 돌아왔다. 다음 요청 전까지 푸터에 안내한다. */
+    val contentRejected: Boolean = false,
     val providedTags: ProvidedTags = ProvidedTags.Loading,
     val selectedGenreTagIds: Set<Long> = emptySet(),
     val customGenreTags: List<CustomTag> = emptyList(),
@@ -340,6 +342,11 @@ sealed interface CreateKeywordEvent {
     /** 되살릴 저장본이 없었다. 복원 대기만 끝낸다. */
     data object RestoreFinished : CreateKeywordEvent
 
+    /** 입력 수위로 거절된 생성의 입력이 돌아왔다. 저장한 입력이 아니라 고칠 입력이다. */
+    data class ContentRejected(
+        val snapshot: KeywordDraftSnapshot,
+    ) : CreateKeywordEvent
+
     data class EntryFailedChanged(
         val failed: Boolean,
     ) : CreateKeywordEvent
@@ -491,6 +498,10 @@ class CreateKeywordViewModel
                 FunnelEntryOutcome.READY -> Unit
             }
             dispatchEvent(CreateKeywordEvent.EntryFailedChanged(false))
+            storylineGenerationStore.takeRejectedKeyword()?.let { rejected ->
+                dispatchEvent(CreateKeywordEvent.ContentRejected(rejected))
+                return
+            }
             // 다른 기기에서 스토리라인 단계로 넘어간 초안이면 그 단계로 간다.
             if (storylineGenerationStore.state.value !is StorylineGenerationState.Idle) {
                 dispatchEffect(CreateKeywordEffect.NavigateToStoryline)
