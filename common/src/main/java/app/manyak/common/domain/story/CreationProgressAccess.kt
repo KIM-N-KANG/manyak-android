@@ -1,5 +1,6 @@
 package app.manyak.common.domain.story
 
+import app.manyak.common.entity.story.CompletionFailure
 import app.manyak.common.entity.story.CompletionRequestSummary
 import app.manyak.common.entity.story.CreationProgressSummary
 import kotlinx.coroutines.flow.Flow
@@ -11,7 +12,7 @@ interface CreationProgressAccess {
     val submissionChanges: Flow<Unit> get() = emptyFlow()
 
     /** 완성에 실패한 요청이 추가 정보 단계 초안으로 되돌아왔다. 보고 있는 제작 탭이 안내한다. */
-    val completionFailures: Flow<Unit> get() = emptyFlow()
+    val completionFailures: Flow<CompletionFailure> get() = emptyFlow()
 
     /** 편집 초안. 처음 임시 저장한 시각 최신순이고, 시각이 없는 이전 초안은 맨 뒤다. */
     val drafts: Flow<List<CreationProgressSummary>>

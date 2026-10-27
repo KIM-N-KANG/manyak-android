@@ -8,7 +8,9 @@ import app.manyak.common.data.di.ApplicationScope
 import app.manyak.common.domain.credit.TrialsRepository
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.error.isContentRejected
 import app.manyak.common.domain.story.CreationProgressAccess
+import app.manyak.common.entity.story.CompletionFailure
 import app.manyak.common.entity.story.CompletionRequestSummary
 import app.manyak.common.entity.story.CreationProgressSummary
 import app.manyak.create.domain.PendingStoryCreationStore
@@ -67,9 +69,9 @@ class StoryCompletionExecutor
         override val completionRequests: Flow<List<CompletionRequestSummary>> =
             requestStore.requests.map { requests -> requests.mapNotNull(StoryCompletionRequest::toSummary) }
 
-        private val failures = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+        private val failures = MutableSharedFlow<CompletionFailure>(extraBufferCapacity = 1)
 
-        override val completionFailures: Flow<Unit> = failures
+        override val completionFailures: Flow<CompletionFailure> = failures
 
         override suspend fun discard(
             draftId: String,
@@ -125,18 +127,25 @@ class StoryCompletionExecutor
                 when (val result = repository.completeStory(command)) {
                     is DomainResult.Success -> markCompleted(work, command.requestId, result.value)
 
-                    is DomainResult.Failure ->
-                        when (result.error) {
+                    is DomainResult.Failure -> {
+                        val error = result.error
+                        when {
                             // 응답을 못 받은 것은 미확정이다. 다음 새로고침이 복구 조회로 판정한다.
-                            DomainError.Network -> Unit
+                            error == DomainError.Network -> Unit
 
                             // 세션 종료 경로가 따로 처리한다. 요청은 미확정으로 남긴다.
-                            DomainError.Unauthorized, DomainError.AccountSuspended -> Unit
+                            error == DomainError.Unauthorized || error == DomainError.AccountSuspended -> Unit
+
+                            // 서버가 요청을 실패로 기록하고 환불까지 마친 확정 거절이다. 복구 조회는 이유를 돌려주지 않아
+                            // 여기서 바로 되돌려야 거절 안내를 띄울 수 있다.
+                            error.isContentRejected() ->
+                                demote(work, command.requestId, CompletionFailure.CONTENT_REJECTED)
 
                             // 409 를 포함한 상태 코드 응답은 서버가 이 requestId 를 어떻게 기록했는지에 따라
                             // 갈린다. 거절만 보고 실패로 낮추지 않고 복구 조회로 판정한다.
                             else -> resolve(command, work, notReceivedIsFailure = true)
                         }
+                    }
                 }
             }
 
@@ -218,8 +227,9 @@ class StoryCompletionExecutor
         private suspend fun demote(
             work: AuthWork,
             requestId: String,
+            failure: CompletionFailure = CompletionFailure.FAILED,
         ) {
-            if (gate.commit(work) { requestStore.demoteToDraft(requestId) } == true) failures.tryEmit(Unit)
+            if (gate.commit(work) { requestStore.demoteToDraft(requestId) } == true) failures.tryEmit(failure)
         }
     }
 

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="error_content_rejected">수위가 높은 내용이 있어 만들 수 없어요. 입력한 내용을 바꿔 주세요</string>
     <string name="error_account_suspended">이용이 제한된 계정이에요</string>
     <string name="error_network">네트워크 연결을 확인해주세요</string>
     <string name="error_provider_failed">로그인에 실패했어요. 다시 시도해주세요</string>

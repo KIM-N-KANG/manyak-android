@@ -283,6 +283,68 @@ class StorylineGenerationStoreTest {
         }
 
     @Test
+    fun `첫 생성이 수위로 거절되면 레코드를 지우고 입력을 키워드 단계로 한 번 돌려준다`() =
+        runTest {
+            val repository = FakeStoryCreationRepository()
+            val pendingStore = FakePendingStoryCreationStore()
+            val store =
+                StorylineGenerationStore(
+                    repository,
+                    pendingStore,
+                    FakeStoryCompletionSubmitter(),
+                    this,
+                    FakeSimpleDraftStore(),
+                ).bind(TEST_DRAFT_ID)
+
+            repository.queuedGenerationResults += DomainResult.Failure(contentRejected())
+            store.generate(sampleGenerationInput())
+            advanceUntilIdle()
+
+            assertEquals(StorylineGenerationState.Rejected, store.state.value)
+            assertNull(pendingStore.current)
+            val rejected = store.takeRejectedKeyword()
+            assertEquals(listOf(1L), rejected?.selectedGenreTagIds)
+            assertEquals(listOf(2L), rejected?.protagonist?.selectedTagIds)
+            assertEquals(StorylineGenerationState.Idle, store.state.value)
+            assertNull(store.takeRejectedKeyword())
+
+            // 고친 입력은 새 요청 ID 로 보낸다.
+            store.generate(sampleGenerationInput())
+            advanceUntilIdle()
+            val (first, second) = repository.generationCommands
+            assertNotEquals(first.requestId, second.requestId)
+        }
+
+    @Test
+    fun `다시 만들기가 수위로 거절되면 직전 결과는 기기 안에 남기고 키워드 단계로 돌려보낸다`() =
+        runTest {
+            val repository = FakeStoryCreationRepository()
+            val pendingStore = FakePendingStoryCreationStore()
+            val store =
+                StorylineGenerationStore(
+                    repository,
+                    pendingStore,
+                    FakeStoryCompletionSubmitter(),
+                    this,
+                    FakeSimpleDraftStore(),
+                ).bind(TEST_DRAFT_ID)
+
+            store.generate(sampleGenerationInput())
+            advanceUntilIdle()
+            advanceTimeBy(COOLDOWN_PASSED_MILLIS)
+            repository.queuedGenerationResults += DomainResult.Failure(contentRejected())
+            store.regenerate()
+            advanceUntilIdle()
+
+            assertEquals(StorylineGenerationState.Rejected, store.state.value)
+            assertEquals(sampleStorylineGeneration(), (pendingStore.current as PendingStoryCreation.Draft).generation)
+            assertTrue(store.takeRejectedKeyword() != null)
+            // 메모리의 결과는 비워 이어지는 키워드 단계가 스토리라인 단계로 되돌아가지 않는다.
+            assertNull(store.state.value.resultOrNull())
+            assertTrue(store.hasSavedDraft())
+        }
+
+    @Test
     fun `재시도 409 는 실패가 아니라 복구 폴링으로 결과를 되찾는다`() =
         runTest {
             val repository = FakeStoryCreationRepository()
@@ -681,5 +743,8 @@ private fun sampleGenerationCommand(): StorylineGenerationCommand =
         parentCreationId = null,
         isRegenerated = false,
     )
+
+private fun contentRejected(): DomainError =
+    DomainError.Server(status = 422, code = "CONTENT_REJECTED", requestId = null)
 
 private const val COOLDOWN_PASSED_MILLIS = 600L

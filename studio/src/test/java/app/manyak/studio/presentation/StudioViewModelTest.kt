@@ -4,6 +4,7 @@ import app.manyak.analytics.domain.NoOpAnalytics
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.story.CreationProgressAccess
+import app.manyak.common.entity.story.CompletionFailure
 import app.manyak.common.entity.story.CompletionRequestStatus
 import app.manyak.common.entity.story.CompletionRequestSummary
 import app.manyak.common.entity.story.CreationProgressSummary
@@ -611,10 +612,13 @@ class StudioViewModelTest {
             val viewModel = studioViewModel(access, FakeStoryRepository(), NoOpAnalytics)
             advanceUntilIdle()
 
-            access.completionFailures.emit(Unit)
+            access.completionFailures.emit(CompletionFailure.CONTENT_REJECTED)
             advanceUntilIdle()
 
-            assertEquals(StudioEffect.ShowCompletionFailed, withTimeoutOrNull(1_000) { viewModel.uiEffect.first() })
+            assertEquals(
+                StudioEffect.ShowCompletionFailed(CompletionFailure.CONTENT_REJECTED),
+                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
+            )
         }
 
     private fun drafts(count: Int): List<CreationProgressSummary> =
