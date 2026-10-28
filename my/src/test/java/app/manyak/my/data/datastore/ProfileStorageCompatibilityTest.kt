@@ -88,11 +88,26 @@ class ProfileStorageCompatibilityTest {
 
             assertTrue(cache.clearUserData())
             assertNull(cache.cached.first())
-            assertTrue(onboarding.pending.first())
+            assertTrue(dataStore.data.first()[booleanPreferencesKey("invite_onboarding_pending")] == true)
             assertTrue(onboarding.clearUserData())
-            assertFalse(onboarding.pending.first())
+            assertFalse(InviteOnboardingStore(dataStore, dispatcher).pending.first())
             assertEquals("profile-cache", cache.storeName)
             assertEquals("invite-onboarding", onboarding.storeName)
+        }
+
+    @Test
+    fun `가입한 실행에서는 안내를 숨기고 다음 실행에서 보인다`() =
+        runTest {
+            val dataStore =
+                PreferenceDataStoreFactory.create(scope = backgroundScope) {
+                    temporaryFolder.newFile("profile.preferences_pb")
+                }
+            val dispatcher = StandardTestDispatcher(testScheduler)
+            val signupRun = InviteOnboardingStore(dataStore, dispatcher)
+            signupRun.markPending()
+
+            assertFalse(signupRun.pending.first())
+            assertTrue(InviteOnboardingStore(dataStore, dispatcher).pending.first())
         }
 }
 

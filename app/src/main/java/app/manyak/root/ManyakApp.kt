@@ -14,9 +14,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -153,8 +156,12 @@ fun ManyakApp(
                             },
                         ) {
                             // 온보딩 여부가 백스택의 루트를 정한다. 읽기 전에는 그래프를 열지 않는다.
-                            storyOnboardingPending?.let { MainNavDisplay(it, viewModel) }
-                            MemberOverlays(viewModel = viewModel, consentViewModel = consentViewModel)
+                            // 그래프는 홈 탭이 보이는지 알려 초대 코드 안내를 홈에서만 띄우게 한다.
+                            var homeVisible by remember { mutableStateOf(false) }
+                            storyOnboardingPending?.let { pending ->
+                                MainNavDisplay(pending, viewModel) { homeVisible = it }
+                            }
+                            MemberOverlays(viewModel, consentViewModel, homeVisible)
                         }
                     }
                     // 이전 사용자의 데이터가 남아 있다. 정리가 끝날 때까지 어느 그래프도 열지 않는다.
@@ -275,10 +282,18 @@ internal fun AuthNavDisplay() {
 private fun MainNavDisplay(
     storyOnboardingPending: Boolean,
     viewModel: RootViewModel,
+    onHomeVisibleChange: (Boolean) -> Unit,
 ) {
     val entryDestination by viewModel.entryDestination.collectAsStateWithLifecycle()
     val backStack = rememberNavBackStack(if (storyOnboardingPending) StoryOnboardingRoute else MainTabsRoute)
     var selectedTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
+    // 홈 탭은 시작 목적지 하나뿐이라 셸이 맨 위이고 홈이 골라져 있으면 홈 화면이 보인다.
+    val homeVisible = backStack.lastOrNull() == MainTabsRoute && selectedTab == MainTab.HOME
+    val latestOnHomeVisibleChange by rememberUpdatedState(onHomeVisibleChange)
+    DisposableEffect(homeVisible) {
+        latestOnHomeVisibleChange(homeVisible)
+        onDispose { latestOnHomeVisibleChange(false) }
+    }
     var studioRefreshRequest by rememberSaveable { mutableStateOf(0) }
     val finishOnboarding = rememberOnboardingFinisher(backStack, storyOnboardingPending, viewModel) { selectedTab = it }
     // 알림 진입은 셸까지 걷어낸 뒤 탭을 선택하거나 상세 하나를 쌓는다.
