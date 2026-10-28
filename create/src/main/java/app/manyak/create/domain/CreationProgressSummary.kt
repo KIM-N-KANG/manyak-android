@@ -105,7 +105,7 @@ private fun SimpleServerDraft.toProgressSummary(): CreationProgressSummary =
     )
 
 /**
- * 완성에 실패한 요청을 제출한 입력 그대로 추가 정보 단계 편집 초안으로 되돌린다. 제출한 명령과 화풍을 남겨 같은 입력으로
+ * 완성에 실패한 요청을 제출한 입력 그대로 추가 정보 단계 편집 초안으로 되돌린다. 제출한 명령과 화풍, 공개 범위를 남겨 같은 입력으로
  * 다시 완성하면 같은 requestId 를 쓰고, 서버 초안 연결은 그대로 둔다.
  */
 fun StoryCompletionRequest.toReturnedDraft(): PendingStoryCreation.Draft =
@@ -118,6 +118,7 @@ fun StoryCompletionRequest.toReturnedDraft(): PendingStoryCreation.Draft =
                     progress.selectedStorylineIndex
                         ?: generation.storylines.indexOfFirst { it.id == command.storylineId }.takeIf { it >= 0 },
                 artStyle = command.artStyle ?: progress.artStyle,
+                visibility = command.visibility,
             ),
         lastCompletionCommand = command,
         serverDraft = serverDraft,

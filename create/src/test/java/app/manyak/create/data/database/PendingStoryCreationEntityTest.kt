@@ -1,5 +1,6 @@
 package app.manyak.create.data.database
 
+import app.manyak.common.entity.story.StoryVisibility
 import app.manyak.create.entity.CharacterGender
 import app.manyak.create.entity.CompletedStory
 import app.manyak.create.entity.CompletionOutcome
@@ -107,7 +108,7 @@ class PendingStoryCreationEntityTest {
     }
 
     @Test
-    fun `화풍 선택 이전에 저장한 초안은 화풍 없이 읽힌다`() {
+    fun `공개 범위 이전에 저장한 초안은 스위치를 켜서 열고 완성 명령은 비공개로 읽는다`() {
         val entity =
             PendingStoryCreation
                 .Draft(generationCommand = null, generation = generation(), progress = CreationProgress())
@@ -122,6 +123,8 @@ class PendingStoryCreationEntityTest {
 
         assertNull(draft.progress.artStyle)
         assertNull(draft.lastCompletionCommand?.artStyle)
+        assertEquals(StoryVisibility.PUBLIC, draft.progress.visibility)
+        assertEquals(StoryVisibility.PRIVATE, draft.lastCompletionCommand?.visibility)
     }
 
     @Test
@@ -156,6 +159,7 @@ class PendingStoryCreationEntityTest {
             storylineId = 21L,
             additionalInfos = listOf("배경은 현대의 서울"),
             artStyle = "ANIME",
+            visibility = StoryVisibility.PUBLIC,
         )
 
     private fun generation() =
@@ -178,6 +182,7 @@ class PendingStoryCreationEntityTest {
             additionalInfoInputs = listOf("입력", ""),
             selectedRecommendations = listOf("추천 정보"),
             artStyle = "ANIME",
+            visibility = StoryVisibility.PRIVATE,
         )
 
     private fun keywordSnapshot() =

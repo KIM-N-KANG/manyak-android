@@ -1,5 +1,6 @@
 package app.manyak.create.domain
 
+import app.manyak.common.entity.story.StoryVisibility
 import app.manyak.create.entity.CreationProgress
 import app.manyak.create.entity.ServerDraftLink
 import app.manyak.create.entity.StoryCompletionCommand
@@ -20,6 +21,7 @@ class ReturnedDraftTest {
                 storylineId = generation.storylines[1].id,
                 additionalInfos = listOf("추천", "배경"),
                 artStyle = "WATERCOLOR",
+                visibility = StoryVisibility.PUBLIC,
                 draftId = "draft-a",
             )
         val request =
@@ -40,7 +42,7 @@ class ReturnedDraftTest {
 
         assertEquals(sampleGenerationCommand(), draft.generationCommand)
         assertEquals(generation, draft.generation)
-        // 같은 입력으로 다시 완성하면 같은 requestId 를 쓰도록 제출한 명령과 화풍을 되살린다.
+        // 같은 입력으로 다시 완성하면 같은 requestId 를 쓰도록 제출한 명령과 화풍, 공개 범위를 되살린다.
         assertEquals(command, draft.lastCompletionCommand)
         assertEquals(
             CreationProgress(
@@ -48,6 +50,7 @@ class ReturnedDraftTest {
                 additionalInfoInputs = listOf("배경"),
                 selectedRecommendations = listOf("추천"),
                 artStyle = "WATERCOLOR",
+                visibility = StoryVisibility.PUBLIC,
             ),
             draft.progress,
         )

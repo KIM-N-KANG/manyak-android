@@ -2,6 +2,7 @@ package app.manyak.create.additionalinfo.presentation
 
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.entity.story.StoryVisibility
 import app.manyak.create.entity.CreationProgress
 import app.manyak.create.entity.PendingStoryCreation
 import app.manyak.create.presentation.state.FunnelExitWarning
@@ -589,6 +590,32 @@ class CreateAdditionalInfoViewModelTest {
                     .command
             assertEquals("NONE", command.artStyle)
             assertNotEquals(firstRequestId, command.requestId)
+        }
+
+    @Test
+    fun `공개 스위치는 켜진 채 시작하고 끄면 비공개로 새 요청 ID 를 쓴다`() =
+        runTest(dispatcher) {
+            val fixture = loadedViewModel(submitter = FakeStoryCompletionSubmitter(submitSucceeds = false))
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.SelectArtStyle("ANIME"))
+            advanceUntilIdle()
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
+            advanceUntilIdle()
+            val firstCommand = requireNotNull(fixture.store.lastCompletionCommand)
+            assertEquals(StoryVisibility.PUBLIC, firstCommand.visibility)
+
+            fixture.submitter.submitSucceeds = true
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.ChangeVisibility(isPublic = false))
+            advanceUntilIdle()
+            assertEquals(StoryVisibility.PRIVATE, fixture.store.progress.visibility)
+            fixture.viewModel.onIntent(CreateAdditionalInfoIntent.CompleteStory(storylineIndex = 0))
+            advanceUntilIdle()
+
+            val command =
+                fixture.submitter.submitted
+                    .single()
+                    .command
+            assertEquals(StoryVisibility.PRIVATE, command.visibility)
+            assertNotEquals(firstCommand.requestId, command.requestId)
         }
 
     @Test

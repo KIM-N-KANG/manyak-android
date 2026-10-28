@@ -1,5 +1,7 @@
 package app.manyak.create.entity
 
+import app.manyak.common.entity.story.StoryVisibility
+
 /**
  * 스토리 완성(컴파일) 명령. [requestId] 는 클라이언트가 만든 UUID 로, 같은 값으로 다시
  * 요청하면 완성된 생성은 AI 재호출·중복 과금 없이 저장된 결과를 돌려받는다.
@@ -14,6 +16,8 @@ data class StoryCompletionCommand(
     val additionalInfos: List<String>,
     /** 고른 화풍 code. 화풍 선택 이전에 저장한 명령은 null 이고, 서버는 이를 ANIME 로 처리한다. */
     val artStyle: String? = null,
+    /** 공개 범위. 이 기능 전에 저장한 명령은 비공개로 읽는다(서버 기본값과 같다). */
+    val visibility: StoryVisibility = StoryVisibility.PRIVATE,
     /** 완성 요청을 기록할 때 서버가 지울 초안. 퍼널 세션의 초안 ID 이며, 서버에 없는 ID 는 조용히 넘어간다. */
     val draftId: String? = null,
 )

@@ -14,13 +14,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import app.manyak.create.general.entity.GeneralField
 import app.manyak.create.general.entity.GeneralFieldTarget
 import app.manyak.create.general.entity.GeneralTab
-import app.manyak.create.presentation.component.KeywordSectionLabel
-import app.manyak.designsystem.component.ManyakSwitch
+import app.manyak.create.presentation.component.VisibilityField
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.create.R as CreateR
 
@@ -38,7 +35,11 @@ internal fun GeneralFormScope.PublishSection(genres: GeneralGenreUi) {
             placeholder = stringResource(CreateR.string.general_description_placeholder),
             hint = stringResource(CreateR.string.general_description_hint),
         )
-        VisibilityField()
+        VisibilityField(
+            isPublic = form.visibility == "PUBLIC",
+            onPublicChange = { onChange(form.copy(visibility = if (it) "PUBLIC" else "PRIVATE")) },
+            enabled = enabled,
+        )
         GeneralNotice(stringResource(CreateR.string.general_moderation_notice))
     }
 }
@@ -64,26 +65,6 @@ internal fun GeneralNotice(
             tint = ManyakTheme.colors.textSubtle,
         )
         Text(text, style = ManyakTheme.typography.bodyMedium, color = ManyakTheme.colors.textSubtle)
-    }
-}
-
-@Composable
-private fun GeneralFormScope.VisibilityField() {
-    val label = stringResource(CreateR.string.general_visibility)
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
-    ) {
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact)) {
-            KeywordSectionLabel(label, required = false)
-            GeneralFieldHint(null, stringResource(CreateR.string.general_visibility_hint))
-        }
-        ManyakSwitch(
-            checked = form.visibility == "PUBLIC",
-            enabled = enabled,
-            onCheckedChange = { onChange(form.copy(visibility = if (it) "PUBLIC" else "PRIVATE")) },
-            modifier = Modifier.semantics { contentDescription = label },
-        )
     }
 }
 
