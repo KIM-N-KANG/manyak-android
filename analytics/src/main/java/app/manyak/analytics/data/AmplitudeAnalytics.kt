@@ -9,6 +9,7 @@ import app.manyak.analytics.domain.CrashReporter
 import app.manyak.analytics.entity.AnalyticsEvent
 import com.amplitude.android.Amplitude
 import com.amplitude.android.Configuration
+import com.amplitude.core.events.Identify
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -16,7 +17,7 @@ import javax.inject.Singleton
 /**
  * Amplitude 배선. 크래시 리포트의 breadcrumb·사용자 식별자도 같은 퍼널에서 [CrashReporter] 로 넘긴다.
  *
- * `device_id` 주입 전에 들어온 이벤트는 그때의 프로퍼티째로 쌓아 두었다가 주입 직후 순서대로 보낸다.
+ * `device_id` 주입 전에 들어온 이벤트와 사용자 속성은 그때의 값째로 쌓아 두었다가 주입 직후 순서대로 보낸다.
  * SDK 큐에 먼저 넣으면 SDK 생성 값이 식별자로 굳는다. breadcrumb 는 이 대기열을 타지 않는다 —
  * `device_id` 가 붙기 전에 죽어도 직전에 무엇을 했는지는 리포트에 남아야 한다.
  */
@@ -36,7 +37,7 @@ class AmplitudeAnalytics
 
         private val lock = Any()
         private var deviceIdReady = false
-        private val pending = ArrayDeque<Pair<String, Map<String, Any>>>()
+        private val pending = ArrayDeque<() -> Unit>()
 
         @Volatile
         private var userId: String? = null
@@ -44,13 +45,7 @@ class AmplitudeAnalytics
         override fun track(event: AnalyticsEvent) {
             crashReporter.recordEvent(event.name, event.screenName, event.properties)
             val payload = event.payload(userId)
-            synchronized(lock) {
-                if (!deviceIdReady) {
-                    pending.addLast(event.name to payload)
-                    return
-                }
-            }
-            send(event.name, payload)
+            sendWhenReady { send(event.name, payload) }
         }
 
         override fun setDeviceId(deviceId: String) {
@@ -60,7 +55,7 @@ class AmplitudeAnalytics
                     deviceIdReady = true
                     pending.toList().also { pending.clear() }
                 }
-            queued.forEach { (name, payload) -> send(name, payload) }
+            queued.forEach { it() }
         }
 
         override fun setUser(userId: String) {
@@ -75,7 +70,26 @@ class AmplitudeAnalytics
             crashReporter.setUser(null)
         }
 
+        override fun setUserPropertiesOnce(properties: Map<String, String>) {
+            if (properties.isEmpty()) return
+            val identify = Identify().apply { properties.forEach { (key, value) -> setOnce(key, value) } }
+            sendWhenReady {
+                if (config.isDebugBuild) Log.d(TAG, "setOnce $properties")
+                amplitude?.identify(identify)
+            }
+        }
+
         override fun currentSessionId(): Long? = amplitude?.sessionId?.takeIf { it >= 0 }
+
+        private fun sendWhenReady(action: () -> Unit) {
+            synchronized(lock) {
+                if (!deviceIdReady) {
+                    pending.addLast(action)
+                    return
+                }
+            }
+            action()
+        }
 
         private fun send(
             name: String,

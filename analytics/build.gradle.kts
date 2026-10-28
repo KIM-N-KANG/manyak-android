@@ -13,7 +13,9 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.androidx.datastore.preferences)
     implementation(libs.amplitude.analytics.android)
+    implementation(libs.install.referrer)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.crashlytics)
 
