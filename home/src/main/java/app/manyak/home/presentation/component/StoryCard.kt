@@ -46,7 +46,7 @@ internal fun StoryCard(
     ) {
         StoryThumbnail(
             thumbnailUrl = story.thumbnailUrl,
-            likeCount = story.likeCount,
+            likeCount = null,
             turnCount = story.turnCount,
             showBorder = true,
         ) {
