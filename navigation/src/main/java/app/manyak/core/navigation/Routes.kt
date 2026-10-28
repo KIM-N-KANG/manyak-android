@@ -26,6 +26,13 @@ data object LoginRoute : NavKey
 @Serializable
 data object MainTabsRoute : NavKey
 
+/**
+ * 신규 가입 회원의 첫 화면. 메인 백스택의 루트로만 놓이고, 채팅을 시작하거나 간편 제작으로 가면
+ * 앱이 이 키를 [MainTabsRoute] 로 바꿔 끼운다. 셸 위에 쌓지 않으므로 뒤로가기로 홈에 닿지 않는다.
+ */
+@Serializable
+data object StoryOnboardingRoute : NavKey
+
 @Serializable
 data object HomeRoute : NavKey
 

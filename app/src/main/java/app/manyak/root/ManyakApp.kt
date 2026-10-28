@@ -14,9 +14,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -64,6 +67,7 @@ import app.manyak.core.navigation.PersonaEditRoute
 import app.manyak.core.navigation.ProfileEditRoute
 import app.manyak.core.navigation.StoryDetailRoute
 import app.manyak.core.navigation.StoryEditRoute
+import app.manyak.core.navigation.StoryOnboardingRoute
 import app.manyak.core.navigation.StudioRoute
 import app.manyak.core.navigation.WithdrawalRoute
 import app.manyak.create.additionalinfo.presentation.CreateAdditionalInfoScreen
@@ -111,7 +115,7 @@ fun ManyakApp(
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val creditPolicy by viewModel.creditPolicy.collectAsStateWithLifecycle()
     val trials by viewModel.trials.collectAsStateWithLifecycle()
-    val entryDestination by viewModel.entryDestination.collectAsStateWithLifecycle()
+    val storyOnboardingPending by viewModel.storyOnboardingPending.collectAsStateWithLifecycle()
     val showSessionProgress = rememberDelayedProgressVisibility(sessionState == SessionState.Undetermined)
     val darkTheme =
         when (themeMode) {
@@ -151,11 +155,13 @@ fun ManyakApp(
                                 )
                             },
                         ) {
-                            MainNavDisplay(
-                                entryDestination = entryDestination,
-                                onEntryConsumed = viewModel::onEntryConsumed,
-                            )
-                            MemberOverlays(viewModel = viewModel, consentViewModel = consentViewModel)
+                            // 온보딩 여부가 백스택의 루트를 정한다. 읽기 전에는 그래프를 열지 않는다.
+                            // 그래프는 홈 탭이 보이는지 알려 초대 코드 안내를 홈에서만 띄우게 한다.
+                            var homeVisible by remember { mutableStateOf(false) }
+                            storyOnboardingPending?.let { pending ->
+                                MainNavDisplay(pending, viewModel) { homeVisible = it }
+                            }
+                            MemberOverlays(viewModel, consentViewModel, homeVisible)
                         }
                     }
                     // 이전 사용자의 데이터가 남아 있다. 정리가 끝날 때까지 어느 그래프도 열지 않는다.
@@ -265,22 +271,38 @@ internal fun AuthNavDisplay() {
 /**
  * 메인 백스택. 하단 탭 넷은 셸이 소유한 탭별 백스택 안에 있고, 셸을 두르지 않는 화면은
  * 셸 키 위에 쌓여 헤더도 하단 탭도 없이 전체 화면으로 그려진다.
+ *
+ * 신규 가입 회원은 셸 대신 온보딩이 루트다. 셸이 백스택에 없으니 뒤로가기로 홈에 닿지 않고, 채팅을 시작하거나
+ * 간편 제작으로 갈 때 루트를 셸로 바꿔 끼운다.
+ *
+ * 목적지 등록을 한 자리에 모아 둬야 백스택 구조가 읽히므로 길이 제한을 두지 않는다.
  */
+@Suppress("LongMethod")
 @Composable
 private fun MainNavDisplay(
-    entryDestination: NavKey?,
-    onEntryConsumed: () -> Unit,
+    storyOnboardingPending: Boolean,
+    viewModel: RootViewModel,
+    onHomeVisibleChange: (Boolean) -> Unit,
 ) {
-    val backStack = rememberNavBackStack(MainTabsRoute)
+    val entryDestination by viewModel.entryDestination.collectAsStateWithLifecycle()
+    val backStack = rememberNavBackStack(if (storyOnboardingPending) StoryOnboardingRoute else MainTabsRoute)
     var selectedTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
+    // 홈 탭은 시작 목적지 하나뿐이라 셸이 맨 위이고 홈이 골라져 있으면 홈 화면이 보인다.
+    val homeVisible = backStack.lastOrNull() == MainTabsRoute && selectedTab == MainTab.HOME
+    val latestOnHomeVisibleChange by rememberUpdatedState(onHomeVisibleChange)
+    DisposableEffect(homeVisible) {
+        latestOnHomeVisibleChange(homeVisible)
+        onDispose { latestOnHomeVisibleChange(false) }
+    }
     var studioRefreshRequest by rememberSaveable { mutableStateOf(0) }
+    val finishOnboarding = rememberOnboardingFinisher(backStack, storyOnboardingPending, viewModel) { selectedTab = it }
     // 알림 진입은 셸까지 걷어낸 뒤 탭을 선택하거나 상세 하나를 쌓는다.
     // 이 그래프는 회원일 때만 그려지므로 미로그인 진입은 로그인 뒤 여기서 소비된다.
     LaunchedEffect(entryDestination) {
         val destination = entryDestination ?: return@LaunchedEffect
         backStack.openExternalDestination(destination)?.let { selectedTab = it }
         if (destination == StudioRoute) studioRefreshRequest++
-        onEntryConsumed()
+        viewModel.onEntryConsumed()
     }
     val openStudio: () -> Unit = {
         selectedTab = MainTab.STUDIO
@@ -295,6 +317,7 @@ private fun MainNavDisplay(
         predictivePopTransitionSpec = slide.predictivePop,
         entryProvider =
             entryProvider<NavKey> {
+                storyOnboardingEntry(backStack, finishOnboarding)
                 entry<MainTabsRoute> {
                     MainTabsScreen(
                         selectedTab = selectedTab,
@@ -331,7 +354,7 @@ private fun MainNavDisplay(
                 myDestinationEntries(backStack)
                 noticeEntries(backStack)
                 notificationInboxEntry(backStack, openStudio)
-                storyDetailEntry(backStack) { selectedTab = MainTab.STUDIO }
+                storyDetailEntry(backStack, backStack.enterChat(finishOnboarding)) { selectedTab = MainTab.STUDIO }
                 generalStoryEntries(backStack, openStudio)
                 creationFunnelEntries(backStack) { selectedTab = MainTab.STUDIO }
                 chatRoomEntry(backStack) { selectedTab = MainTab.CHAT }

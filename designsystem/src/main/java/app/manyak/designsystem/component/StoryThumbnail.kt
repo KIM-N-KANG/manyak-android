@@ -38,7 +38,7 @@ import app.manyak.designsystem.R as DesignsystemR
 
 /**
  * 목록 카드의 3:4 표지에 좋아요 수·누적 턴 수 뱃지를 얹은 것. 카드 종류별 표시(예: 홈의
- * ORIGINAL 태그)는 [overlay] 로 표지 위에 더한다.
+ * ORIGINAL 태그)는 [overlay] 로 표지 위에 더한다. [likeCount] 가 null 이면 좋아요 뱃지를 그리지 않는다.
  *
  * 뱃지를 얹을 수 없는 자리 — 채팅 목록 카드처럼 표지가 작거나, 턴 수를 카드의 다른 자리가 이미
  * 말하는 곳 — 는 [StoryCover] 를 직접 쓴다.
@@ -46,7 +46,7 @@ import app.manyak.designsystem.R as DesignsystemR
 @Composable
 fun StoryThumbnail(
     thumbnailUrl: String?,
-    likeCount: Long,
+    likeCount: Long?,
     turnCount: Long,
     modifier: Modifier = Modifier,
     badgeScale: StoryBadgeScale = StoryBadgeScale.Compact,
@@ -69,13 +69,15 @@ fun StoryThumbnail(
             horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline, Alignment.End),
             verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
         ) {
-            CountBadge(
-                iconRes = DesignsystemR.drawable.ic_heart_outline,
-                count = likeCount,
-                descriptionRes = DesignsystemR.string.story_like_count_description,
-                scale = badgeScale,
-                backdrop = coverBackdrop,
-            )
+            if (likeCount != null) {
+                CountBadge(
+                    iconRes = DesignsystemR.drawable.ic_heart_outline,
+                    count = likeCount,
+                    descriptionRes = DesignsystemR.string.story_like_count_description,
+                    scale = badgeScale,
+                    backdrop = coverBackdrop,
+                )
+            }
             CountBadge(
                 iconRes = DesignsystemR.drawable.ic_dialog,
                 count = turnCount,

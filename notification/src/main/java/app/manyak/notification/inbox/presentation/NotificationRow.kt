@@ -82,27 +82,36 @@ internal fun NotificationRow(
 private fun NotificationTitle(item: InboxNotification) {
     val unread = stringResource(NotificationR.string.inbox_unread)
     val dotSize = with(LocalDensity.current) { ManyakTheme.sizes.unreadDotInline.toSp() }
-    Text(
-        text =
-            buildAnnotatedString {
-                append(item.title)
-                if (!item.isRead) {
-                    append(' ')
-                    appendInlineContent("unread", unread)
-                }
-            },
-        inlineContent =
-            mapOf(
-                "unread" to
-                    InlineTextContent(
-                        Placeholder(dotSize, dotSize, PlaceholderVerticalAlign.TextTop),
-                    ) { InboxUnreadDot(unread) },
-            ),
-        style = if (item.isRead) ManyakTheme.typography.bodyLarge else ManyakTheme.typography.bodyLargeStrong,
-        color = if (item.isRead) ManyakTheme.colors.textSubtle else ManyakTheme.colors.text,
-        maxLines = 2,
-        overflow = TextOverflow.Ellipsis,
-    )
+    val titleStyle = if (item.isRead) ManyakTheme.typography.bodyLarge else ManyakTheme.typography.bodyLargeStrong
+    // 점을 제목 글에 붙이면 말줄임에 함께 잘리므로, 제목만 줄이고 점은 따로 둬 줄 끝에 남긴다.
+    Row {
+        Text(
+            item.title,
+            modifier = Modifier.weight(1f, fill = false).alignByBaseline(),
+            style = titleStyle,
+            color = if (item.isRead) ManyakTheme.colors.textSubtle else ManyakTheme.colors.text,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        if (!item.isRead) {
+            Text(
+                text =
+                    buildAnnotatedString {
+                        append(' ')
+                        appendInlineContent("unread", unread)
+                    },
+                modifier = Modifier.alignByBaseline(),
+                inlineContent =
+                    mapOf(
+                        "unread" to
+                            InlineTextContent(
+                                Placeholder(dotSize, dotSize, PlaceholderVerticalAlign.TextTop),
+                            ) { InboxUnreadDot(unread) },
+                    ),
+                style = titleStyle,
+            )
+        }
+    }
 }
 
 @Composable
@@ -119,24 +128,27 @@ internal fun InboxUnreadDot(description: String) {
     )
 }
 
-internal fun InboxNotification.labelRes(): Int? =
-    when (noticeTag) {
-        "SERVICE" -> NotificationR.string.inbox_tag_service
-        "UPDATE" -> NotificationR.string.inbox_tag_update
-        "MAINTENANCE" -> NotificationR.string.inbox_tag_maintenance
-        "EVENT" -> NotificationR.string.inbox_tag_event
-        "PROMOTION" -> NotificationR.string.inbox_tag_promotion
-        else ->
-            when (type) {
-                "NOTICE" -> NotificationR.string.inbox_notice
-                "PROMOTION" -> NotificationR.string.inbox_promotion
-                "STORY_COMPLETED" -> NotificationR.string.inbox_story_completed
-                "STORY_MODERATION_COMPLETED" -> NotificationR.string.inbox_review_completed
-                "ATTENDANCE_REMINDER" -> NotificationR.string.inbox_attendance
-                "CREDIT_EXPIRY_REMINDER" -> NotificationR.string.inbox_credit_expiry
-                else -> null
-            }
-    }
+private val noticeTagLabels =
+    mapOf(
+        "SERVICE" to NotificationR.string.inbox_tag_service,
+        "UPDATE" to NotificationR.string.inbox_tag_update,
+        "MAINTENANCE" to NotificationR.string.inbox_tag_maintenance,
+        "EVENT" to NotificationR.string.inbox_tag_event,
+        "PROMOTION" to NotificationR.string.inbox_tag_promotion,
+    )
+
+private val typeLabels =
+    mapOf(
+        "NOTICE" to NotificationR.string.inbox_notice,
+        "PROMOTION" to NotificationR.string.inbox_promotion,
+        "STORY_COMPLETED" to NotificationR.string.inbox_story_completed,
+        "STORY_MODERATION_COMPLETED" to NotificationR.string.inbox_review_completed,
+        "ATTENDANCE_REMINDER" to NotificationR.string.inbox_attendance,
+        "CREDIT_EXPIRY_REMINDER" to NotificationR.string.inbox_credit_expiry,
+        "STORY_TAKEN_DOWN" to NotificationR.string.inbox_story_taken_down,
+    )
+
+internal fun InboxNotification.labelRes(): Int? = noticeTagLabels[noticeTag] ?: typeLabels[type]
 
 internal data class NotificationTime(
     val label: Int? = null,

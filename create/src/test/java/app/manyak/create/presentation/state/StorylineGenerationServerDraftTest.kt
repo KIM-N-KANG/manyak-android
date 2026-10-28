@@ -2,6 +2,7 @@ package app.manyak.create.presentation.state
 
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.entity.story.StoryVisibility
 import app.manyak.create.entity.CharacterGender
 import app.manyak.create.entity.CreationProgress
 import app.manyak.create.entity.KeywordCharacterSnapshot
@@ -192,7 +193,12 @@ class StorylineGenerationServerDraftTest {
             store.markStorylineSelected(0)
             store.saveDraft()
             runCurrent()
-            store.updateAdditionalInfoProgress(listOf("배경"), emptyList(), artStyle = null)
+            store.updateAdditionalInfoProgress(
+                listOf("배경"),
+                emptyList(),
+                artStyle = null,
+                visibility = StoryVisibility.PRIVATE,
+            )
             store.saveDraft(notify = false)
             runCurrent()
             gate.complete(Unit)

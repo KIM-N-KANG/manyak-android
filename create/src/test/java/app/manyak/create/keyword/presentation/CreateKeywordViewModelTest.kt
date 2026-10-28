@@ -610,6 +610,51 @@ class CreateKeywordViewModelTest {
         }
 
     @Test
+    fun `수위로 거절된 생성의 입력을 되살려 안내하고 다시 만들면 안내를 내린다`() =
+        runTest(dispatcher) {
+            val repository = fixedTagsRepository()
+            repository.queuedGenerationResults +=
+                DomainResult.Failure(DomainError.Server(status = 422, code = "CONTENT_REJECTED", requestId = null))
+            val store =
+                StorylineGenerationStore(
+                    repository,
+                    FakePendingStoryCreationStore(),
+                    FakeStoryCompletionSubmitter(),
+                    this,
+                    FakeSimpleDraftStore(),
+                ).bind(TEST_DRAFT_ID)
+            store.ensureRestored()
+            store.generate(sampleGenerationInput())
+            advanceUntilIdle()
+
+            val viewModel =
+                CreateKeywordViewModel(
+                    draftId = TEST_DRAFT_ID,
+                    storyCreationRepository = repository,
+                    storylineGenerationStore = store,
+                    analytics = NoOpAnalytics,
+                )
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertTrue(state.contentRejected)
+            assertFalse(state.isRestoring)
+            assertEquals(setOf(1L), state.selectedGenreTagIds)
+            assertEquals(setOf(2L), state.protagonist.selectedTagIds)
+            // 돌아온 입력은 저장한 것이 아니다.
+            assertTrue(state.draftSave.hasUnsavedChanges)
+
+            viewModel.onIntent(CreateKeywordIntent.GenerateStorylines)
+            advanceUntilIdle()
+
+            assertFalse(viewModel.uiState.value.contentRejected)
+            assertEquals(
+                CreateKeywordEffect.NavigateToStoryline,
+                withTimeoutOrNull(1_000) { viewModel.uiEffect.first() },
+            )
+        }
+
+    @Test
     fun `복원할 레코드가 없어도 복원 대기는 끝난다`() =
         runTest(dispatcher) {
             val viewModel = viewModel(fixedTagsRepository())

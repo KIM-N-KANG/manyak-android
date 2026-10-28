@@ -66,8 +66,10 @@ internal fun EntryProviderScope<NavKey>.generalStoryEntries(
     }
 }
 
+/** [onEnterChat] 이 채팅방을 쌓는다. 온보딩 위에서 연 상세라면 그 전에 온보딩을 끝내야 한다. */
 internal fun EntryProviderScope<NavKey>.storyDetailEntry(
     backStack: MutableList<NavKey>,
+    onEnterChat: (storyId: String, chatId: String) -> Unit,
     onSelectStudio: () -> Unit,
 ) {
     entry<StoryDetailRoute> { route ->
@@ -79,7 +81,7 @@ internal fun EntryProviderScope<NavKey>.storyDetailEntry(
                 backStack.popToMainTabs()
                 onSelectStudio()
             },
-            onEnterChat = { backStack.push(ChatRoomRoute(it)) },
+            onEnterChat = { chatId -> onEnterChat(route.storyId, chatId) },
             onCreatePersona = { backStack.push(PersonaCreateRoute(originStoryId = route.storyId)) },
         )
     }

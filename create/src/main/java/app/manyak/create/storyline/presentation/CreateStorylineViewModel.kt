@@ -174,7 +174,7 @@ sealed interface CreateStorylineEffect {
     data object ExitFunnel : CreateStorylineEffect
 
     /**
-     * 이어 갈 스토리라인이 없어(초안을 찾지 못했거나 아직 키워드 단계) 같은 초안의 키워드 단계로 새로 시작한다.
+     * 이어 갈 스토리라인이 없어(초안을 찾지 못했거나 아직 키워드 단계, 입력 수위로 거절된 생성) 같은 초안의 키워드 단계로 새로 시작한다.
      * [notFound]면 제작 탭 카드로 연 초안을 찾지 못했다고 알린다.
      */
     data class RestartAtKeyword(
@@ -246,6 +246,12 @@ class CreateStorylineViewModel
                 }
                 storylineGenerationStore.state.collect { generation ->
                     if (isLeaving) return@collect
+                    // 거절된 입력을 고치도록 같은 초안의 키워드 단계로 바꾼다. 키워드 단계가 입력과 안내를 꺼내 간다.
+                    if (generation is StorylineGenerationState.Rejected) {
+                        isLeaving = true
+                        dispatchEffect(CreateStorylineEffect.RestartAtKeyword(notFound = false))
+                        return@collect
+                    }
                     // 새 생성 결과가 오면 이전 스토리라인의 평가 동기화는 의미가 없다.
                     if (generation is StorylineGenerationState.Generated) {
                         ratingSyncTimers.values.forEach(Job::cancel)
@@ -566,6 +572,9 @@ private fun reduceGeneration(
                 content = StorylineContent.Loaded(generation.previousResult?.storylines.orEmpty()),
                 hasGenerationError = true,
             )
+
+        // 키워드 단계로 바뀌는 중이다. 떠나는 화면은 그대로 둔다.
+        StorylineGenerationState.Rejected -> state
 
         // 복원할 진행 레코드조차 없이 결과가 사라진 경우. 실패와 같은 화면으로 보여 준다
         // ("다시 만들기"는 직전 명령이 없어 동작하지 않는다).

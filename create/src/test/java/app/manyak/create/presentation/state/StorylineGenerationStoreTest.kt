@@ -2,6 +2,7 @@ package app.manyak.create.presentation.state
 
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.entity.story.StoryVisibility
 import app.manyak.create.entity.CreationProgress
 import app.manyak.create.entity.CreationRequestSnapshot
 import app.manyak.create.entity.PendingStoryCreation
@@ -83,7 +84,7 @@ class StorylineGenerationStoreTest {
         }
 
     @Test
-    fun `재생성 결과는 이전 스토리라인의 편집을 비우되 고른 화풍은 남긴다`() =
+    fun `재생성 결과는 이전 스토리라인의 편집을 비우되 고른 화풍과 공개 범위는 남긴다`() =
         runTest {
             val store =
                 StorylineGenerationStore(
@@ -96,12 +97,12 @@ class StorylineGenerationStoreTest {
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
             store.markStorylineSelected(0)
-            store.updateAdditionalInfoProgress(listOf("배경은 서울"), listOf("폐허를 자세히 그려줘"), artStyle = "ANIME")
+            store.updateAdditionalInfoProgress(listOf("배경은 서울"), listOf("폐허 묘사"), "ANIME", StoryVisibility.PRIVATE)
 
             store.regenerate()
             advanceUntilIdle()
 
-            assertEquals(CreationProgress(artStyle = "ANIME"), store.progress)
+            assertEquals(CreationProgress(artStyle = "ANIME", visibility = StoryVisibility.PRIVATE), store.progress)
         }
 
     @Test
@@ -280,6 +281,68 @@ class StorylineGenerationStoreTest {
             store.regenerate()
             advanceUntilIdle()
             assertNull(pendingStore.current)
+        }
+
+    @Test
+    fun `첫 생성이 수위로 거절되면 레코드를 지우고 입력을 키워드 단계로 한 번 돌려준다`() =
+        runTest {
+            val repository = FakeStoryCreationRepository()
+            val pendingStore = FakePendingStoryCreationStore()
+            val store =
+                StorylineGenerationStore(
+                    repository,
+                    pendingStore,
+                    FakeStoryCompletionSubmitter(),
+                    this,
+                    FakeSimpleDraftStore(),
+                ).bind(TEST_DRAFT_ID)
+
+            repository.queuedGenerationResults += DomainResult.Failure(contentRejected())
+            store.generate(sampleGenerationInput())
+            advanceUntilIdle()
+
+            assertEquals(StorylineGenerationState.Rejected, store.state.value)
+            assertNull(pendingStore.current)
+            val rejected = store.takeRejectedKeyword()
+            assertEquals(listOf(1L), rejected?.selectedGenreTagIds)
+            assertEquals(listOf(2L), rejected?.protagonist?.selectedTagIds)
+            assertEquals(StorylineGenerationState.Idle, store.state.value)
+            assertNull(store.takeRejectedKeyword())
+
+            // 고친 입력은 새 요청 ID 로 보낸다.
+            store.generate(sampleGenerationInput())
+            advanceUntilIdle()
+            val (first, second) = repository.generationCommands
+            assertNotEquals(first.requestId, second.requestId)
+        }
+
+    @Test
+    fun `다시 만들기가 수위로 거절되면 직전 결과는 기기 안에 남기고 키워드 단계로 돌려보낸다`() =
+        runTest {
+            val repository = FakeStoryCreationRepository()
+            val pendingStore = FakePendingStoryCreationStore()
+            val store =
+                StorylineGenerationStore(
+                    repository,
+                    pendingStore,
+                    FakeStoryCompletionSubmitter(),
+                    this,
+                    FakeSimpleDraftStore(),
+                ).bind(TEST_DRAFT_ID)
+
+            store.generate(sampleGenerationInput())
+            advanceUntilIdle()
+            advanceTimeBy(COOLDOWN_PASSED_MILLIS)
+            repository.queuedGenerationResults += DomainResult.Failure(contentRejected())
+            store.regenerate()
+            advanceUntilIdle()
+
+            assertEquals(StorylineGenerationState.Rejected, store.state.value)
+            assertEquals(sampleStorylineGeneration(), (pendingStore.current as PendingStoryCreation.Draft).generation)
+            assertTrue(store.takeRejectedKeyword() != null)
+            // 메모리의 결과는 비워 이어지는 키워드 단계가 스토리라인 단계로 되돌아가지 않는다.
+            assertNull(store.state.value.resultOrNull())
+            assertTrue(store.hasSavedDraft())
         }
 
     @Test
@@ -545,7 +608,7 @@ class StorylineGenerationStoreTest {
                 ).bind(TEST_DRAFT_ID)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
-            store.updateAdditionalInfoProgress(listOf("배경은 서울"), emptyList(), artStyle = null)
+            store.updateAdditionalInfoProgress(listOf("배경은 서울"), emptyList(), null, StoryVisibility.PRIVATE)
 
             val generation = sampleStorylineGeneration()
             val command =
@@ -584,7 +647,7 @@ class StorylineGenerationStoreTest {
                 ).bind(TEST_DRAFT_ID)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
-            store.updateAdditionalInfoProgress(listOf("배경은 서울"), emptyList(), artStyle = null)
+            store.updateAdditionalInfoProgress(listOf("배경은 서울"), emptyList(), null, StoryVisibility.PRIVATE)
 
             val generation = sampleStorylineGeneration()
             val command =
@@ -681,5 +744,8 @@ private fun sampleGenerationCommand(): StorylineGenerationCommand =
         parentCreationId = null,
         isRegenerated = false,
     )
+
+private fun contentRejected(): DomainError =
+    DomainError.Server(status = 422, code = "CONTENT_REJECTED", requestId = null)
 
 private const val COOLDOWN_PASSED_MILLIS = 600L

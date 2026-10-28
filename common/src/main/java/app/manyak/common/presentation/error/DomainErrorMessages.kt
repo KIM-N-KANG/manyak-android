@@ -2,6 +2,7 @@ package app.manyak.common.presentation.error
 
 import androidx.annotation.StringRes
 import app.manyak.common.domain.error.DomainError
+import app.manyak.common.domain.error.isContentRejected
 import app.manyak.common.entity.session.SessionEndNotice
 import app.manyak.common.R as CommonR
 
@@ -16,7 +17,8 @@ fun DomainError.messageResOrNull(): Int? =
     when (this) {
         DomainError.Network -> CommonR.string.error_network
         DomainError.Serialization -> CommonR.string.error_server
-        is DomainError.Server -> CommonR.string.error_server
+        is DomainError.Server ->
+            if (isContentRejected()) CommonR.string.error_content_rejected else CommonR.string.error_server
         DomainError.Unauthorized -> CommonR.string.error_unauthorized
         DomainError.AccountSuspended -> CommonR.string.error_account_suspended
         DomainError.ProviderCancelled -> null

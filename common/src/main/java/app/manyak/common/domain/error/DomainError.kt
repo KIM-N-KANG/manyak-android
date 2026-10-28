@@ -43,3 +43,11 @@ sealed interface DomainError {
     /** 분류하지 못한 실패. */
     data object Unknown : DomainError
 }
+
+/**
+ * AI 가 입력 수위를 이유로 생성을 거절했다(422). 같은 입력은 다시 거절되므로 재시도가 아니라 입력을 고치게 한다.
+ * 서버가 이프와 게스트 횟수를 돌려준다.
+ */
+fun DomainError.isContentRejected(): Boolean = this is DomainError.Server && code == CONTENT_REJECTED_CODE
+
+private const val CONTENT_REJECTED_CODE = "CONTENT_REJECTED"

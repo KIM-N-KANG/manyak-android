@@ -218,7 +218,7 @@ private class SignupFixture(
             stateHolder = state,
             gate = gate,
             sessionEndSignal = signal,
-            inviteOnboarding = marker,
+            signupOnboarding = setOf(marker),
         )
 
     val pending: PendingSignup? get() = repository.pendingSignup.value

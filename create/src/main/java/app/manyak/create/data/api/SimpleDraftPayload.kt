@@ -63,6 +63,7 @@ private fun PendingStoryCreation.Draft.toStoryDraftRequest(baseVersion: Int?): P
             additionalInfos = progress.additionalInfoInputs,
             selectedRecommendations = progress.selectedRecommendations,
             artStyle = progress.artStyle,
+            visibility = progress.visibility.name,
             createdStoryId = null,
             completionRequest = lastCompletionCommand?.toPayload(),
         )
@@ -112,6 +113,8 @@ internal data class StoryPayload(
     val additionalInfos: List<String> = emptyList(),
     val selectedRecommendations: List<String> = emptyList(),
     val artStyle: String? = null,
+    /** 웹은 아직 싣지 않아 웹이 저장한 초안에는 없다. 없으면 스위치 기본값인 공개다. */
+    val visibility: String? = null,
     val createdStoryId: String? = null,
     val completionRequest: CompletionRequestPayload? = null,
 )
@@ -143,6 +146,7 @@ internal data class CompletionRequestPayload(
     val storylineId: Long,
     val additionalInfos: List<String> = emptyList(),
     val artStyle: String? = null,
+    val visibility: String? = null,
     val draftId: String? = null,
 )
 
@@ -178,4 +182,12 @@ private fun StoryCharacterInput.toPayload(): CharacterPayload =
     CharacterPayload(name, gender?.name, featureTagIds, customTags)
 
 private fun StoryCompletionCommand.toPayload(): CompletionRequestPayload =
-    CompletionRequestPayload(requestId, simpleCreationId, storylineId, additionalInfos, artStyle, draftId)
+    CompletionRequestPayload(
+        requestId = requestId,
+        simpleCreationId = simpleCreationId,
+        storylineId = storylineId,
+        additionalInfos = additionalInfos,
+        artStyle = artStyle,
+        visibility = visibility.name,
+        draftId = draftId,
+    )

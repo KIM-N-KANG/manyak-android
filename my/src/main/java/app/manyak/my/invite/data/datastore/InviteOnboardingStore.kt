@@ -11,7 +11,9 @@ import app.manyak.my.data.di.ProfileDataStore
 import app.manyak.my.invite.domain.InviteOnboardingRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.io.IOException
@@ -20,6 +22,9 @@ import javax.inject.Singleton
 
 /**
  * 신규 가입 초대 코드 안내를 아직 보여 주지 않았다는 표시.
+ *
+ * 가입한 실행에서는 안내를 내보내지 않는다. 그 실행은 스토리 온보딩과 첫 채팅에 쓰고, 표시는 디스크에
+ * 남아 다음 실행에서 뜬다. "이번 실행에 가입했다"는 프로세스 메모리라 앱을 다시 열면 풀린다.
  *
  * **사용자 귀속 데이터라 프로필 캐시와 같은 DataStore 파일을 쓰고 세션 종료 정리 대상이다** — 남으면
  * 공용 기기의 다음 사용자에게 이전 회원의 안내가 뜬다.
@@ -37,12 +42,21 @@ class InviteOnboardingStore
         UserScopedStore {
         override val storeName: String = "invite-onboarding"
 
-        override val pending: Flow<Boolean> =
-            dataStore.data
-                .catch { emit(emptyPreferences()) }
-                .map { preferences -> preferences[PENDING_KEY] == true }
+        private val signedUpThisRun = MutableStateFlow(false)
 
-        override suspend fun markPending() = write { it[PENDING_KEY] = true }
+        override val pending: Flow<Boolean> =
+            combine(
+                dataStore.data
+                    .catch { emit(emptyPreferences()) }
+                    .map { preferences -> preferences[PENDING_KEY] == true },
+                signedUpThisRun,
+            ) { pending, signedUp -> pending && !signedUp }
+
+        override suspend fun markPending() {
+            // 쓰기보다 먼저 세워 저장 직후 한 번이라도 참이 흘러나가지 않게 한다.
+            signedUpThisRun.value = true
+            write { it[PENDING_KEY] = true }
+        }
 
         override suspend fun acknowledge(): Boolean =
             withContext(ioDispatcher) {

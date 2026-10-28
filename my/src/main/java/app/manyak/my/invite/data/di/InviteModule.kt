@@ -9,6 +9,7 @@ import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import dagger.multibindings.IntoSet
 import javax.inject.Singleton
 
 @Module
@@ -23,6 +24,6 @@ abstract class InviteModule {
     abstract fun bindInviteOnboardingRepository(impl: InviteOnboardingStore): InviteOnboardingRepository
 
     @Binds
-    @Singleton
+    @IntoSet
     abstract fun bindSignupOnboardingWriter(impl: InviteOnboardingStore): SignupOnboardingWriter
 }

@@ -1,6 +1,7 @@
 package app.manyak.studio.testing
 
 import app.manyak.common.domain.story.CreationProgressAccess
+import app.manyak.common.entity.story.CompletionFailure
 import app.manyak.common.entity.story.CompletionRequestSummary
 import app.manyak.common.entity.story.CreationProgressSummary
 import kotlinx.coroutines.CompletableDeferred
@@ -19,7 +20,7 @@ internal class FakeCreationProgressAccess(
     override val drafts: Flow<List<CreationProgressSummary>> = draftState
     override val completionRequests: Flow<List<CompletionRequestSummary>> = requestState
     override val submissionChanges = MutableSharedFlow<Unit>()
-    override val completionFailures = MutableSharedFlow<Unit>()
+    override val completionFailures = MutableSharedFlow<CompletionFailure>()
 
     val currentDrafts: List<CreationProgressSummary> get() = draftState.value
     val currentRequests: List<CompletionRequestSummary> get() = requestState.value

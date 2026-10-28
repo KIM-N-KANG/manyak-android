@@ -224,6 +224,62 @@ sealed class AnalyticsEvent(
         val storyId: String,
     ) : AnalyticsEvent("client_storyCreate_completed", mapOf("story_id" to storyId))
 
+    // storyOnboarding — 신규 가입 첫 화면. position 은 오리지널 목록 안의 0부터 센 순번이다.
+    data object StoryOnboardingViewed : AnalyticsEvent("client_storyOnboarding_viewed")
+
+    data class StoryOnboardingCardImpressed(
+        val storyId: String,
+        val position: Int,
+    ) : AnalyticsEvent(
+            "client_storyOnboarding_storyCard_impressed",
+            mapOf("story_id" to storyId, "position" to position),
+        )
+
+    data class StoryOnboardingDetailClicked(
+        val storyId: String,
+        val position: Int,
+        val source: StoryOnboardingDetailSource,
+    ) : AnalyticsEvent(
+            "client_storyOnboarding_detailButton_clicked",
+            mapOf("story_id" to storyId, "position" to position, "source" to source.wire),
+        )
+
+    /** [browsedCount] 는 이번 진입에서 가운데에 1초 이상 둔 서로 다른 스토리 수다. */
+    data class StoryOnboardingChatStartClicked(
+        val storyId: String,
+        val position: Int,
+        val browsedCount: Int,
+    ) : AnalyticsEvent(
+            "client_storyOnboarding_chatStartButton_clicked",
+            mapOf("story_id" to storyId, "position" to position, "browsed_count" to browsedCount),
+        )
+
+    data class StoryOnboardingChatStartErrorShown(
+        val storyId: String,
+    ) : AnalyticsEvent("client_storyOnboarding_chatStartError_shown", mapOf("story_id" to storyId))
+
+    data class StoryOnboardingCreateClicked(
+        val browsedCount: Int,
+    ) : AnalyticsEvent("client_storyOnboarding_createButton_clicked", mapOf("browsed_count" to browsedCount))
+
+    data object StoryOnboardingLoadErrorShown : AnalyticsEvent("client_storyOnboarding_loadError_shown")
+
+    /** 온보딩을 벗어났다. 채팅은 생성에 성공했을 때만 보내 버튼 클릭과 실제 시작을 가른다. */
+    data class StoryOnboardingCompleted(
+        val action: StoryOnboardingAction,
+        val source: StoryOnboardingChatSource? = null,
+        val storyId: String? = null,
+        val chatId: String? = null,
+    ) : AnalyticsEvent(
+            "client_storyOnboarding_completed",
+            mapOf(
+                "action" to action.wire,
+                "source" to source?.wire,
+                "story_id" to storyId,
+                "chat_id" to chatId,
+            ),
+        )
+
     // storyDetail
     data class StoryDetailViewed(
         val storyId: String,
@@ -546,6 +602,28 @@ enum class PersonaType(
 ) {
     DEFAULT("default"),
     PERSONA("persona"),
+}
+
+enum class StoryOnboardingDetailSource(
+    val wire: String,
+) {
+    BUTTON("button"),
+    CARD("card"),
+}
+
+enum class StoryOnboardingAction(
+    val wire: String,
+) {
+    CHAT("chat"),
+    CREATE("create"),
+}
+
+/** 온보딩 채팅이 시작된 자리. 캐러셀의 CTA 이거나 온보딩 위에서 연 상세다. */
+enum class StoryOnboardingChatSource(
+    val wire: String,
+) {
+    CAROUSEL("carousel"),
+    STORY_DETAIL("storyDetail"),
 }
 
 enum class StoryListSection(

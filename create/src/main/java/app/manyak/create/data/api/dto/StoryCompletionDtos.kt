@@ -1,5 +1,6 @@
 package app.manyak.create.data.api.dto
 
+import app.manyak.common.entity.story.StoryVisibility
 import app.manyak.create.entity.CompletedStory
 import app.manyak.create.entity.StoryCompletionCommand
 import kotlinx.serialization.Serializable
@@ -11,6 +12,7 @@ data class StoryCompletionRequestDto(
     val storylineId: Long,
     val additionalInfos: List<String>,
     val artStyle: String? = null,
+    val visibility: String = StoryVisibility.PRIVATE.name,
     val draftId: String? = null,
 )
 
@@ -21,6 +23,7 @@ fun StoryCompletionCommand.toRequestDto(): StoryCompletionRequestDto =
         storylineId = storylineId,
         additionalInfos = additionalInfos,
         artStyle = artStyle,
+        visibility = visibility.name,
         draftId = draftId,
     )
 

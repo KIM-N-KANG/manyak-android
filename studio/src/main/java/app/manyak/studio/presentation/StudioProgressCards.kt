@@ -1,13 +1,17 @@
 package app.manyak.studio.presentation
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
+import app.manyak.common.entity.story.CompletionFailure
 import app.manyak.common.entity.story.CompletionRequestStatus
 import app.manyak.common.entity.story.CompletionRequestSummary
 import app.manyak.studio.presentation.component.CreationProgressCard
 import app.manyak.studio.presentation.component.CreationProgressCardKind
 import app.manyak.studio.presentation.component.SubmissionCard
+import app.manyak.common.R as CommonR
+import app.manyak.studio.R as StudioR
 
 internal fun LazyListScope.progressCards(
     state: StudioUiState,
@@ -73,3 +77,11 @@ private fun CompletionRequestRow(
 
 private const val DRAFT_KEY_PREFIX = "draft:"
 private const val COMPLETION_KEY_PREFIX = "completion:"
+
+/** 복구 조회로 확정한 실패는 이유를 몰라 한 문구로 알리고, 원 응답에서 받은 수위 거절만 따로 알린다. */
+@StringRes
+internal fun CompletionFailure.messageRes(): Int =
+    when (this) {
+        CompletionFailure.FAILED -> StudioR.string.studio_completion_failed
+        CompletionFailure.CONTENT_REJECTED -> CommonR.string.error_content_rejected
+    }

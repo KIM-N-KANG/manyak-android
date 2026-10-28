@@ -1,6 +1,10 @@
 package app.manyak.login.presentation
 
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -32,9 +36,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
@@ -47,10 +53,16 @@ import androidx.core.view.ViewCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.manyak.common.entity.auth.AuthProvider
+import app.manyak.common.presentation.credit.LocalCreditPolicy
+import app.manyak.common.presentation.credit.creditAmountText
 import app.manyak.common.presentation.error.messageResOrNull
 import app.manyak.core.navigation.LegalDocument
+import app.manyak.designsystem.component.CoverBackdrop
 import app.manyak.designsystem.component.ManyakLogo
 import app.manyak.designsystem.component.ManyakProgressIndicator
+import app.manyak.designsystem.component.coverBackdrop
+import app.manyak.designsystem.component.rememberCoverBackdrop
+import app.manyak.designsystem.credit.CreditAmountText
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.login.presentation.component.LoginBackground
 import app.manyak.designsystem.R as DesignsystemR
@@ -108,13 +120,14 @@ private fun LoginContent(
     onOpenLegalDocument: (LegalDocument) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val backdrop = rememberCoverBackdrop()
     Box(
         modifier =
             modifier
                 .fillMaxSize()
                 .background(ManyakTheme.colors.surface),
     ) {
-        LoginBackground()
+        LoginBackground(backdrop = backdrop)
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             containerColor = Color.Transparent,
@@ -139,8 +152,13 @@ private fun LoginContent(
                     verticalArrangement = Arrangement.SpaceBetween,
                 ) {
                     LoginHeadline(modifier = Modifier.padding(bottom = ManyakTheme.spacing.block))
-                    Column {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         LoginMessages(state = state)
+
+                        SignupBenefitBadge(
+                            backdrop = backdrop,
+                            modifier = Modifier.padding(bottom = ManyakTheme.spacing.compact),
+                        )
 
                         ProviderButtons(state = state, onSignIn = onSignIn)
 
@@ -170,7 +188,7 @@ private fun LoginHeadline(modifier: Modifier = Modifier) {
         Text(
             modifier = Modifier.padding(top = ManyakTheme.spacing.component),
             text = stringResource(LoginR.string.login_subheadline),
-            style = ManyakTheme.typography.titleMedium.copy(shadow = headlineShadow()),
+            style = ManyakTheme.typography.bodyLarge.copy(shadow = headlineShadow()),
             color = ManyakTheme.colors.textSubtle,
         )
     }
@@ -191,12 +209,63 @@ private fun LoginMessages(
             )
         }
 
-        val errorRes = state.error?.messageResOrNull()
-        CenteredMessage(
-            modifier = Modifier.padding(bottom = ManyakTheme.spacing.component),
-            text = stringResource(errorRes ?: LoginR.string.login_provider_conflict),
-            style = ManyakTheme.typography.bodySmall,
-            color = if (errorRes == null) ManyakTheme.colors.textSubtle else ManyakTheme.colors.textDanger,
+        state.error?.messageResOrNull()?.let { errorRes ->
+            CenteredMessage(
+                modifier = Modifier.padding(bottom = ManyakTheme.spacing.component),
+                text = stringResource(errorRes),
+                style = ManyakTheme.typography.bodySmall,
+                color = ManyakTheme.colors.textDanger,
+            )
+        }
+    }
+}
+
+/**
+ * 두 로그인 버튼 위의 가입 혜택 배지. 어느 제공자로 가입해도 받으므로 특정 버튼을 가리키지 않는다.
+ * 표지 위 지표 배지와 같은 흐린 유리 바탕을 쓰고, 천천히 떠올랐다 내려앉아 눈길을 끈다.
+ */
+@Composable
+private fun SignupBenefitBadge(
+    backdrop: CoverBackdrop?,
+    modifier: Modifier = Modifier,
+) {
+    val signupReward = LocalCreditPolicy.current?.signupReward
+    // 문장 가운데 수치 자리에 다른 화면과 같은 마크+수치 묶음을 끼우려고, 서식 전 원문을 자리표시로 나눈다.
+    val sentence = stringResource(LoginR.string.login_signup_benefit)
+    val lift by rememberInfiniteTransition(label = "signupBenefit").animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(BADGE_FLOAT_MILLIS), RepeatMode.Reverse),
+        label = "signupBenefitLift",
+    )
+    Row(
+        modifier =
+            modifier
+                .graphicsLayer { translationY = -BadgeFloatDistance.toPx() * lift }
+                .coverBackdrop(backdrop, ManyakTheme.shapes.pill)
+                // 문장을 세 조각으로 나눠 그리므로, 보조 기술이 한 문장으로 읽도록 묶는다.
+                .semantics(mergeDescendants = true) {}
+                .padding(
+                    horizontal = ManyakTheme.spacing.controlHorizontal,
+                    vertical = ManyakTheme.spacing.compact,
+                ),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = sentence.substringBefore(AMOUNT_SLOT),
+            style = ManyakTheme.typography.labelLarge,
+            color = ManyakTheme.colors.text,
+        )
+        CreditAmountText(
+            amount = stringResource(LoginR.string.login_signup_benefit_value, creditAmountText(signupReward)),
+            pending = signupReward == null,
+            style = ManyakTheme.typography.bodyMediumStrong,
+            color = ManyakTheme.colors.textBrand,
+        )
+        Text(
+            text = sentence.substringAfter(AMOUNT_SLOT, missingDelimiterValue = ""),
+            style = ManyakTheme.typography.labelLarge,
+            color = ManyakTheme.colors.text,
         )
     }
 }
@@ -242,7 +311,6 @@ private fun ProviderButtons(
             logoRes = DesignsystemR.drawable.ic_logo_google,
             containerColor = GoogleContainerColor,
             contentColor = GoogleContentColor,
-            border = BorderStroke(ProviderButtonBorderWidth, ManyakTheme.colors.border),
             state = state,
             onClick = onSignIn,
         )
@@ -258,7 +326,6 @@ private fun ProviderButton(
     contentColor: Color,
     state: LoginUiState,
     onClick: (AuthProvider) -> Unit,
-    border: BorderStroke? = null,
 ) {
     val isBusy = state.inProgress != null || !state.canSignIn
     Button(
@@ -270,7 +337,6 @@ private fun ProviderButton(
         onClick = { onClick(provider) },
         enabled = !isBusy,
         shape = ManyakTheme.shapes.control,
-        border = border,
         contentPadding =
             PaddingValues(
                 horizontal = ManyakTheme.spacing.component,
@@ -348,7 +414,9 @@ private fun LegalLinks(
 @Composable
 private fun headlineShadow(): Shadow = Shadow(color = ManyakTheme.colors.surface, blurRadius = HEADLINE_SHADOW_BLUR)
 
-private val ProviderButtonBorderWidth = 1.dp
+private val BadgeFloatDistance = 3.dp
+private const val BADGE_FLOAT_MILLIS = 1_200
+private const val AMOUNT_SLOT = "%1\$s"
 private const val HEADLINE_SHADOW_BLUR = 12f
 private const val DISABLED_BUTTON_ALPHA = 0.75f
 

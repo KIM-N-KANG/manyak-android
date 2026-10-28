@@ -2,12 +2,16 @@ package app.manyak.create.presentation.state
 
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.error.isContentRejected
+import app.manyak.common.entity.story.StoryVisibility
 import app.manyak.create.domain.PendingStoryCreationStore
 import app.manyak.create.domain.SimpleDraftStore
 import app.manyak.create.domain.StoryCompletionSubmitter
 import app.manyak.create.domain.StoryCreationRepository
 import app.manyak.create.entity.CreationProgress
 import app.manyak.create.entity.CreationRequestSnapshot
+import app.manyak.create.entity.KeywordCharacterSnapshot
+import app.manyak.create.entity.KeywordCustomTagSnapshot
 import app.manyak.create.entity.KeywordDraftSnapshot
 import app.manyak.create.entity.PendingStoryCreation
 import app.manyak.create.entity.StoryCharacterInput
@@ -57,6 +61,9 @@ sealed interface StorylineGenerationState {
     data class Failed(
         val previousResult: StorylineGeneration?,
     ) : StorylineGenerationState
+
+    /** AI 가 입력 수위를 이유로 거절했다. 키워드 단계가 거절된 입력을 [StorylineGenerationStore.takeRejectedKeyword] 로 꺼내 간다. */
+    data object Rejected : StorylineGenerationState
 }
 
 /** 퍼널 진입 판정 결과. 판정이 끝나면 세션 동안 저장 위치와 기준 버전을 바꾸지 않는다. */
@@ -187,6 +194,9 @@ class StorylineGenerationStore
         /** 지금 퍼널 세션이 쓰는 초안. 모든 영속은 이 행에만 한다. */
         private var draftId: String? = null
 
+        /** 거절된 생성의 입력. 키워드 단계가 한 번 꺼내 간다. */
+        private var rejectedKeyword: KeywordDraftSnapshot? = null
+
         /** 스토리라인 단계 복구 폴링 대상. 스토리라인 화면이 STARTED 동안 [runStorylineRecovery] 로 소비한다. */
         private val storylineRecoveryTarget = MutableStateFlow<StorylineGenerationCommand?>(null)
 
@@ -307,13 +317,15 @@ class StorylineGenerationStore
                             mutableState.value = StorylineGenerationState.Failed(lastResult)
 
                         else -> {
-                            mutableState.value = StorylineGenerationState.Failed(lastResult)
+                            val rejected = result.error.isContentRejected()
+                            if (!rejected) mutableState.value = StorylineGenerationState.Failed(lastResult)
                             if (lastResult == null) {
                                 clearPendingRecord(owner)
                             } else {
                                 enableDraftSave()
                                 persistLocal(owner)
                             }
+                            if (rejected) returnToKeyword(command)
                         }
                     }
             }
@@ -367,6 +379,24 @@ class StorylineGenerationStore
                     enableDraftSave()
                 }
             }
+        }
+
+        /**
+         * 같은 입력은 다시 거절되므로 재시도로 두지 않고 입력을 키워드 단계로 돌려보낸다. 다시 만들기가 거절됐으면 직전 결과는
+         * 바로 앞에서 기기 안에 되돌려 두었다 — 키워드 단계에서 그냥 떠나도 그 결과로 이어서 만들 수 있다. 세션의 저장 위치는
+         * 그대로라 키워드 단계가 진입 판정을 다시 하지 않는다.
+         */
+        private fun returnToKeyword(command: StorylineGenerationCommand) {
+            clearGeneration()
+            rejectedKeyword = command.toKeywordSnapshot()
+            mutableState.value = StorylineGenerationState.Rejected
+        }
+
+        /** 거절된 생성의 입력을 한 번 꺼낸다. 꺼내면 새 생성을 기다리는 상태가 된다. */
+        fun takeRejectedKeyword(): KeywordDraftSnapshot? {
+            if (mutableState.value !is StorylineGenerationState.Rejected) return null
+            mutableState.value = StorylineGenerationState.Idle
+            return rejectedKeyword.also { rejectedKeyword = null }
         }
 
         /** 진입 판정이 복원한 키워드 입력을 한 번 꺼낸다. */
@@ -502,17 +532,19 @@ class StorylineGenerationStore
             updateProgress(progress.copy(selectedStorylineIndex = index))
         }
 
-        /** 추가 정보 화면의 입력, 추천 선택, 화풍 미러. */
+        /** 추가 정보 화면의 입력, 추천 선택, 화풍, 공개 범위 미러. */
         fun updateAdditionalInfoProgress(
             inputs: List<String>,
             recommendations: List<String>,
             artStyle: String?,
+            visibility: StoryVisibility,
         ) {
             updateProgress(
                 progress.copy(
                     additionalInfoInputs = inputs,
                     selectedRecommendations = recommendations,
                     artStyle = artStyle,
+                    visibility = visibility,
                 ),
             )
         }
@@ -520,7 +552,7 @@ class StorylineGenerationStore
         /**
          * "다시 선택하기"로 스토리라인 단계에 되돌아간다. 입력·추천 선택과 함께 선택 순번도
          * 지운다 — 순번이 남으면 이후 이탈이 추가 정보 단계로 재개되어 이미 버린 입력 화면으로 돌아간다.
-         * 화풍은 스토리라인과 무관한 선택이라 남긴다.
+         * 화풍과 공개 범위는 스토리라인과 무관한 선택이라 남긴다.
          */
         fun clearAdditionalInfoProgress() {
             updateProgress(
@@ -777,18 +809,24 @@ class StorylineGenerationStore
         }
 
         private fun resetInMemory() {
+            clearGeneration()
+            mutableState.value = StorylineGenerationState.Idle
+            session.reset()
+        }
+
+        /** 생성과 그 뒤의 편집을 메모리에서 비운다. 세션의 저장 위치는 건드리지 않는다. */
+        private fun clearGeneration() {
             draftSaveJob?.cancel()
             draftSaveJob = null
-            mutableState.value = StorylineGenerationState.Idle
             lastCommand = null
             lastResult = null
             lastResultCommand = null
             lastCompletionCommand = null
+            rejectedKeyword = null
             progress = CreationProgress()
             savedProgress = CreationProgress()
             draftPersisted = false
             storylineRecoveryTarget.value = null
-            session.reset()
             conflictVersion = null
             disableDraftSave()
         }
@@ -807,8 +845,26 @@ class StorylineGenerationStore
 private fun CreationProgress.hasSameContentAs(other: CreationProgress): Boolean =
     copy(activeStorylineIndex = other.activeStorylineIndex) == other
 
-/** 새 스토리라인에는 이전 스토리라인에 딸린 편집이 맞지 않아 비우되, 스토리라인과 무관한 화풍은 남긴다. */
-private fun CreationProgress.forNewStorylines(): CreationProgress = CreationProgress(artStyle = artStyle)
+/** 새 스토리라인에는 이전 스토리라인에 딸린 편집이 맞지 않아 비우되, 스토리라인과 무관한 화풍과 공개 범위는 남긴다. */
+private fun CreationProgress.forNewStorylines(): CreationProgress =
+    CreationProgress(artStyle = artStyle, visibility = visibility)
+
+/** 생성 요청을 키워드 입력으로 되돌린다. 요청에는 고른 직접 입력 태그만 실려 선택을 풀어 둔 태그는 돌아오지 않는다. */
+private fun StorylineGenerationCommand.toKeywordSnapshot(): KeywordDraftSnapshot =
+    KeywordDraftSnapshot(
+        selectedGenreTagIds = genreTagIds,
+        customGenreTags = customGenreTags.map { KeywordCustomTagSnapshot(it, selected = true) },
+        protagonist = protagonist.toKeywordSnapshot(),
+        supportingCharacters = supportingCharacters.map { it.toKeywordSnapshot() },
+    )
+
+private fun StoryCharacterInput.toKeywordSnapshot(): KeywordCharacterSnapshot =
+    KeywordCharacterSnapshot(
+        name = name.orEmpty(),
+        gender = gender,
+        selectedTagIds = featureTagIds,
+        customTags = customTags.map { KeywordCustomTagSnapshot(it, selected = true) },
+    )
 
 /** requestId 재사용이 서버 `PENDING` 과 겹친 409 판정. */
 internal fun DomainError.isConflict(): Boolean = this is DomainError.Server && status == HTTP_CONFLICT

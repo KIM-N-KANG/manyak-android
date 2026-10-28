@@ -1,6 +1,7 @@
 package app.manyak
 
 import android.app.Application
+import app.manyak.analytics.data.InstallReferrerReporter
 import app.manyak.auth.data.provider.KakaoSdkInitializer
 import app.manyak.create.data.datastore.LegacyPendingCreationFile
 import app.manyak.notification.data.PushNotificationTray
@@ -30,6 +31,9 @@ class ManyakApplication : Application() {
     lateinit var analyticsSessionBinder: AnalyticsSessionBinder
 
     @Inject
+    lateinit var installReferrerReporter: InstallReferrerReporter
+
+    @Inject
     lateinit var memberDataLoader: MemberDataLoader
 
     @Inject
@@ -47,6 +51,8 @@ class ManyakApplication : Application() {
         sessionBootstrapper.start()
         // device_id 를 SDK 에 넣기 전까지 이벤트가 나가지 않으므로 세션 복원과 나란히 시작해도 된다.
         analyticsSessionBinder.start()
+        // 사용자 속성도 device_id 주입 뒤에 나가므로 순서를 기다리지 않는다.
+        installReferrerReporter.start()
         memberDataLoader.start()
         // 회원 세션과 필수 동의가 확인된 뒤 FCM 토큰을 서버에 맡긴다.
         pushTokenRegistrar.start()

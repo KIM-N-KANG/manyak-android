@@ -9,7 +9,6 @@ import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.persona.PersonaAccess
 import app.manyak.common.domain.story.StoryDeletion
-import app.manyak.common.domain.story.StoryLikeUpdates
 import app.manyak.common.presentation.mvi.MviViewModel
 import app.manyak.designsystem.component.isAllowedCharacterImageUrl
 import app.manyak.report.domain.ReportRepository
@@ -198,7 +197,6 @@ class StoryDetailViewModel
         private val analytics: Analytics,
         reportRepository: ReportRepository,
         private val storyDeletion: StoryDeletion,
-        private val storyLikeUpdates: StoryLikeUpdates,
         personaAccess: PersonaAccess,
     ) : MviViewModel<StoryDetailIntent, StoryDetailUiState, StoryDetailEvent, StoryDetailEffect>(
             StoryDetailUiState(),
@@ -387,12 +385,9 @@ class StoryDetailViewModel
             dispatchEvent(StoryDetailEvent.Like(LikeChange.Updated(liked, likeCount)))
             likeJob =
                 viewModelScope.launch {
-                    when (storyRepository.setStoryLiked(storyId, liked)) {
-                        is DomainResult.Success -> storyLikeUpdates.updateLikeCount(storyId, likeCount)
-                        is DomainResult.Failure -> {
-                            dispatchEvent(StoryDetailEvent.Like(LikeChange.Updated(story.isLiked, story.likeCount)))
-                            dispatchEffect(StoryDetailEffect.ShowLikeFailed)
-                        }
+                    if (storyRepository.setStoryLiked(storyId, liked) is DomainResult.Failure) {
+                        dispatchEvent(StoryDetailEvent.Like(LikeChange.Updated(story.isLiked, story.likeCount)))
+                        dispatchEffect(StoryDetailEffect.ShowLikeFailed)
                     }
                     dispatchEvent(StoryDetailEvent.Like(LikeChange.Finished))
                     delay(LIKE_COOLDOWN_MILLIS)

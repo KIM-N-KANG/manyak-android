@@ -6,7 +6,6 @@ import app.manyak.home.domain.HomeRepository
 import app.manyak.home.entity.StoryListQuery
 import app.manyak.home.entity.StoryPage
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.yield
 
 internal fun sampleStories(): List<StorySummary> =
@@ -39,8 +38,6 @@ internal fun sampleStories(): List<StorySummary> =
 
 /** 조회 결과는 큐에서 꺼내고 비면 마지막 페이지인 성공 샘플을 돌려준다. */
 internal class FakeStoryRepository : HomeRepository {
-    override val likeCountUpdates = MutableSharedFlow<Pair<String, Long>>()
-
     /** 받은 요청의 조건과 커서. 순서대로 쌓인다. */
     val requests = mutableListOf<Pair<StoryListQuery, String?>>()
     val queuedResults = ArrayDeque<DomainResult<StoryPage>>()

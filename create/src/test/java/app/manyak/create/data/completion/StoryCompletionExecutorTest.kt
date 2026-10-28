@@ -5,6 +5,7 @@ import app.manyak.analytics.entity.AnalyticsEvent
 import app.manyak.auth.domain.SessionGate
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.entity.story.CompletionFailure
 import app.manyak.create.entity.CompletedStory
 import app.manyak.create.entity.CompletionOutcome
 import app.manyak.create.entity.CreationProgress
@@ -157,7 +158,7 @@ class StoryCompletionExecutorTest {
     fun `거절 응답은 복구 조회로 판정하고 서버가 모르는 요청만 추가 정보 단계 초안으로 되돌린다`() =
         runTest {
             val fixture = fixture()
-            val failures = mutableListOf<Unit>()
+            val failures = mutableListOf<CompletionFailure>()
             backgroundScope.launch { fixture.executor.completionFailures.collect { failures += it } }
             fixture.repository.queuedCompletionResults +=
                 DomainResult.Failure(DomainError.Server(status = 402, code = null, requestId = null))
@@ -169,7 +170,7 @@ class StoryCompletionExecutorTest {
             val returned = fixture.draftStore.record("draft-a") as PendingStoryCreation.Draft
             assertEquals(submitted.command, returned.lastCompletionCommand)
             assertEquals(0, returned.progress.selectedStorylineIndex)
-            assertEquals(1, failures.size)
+            assertEquals(listOf(CompletionFailure.FAILED), failures)
 
             // 409 인데 서버가 진행 중이면 실패가 아니라 미확정이다.
             fixture.repository.queuedCompletionResults +=
@@ -183,6 +184,25 @@ class StoryCompletionExecutorTest {
                     .single { it.requestId == "b" }
                     .outcome,
             )
+        }
+
+    @Test
+    fun `수위 거절은 복구 조회 없이 초안으로 되돌리고 거절로 알린다`() =
+        runTest {
+            val fixture = fixture()
+            val failures = mutableListOf<CompletionFailure>()
+            backgroundScope.launch { fixture.executor.completionFailures.collect { failures += it } }
+            fixture.repository.queuedCompletionResults +=
+                DomainResult.Failure(DomainError.Server(status = 422, code = "CONTENT_REJECTED", requestId = null))
+            val submitted = request("a", draftId = "draft-a")
+            fixture.executor.submit(submitted, "draft-a")
+            advanceUntilIdle()
+
+            assertTrue(fixture.requestStore.current.isEmpty())
+            val returned = fixture.draftStore.record("draft-a") as PendingStoryCreation.Draft
+            assertEquals(submitted.command, returned.lastCompletionCommand)
+            assertEquals(listOf(CompletionFailure.CONTENT_REJECTED), failures)
+            assertTrue(fixture.repository.creationRequestIds.isEmpty())
         }
 
     @Test

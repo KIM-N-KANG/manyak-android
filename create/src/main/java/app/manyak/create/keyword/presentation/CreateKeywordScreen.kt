@@ -60,6 +60,7 @@ import app.manyak.designsystem.component.FocusScrollMargin
 import app.manyak.designsystem.component.ManyakDestructiveDialog
 import app.manyak.designsystem.component.ScrollEdgeFade
 import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.common.R as CommonR
 import app.manyak.create.R as CreateR
 
 /**
@@ -309,6 +310,7 @@ private fun CreateKeywordFooter(
             !state.isFooterEnabled -> null
             state.validationErrorCategory == state.activeCategory -> CreateR.string.create_error_select_keyword
             state.showDuplicateNameFooterError -> CreateR.string.create_error_duplicate_name_footer
+            state.contentRejected -> CommonR.string.error_content_rejected
             else -> null
         }
 

@@ -3,7 +3,6 @@ package app.manyak.story.detail.presentation
 import app.manyak.analytics.domain.NoOpAnalytics
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
-import app.manyak.common.domain.story.StoryLikeUpdates
 import app.manyak.story.testing.FakeChatRepository
 import app.manyak.story.testing.FakePersonaAccess
 import app.manyak.story.testing.FakeStoryRepository
@@ -45,7 +44,6 @@ class StoryDetailLikeTest {
     private fun viewModel(
         storyRepository: FakeStoryRepository = FakeStoryRepository(),
         chatRepository: FakeChatRepository = FakeChatRepository(),
-        likeUpdates: StoryLikeUpdates = StoryLikeUpdates { _, _ -> },
     ) = StoryDetailViewModel(
         STORY_ID,
         storyRepository,
@@ -53,7 +51,6 @@ class StoryDetailLikeTest {
         NoOpAnalytics,
         storyRepository,
         storyRepository,
-        likeUpdates,
         FakePersonaAccess(),
     )
 
@@ -68,18 +65,7 @@ class StoryDetailLikeTest {
             repository.queuedLikeResults += DomainResult.Failure(DomainError.Network)
             val gate = CompletableDeferred<Unit>()
             repository.likeGate = gate
-            val updates = mutableListOf<Pair<String, Long>>()
-            val viewModel =
-                viewModel(
-                    repository,
-                    likeUpdates =
-                        StoryLikeUpdates {
-                            id,
-                            count,
-                            ->
-                            updates += id to count
-                        },
-                )
+            val viewModel = viewModel(repository)
             viewModel.onIntent(StoryDetailIntent.ScreenShown)
             advanceUntilIdle()
             viewModel.onIntent(StoryDetailIntent.ToggleLike)
@@ -111,28 +97,16 @@ class StoryDetailLikeTest {
                     .likeCount,
             )
             assertFalse(viewModel.uiState.value.isTogglingLike)
-            assertTrue(updates.isEmpty())
             assertEquals(2, repository.storyDetailCallCount)
             assertEquals(StoryDetailEffect.ShowLikeFailed, viewModel.uiEffect.first())
         }
 
     @Test
-    fun `좋아요 성공만 목록으로 전달하고 진행 중 재조회를 취소한다`() =
+    fun `좋아요는 진행 중 재조회를 취소한다`() =
         runTest(dispatcher) {
             val repository = FakeStoryRepository()
             repository.queuedDetailResults += DomainResult.Success(sampleStoryDetail(isOwner = false))
-            val updates = mutableListOf<Pair<String, Long>>()
-            val viewModel =
-                viewModel(
-                    repository,
-                    likeUpdates =
-                        StoryLikeUpdates {
-                            id,
-                            count,
-                            ->
-                            updates += id to count
-                        },
-                )
+            val viewModel = viewModel(repository)
             viewModel.onIntent(StoryDetailIntent.ScreenShown)
             advanceUntilIdle()
             val loadGate = CompletableDeferred<Unit>()
@@ -152,7 +126,6 @@ class StoryDetailLikeTest {
                 viewModel.uiState.value.story!!
                     .likeCount,
             )
-            assertTrue(updates.isEmpty())
             loadGate.complete(Unit)
             runCurrent()
             assertEquals(
@@ -162,7 +135,6 @@ class StoryDetailLikeTest {
             )
             likeGate.complete(Unit)
             advanceUntilIdle()
-            assertEquals(listOf(STORY_ID to 13L), updates)
         }
 
     @Test

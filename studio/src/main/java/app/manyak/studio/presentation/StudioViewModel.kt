@@ -8,6 +8,7 @@ import app.manyak.analytics.entity.ReportSource
 import app.manyak.analytics.entity.StoryListSection
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.story.CreationProgressAccess
+import app.manyak.common.entity.story.CompletionFailure
 import app.manyak.common.entity.story.CompletionRequestStatus
 import app.manyak.common.entity.story.CompletionRequestSummary
 import app.manyak.common.entity.story.CreationProgressSummary
@@ -215,7 +216,9 @@ sealed interface StudioEffect {
     data object ShowDraftLimit : StudioEffect
 
     /** 완성에 실패한 요청이 추가 정보 단계 초안으로 되돌아왔다. */
-    data object ShowCompletionFailed : StudioEffect
+    data class ShowCompletionFailed(
+        val failure: CompletionFailure,
+    ) : StudioEffect
 
     data class NavigateToEdit(
         val storyId: String,
@@ -312,7 +315,7 @@ class StudioViewModel
                 }
             }
             viewModelScope.launch {
-                creationProgress.completionFailures.collect { dispatchEffect(StudioEffect.ShowCompletionFailed) }
+                creationProgress.completionFailures.collect { dispatchEffect(StudioEffect.ShowCompletionFailed(it)) }
             }
             viewModelScope.launch {
                 creationProgress.completionRequests.collect { requests ->

@@ -8,6 +8,7 @@
     <string name="login_legal_links">%1$s · %2$s</string>
     <string name="login_legal_privacy">개인정보 처리방침</string>
     <string name="login_legal_terms">서비스 이용약관</string>
-    <string name="login_provider_conflict">소셜 계정 하나로 먼저 로그인한 뒤 다른 계정을 연동하면,\n어느 계정으로 로그인해도 똑같이 이용할 수 있어요</string>
+    <string name="login_signup_benefit">지금 가입하고 %1$s 받기</string>
+    <string name="login_signup_benefit_value">%1$s 이프</string>
     <string name="login_title">로그인</string>
 </resources>
