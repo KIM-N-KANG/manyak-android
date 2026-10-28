@@ -34,6 +34,10 @@ class NotificationDisplayTest {
             NotificationR.string.inbox_credit_expiry,
             item.copy(type = "CREDIT_EXPIRY_REMINDER").labelRes(),
         )
+        assertEquals(
+            NotificationR.string.inbox_story_taken_down,
+            item.copy(type = "STORY_TAKEN_DOWN").labelRes(),
+        )
         assertNull(item.copy(type = "UNKNOWN").labelRes())
     }
 
