@@ -82,27 +82,36 @@ internal fun NotificationRow(
 private fun NotificationTitle(item: InboxNotification) {
     val unread = stringResource(NotificationR.string.inbox_unread)
     val dotSize = with(LocalDensity.current) { ManyakTheme.sizes.unreadDotInline.toSp() }
-    Text(
-        text =
-            buildAnnotatedString {
-                append(item.title)
-                if (!item.isRead) {
-                    append(' ')
-                    appendInlineContent("unread", unread)
-                }
-            },
-        inlineContent =
-            mapOf(
-                "unread" to
-                    InlineTextContent(
-                        Placeholder(dotSize, dotSize, PlaceholderVerticalAlign.TextTop),
-                    ) { InboxUnreadDot(unread) },
-            ),
-        style = if (item.isRead) ManyakTheme.typography.bodyLarge else ManyakTheme.typography.bodyLargeStrong,
-        color = if (item.isRead) ManyakTheme.colors.textSubtle else ManyakTheme.colors.text,
-        maxLines = 2,
-        overflow = TextOverflow.Ellipsis,
-    )
+    val titleStyle = if (item.isRead) ManyakTheme.typography.bodyLarge else ManyakTheme.typography.bodyLargeStrong
+    // 점을 제목 글에 붙이면 말줄임에 함께 잘리므로, 제목만 줄이고 점은 따로 둬 줄 끝에 남긴다.
+    Row {
+        Text(
+            item.title,
+            modifier = Modifier.weight(1f, fill = false).alignByBaseline(),
+            style = titleStyle,
+            color = if (item.isRead) ManyakTheme.colors.textSubtle else ManyakTheme.colors.text,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        if (!item.isRead) {
+            Text(
+                text =
+                    buildAnnotatedString {
+                        append(' ')
+                        appendInlineContent("unread", unread)
+                    },
+                modifier = Modifier.alignByBaseline(),
+                inlineContent =
+                    mapOf(
+                        "unread" to
+                            InlineTextContent(
+                                Placeholder(dotSize, dotSize, PlaceholderVerticalAlign.TextTop),
+                            ) { InboxUnreadDot(unread) },
+                    ),
+                style = titleStyle,
+            )
+        }
+    }
 }
 
 @Composable
