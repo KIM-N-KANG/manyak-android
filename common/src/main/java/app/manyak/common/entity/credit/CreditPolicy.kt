@@ -7,7 +7,7 @@ package app.manyak.common.entity.credit
  * 앱이 들고 있는 값은 서버가 정책을 바꾸는 순간 거짓이 되고, 스토어 배포 주기가 길어 고치는 데도 오래 걸린다.
  */
 data class CreditPolicy(
-    /** 가입 보상 이프. 앱은 문구로 노출하지 않는다. */
+    /** 가입 보상 이프. 로그인 화면의 가입 혜택 배지가 보여 준다. */
     val signupReward: Long? = null,
     /** 초대 보상 이프. 초대자와 제출자가 각각 받는다. */
     val inviteReward: Long? = null,

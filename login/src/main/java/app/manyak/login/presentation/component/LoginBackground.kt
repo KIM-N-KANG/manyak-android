@@ -26,23 +26,29 @@ import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.currentStateAsState
+import app.manyak.designsystem.component.CoverBackdrop
+import app.manyak.designsystem.component.coverBackdropSource
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.login.R
 import kotlinx.coroutines.delay
 
 /**
- * 로그인 화면 배경. 이미지를 천천히 교차 전환하고, 버튼과 약관 문구가 놓이는 아래쪽은 표면색으로
- * 덮어 대비를 확보한다.
+ * 로그인 화면 배경. 이미지를 천천히 교차 전환하고, 제목이 놓이는 위쪽과 버튼·약관 문구가 놓이는
+ * 아래쪽은 표면색으로 덮어 대비를 확보한다.
  */
 @Composable
-internal fun LoginBackground(modifier: Modifier = Modifier) {
+internal fun LoginBackground(
+    backdrop: CoverBackdrop?,
+    modifier: Modifier = Modifier,
+) {
     Box(modifier = modifier.fillMaxSize()) {
-        CrossfadingImages(modifier = Modifier.fillMaxSize())
+        // 덮개 아래 그림을 흐림 원천으로 둬, 위에 놓인 배지가 어두운 덮개 너머의 그림을 흐리게 비춘다.
+        CrossfadingImages(modifier = Modifier.fillMaxSize().coverBackdropSource(backdrop))
         Box(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .background(bottomScrim(ManyakTheme.colors.surface)),
+                    .background(scrim(ManyakTheme.colors.surface)),
         )
     }
 }
@@ -99,8 +105,10 @@ private fun BackgroundImage(
     )
 }
 
-private fun bottomScrim(surface: Color): Brush =
+private fun scrim(surface: Color): Brush =
     Brush.verticalGradient(
+        0f to surface.copy(alpha = TOP_SCRIM_ALPHA),
+        TOP_SCRIM_HOLD to surface.copy(alpha = TOP_SCRIM_ALPHA),
         SCRIM_START to surface.copy(alpha = 0f),
         SCRIM_END to surface.copy(alpha = SCRIM_ALPHA),
         1f to surface.copy(alpha = SCRIM_ALPHA),
@@ -120,6 +128,10 @@ private val LoginBackgroundImages =
 
 /** 배경 농도. 이 위에 올라가는 본문 대비를 확보하려고 원본보다 크게 낮춘다. */
 private const val IMAGE_ALPHA = 0.4f
+
+/** 이미지의 가장 밝은 부분 위에서도 제목 아래 보조 문구가 4.5:1 을 넘도록 잡은 상단 표면 농도. */
+private const val TOP_SCRIM_ALPHA = 0.5f
+private const val TOP_SCRIM_HOLD = 0.3f
 
 /** 배경이 가장 어두울 때에도 약관 문구가 4.5:1 을 넘도록 잡은 하단 표면 농도. */
 private const val SCRIM_ALPHA = 0.85f
