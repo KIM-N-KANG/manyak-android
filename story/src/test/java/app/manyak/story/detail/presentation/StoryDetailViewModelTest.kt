@@ -5,7 +5,6 @@ import app.manyak.analytics.domain.NoOpAnalytics
 import app.manyak.analytics.entity.AnalyticsEvent
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
-import app.manyak.common.domain.story.StoryLikeUpdates
 import app.manyak.common.entity.chat.CreatedChat
 import app.manyak.report.entity.StoryReportReason
 import app.manyak.report.presentation.StoryReportAction
@@ -51,7 +50,6 @@ class StoryDetailViewModelTest {
     private fun viewModel(
         storyRepository: FakeStoryRepository = FakeStoryRepository(),
         chatRepository: FakeChatRepository = FakeChatRepository(),
-        likeUpdates: StoryLikeUpdates = StoryLikeUpdates { _, _ -> },
     ) = StoryDetailViewModel(
         STORY_ID,
         storyRepository,
@@ -59,7 +57,6 @@ class StoryDetailViewModelTest {
         NoOpAnalytics,
         storyRepository,
         storyRepository,
-        likeUpdates,
         FakePersonaAccess(),
     )
 
@@ -391,11 +388,6 @@ class StoryDetailViewModelTest {
                     analytics,
                     repository,
                     repository,
-                    StoryLikeUpdates {
-                        _,
-                        _,
-                        ->
-                    },
                     FakePersonaAccess(),
                 )
             viewModel.onIntent(StoryDetailIntent.ScreenShown)
@@ -455,7 +447,6 @@ class StoryDetailViewModelTest {
                     },
                     repository,
                     repository,
-                    StoryLikeUpdates { _, _ -> },
                     FakePersonaAccess(),
                 )
             viewModel.onIntent(StoryDetailIntent.ScreenShown)
