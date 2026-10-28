@@ -64,6 +64,7 @@ import app.manyak.core.navigation.PersonaEditRoute
 import app.manyak.core.navigation.ProfileEditRoute
 import app.manyak.core.navigation.StoryDetailRoute
 import app.manyak.core.navigation.StoryEditRoute
+import app.manyak.core.navigation.StoryOnboardingRoute
 import app.manyak.core.navigation.StudioRoute
 import app.manyak.core.navigation.WithdrawalRoute
 import app.manyak.create.additionalinfo.presentation.CreateAdditionalInfoScreen
@@ -111,7 +112,7 @@ fun ManyakApp(
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val creditPolicy by viewModel.creditPolicy.collectAsStateWithLifecycle()
     val trials by viewModel.trials.collectAsStateWithLifecycle()
-    val entryDestination by viewModel.entryDestination.collectAsStateWithLifecycle()
+    val storyOnboardingPending by viewModel.storyOnboardingPending.collectAsStateWithLifecycle()
     val showSessionProgress = rememberDelayedProgressVisibility(sessionState == SessionState.Undetermined)
     val darkTheme =
         when (themeMode) {
@@ -151,10 +152,8 @@ fun ManyakApp(
                                 )
                             },
                         ) {
-                            MainNavDisplay(
-                                entryDestination = entryDestination,
-                                onEntryConsumed = viewModel::onEntryConsumed,
-                            )
+                            // 온보딩 여부가 백스택의 루트를 정한다. 읽기 전에는 그래프를 열지 않는다.
+                            storyOnboardingPending?.let { MainNavDisplay(it, viewModel) }
                             MemberOverlays(viewModel = viewModel, consentViewModel = consentViewModel)
                         }
                     }
@@ -265,22 +264,30 @@ internal fun AuthNavDisplay() {
 /**
  * 메인 백스택. 하단 탭 넷은 셸이 소유한 탭별 백스택 안에 있고, 셸을 두르지 않는 화면은
  * 셸 키 위에 쌓여 헤더도 하단 탭도 없이 전체 화면으로 그려진다.
+ *
+ * 신규 가입 회원은 셸 대신 온보딩이 루트다. 셸이 백스택에 없으니 뒤로가기로 홈에 닿지 않고, 채팅을 시작하거나
+ * 간편 제작으로 갈 때 루트를 셸로 바꿔 끼운다.
+ *
+ * 목적지 등록을 한 자리에 모아 둬야 백스택 구조가 읽히므로 길이 제한을 두지 않는다.
  */
+@Suppress("LongMethod")
 @Composable
 private fun MainNavDisplay(
-    entryDestination: NavKey?,
-    onEntryConsumed: () -> Unit,
+    storyOnboardingPending: Boolean,
+    viewModel: RootViewModel,
 ) {
-    val backStack = rememberNavBackStack(MainTabsRoute)
+    val entryDestination by viewModel.entryDestination.collectAsStateWithLifecycle()
+    val backStack = rememberNavBackStack(if (storyOnboardingPending) StoryOnboardingRoute else MainTabsRoute)
     var selectedTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
     var studioRefreshRequest by rememberSaveable { mutableStateOf(0) }
+    val finishOnboarding = rememberOnboardingFinisher(backStack, storyOnboardingPending, viewModel) { selectedTab = it }
     // 알림 진입은 셸까지 걷어낸 뒤 탭을 선택하거나 상세 하나를 쌓는다.
     // 이 그래프는 회원일 때만 그려지므로 미로그인 진입은 로그인 뒤 여기서 소비된다.
     LaunchedEffect(entryDestination) {
         val destination = entryDestination ?: return@LaunchedEffect
         backStack.openExternalDestination(destination)?.let { selectedTab = it }
         if (destination == StudioRoute) studioRefreshRequest++
-        onEntryConsumed()
+        viewModel.onEntryConsumed()
     }
     val openStudio: () -> Unit = {
         selectedTab = MainTab.STUDIO
@@ -295,6 +302,7 @@ private fun MainNavDisplay(
         predictivePopTransitionSpec = slide.predictivePop,
         entryProvider =
             entryProvider<NavKey> {
+                storyOnboardingEntry(backStack, finishOnboarding)
                 entry<MainTabsRoute> {
                     MainTabsScreen(
                         selectedTab = selectedTab,
@@ -331,7 +339,7 @@ private fun MainNavDisplay(
                 myDestinationEntries(backStack)
                 noticeEntries(backStack)
                 notificationInboxEntry(backStack, openStudio)
-                storyDetailEntry(backStack) { selectedTab = MainTab.STUDIO }
+                storyDetailEntry(backStack, backStack.enterChat(finishOnboarding)) { selectedTab = MainTab.STUDIO }
                 generalStoryEntries(backStack, openStudio)
                 creationFunnelEntries(backStack) { selectedTab = MainTab.STUDIO }
                 chatRoomEntry(backStack) { selectedTab = MainTab.CHAT }
