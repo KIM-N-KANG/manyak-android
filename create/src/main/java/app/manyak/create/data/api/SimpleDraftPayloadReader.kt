@@ -1,7 +1,9 @@
 package app.manyak.create.data.api
 
 import app.manyak.common.data.time.toEpochMillisOrNull
+import app.manyak.common.entity.story.StoryVisibility
 import app.manyak.create.data.api.dto.toDomainOrNull
+import app.manyak.create.data.database.toStoryVisibility
 import app.manyak.create.entity.CharacterGender
 import app.manyak.create.entity.CreationProgress
 import app.manyak.create.entity.CreationRequestSnapshot
@@ -70,6 +72,7 @@ private fun StoryDraftDetailDto.readStoryDraft(json: Json): SimpleDraftOpen? {
                     additionalInfoInputs = story.additionalInfos,
                     selectedRecommendations = story.selectedRecommendations,
                     artStyle = story.artStyle,
+                    visibility = story.visibility.toStoryVisibility(default = StoryVisibility.PUBLIC),
                 ),
             lastCompletionCommand = story.completionRequest?.toCommand(),
         ),
@@ -110,6 +113,14 @@ private fun CharacterPayload.toInput(): StoryCharacterInput =
     StoryCharacterInput(name, gender.toGender(), featureTagIds, customTags)
 
 private fun CompletionRequestPayload.toCommand(): StoryCompletionCommand =
-    StoryCompletionCommand(requestId, simpleCreationId, storylineId, additionalInfos, artStyle, draftId)
+    StoryCompletionCommand(
+        requestId = requestId,
+        simpleCreationId = simpleCreationId,
+        storylineId = storylineId,
+        additionalInfos = additionalInfos,
+        artStyle = artStyle,
+        visibility = visibility.toStoryVisibility(default = StoryVisibility.PRIVATE),
+        draftId = draftId,
+    )
 
 private fun String?.toGender(): CharacterGender? = CharacterGender.entries.firstOrNull { it.name == this }

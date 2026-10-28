@@ -1,5 +1,6 @@
 package app.manyak.create.data.database
 
+import app.manyak.common.entity.story.StoryVisibility
 import app.manyak.create.entity.CharacterGender
 import app.manyak.create.entity.CreationProgress
 import app.manyak.create.entity.StoryCharacterInput
@@ -37,6 +38,7 @@ internal data class CompletionCommandDto(
     val storylineId: Long,
     val additionalInfos: List<String>,
     val artStyle: String? = null,
+    val visibility: String? = null,
     val draftId: String? = null,
 )
 
@@ -66,6 +68,7 @@ internal data class ProgressDto(
     val additionalInfoInputs: List<String> = emptyList(),
     val selectedRecommendations: List<String> = emptyList(),
     val artStyle: String? = null,
+    val visibility: String? = null,
 )
 
 internal fun StorylineGenerationCommand.toDto(): GenerationCommandDto {
@@ -113,6 +116,7 @@ internal fun StoryCompletionCommand.toDto(): CompletionCommandDto =
         storylineId = storylineId,
         additionalInfos = additionalInfos,
         artStyle = artStyle,
+        visibility = visibility.toPayloadValue(default = StoryVisibility.PRIVATE),
         draftId = draftId,
     )
 
@@ -123,6 +127,7 @@ internal fun CompletionCommandDto.toDomain(): StoryCompletionCommand =
         storylineId = storylineId,
         additionalInfos = additionalInfos,
         artStyle = artStyle,
+        visibility = visibility.toStoryVisibility(default = StoryVisibility.PRIVATE),
         draftId = draftId,
     )
 
@@ -161,6 +166,7 @@ internal fun CreationProgress.toDto(): ProgressDto =
         additionalInfoInputs = additionalInfoInputs,
         selectedRecommendations = selectedRecommendations,
         artStyle = artStyle,
+        visibility = visibility.toPayloadValue(default = StoryVisibility.PUBLIC),
     )
 
 internal fun ProgressDto.toDomain(): CreationProgress =
@@ -170,4 +176,15 @@ internal fun ProgressDto.toDomain(): CreationProgress =
         additionalInfoInputs = additionalInfoInputs,
         selectedRecommendations = selectedRecommendations,
         artStyle = artStyle,
+        visibility = visibility.toStoryVisibility(default = StoryVisibility.PUBLIC),
     )
+
+/** 기본값은 비워 둬 이 기능 전과 같은 JSON 으로 남긴다. */
+private fun StoryVisibility.toPayloadValue(default: StoryVisibility): String? = name.takeIf { this != default }
+
+/**
+ * 값이 없거나 모르면 [default] 다. 진행은 스위치 기본값인 공개로 열고, 완성 명령은 이 기능 전 요청이
+ * 공개 범위 없이 나가 서버가 비공개로 만들었으므로 비공개로 읽는다.
+ */
+internal fun String?.toStoryVisibility(default: StoryVisibility): StoryVisibility =
+    StoryVisibility.entries.firstOrNull { it.name == this } ?: default

@@ -3,6 +3,7 @@ package app.manyak.create.presentation.state
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.error.isContentRejected
+import app.manyak.common.entity.story.StoryVisibility
 import app.manyak.create.domain.PendingStoryCreationStore
 import app.manyak.create.domain.SimpleDraftStore
 import app.manyak.create.domain.StoryCompletionSubmitter
@@ -531,17 +532,19 @@ class StorylineGenerationStore
             updateProgress(progress.copy(selectedStorylineIndex = index))
         }
 
-        /** 추가 정보 화면의 입력, 추천 선택, 화풍 미러. */
+        /** 추가 정보 화면의 입력, 추천 선택, 화풍, 공개 범위 미러. */
         fun updateAdditionalInfoProgress(
             inputs: List<String>,
             recommendations: List<String>,
             artStyle: String?,
+            visibility: StoryVisibility,
         ) {
             updateProgress(
                 progress.copy(
                     additionalInfoInputs = inputs,
                     selectedRecommendations = recommendations,
                     artStyle = artStyle,
+                    visibility = visibility,
                 ),
             )
         }
@@ -549,7 +552,7 @@ class StorylineGenerationStore
         /**
          * "다시 선택하기"로 스토리라인 단계에 되돌아간다. 입력·추천 선택과 함께 선택 순번도
          * 지운다 — 순번이 남으면 이후 이탈이 추가 정보 단계로 재개되어 이미 버린 입력 화면으로 돌아간다.
-         * 화풍은 스토리라인과 무관한 선택이라 남긴다.
+         * 화풍과 공개 범위는 스토리라인과 무관한 선택이라 남긴다.
          */
         fun clearAdditionalInfoProgress() {
             updateProgress(
@@ -842,8 +845,9 @@ class StorylineGenerationStore
 private fun CreationProgress.hasSameContentAs(other: CreationProgress): Boolean =
     copy(activeStorylineIndex = other.activeStorylineIndex) == other
 
-/** 새 스토리라인에는 이전 스토리라인에 딸린 편집이 맞지 않아 비우되, 스토리라인과 무관한 화풍은 남긴다. */
-private fun CreationProgress.forNewStorylines(): CreationProgress = CreationProgress(artStyle = artStyle)
+/** 새 스토리라인에는 이전 스토리라인에 딸린 편집이 맞지 않아 비우되, 스토리라인과 무관한 화풍과 공개 범위는 남긴다. */
+private fun CreationProgress.forNewStorylines(): CreationProgress =
+    CreationProgress(artStyle = artStyle, visibility = visibility)
 
 /** 생성 요청을 키워드 입력으로 되돌린다. 요청에는 고른 직접 입력 태그만 실려 선택을 풀어 둔 태그는 돌아오지 않는다. */
 private fun StorylineGenerationCommand.toKeywordSnapshot(): KeywordDraftSnapshot =

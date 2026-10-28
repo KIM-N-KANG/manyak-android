@@ -1,5 +1,7 @@
 package app.manyak.create.entity
 
+import app.manyak.common.entity.story.StoryVisibility
+
 /**
  * 임시 저장·복원 재료가 되는 퍼널 진행 스냅숏. 키워드 입력은 저장 범위 밖이라 담지 않는다.
  */
@@ -14,6 +16,8 @@ data class CreationProgress(
     val selectedRecommendations: List<String> = emptyList(),
     /** 고른 화풍 code. 스토리라인과 무관한 선택이라 스토리라인을 다시 골라도 남는다. */
     val artStyle: String? = null,
+    /** 공개 스위치. 일반 제작과 달리 켜진 채(공개) 시작하고, 화풍처럼 스토리라인을 다시 골라도 남는다. */
+    val visibility: StoryVisibility = StoryVisibility.PUBLIC,
 )
 
 /**

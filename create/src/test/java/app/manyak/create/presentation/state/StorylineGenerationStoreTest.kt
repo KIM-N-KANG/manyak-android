@@ -2,6 +2,7 @@ package app.manyak.create.presentation.state
 
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.entity.story.StoryVisibility
 import app.manyak.create.entity.CreationProgress
 import app.manyak.create.entity.CreationRequestSnapshot
 import app.manyak.create.entity.PendingStoryCreation
@@ -83,7 +84,7 @@ class StorylineGenerationStoreTest {
         }
 
     @Test
-    fun `재생성 결과는 이전 스토리라인의 편집을 비우되 고른 화풍은 남긴다`() =
+    fun `재생성 결과는 이전 스토리라인의 편집을 비우되 고른 화풍과 공개 범위는 남긴다`() =
         runTest {
             val store =
                 StorylineGenerationStore(
@@ -96,12 +97,12 @@ class StorylineGenerationStoreTest {
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
             store.markStorylineSelected(0)
-            store.updateAdditionalInfoProgress(listOf("배경은 서울"), listOf("폐허를 자세히 그려줘"), artStyle = "ANIME")
+            store.updateAdditionalInfoProgress(listOf("배경은 서울"), listOf("폐허 묘사"), "ANIME", StoryVisibility.PRIVATE)
 
             store.regenerate()
             advanceUntilIdle()
 
-            assertEquals(CreationProgress(artStyle = "ANIME"), store.progress)
+            assertEquals(CreationProgress(artStyle = "ANIME", visibility = StoryVisibility.PRIVATE), store.progress)
         }
 
     @Test
@@ -607,7 +608,7 @@ class StorylineGenerationStoreTest {
                 ).bind(TEST_DRAFT_ID)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
-            store.updateAdditionalInfoProgress(listOf("배경은 서울"), emptyList(), artStyle = null)
+            store.updateAdditionalInfoProgress(listOf("배경은 서울"), emptyList(), null, StoryVisibility.PRIVATE)
 
             val generation = sampleStorylineGeneration()
             val command =
@@ -646,7 +647,7 @@ class StorylineGenerationStoreTest {
                 ).bind(TEST_DRAFT_ID)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
-            store.updateAdditionalInfoProgress(listOf("배경은 서울"), emptyList(), artStyle = null)
+            store.updateAdditionalInfoProgress(listOf("배경은 서울"), emptyList(), null, StoryVisibility.PRIVATE)
 
             val generation = sampleStorylineGeneration()
             val command =

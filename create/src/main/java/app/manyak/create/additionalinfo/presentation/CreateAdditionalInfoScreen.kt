@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
@@ -39,6 +40,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
+import app.manyak.common.entity.story.StoryVisibility
 import app.manyak.common.presentation.credit.LocalCreditPolicy
 import app.manyak.common.presentation.credit.LocalTrials
 import app.manyak.common.presentation.credit.creditAmountText
@@ -51,6 +53,7 @@ import app.manyak.create.presentation.component.FunnelNeutralButton
 import app.manyak.create.presentation.component.FunnelPrimaryButton
 import app.manyak.create.presentation.component.ReselectWarningDialog
 import app.manyak.create.presentation.component.SaveDraftWhenBackgrounded
+import app.manyak.create.presentation.component.VisibilityField
 import app.manyak.create.presentation.preview.previewStorylines
 import app.manyak.create.presentation.state.DraftSaveUiState
 import app.manyak.designsystem.component.FocusScrollMargin
@@ -267,17 +270,35 @@ internal fun AdditionalInfoList(
                 )
             }
         }
-        item {
-            ArtStyleSection(
-                modifier = Modifier.padding(top = ManyakTheme.spacing.section),
-                artStyles = state.artStyles,
-                failed = state.artStylesFailed,
-                selectedCode = state.selectedArtStyle,
-                onSelect = { code -> onIntent(CreateAdditionalInfoIntent.SelectArtStyle(code)) },
-                onRetry = { onIntent(CreateAdditionalInfoIntent.RetryArtStyles) },
-            )
-        }
+        completionOptionItems(state, onIntent)
         item { Spacer(modifier = Modifier.height(ManyakTheme.spacing.gutter)) }
+    }
+}
+
+/** 목록 끝의 완성 옵션. 화풍 아래에 공개 스위치를 둔다. */
+private fun LazyListScope.completionOptionItems(
+    state: CreateAdditionalInfoUiState,
+    onIntent: (CreateAdditionalInfoIntent) -> Unit,
+) {
+    item {
+        ArtStyleSection(
+            modifier = Modifier.padding(top = ManyakTheme.spacing.section),
+            artStyles = state.artStyles,
+            failed = state.artStylesFailed,
+            selectedCode = state.selectedArtStyle,
+            onSelect = { code -> onIntent(CreateAdditionalInfoIntent.SelectArtStyle(code)) },
+            onRetry = { onIntent(CreateAdditionalInfoIntent.RetryArtStyles) },
+        )
+    }
+    item {
+        VisibilityField(
+            modifier =
+                Modifier
+                    .padding(horizontal = ManyakTheme.spacing.gutter)
+                    .padding(top = ManyakTheme.spacing.section),
+            isPublic = state.visibility == StoryVisibility.PUBLIC,
+            onPublicChange = { onIntent(CreateAdditionalInfoIntent.ChangeVisibility(isPublic = it)) },
+        )
     }
 }
 

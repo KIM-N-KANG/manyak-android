@@ -1,5 +1,6 @@
 package app.manyak.create.data
 
+import app.manyak.common.entity.story.StoryVisibility
 import app.manyak.create.data.api.StoryDraftDetailDto
 import app.manyak.create.data.api.toSimpleDraftOpen
 import app.manyak.create.data.api.toSimpleDraftRequest
@@ -62,7 +63,8 @@ class SimpleDraftPayloadTest {
                 "supportingCharacters":[{"name":null,"gender":null,"featureTagIds":[],"customTags":[]}],
                 "parentCreationId":null,"isRegenerated":false},
                 "activeStorylineIndex":1,"selectedStorylineId":102,"additionalInfos":["배경은 서울",""],
-                "selectedRecommendations":["폐허"],"artStyle":"ANIME","createdStoryId":null,"completionRequest":null}""",
+                "selectedRecommendations":["폐허"],"artStyle":"ANIME","visibility":"PRIVATE","createdStoryId":null,
+                "completionRequest":null}""",
             ),
             request.payload,
         )
@@ -136,6 +138,8 @@ class SimpleDraftPayloadTest {
             ),
             record.progress,
         )
+        // 웹은 공개 범위를 싣지 않아 스위치 기본값(공개)으로 연다.
+        assertEquals(StoryVisibility.PUBLIC, record.progress.visibility)
     }
 
     @Test
@@ -218,6 +222,7 @@ class SimpleDraftPayloadTest {
                     additionalInfoInputs = if (selectedIndex == null) emptyList() else listOf("배경은 서울", ""),
                     selectedRecommendations = if (selectedIndex == null) emptyList() else listOf("폐허"),
                     artStyle = if (selectedIndex == null) null else "ANIME",
+                    visibility = if (selectedIndex == null) StoryVisibility.PUBLIC else StoryVisibility.PRIVATE,
                 ),
         )
 

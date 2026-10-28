@@ -13,6 +13,7 @@ import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.user.UserProfileRepository
 import app.manyak.common.entity.credit.CreditPolicy
 import app.manyak.common.entity.credit.Trials
+import app.manyak.common.entity.story.StoryVisibility
 import app.manyak.common.entity.user.UserProfile
 import app.manyak.common.presentation.credit.AttendanceOutcome
 import app.manyak.common.presentation.credit.CreditShortageController
@@ -73,6 +74,8 @@ data class CreateAdditionalInfoUiState(
     val selectedArtStyle: String? = null,
     /** 화풍을 고르지 않고 완성을 눌러 푸터에 선택 안내를 띄운 상태. 화풍을 고르면 내린다. */
     val showArtStyleRequired: Boolean = false,
+    /** 공개 스위치. 일반 제작과 달리 켜진 채(공개) 시작한다. */
+    val visibility: StoryVisibility = StoryVisibility.PUBLIC,
     /** 완성 요청을 영속하는 중. 연타를 요청 하나로 묶고, 성공하면 화면이 제작 탭으로 대체된다. */
     val isSubmitting: Boolean = false,
     /** 이탈을 막고 띄운 경고. */
@@ -111,11 +114,19 @@ sealed interface CreateAdditionalInfoIntent {
         val value: String,
     ) : CreateAdditionalInfoIntent
 
+    /** 화풍과 공개 범위 선택. 그대로 상태를 바꾸는 사건이 된다. */
+    sealed interface CompletionOptionIntent : CreateAdditionalInfoIntent
+
     data class SelectArtStyle(
         val code: String,
-    ) : CreateAdditionalInfoIntent
+    ) : CompletionOptionIntent
 
     data object RetryArtStyles : CreateAdditionalInfoIntent
+
+    /** 공개 스위치. 켜면 공개, 끄면 비공개다. */
+    data class ChangeVisibility(
+        val isPublic: Boolean,
+    ) : CompletionOptionIntent
 
     data class CompleteStory(
         val storylineIndex: Int,
@@ -182,22 +193,26 @@ sealed interface CreateAdditionalInfoEvent {
         val value: String,
     ) : CreateAdditionalInfoEvent
 
-    /** 화풍 목록과 선택 사건. 화풍끼리 묶어 따로 reduce 한다. */
-    sealed interface ArtStyleEvent : CreateAdditionalInfoEvent
+    /** 완성 옵션(화풍 목록과 선택, 공개 범위) 사건. 따로 묶어 reduce 한다. */
+    sealed interface CompletionOptionEvent : CreateAdditionalInfoEvent
 
-    data object ArtStylesRequested : ArtStyleEvent
+    data object ArtStylesRequested : CompletionOptionEvent
 
     data class ArtStylesLoaded(
         val artStyles: List<ArtStyle>,
-    ) : ArtStyleEvent
+    ) : CompletionOptionEvent
 
-    data object ArtStylesFailed : ArtStyleEvent
+    data object ArtStylesFailed : CompletionOptionEvent
 
     data class ArtStyleSelected(
         val code: String,
-    ) : ArtStyleEvent
+    ) : CompletionOptionEvent
 
-    data object ArtStyleRequired : ArtStyleEvent
+    data object ArtStyleRequired : CompletionOptionEvent
+
+    data class VisibilityChanged(
+        val visibility: StoryVisibility,
+    ) : CompletionOptionEvent
 
     data object SubmissionStarted : CreateAdditionalInfoEvent
 
@@ -295,7 +310,7 @@ class CreateAdditionalInfoViewModel
             loadArtStyles()
             viewModelScope.launch { resolveEntry() }
             viewModelScope.launch {
-                // 입력, 추천 선택, 화풍을 스토어에 미러링해 이탈 시 임시 저장 재료로 쓴다.
+                // 입력, 추천 선택, 화풍, 공개 범위를 스토어에 미러링해 이탈 시 임시 저장 재료로 쓴다.
                 uiState.collect { state ->
                     // 복원 전의 빈 입력을 미러링하면 되살릴 임시 저장 재료를 덮어쓴다.
                     if (state.isRestoring || isLeaving) return@collect
@@ -355,8 +370,7 @@ class CreateAdditionalInfoViewModel
                         ),
                     )
 
-                is CreateAdditionalInfoIntent.SelectArtStyle ->
-                    dispatchEvent(CreateAdditionalInfoEvent.ArtStyleSelected(intent.code))
+                is CreateAdditionalInfoIntent.CompletionOptionIntent -> dispatchEvent(intent.toEvent())
 
                 CreateAdditionalInfoIntent.RetryArtStyles -> loadArtStyles()
 
@@ -529,6 +543,7 @@ class CreateAdditionalInfoViewModel
                     storylineId = storylineId,
                     additionalInfos = state.submittedAdditionalInfos(),
                     artStyle = artStyle,
+                    visibility = state.visibility,
                 )
             // UiState가 이벤트 채널보다 먼저 읽힌 직후에도 요청에는 최신 입력이 들어가야 한다.
             mirrorProgress(state)
@@ -565,6 +580,7 @@ class CreateAdditionalInfoViewModel
                 inputs = state.additionalInfos.map(AdditionalInfoInput::value),
                 recommendations = state.selectedRecommendations.toList(),
                 artStyle = state.selectedArtStyle,
+                visibility = state.visibility,
             )
         }
 
@@ -605,7 +621,7 @@ class CreateAdditionalInfoViewModel
                             },
                     )
 
-                is CreateAdditionalInfoEvent.ArtStyleEvent -> state.reduceArtStyle(event)
+                is CreateAdditionalInfoEvent.CompletionOptionEvent -> state.reduceCompletionOption(event)
 
                 CreateAdditionalInfoEvent.SubmissionStarted, CreateAdditionalInfoEvent.SubmissionFailed ->
                     state.copy(isSubmitting = event == CreateAdditionalInfoEvent.SubmissionStarted)
@@ -635,8 +651,17 @@ class CreateAdditionalInfoViewModel
             }
     }
 
-private fun CreateAdditionalInfoUiState.reduceArtStyle(
-    event: CreateAdditionalInfoEvent.ArtStyleEvent,
+private fun CreateAdditionalInfoIntent.CompletionOptionIntent.toEvent(): CreateAdditionalInfoEvent =
+    when (this) {
+        is CreateAdditionalInfoIntent.SelectArtStyle -> CreateAdditionalInfoEvent.ArtStyleSelected(code)
+        is CreateAdditionalInfoIntent.ChangeVisibility ->
+            CreateAdditionalInfoEvent.VisibilityChanged(
+                if (isPublic) StoryVisibility.PUBLIC else StoryVisibility.PRIVATE,
+            )
+    }
+
+private fun CreateAdditionalInfoUiState.reduceCompletionOption(
+    event: CreateAdditionalInfoEvent.CompletionOptionEvent,
 ): CreateAdditionalInfoUiState =
     when (event) {
         CreateAdditionalInfoEvent.ArtStylesRequested -> copy(artStylesFailed = false)
@@ -645,11 +670,12 @@ private fun CreateAdditionalInfoUiState.reduceArtStyle(
         is CreateAdditionalInfoEvent.ArtStyleSelected ->
             copy(selectedArtStyle = event.code, showArtStyleRequired = false)
         CreateAdditionalInfoEvent.ArtStyleRequired -> copy(showArtStyleRequired = true)
+        is CreateAdditionalInfoEvent.VisibilityChanged -> copy(visibility = event.visibility)
     }
 
 /**
  * 같은 페이로드의 재시도는 requestId 를 재사용한다 — 서버가 이미 완성했다면 AI 재호출 없이
- * 저장된 결과를 돌려받아 중복 생성·중복 과금이 없다(멱등 계약). 화풍만 바꿔도 다른 페이로드다.
+ * 저장된 결과를 돌려받아 중복 생성·중복 과금이 없다(멱등 계약). 화풍이나 공개 범위만 바꿔도 다른 페이로드다.
  * 이전 requestId 로 보내면 이전 화풍으로 만든 결과가 돌아온다. [previous] 는 영속 실패 뒤의
  * 재시도와 이전 버전 임시 저장본이 남긴 마지막 명령이다.
  */
@@ -659,6 +685,7 @@ private fun buildCompletionCommand(
     storylineId: Long,
     additionalInfos: List<String>,
     artStyle: String,
+    visibility: StoryVisibility,
 ): StoryCompletionCommand {
     val reusableRequestId =
         previous
@@ -666,7 +693,8 @@ private fun buildCompletionCommand(
                 it.simpleCreationId == simpleCreationId &&
                     it.storylineId == storylineId &&
                     it.additionalInfos == additionalInfos &&
-                    it.artStyle == artStyle
+                    it.artStyle == artStyle &&
+                    it.visibility == visibility
             }?.requestId
     return StoryCompletionCommand(
         requestId = reusableRequestId ?: UUID.randomUUID().toString(),
@@ -674,6 +702,7 @@ private fun buildCompletionCommand(
         storylineId = storylineId,
         additionalInfos = additionalInfos,
         artStyle = artStyle,
+        visibility = visibility,
     )
 }
 
@@ -744,5 +773,6 @@ internal fun StorylineGenerationStore.toAdditionalInfoSnapshot(): CreateAddition
         additionalInfos = inputs,
         nextInputId = inputs.size.toLong(),
         selectedArtStyle = progress.artStyle,
+        visibility = progress.visibility,
     )
 }
