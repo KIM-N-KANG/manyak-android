@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation3.runtime.NavKey
 import app.manyak.analytics.domain.Analytics
+import app.manyak.analytics.entity.AnalyticsEvent
 import app.manyak.auth.domain.SessionRepository
 import app.manyak.auth.entity.SessionState
 import app.manyak.common.domain.credit.CreditPolicyRepository
@@ -16,9 +17,11 @@ import app.manyak.common.entity.credit.CreditPolicy
 import app.manyak.common.entity.credit.Trials
 import app.manyak.common.entity.settings.ThemeMode
 import app.manyak.core.navigation.PushEntry
+import app.manyak.home.onboarding.domain.StoryOnboardingRepository
 import app.manyak.my.invite.domain.InviteOnboardingRepository
 import app.manyak.session.SessionTerminationCoordinator
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -36,6 +39,7 @@ class RootViewModel
         themePreferenceRepository: ThemePreferenceRepository,
         profileRepository: UserProfileRepository,
         inviteOnboardingRepository: InviteOnboardingRepository,
+        private val storyOnboardingRepository: StoryOnboardingRepository,
         private val savedStateHandle: SavedStateHandle,
         private val creditPolicyRepository: CreditPolicyRepository,
         trialsRepository: TrialsRepository,
@@ -65,6 +69,22 @@ class RootViewModel
         val inviteOnboardingPending: StateFlow<Boolean> =
             inviteOnboardingRepository.pending.stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
+        /**
+         * 이번 실행에서 온보딩을 마쳤다. 완료 기록의 저장이 실패해도 같은 실행의 화면 재생성이 채팅방에 있던
+         * 사용자를 온보딩으로 되돌리지 않게 한다. 저장된 표시가 꺼지면(완료 저장, 로그아웃 정리) 다시 내린다 —
+         * 같은 실행에서 다음 신규 가입 회원이 온보딩을 건너뛰지 않게.
+         */
+        private val storyOnboardingFinished = MutableStateFlow(false)
+
+        /**
+         * 신규 가입 회원이 첫 스토리 온보딩을 마치지 않았는가. 메인 그래프의 루트가 이 값으로 정해지므로
+         * 읽기 전에는 null 로 두고 그래프를 열지 않는다 — 홈이 스쳤다가 온보딩으로 바뀌지 않게.
+         */
+        val storyOnboardingPending: StateFlow<Boolean?> =
+            combine(storyOnboardingRepository.pending, storyOnboardingFinished) { pending, finished ->
+                pending && !finished
+            }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
         /** 서버가 정본인 이프 수치. 세 기능 모듈이 같은 값을 보도록 루트가 한 번만 읽는다. */
         val creditPolicy: StateFlow<CreditPolicy?> = creditPolicyRepository.policy
 
@@ -90,6 +110,21 @@ class RootViewModel
             // 인증이 필요 없는 공개 조회라 세션이 정해지기 전에 시작해도 된다. 실패해도 되살리지 않는다 —
             // 수치를 못 받은 자리는 자리표시 숫자로 그려지고 다음 실행에서 다시 읽는다.
             viewModelScope.launch { creditPolicyRepository.refresh() }
+            viewModelScope.launch {
+                storyOnboardingRepository.pending.collect { pending ->
+                    if (!pending) {
+                        storyOnboardingFinished.value =
+                            false
+                    }
+                }
+            }
+        }
+
+        /** 채팅을 시작했거나 간편 제작으로 갔다. 화면 전환은 호출한 쪽이 이미 했다. */
+        fun onStoryOnboardingFinished(completion: AnalyticsEvent.StoryOnboardingCompleted) {
+            storyOnboardingFinished.value = true
+            analytics.track(completion)
+            viewModelScope.launch { storyOnboardingRepository.complete() }
         }
 
         /** 첫 생성과 `onNewIntent` 가 같은 자리로 들어온다. 나중 진입이 앞의 미소비 진입을 대체한다. */

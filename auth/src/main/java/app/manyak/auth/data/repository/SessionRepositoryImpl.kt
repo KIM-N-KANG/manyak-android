@@ -60,7 +60,7 @@ class SessionRepositoryImpl
         private val stateHolder: SessionStateHolder,
         private val gate: SessionGate,
         private val sessionEndSignal: Lazy<SessionEndSignal>,
-        private val inviteOnboarding: SignupOnboardingWriter,
+        private val signupOnboarding: Set<@JvmSuppressWildcards SignupOnboardingWriter>,
     ) : SessionRepository,
         SignupRepository,
         SessionBootstrap {
@@ -249,7 +249,7 @@ class SessionRepositoryImpl
             gate.commit(work) { stateHolder.publishMember() }
                 ?: return DomainResult.Failure(DomainError.Unauthorized)
             // 가입 사실만 기록한다. 안내는 필수 동의를 마친 뒤 회원 화면에서 소비한다.
-            if (issued.isNewUser) inviteOnboarding.markPending()
+            if (issued.isNewUser) signupOnboarding.forEach { it.markPending() }
             return DomainResult.Success(SignInOutcome.Completed(isNewUser = issued.isNewUser))
         }
 

@@ -1,6 +1,7 @@
 package app.manyak.di
 
 import app.manyak.common.domain.session.UserScopedStore
+import app.manyak.home.onboarding.data.StoryOnboardingStore
 import app.manyak.legal.consent.data.repository.ConsentRepositoryImpl
 import app.manyak.my.credit.data.repository.TrialsRepositoryImpl
 import app.manyak.my.invite.data.datastore.InviteOnboardingStore
@@ -32,6 +33,11 @@ abstract class UserScopedStoreModule {
     @Binds
     @IntoSet
     abstract fun bindInviteOnboardingAsUserScoped(impl: InviteOnboardingStore): UserScopedStore
+
+    /** 신규 가입 스토리 온보딩 표시 — 남으면 공용 기기의 다음 회원이 홈 대신 온보딩으로 열린다. */
+    @Binds
+    @IntoSet
+    abstract fun bindStoryOnboardingAsUserScoped(impl: StoryOnboardingStore): UserScopedStore
 
     /** 표시된 알림도 이전 회원의 것이다. 정리 단계에서 트레이를 비워 다음 회원에게 남기지 않는다. */
     @Binds

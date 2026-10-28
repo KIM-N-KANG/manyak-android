@@ -155,6 +155,7 @@ rounded:
   control: 14dp
   card: 16dp
   overlay: 20dp
+  feature-card: 24dp
   sheet: 20dp (위쪽 두 모서리)
   pill: CircleShape
 
@@ -655,6 +656,8 @@ components:
 
 **그림자를 쓰지 않습니다.** 깊이는 (a) 표면 색 차이와 (b) 경계선으로만 만듭니다. M3의 tonal elevation도 끕니다 — `surfaceTint`를 투명으로 파생시켜 표면이 고도에 따라 브랜드 색으로 물드는 것을 막습니다.
 
+예외는 떠 있는 판이 같은 밝기의 바탕과 겹쳐 경계만으로 층이 드러나지 않는 자리뿐입니다 — 셀렉트 메뉴·툴팁·비용 안내 판(4dp), 신규 가입 온보딩 캐러셀 카드(아주 옅게 넓힌 그림자, 아래 `story-onboarding-carousel`).
+
 ## 크기
 
 | 토큰 | 값 | 용도 |
@@ -748,6 +751,7 @@ components:
 | `{rounded.control}` | 14dp | 버튼·입력창·탭 |
 | `{rounded.card}` | 16dp | 카드·리스트 항목, 목록 카드 표지(홈, 제작 탭, 이미지 스타일) |
 | `{rounded.overlay}` | 20dp | 다이얼로그 |
+| `{rounded.feature-card}` | 24dp | 화면의 주인공으로 크게 놓이는 카드(신규 가입 온보딩 캐러셀) |
 | `{rounded.sheet}` | 20dp (위쪽 두 모서리) | 바텀시트 |
 | `{rounded.pill}` | `CircleShape` | 배지·칩·아바타 |
 
@@ -818,6 +822,8 @@ components:
 ### 스토리
 
 검수 제출본 카드는 제작 탭의 기존 표지 폭 `{sizes.studio-cover-width}`와 `card` 모서리, 제목 `body-large-strong`, 설명 `body-medium`, KST 날짜 칩을 사용합니다. 상태 배지는 `pill`, `body-small`, 가로 `compact`와 세로 `hairline` 여백이며 검토 중은 `background-neutral`과 `text-subtle`, 반려와 실패는 `background-danger-subtle`과 `text-danger`를 사용합니다.
+
+**`story-onboarding-carousel`** — 신규 가입 온보딩의 오리지널 캐러셀. 카드는 화면 폭의 76%(최대 360dp)와 남은 높이에 들어가는 3:4 중 작은 쪽이고, 카드 사이는 `{spacing.component}`이며 양옆 카드가 그 바깥으로 비칩니다. 옆 카드는 가운데에서 멀어진 만큼 88%로 줄고 불투명도 40%로 내려가며, 축소 기준점을 가운데 쪽 변에 둬 넘기는 동안 카드 사이 간격이 그대로입니다. 카드는 스토리 상세의 주변 인물 카드와 같은 틀입니다 — `{colors.surface-raised}` 바탕, `{colors.border}` 1dp 테두리, `{rounded.feature-card}` 모서리(인물 카드의 `{rounded.overlay}`보다 한 단계 둥근 큰 카드)에 위는 3:4 표지(각지게 두고 카드가 깎음), 그 아래 글자 영역(좌우 `{spacing.gutter}`, 위아래 `{spacing.control-horizontal}`)입니다. 글자는 제목 `{typography.body-large-strong}` 1줄과 그 오른쪽 "상세 보기"(`{typography.label-small}`과 `{sizes.icon-tiny}` 꺾쇠), 그 아래 `{spacing.inline}` 띄운 한 줄 소개 `{typography.body-medium}` 두 줄 고정(짧아도 두 줄 높이라 나란히 놓인 카드의 아래 변이 맞음)입니다. 제목은 `{colors.text}`, 소개는 한 단계 옅은 `{colors.text-subtle}`, 상세 보기는 그보다 한 단계 옅은 `{colors.text-subtlest}`(흰 카드 위라 본문 크기 대비를 지킴)입니다. 흰 글자 영역이 같은 밝기의 바탕에 묻히지 않도록 그림자의 예외로 카드 아래에 아주 옅은 그림자를 깝니다 — 높이 16dp로 넓게 퍼뜨리고 그림자 색을 30%로 눌러(플랫폼 기본 농도가 한 번 더 곱해짐) 윤곽 없이 카드 아래가 살짝 가라앉은 정도로만 보입니다. 옆 카드를 흐리는 반투명 층이 그림자를 자르지 않도록 그림자는 카드 안이 아니라 그 층의 높이로 그립니다. 바깥 선택 테두리는 두지 않습니다. 표지 위에는 아무것도 얹지 않고, 표지와 글자 영역 사이는 인물 카드처럼 `{colors.border}` 1dp 구분선입니다. 카드 폭은 글자 영역 높이(줄 높이를 sp로 읽어 글자 크기를 따라감)를 뺀 남은 높이로도 제한합니다. 헤드라인은 `{typography.headline-small}`, 대안 줄은 `{colors.text-subtle}` 질문 옆 `{colors.text-brand}` 글자 버튼(아이콘 없음)으로 주 동작보다 낮춥니다. 하단 CTA는 "채팅 시작하기" 한 줄의 주 버튼(`button-primary`, 높이 `{sizes.control}`)이고, 생성 중에는 라벨 자리를 유지한 채 스피너를 얹습니다. 받는 동안은 같은 자리의 골격 세 장, 상태가 바뀔 때는 `{motion.list-item-enter}` 교차 페이드입니다. 창 높이가 600dp 미만이면 캐러셀 높이를 420dp로 고정하고 화면을 세로 스크롤합니다.
 
 **`story-body`** — 배경 `{colors.surface}`, 텍스트 `{colors.text}` + `{typography.body-reading}`, 좌우 여백 `{spacing.gutter}`. 이 시스템에서 MaruBuri가 나타나는 자리는 스토리 본문과 퍼널의 스토리라인 미리보기(아래 퍼널 절)뿐입니다.
 
