@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -214,7 +215,6 @@ private fun NoticeRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val newBadge = stringResource(NoticeR.string.notice_new_badge)
     Column(
         modifier =
             modifier
@@ -226,40 +226,60 @@ private fun NoticeRow(
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
     ) {
         NoticeTagBadge(notice.tag, scale = StoryBadgeScale.Compact)
-        Text(
-            text =
-                buildAnnotatedString {
-                    append(notice.title)
-                    if (isUnread) {
-                        append(' ')
-                        appendInlineContent(UNREAD_DOT_ID, newBadge)
-                    }
-                },
-            inlineContent =
-                mapOf(
-                    UNREAD_DOT_ID to
-                        InlineTextContent(
-                            Placeholder(UnreadDotSp, UnreadDotSp, PlaceholderVerticalAlign.TextTop),
-                        ) {
-                            Box(
-                                modifier =
-                                    Modifier
-                                        .size(ManyakTheme.sizes.unreadDotInline)
-                                        .background(ManyakTheme.colors.backgroundDangerBold, ManyakTheme.shapes.pill)
-                                        .semantics { contentDescription = newBadge },
-                            )
-                        },
-                ),
-            style = if (isUnread) ManyakTheme.typography.bodyLargeStrong else ManyakTheme.typography.bodyLarge,
-            color = ManyakTheme.colors.text,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
+        NoticeTitle(title = notice.title, isUnread = isUnread)
         notice.publishedAtMillis?.let { publishedAt ->
             Text(
                 text = formatNoticeDate(publishedAt),
                 style = ManyakTheme.typography.bodyMedium,
                 color = ManyakTheme.colors.textSubtle,
+            )
+        }
+    }
+}
+
+@Composable
+private fun NoticeTitle(
+    title: String,
+    isUnread: Boolean,
+) {
+    val newBadge = stringResource(NoticeR.string.notice_new_badge)
+    val titleStyle = if (isUnread) ManyakTheme.typography.bodyLargeStrong else ManyakTheme.typography.bodyLarge
+    // 점을 제목 글에 붙이면 말줄임에 함께 잘리므로, 제목만 줄이고 점은 따로 둬 줄 끝에 남긴다.
+    Row {
+        Text(
+            modifier = Modifier.weight(1f, fill = false).alignByBaseline(),
+            text = title,
+            style = titleStyle,
+            color = ManyakTheme.colors.text,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        if (isUnread) {
+            Text(
+                modifier = Modifier.alignByBaseline(),
+                text =
+                    buildAnnotatedString {
+                        append(' ')
+                        appendInlineContent(UNREAD_DOT_ID, newBadge)
+                    },
+                inlineContent =
+                    mapOf(
+                        UNREAD_DOT_ID to
+                            InlineTextContent(
+                                Placeholder(UnreadDotSp, UnreadDotSp, PlaceholderVerticalAlign.TextTop),
+                            ) {
+                                Box(
+                                    modifier =
+                                        Modifier
+                                            .size(ManyakTheme.sizes.unreadDotInline)
+                                            .background(
+                                                ManyakTheme.colors.backgroundDangerBold,
+                                                ManyakTheme.shapes.pill,
+                                            ).semantics { contentDescription = newBadge },
+                                )
+                            },
+                    ),
+                style = titleStyle,
             )
         }
     }
