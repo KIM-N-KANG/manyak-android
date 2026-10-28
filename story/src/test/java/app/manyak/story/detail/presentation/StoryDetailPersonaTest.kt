@@ -3,7 +3,6 @@ package app.manyak.story.detail.presentation
 import app.manyak.analytics.domain.Analytics
 import app.manyak.analytics.entity.AnalyticsEvent
 import app.manyak.analytics.entity.PersonaType
-import app.manyak.common.domain.story.StoryLikeUpdates
 import app.manyak.common.entity.persona.CreatedPersona
 import app.manyak.common.entity.persona.Persona
 import app.manyak.story.detail.presentation.component.truncateSummaryPart
@@ -59,7 +58,6 @@ class StoryDetailPersonaTest {
             analytics,
             storyRepository,
             storyRepository,
-            StoryLikeUpdates { _, _ -> },
             personaAccess,
         )
     }
