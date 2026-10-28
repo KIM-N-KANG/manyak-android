@@ -26,6 +26,7 @@ googleid = "1.2.0"
 kakao = "2.24.0"
 aboutlibraries = "15.2.0"
 amplitude = "1.30.1"
+installReferrer = "2.2"
 firebaseBom = "34.18.0"
 googleServices = "4.5.0"
 firebaseCrashlytics = "3.0.8"
@@ -72,6 +73,7 @@ googleid = { group = "com.google.android.libraries.identity.googleid", name = "g
 kakao-user = { group = "com.kakao.sdk", name = "v2-user", version.ref = "kakao" }
 aboutlibraries-compose-core = { group = "com.mikepenz", name = "aboutlibraries-compose-core", version.ref = "aboutlibraries" }
 amplitude-analytics-android = { group = "com.amplitude", name = "analytics-android", version.ref = "amplitude" }
+install-referrer = { group = "com.android.installreferrer", name = "installreferrer", version.ref = "installReferrer" }
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }
 firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging" }

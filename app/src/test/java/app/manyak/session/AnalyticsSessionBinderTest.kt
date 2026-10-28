@@ -105,6 +105,8 @@ private class RecordingIdentity : AnalyticsIdentity {
         current = null
     }
 
+    override fun setUserPropertiesOnce(properties: Map<String, String>) = Unit
+
     override fun currentSessionId(): Long? = null
 }
 
