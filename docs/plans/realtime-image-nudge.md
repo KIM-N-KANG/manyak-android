@@ -4,7 +4,7 @@
 - 기준: Android `4638183`, 하네스 `c0b33af`의 `origin/dev`
 - 참고 구현: 웹 `src/features/chats/room/hooks/use-realtime-image-nudge.ts`, `utils/realtime-image-nudge.ts`, `components/input/chat-settings-sheet.tsx`
 - 계약: [공통 채팅 설정](../../../knk-harness/docs/domain/CHAT/CLIENT/3-3-LAYOUT.md#3-3-3-설정과-메뉴), [Android spec](../../../knk-harness/docs/domain/CHAT/CLIENT/ANDROID/AGENTS.md)
-- 구조와 결정: [Android design](../../../knk-harness/docs/client/ANDROID/4-4-EXECUTION.md#4-4-1-요청과-취소), [A-050](../../../knk-harness/docs/domain/CHAT/CLIENT/ANDROID/DECISIONS.md#a-050)
+- 구조와 결정: [Android design](../../../knk-harness/docs/platform/ANDROID/4-4-EXECUTION.md#4-4-1-요청과-취소), [A-050](../../../knk-harness/docs/domain/CHAT/CLIENT/ANDROID/DECISIONS.md#a-050)
 
 ## 변경
 

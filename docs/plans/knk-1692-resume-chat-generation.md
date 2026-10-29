@@ -4,7 +4,7 @@
 
 [KNK-1692](https://kimandkang.atlassian.net/browse/KNK-1692)는 상위 [KNK-1690](https://kimandkang.atlassian.net/browse/KNK-1690)의 Android 작업입니다. 서버가 연결이 끊겨도 생성을 계속하고 채팅마다 생성을 하나만 돌리게 되어(KNK-1677, KNK-1678), 채팅방이 끊긴 생성에 다시 붙고 나갔다 들어와도 생성 중 화면을 보이며 이어 받게 합니다. 웹은 [KNK-1691](https://kimandkang.atlassian.net/browse/KNK-1691)에서 같은 계약으로 먼저 구현했습니다.
 
-정본은 [생성 이어받기](../../../knk-harness/docs/domain/CHAT/CLIENT/2-2-REQUIREMENTS.md#2-2-3-생성-실패와-복구)와 채팅 예외 처리 표(KNK-1691 하네스 브랜치), [채팅 백엔드 계약](../../../knk-harness/docs/domain/CHAT/BACKEND/4-2-CONTRACT.md) 4-2-4, 4-2-6, 4-2-7, 4-2-8, 4-2-13, [Android spec](../../../knk-harness/docs/domain/CHAT/CLIENT/ANDROID/AGENTS.md), [Android design](../../../knk-harness/docs/client/ANDROID/AGENTS.md)입니다. 결정 이유는 [A-078](../../../knk-harness/docs/domain/CHAT/CLIENT/ANDROID/DECISIONS.md#a-078)에 있습니다. 웹 참고 구현은 `manyak-web`의 `follow-chat-generation.ts`, `use-chat-stream.ts`입니다.
+정본은 [생성 이어받기](../../../knk-harness/docs/domain/CHAT/CLIENT/2-2-REQUIREMENTS.md#2-2-3-생성-실패와-복구)와 채팅 예외 처리 표(KNK-1691 하네스 브랜치), [채팅 백엔드 계약](../../../knk-harness/docs/domain/CHAT/BACKEND/4-2-CONTRACT.md) 4-2-4, 4-2-6, 4-2-7, 4-2-8, 4-2-13, [Android spec](../../../knk-harness/docs/domain/CHAT/CLIENT/ANDROID/AGENTS.md), [Android design](../../../knk-harness/docs/domain/APP/CLIENT/ANDROID/AGENTS.md)입니다. 결정 이유는 [A-078](../../../knk-harness/docs/domain/CHAT/CLIENT/ANDROID/DECISIONS.md#a-078)에 있습니다. 웹 참고 구현은 `manyak-web`의 `follow-chat-generation.ts`, `use-chat-stream.ts`입니다.
 
 ## 확정한 선택
 

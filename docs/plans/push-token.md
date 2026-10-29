@@ -1,7 +1,7 @@
 # 푸시 토큰 등록 (KNK-1133)
 
 - 작성일: 2026-09-08
-- 현재 기준: 하네스 [NOTIFICATION 공통](../../../knk-harness/docs/domain/NOTIFICATION/CLIENT/AGENTS.md)와 [Android](../../../knk-harness/docs/domain/NOTIFICATION/CLIENT/ANDROID/AGENTS.md), [모듈 경계](../../../knk-harness/docs/client/ANDROID/4-2-COMPONENT-ARCHITECTURE.md)
+- 현재 기준: 하네스 [NOTIFICATION 공통](../../../knk-harness/docs/domain/NOTIFICATION/CLIENT/AGENTS.md)와 [Android](../../../knk-harness/docs/domain/NOTIFICATION/CLIENT/ANDROID/AGENTS.md), [모듈 경계](../../../knk-harness/docs/platform/ANDROID/4-2-COMPONENT-ARCHITECTURE.md)
 
 ## 목표와 제외 범위
 

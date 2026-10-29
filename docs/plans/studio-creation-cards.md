@@ -5,7 +5,7 @@
 - 상태: 구현·에뮬레이터 검증 완료(2026-09-08). 실패 카드 문구·동작과 완료 분석 이벤트는 잠정 구현
 - Android: `feat/KNK-1222-studio-creation-cards` — fetch한 `origin/dev`의 `de51b360`
 - 하네스: `docs/KNK-1222-studio-creation-cards` — fetch한 `origin/dev`의 `24b2d0b`
-- 제품 정본: [Android Spec](../../../knk-harness/docs/client/ANDROID/AGENTS.md), [Android Design](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md)
+- 제품 정본: [Android Spec](../../../knk-harness/docs/domain/APP/CLIENT/ANDROID/AGENTS.md), [Android Design](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md)
 
 ## 목표와 범위
 
@@ -52,7 +52,7 @@ Android의 간편 제작·제작 목록·해당 저장 및 복구 흐름을 변�
 | `app/.../root/ManyakApp.kt`, `MainTabs.kt` | 퍼널·메인 탭 조립 | 퍼널 백스택 제거와 제작 탭 선택을 앱에서 처리 |
 | `analytics/.../AnalyticsEvent.kt` | `StoryCreateCompleted`가 필수 `chatId` 요구 | 자동 채팅 제거에 맞는 분석 계약 정리 필요 |
 
-현재 모듈 경계는 하네스 [Android 컴포넌트 구조](../../../knk-harness/docs/client/ANDROID/4-2-COMPONENT-ARCHITECTURE.md)를 따릅니다. 계획 작성 당시 구현 파일이 fetch한 `origin/dev`에 들어 있음을 확인했습니다.
+현재 모듈 경계는 하네스 [Android 컴포넌트 구조](../../../knk-harness/docs/platform/ANDROID/4-2-COMPONENT-ARCHITECTURE.md)를 따릅니다. 계획 작성 당시 구현 파일이 fetch한 `origin/dev`에 들어 있음을 확인했습니다.
 
 ## API 근거와 한계
 

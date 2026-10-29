@@ -4,7 +4,7 @@
 - 작업일: 2026-09-26
 - 브랜치: Android `feat/KNK-1432-chat-header-tap-toggle-and-image-viewer-tap`, 하네스 `docs/KNK-1432-chat-header-tap-toggle`
 - 분기 기준: fetch한 `origin/dev` — Android `2626910c`, 하네스 `6e6d091`
-- 계약: [공통 채팅 화면 헤더 show/hide](../../../knk-harness/docs/client/AGENTS.md), [FE-SCREEN-003 썸네일 이미지 뷰어](../../../knk-harness/docs/domain/STORY/CLIENT/3-3-LAYOUT.md#3-3-2-상세와-이미지), [Android 채팅 목록과 채팅방](../../../knk-harness/docs/domain/CHAT/CLIENT/ANDROID/AGENTS.md)
+- 계약: [공통 채팅 화면 헤더 show/hide](../../../knk-harness/docs/domain/APP/CLIENT/AGENTS.md), [FE-SCREEN-003 썸네일 이미지 뷰어](../../../knk-harness/docs/domain/STORY/CLIENT/3-3-LAYOUT.md#3-3-2-상세와-이미지), [Android 채팅 목록과 채팅방](../../../knk-harness/docs/domain/CHAT/CLIENT/ANDROID/AGENTS.md)
 - 참고: 웹 KNK-1427(manyak-web #211), 웹 `src/features/chats/room/utils/header-toggle-tap.ts`, `src/lib/contained-image.ts`
 
 ## 변경

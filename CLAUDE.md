@@ -8,11 +8,11 @@
 
 | 확인할 것 | 위치 |
 | --- | --- |
-| 공용 사용자 계약과 셸 | [공용 CLIENT](../knk-harness/docs/client/AGENTS.md) |
-| Android 기반과 공용 검증 | [공용 ANDROID](../knk-harness/docs/client/ANDROID/AGENTS.md) |
-| 모듈 소유권과 의존 방향 | [컴포넌트 구조](../knk-harness/docs/client/ANDROID/4-2-COMPONENT-ARCHITECTURE.md) |
+| 공용 사용자 계약과 셸 | [공용 CLIENT](../knk-harness/docs/domain/APP/CLIENT/AGENTS.md) |
+| Android 기반과 공용 검증 | [ANDROID 기반](../knk-harness/docs/platform/ANDROID/AGENTS.md) |
+| 모듈 소유권과 의존 방향 | [컴포넌트 구조](../knk-harness/docs/platform/ANDROID/4-2-COMPONENT-ARCHITECTURE.md) |
 | 결정 당시 맥락과 이유 | 해당 CLIENT와 ANDROID의 `DECISIONS.md` |
-| 릴리스와 배포 | [Android 배포](../knk-harness/docs/client/ANDROID/6-DEPLOYMENT.md) |
+| 릴리스와 배포 | [Android 배포](../knk-harness/docs/platform/ANDROID/6-DEPLOYMENT.md) |
 | 저장소의 빌드 주입과 검증 정책 | [프로젝트 계획](docs/plans/_project.md) |
 | 기술 스택과 로컬 준비 | [README](README.md) |
 | 디자인 토큰과 컴포넌트 | [DESIGN](DESIGN.md) |
@@ -52,7 +52,7 @@
 
 ## 모듈 구조
 
-모듈 소유권, 계층과 의존 규칙은 하네스 [공용 Android 컴포넌트 구조](../knk-harness/docs/client/ANDROID/4-2-COMPONENT-ARCHITECTURE.md)를 따릅니다. 실제 모듈 등록은 `settings.gradle.kts`를 확인하세요.
+모듈 소유권, 계층과 의존 규칙은 하네스 [공용 Android 컴포넌트 구조](../knk-harness/docs/platform/ANDROID/4-2-COMPONENT-ARCHITECTURE.md)를 따릅니다. 실제 모듈 등록은 `settings.gradle.kts`를 확인하세요.
 
 `app`이 최상위 기능·기반 모듈을 조립합니다. 기능은 필요한 entity/domain/data/presentation 패키지를 소유하고, chat·create·my의 하위 기능도 패키지로 구분합니다. `checkModuleArchitecture`가 프로젝트 의존과 Kotlin PSI 기반 계층 경계를 검사하며 루트 `check`에 연결되어 있습니다. navigation의 기존 Kotlin 패키지는 직렬화 호환을 위해 유지합니다.
 

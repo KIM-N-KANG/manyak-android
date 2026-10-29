@@ -7,7 +7,7 @@
 - Android 분기 기준: fetch한 `origin/dev`의 `bb74e94aae727d6938ae1bffd571bed28e80a5e3`.
 - 하네스 분기 기준: fetch한 `origin/dev`의 `634702e6b0483a0076ca155457c296758c97d042`. 관련 정본이 이 커밋에 포함된 것을 확인했습니다.
 - 작업 시작 시 두 저장소의 작업 트리는 깨끗했습니다.
-- 사용자 계약은 [공통 제작 목록 spec](../../../knk-harness/docs/domain/STORY/CLIENT/2-2-REQUIREMENTS.md#2-2-2-탐색과-제작-목록), [Android spec](../../../knk-harness/docs/client/ANDROID/AGENTS.md), 구조는 [Android design](../../../knk-harness/docs/client/ANDROID/AGENTS.md), 결정 이유는 [A-056](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-056)을 따릅니다.
+- 사용자 계약은 [공통 제작 목록 spec](../../../knk-harness/docs/domain/STORY/CLIENT/2-2-REQUIREMENTS.md#2-2-2-탐색과-제작-목록), [Android spec](../../../knk-harness/docs/domain/APP/CLIENT/ANDROID/AGENTS.md), 구조는 [Android design](../../../knk-harness/docs/domain/APP/CLIENT/ANDROID/AGENTS.md), 결정 이유는 [A-056](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-056)을 따릅니다.
 - dev Swagger의 `GET /api/v1/stories/submissions`와 `DELETE /api/v1/stories/submissions/{id}`를 확인했습니다. 목록의 상세 응답 스키마가 자유 형식 객체이므로 서버 `StorySubmissionService.kt`의 직렬화 필드, 삭제의 204, 404, 409 처리를 직접 대조했습니다.
 - 서버 `ModerationPushListeners.kt`에서 알림의 type, status, submissionId, 선택적 storyId, title, body 및 `/studio` deepLink를 확인했습니다.
 - 웹 `submission-card.tsx`, `use-story-submissions.ts`, `story-submission.ts`, `created-story-list.tsx`와 대조했습니다. 실제 브라우저의 제작 페이지는 로그아웃 상태여서 제출본 상태별 화면 비교는 웹 소스를 기준으로 했습니다.

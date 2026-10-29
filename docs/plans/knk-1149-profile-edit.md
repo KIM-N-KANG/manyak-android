@@ -4,7 +4,7 @@
 
 [KNK-1149](https://kimandkang.atlassian.net/browse/KNK-1149)는 상위 [KNK-1121](https://kimandkang.atlassian.net/browse/KNK-1121)의 Android 작업입니다. 회원이 마이에서 닉네임과 프로필 이미지(프리셋)를 바꿉니다. 규칙은 [KNK-1146](https://kimandkang.atlassian.net/browse/KNK-1146), API는 [KNK-1147](https://kimandkang.atlassian.net/browse/KNK-1147)이고, 웹은 [KNK-1148](https://kimandkang.atlassian.net/browse/KNK-1148)에서 같은 계약으로 먼저 구현했습니다.
 
-정본은 [공통 프로필 수정](../../../knk-harness/docs/domain/ACCOUNT/CLIENT/3-3-LAYOUT.md)과 [분석 §6-4-2-19](../../../knk-harness/docs/REFERENCE/ANALYTICS.md)(KNK-1148 하네스 브랜치), [계정 백엔드 계약](../../../knk-harness/docs/domain/ACCOUNT/BACKEND/4-2-CONTRACT.md) 4-2-14, 4-2-15, [Android spec](../../../knk-harness/docs/domain/ACCOUNT/CLIENT/ANDROID/3-3-LAYOUT.md), [Android design](../../../knk-harness/docs/domain/ACCOUNT/CLIENT/ANDROID/AGENTS.md)입니다. 닉네임 규칙은 Jira KNK-1146 본문의 "공백 허용"이 아니라 Swagger의 최신 규칙(입력값 그대로 2~20자, 완성형 한글, 영문, 숫자, 공백 불가)을 따릅니다.
+정본은 [공통 프로필 수정](../../../knk-harness/docs/domain/ACCOUNT/CLIENT/3-3-LAYOUT.md)과 [분석 §6-4-2-19](../../../knk-harness/docs/reference/ANALYTICS.md)(KNK-1148 하네스 브랜치), [계정 백엔드 계약](../../../knk-harness/docs/domain/ACCOUNT/BACKEND/4-2-CONTRACT.md) 4-2-14, 4-2-15, [Android spec](../../../knk-harness/docs/domain/ACCOUNT/CLIENT/ANDROID/3-3-LAYOUT.md), [Android design](../../../knk-harness/docs/domain/ACCOUNT/CLIENT/ANDROID/AGENTS.md)입니다. 닉네임 규칙은 Jira KNK-1146 본문의 "공백 허용"이 아니라 Swagger의 최신 규칙(입력값 그대로 2~20자, 완성형 한글, 영문, 숫자, 공백 불가)을 따릅니다.
 
 ## 확정한 선택
 

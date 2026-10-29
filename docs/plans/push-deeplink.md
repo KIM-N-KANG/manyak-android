@@ -54,8 +54,8 @@
    완료 조건: `:navigation:testDebugUnitTest` 통과.
 2. `:notification` — `PushMessage.from` 이 `deepLink` 를 싣는다. 완료 조건: `:notification` 컴파일·테스트 통과.
    (`:app` 은 `PushEntry` 를 값으로만 다뤄 변경 없음. `ExternalEntryTest` 그대로.)
-3. 하네스 — `design/1-2-android-design.md §1-2-6` "알림 진입과 권한" 첫 문장을 URL 우선·`type` 하위 호환으로 고치고,
-   `spec/3-3-android-spec.md §3-3-5` 에 "허용 목록 밖 URL 은 홈" 한 줄, `adr/1-3-android-adr.md` 에 결정 1 을 A-045 로
+3. 하네스 — `docs/domain/NOTIFICATION/CLIENT/ANDROID/4-4-EXECUTION.md` "알림 진입과 권한" 첫 문장을 URL 우선·`type` 하위 호환으로 고치고,
+   `docs/domain/NOTIFICATION/CLIENT/ANDROID/2-2-REQUIREMENTS.md` 에 "허용 목록 밖 URL 은 홈" 한 줄, `docs/domain/NOTIFICATION/CLIENT/ANDROID/DECISIONS.md` 에 결정 1 을 A-045 로
    추가. 1·2 와 병렬 가능.
 
 ## 검증 (2026-09-20, emulator-5554 · dev 서버)

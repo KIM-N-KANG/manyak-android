@@ -5,7 +5,7 @@
 [KNK-1488](https://kimandkang.atlassian.net/browse/KNK-1488)에 따라 홈 목록 정렬을 인기순·최신순·좋아요순·채팅순 네 가지로 맞추고 기본 정렬을 인기순으로 바꿉니다.
 
 - 분기 기준: fetch한 `origin/dev`의 `080c19f6`.
-- 사용자 계약은 하네스 `origin/dev`의 [공통 spec 필터·정렬](../../../knk-harness/docs/client/AGENTS.md)과 [Android spec](../../../knk-harness/docs/client/ANDROID/AGENTS.md)(진입 기본값 전체·인기순, 선택은 홈 탭 수명 동안만 유지)을 따릅니다.
+- 사용자 계약은 하네스 `origin/dev`의 [공통 spec 필터·정렬](../../../knk-harness/docs/domain/APP/CLIENT/AGENTS.md)과 [Android spec](../../../knk-harness/docs/domain/APP/CLIENT/ANDROID/AGENTS.md)(진입 기본값 전체·인기순, 선택은 홈 탭 수명 동안만 유지)을 따릅니다.
 - 서버 `origin/dev`의 `GET /stories`가 `sort=popular|latest|likes|chats`를 받고 기본값이 `popular`임을 `StoryController.kt`·`StoryListCursor.kt`에서 확인했습니다. 인기 점수 계산은 서버가 소유하며 앱은 값을 그대로 보냅니다.
 
 ## 구현
