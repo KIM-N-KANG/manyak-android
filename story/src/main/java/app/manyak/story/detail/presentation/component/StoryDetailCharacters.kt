@@ -63,6 +63,7 @@ import app.manyak.designsystem.component.coverBackdropSource
 import app.manyak.designsystem.component.isAllowedCharacterImageUrl
 import app.manyak.designsystem.component.rememberCoverBackdrop
 import app.manyak.designsystem.component.selectionRing
+import app.manyak.designsystem.component.swipeBetweenTabs
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.story.detail.presentation.preview.previewCharacters
 import app.manyak.story.entity.StoryCharacter
@@ -74,6 +75,8 @@ import app.manyak.story.R as StoryR
 
 /**
  * 주변 인물. 한 번에 한 인물만 크게 보이고, 인물이 둘 이상이면 제목 아래 썸네일 줄로 고른다.
+ *
+ * 카드를 좌우로 밀어도 옆 인물로 넘어간다.
  *
  * 썸네일 줄은 화면 끝까지 스크롤되므로 좌우 여백을 섹션에 걸지 않고 제목·카드가 각자 건다.
  * 고른 인물은 화면 회전 뒤에도 남도록 저장한다.
@@ -129,7 +132,10 @@ internal fun CharacterSection(
                     )
                 }
                 CharacterCard(
-                    modifier = Modifier.padding(horizontal = gutter),
+                    modifier =
+                        Modifier
+                            .padding(horizontal = gutter)
+                            .swipeBetweenTabs(selectedIndex, characters.size, select),
                     character = selected,
                     onImageClick = onImageClick,
                     onPrevious = (selectedIndex - 1).takeIf { it >= 0 }?.let { { select(it) } },

@@ -56,6 +56,9 @@ import app.manyak.create.presentation.component.StorylineGeneratingContent
 import app.manyak.create.presentation.preview.previewStorylines
 import app.manyak.create.presentation.state.DraftSaveUiState
 import app.manyak.designsystem.component.ScrollEdgeFade
+import app.manyak.designsystem.component.rememberTabSwipeState
+import app.manyak.designsystem.component.swipeBetweenTabs
+import app.manyak.designsystem.component.tabSwipeOffset
 import app.manyak.designsystem.text.storyAnnotatedString
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.create.R as CreateR
@@ -233,7 +236,18 @@ private fun StorylineResultContent(
         if (switched) listState.scrollToItem(0)
     }
 
-    LazyColumn(modifier = modifier, state = listState) {
+    // 본문이 짧아도 그 아래 빈 자리에서 밀 수 있게 목록 전체에서 받는다.
+    val swipe = rememberTabSwipeState()
+    LazyColumn(
+        modifier =
+            modifier.swipeBetweenTabs(
+                selectedIndex = state.activeIndex,
+                tabCount = state.storylines.size,
+                onSelect = { onIntent(CreateStorylineIntent.SelectStoryline(it)) },
+                state = swipe,
+            ),
+        state = listState,
+    ) {
         item { StorylineStepTitle() }
         stickyHeader {
             StorylineTabs(state = state, onIntent = onIntent)
@@ -244,6 +258,7 @@ private fun StorylineResultContent(
                     text = storyline.storyline,
                     rating = state.activeRating,
                     onToggleRating = { rating -> onIntent(CreateStorylineIntent.ToggleRating(rating)) },
+                    modifier = Modifier.tabSwipeOffset(swipe),
                 )
             }
         }
