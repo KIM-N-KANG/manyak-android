@@ -5,7 +5,7 @@
 - 상태: 구현·로컬 집중 검증 완료. 원격 PR·CI 결과는 연결된 Jira와 PR에서 확인합니다.
 - 브랜치: 두 저장소 모두 `design/KNK-1322-hide-story-like-ui`
 - 분기 기준: fetch한 `origin/dev` — Android `afa860a3`, 하네스 `7114010b`
-- 계약: [공통 스토리 상세](../../../knk-harness/docs/spec/3-1-client-spec.md#fe-screen-003-스토리-상세), [Android 스토리 목록·상세](../../../knk-harness/docs/spec/3-3-android-spec.md#스토리-목록상세)
+- 계약: [공통 스토리 상세](../../../knk-harness/docs/domain/STORY/CLIENT/3-3-LAYOUT.md#3-3-2-상세와-이미지), [Android 스토리 목록·상세](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/2-2-REQUIREMENTS.md)
 
 ## 변경
 

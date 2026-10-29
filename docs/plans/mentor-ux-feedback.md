@@ -33,7 +33,7 @@
 
 ## 2. 카드 옵션 다이얼로그 · 내 스토리 상세 삭제
 
-카드 옵션과 상세 삭제의 선택 근거는 [Android ADR A-029](../../../knk-harness/docs/adr/1-3-android-adr.md#a-029)·[A-030](../../../knk-harness/docs/adr/1-3-android-adr.md#a-030)에 보존되어 있습니다. 이 레포가 새로 내린 것은 아래뿐입니다.
+카드 옵션과 상세 삭제의 선택 근거는 [Android ADR A-029](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-029)·[A-030](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-030)에 보존되어 있습니다. 이 레포가 새로 내린 것은 아래뿐입니다.
 
 - **옵션 다이얼로그 상단에는 회색 상자 안에 카드 미리보기**를 두고 항목과 8dp 띄웁니다. 목록 카드와 같은 정보를 표지·서체·간격·뱃지 크기만 한 단계씩 작게 그린 `ChatCardPreview`·`MyStoryCardPreview`이고, 회색 상자 위에서 장르 뱃지 바탕이 묻히지 않도록 그 자리만 밝은 알약을 씁니다.
 - **옵션 다이얼로그 `ManyakOptionsDialog`와 더보기 버튼 `ManyakMoreButton`을 `:core:ui`에** 둡니다. 채팅 목록과 제작 탭 두 사용처가 동시에 생겨 공용 승격 조건을 만족합니다. 내 스토리 카드의 기존 팝업 메뉴는 이 다이얼로그로 대체했고, 처음 바텀 시트로 만들었다가 내용에 비해 시트 높이가 남아 가운데 다이얼로그로 바꿨습니다.
@@ -63,7 +63,7 @@
 
 ## 4. 제작 퍼널 닫기(X) 확인 다이얼로그
 
-이탈 가드의 선택 근거는 [Android ADR A-031](../../../knk-harness/docs/adr/1-3-android-adr.md#a-031)에 보존되어 있습니다. 이 레포가 새로 내린 것은 아래뿐입니다.
+이탈 가드의 선택 근거는 [Android ADR A-031](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-031)에 보존되어 있습니다. 이 레포가 새로 내린 것은 아래뿐입니다.
 
 - `FunnelExitWarning`에 세 번째 값 `SAVED_DRAFT`를 더해 저장분·진행 중 레코드만 남은 이탈도 다이얼로그를 거칩니다. 세 단계 ViewModel의 판정 분기 하나만 바뀌고 이탈 처리 자체는 그대로입니다.
 - 키워드 단계는 `PendingStoryCreationStore.read()`로 레코드 유무를 봅니다 — 스토리라인·추가 정보 단계의 `hasContentToPreserve()`와 같은 판정입니다.

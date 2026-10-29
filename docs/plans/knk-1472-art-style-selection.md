@@ -4,9 +4,9 @@
 
 간편 제작 추가 정보 단계에 필수 "이미지 스타일" 선택을 더하고, 고른 화풍을 완성 요청 `artStyle`, 임시 저장, 재개에 연결합니다. 추가 정보 입력 행은 처음 1개로 줄이고 섹션 간격을 24dp로 맞춥니다. 공개 스위치는 2026-10-14 결정으로 넣지 않습니다.
 
-- 사용자 계약: [공통 추가 정보 진입](../../../knk-harness/docs/spec/3-1-client-spec.md#추가-정보-진입스토리라인-재선택), [추가 정보 (퍼널)](../../../knk-harness/docs/spec/3-1-client-spec.md#추가-정보-퍼널)
-- 현재 구조: [Android design 화풍 선택](../../../knk-harness/docs/design/1-2-android-design.md#화풍-선택)
-- 결정: [A-072 저장 형식과 재생성 유지](../../../knk-harness/docs/adr/1-3-android-adr.md#a-072-간편-제작-화풍을-기존-초안-json에-더하고-스토리라인을-다시-만들어도-남기기)
+- 사용자 계약: [공통 추가 정보 진입](../../../knk-harness/docs/domain/STORY/CLIENT/3-3-LAYOUT.md#3-3-3-제작-선택과-간편-제작), [추가 정보 (퍼널)](../../../knk-harness/docs/domain/STORY/CLIENT/4-1-CONTRACT.md#4-1-2-간편-제작-요청)
+- 현재 구조: [Android design 화풍 선택](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md)
+- 결정: [A-072 저장 형식과 재생성 유지](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-072)
 - 웹 기준: [manyak-web#265](https://github.com/KIM-N-KANG/manyak-web/pull/265), [manyak-web#266](https://github.com/KIM-N-KANG/manyak-web/pull/266)
 - API 근거: 2026-10-14 dev Swagger의 `GET /api/v1/stories/art-styles`(`ArtStyleCatalogItem`)와 `CreateSimpleStoryRequest.artStyle`(누락·null은 ANIME, 미등록·비활성·빈 문자열은 400). 실제 응답은 `NONE`부터 11개이고 `NONE`만 미리보기가 null입니다. 하네스 백엔드 스펙의 "서버 미구현" 문구는 서버 dev `52fcae5`에 이미 구현되어 있어 지웠습니다.
 
@@ -34,7 +34,7 @@
 
 ## 표지 위 뱃지의 웹 정렬
 
-사용자 요청으로 화풍 이름 뱃지와 함께 모든 표지 위 뱃지를 웹과 같은 배경 흐림으로 바꿨습니다. 결정: [A-073](../../../knk-harness/docs/adr/1-3-android-adr.md#a-073-표지-위-뱃지에-웹과-같은-배경-흐림을-graphicslayer로-적용하기).
+사용자 요청으로 화풍 이름 뱃지와 함께 모든 표지 위 뱃지를 웹과 같은 배경 흐림으로 바꿨습니다. 결정: [A-073](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-073).
 
 1. `designsystem`에 `CoverBackdrop`(흐림 원천), `coverBackdropSource`, `coverBackdrop`, `originalTagBackdrop`을 추가했습니다. `StoryCover`는 표지 그림만 원천으로 기록하고 겹침 요소에 `CoverOverlayScope.backdrop`을 넘깁니다. API 31 미만은 원천이 없어 기존 #111414 70%를 깝니다.
 2. 목록 카드의 좋아요 수와 턴 수 뱃지, 화풍 이름, 상세 인물 카드의 이전·다음 버튼은 흐림 위에 검정 20%를, ORIGINAL 태그는 도안에서 뺀 #111414 20% 바탕을 같은 방식으로 깝니다. 상세 히어로 뱃지도 사용자 요청으로 같은 흐린 바탕을 씁니다(웹 상세는 흐림 없는 검정 70%).

@@ -376,7 +376,7 @@ turnId에 귀속**시키고 최신 요청 turnId를 들고 있어, 늦게 끝난
 
 - 티켓: [KNK-1320](https://kimandkang.atlassian.net/browse/KNK-1320) (부모 KNK-1315)
 - 브랜치: Android·하네스 모두 `feat/KNK-1320-options-bottom-sheets`, 분기 기준 fetch한 `origin/dev` — Android `cddd12df`, 하네스 `105b313`
-- 계약: [카드 옵션 시트](../../../knk-harness/docs/spec/3-1-client-spec.md#fe-screen-013-제작--내-스토리-목록)(FE-SCREEN-013), [채팅 설정 시트와 메뉴 시트](../../../knk-harness/docs/domain/CHAT/CLIENT/3-3-LAYOUT.md#3-3-3-설정과-메뉴), Swagger `POST /chats`(`startSettingId` 생략 시 첫 시작 설정). 결정: [A-042](../../../knk-harness/docs/adr/1-3-android-adr.md#a-042)
+- 계약: [카드 옵션 시트](../../../knk-harness/docs/domain/STORY/CLIENT/2-2-REQUIREMENTS.md#2-2-2-탐색과-제작-목록)(FE-SCREEN-013), [채팅 설정 시트와 메뉴 시트](../../../knk-harness/docs/domain/CHAT/CLIENT/3-3-LAYOUT.md#3-3-3-설정과-메뉴), Swagger `POST /chats`(`startSettingId` 생략 시 첫 시작 설정). 결정: [A-042](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-042)
 - 제외: 공유 열람 화면(웹 소유). 삭제 확인은 다이얼로그 그대로.
 
 ### 변경

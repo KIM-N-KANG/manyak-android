@@ -4,7 +4,7 @@
 - 작업일: 2026-09-17
 - 브랜치: Android·하네스 모두 `design/KNK-1323-refresh-creation-loading`
 - 분기 기준: fetch한 `origin/dev` — Android `e0119b20`, 하네스 `9afdad8`
-- 계약: [공통 제작 퍼널](../../../knk-harness/docs/spec/3-1-client-spec.md#3-1-4-스토리-생성-퍼널), [Android 제작](../../../knk-harness/docs/spec/3-3-android-spec.md#제작과-데이터-보존)
+- 계약: [공통 제작 퍼널](../../../knk-harness/docs/domain/STORY/CLIENT/2-2-REQUIREMENTS.md#2-2-4-간편-제작-입력), [Android 제작](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md)
 
 ## 변경과 근거
 

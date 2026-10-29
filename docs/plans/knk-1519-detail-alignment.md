@@ -103,7 +103,7 @@ API와 저장 스키마 변경이 없어 작업 커밋을 되돌리면 이전 �
 
 ## 후속 요청: 임시 저장 성공 안내
 
-임시 저장에 성공하면 버튼을 체크와 '임시 저장됨'으로 바꾸던 표시를 웹과 같은 토스트로 바꿨습니다. 새로운 사용자 계약은 [Android spec](../../../knk-harness/docs/spec/3-3-android-spec.md), 결정 근거는 [A-055](../../../knk-harness/docs/adr/1-3-android-adr.md#a-055)를 따릅니다.
+임시 저장에 성공하면 버튼을 체크와 '임시 저장됨'으로 바꾸던 표시를 웹과 같은 토스트로 바꿨습니다. 새로운 사용자 계약은 [Android spec](../../../knk-harness/docs/spec/3-3-android-spec.md), 결정 근거는 [A-055](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-055)를 따릅니다.
 
 - 버튼 모양은 바꾸지 않고 '임시 저장했어요' 토스트를 띄웁니다. 토스트는 버튼으로 시작한 저장에만 띄우며, 백그라운드 전환 저장은 알리지 않습니다.
 - 성공 뒤 2초(`DRAFT_SAVE_LOCK_MS`) 동안 버튼을 잠그고 회색으로 표시합니다. 그 사이에 편집해도 잠금을 풀지 않습니다. 저장 중에는 기존처럼 스피너를 표시합니다.

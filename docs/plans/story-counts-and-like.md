@@ -4,7 +4,7 @@
 - 작업일: 2026-09-26
 - 브랜치: Android `feat/KNK-1430-abbreviate-story-counts-and-show-likes`, 하네스 `docs/KNK-1430-abbreviate-story-counts-and-show-likes`
 - 분기 기준: fetch한 `origin/dev` — Android `aa554767`, 하네스 `31c35e9`
-- 계약: [공통 FE-SCREEN-001·003·013](../../../knk-harness/docs/spec/3-1-client-spec.md#fe-screen-003-스토리-상세), [Android 스토리 목록·상세](../../../knk-harness/docs/spec/3-3-android-spec.md#스토리-목록상세)
+- 계약: [공통 FE-SCREEN-001·003·013](../../../knk-harness/docs/domain/STORY/CLIENT/3-3-LAYOUT.md#3-3-2-상세와-이미지), [Android 스토리 목록·상세](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/2-2-REQUIREMENTS.md)
 - 참고: 웹 KNK-1421(manyak-web #209), 웹 `src/lib/format-count.ts`
 
 ## 변경
@@ -16,7 +16,7 @@
 5. 필터·정렬을 바꾸면 새 첫 페이지가 올 때까지 이전 목록을 남깁니다. 비웠다 채우던 동작이 빈 화면 → 골격 → 목록으로 깜빡였습니다. 골격은 목록이 비었을 때만 보이고, 응답이 300ms를 넘으면 이전 목록을 반투명(0.5)으로 흐립니다. `HomeViewModelTest`에 고정했습니다.
 6. `StoryCover`의 표지 요청에 Coil `crossfade`를 켰습니다. 네트워크로 받은 표지가 빈 바탕에서 한 프레임에 튀어나오지 않고 서서히 드러나며, 메모리 캐시 적중은 페이드 없이 그립니다.
 7. 이전 목록을 남기자 정렬을 바꿀 때 목록이 끝으로 내려가는 회귀가 생겼습니다. `LazyVerticalGrid`가 보던 첫 카드를 키로 따라가, 그 카드가 새 정렬에서 끝으로 밀리면 거기까지 스크롤합니다(최신순 → 채팅순에서 재현). 스크롤 상태의 키를 조건 대신 첫 페이지를 받을 때마다 오르는 `HomeUiState.firstPageVersion`으로 바꿔, 새 첫 페이지가 오면 새 스크롤 상태로 맨 위에서 시작하게 했습니다. 새로고침에서 기존 첫 카드 위로 새 스토리가 끼어들 때 가려지던 경우도 같은 이유로 함께 막힙니다.
-8. 홈 진입 기본 정렬을 인기순에서 서버 기본값과 같은 최신순으로 바꿨습니다(하네스 [C-008](../../../knk-harness/docs/adr/1-1-client-adr.md#c-008), 공통·웹·Android spec 갱신). 정렬은 계속 항상 명시해 보냅니다. 정렬 메뉴도 최신순·인기순·채팅순 순서로 바꿨습니다(`StoryListSort` 선언 순서). 웹은 별도 작업으로 맞춰야 합니다.
+8. 홈 진입 기본 정렬을 인기순에서 서버 기본값과 같은 최신순으로 바꿨습니다(하네스 [C-008](../../../knk-harness/docs/domain/STORY/CLIENT/DECISIONS.md#c-008), 공통·웹·Android spec 갱신). 정렬은 계속 항상 명시해 보냅니다. 정렬 메뉴도 최신순·인기순·채팅순 순서로 바꿨습니다(`StoryListSort` 선언 순서). 웹은 별도 작업으로 맞춰야 합니다.
 
 ## 검증
 

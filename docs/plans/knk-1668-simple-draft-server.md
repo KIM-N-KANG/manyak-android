@@ -4,7 +4,7 @@
 
 [KNK-1668](https://kimandkang.atlassian.net/browse/KNK-1668)의 두 번째 작업입니다. 일반 제작([계획](knk-1668-general-draft-server.md))에 이어 회원 간편 제작의 키워드 초안과 스토리라인 초안을 서버 초안(`/users/me/story-drafts`, mode `SIMPLE`)에 보관해 다른 기기와 웹에서 이어서 만들게 하고, 만들고 있는 스토리 카드가 5장이면 새 제작을 막습니다. 웹은 [KNK-1667](https://kimandkang.atlassian.net/browse/KNK-1667)에서 같은 계약으로 먼저 구현했습니다.
 
-정본은 [공통 임시 저장 계약](../../../knk-harness/docs/spec/3-1-client-spec.md#임시-저장)과 [새 제작 상한](../../../knk-harness/docs/spec/3-1-client-spec.md#제작-카드와-다중-완성-진행)(둘 다 KNK-1667 하네스 브랜치), [서버 초안 계약](../../../knk-harness/docs/spec/4-backend-server-spec.md#story-drafts), [Android spec](../../../knk-harness/docs/spec/3-3-android-spec.md#간편-제작-흐름과-보존), [Android design](../../../knk-harness/docs/design/1-2-android-design.md#제작-카드와-다중-완성-진행)입니다. 결정 이유는 [A-077](../../../knk-harness/docs/adr/1-3-android-adr.md#a-077-완성-실패를-추가-정보-단계-초안으로-되돌리고-실패-카드를-없애기), [A-075](../../../knk-harness/docs/adr/1-3-android-adr.md#a-075-간편-제작-초안을-세션-id로-서버에-두고-진행-기록에-서버-초안-버전-열을-더하기)와 [A-076](../../../knk-harness/docs/adr/1-3-android-adr.md#a-076-새-제작-상한을-fab에서-보이는-초안-카드로-판정하고-제작-탭-첫-조회를-한-스켈레톤으로-덮기)에 있습니다. API는 2026-10-17에 [dev Swagger JSON](https://dev-api.manyak.app/v3/api-docs)과 서버 `StoryDraftService`로 확인했습니다. 목록에는 `kind: CREATION_REQUEST` 항목이 섞여 오고, 상세의 `generation`은 생성 요청 복구 조회와 같은 `{stage, status, result}`입니다.
+정본은 [공통 임시 저장 계약](../../../knk-harness/docs/domain/STORY/CLIENT/4-1-CONTRACT.md#4-1-4-공통-초안-봉투와-버전)과 [새 제작 상한](../../../knk-harness/docs/domain/STORY/CLIENT/2-2-REQUIREMENTS.md#2-2-2-탐색과-제작-목록)(둘 다 KNK-1667 하네스 브랜치), [서버 초안 계약](../../../knk-harness/docs/spec/4-backend-server-spec.md#story-drafts), [Android spec](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md), [Android design](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md)입니다. 결정 이유는 [A-077](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-077), [A-075](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-075)와 [A-076](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-076)에 있습니다. API는 2026-10-17에 [dev Swagger JSON](https://dev-api.manyak.app/v3/api-docs)과 서버 `StoryDraftService`로 확인했습니다. 목록에는 `kind: CREATION_REQUEST` 항목이 섞여 오고, 상세의 `generation`은 생성 요청 복구 조회와 같은 `{stage, status, result}`입니다.
 
 ## 확정한 선택
 
@@ -13,7 +13,7 @@
 - Room v5→v6으로 `pending_story_creation`과 `story_completion_request`에 nullable `serverDraftVersion` 열을 더합니다. null은 기기 안 세션, 0은 서버 초안을 가리키지만 아직 서버에 없는 기록입니다.
 - 새 제작 상한은 병합한 초안 카드를 셉니다. 완성 중 카드와 검수 제출본은 세지 않습니다.
 - 완성 실패는 웹과 같이 그 초안의 추가 정보 단계 초안으로 되돌리고 실패 카드와 "다시 시도하기"를 없앴습니다(2026-10-17 후속 결정). 되돌린 초안은 상한에서도 셉니다.
-- 웹도 단계 이동 자동 저장을 없애 두 플랫폼 모두 임시 저장 버튼과 앱을 떠날 때(Android 백그라운드 전환, 웹 화면 숨김)만 저장합니다. 웹 변경은 KNK-1667 브랜치와 [W-039](../../../knk-harness/docs/adr/1-2-web-adr.md#w-039)에 있습니다.
+- 웹도 단계 이동 자동 저장을 없애 두 플랫폼 모두 임시 저장 버튼과 앱을 떠날 때(Android 백그라운드 전환, 웹 화면 숨김)만 저장합니다. 웹 변경은 KNK-1667 브랜치와 [W-039](../../../knk-harness/docs/domain/STORY/CLIENT/WEB/DECISIONS.md#w-039)에 있습니다.
 - 서버 초안을 읽는 진입 대기는 채팅방 진입과 같이 헤더를 두고 그 아래에 늦게 뜨는 가운데 스피너로 보입니다.
 - 제작 탭 첫 조회는 웹과 같이 모든 카드 묶음이 준비될 때까지 한 스켈레톤으로 덮습니다.
 

@@ -5,8 +5,8 @@
 - 상태: 구현·로컬 집중 검증 완료. 원격 PR·CI 결과는 연결된 Jira와 PR에서 확인합니다.
 - 브랜치: Android·하네스 모두 `feat/KNK-1321-character-image-viewer`
 - 분기 기준: fetch한 `origin/dev` — Android `ebafa9b7`, 하네스 `6361c069`
-- 계약: [공통 스토리 상세](../../../knk-harness/docs/spec/3-1-client-spec.md#fe-screen-003-스토리-상세), [Android 화면 계약](../../../knk-harness/docs/spec/3-3-android-spec.md#3-3-2-내비게이션화면-계약), [분석 이벤트](../../../knk-harness/docs/spec/6-analytics.md)
-- 구조·결정: [Android design](../../../knk-harness/docs/design/1-2-android-design.md#1-2-4-내비게이션과-화면), [A-041](../../../knk-harness/docs/adr/1-3-android-adr.md#a-041)
+- 계약: [공통 스토리 상세](../../../knk-harness/docs/domain/STORY/CLIENT/3-3-LAYOUT.md#3-3-2-상세와-이미지), [Android 화면 계약](../../../knk-harness/docs/spec/3-3-android-spec.md#3-3-2-내비게이션화면-계약), [분석 이벤트](../../../knk-harness/docs/spec/6-analytics.md)
+- 구조·결정: [Android design](../../../knk-harness/docs/design/1-2-android-design.md#1-2-4-내비게이션과-화면), [A-041](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-041)
 
 ## 변경
 
