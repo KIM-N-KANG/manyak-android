@@ -1,7 +1,8 @@
 package app.manyak.home.presentation
 
 import android.widget.Toast
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -20,13 +21,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
@@ -53,11 +55,14 @@ import app.manyak.designsystem.component.ManyakPullToRefreshBox
 import app.manyak.designsystem.component.rememberDelayedProgressVisibility
 import app.manyak.designsystem.component.withScreenMargins
 import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.home.entity.StoryListQuery
 import app.manyak.home.presentation.component.StoryCard
 import app.manyak.home.presentation.component.StoryGridSkeleton
 import app.manyak.home.presentation.component.StoryListToolbar
 import app.manyak.home.presentation.component.rememberToolbarHideState
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import app.manyak.common.R as CommonR
 import app.manyak.home.R as HomeR
 
@@ -172,9 +177,31 @@ private fun StoriesContent(
 ) {
     // 금방 끝나는 조회에서 자리만 잡았다 사라지는 깜빡임을 만들지 않는다.
     val showProgress = rememberDelayedProgressVisibility(state.isLoading)
-    // 조건을 바꾼 직후에는 이전 목록이 남아 있다. 응답이 늦을 때만 흐려 새 목록을 기다리는 중임을 알린다.
-    val listAlpha by animateFloatAsState(if (showProgress) STALE_LIST_ALPHA else 1f, label = "staleList")
+    val switching = rememberQuerySwitching(state.query, state.isLoading)
 
+    Crossfade(
+        targetState = switching,
+        animationSpec = tween(ManyakTheme.motion.elementEnterMillis),
+        label = "storyListSwitch",
+    ) { showsSwitchSkeleton ->
+        if (showsSwitchSkeleton) {
+            StoryGridSkeleton(contentPadding = listPadding.withScreenMargins())
+        } else {
+            StoriesState(state, gridState, listPadding, showProgress, onOpenStory, onIntent)
+        }
+    }
+}
+
+@Composable
+@Suppress("LongParameterList")
+private fun StoriesState(
+    state: HomeUiState,
+    gridState: LazyGridState,
+    listPadding: PaddingValues,
+    showProgress: Boolean,
+    onOpenStory: (String) -> Unit,
+    onIntent: (HomeIntent) -> Unit,
+) {
     when {
         state.isLoading && state.stories.isEmpty() ->
             if (showProgress) StoryGridSkeleton(contentPadding = listPadding.withScreenMargins())
@@ -201,7 +228,6 @@ private fun StoriesContent(
 
         else ->
             StoryGrid(
-                modifier = Modifier.alpha(listAlpha),
                 state = state,
                 gridState = gridState,
                 listPadding = listPadding,
@@ -209,6 +235,27 @@ private fun StoriesContent(
                 onIntent = onIntent,
             )
     }
+}
+
+/**
+ * 필터나 정렬을 바꾼 뒤 새 목록을 보이기 전인지. 바꾸자마자 골격으로 덮고, 새 첫 페이지가 빨리 와도
+ * [MIN_SWITCH_SKELETON_MILLIS] 동안은 골격을 지킨다. 목록이 순간 바뀌면 두 목록에 같은 카드가 많을 때
+ * 바뀐 줄 모른다. 첫 조회와 새로고침은 조건이 그대로라 해당하지 않는다.
+ */
+@Composable
+private fun rememberQuerySwitching(
+    query: StoryListQuery,
+    isLoading: Boolean,
+): Boolean {
+    var shownQuery by remember { mutableStateOf(query) }
+    val loading by rememberUpdatedState(isLoading)
+    LaunchedEffect(query) {
+        if (query == shownQuery) return@LaunchedEffect
+        delay(MIN_SWITCH_SKELETON_MILLIS)
+        snapshotFlow { loading }.first { !it }
+        shownQuery = query
+    }
+    return query != shownQuery
 }
 
 @Composable
@@ -298,8 +345,7 @@ private const val LOAD_MORE_AHEAD_ITEMS = GRID_COLUMNS * 2
 
 private const val LOAD_MORE_KEY = "load-more"
 
-/** 새 조건의 응답을 기다리는 동안 남겨 둔 이전 목록의 불투명도. 읽을 수는 있되 곧 바뀔 것임이 보이는 정도다. */
-private const val STALE_LIST_ALPHA = 0.5f
+private const val MIN_SWITCH_SKELETON_MILLIS = 500L
 
 /** 목록 맨 위에서 이만큼 안쪽이면 스크롤 방향과 무관하게 바를 보인다. 바 높이보다 크게 둔다. */
 private val ToolbarAlwaysShownScroll: Dp = 64.dp
