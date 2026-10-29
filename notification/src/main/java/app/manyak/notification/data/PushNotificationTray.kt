@@ -86,6 +86,7 @@ class PushNotificationTray
                     .setSmallIcon(DesignsystemR.drawable.ic_manyak_symbol)
                     .setContentTitle(title)
                     .setContentText(body)
+                    .setStyle(NotificationCompat.BigTextStyle().bigText(body))
                     .setAutoCancel(true)
                     .setContentIntent(contentIntent(message, id))
                     .apply {
