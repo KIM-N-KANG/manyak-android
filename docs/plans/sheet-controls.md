@@ -1,5 +1,7 @@
 # 시트 닫기·메뉴 규격과 선택 행 리플
 
+아래 캡처와 `build/qa` 자료 중 현재 checkout에 포함되지 않은 항목은 원래 로컬 경로로 표시한다. 당시 검증 기록은 보존하되 이 문서에서 해당 파일을 열거나 결과를 재확인할 수는 없다.
+
 - 티켓: [KNK-1324](https://kimandkang.atlassian.net/browse/KNK-1324)
 - 작업일: 2026-09-17
 - 브랜치: Android·하네스 모두 `design/KNK-1324-align-sheet-controls`
@@ -40,16 +42,16 @@
 - 관련 기존 UI 자동화 테스트는 없습니다. 로직 변경 없이 Compose 속성·버튼 연결만 조정했으므로 단위 테스트·전체 `check`는 추가 실행하지 않았습니다.
 - 두 저장소 `git diff --check`와 추가한 문서 링크·문자열 XML을 확인했습니다.
 
-후속 글자 조정 후 위의 모듈 컴파일·ktlint·detekt와 `:app:installDebug`를 다시 통과했습니다. 신고 시트 Preview에서 두 버튼의 글자 크기·굵기 일치를 확인했습니다([조정 전](../../captures/knk-1324/report-typography-before.png), [최종 화면](../../captures/knk-1324/report-typography-after.png)). 간격 조정 후 report·my·notification 모듈의 컴파일·ktlint·detekt와 `:app:installDebug`를 다시 통과했고, 신고 시트의 8dp 간격을 [최종 화면](../../captures/knk-1324/report-gap-after.png)에서 확인했습니다. 아래 표는 최초 구현 시점의 비교입니다.
+후속 글자 조정 후 위의 모듈 컴파일·ktlint·detekt와 `:app:installDebug`를 다시 통과했습니다. 신고 시트 Preview에서 두 버튼의 글자 크기·굵기 일치를 확인했습니다(조정 전 (보관 경로: `../../captures/knk-1324/report-typography-before.png`), 최종 화면 (보관 경로: `../../captures/knk-1324/report-typography-after.png`)). 간격 조정 후 report·my·notification 모듈의 컴파일·ktlint·detekt와 `:app:installDebug`를 다시 통과했고, 신고 시트의 8dp 간격을 최종 화면 (보관 경로: `../../captures/knk-1324/report-gap-after.png`)에서 확인했습니다. 아래 표는 최초 구현 시점의 비교입니다.
 
 | 화면 | 변경 전 | 변경 후 |
 | --- | --- | --- |
-| 신고 | [전](../../captures/knk-1324/report-before.png) | [후](../../captures/knk-1324/report-after.png) |
-| 초대 | [전](../../captures/knk-1324/invite-before.png) | [후](../../captures/knk-1324/invite-after.png) |
-| 광고 동의 | [전](../../captures/knk-1324/marketing-before.png) | [후](../../captures/knk-1324/marketing-after.png) |
-| 선택 키워드 | [전](../../captures/knk-1324/keywords-before.png) | [후](../../captures/knk-1324/keywords-after.png) |
-| 마이 | [전](../../captures/knk-1324/my-before.png) | [후](../../captures/knk-1324/my-after.png) |
-| 탈퇴 확인 | [전](../../captures/knk-1324/withdrawal-before.png) | [후](../../captures/knk-1324/withdrawal-after.png) |
+| 신고 | 전 (보관 경로: `../../captures/knk-1324/report-before.png`) | 후 (보관 경로: `../../captures/knk-1324/report-after.png`) |
+| 초대 | 전 (보관 경로: `../../captures/knk-1324/invite-before.png`) | 후 (보관 경로: `../../captures/knk-1324/invite-after.png`) |
+| 광고 동의 | 전 (보관 경로: `../../captures/knk-1324/marketing-before.png`) | 후 (보관 경로: `../../captures/knk-1324/marketing-after.png`) |
+| 선택 키워드 | 전 (보관 경로: `../../captures/knk-1324/keywords-before.png`) | 후 (보관 경로: `../../captures/knk-1324/keywords-after.png`) |
+| 마이 | 전 (보관 경로: `../../captures/knk-1324/my-before.png`) | 후 (보관 경로: `../../captures/knk-1324/my-after.png`) |
+| 탈퇴 확인 | 전 (보관 경로: `../../captures/knk-1324/withdrawal-before.png`) | 후 (보관 경로: `../../captures/knk-1324/withdrawal-after.png`) |
 
 캡처와 접근성 XML은 기존 `/captures` ignore 규칙에 따른 로컬 증거이며 Git에는 포함하지 않습니다.
 

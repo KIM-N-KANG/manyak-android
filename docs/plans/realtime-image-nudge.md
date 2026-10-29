@@ -1,10 +1,12 @@
 # 실시간 이미지 기본값과 설정 안내
 
+아래 캡처와 `build/qa` 자료 중 현재 checkout에 포함되지 않은 항목은 원래 로컬 경로로 표시한다. 당시 검증 기록은 보존하되 이 문서에서 해당 파일을 열거나 결과를 재확인할 수는 없다.
+
 - 티켓: [KNK-1517](https://kimandkang.atlassian.net/browse/KNK-1517)
 - 기준: Android `4638183`, 하네스 `c0b33af`의 `origin/dev`
 - 참고 구현: 웹 `src/features/chats/room/hooks/use-realtime-image-nudge.ts`, `utils/realtime-image-nudge.ts`, `components/input/chat-settings-sheet.tsx`
 - 계약: [공통 채팅 설정](../../../knk-harness/docs/domain/CHAT/CLIENT/3-3-LAYOUT.md#3-3-3-설정과-메뉴), [Android spec](../../../knk-harness/docs/domain/CHAT/CLIENT/ANDROID/AGENTS.md)
-- 구조와 결정: [Android design](../../../knk-harness/docs/platform/ANDROID/4-4-EXECUTION.md#4-4-1-요청과-취소), [A-050](../../../knk-harness/docs/domain/CHAT/CLIENT/ANDROID/DECISIONS.md#a-050)
+- 구조와 결정: [Android design](../../../knk-harness/docs/platform/CLIENT/ANDROID/3-EXECUTION.md#3-1-요청과-취소), [A-050](../../../knk-harness/docs/domain/CHAT/CLIENT/ANDROID/DECISIONS.md#a-050)
 
 ## 변경
 
@@ -38,11 +40,11 @@
 
 | 확인 | 캡처 |
 | --- | --- |
-| 초기 설정과 비용 | [시트](../../captures/knk-1517/settings-before.png), [비용](../../captures/knk-1517/default-off-cost.png) |
-| 전송 잠금 중 설정 | [응답 생성](../../captures/knk-1517/streaming.png), [설정 열기](../../captures/knk-1517/locked-settings.png) |
-| 자동 안내와 스위치 | [세로 안내](../../captures/knk-1517/nudge-portrait.png), [스위치 ON](../../captures/knk-1517/nudge-toggle-on.png) |
-| 구성 변경 | [가로](../../captures/knk-1517/nudge-landscape.png), [다크](../../captures/knk-1517/nudge-dark.png), [큰 글자](../../captures/knk-1517/nudge-large-text.png) |
-| 안내 닫기 | [뒤로가기 후 시트](../../captures/knk-1517/back-keeps-sheet.png) |
+| 초기 설정과 비용 | 시트 (보관 경로: `../../captures/knk-1517/settings-before.png`), 비용 (보관 경로: `../../captures/knk-1517/default-off-cost.png`) |
+| 전송 잠금 중 설정 | 응답 생성 (보관 경로: `../../captures/knk-1517/streaming.png`), 설정 열기 (보관 경로: `../../captures/knk-1517/locked-settings.png`) |
+| 자동 안내와 스위치 | 세로 안내 (보관 경로: `../../captures/knk-1517/nudge-portrait.png`), 스위치 ON (보관 경로: `../../captures/knk-1517/nudge-toggle-on.png`) |
+| 구성 변경 | 가로 (보관 경로: `../../captures/knk-1517/nudge-landscape.png`), 다크 (보관 경로: `../../captures/knk-1517/nudge-dark.png`), 큰 글자 (보관 경로: `../../captures/knk-1517/nudge-large-text.png`) |
+| 안내 닫기 | 뒤로가기 후 시트 (보관 경로: `../../captures/knk-1517/back-keeps-sheet.png`) |
 
 캡처는 기존 저장소 규칙에 따라 Git 추적 대상에서 제외합니다. 캡처 비교에서 안내 표시 중 시트에 섹션 간격 하나가 추가되는 현상을 발견해 Popup의 0 크기 앵커를 실시간 이미지 행 안으로 옮겼습니다. 이 최종 위치 보정은 행 좌표를 비교하는 UI 계측 테스트로 검증했습니다. 예약 중 회전과 프로세스 종료는 실제 기기에서 재현하지 않았으며 ViewModel 수명과 재진입 단위 테스트로 판단했습니다.
 

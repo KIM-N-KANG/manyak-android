@@ -2,7 +2,7 @@
 
 이 문서의 실행 단계와 과거 변경 서술은 작성 당시 경로를 보존합니다. 현재 기준은 [STORY 공통](../../../knk-harness/docs/domain/STORY/CLIENT/AGENTS.md)와 [Android](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md)에서 확인합니다. 이전 문서는 [당시 하네스](https://github.com/KIM-N-KANG/knk-harness/blob/8aa505cbf7a5390e67ca48a42fb94d89d21eb3ad/docs/)에서 확인합니다.
 
-> **KNK-1197 구조 이전 안내 (2026-09-05)** — 아래 구현 순서·모듈 경로·코드 예시·본문의 문서 절 번호와 검수 항목은 작성 당시 기록입니다. 현재 소유 위치와 검증 결과는 [모듈 재구성 기록](./module-reorganization.md), 현재 계층·의존 규칙은 [하네스 모듈 아키텍처](../../../knk-harness/docs/platform/ANDROID/4-2-COMPONENT-ARCHITECTURE.md#4-2-1-책임과-의존)를 따릅니다.
+> **KNK-1197 구조 이전 안내 (2026-09-05)** — 아래 구현 순서·모듈 경로·코드 예시·본문의 문서 절 번호와 검수 항목은 작성 당시 기록입니다. 현재 소유 위치와 검증 결과는 [모듈 재구성 기록](./module-reorganization.md), 현재 계층·의존 규칙은 [하네스 모듈 아키텍처](../../../knk-harness/docs/platform/CLIENT/ANDROID/1-COMPONENT-ARCHITECTURE.md#1-1-책임과-의존)를 따릅니다.
 
 - 현재 계약: [Android Spec §3-3-2](../../../knk-harness/docs/ui/ANDROID/3-1-INFORMATION-ARCHITECTURE.md#3-1-1-셸과-진입). 2026-09-03 선택 근거: [Android ADR A-028~A-031](../../../knk-harness/docs/ui/ANDROID/DECISIONS.md#a-028).
 - 작성일: 2026-09-03

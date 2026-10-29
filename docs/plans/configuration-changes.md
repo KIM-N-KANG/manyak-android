@@ -105,7 +105,7 @@ ViewModel 상태는 **구성 변경까지만** 보장합니다. 프로세스 종
 
 ### 1단계 — 하네스에 지원 정책을 씁니다 (작성 당시 선행 작업)
 
-작성 당시 "디바이스 지원 작성 예정" 자리에 위 결정 1~4와 검수 항목을 채우는 작업입니다. 현재 계약은 [Android Spec §3-3-4](../../../knk-harness/docs/ui/ANDROID/2-2-REQUIREMENTS.md#2-2-1-화면과-기기), 구현 구조는 [Android Design §1-2-4](../../../knk-harness/docs/platform/ANDROID/4-4-EXECUTION.md#4-4-1-요청과-취소), 선택 근거는 [Android ADR A-023](../../../knk-harness/docs/platform/ANDROID/DECISIONS.md#a-023)에 있습니다.
+작성 당시 "디바이스 지원 작성 예정" 자리에 위 결정 1~4와 검수 항목을 채우는 작업입니다. 현재 계약은 [Android Spec §3-3-4](../../../knk-harness/docs/ui/ANDROID/2-2-REQUIREMENTS.md#2-2-1-화면과-기기), 구현 구조는 [Android Design §1-2-4](../../../knk-harness/docs/platform/CLIENT/ANDROID/3-EXECUTION.md#3-1-요청과-취소), 선택 근거는 [Android ADR A-023](../../../knk-harness/docs/platform/CLIENT/ANDROID/DECISIONS.md#a-023)에 있습니다.
 KNK-1009 용 하네스 브랜치가 따로 필요합니다(현재 브랜치는 KNK-1015).
 
 완료 조건: 방향·창 크기 지원 범위, 상태 수명 표, 구성 변경 검수 항목이 하네스에 있습니다.

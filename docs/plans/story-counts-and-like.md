@@ -1,5 +1,7 @@
 # 스토리 지표 축약과 좋아요 재노출
 
+아래 캡처와 `build/qa` 자료 중 현재 checkout에 포함되지 않은 항목은 원래 로컬 경로로 표시한다. 당시 검증 기록은 보존하되 이 문서에서 해당 파일을 열거나 결과를 재확인할 수는 없다.
+
 - 티켓: [KNK-1430](https://kimandkang.atlassian.net/browse/KNK-1430) (상위 KNK-1428)
 - 작업일: 2026-09-26
 - 브랜치: Android `feat/KNK-1430-abbreviate-story-counts-and-show-likes`, 하네스 `docs/KNK-1430-abbreviate-story-counts-and-show-likes`
@@ -40,9 +42,9 @@
 
 | 화면 | 변경 전 | 변경 후 |
 | --- | --- | --- |
-| 홈 카드·필터 칩 | [전](../../captures/knk-1430/home-before.png) | [후](../../captures/knk-1430/home-after.png) |
-| 상세 히어로·CTA | [전](../../captures/knk-1430/detail-before.png) | [후](../../captures/knk-1430/detail-after.png) |
-| 제작 카드 | [전](../../captures/knk-1430/studio-before.png) | [후](../../captures/knk-1430/studio-after.png) |
+| 홈 카드·필터 칩 | 전 (보관 경로: `../../captures/knk-1430/home-before.png`) | 후 (보관 경로: `../../captures/knk-1430/home-after.png`) |
+| 상세 히어로·CTA | 전 (보관 경로: `../../captures/knk-1430/detail-before.png`) | 후 (보관 경로: `../../captures/knk-1430/detail-after.png`) |
+| 제작 카드 | 전 (보관 경로: `../../captures/knk-1430/studio-before.png`) | 후 (보관 경로: `../../captures/knk-1430/studio-after.png`) |
 
 ## 복구
 

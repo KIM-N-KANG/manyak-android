@@ -1,12 +1,14 @@
 # 인물 이미지 풀스크린 뷰어
 
+아래 캡처와 `build/qa` 자료 중 현재 checkout에 포함되지 않은 항목은 원래 로컬 경로로 표시한다. 당시 검증 기록은 보존하되 이 문서에서 해당 파일을 열거나 결과를 재확인할 수는 없다.
+
 - 티켓: [KNK-1321](https://kimandkang.atlassian.net/browse/KNK-1321)
 - 작업일: 2026-09-17
 - 상태: 구현·로컬 집중 검증 완료. 원격 PR·CI 결과는 연결된 Jira와 PR에서 확인합니다.
 - 브랜치: Android·하네스 모두 `feat/KNK-1321-character-image-viewer`
 - 분기 기준: fetch한 `origin/dev` — Android `ebafa9b7`, 하네스 `6361c069`
 - 계약: [공통 스토리 상세](../../../knk-harness/docs/domain/STORY/CLIENT/3-3-LAYOUT.md#3-3-2-상세와-이미지), [Android 화면 계약](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/3-1-INFORMATION-ARCHITECTURE.md#3-1-1-목적지), [분석 이벤트](../../../knk-harness/docs/reference/ANALYTICS.md)
-- 구조·결정: [Android design](../../../knk-harness/docs/platform/ANDROID/4-4-EXECUTION.md#4-4-1-요청과-취소), [A-041](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-041)
+- 구조·결정: [Android design](../../../knk-harness/docs/platform/CLIENT/ANDROID/3-EXECUTION.md#3-1-요청과-취소), [A-041](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-041)
 
 ## 변경
 
@@ -41,10 +43,10 @@
 
 | 화면 | 열기 전 | 뷰어 | 시스템 뒤로가기 후 |
 | --- | --- | --- | --- |
-| 상세 | [전](../../captures/knk-1321/detail-before-open.png) | [열림](../../captures/knk-1321/detail-open.png) | [닫힘](../../captures/knk-1321/detail-after-back.png) |
-| 채팅 | [전](../../captures/knk-1321/chat-before-open.png) | [열림](../../captures/knk-1321/chat-open.png) | [닫힘](../../captures/knk-1321/chat-after-back.png) |
+| 상세 | 전 (보관 경로: `../../captures/knk-1321/detail-before-open.png`) | 열림 (보관 경로: `../../captures/knk-1321/detail-open.png`) | 닫힘 (보관 경로: `../../captures/knk-1321/detail-after-back.png`) |
+| 채팅 | 전 (보관 경로: `../../captures/knk-1321/chat-before-open.png`) | 열림 (보관 경로: `../../captures/knk-1321/chat-open.png`) | 닫힘 (보관 경로: `../../captures/knk-1321/chat-after-back.png`) |
 
-[상세 다크 모드의 열린 뷰어](../../captures/knk-1321/detail-dark-open.png)는 별도 인물 이미지로 구성 변경을 확인한 캡처입니다.
+상세 다크 모드의 열린 뷰어 (보관 경로: `../../captures/knk-1321/detail-dark-open.png`)는 별도 인물 이미지로 구성 변경을 확인한 캡처입니다.
 
 ## 복구
 

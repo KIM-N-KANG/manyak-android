@@ -1,5 +1,7 @@
 # 스토리 좋아요 UI 비노출
 
+아래 캡처와 `build/qa` 자료 중 현재 checkout에 포함되지 않은 항목은 원래 로컬 경로로 표시한다. 당시 검증 기록은 보존하되 이 문서에서 해당 파일을 열거나 결과를 재확인할 수는 없다.
+
 - 티켓: [KNK-1322](https://kimandkang.atlassian.net/browse/KNK-1322)
 - 작업일: 2026-09-17
 - 상태: 구현·로컬 집중 검증 완료. 원격 PR·CI 결과는 연결된 Jira와 PR에서 확인합니다.
@@ -36,9 +38,9 @@
 
 | 화면 | 변경 전 | 변경 후 |
 | --- | --- | --- |
-| 홈 카드 | [전](../../captures/knk-1322/home-before.png) | [후](../../captures/knk-1322/home-after.png) |
-| 상세 히어로·CTA | [전](../../captures/knk-1322/detail-before.png) | [후](../../captures/knk-1322/detail-after.png) |
-| 제작 카드 | [전](../../captures/knk-1322/studio-before.png) | [후](../../captures/knk-1322/studio-after.png) |
+| 홈 카드 | 전 (보관 경로: `../../captures/knk-1322/home-before.png`) | 후 (보관 경로: `../../captures/knk-1322/home-after.png`) |
+| 상세 히어로·CTA | 전 (보관 경로: `../../captures/knk-1322/detail-before.png`) | 후 (보관 경로: `../../captures/knk-1322/detail-after.png`) |
+| 제작 카드 | 전 (보관 경로: `../../captures/knk-1322/studio-before.png`) | 후 (보관 경로: `../../captures/knk-1322/studio-after.png`) |
 
 확인 범위는 샘플 데이터의 라이트 테마 Compose Preview입니다. 로그인 후 실제 서버 데이터·탭 이동·채팅 생성·옵션 미리보기·다크 테마는 수동 실행하지 않았습니다. `android layout`은 instrumentation server 연결 오류로 사용하지 못해 접근성 트리 검증은 하지 않았습니다.
 

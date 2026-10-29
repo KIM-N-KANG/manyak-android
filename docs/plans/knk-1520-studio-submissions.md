@@ -1,5 +1,7 @@
 # KNK-1520 제작 탭 검수 제출본과 검수 완료 알림
 
+아래 캡처와 `build/qa` 자료 중 현재 checkout에 포함되지 않은 항목은 원래 로컬 경로로 표시한다. 당시 검증 기록은 보존하되 이 문서에서 해당 파일을 열거나 결과를 재확인할 수는 없다.
+
 ## 목표와 확인 근거
 
 [KNK-1520](https://kimandkang.atlassian.net/browse/KNK-1520)의 신규 등록 제출본 카드와 검수 완료 알림을 구현합니다. Android와 하네스는 같은 `feat/KNK-1520-studio-submissions-and-moderation-notifications` 브랜치에서 작업합니다.
@@ -48,7 +50,7 @@
 
 ### 화면 근거와 검증 한계
 
-- [캡처 폴더](../../build/qa/knk-1520)의 `before-live.png`는 변경 전 실제 앱의 제작 탭, `after-live.png`는 최종 앱의 제작 탭입니다. 실제 계정에는 검증 시점의 제출본이 없어 상태별 카드는 테스트 데이터로 검증했습니다.
+- 캡처 폴더 (보관 경로: `../../build/qa/knk-1520`)의 `before-live.png`는 변경 전 실제 앱의 제작 탭, `after-live.png`는 최종 앱의 제작 탭입니다. 실제 계정에는 검증 시점의 제출본이 없어 상태별 카드는 테스트 데이터로 검증했습니다.
 - `cards-light.png`, `cards-dark.png`, `cancel-confirmation.png`, `delete-confirmation.png`는 실제 StudioScreen과 ViewModel에 fake 저장소를 연결한 Compose 테스트 화면을 `adb exec-out screencap -p`로 캡처한 결과입니다. 앱 셸 전체 캡처는 아닙니다.
 - 다크 테마와 Compose 상태 복원은 테스트 호스트에서 확인했습니다. 실제 Activity 재생성, 회전과 글자 크기 변경은 이번 검증에 포함하지 않았습니다.
 - 시스템 알림 검증은 실제 NotificationManager에 테스트 알림을 게시한 결과이며 검증 후 해당 알림을 제거했습니다. 실제 FCM 전송, 서버 검수 완료부터 알림 탭을 거치는 통합 흐름은 미검증입니다.
