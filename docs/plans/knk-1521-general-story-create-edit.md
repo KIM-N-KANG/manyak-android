@@ -6,7 +6,7 @@
 
 2026-10-05 기존 `feat/KNK-1521-general-story-create-and-edit` 브랜치를 재사용하고 최신 `origin/dev`로 fast-forward했습니다. Android 기준은 `668c1bdc`, 하네스 기준은 `ee58384`이며 KNK-1519, KNK-1520, KNK-1543을 포함합니다. 시작 시 남아 있던 이 조사 문서를 구현 계획으로 갱신합니다. Jira는 이미 진행 중입니다.
 
-정본은 [공통 폼](../../../knk-harness/docs/domain/STORY/CLIENT/2-2-REQUIREMENTS.md#2-2-6-일반-제작과-수정-입력), [검증 규칙](../../../knk-harness/docs/spec/3-1-client-spec.md#3-1-8-입력폼-검증-규칙), [Android spec](../../../knk-harness/docs/spec/3-3-android-spec.md), [Android design](../../../knk-harness/docs/design/1-2-android-design.md)입니다. API는 당일 직접 조회한 [dev Swagger JSON](https://dev-api.manyak.app/v3/api-docs)과 서버 `StorySubmissionService` 및 `SubmissionFormAssembler`로 확인합니다.
+정본은 [공통 폼](../../../knk-harness/docs/domain/STORY/CLIENT/2-2-REQUIREMENTS.md#2-2-6-일반-제작과-수정-입력), [검증 규칙](../../../knk-harness/docs/client/AGENTS.md), [Android spec](../../../knk-harness/docs/client/ANDROID/AGENTS.md), [Android design](../../../knk-harness/docs/client/ANDROID/AGENTS.md)입니다. API는 당일 직접 조회한 [dev Swagger JSON](https://dev-api.manyak.app/v3/api-docs)과 서버 `StorySubmissionService` 및 `SubmissionFormAssembler`로 확인합니다.
 
 ## 확정한 선택
 

@@ -5,7 +5,7 @@
 - 상태: 구현·에뮬레이터 검증 완료, Play Console 확인은 다음 업로드 뒤
 - Android: `chore/KNK-1408-enable-r8-minification-for-release` — fetch한 `origin/dev`의 `74a10daa`
 - 하네스: `docs/KNK-1408-enable-r8-minification-for-release` — fetch한 `origin/dev`의 `ab5f483`
-- 정본: [Android ADR A-047](../../../knk-harness/docs/adr/1-3-android-adr.md#a-047), [배포 Design](../../../knk-harness/docs/design/4-deployment.md#manyak-android-ci)
+- 정본: [Android ADR A-047](../../../knk-harness/docs/client/ANDROID/DECISIONS.md#a-047), [배포 Design](../../../knk-harness/docs/design/4-deployment.md#manyak-android-ci)
 
 ## 목표와 범위
 
