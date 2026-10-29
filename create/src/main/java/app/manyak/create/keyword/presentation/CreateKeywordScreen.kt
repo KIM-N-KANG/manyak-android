@@ -59,6 +59,9 @@ import app.manyak.create.presentation.preview.previewKeywordState
 import app.manyak.designsystem.component.FocusScrollMargin
 import app.manyak.designsystem.component.ManyakDestructiveDialog
 import app.manyak.designsystem.component.ScrollEdgeFade
+import app.manyak.designsystem.component.rememberTabSwipeState
+import app.manyak.designsystem.component.swipeBetweenTabs
+import app.manyak.designsystem.component.tabSwipeOffset
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.common.R as CommonR
 import app.manyak.create.R as CreateR
@@ -225,11 +228,20 @@ private fun KeywordStepBody(
         else -> {
             val listState = rememberLazyListState()
             var viewportCenter by remember { mutableFloatStateOf(0f) }
+            // 고른 카테고리의 내용이 짧아도 그 아래 빈 자리에서 밀 수 있게 목록 전체에서 받는다.
+            val swipe = rememberTabSwipeState()
             LazyColumn(
                 modifier =
-                    modifier.onGloballyPositioned {
-                        viewportCenter = it.positionInRoot().y + it.size.height / 2f
-                    },
+                    modifier
+                        .swipeBetweenTabs(
+                            selectedIndex = state.activeCategory.ordinal,
+                            tabCount = StoryTagCategory.entries.size,
+                            onSelect = { onIntent(CreateKeywordIntent.SelectCategory(StoryTagCategory.entries[it])) },
+                            canSelect = { state.isUnlocked(StoryTagCategory.entries[it]) },
+                            state = swipe,
+                        ).onGloballyPositioned {
+                            viewportCenter = it.positionInRoot().y + it.size.height / 2f
+                        },
                 state = listState,
             ) {
                 item { KeywordStepTitle() }
@@ -241,6 +253,7 @@ private fun KeywordStepBody(
                         state = state,
                         onIntent = onIntent,
                         onOpenAddKeyword = onOpenAddKeyword,
+                        modifier = Modifier.tabSwipeOffset(swipe),
                         scrollToCenter = { listState.scrollToCenter(it, viewportCenter) },
                     )
                 }

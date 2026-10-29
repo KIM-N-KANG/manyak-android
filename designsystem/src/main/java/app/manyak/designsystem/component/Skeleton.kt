@@ -27,7 +27,8 @@ fun SkeletonPlaceholder(
             modifier
                 .alpha(alpha)
                 .clip(shape)
-                .background(ManyakTheme.colors.backgroundNeutral),
+                // 보조 배경색은 화면 바탕과 거의 같아 맥동으로 옅어지면 빈 화면과 구분되지 않는다.
+                .background(ManyakTheme.colors.border),
     )
 }
 
@@ -48,5 +49,5 @@ fun rememberSkeletonPulseAlpha(): Float {
     return alpha
 }
 
-private const val PULSE_MIN_ALPHA = 0.4f
+private const val PULSE_MIN_ALPHA = 0.5f
 private const val PULSE_DURATION_MILLIS = 700

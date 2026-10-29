@@ -199,7 +199,8 @@ class HomeViewModel
             event: HomeEvent,
         ): HomeUiState =
             when (event) {
-                // 새 조건의 첫 페이지가 올 때까지 보던 목록을 남긴다 — 비웠다 채우면 칩을 누를 때마다 목록이 깜빡인다.
+                // 새 조건의 첫 페이지가 올 때까지 보던 목록을 남긴다. 화면은 그동안 골격으로 덮지만, 응답 전에
+                // 원래 조건으로 돌아오면 남은 목록을 다시 받을 때까지 그대로 보인다.
                 // 커서는 비워 이전 조건의 다음 페이지를 잇지 않는다.
                 is HomeEvent.QueryChanged ->
                     state.copy(
