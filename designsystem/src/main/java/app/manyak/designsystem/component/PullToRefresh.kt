@@ -1,15 +1,17 @@
 package app.manyak.designsystem.component
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import app.manyak.designsystem.theme.ManyakTheme
 
 /**
@@ -28,23 +30,31 @@ fun ManyakPullToRefreshBox(
     content: @Composable BoxScope.() -> Unit,
 ) {
     val state = rememberPullToRefreshState()
-    PullToRefreshBox(
-        modifier = modifier.fillMaxSize(),
-        isRefreshing = isRefreshing,
-        onRefresh = onRefresh,
-        state = state,
-        indicator = {
-            PullToRefreshDefaults.Indicator(
-                state = state,
-                isRefreshing = isRefreshing,
-                modifier =
-                    Modifier
-                        .align(Alignment.TopCenter)
-                        .padding(top = contentPadding.calculateTopPadding()),
-                containerColor = ManyakTheme.colors.surfaceRaised,
-                color = ManyakTheme.colors.progressIndicator,
-            )
-        },
-        content = content,
-    )
+    Box(
+        modifier =
+            modifier
+                .fillMaxSize()
+                .pullToRefresh(
+                    isRefreshing = isRefreshing,
+                    state = state,
+                    threshold = RefreshThreshold,
+                    onRefresh = onRefresh,
+                ),
+    ) {
+        content()
+        PullToRefreshDefaults.Indicator(
+            state = state,
+            isRefreshing = isRefreshing,
+            modifier =
+                Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = contentPadding.calculateTopPadding()),
+            containerColor = ManyakTheme.colors.surfaceRaised,
+            color = ManyakTheme.colors.progressIndicator,
+        )
+    }
 }
+
+// M3 는 손가락 이동의 절반만 당김으로 세므로 112dp 를 끌면 발동한다. 기본값 80dp 는 160dp 를
+// 끌어야 해서 너무 길다. 표시자가 멈추는 높이는 기본값 80dp 그대로 둔다.
+private val RefreshThreshold = 56.dp
