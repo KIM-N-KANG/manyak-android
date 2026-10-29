@@ -1,6 +1,6 @@
 # 채팅방 — 턴 진행
 
-> **KNK-1197 구조 이전 안내 (2026-09-05)** — 아래 구현 순서·모듈 경로·코드 예시·본문의 문서 절 번호와 검수 항목은 작성 당시 기록입니다. 현재 소유 위치와 검증 결과는 [모듈 재구성 기록](./module-reorganization.md), 현재 계층·의존 규칙은 [하네스 모듈 아키텍처](../../../knk-harness/docs/platform/ANDROID/COMPONENT-ARCHITECTURE.md#책임과-의존)를 따릅니다.
+> **KNK-1197 구조 이전 안내 (2026-09-05)** — 아래 구현 순서·모듈 경로·코드 예시·본문의 문서 절 번호와 검수 항목은 작성 당시 기록입니다. 현재 소유 위치와 검증 결과는 [모듈 재구성 기록](./module-reorganization.md), 현재 계층·의존 규칙은 [하네스 모듈 아키텍처](../../../knk-harness/docs/platform/ANDROID/4-2-COMPONENT-ARCHITECTURE.md#4-2-1-책임과-의존)를 따릅니다.
 
 - 작성일: 2026-08-29
 - 지라: KNK-868(기능) · KNK-1032(스펙 확정)
@@ -300,7 +300,7 @@ turnId에 귀속**시키고 최신 요청 turnId를 들고 있어, 늦게 끝난
 
 - 티켓: [KNK-1317](https://kimandkang.atlassian.net/browse/KNK-1317) (부모 KNK-1315)
 - 브랜치: Android·하네스 모두 `feat/KNK-1317-chat-realtime-image-settings-sheet`, 분기 기준 fetch한 `origin/dev` — Android `ecf50831`, 하네스 `4b34221`
-- 계약: [채팅 설정 시트와 메뉴 시트](../../../knk-harness/docs/domain/CHAT/CLIENT/LAYOUT.md#설정과-메뉴), [인물 이미지 렌더](../../../knk-harness/docs/domain/CHAT/CLIENT/CONTRACT.md#이미지와-텍스트), Swagger `ContinueChatRequest`·`RegenerateChatRequest`의 `realtimeImage`
+- 계약: [채팅 설정 시트와 메뉴 시트](../../../knk-harness/docs/domain/CHAT/CLIENT/3-3-LAYOUT.md#3-3-3-설정과-메뉴), [인물 이미지 렌더](../../../knk-harness/docs/domain/CHAT/CLIENT/4-1-CONTRACT.md#4-1-4-이미지와-텍스트), Swagger `ContinueChatRequest`·`RegenerateChatRequest`의 `realtimeImage`
 - 제외: 로딩 표현·스크롤 높이 유지(KNK-1318), 이프 비용 배지·안내 팝오버(KNK-1319), 채팅 메뉴 시트(KNK-1320)
 
 ### 변경
@@ -338,7 +338,7 @@ turnId에 귀속**시키고 최신 요청 turnId를 들고 있어, 늦게 끝난
 
 - 티켓: [KNK-1318](https://kimandkang.atlassian.net/browse/KNK-1318) (부모 KNK-1315)
 - 브랜치: `feat/KNK-1318-chat-stream-loading-height`, 분기 기준 fetch한 `origin/dev` `b61d3704`
-- 계약: [렌더와 스크롤](../../../knk-harness/docs/domain/CHAT/CLIENT/LAYOUT.md#생성-대기와-이미지)(부분 렌더·새 턴 앵커), 메뉴 시트 AI 안내 문구(`CHAT_AI_NOTICE`)
+- 계약: [렌더와 스크롤](../../../knk-harness/docs/domain/CHAT/CLIENT/3-3-LAYOUT.md#3-3-4-생성-대기와-이미지)(부분 렌더·새 턴 앵커), 메뉴 시트 AI 안내 문구(`CHAT_AI_NOTICE`)
 - 제외: 앵커·패드 회수·진입 위치·하단 이동 버튼(현재 구현 유지), 토글·설정 시트(KNK-1317), 비용 배지(KNK-1319)
 
 ### 변경
@@ -376,7 +376,7 @@ turnId에 귀속**시키고 최신 요청 turnId를 들고 있어, 늦게 끝난
 
 - 티켓: [KNK-1320](https://kimandkang.atlassian.net/browse/KNK-1320) (부모 KNK-1315)
 - 브랜치: Android·하네스 모두 `feat/KNK-1320-options-bottom-sheets`, 분기 기준 fetch한 `origin/dev` — Android `cddd12df`, 하네스 `105b313`
-- 계약: [카드 옵션 시트](../../../knk-harness/docs/domain/STORY/CLIENT/REQUIREMENTS.md#탐색과-제작-목록)(FE-SCREEN-013), [채팅 설정 시트와 메뉴 시트](../../../knk-harness/docs/domain/CHAT/CLIENT/LAYOUT.md#설정과-메뉴), Swagger `POST /chats`(`startSettingId` 생략 시 첫 시작 설정). 결정: [A-042](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-042)
+- 계약: [카드 옵션 시트](../../../knk-harness/docs/domain/STORY/CLIENT/2-2-REQUIREMENTS.md#2-2-2-탐색과-제작-목록)(FE-SCREEN-013), [채팅 설정 시트와 메뉴 시트](../../../knk-harness/docs/domain/CHAT/CLIENT/3-3-LAYOUT.md#3-3-3-설정과-메뉴), Swagger `POST /chats`(`startSettingId` 생략 시 첫 시작 설정). 결정: [A-042](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-042)
 - 제외: 공유 열람 화면(웹 소유). 삭제 확인은 다이얼로그 그대로.
 
 ### 변경

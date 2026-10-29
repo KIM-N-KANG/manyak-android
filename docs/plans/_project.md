@@ -4,11 +4,11 @@
 
 | 확인할 것 | 정본 |
 | --- | --- |
-| 공통 화면·동작·API 사용 계약 | [공통 spec](../../../knk-harness/docs/experience/AGENTS.md) |
-| Android 사용자 모델·플랫폼 예외·수용 기준 | [도메인별 Android 계약](../../../knk-harness/docs/domain/AGENTS.md) |
-| 스택·MVI·내비게이션·세션·저장·라이프사이클·관측 구조 | [Android 기반](../../../knk-harness/docs/platform/ANDROID/AGENTS.md) |
-| 모듈·계층·의존 방향 | [모듈 아키텍처](../../../knk-harness/docs/platform/ANDROID/COMPONENT-ARCHITECTURE.md#책임과-의존) |
-| 중요한 선택 이유·대체 관계 | [공통 ADR](../../../knk-harness/docs/reference/decisions/DOCUMENTATION.md) · [Android 기반 결정](../../../knk-harness/docs/platform/ANDROID/DECISIONS.md), [공통 경험 결정](../../../knk-harness/docs/experience/ANDROID/DECISIONS.md), 각 도메인의 CLIENT/ANDROID/DECISIONS.md |
+| 공통 화면·동작·API 사용 계약 | [공통 spec](../../../knk-harness/docs/domain/APP/CLIENT/AGENTS.md) |
+| Android 사용자 모델·플랫폼 예외·수용 기준 | [Android spec](../../../knk-harness/docs/domain/APP/CLIENT/ANDROID/AGENTS.md) |
+| 스택·MVI·내비게이션·세션·저장·라이프사이클·관측 구조 | [Android design](../../../knk-harness/docs/domain/APP/CLIENT/ANDROID/AGENTS.md) |
+| 모듈·계층·의존 방향 | [모듈 아키텍처](../../../knk-harness/docs/platform/ANDROID/4-2-COMPONENT-ARCHITECTURE.md#4-2-1-책임과-의존) |
+| 중요한 선택 이유·대체 관계 | [공통 ADR](../../../knk-harness/docs/reference/decisions/DOCUMENTATION.md) · [Android ADR](../../../knk-harness/docs/domain/APP/CLIENT/ANDROID/DECISIONS.md) |
 | 일정과 우선순위 | Jira |
 
 기능 계획은 변경 순서·검증·복구를 소유합니다. 완료한 계획은 당시 실행 기록으로 보관하고 현재 문서의 사본으로 갱신하지 않습니다. 이전 계획의 모듈·명령은 당시 기준이며 현행 규칙은 위 정본을 확인합니다. 모듈 이전의 실행 기록은 [module-reorganization.md](./module-reorganization.md)에 있습니다.

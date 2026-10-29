@@ -4,7 +4,7 @@
 - 작업일: 2026-09-26
 - 브랜치: Android `feat/KNK-1430-abbreviate-story-counts-and-show-likes`, 하네스 `docs/KNK-1430-abbreviate-story-counts-and-show-likes`
 - 분기 기준: fetch한 `origin/dev` — Android `aa554767`, 하네스 `31c35e9`
-- 계약: [공통 FE-SCREEN-001·003·013](../../../knk-harness/docs/domain/STORY/CLIENT/LAYOUT.md#상세와-이미지), [Android 스토리 목록·상세](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/REQUIREMENTS.md)
+- 계약: [공통 FE-SCREEN-001·003·013](../../../knk-harness/docs/domain/STORY/CLIENT/3-3-LAYOUT.md#3-3-2-상세와-이미지), [Android 스토리 목록·상세](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/2-2-REQUIREMENTS.md)
 - 참고: 웹 KNK-1421(manyak-web #209), 웹 `src/lib/format-count.ts`
 
 ## 변경

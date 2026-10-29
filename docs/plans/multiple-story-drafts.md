@@ -5,7 +5,7 @@
 - 상태: 구현·에뮬레이터 검증 완료
 - Android: `feat/KNK-1395-support-multiple-story-drafts` — fetch한 `origin/dev`의 `709ec3e1`
 - 하네스: `docs/KNK-1395-support-multiple-story-drafts` — fetch한 `origin/dev`의 `53358c3`
-- 제품 정본: [공통 §3-1-4](../../../knk-harness/docs/experience/AGENTS.md), [Android Spec §3-3-3](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md), [Android Design §1-2-7](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md), [A-046](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-046)
+- 제품 정본: [공통 §3-1-4](../../../knk-harness/docs/domain/APP/CLIENT/AGENTS.md), [Android Spec §3-3-3](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md), [Android Design §1-2-7](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md), [A-046](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-046)
 
 ## 목표와 범위
 

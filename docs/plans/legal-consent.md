@@ -2,9 +2,9 @@
 
 - 작성일: 2026-09-20
 - 브랜치: Android·하네스 모두 `feat/KNK-1347-legal-consent-bottom-sheet`
-- 정본: 공통 [동의 모델](../../../knk-harness/docs/domain/ACCOUNT/CLIENT/INTERACTION-FLOWS.md#로그인과-필수-동의),
-  [Android 동의 요구사항](../../../knk-harness/docs/domain/ACCOUNT/CLIENT/ANDROID/REQUIREMENTS.md#진입과-동의),
-  [Android 동의 실행](../../../knk-harness/docs/domain/ACCOUNT/CLIENT/ANDROID/EXECUTION.md#인증과-동의),
+- 정본: 공통 [동의 모델](../../../knk-harness/docs/domain/ACCOUNT/CLIENT/3-2-INTERACTION-FLOWS.md#3-2-1-로그인과-필수-동의),
+  [Android spec §3-3-1·§3-3-5](../../../knk-harness/docs/domain/APP/CLIENT/ANDROID/AGENTS.md),
+  [Android design §1-2-5 약관 동의 게이트·§1-2-6 광고 알림 수신 동의](../../../knk-harness/docs/domain/APP/CLIENT/ANDROID/AGENTS.md),
   [A-044](../../../knk-harness/docs/domain/ACCOUNT/CLIENT/ANDROID/DECISIONS.md#a-044). API는 dev Swagger `GET·POST /users/me/consents`.
 - 참고 구현: 웹 `manyak-web` `feat/KNK-1342-legal-consent-bottom-sheet`의 `consent-gate.tsx`·`consent-sheet.tsx`.
 

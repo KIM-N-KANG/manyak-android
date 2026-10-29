@@ -4,8 +4,8 @@
 - 상태: **모듈 이전·로컬 검증 완료**
 - 대응 브랜치: Android `refactor/KNK-1197-improve-folder-structure`, 하네스 `docs/KNK-1197-improve-folder-structure`. 병합·배포 상태와 구분합니다.
 - 후속 구현 요청에 따라 모듈별 이동·검증을 완료하고 모듈 단위 로컬 커밋으로 기록했습니다.
-- 공통 설계 정본: [하네스 Android 모듈 재구성 설계](../../../knk-harness/docs/platform/ANDROID/COMPONENT-ARCHITECTURE.md#책임과-의존)
-- 현행 정본: [Android 설계](../../../knk-harness/docs/platform/ANDROID/AGENTS.md), 로컬 검증 정책: [_project.md](./_project.md)
+- 공통 설계 정본: [하네스 Android 모듈 재구성 설계](../../../knk-harness/docs/platform/ANDROID/4-2-COMPONENT-ARCHITECTURE.md#4-2-1-책임과-의존)
+- 현행 정본: [Android 설계](../../../knk-harness/docs/domain/APP/CLIENT/ANDROID/AGENTS.md), 로컬 검증 정책: [_project.md](./_project.md)
 
 ## 1. 목표와 기준 상태
 

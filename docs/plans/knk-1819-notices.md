@@ -1,8 +1,8 @@
 # 공지사항 목록과 상세 화면 (KNK-1819)
 
 - 작성일: 2026-10-24
-- 근거 정본: 하네스 [FE-SCREEN-014 공지사항](../../../knk-harness/docs/domain/NOTIFICATION/CLIENT/REQUIREMENTS.md#공지사항)(웹 KNK-1818과 공통 계약),
-  [Android 공지사항](../../../knk-harness/docs/experience/ANDROID/LAYOUT.md#셸과-조작), [Android 구조](../../../knk-harness/docs/platform/ANDROID/EXECUTION.md#요청과-취소),
+- 근거 정본: 하네스 [FE-SCREEN-014 공지사항](../../../knk-harness/docs/domain/NOTIFICATION/CLIENT/2-2-REQUIREMENTS.md#2-2-2-공지사항)(웹 KNK-1818과 공통 계약),
+  [Android 공지사항](../../../knk-harness/docs/domain/APP/CLIENT/ANDROID/3-3-LAYOUT.md#3-3-1-셸과-조작), [Android 구조](../../../knk-harness/docs/platform/ANDROID/4-4-EXECUTION.md#4-4-1-요청과-취소),
   ADR [A-079](../../../knk-harness/docs/domain/NOTIFICATION/CLIENT/ANDROID/DECISIONS.md#a-079)
 - 서버 API: dev Swagger `GET /api/v1/notices?limit=&cursor=`, `GET /api/v1/notices/{noticeId}`(둘 다 permitAll). 공지 게시 푸시의 `deepLink`는 `https://manyak.app/notices/{noticeId}`.
 - 웹 구현 참고: `manyak-web/src/features/notices/`(KNK-1818, PR #318)

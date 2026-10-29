@@ -1,7 +1,7 @@
 # 알림 설정 화면 (KNK-1135)
 
 - 작성일: 2026-09-08
-- 현재 기준: 하네스 [NOTIFICATION 공통](../../../knk-harness/docs/domain/NOTIFICATION/CLIENT/AGENTS.md)와 [Android](../../../knk-harness/docs/domain/NOTIFICATION/CLIENT/ANDROID/AGENTS.md), [NOTIFICATION API](../../../knk-harness/docs/domain/NOTIFICATION/BACKEND/CONTRACT.md), [모듈 경계](../../../knk-harness/docs/platform/ANDROID/COMPONENT-ARCHITECTURE.md)
+- 현재 기준: 하네스 [NOTIFICATION 공통](../../../knk-harness/docs/domain/NOTIFICATION/CLIENT/AGENTS.md)와 [Android](../../../knk-harness/docs/domain/NOTIFICATION/CLIENT/ANDROID/AGENTS.md), [NOTIFICATION API](../../../knk-harness/docs/domain/NOTIFICATION/BACKEND/4-2-CONTRACT.md), [모듈 경계](../../../knk-harness/docs/platform/ANDROID/4-2-COMPONENT-ARCHITECTURE.md)
 
 ## 목표와 제외 범위
 
