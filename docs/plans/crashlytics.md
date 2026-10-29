@@ -1,9 +1,9 @@
 # Firebase Crashlytics 등록
 
-> **KNK-1197 구조 이전 안내 (2026-09-05)** — 아래 구현 순서·모듈 경로·코드 예시·본문의 문서 절 번호와 검수 항목은 작성 당시 기록입니다. 현재 소유 위치와 검증 결과는 [모듈 재구성 기록](./module-reorganization.md), 현재 계층·의존 규칙은 [하네스 모듈 아키텍처](../../../knk-harness/docs/platform/ANDROID/4-2-COMPONENT-ARCHITECTURE.md#4-2-1-책임과-의존)를 따릅니다.
+> **KNK-1197 구조 이전 안내 (2026-09-05)** — 아래 구현 순서·모듈 경로·코드 예시·본문의 문서 절 번호와 검수 항목은 작성 당시 기록입니다. 현재 소유 위치와 검증 결과는 [모듈 재구성 기록](./module-reorganization.md), 현재 계층·의존 규칙은 [하네스 모듈 아키텍처](../../../knk-harness/docs/platform/ANDROID/COMPONENT-ARCHITECTURE.md#책임과-의존)를 따릅니다.
 
 - 작성일: 2026-09-04
-- 근거 정본: 하네스 [Android ADR A-006](../../../knk-harness/docs/platform/ANDROID/DECISIONS.md#a-006)(크래시 도구 결정 기록), `REFERENCE/ANALYTICS.md §6-6-4`(수집 기준)
+- 근거 정본: 하네스 [Android ADR A-006](../../../knk-harness/docs/platform/ANDROID/DECISIONS.md#a-006)(크래시 도구 결정 기록), [클라이언트 오류 수집 기준](../../../knk-harness/docs/reference/ANALYTICS.md#클라이언트-오류-수집-기준sentrycrashlytics)(수집 기준)
 
 ## 목표와 제외 범위
 

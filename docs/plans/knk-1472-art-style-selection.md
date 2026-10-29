@@ -4,7 +4,7 @@
 
 간편 제작 추가 정보 단계에 필수 "이미지 스타일" 선택을 더하고, 고른 화풍을 완성 요청 `artStyle`, 임시 저장, 재개에 연결합니다. 추가 정보 입력 행은 처음 1개로 줄이고 섹션 간격을 24dp로 맞춥니다. 공개 스위치는 2026-10-14 결정으로 넣지 않습니다.
 
-- 사용자 계약: [공통 추가 정보 진입](../../../knk-harness/docs/domain/STORY/CLIENT/3-3-LAYOUT.md#3-3-3-제작-선택과-간편-제작), [추가 정보 (퍼널)](../../../knk-harness/docs/domain/STORY/CLIENT/4-1-CONTRACT.md#4-1-2-간편-제작-요청)
+- 사용자 계약: [공통 추가 정보 진입](../../../knk-harness/docs/domain/STORY/CLIENT/LAYOUT.md#제작-선택과-간편-제작), [추가 정보 (퍼널)](../../../knk-harness/docs/domain/STORY/CLIENT/CONTRACT.md#간편-제작-요청)
 - 현재 구조: [Android design 화풍 선택](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md)
 - 결정: [A-072 저장 형식과 재생성 유지](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-072)
 - 웹 기준: [manyak-web#265](https://github.com/KIM-N-KANG/manyak-web/pull/265), [manyak-web#266](https://github.com/KIM-N-KANG/manyak-web/pull/266)

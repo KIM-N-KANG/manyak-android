@@ -3,7 +3,7 @@
 이 문서의 실행 단계와 과거 변경 서술은 작성 당시 경로를 보존합니다. 현재 기준은 [NOTIFICATION 공통](../../../knk-harness/docs/domain/NOTIFICATION/CLIENT/AGENTS.md)와 [Android](../../../knk-harness/docs/domain/NOTIFICATION/CLIENT/ANDROID/AGENTS.md)에서 확인합니다. 이전 문서는 [당시 하네스](https://github.com/KIM-N-KANG/knk-harness/blob/8aa505cbf7a5390e67ca48a42fb94d89d21eb3ad/docs/)에서 확인합니다.
 
 - 작성일: 2026-09-20
-- 현재 기준: 하네스 [NOTIFICATION 공통](../../../knk-harness/docs/domain/NOTIFICATION/CLIENT/AGENTS.md)와 [Android](../../../knk-harness/docs/domain/NOTIFICATION/CLIENT/ANDROID/AGENTS.md), [NOTIFICATION API](../../../knk-harness/docs/domain/NOTIFICATION/BACKEND/4-2-CONTRACT.md) (선택 키 `deepLink`, KNK-1335)
+- 현재 기준: 하네스 [NOTIFICATION 공통](../../../knk-harness/docs/domain/NOTIFICATION/CLIENT/AGENTS.md)와 [Android](../../../knk-harness/docs/domain/NOTIFICATION/CLIENT/ANDROID/AGENTS.md), [NOTIFICATION API](../../../knk-harness/docs/domain/NOTIFICATION/BACKEND/CONTRACT.md) (선택 키 `deepLink`, KNK-1335)
 
 - 서버 반영: `manyak-server` `0005fec` [KNK-1335] (v0.5.1, main 포함). 스토리 완성 `/stories/{storyId}`,
   출석 리마인드 `/my/credits?tab=free`, 프로모션은 생략. 기준 origin `manyak.push.web-base-url`(기본 `https://manyak.app`).
@@ -54,8 +54,8 @@
    완료 조건: `:navigation:testDebugUnitTest` 통과.
 2. `:notification` — `PushMessage.from` 이 `deepLink` 를 싣는다. 완료 조건: `:notification` 컴파일·테스트 통과.
    (`:app` 은 `PushEntry` 를 값으로만 다뤄 변경 없음. `ExternalEntryTest` 그대로.)
-3. 하네스 — `docs/domain/NOTIFICATION/CLIENT/ANDROID/4-4-EXECUTION.md` "알림 진입과 권한" 첫 문장을 URL 우선·`type` 하위 호환으로 고치고,
-   `docs/domain/NOTIFICATION/CLIENT/ANDROID/2-2-REQUIREMENTS.md` 에 "허용 목록 밖 URL 은 홈" 한 줄, `docs/domain/NOTIFICATION/CLIENT/ANDROID/DECISIONS.md` 에 결정 1 을 A-045 로
+3. 하네스 — `docs/domain/NOTIFICATION/CLIENT/ANDROID/EXECUTION.md` "알림 진입과 권한" 첫 문장을 URL 우선·`type` 하위 호환으로 고치고,
+   `docs/domain/NOTIFICATION/CLIENT/ANDROID/REQUIREMENTS.md` 에 "허용 목록 밖 URL 은 홈" 한 줄, `docs/domain/NOTIFICATION/CLIENT/ANDROID/DECISIONS.md` 에 결정 1 을 A-045 로
    추가. 1·2 와 병렬 가능.
 
 ## 검증 (2026-09-20, emulator-5554 · dev 서버)

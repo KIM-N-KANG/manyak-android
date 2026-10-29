@@ -3,7 +3,7 @@
 - 작성일: 2026-10-25
 - 상위: KNK-1840. 서버 KNK-1835(이프 만료 예정 알림 `CREDIT_EXPIRY_REMINDER`, ACTIVITY 분류), 웹 KNK-1842
 - 근거 정본: 하네스 ADR [A-080](../../../knk-harness/docs/domain/PAYMENT/CLIENT/ANDROID/DECISIONS.md#a-080)(A-045의 탭 쿼리 미해석 대체),
-  [Android 알림 계약](../../../knk-harness/docs/domain/APP/CLIENT/ANDROID/AGENTS.md), [Android 구조](../../../knk-harness/docs/domain/APP/CLIENT/ANDROID/AGENTS.md)
+  [Android 알림 계약](../../../knk-harness/docs/domain/NOTIFICATION/CLIENT/ANDROID/AGENTS.md), [Android 충전 화면](../../../knk-harness/docs/domain/PAYMENT/CLIENT/ANDROID/INFORMATION-ARCHITECTURE.md)
 
 ## 목표와 제외 범위
 

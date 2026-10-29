@@ -4,7 +4,7 @@
 - 작업일: 2026-09-26
 - 브랜치: Android `feat/KNK-1431-add-chat-tour`, 하네스 `docs/KNK-1431-add-chat-tour`
 - 분기 기준: fetch한 `origin/dev`. Android `746af162`, 하네스 `3fd9b0f`(KNK-1434 병합 뒤로 다시 올림)
-- 계약: [공통 첫 진입 안내](../../../knk-harness/docs/domain/CHAT/CLIENT/2-2-REQUIREMENTS.md#2-2-6-처음-사용-안내), [분석 §6-4-2-6](../../../knk-harness/docs/reference/ANALYTICS.md), [Android 채팅 목록과 채팅방](../../../knk-harness/docs/domain/CHAT/CLIENT/ANDROID/AGENTS.md), 결정 [A-048](../../../knk-harness/docs/domain/CHAT/CLIENT/ANDROID/DECISIONS.md#a-048)
+- 계약: [공통 첫 진입 안내](../../../knk-harness/docs/domain/CHAT/CLIENT/REQUIREMENTS.md#처음-사용-안내), [분석 §6-4-2-6](../../../knk-harness/docs/reference/ANALYTICS.md), [Android 채팅 목록과 채팅방](../../../knk-harness/docs/domain/CHAT/CLIENT/ANDROID/AGENTS.md), 결정 [A-048](../../../knk-harness/docs/domain/CHAT/CLIENT/ANDROID/DECISIONS.md#a-048)
 - 참고: 웹 `src/features/chats/room/components/tour/`, `hooks/use-chat-tour.ts`, `utils/chat-tour-gate.ts`, `utils/tour-geometry.ts`
 
 ## 변경
@@ -38,7 +38,7 @@
 
 | 화면 | 캡처 |
 | --- | --- |
-| 스텝 | [1 상황 추가](../../captures/knk-1431/step1-plain.png) · [2 채팅 설정](../../captures/knk-1431/step2-plain.png) · [3 랜덤 전송](../../captures/knk-1431/step3-plain.png) |
+| 스텝 | [상황 추가](../../captures/knk-1431/step1-plain.png) · [채팅 설정](../../captures/knk-1431/step2-plain.png) · [랜덤 전송](../../captures/knk-1431/step3-plain.png) |
 | 구성 변경 | [3단계에서 가로 회전](../../captures/knk-1431/step3-landscape.png) |
 | 재노출 없음 | [완료 뒤 새 채팅](../../captures/knk-1431/reentry-no-tour.png) |
 

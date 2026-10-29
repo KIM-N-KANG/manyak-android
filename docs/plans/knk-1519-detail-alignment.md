@@ -8,7 +8,7 @@
 - 하네스 분기 기준: fetch한 `origin/dev`의 `1648e85f0dc2b95f39c7ce9389b0d528184345b7`. 관련 정본이 이 커밋에 포함된 것을 확인했습니다.
 - 기존 두 작업 트리는 깨끗했으며 별도 변경을 이동하거나 삭제하지 않았습니다.
 - 서버 `ChatService`의 목록 및 상세는 공개 스냅샷이 없으면 제목을 비우면서 원본 스토리 ID를 유지할 수 있습니다. 웹은 제목도 검사하지만 앱은 ID만 검사했습니다. API나 저장 스키마 변경 없이 소비 조건을 맞춥니다.
-- 공통 계약은 [클라이언트 spec](../../../knk-harness/docs/domain/APP/CLIENT/AGENTS.md), 플랫폼 예외는 [Android spec](../../../knk-harness/docs/domain/APP/CLIENT/ANDROID/AGENTS.md), 내부 소유권은 [Android design](../../../knk-harness/docs/domain/APP/CLIENT/ANDROID/AGENTS.md)을 따릅니다.
+- 공통 계약은 [클라이언트 spec](../../../knk-harness/docs/domain/STORY/CLIENT/AGENTS.md), 플랫폼 예외는 [Android spec](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md), 내부 소유권은 [Android design](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md)을 따릅니다.
 
 ## 작업별 구현
 
@@ -76,7 +76,7 @@ API와 저장 스키마 변경이 없어 작업 커밋을 되돌리면 이전 �
 
 ## 후속 요청: 앱 재실행의 시작 화면
 
-기존 회원이 앱을 다시 켤 때 로그인 화면이 나타나던 경로를 `40644e6d`에서 분리했습니다. 새로운 사용자 계약은 [Android spec](../../../knk-harness/docs/domain/APP/CLIENT/ANDROID/AGENTS.md), 결정 근거는 [A-054](../../../knk-harness/docs/domain/ACCOUNT/CLIENT/ANDROID/DECISIONS.md#a-054)를 따릅니다.
+기존 회원이 앱을 다시 켤 때 로그인 화면이 나타나던 경로를 `40644e6d`에서 분리했습니다. 새로운 사용자 계약은 [Android spec](../../../knk-harness/docs/domain/ACCOUNT/CLIENT/ANDROID/AGENTS.md), 결정 근거는 [A-054](../../../knk-harness/docs/domain/ACCOUNT/CLIENT/ANDROID/DECISIONS.md#a-054)를 따릅니다.
 
 - 시스템 스플래시 다음의 첫 앱 화면에 로고와 지연 스피너를 표시합니다. 시스템 스플래시를 서버 응답까지 유지하는 조건은 추가하지 않습니다.
 - `RootViewModel.entryState`는 세션과 시작 경로를 함께 발행합니다. 로그인 화면에 진입하기 전의 회원 복원은 시작 경로, `SignedOut`을 거친 인증은 기존 로그인 경로를 사용합니다. ViewModel 수명으로 구성 변경을 견디며 프로세스 재시작 때 다시 판정합니다.
@@ -103,7 +103,7 @@ API와 저장 스키마 변경이 없어 작업 커밋을 되돌리면 이전 �
 
 ## 후속 요청: 임시 저장 성공 안내
 
-임시 저장에 성공하면 버튼을 체크와 '임시 저장됨'으로 바꾸던 표시를 웹과 같은 토스트로 바꿨습니다. 새로운 사용자 계약은 [Android spec](../../../knk-harness/docs/domain/APP/CLIENT/ANDROID/AGENTS.md), 결정 근거는 [A-055](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-055)를 따릅니다.
+임시 저장에 성공하면 버튼을 체크와 '임시 저장됨'으로 바꾸던 표시를 웹과 같은 토스트로 바꿨습니다. 새로운 사용자 계약은 [Android spec](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md), 결정 근거는 [A-055](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-055)를 따릅니다.
 
 - 버튼 모양은 바꾸지 않고 '임시 저장했어요' 토스트를 띄웁니다. 토스트는 버튼으로 시작한 저장에만 띄우며, 백그라운드 전환 저장은 알리지 않습니다.
 - 성공 뒤 2초(`DRAFT_SAVE_LOCK_MS`) 동안 버튼을 잠그고 회색으로 표시합니다. 그 사이에 편집해도 잠금을 풀지 않습니다. 저장 중에는 기존처럼 스피너를 표시합니다.
