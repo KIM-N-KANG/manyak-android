@@ -12,7 +12,7 @@ Android 기준은 `6b39aa01`, 하네스 기준은 `e39aef3`(KNK-1469 문서 병�
 
 ## 확정한 선택
 
-선택 이유는 [A-070](../../../knk-harness/docs/adr/1-3-android-adr.md#a-070-페르소나를-마이가-소유하고-상세에는-좁은-공용-계약으로-열기)에 기록합니다.
+선택 이유는 [A-070](../../../knk-harness/docs/domain/ACCOUNT/CLIENT/ANDROID/DECISIONS.md#a-070)에 기록합니다.
 
 - 새 모듈 없이 `my/persona`가 페르소나를 소유하고, 상세에는 `common`의 `PersonaAccess`만 엽니다.
 - 목록은 Singleton 저장소의 메모리 StateFlow이고 `UserScopedStore`로 로그아웃 정리에 참여합니다.

@@ -76,7 +76,7 @@ API와 저장 스키마 변경이 없어 작업 커밋을 되돌리면 이전 �
 
 ## 후속 요청: 앱 재실행의 시작 화면
 
-기존 회원이 앱을 다시 켤 때 로그인 화면이 나타나던 경로를 `40644e6d`에서 분리했습니다. 새로운 사용자 계약은 [Android spec](../../../knk-harness/docs/spec/3-3-android-spec.md), 결정 근거는 [A-054](../../../knk-harness/docs/adr/1-3-android-adr.md#a-054)를 따릅니다.
+기존 회원이 앱을 다시 켤 때 로그인 화면이 나타나던 경로를 `40644e6d`에서 분리했습니다. 새로운 사용자 계약은 [Android spec](../../../knk-harness/docs/spec/3-3-android-spec.md), 결정 근거는 [A-054](../../../knk-harness/docs/domain/ACCOUNT/CLIENT/ANDROID/DECISIONS.md#a-054)를 따릅니다.
 
 - 시스템 스플래시 다음의 첫 앱 화면에 로고와 지연 스피너를 표시합니다. 시스템 스플래시를 서버 응답까지 유지하는 조건은 추가하지 않습니다.
 - `RootViewModel.entryState`는 세션과 시작 경로를 함께 발행합니다. 로그인 화면에 진입하기 전의 회원 복원은 시작 경로, `SignedOut`을 거친 인증은 기존 로그인 경로를 사용합니다. ViewModel 수명으로 구성 변경을 견디며 프로세스 재시작 때 다시 판정합니다.
