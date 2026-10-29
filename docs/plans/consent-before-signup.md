@@ -3,8 +3,8 @@
 - 작성일: 2026-10-05
 - 브랜치: Android·하네스 모두 `feat/KNK-1541-social-login-consent-before-signup`
 - 정본: 공통 [동의 모델](../../../knk-harness/docs/domain/ACCOUNT/CLIENT/3-2-INTERACTION-FLOWS.md#3-2-1-로그인과-필수-동의),
-  [Android spec §3-3-1](../../../knk-harness/docs/domain/APP/CLIENT/ANDROID/AGENTS.md),
-  [Android design §1-2-5 약관 동의 게이트](../../../knk-harness/docs/domain/APP/CLIENT/ANDROID/AGENTS.md),
+  [Android 동의 요구사항](../../../knk-harness/docs/domain/ACCOUNT/CLIENT/ANDROID/2-2-REQUIREMENTS.md#2-2-1-진입과-동의),
+  [Android 동의 실행](../../../knk-harness/docs/domain/ACCOUNT/CLIENT/ANDROID/4-4-EXECUTION.md#4-4-1-인증과-동의),
   [A-064](../../../knk-harness/docs/domain/ACCOUNT/CLIENT/ANDROID/DECISIONS.md#a-064).
   API는 dev Swagger `POST /auth/social/{provider}`, `POST /auth/social/complete`.
 - 참고 구현: 웹 KNK-1540([manyak-web#233](https://github.com/KIM-N-KANG/manyak-web/pull/233)), 서버 KNK-1536.

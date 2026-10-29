@@ -7,7 +7,7 @@
 - 시트·다이얼로그는 별도 창이므로 modifier node에서 해당 창의 `LocalFocusManager`를 읽습니다. 포커스 영역 좌표는 커서·선택 영역으로 좁아질 수 있어 입력란의 터치 영역 판정에 사용하지 않습니다.
 - 기존 BOM은 2026.02.01이지만 최종 앱의 Compose UI·Foundation은 AboutLibraries 등의 전이 의존성으로 1.12.0이었습니다. 모듈의 컴파일 버전만 보면 실행 버전을 잘못 판단할 수 있어 `:app:dependencyInsight`의 `debugRuntimeClasspath`로 확인했습니다.
 - 1.12.0의 `isOutOfFrameSchedulerForTextInputEventsEnabled`가 입력 종료 명령을 메인 큐 앞에 넣어, 다음 입력 시작 전에 키보드 숨김이 실행됐습니다. [AndroidX 수정](https://android.googlesource.com/platform/frameworks/support/+/9d039d835daa553abea4ff30ccf569219a6c2fc6)은 이 플래그를 1.12.1에서 비활성화합니다. BOM을 2026.09.00(UI·Foundation 1.12.1)으로 맞추어 공식 수정을 적용합니다. 앱의 별도 플래그·지연·강제 키보드 표시 코드는 두지 않습니다.
-- 입력 값·커서 동기화·화면 상태·서버 요청은 바꾸지 않습니다. 포커스 동작은 [디자인 규칙](../../DESIGN.md#컴포넌트), 구성 변경은 [Android 계약](../../../knk-harness/docs/domain/APP/CLIENT/ANDROID/2-2-REQUIREMENTS.md#2-2-1-화면과-기기)을 따릅니다.
+- 입력 값·커서 동기화·화면 상태·서버 요청은 바꾸지 않습니다. 포커스 동작은 [디자인 규칙](../../DESIGN.md#컴포넌트), 구성 변경은 [Android 계약](../../../knk-harness/docs/ui/ANDROID/2-2-REQUIREMENTS.md#2-2-1-화면과-기기)을 따릅니다.
 
 ## 검증
 

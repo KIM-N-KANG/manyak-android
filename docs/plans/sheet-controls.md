@@ -5,7 +5,7 @@
 - 브랜치: Android·하네스 모두 `design/KNK-1324-align-sheet-controls`
 - 분기 기준: fetch한 `origin/dev` — Android `984e910d`, 하네스 `fed16a42`
 - 표현 규칙: [DESIGN.md](../../DESIGN.md#컴포넌트)
-- 계약: [Android spec](../../../knk-harness/docs/domain/APP/CLIENT/ANDROID/AGENTS.md), [공통 마이·계정](../../../knk-harness/docs/domain/APP/CLIENT/3-1-INFORMATION-ARCHITECTURE.md#3-1-1-화면과-진입점)
+- 계약: [Android spec](../../../knk-harness/docs/ui/ANDROID/AGENTS.md), [공통 마이·계정](../../../knk-harness/docs/domain/ACCOUNT/CLIENT/3-1-INFORMATION-ARCHITECTURE.md#3-1-1-화면과-진입)
 
 ## 변경 순서와 범위
 

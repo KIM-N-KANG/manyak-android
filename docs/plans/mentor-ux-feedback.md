@@ -4,7 +4,7 @@
 
 > **KNK-1197 구조 이전 안내 (2026-09-05)** — 아래 구현 순서·모듈 경로·코드 예시·본문의 문서 절 번호와 검수 항목은 작성 당시 기록입니다. 현재 소유 위치와 검증 결과는 [모듈 재구성 기록](./module-reorganization.md), 현재 계층·의존 규칙은 [하네스 모듈 아키텍처](../../../knk-harness/docs/platform/ANDROID/4-2-COMPONENT-ARCHITECTURE.md#4-2-1-책임과-의존)를 따릅니다.
 
-- 현재 계약: [Android Spec §3-3-2](../../../knk-harness/docs/domain/APP/CLIENT/ANDROID/3-1-INFORMATION-ARCHITECTURE.md#3-1-1-셸과-진입). 2026-09-03 선택 근거: [Android ADR A-028~A-031](../../../knk-harness/docs/domain/APP/CLIENT/ANDROID/DECISIONS.md#a-028).
+- 현재 계약: [Android Spec §3-3-2](../../../knk-harness/docs/ui/ANDROID/3-1-INFORMATION-ARCHITECTURE.md#3-1-1-셸과-진입). 2026-09-03 선택 근거: [Android ADR A-028~A-031](../../../knk-harness/docs/ui/ANDROID/DECISIONS.md#a-028).
 - 작성일: 2026-09-03
 
 ## 목표
@@ -22,7 +22,7 @@
 
 ## 1. 뒤로가기 화면 전환
 
-화면 전환의 선택 근거는 [Android ADR A-028](../../../knk-harness/docs/domain/APP/CLIENT/ANDROID/DECISIONS.md#a-028)에 보존되어 있습니다. 이 레포가 새로 내린 것은 아래뿐입니다.
+화면 전환의 선택 근거는 [Android ADR A-028](../../../knk-harness/docs/ui/ANDROID/DECISIONS.md#a-028)에 보존되어 있습니다. 이 레포가 새로 내린 것은 아래뿐입니다.
 
 - **길이 토큰 `{motion.screen-slide}` 250ms 추가**(`DESIGN.md`). 탭 페이드 150ms 는 그대로 두고 밀기만 따로 둡니다.
 - **전환 정의는 `:app`의 `NavTransitions.kt` 한 곳**에 둡니다. `NavDisplay` 세 곳(인증·메인·탭 셸)이 이 파일의 값을 받고, 퍼널 세 목적지는 `entry(metadata = …)`로 축을 고릅니다. 퍼널 판정은 전환 반대편 `Scene`의 마지막 엔트리 키가 퍼널 라우트인지로 합니다 — 라우트 타입만 보므로 `:core:navigation` 외에 새 의존이 생기지 않습니다.
@@ -53,7 +53,7 @@
 
 ## 3. 무료 충전 탭 당겨서 새로고침
 
-작성 당시 규칙은 마이 · 이프 충전 절(2026-09-03)에 있었습니다. 현재 계약은 [공통 Spec](../../../knk-harness/docs/domain/APP/CLIENT/AGENTS.md)을 따릅니다. 이 레포가 새로 내린 것은 아래뿐입니다.
+작성 당시 규칙은 마이 · 이프 충전 절(2026-09-03)에 있었습니다. 현재 계약은 [공통 Spec](../../../knk-harness/docs/ui/AGENTS.md)을 따릅니다. 이 레포가 새로 내린 것은 아래뿐입니다.
 
 - **내역 탭의 `Refresh`와 별개의 `RefreshProfile` 인텐트**를 둡니다. 같은 인텐트를 쓰면 무료 충전 탭에서 당겨도 내역 첫 페이지까지 다시 읽고 내역 탭 표시자 상태가 함께 바뀝니다. 진행 상태도 `isRefreshingProfile`로 따로 둡니다.
 - 기존 `ManyakPullToRefreshBox`를 `verticalScroll` Column 에 그대로 씌웁니다. 내용이 짧아도 당길 수 있습니다.

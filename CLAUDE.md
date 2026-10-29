@@ -8,7 +8,7 @@
 
 | 확인할 것 | 위치 |
 | --- | --- |
-| 공용 사용자 계약과 셸 | [공용 CLIENT](../knk-harness/docs/domain/APP/CLIENT/AGENTS.md) |
+| 공용 사용자 계약과 셸 | [공통 UI](../knk-harness/docs/ui/AGENTS.md) |
 | Android 기반과 공용 검증 | [ANDROID 기반](../knk-harness/docs/platform/ANDROID/AGENTS.md) |
 | 모듈 소유권과 의존 방향 | [컴포넌트 구조](../knk-harness/docs/platform/ANDROID/4-2-COMPONENT-ARCHITECTURE.md) |
 | 결정 당시 맥락과 이유 | 해당 CLIENT와 ANDROID의 `DECISIONS.md` |
