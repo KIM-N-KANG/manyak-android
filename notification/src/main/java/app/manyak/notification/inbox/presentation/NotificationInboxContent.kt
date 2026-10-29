@@ -38,6 +38,7 @@ import app.manyak.designsystem.component.ManyakPullToRefreshBox
 import app.manyak.designsystem.component.SkeletonPlaceholder
 import app.manyak.designsystem.component.rememberDelayedProgressVisibility
 import app.manyak.designsystem.component.rememberSkeletonPulseAlpha
+import app.manyak.designsystem.component.swipeBetweenTabs
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.notification.inbox.entity.NotificationCategory
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -53,7 +54,15 @@ internal fun NotificationInboxContent(
     Column(modifier) {
         InboxTabs(state) { onIntent(NotificationInboxIntent.Select(it)) }
         holder.SaveableStateProvider(state.category) {
-            InboxList(state, onIntent, Modifier.weight(1f))
+            InboxList(
+                state,
+                onIntent,
+                Modifier.weight(1f).swipeBetweenTabs(
+                    selectedIndex = state.category.ordinal,
+                    tabCount = NotificationCategory.entries.size,
+                    onSelect = { onIntent(NotificationInboxIntent.Select(NotificationCategory.entries[it])) },
+                ),
+            )
         }
     }
 }

@@ -52,6 +52,7 @@ import app.manyak.create.presentation.component.scrollToCenter
 import app.manyak.designsystem.component.ManyakDestructiveDialog
 import app.manyak.designsystem.component.ManyakNeutralButton
 import app.manyak.designsystem.component.ScrollEdgeFade
+import app.manyak.designsystem.component.swipeBetweenTabs
 import app.manyak.designsystem.theme.ManyakTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
@@ -155,7 +156,12 @@ internal fun GeneralStoryFormContent(
             Column(
                 Modifier
                     .fillMaxSize()
-                    .onGloballyPositioned {
+                    .swipeBetweenTabs(
+                        selectedIndex = tabIndex,
+                        tabCount = GeneralTab.entries.size,
+                        onSelect = changeTab,
+                        canSelect = { tabsEnabled },
+                    ).onGloballyPositioned {
                         viewportCenter =
                             it.positionInRoot().y + it.size.height / 2f
                     }.verticalScroll(scroll)
