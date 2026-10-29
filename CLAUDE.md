@@ -4,7 +4,7 @@
 
 ## 정본 문서
 
-ACCOUNT의 로그인, 동의, 프로필, 페르소나, 초대와 세션 종료는 [공통 CLIENT](../knk-harness/docs/domain/ACCOUNT/CLIENT/AGENTS.md)와 [ANDROID](../knk-harness/docs/domain/ACCOUNT/CLIENT/ANDROID/AGENTS.md)를 함께 확인합니다. 검증 케이스와 결정 기록도 해당 세트에서 관리합니다. 다른 도메인과 공용 구조는 이관 전까지 아래 기존 문서를 사용합니다.
+ACCOUNT의 로그인, 동의, 프로필, 페르소나, 초대와 세션 종료는 [공통 CLIENT](../knk-harness/docs/domain/ACCOUNT/CLIENT/AGENTS.md)와 [ANDROID](../knk-harness/docs/domain/ACCOUNT/CLIENT/ANDROID/AGENTS.md)를 함께 확인합니다. PAYMENT의 이프와 보상, 체험 및 충전은 [공통 CLIENT](../knk-harness/docs/domain/PAYMENT/CLIENT/AGENTS.md)와 [ANDROID](../knk-harness/docs/domain/PAYMENT/CLIENT/ANDROID/AGENTS.md)를 확인합니다. 검증 케이스와 결정 기록도 해당 세트에서 관리합니다. 다른 도메인과 공용 구조는 이관 전까지 아래 기존 문서를 사용합니다.
 
 | 확인할 것 | 위치                                                 |
 | --- |----------------------------------------------------|

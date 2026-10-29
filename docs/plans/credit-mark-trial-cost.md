@@ -5,7 +5,7 @@
 - 상태: 구현·로컬 집중 검증 완료. 원격 PR·CI 결과는 연결된 Jira와 PR에서 확인합니다.
 - 브랜치: `feat/KNK-1319-credit-mark-and-trial-cost-display`
 - 분기 기준: fetch한 `origin/dev` `cf424f8d`
-- 계약: [채팅 턴 체험·이프 비용](../../../knk-harness/docs/spec/3-1-client-spec.md#fe-screen-005-채팅-화면), [채팅 설정 시트](../../../knk-harness/docs/spec/3-1-client-spec.md#채팅-설정-시트와-메뉴-시트), [추가 정보 진입](../../../knk-harness/docs/spec/3-1-client-spec.md#추가-정보-진입스토리라인-재선택), [이프 정책 수치 표시](../../../knk-harness/docs/spec/3-1-client-spec.md#이프-정책-수치-표시)
+- 계약: [채팅 턴 체험·이프 비용](../../../knk-harness/docs/spec/3-1-client-spec.md#fe-screen-005-채팅-화면), [채팅 설정 시트](../../../knk-harness/docs/spec/3-1-client-spec.md#채팅-설정-시트와-메뉴-시트), [추가 정보 진입](../../../knk-harness/docs/spec/3-1-client-spec.md#추가-정보-진입스토리라인-재선택), [이프 정책 수치 표시](../../../knk-harness/docs/domain/PAYMENT/CLIENT/2-2-REQUIREMENTS.md#2-2-2-잔액과-비용)
 - 서버 근거: dev Swagger `GET /api/v1/users/me/trials` → `TrialsResponse { chatTurn, chatImage, storyCreation, storylineGeneration }`(각 `TrialUsage { used, limit: int64|null }`), `CreditPolicyResponse.chatImageCost`
 
 ## 변경
