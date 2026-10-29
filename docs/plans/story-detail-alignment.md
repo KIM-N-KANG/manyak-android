@@ -4,7 +4,7 @@
 
 - 티켓: [KNK-1516](https://kimandkang.atlassian.net/browse/KNK-1516)
 - Android 기준: `fa83a744`, 하네스 기준: `2d9e14c`. 두 저장소 모두 fetch한 `origin/dev`에서 분기했습니다.
-- 계약: 하네스 `docs/spec/3-1-client-spec.md`의 스토리 상세 및 기본 심벌, `docs/spec/3-3-android-spec.md`의 플랫폼 계약.
+- 계약: 하네스 [STORY 공통](../../../knk-harness/docs/domain/STORY/CLIENT/AGENTS.md)와 [Android](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md)의 상세 화면과 기본 심벌 계약.
 - dev Swagger를 2026-10-03 확인했습니다. `StoryCharacterResponse.description`은 nullable string, `StoryDetailResponse.visibility`는 PUBLIC 또는 PRIVATE입니다.
 - 홈 정렬 변경, 일반 제작과 수정 기능, 앱 링크는 제외합니다.
 

@@ -4,7 +4,7 @@
 
 - 작성일: 2026-09-01
 - 지라: KNK-1096 (상위 KNK-1089 · 웹 선행 KNK-1095)
-- 근거 정본: 하네스 `spec/3-1-client-spec.md §3-1-7 이프 정책 수치 표시`, `design/1-2-android-design.md §1-2-5 이프 정책 수치 패칭`
+- 현재 기준: 하네스 [PAYMENT 공통](../../../knk-harness/docs/domain/PAYMENT/CLIENT/AGENTS.md)와 [Android](../../../knk-harness/docs/domain/PAYMENT/CLIENT/ANDROID/AGENTS.md)
 
 ## 목표와 제외 범위
 

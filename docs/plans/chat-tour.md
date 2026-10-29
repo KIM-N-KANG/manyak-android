@@ -4,7 +4,7 @@
 - 작업일: 2026-09-26
 - 브랜치: Android `feat/KNK-1431-add-chat-tour`, 하네스 `docs/KNK-1431-add-chat-tour`
 - 분기 기준: fetch한 `origin/dev`. Android `746af162`, 하네스 `3fd9b0f`(KNK-1434 병합 뒤로 다시 올림)
-- 계약: [공통 첫 진입 안내](../../../knk-harness/docs/domain/CHAT/CLIENT/2-2-REQUIREMENTS.md#2-2-6-처음-사용-안내), [분석 §6-4-2-6](../../../knk-harness/docs/spec/6-analytics.md), [Android 채팅 목록과 채팅방](../../../knk-harness/docs/domain/CHAT/CLIENT/ANDROID/AGENTS.md), 결정 [A-048](../../../knk-harness/docs/domain/CHAT/CLIENT/ANDROID/DECISIONS.md#a-048)
+- 계약: [공통 첫 진입 안내](../../../knk-harness/docs/domain/CHAT/CLIENT/2-2-REQUIREMENTS.md#2-2-6-처음-사용-안내), [분석 §6-4-2-6](../../../knk-harness/docs/REFERENCE/ANALYTICS.md), [Android 채팅 목록과 채팅방](../../../knk-harness/docs/domain/CHAT/CLIENT/ANDROID/AGENTS.md), 결정 [A-048](../../../knk-harness/docs/domain/CHAT/CLIENT/ANDROID/DECISIONS.md#a-048)
 - 참고: 웹 `src/features/chats/room/components/tour/`, `hooks/use-chat-tour.ts`, `utils/chat-tour-gate.ts`, `utils/tour-geometry.ts`
 
 ## 변경

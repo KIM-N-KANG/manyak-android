@@ -1,8 +1,10 @@
 # 푸시 `deepLink` 진입 처리
 
+이 문서의 실행 단계와 과거 변경 서술은 작성 당시 경로를 보존합니다. 현재 기준은 [NOTIFICATION 공통](../../../knk-harness/docs/domain/NOTIFICATION/CLIENT/AGENTS.md)와 [Android](../../../knk-harness/docs/domain/NOTIFICATION/CLIENT/ANDROID/AGENTS.md)에서 확인합니다. 이전 문서는 [당시 하네스](https://github.com/KIM-N-KANG/knk-harness/blob/8aa505cbf7a5390e67ca48a42fb94d89d21eb3ad/docs/)에서 확인합니다.
+
 - 작성일: 2026-09-20
-- 근거 정본: 하네스 `spec/4-backend-server-spec.md §4-3-5 푸시 발송 모듈`(선택 키 `deepLink`, KNK-1335),
-  `spec/3-3-android-spec.md §3-3-5 알림`, `design/1-2-android-design.md §1-2-6 알림 진입과 권한`
+- 현재 기준: 하네스 [NOTIFICATION 공통](../../../knk-harness/docs/domain/NOTIFICATION/CLIENT/AGENTS.md)와 [Android](../../../knk-harness/docs/domain/NOTIFICATION/CLIENT/ANDROID/AGENTS.md), [NOTIFICATION API](../../../knk-harness/docs/domain/NOTIFICATION/BACKEND/4-2-CONTRACT.md) (선택 키 `deepLink`, KNK-1335)
+
 - 서버 반영: `manyak-server` `0005fec` [KNK-1335] (v0.5.1, main 포함). 스토리 완성 `/stories/{storyId}`,
   출석 리마인드 `/my/credits?tab=free`, 프로모션은 생략. 기준 origin `manyak.push.web-base-url`(기본 `https://manyak.app`).
 

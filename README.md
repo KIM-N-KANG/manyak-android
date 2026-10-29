@@ -85,6 +85,6 @@ PR에서는 CI(`.github/workflows/android-ci.yml`)가 `check`와 `assembleDebug`
 | `DESIGN.md`                                            | 색·타이포·여백·컴포넌트 규칙                |
 | `CLAUDE.md`                                            | 이 저장소의 작업 규칙                       |
 | `docs/plans/`                                          | 기능별 구현 순서·검증·실행 결과    |
-| `../knk-harness/docs/design/1-2-android-design.md` | 현재 앱 기술 구조·상태 수명·요청 흐름 |
+| [공용 Android](../knk-harness/docs/client/ANDROID/AGENTS.md) | 현재 앱 기술 구조·상태 수명·요청 흐름 |
 
-문서 역할: [Android spec](../knk-harness/docs/client/ANDROID/AGENTS.md)은 사용자 계약, [Android design](../knk-harness/docs/client/ANDROID/AGENTS.md)은 현재 구조, [Android ADR](../knk-harness/docs/client/ANDROID/DECISIONS.md)은 결정 이유를 소유합니다. 변경 순서·실행 결과는 `docs/plans/`, 관련 티켓·검증 근거는 해당 PR에 남깁니다. 공통 계약·결정은 하네스 공통 문서를 참조하고 복사하지 않습니다.
+기능별 사용자 계약, 현재 구조와 검증은 [도메인 목록](../knk-harness/docs/domain/AGENTS.md)에서 해당 CLIENT와 ANDROID 세트를 찾아 확인합니다. 결정 이유는 각 세트의 DECISIONS에 보존합니다. 변경 순서와 실행 결과는 `docs/plans/`, 관련 티켓과 검증 근거는 해당 PR에 남깁니다. 공통 계약과 결정은 하네스를 참조하고 복사하지 않습니다.

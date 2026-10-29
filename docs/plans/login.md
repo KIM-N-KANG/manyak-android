@@ -3,7 +3,7 @@
 > **KNK-1197 구조 이전 안내 (2026-09-05)** — 아래 구현 순서·모듈 경로·코드 예시·본문의 문서 절 번호와 검수 항목은 작성 당시 기록입니다. 현재 소유 위치와 검증 결과는 [모듈 재구성 기록](./module-reorganization.md), 현재 계층·의존 규칙은 [하네스 모듈 아키텍처](../../../knk-harness/docs/client/ANDROID/4-2-COMPONENT-ARCHITECTURE.md#4-2-1-책임과-의존)를 따릅니다.
 
 - 작성일: 2026-08-22
-- 정본: 하네스 [`design/1-2-android-design.md`](../../../knk-harness/docs/client/ANDROID/AGENTS.md) §1-2-1·§1-2-4·§1-2-5·§1-2-9. 아래는 그 결정을 **이 레포에서 실행하는 순서**와 **이번에 새로 내린 결정**만 담습니다.
+- 현재 기준: 하네스 [ACCOUNT 공통](../../../knk-harness/docs/domain/ACCOUNT/CLIENT/AGENTS.md)와 [Android](../../../knk-harness/docs/domain/ACCOUNT/CLIENT/ANDROID/AGENTS.md)
 
 ## 목표
 

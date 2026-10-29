@@ -4,7 +4,7 @@
 
 [KNK-1473](https://kimandkang.atlassian.net/browse/KNK-1473)은 웹 KNK-1469에서 구현한 사용자 페르소나를 Android에 같은 계약과 문구로 맞춥니다. 범위는 스토리 상세의 페르소나 선택과 생성 진입, 마이의 관리, 생성, 수정, 채팅방 헤더의 페르소나 표시, 일반 제작의 `protagonistName` 전송입니다. 앱은 로그인 필수라 게스트 분기는 적용하지 않습니다.
 
-Android 기준은 `6b39aa01`, 하네스 기준은 `e39aef3`(KNK-1469 문서 병합)입니다. 정본은 [공통 스펙](../../../knk-harness/docs/client/AGENTS.md)의 FE-SCREEN-003 페르소나 선택, FE-SCREEN-005 플레이 중인 페르소나, FE-SCREEN-008 페르소나 생성과 관리, 일반 제작 클라이언트 선검증, [분석 스펙](../../../knk-harness/docs/spec/6-analytics.md) §6-4-2-4와 §6-4-2-17입니다. API는 2026-10-08 [dev Swagger JSON](https://dev-api.manyak.app/v3/api-docs)으로 확인했습니다.
+Android 기준은 `6b39aa01`, 하네스 기준은 `e39aef3`(KNK-1469 문서 병합)입니다. 정본은 [ACCOUNT 공통](../../../knk-harness/docs/domain/ACCOUNT/CLIENT/AGENTS.md), [STORY 공통](../../../knk-harness/docs/domain/STORY/CLIENT/AGENTS.md), [CHAT 공통](../../../knk-harness/docs/domain/CHAT/CLIENT/AGENTS.md)의 FE-SCREEN-003 페르소나 선택, FE-SCREEN-005 플레이 중인 페르소나, FE-SCREEN-008 페르소나 생성과 관리, 일반 제작 클라이언트 선검증, [분석 스펙](../../../knk-harness/docs/REFERENCE/ANALYTICS.md) §6-4-2-4와 §6-4-2-17입니다. API는 2026-10-08 [dev Swagger JSON](https://dev-api.manyak.app/v3/api-docs)으로 확인했습니다.
 
 - `GET/POST /users/me/personas`, `PATCH/DELETE /users/me/personas/{personaId}`. 응답은 `UserPersonaResponse{id, name, description, createdAt, updatedAt}`, 삭제는 204입니다.
 - `POST /chats`의 `CreateChatRequest.personaId`(nullable), `ChatDetailResponse.persona{name}`(nullable).

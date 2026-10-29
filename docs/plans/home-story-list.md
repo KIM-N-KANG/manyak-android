@@ -2,7 +2,7 @@
 
 - 작성일: 2026-09-26
 - 지라: KNK-1429 (상위 KNK-1428 · 웹 KNK-1421·KNK-1426)
-- 근거 정본: 하네스 `spec/3-1-client-spec.md` FE-SCREEN-001, `spec/3-3-android-spec.md §3-3-2 스토리 목록·상세`, `design/1-2-android-design.md §1-2-4`
+- 현재 기준: 하네스 [STORY 공통](../../../knk-harness/docs/domain/STORY/CLIENT/AGENTS.md)와 [Android](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md)
 
 ## 범위
 

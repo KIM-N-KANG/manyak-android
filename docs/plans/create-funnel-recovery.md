@@ -2,8 +2,8 @@
 
 > **KNK-1197 구조 이전 안내 (2026-09-05)** — 아래 구현 순서·모듈 경로·코드 예시·본문의 문서 절 번호와 검수 항목은 작성 당시 기록입니다. 현재 소유 위치와 검증 결과는 [모듈 재구성 기록](./module-reorganization.md), 현재 계층·의존 규칙은 [하네스 모듈 아키텍처](../../../knk-harness/docs/client/ANDROID/4-2-COMPONENT-ARCHITECTURE.md#4-2-1-책임과-의존)를 따릅니다.
 
-- 공통 계약 정본: `../../../knk-harness/docs/spec/3-1-client-spec.md` §3-1-4(이탈 가드·백그라운드 생성 복귀·제작 임시 저장, dev 병합 확인), `spec/4-backend-server-spec.md` §4-3-2 KNK-623 복구 계약(dev 병합 확인)
-- 앱 결정 정본: `../../../knk-harness/docs/design/1-2-android-design.md` §1-2-7 라이프사이클 절(이 계획으로 작성)
+- 공통 계약 정본: [STORY 공통](../../../knk-harness/docs/domain/STORY/CLIENT/AGENTS.md), [STORY API](../../../knk-harness/docs/domain/STORY/BACKEND/4-2-CONTRACT.md)
+- 앱 구조와 결정: [STORY Android](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md)
 
 ## 목표
 

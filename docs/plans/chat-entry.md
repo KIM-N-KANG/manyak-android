@@ -3,7 +3,7 @@
 > **KNK-1197 구조 이전 안내 (2026-09-05)** — 아래 구현 순서·모듈 경로·코드 예시·본문의 문서 절 번호와 검수 항목은 작성 당시 기록입니다. 현재 소유 위치와 검증 결과는 [모듈 재구성 기록](./module-reorganization.md), 현재 계층·의존 규칙은 [하네스 모듈 아키텍처](../../../knk-harness/docs/client/ANDROID/4-2-COMPONENT-ARCHITECTURE.md#4-2-1-책임과-의존)를 따릅니다.
 
 - 작성일: 2026-08-25
-- 근거 정본: 하네스 `spec/3-1-client-spec.md §3-1-4 완성(finalize)`·`§3-1-5 턴 모델`, `spec/4-backend-server-spec.md §4-3-3 POST /chats`, `design/1-2-android-design.md §1-2-4`
+- 현재 기준: 하네스 [STORY 공통](../../../knk-harness/docs/domain/STORY/CLIENT/AGENTS.md)와 [Android](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md), [CHAT 공통](../../../knk-harness/docs/domain/CHAT/CLIENT/AGENTS.md)와 [Android](../../../knk-harness/docs/domain/CHAT/CLIENT/ANDROID/AGENTS.md), [CHAT API](../../../knk-harness/docs/domain/CHAT/BACKEND/4-2-CONTRACT.md)
 
 ## 목표와 제외 범위
 

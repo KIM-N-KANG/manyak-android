@@ -4,9 +4,7 @@
 > 바뀌었습니다(결정 1·5 대체). 현재 규칙은 [legal-consent.md](./legal-consent.md)와 [A-044](../../../knk-harness/docs/domain/ACCOUNT/CLIENT/ANDROID/DECISIONS.md#a-044)를 따릅니다.
 
 - 작성일: 2026-09-11
-- 근거 정본: 하네스 [Android Spec의 알림 계약](../../../knk-harness/docs/domain/NOTIFICATION/CLIENT/ANDROID/AGENTS.md) ·
-  `design/1-2-android-design.md §1-2-6 알림 진입과 권한`, `spec/4-backend-server-spec.md §4-3-5 푸시 수신 동의`,
-  웹 `src/features/legal/content/privacy-content.ts`의 광고성 정보 수신 동의 절
+- 현재 기준: 하네스 [NOTIFICATION 공통](../../../knk-harness/docs/domain/NOTIFICATION/CLIENT/AGENTS.md)와 [Android](../../../knk-harness/docs/domain/NOTIFICATION/CLIENT/ANDROID/AGENTS.md), [NOTIFICATION API](../../../knk-harness/docs/domain/NOTIFICATION/BACKEND/4-2-CONTRACT.md), 웹 `src/features/legal/content/privacy-content.ts`의 광고성 정보 수신 동의 절
 
 ## 목표와 제외 범위
 

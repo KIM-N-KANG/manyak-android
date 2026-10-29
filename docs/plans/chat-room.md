@@ -4,7 +4,7 @@
 
 - 작성일: 2026-08-29
 - 지라: KNK-868(기능) · KNK-1032(스펙 확정)
-- 근거 정본: 하네스 `design/1-2-android-design.md §1-2-4 채팅방 — 턴 진행`, `spec/3-1-client-spec.md §3-1-5`
+- 현재 기준: 하네스 [CHAT 공통](../../../knk-harness/docs/domain/CHAT/CLIENT/AGENTS.md)와 [Android](../../../knk-harness/docs/domain/CHAT/CLIENT/ANDROID/AGENTS.md)
 
 ## 목표와 제외 범위
 
