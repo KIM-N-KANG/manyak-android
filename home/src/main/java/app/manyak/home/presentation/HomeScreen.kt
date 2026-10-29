@@ -141,7 +141,6 @@ private fun HomeContent(
         StoriesContent(
             state = state,
             gridState = gridState,
-            contentPadding = contentPadding,
             listPadding = listPadding,
             onOpenStory = onOpenStory,
             onIntent = onIntent,
@@ -167,7 +166,6 @@ private fun HomeContent(
 private fun StoriesContent(
     state: HomeUiState,
     gridState: LazyGridState,
-    contentPadding: PaddingValues,
     listPadding: PaddingValues,
     onOpenStory: (String) -> Unit,
     onIntent: (HomeIntent) -> Unit,
@@ -206,7 +204,6 @@ private fun StoriesContent(
                 modifier = Modifier.alpha(listAlpha),
                 state = state,
                 gridState = gridState,
-                contentPadding = contentPadding,
                 listPadding = listPadding,
                 onOpenStory = onOpenStory,
                 onIntent = onIntent,
@@ -219,7 +216,6 @@ private fun StoriesContent(
 private fun StoryGrid(
     state: HomeUiState,
     gridState: LazyGridState,
-    contentPadding: PaddingValues,
     listPadding: PaddingValues,
     onOpenStory: (String) -> Unit,
     onIntent: (HomeIntent) -> Unit,
@@ -229,11 +225,11 @@ private fun StoryGrid(
     val impressions = rememberImpressionTracker()
     LoadMoreWhenGridEnds(gridState = gridState, state = state, onLoadMore = { onIntent(HomeIntent.LoadMore) })
 
-    // 당김 표시자는 셸 여백에 둬 바 뒤에서 내려오게 한다.
+    // 필터 바가 목록 위에 겹쳐 있어 셸 여백에서 내리면 바에 가린다. 목록이 시작하는 줄에서 내린다.
     ManyakPullToRefreshBox(
         isRefreshing = state.isRefreshing,
         onRefresh = { onIntent(HomeIntent.Refresh) },
-        contentPadding = contentPadding,
+        contentPadding = listPadding,
         modifier = modifier,
     ) {
         LazyVerticalGrid(

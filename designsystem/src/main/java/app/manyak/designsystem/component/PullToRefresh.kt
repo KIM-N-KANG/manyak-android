@@ -69,12 +69,13 @@ fun ManyakPullToRefreshBox(
                     .padding(top = contentPadding.calculateTopPadding()),
             containerColor = ManyakTheme.colors.surfaceRaised,
             color = ManyakTheme.colors.progressIndicator,
+            maxDistance = RefreshThreshold,
         )
     }
 }
 
 // M3 는 손가락 이동의 절반만 당김으로 세므로 112dp 를 끌면 발동한다. 기본값 80dp 는 160dp 를
-// 끌어야 해서 너무 길다. 표시자가 멈추는 높이는 기본값 80dp 그대로 둔다.
+// 끌어야 해서 너무 길다. 표시자도 기본값만큼 내려오면 지나치게 내려와 보여 같은 거리에서 멈춘다.
 private val RefreshThreshold = 56.dp
 
 private const val MIN_REFRESH_INDICATOR_MILLIS = 800L
