@@ -300,7 +300,7 @@ turnId에 귀속**시키고 최신 요청 turnId를 들고 있어, 늦게 끝난
 
 - 티켓: [KNK-1317](https://kimandkang.atlassian.net/browse/KNK-1317) (부모 KNK-1315)
 - 브랜치: Android·하네스 모두 `feat/KNK-1317-chat-realtime-image-settings-sheet`, 분기 기준 fetch한 `origin/dev` — Android `ecf50831`, 하네스 `4b34221`
-- 계약: [채팅 설정 시트와 메뉴 시트](../../../knk-harness/docs/spec/3-1-client-spec.md#채팅-설정-시트와-메뉴-시트), [인물 이미지 렌더](../../../knk-harness/docs/spec/3-1-client-spec.md#응답-재생성과-채팅-이미지), Swagger `ContinueChatRequest`·`RegenerateChatRequest`의 `realtimeImage`
+- 계약: [채팅 설정 시트와 메뉴 시트](../../../knk-harness/docs/domain/CHAT/CLIENT/3-3-LAYOUT.md#3-3-3-설정과-메뉴), [인물 이미지 렌더](../../../knk-harness/docs/domain/CHAT/CLIENT/4-1-CONTRACT.md#4-1-4-이미지와-텍스트), Swagger `ContinueChatRequest`·`RegenerateChatRequest`의 `realtimeImage`
 - 제외: 로딩 표현·스크롤 높이 유지(KNK-1318), 이프 비용 배지·안내 팝오버(KNK-1319), 채팅 메뉴 시트(KNK-1320)
 
 ### 변경
@@ -338,7 +338,7 @@ turnId에 귀속**시키고 최신 요청 turnId를 들고 있어, 늦게 끝난
 
 - 티켓: [KNK-1318](https://kimandkang.atlassian.net/browse/KNK-1318) (부모 KNK-1315)
 - 브랜치: `feat/KNK-1318-chat-stream-loading-height`, 분기 기준 fetch한 `origin/dev` `b61d3704`
-- 계약: [렌더와 스크롤](../../../knk-harness/docs/spec/3-1-client-spec.md#렌더와-스크롤)(부분 렌더·새 턴 앵커), 메뉴 시트 AI 안내 문구(`CHAT_AI_NOTICE`)
+- 계약: [렌더와 스크롤](../../../knk-harness/docs/domain/CHAT/CLIENT/3-3-LAYOUT.md#3-3-4-생성-대기와-이미지)(부분 렌더·새 턴 앵커), 메뉴 시트 AI 안내 문구(`CHAT_AI_NOTICE`)
 - 제외: 앵커·패드 회수·진입 위치·하단 이동 버튼(현재 구현 유지), 토글·설정 시트(KNK-1317), 비용 배지(KNK-1319)
 
 ### 변경
@@ -376,7 +376,7 @@ turnId에 귀속**시키고 최신 요청 turnId를 들고 있어, 늦게 끝난
 
 - 티켓: [KNK-1320](https://kimandkang.atlassian.net/browse/KNK-1320) (부모 KNK-1315)
 - 브랜치: Android·하네스 모두 `feat/KNK-1320-options-bottom-sheets`, 분기 기준 fetch한 `origin/dev` — Android `cddd12df`, 하네스 `105b313`
-- 계약: [카드 옵션 시트](../../../knk-harness/docs/spec/3-1-client-spec.md#fe-screen-013-제작--내-스토리-목록)(FE-SCREEN-013), [채팅 설정 시트와 메뉴 시트](../../../knk-harness/docs/spec/3-1-client-spec.md#채팅-설정-시트와-메뉴-시트), Swagger `POST /chats`(`startSettingId` 생략 시 첫 시작 설정). 결정: [A-042](../../../knk-harness/docs/adr/1-3-android-adr.md#a-042)
+- 계약: [카드 옵션 시트](../../../knk-harness/docs/spec/3-1-client-spec.md#fe-screen-013-제작--내-스토리-목록)(FE-SCREEN-013), [채팅 설정 시트와 메뉴 시트](../../../knk-harness/docs/domain/CHAT/CLIENT/3-3-LAYOUT.md#3-3-3-설정과-메뉴), Swagger `POST /chats`(`startSettingId` 생략 시 첫 시작 설정). 결정: [A-042](../../../knk-harness/docs/adr/1-3-android-adr.md#a-042)
 - 제외: 공유 열람 화면(웹 소유). 삭제 확인은 다이얼로그 그대로.
 
 ### 변경
@@ -385,7 +385,7 @@ turnId에 귀속**시키고 최신 요청 turnId를 들고 있어, 늦게 끝난
 2. 제작 카드(`StudioDialogs`)·채팅 카드(`ChatListScreen`)는 `optionsTarget`이 있으면 시트, `deleteTarget`이 있으면 다이얼로그를 띄웁니다. ViewModel의 "삭제하기는 시트를 닫고 확인을 요청" 흐름은 이미 그대로라 상태·의도는 바꾸지 않았습니다. 머리글 종류는 "내가 만든 스토리" / "만들던 스토리"(초안·실패 요청) / "채팅"이고, 삭제된 스토리의 채팅은 제목 자리에 "삭제된 스토리"를 씁니다. 더보기·길게 누르기 진입은 유지합니다.
 3. 스토리 상세 `StoryDetailHeaderMenu`는 더보기 아이콘 버튼 + 같은 시트("내가 만든 스토리" / "스토리")입니다. 열림은 컴포넌트 안 `rememberSaveable`입니다.
 4. 채팅방 헤더는 더보기 버튼 하나(접근 이름 "채팅 메뉴", 아이콘은 `DESIGN.md` 규칙대로 가로 점 `ic_more_horizontal`)이고 `ChatMenuSheet`("채팅 메뉴")를 엽니다 — 내 이프 카드 → "새 채팅 시작하기"(`ic_comment_plus`) → "공유하기"(`ic_share`) → "신고하기"(`ic_alert_triangle`, 옵션 시트 4곳의 신고 항목 공통) → destructive "삭제하기". 참조 스토리가 삭제된 방(`storyId` 빈 문자열, 서버가 `orEmpty()`로 보냄)은 새 채팅·신고를 두지 않습니다. 신고·삭제·충전은 시트를 닫고 엽니다 — 시트는 별도 창이라 닫지 않고 이동하면 다음 화면 위에 남습니다.
-   - **공유하기**(2026-09-18 사용자 결정으로 앱 비적용을 뒤집음, [A-043](../../../knk-harness/docs/adr/1-3-android-adr.md#a-043); 채팅 목록 카드 옵션 시트에도 같은 항목을 신고하기 앞에 둠 — `ChatListViewModel.share`, 성공 시 시트를 닫고 실패 시 유지): `POST /chats/{id}/shares`로 `shareId`를 받아 `ChatRepositoryImpl`이 `DataLayerConfig.webBaseUrl`(`BuildConfig.WEB_BASE_URL`)로 `{웹 origin}/share/{shareId}`를 완성합니다. 앱은 클립보드 복사 대신 초대 코드와 같은 **Android 공유 시트**(`ACTION_SEND`, 제목은 스토리 제목, 본문은 `chat_room_share_message` — "「{제목}」에 제 선택을 좀 섞어봤어요. / (빈 줄) / {N}턴 뒤에 어떻게 됐냐면요… 👀 / (빈 줄) / 링크: {링크}", N 은 발급 시점 확정 턴 수. 턴이 0이면 `chat_room_share_message_prologue` "「{제목}」에 들어와 봤어요. / (빈 줄) / 어떤 이야기냐면요… 👀 / (빈 줄) / 링크: {링크}". 삭제된 스토리는 제목 자리에 "삭제된 스토리")로 바로 보냅니다 — `my/InviteScreen`의 `shareText`를 두 번째 사용처가 생겨 `common/presentation/share/ShareText.kt`로 올렸습니다. `ShareRequested` → `shareJob` single-flight·`isSharing` 스피너 → 성공 `ShareLink(url, turnCount)` 효과(시트 닫고 공유 시트), 실패 토스트 "공유 링크 생성에 실패했어요"(시트 유지). 문구 조립은 `chat/presentation/ChatShareMessage.kt`를 채팅방·목록이 함께 씁니다. 분석 `client_chat_shareButton_clicked`(`chat_id`, `turn_number`)를 발급 시도에 기록합니다. 디버그 빌드는 API 가 dev, `WEB_BASE_URL` 기본이 운영 웹이라 발급된 링크를 운영 웹이 못 찾습니다 — dev 웹은 Vercel SSO 뒤라 공개 origin 이 없고, 릴리스는 API·웹 모두 운영이라 맞습니다.
+   - **공유하기**(2026-09-18 사용자 결정으로 앱 비적용을 뒤집음, [A-043](../../../knk-harness/docs/domain/CHAT/CLIENT/ANDROID/DECISIONS.md#a-043); 채팅 목록 카드 옵션 시트에도 같은 항목을 신고하기 앞에 둠 — `ChatListViewModel.share`, 성공 시 시트를 닫고 실패 시 유지): `POST /chats/{id}/shares`로 `shareId`를 받아 `ChatRepositoryImpl`이 `DataLayerConfig.webBaseUrl`(`BuildConfig.WEB_BASE_URL`)로 `{웹 origin}/share/{shareId}`를 완성합니다. 앱은 클립보드 복사 대신 초대 코드와 같은 **Android 공유 시트**(`ACTION_SEND`, 제목은 스토리 제목, 본문은 `chat_room_share_message` — "「{제목}」에 제 선택을 좀 섞어봤어요. / (빈 줄) / {N}턴 뒤에 어떻게 됐냐면요… 👀 / (빈 줄) / 링크: {링크}", N 은 발급 시점 확정 턴 수. 턴이 0이면 `chat_room_share_message_prologue` "「{제목}」에 들어와 봤어요. / (빈 줄) / 어떤 이야기냐면요… 👀 / (빈 줄) / 링크: {링크}". 삭제된 스토리는 제목 자리에 "삭제된 스토리")로 바로 보냅니다 — `my/InviteScreen`의 `shareText`를 두 번째 사용처가 생겨 `common/presentation/share/ShareText.kt`로 올렸습니다. `ShareRequested` → `shareJob` single-flight·`isSharing` 스피너 → 성공 `ShareLink(url, turnCount)` 효과(시트 닫고 공유 시트), 실패 토스트 "공유 링크 생성에 실패했어요"(시트 유지). 문구 조립은 `chat/presentation/ChatShareMessage.kt`를 채팅방·목록이 함께 씁니다. 분석 `client_chat_shareButton_clicked`(`chat_id`, `turn_number`)를 발급 시도에 기록합니다. 디버그 빌드는 API 가 dev, `WEB_BASE_URL` 기본이 운영 웹이라 발급된 링크를 운영 웹이 못 찾습니다 — dev 웹은 Vercel SSO 뒤라 공개 origin 이 없고, 릴리스는 API·웹 모두 운영이라 맞습니다.
 5. 내 이프 카드는 두 번째 사용처가 생겨 `my/MyCreditCard.kt`의 `CreditBalanceCard`를 `designsystem/credit/CreditBalanceCard.kt`로 올렸습니다(`balance: Long?`만 받고 바깥 여백은 호출부가). 문자열 `my_credit_label`·`my_credit_charge`는 `credit_balance_label`·`credit_balance_charge`로 옮겼습니다.
 6. `ChatRoomViewModel`에 `UserProfileRepository`를 주입해 `profile` 흐름을 `creditBalance`로 내리고, `MenuOpened`(메뉴 버튼 탭)에 `refresh()`를 띄워 방금 턴에서 차감된 잔액이 낡게 보이지 않게 했습니다(웹 카드의 `refetchOnMount: 'always'`와 같은 의도). `NewChatRequested`는 `chatRepository.createChat(storyId)`(`ChatStarter` 계약, 시작 설정 생략)를 `newChatJob` single-flight로 부르고 `isStartingNewChat`으로 항목 스피너·시트 닫기 잠금을 겁니다. 성공은 `NavigateToChat(chatId)` 효과이고 잠금은 풀지 않습니다(화면이 교체되므로). 실패는 잠금 해제 + 토스트 "채팅을 시작하지 못했어요".
 7. 교체 이동은 `app`의 `NavBackStackOps.replaceTop`이 맡습니다 — `ChatRoomRoute(new)`로 맨 위를 바꿔 끼워 뒤로가기가 이전 방으로 돌아가지 않습니다. `ChatRoomScreen`은 `onReplaceChat`·`onOpenCreditCharge`(→ `MyCreditChargeRoute`)를 받습니다. detekt 한도 때문에 채팅방 항목 등록은 `chatRoomEntry`, 삭제 다이얼로그·신고 시트는 `ChatRoomOverlays.kt`, 토스트 문구는 `ChatRoomEffect.toastText`로 뗐습니다.

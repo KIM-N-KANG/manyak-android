@@ -28,7 +28,7 @@
 
 ## 채팅 작성 버튼 예외
 
-- 채팅의 `ComposerIconButton`·`ComposerChipButton`·`ComposerSendButton`에 기존 `keepKeyboardOnTap`을 적용합니다. 버튼 주변의 빈 여백에는 적용하지 않습니다. 사용자 동작 계약은 [Android 채팅 계약](../../../knk-harness/docs/spec/3-3-android-spec.md#채팅-목록과-채팅방)을 따릅니다.
+- 채팅의 `ComposerIconButton`·`ComposerChipButton`·`ComposerSendButton`에 기존 `keepKeyboardOnTap`을 적용합니다. 버튼 주변의 빈 여백에는 적용하지 않습니다. 사용자 동작 계약은 [Android 채팅 계약](../../../knk-harness/docs/domain/CHAT/CLIENT/ANDROID/AGENTS.md)을 따릅니다.
 - `BlockInputList`가 현재 포커스와 블럭별 `FocusRequester`를 관리합니다. 현재 입력칸 삭제 시 비활성화·퇴장 전에 남은 다음 칸, 없으면 이전 칸으로 이동합니다. 다른 입력칸 삭제는 현재 포커스를 유지합니다. 마지막 칸 삭제는 키보드를 닫고, 구성 변경 후 강제 포커스 복원은 하지 않습니다.
 - `ChatComposerKeyboardTest`는 실제 컴포저와 상태 갱신 콜백으로 상황·대사 추가, 비포커스 칸 삭제, 현재 칸 삭제 후 다음·이전 칸 이동, 추천 설정 선택, 바깥 영역 탭, 마지막 칸 삭제를 검사합니다. Pixel_10(Android 17)에서 통과했습니다. 서버 전송 성공·입력 모드 교체·내용이 있는 칸의 확인 다이얼로그는 이번 자동화 검증 범위에 포함하지 않았습니다.
 - `:chat:testDebugUnitTest`, `:chat:detekt`, `:chat:assembleDebugAndroidTest`, `:app:installDebug`를 통과했습니다. 테스트 APK는 `adb install -r chat/build/outputs/apk/androidTest/debug/chat-debug-androidTest.apk`로 설치하고 `adb shell am instrument -w -e class app.manyak.chat.room.presentation.composer.ChatComposerKeyboardTest app.manyak.chat.test/androidx.test.runner.AndroidJUnitRunner`로 실행했습니다. 기존 앱 데이터는 제거하지 않았습니다.
