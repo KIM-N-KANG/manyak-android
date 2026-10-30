@@ -6,7 +6,7 @@
 
 2026-10-05 기존 `feat/KNK-1521-general-story-create-and-edit` 브랜치를 재사용하고 최신 `origin/dev`로 fast-forward했습니다. Android 기준은 `668c1bdc`, 하네스 기준은 `ee58384`이며 KNK-1519, KNK-1520, KNK-1543을 포함합니다. 시작 시 남아 있던 이 조사 문서를 구현 계획으로 갱신합니다. Jira는 이미 진행 중입니다.
 
-정본은 [공통 폼](../../../knk-harness/docs/spec/3-1-client-spec.md#fe-screen-009-일반-제작스토리-수정), [검증 규칙](../../../knk-harness/docs/spec/3-1-client-spec.md#3-1-8-입력폼-검증-규칙), [Android spec](../../../knk-harness/docs/spec/3-3-android-spec.md), [Android design](../../../knk-harness/docs/design/1-2-android-design.md)입니다. API는 당일 직접 조회한 [dev Swagger JSON](https://dev-api.manyak.app/v3/api-docs)과 서버 `StorySubmissionService` 및 `SubmissionFormAssembler`로 확인합니다.
+정본은 [공통 폼](../../../knk-harness/docs/domain/STORY/CLIENT/2-2-REQUIREMENTS.md#2-2-6-일반-제작과-수정-입력), [검증 규칙](../../../knk-harness/docs/domain/STORY/CLIENT/AGENTS.md), [Android spec](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md), [Android design](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md)입니다. API는 당일 직접 조회한 [dev Swagger JSON](https://dev-api.manyak.app/v3/api-docs)과 서버 `StorySubmissionService` 및 `SubmissionFormAssembler`로 확인합니다.
 
 ## 확정한 선택
 
@@ -19,7 +19,7 @@
 - Photo Picker와 Compose 고정 비율 크롭을 사용합니다. 실제 MIME 및 5MB 상한, 샘플링 디코딩, EXIF 보정 후 자르며 업로드 전용 OkHttpClient에는 인증과 분석 헤더를 붙이지 않습니다.
 - 일반 제작도 버튼과 실제 백그라운드 전환에서만 저장하고 재개는 스토리 프로필 탭부터 시작합니다. 탭 이동과 구성 변경 및 선택기 왕복은 저장 계기가 아닙니다.
 
-선택 이유는 [A-061과 A-062](../../../knk-harness/docs/adr/1-3-android-adr.md#a-061-일반-제작의-별도-초안-테이블과-제출-접수-경계)에 기록합니다.
+선택 이유는 [A-061과 A-062](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-061)에 기록합니다.
 
 ## 구현 순서와 커밋 단위
 
@@ -93,7 +93,7 @@
 - 닫기 경고는 웹과 같은 상태별 문구를 쓰되, 사용자 요청으로 앱의 모든 확인 다이얼로그와 같이 머무르는 버튼은 "닫기"로 통일했습니다. 입력한 것도 저장하거나 등록을 요청한 것도 없으면 확인 없이 닫습니다.
 - 웹 전용 모션인 제작 방식 선택 일러스트 두 개와 분량 배분 인라인 슬라이더를 같은 시간과 곡선으로 구현했습니다. 동작 줄이기 설정에서는 완성 장면이나 즉시 이동을 씁니다.
 - 제작 탭의 반려 카드 수정하기는 초안 카드의 이어서 만들기와 같은 버튼과 위치로 옮겼습니다.
-- 사용자 요청으로 간편 제작 퍼널의 덮개 전환을 없애 제작 방식 선택에서 두 제작 화면이 같은 수평 이동으로 들어오고 나가게 했습니다. 입력한 것도 저장하거나 등록을 요청한 것도 없으면 간편 제작 세 단계와 일반 제작 모두 확인 없이 닫습니다([A-063](../../../knk-harness/docs/adr/1-3-android-adr.md#a-063-잃을-것-없는-제작-이탈과-제작-화면-전환-통일)). 화면 녹화로 진입과 이탈 전환 및 바로 닫기를 확인했습니다.
+- 사용자 요청으로 간편 제작 퍼널의 덮개 전환을 없애 제작 방식 선택에서 두 제작 화면이 같은 수평 이동으로 들어오고 나가게 했습니다. 입력한 것도 저장하거나 등록을 요청한 것도 없으면 간편 제작 세 단계와 일반 제작 모두 확인 없이 닫습니다([A-063](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-063)). 화면 녹화로 진입과 이탈 전환 및 바로 닫기를 확인했습니다.
 - 사용자 요청으로 검수 결과를 화면에서 기다리는 동안과 화면이 같은 결과를 보여 준 뒤 2분 안의 같은 제출본 검수 완료 알림을 띄우지 않게 했습니다. 알림은 서버 data 전용이라 앱이 표시 여부를 정하므로 서버 변경은 없습니다. `GeneralReviewWatchTest` 3개와 `ModerationNotificationUiTest`의 걸러진 알림 경우를 추가했습니다. 이 app 모듈 기기 테스트는 끝난 뒤 에뮬레이터의 앱을 제거해 로그인과 로컬 초안이 지워졌고, 앱은 다시 설치했습니다.
 - 제작 탭 카드의 이어서 만들기와 수정하기는 웹의 secondary 버튼과 같은 보조 버튼이고, 내 스토리 카드의 제작일은 웹처럼 오늘 만든 스토리만 "방금 전", "N분 전", "N시간 전"으로 씁니다.
 - 셀렉트, 정렬 메뉴, 장르 콤보박스, 채팅 안내 팝오버는 공용 `ManyakPopup`의 스프링 등장과 짧은 퇴장을 씁니다. 장르 197개를 모두 그리던 목록을 보이는 항목만 그리게 바꿔 팝업 첫 프레임의 레이아웃이 에뮬레이터에서 38ms에서 약 23ms로 줄었습니다.

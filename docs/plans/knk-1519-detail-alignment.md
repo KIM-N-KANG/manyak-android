@@ -1,5 +1,7 @@
 # KNK-1519 세부 동작 정합
 
+아래 캡처와 `build/qa` 자료 중 현재 checkout에 포함되지 않은 항목은 원래 로컬 경로로 표시한다. 당시 검증 기록은 보존하되 이 문서에서 해당 파일을 열거나 결과를 재확인할 수는 없다.
+
 ## 목표와 분석
 
 [KNK-1519](https://kimandkang.atlassian.net/browse/KNK-1519)의 간편 제작, 채팅, 마이 화면 차이를 공통 계약에 맞춥니다. 하네스와 Android 모두 `fix/KNK-1519-align-creation-chat-my-details`에서 작업합니다.
@@ -8,7 +10,7 @@
 - 하네스 분기 기준: fetch한 `origin/dev`의 `1648e85f0dc2b95f39c7ce9389b0d528184345b7`. 관련 정본이 이 커밋에 포함된 것을 확인했습니다.
 - 기존 두 작업 트리는 깨끗했으며 별도 변경을 이동하거나 삭제하지 않았습니다.
 - 서버 `ChatService`의 목록 및 상세는 공개 스냅샷이 없으면 제목을 비우면서 원본 스토리 ID를 유지할 수 있습니다. 웹은 제목도 검사하지만 앱은 ID만 검사했습니다. API나 저장 스키마 변경 없이 소비 조건을 맞춥니다.
-- 공통 계약은 [클라이언트 spec](../../../knk-harness/docs/spec/3-1-client-spec.md), 플랫폼 예외는 [Android spec](../../../knk-harness/docs/spec/3-3-android-spec.md), 내부 소유권은 [Android design](../../../knk-harness/docs/design/1-2-android-design.md)을 따릅니다.
+- 공통 계약은 [클라이언트 spec](../../../knk-harness/docs/domain/STORY/CLIENT/AGENTS.md), 플랫폼 예외는 [Android spec](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md), 내부 소유권은 [Android design](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md)을 따릅니다.
 
 ## 작업별 구현
 
@@ -62,7 +64,7 @@
 ### 화면 근거와 한계
 
 - 인물 입력은 변경 전 `origin/dev` 소스와 현재 소스를 같은 Compose 테스트 호스트에 렌더링해 `adb exec-out screencap -p`로 캡처했습니다. 실제 회원 데이터나 실제 퍼널 전체 화면의 캡처는 아닙니다.
-- 결과는 로컬 [캡처 폴더](../../build/qa/knk-1519)에 있습니다: `before.png`, `after-expanded.png`, `after-collapsed.png`, `after-dark.png`. 비교용 임시 테스트 소스는 제거했습니다.
+- 결과는 로컬 캡처 폴더 (보관 경로: `../../build/qa/knk-1519`)에 있습니다: `before.png`, `after-expanded.png`, `after-collapsed.png`, `after-dark.png`. 비교용 임시 테스트 소스는 제거했습니다.
 - 위 인물 캡처는 `9dfba2b1`의 최종 머리 줄 크기와 인물 추가 간격 조정 전 자료입니다. 접기 동작의 검증 근거이며 최종 치수의 화면 근거로 사용하지 않습니다.
 - 라이트와 다크 테마에서 머리 줄, 화살표, 접힌 행 간격, 남은 인물 입력을 확인했습니다. 다크 캡처는 Compose 테마 전환이며 Activity 재생성 검증은 아닙니다.
 - 실제 앱은 최종 `installDebug` 설치와 로그인 화면 실행까지 확인했으며 `final-login.png`를 남겼습니다. 회원 로그인 세션이 없어 마이, 제작 FAB, 삭제된 스토리 메뉴, 계정 연동 및 광고 동의 다이얼로그의 실제 화면 전후 캡처는 미검증입니다.
@@ -76,7 +78,7 @@ API와 저장 스키마 변경이 없어 작업 커밋을 되돌리면 이전 �
 
 ## 후속 요청: 앱 재실행의 시작 화면
 
-기존 회원이 앱을 다시 켤 때 로그인 화면이 나타나던 경로를 `40644e6d`에서 분리했습니다. 새로운 사용자 계약은 [Android spec](../../../knk-harness/docs/spec/3-3-android-spec.md), 결정 근거는 [A-054](../../../knk-harness/docs/adr/1-3-android-adr.md#a-054)를 따릅니다.
+기존 회원이 앱을 다시 켤 때 로그인 화면이 나타나던 경로를 `40644e6d`에서 분리했습니다. 새로운 사용자 계약은 [Android spec](../../../knk-harness/docs/domain/ACCOUNT/CLIENT/ANDROID/AGENTS.md), 결정 근거는 [A-054](../../../knk-harness/docs/domain/ACCOUNT/CLIENT/ANDROID/DECISIONS.md#a-054)를 따릅니다.
 
 - 시스템 스플래시 다음의 첫 앱 화면에 로고와 지연 스피너를 표시합니다. 시스템 스플래시를 서버 응답까지 유지하는 조건은 추가하지 않습니다.
 - `RootViewModel.entryState`는 세션과 시작 경로를 함께 발행합니다. 로그인 화면에 진입하기 전의 회원 복원은 시작 경로, `SignedOut`을 거친 인증은 기존 로그인 경로를 사용합니다. ViewModel 수명으로 구성 변경을 견디며 프로세스 재시작 때 다시 판정합니다.
@@ -97,13 +99,13 @@ API와 저장 스키마 변경이 없어 작업 커밋을 되돌리면 이전 �
 
 새 회귀는 세션 복원과 새 로그인 분리, 로그인 화면의 불필요한 구성 방지, 완료 전 회원 화면 차단, 재시도와 403 로그아웃, 추가 동의의 체크 복원, 시작 조회 중 뒤로가기에서 로그아웃하지 않음을 확인합니다.
 
-실제 화면 컴포넌트에 지연 및 실패 응답을 넣은 임시 검증 Activity에서 `adb exec-out screencap -p`로 전후를 캡처했습니다. [캡처 폴더](../../build/qa/knk-1519-startup)의 `before-login.png`는 기존 로그인 배경의 대기 표시이며, `after-startup-*`와 `after-failure-*`는 시작 로딩과 오류 화면입니다. 라이트, 다크, 글자 크기 130%에서 잘림 없이 표시됐습니다. 다크 모드 및 글자 크기 변경으로 실제 Activity가 재생성된 뒤에도 동의 조회 횟수가 1회로 유지된 근거는 `activity-recreation.log`에 있습니다.
+실제 화면 컴포넌트에 지연 및 실패 응답을 넣은 임시 검증 Activity에서 `adb exec-out screencap -p`로 전후를 캡처했습니다. 캡처 폴더 (보관 경로: `../../build/qa/knk-1519-startup`)의 `before-login.png`는 기존 로그인 배경의 대기 표시이며, `after-startup-*`와 `after-failure-*`는 시작 로딩과 오류 화면입니다. 라이트, 다크, 글자 크기 130%에서 잘림 없이 표시됐습니다. 다크 모드 및 글자 크기 변경으로 실제 Activity가 재생성된 뒤에도 동의 조회 횟수가 1회로 유지된 근거는 `activity-recreation.log`에 있습니다.
 
 검증 후 night=no, font_scale=1.0으로 복원했고, 임시 Activity와 매니페스트 항목을 제거했습니다. 운영 계정의 실제 로그인부터 프로세스 종료 후 재실행까지의 통합 검증은 하지 않았습니다. 경로와 서버 결과 분기는 단위 및 UI 테스트의 fake 응답으로 검증했습니다. 전체 `check`와 `assembleDebug`는 CI 소유로 남깁니다.
 
 ## 후속 요청: 임시 저장 성공 안내
 
-임시 저장에 성공하면 버튼을 체크와 '임시 저장됨'으로 바꾸던 표시를 웹과 같은 토스트로 바꿨습니다. 새로운 사용자 계약은 [Android spec](../../../knk-harness/docs/spec/3-3-android-spec.md), 결정 근거는 [A-055](../../../knk-harness/docs/adr/1-3-android-adr.md#a-055)를 따릅니다.
+임시 저장에 성공하면 버튼을 체크와 '임시 저장됨'으로 바꾸던 표시를 웹과 같은 토스트로 바꿨습니다. 새로운 사용자 계약은 [Android spec](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md), 결정 근거는 [A-055](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-055)를 따릅니다.
 
 - 버튼 모양은 바꾸지 않고 '임시 저장했어요' 토스트를 띄웁니다. 토스트는 버튼으로 시작한 저장에만 띄우며, 백그라운드 전환 저장은 알리지 않습니다.
 - 성공 뒤 2초(`DRAFT_SAVE_LOCK_MS`) 동안 버튼을 잠그고 회색으로 표시합니다. 그 사이에 편집해도 잠금을 풀지 않습니다. 저장 중에는 기존처럼 스피너를 표시합니다.

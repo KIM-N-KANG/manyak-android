@@ -1,10 +1,12 @@
 # 채팅 헤더 탭 전환과 이미지 뷰어 그림 탭 비닫힘
 
+아래 캡처와 `build/qa` 자료 중 현재 checkout에 포함되지 않은 항목은 원래 로컬 경로로 표시한다. 당시 검증 기록은 보존하되 이 문서에서 해당 파일을 열거나 결과를 재확인할 수는 없다.
+
 - 티켓: [KNK-1432](https://kimandkang.atlassian.net/browse/KNK-1432) (상위 KNK-1428)
 - 작업일: 2026-09-26
 - 브랜치: Android `feat/KNK-1432-chat-header-tap-toggle-and-image-viewer-tap`, 하네스 `docs/KNK-1432-chat-header-tap-toggle`
 - 분기 기준: fetch한 `origin/dev` — Android `2626910c`, 하네스 `6e6d091`
-- 계약: [공통 채팅 화면 헤더 show/hide](../../../knk-harness/docs/spec/3-1-client-spec.md), [FE-SCREEN-003 썸네일 이미지 뷰어](../../../knk-harness/docs/spec/3-1-client-spec.md#fe-screen-003-스토리-상세), [Android 채팅 목록과 채팅방](../../../knk-harness/docs/spec/3-3-android-spec.md#채팅-목록과-채팅방)
+- 계약: [공통 채팅 화면 헤더 show/hide](../../../knk-harness/docs/domain/CHAT/CLIENT/3-2-INTERACTION-FLOWS.md#3-2-1-입력과-응답), [FE-SCREEN-003 썸네일 이미지 뷰어](../../../knk-harness/docs/domain/STORY/CLIENT/3-3-LAYOUT.md#3-3-2-상세와-이미지), [Android 채팅 목록과 채팅방](../../../knk-harness/docs/domain/CHAT/CLIENT/ANDROID/AGENTS.md)
 - 참고: 웹 KNK-1427(manyak-web #211), 웹 `src/features/chats/room/utils/header-toggle-tap.ts`, `src/lib/contained-image.ts`
 
 ## 변경
@@ -36,9 +38,9 @@
 
 | 화면 | 캡처 |
 | --- | --- |
-| 헤더 | [진입 시 표시](../../captures/knk-1432/header-shown.png) · [숨긴 상태에서 본문 탭 → 표시](../../captures/knk-1432/header-shown-again.png) · [다시 본문 탭 → 숨김, 본문 위치 그대로](../../captures/knk-1432/header-hidden.png) |
-| AI 생성 안내 | [헤더 바로 아래](../../captures/knk-1432/ai-notice-top.png) |
-| 뷰어 그림 탭 → 여백 탭 | [그림 탭 후 유지](../../captures/knk-1432/viewer-image-tap.png) · [여백 탭 후 닫힘](../../captures/knk-1432/viewer-background-tap.png) |
+| 헤더 | 진입 시 표시 (보관 경로: `../../captures/knk-1432/header-shown.png`) · 숨긴 상태에서 본문 탭 → 표시 (보관 경로: `../../captures/knk-1432/header-shown-again.png`) · 다시 본문 탭 → 숨김, 본문 위치 그대로 (보관 경로: `../../captures/knk-1432/header-hidden.png`) |
+| AI 생성 안내 | 헤더 바로 아래 (보관 경로: `../../captures/knk-1432/ai-notice-top.png`) |
+| 뷰어 그림 탭 → 여백 탭 | 그림 탭 후 유지 (보관 경로: `../../captures/knk-1432/viewer-image-tap.png`) · 여백 탭 후 닫힘 (보관 경로: `../../captures/knk-1432/viewer-background-tap.png`) |
 
 ## 복구
 

@@ -1,10 +1,12 @@
 # 채팅 첫 진입 안내 투어와 투어 분석 이벤트
 
+아래 캡처와 `build/qa` 자료 중 현재 checkout에 포함되지 않은 항목은 원래 로컬 경로로 표시한다. 당시 검증 기록은 보존하되 이 문서에서 해당 파일을 열거나 결과를 재확인할 수는 없다.
+
 - 티켓: [KNK-1431](https://kimandkang.atlassian.net/browse/KNK-1431) (상위 KNK-1428)
 - 작업일: 2026-09-26
 - 브랜치: Android `feat/KNK-1431-add-chat-tour`, 하네스 `docs/KNK-1431-add-chat-tour`
 - 분기 기준: fetch한 `origin/dev`. Android `746af162`, 하네스 `3fd9b0f`(KNK-1434 병합 뒤로 다시 올림)
-- 계약: [공통 첫 진입 안내](../../../knk-harness/docs/spec/3-1-client-spec.md#첫-진입-안내), [분석 §6-4-2-6](../../../knk-harness/docs/spec/6-analytics.md), [Android 채팅 목록과 채팅방](../../../knk-harness/docs/spec/3-3-android-spec.md#채팅-목록과-채팅방), 결정 [A-048](../../../knk-harness/docs/adr/1-3-android-adr.md#a-048)
+- 계약: [공통 첫 진입 안내](../../../knk-harness/docs/domain/CHAT/CLIENT/2-2-REQUIREMENTS.md#2-2-6-처음-사용-안내), [분석과 관측 기준](../../../knk-harness/docs/reference/ANALYTICS.md), [Android 채팅 목록과 채팅방](../../../knk-harness/docs/domain/CHAT/CLIENT/ANDROID/AGENTS.md), 결정 [A-048](../../../knk-harness/docs/domain/CHAT/CLIENT/ANDROID/DECISIONS.md#a-048)
 - 참고: 웹 `src/features/chats/room/components/tour/`, `hooks/use-chat-tour.ts`, `utils/chat-tour-gate.ts`, `utils/tour-geometry.ts`
 
 ## 변경
@@ -38,16 +40,16 @@
 
 | 화면 | 캡처 |
 | --- | --- |
-| 스텝 | [1 상황 추가](../../captures/knk-1431/step1-plain.png) · [2 채팅 설정](../../captures/knk-1431/step2-plain.png) · [3 랜덤 전송](../../captures/knk-1431/step3-plain.png) |
-| 구성 변경 | [3단계에서 가로 회전](../../captures/knk-1431/step3-landscape.png) |
-| 재노출 없음 | [완료 뒤 새 채팅](../../captures/knk-1431/reentry-no-tour.png) |
+| 스텝 | 1 상황 추가 (보관 경로: `../../captures/knk-1431/step1-plain.png`) · 2 채팅 설정 (보관 경로: `../../captures/knk-1431/step2-plain.png`) · 3 랜덤 전송 (보관 경로: `../../captures/knk-1431/step3-plain.png`) |
+| 구성 변경 | 3단계에서 가로 회전 (보관 경로: `../../captures/knk-1431/step3-landscape.png`) |
+| 재노출 없음 | 완료 뒤 새 채팅 (보관 경로: `../../captures/knk-1431/reentry-no-tour.png`) |
 
 ## 함께 고친 것: 채팅 목록 스크롤 위치
 
 채팅 탭을 본 뒤 홈에서 다른 스토리로 채팅을 만들고 돌아오면 목록이 맨 위가 아니라 새 채팅 수만큼 아래에 서 있었습니다. 채팅 탭 ViewModel은 이전 목록을 들고 있다가 다시 읽은 목록으로 바꾸는데, 새 채팅이 앞에 붙으면 `LazyColumn`이 보던 첫 카드를 키로 따라가기 때문입니다. `ChatListScreen`에서 맨 위를 보던 중에 첫 카드가 바뀌면 `requestScrollToItem(0)`으로 맨 위에 남기고, 스크롤해 둔 자리는 그대로 둡니다.
 
 - emulator-5554에서 채팅 탭 → 홈 → 스토리 두 개로 채팅 시작 → 채팅 탭 순서로 확인했습니다. 고치기 전 빌드는 새 채팅 두 개가 화면 위로 밀려 있었고, 고친 빌드는 맨 위에 보였습니다. 이 확인으로 dev 서버에 턴 0개 채팅 4개가 더 생겼습니다.
-- [고치기 전](../../captures/knk-1431/chat-list-without-fix.png) · [고친 뒤](../../captures/knk-1431/chat-list-with-fix.png)
+- 고치기 전 (보관 경로: `../../captures/knk-1431/chat-list-without-fix.png`) · 고친 뒤 (보관 경로: `../../captures/knk-1431/chat-list-with-fix.png`)
 
 ## 복구
 

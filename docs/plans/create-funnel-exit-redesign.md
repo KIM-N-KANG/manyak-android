@@ -1,9 +1,9 @@
 # 간편 제작 퍼널 이탈 개편 — 닫기·전 단계 이탈·키워드 임시 저장
 
-> **KNK-1197 구조 이전 안내 (2026-09-05)** — 아래 구현 순서·모듈 경로·코드 예시·본문의 문서 절 번호와 검수 항목은 작성 당시 기록입니다. 현재 소유 위치와 검증 결과는 [모듈 재구성 기록](./module-reorganization.md), 현재 계층·의존 규칙은 [하네스 모듈 아키텍처](../../../knk-harness/docs/design/1-2-android-design.md#1-2-2-모듈과-소유권)를 따릅니다.
+> **KNK-1197 구조 이전 안내 (2026-09-05)** — 아래 구현 순서·모듈 경로·코드 예시·본문의 문서 절 번호와 검수 항목은 작성 당시 기록입니다. 현재 소유 위치와 검증 결과는 [모듈 재구성 기록](./module-reorganization.md), 현재 계층·의존 규칙은 [하네스 모듈 아키텍처](../../../knk-harness/docs/platform/CLIENT/ANDROID/1-COMPONENT-ARCHITECTURE.md#1-1-책임과-의존)를 따릅니다.
 
-- 공통 계약 정본: `../../../knk-harness/docs/spec/3-1-client-spec.md` §3-1-4(이탈 가드·제작 임시 저장)
-- 앱 결정 정본: `../../../knk-harness/docs/design/1-2-android-design.md` §1-2-4(퍼널 구조)·§1-2-7(라이프사이클)
+- 공통 계약 정본: [STORY 공통](../../../knk-harness/docs/domain/STORY/CLIENT/AGENTS.md), [STORY API](../../../knk-harness/docs/domain/STORY/BACKEND/4-2-CONTRACT.md)
+- 앱 구조와 결정: [STORY Android](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md)
 - 선행 계획: `create-funnel-recovery.md` — 이 계획이 그 문서의 D1·D3·D6을 대체한다
 
 ## 목표

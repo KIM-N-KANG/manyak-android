@@ -4,11 +4,11 @@
 
 간편 제작 장르의 직접 입력 버튼을 검색 가능한 콤보박스로 교체합니다. 사용자 제공 검색과 확장 SVG를 기능 모듈 vector drawable로 변환하며 기존 입력 표면을 사용합니다. 일반 제작과 수정 화면의 연결은 해당 화면을 구현하는 후속 작업에 남습니다.
 
-- 사용자 계약: [Android spec 제작과 데이터 보존](../../../knk-harness/docs/spec/3-3-android-spec.md#3-3-3-제작과-데이터-보존)
-- 현재 구조: [Android design 제작과 상태 복원](../../../knk-harness/docs/design/1-2-android-design.md#1-2-7-제작과-상태-복원)
-- 결정: [A-057 검색과 초안 호환](../../../knk-harness/docs/adr/1-3-android-adr.md#a-057-제공-장르-검색과-이전-초안-호환), [A-058 선택 토글과 칩 순서](../../../knk-harness/docs/adr/1-3-android-adr.md#a-058-장르-검색-선택-토글과-대표-칩-순서-유지)
+- 사용자 계약: [Android spec 제작과 데이터 보존](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md)
+- 현재 구조: [Android design 제작과 상태 복원](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md)
+- 결정: [A-057 검색과 초안 호환](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-057), [A-058 선택 토글과 칩 순서](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-058)
 - API 근거: 2026-10-05 dev Swagger의 `GET /api/v1/stories/genres`, 실제 응답 전체 197개와 대표 15개 확인. 검색어 원문 상한 30자.
-- 검색 캐시와 로딩 표시 결정: [A-059](../../../knk-harness/docs/adr/1-3-android-adr.md#a-059-장르-검색-캐시와-지연-로딩-표시), [A-060 200ms 기준](../../../knk-harness/docs/adr/1-3-android-adr.md#a-060-장르-검색-로딩-표시-기준-조정)
+- 검색 캐시와 로딩 표시 결정: [A-059](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-059), [A-060 200ms 기준](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-060)
 
 ## 구현 순서와 결과
 

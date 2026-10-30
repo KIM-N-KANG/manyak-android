@@ -4,23 +4,24 @@
 
 ## 정본 문서
 
-| 확인할 것 | 위치                                                 |
-| --- |----------------------------------------------------|
-| Android 사용자 계약·플랫폼 예외 | `../knk-harness/docs/spec/3-3-android-spec.md` |
-| 현재 구조·상태·인증·내비게이션 | `../knk-harness/docs/design/1-2-android-design.md` |
-| 결정 당시 맥락·선택·이유 | `../knk-harness/docs/adr/1-1-client-adr.md` · `../knk-harness/docs/adr/1-3-android-adr.md` |
-| 모듈 소유권·내부 계층·의존 방향 상세 규칙 | `../knk-harness/docs/design/1-2-android-design.md#1-2-2-모듈과-소유권` |
-| 웹·앱 공통 계약(화면·상태·사용자 흐름·API 사용) | `../knk-harness/docs/spec/3-1-client-spec.md`  |
-| 릴리스·배포 절차(버전 규칙·서명·트랙 승격·중단 기준) | `../knk-harness/docs/design/4-deployment.md` §4-5·§4-7·§4-9 |
-| 이 레포가 소유하는 값(빌드 주입·검증 정책) | `docs/plans/_project.md`                           |
-| 기술 스택·모듈 폴더 트리·로컬 실행 준비 | `README.md` (이동 내역은 `docs/plans/module-reorganization.md`) |
-| 색·타이포·여백·컴포넌트 규칙 | `DESIGN.md`                                        |
-| 기능별 구현 순서·검증·실행 결과 | `docs/plans/<기능>.md`                               |
-| **서버 API 계약(엔드포인트·요청·응답 필드·상태 코드)** | **dev 서버 Swagger** `https://dev-api.manyak.app/swagger-ui/index.html` (기계 판독은 `https://dev-api.manyak.app/v3/api-docs`) |
+[도메인 목록](../knk-harness/docs/domain/AGENTS.md)에서 관련 도메인을 선택하고 `CLIENT/` 공통 문서와 `CLIENT/ANDROID/`를 단계마다 함께 확인합니다. 사용자 목표와 ID는 공통 문서가 소유하며 플랫폼 구현과 검증은 ANDROID에 둡니다.
+
+| 확인할 것 | 위치 |
+| --- | --- |
+| 공용 사용자 계약과 셸 | [공통 UI](../knk-harness/docs/ui/AGENTS.md) |
+| Android 기반과 공용 검증 | [ANDROID 기반](../knk-harness/docs/platform/CLIENT/ANDROID/AGENTS.md) |
+| 모듈 소유권과 의존 방향 | [컴포넌트 구조](../knk-harness/docs/platform/CLIENT/ANDROID/1-COMPONENT-ARCHITECTURE.md) |
+| 결정 당시 맥락과 이유 | 해당 CLIENT와 ANDROID의 `DECISIONS.md` |
+| 릴리스와 배포 | [Android 배포](../knk-harness/docs/platform/CLIENT/ANDROID/5-DEPLOYMENT.md) |
+| 저장소의 빌드 주입과 검증 정책 | [프로젝트 계획](docs/plans/_project.md) |
+| 기술 스택과 로컬 준비 | [README](README.md) |
+| 디자인 토큰과 컴포넌트 | [DESIGN](DESIGN.md) |
+| 기능별 순서와 실행 결과 | `docs/plans/<기능>.md` |
+| 서버 API의 실제 필드와 상태 코드 | [dev Swagger](https://dev-api.manyak.app/swagger-ui/index.html), [OpenAPI JSON](https://dev-api.manyak.app/v3/api-docs) |
 
 - 공통 결정은 하네스에 쓰고 이 레포에는 포인터만 둡니다. 같은 결정을 두 곳에 두지 않습니다.
 - 하네스 문서를 읽을 때는 해당 절이 `dev`에 병합됐는지 확인하세요. 미병합 브랜치 내용을 정본으로 오인하면 잘못된 전제 위에서 작업하게 됩니다.
-- **API 관련 확인은 하네스(`spec/4-backend-server-spec.md`)가 아니라 Swagger를 직접 봅니다.** 하네스의 API 절은 서버 구현보다 뒤처질 수 있어(예: `author`·`isOwner`가 구현됐는데 문서는 "계획"으로 남아 있었음) 응답 필드 유무·타입·상태 코드는 반드시 Swagger 또는 `../manyak-server` 코드로 확인합니다. Swagger·코드는 구현 사실의 근거입니다. 승인된 제품/API 계약과 다르면 차이를 기록하고 실제 오류인지 승인된 변경인지 확인한 뒤 해당 정본을 정정합니다.
+- **API 구현 확인은 Swagger를 직접 봅니다.** 승인된 계약은 해당 도메인의 BACKEND 문서에서 확인합니다. 하네스의 API 절은 서버 구현보다 뒤처질 수 있어(예: `author`·`isOwner`가 구현됐는데 문서는 "계획"으로 남아 있었음) 응답 필드 유무·타입·상태 코드는 반드시 Swagger 또는 `../manyak-server` 코드로 확인합니다. Swagger·코드는 구현 사실의 근거입니다. 승인된 제품/API 계약과 다르면 차이를 기록하고 실제 오류인지 승인된 변경인지 확인한 뒤 해당 정본을 정정합니다.
 
 ## 작업 방식
 
@@ -51,7 +52,7 @@
 
 ## 모듈 구조
 
-정본은 하네스 `docs/design/1-2-android-design.md`이며, 모듈 소유권·계층·의존 규칙은 같은 문서의 §1-2-2에 통합되어 있습니다. 실제 모듈 등록은 `settings.gradle.kts`를 확인하세요.
+모듈 소유권, 계층과 의존 규칙은 하네스 [공용 Android 컴포넌트 구조](../knk-harness/docs/platform/CLIENT/ANDROID/1-COMPONENT-ARCHITECTURE.md)를 따릅니다. 실제 모듈 등록은 `settings.gradle.kts`를 확인하세요.
 
 `app`이 최상위 기능·기반 모듈을 조립합니다. 기능은 필요한 entity/domain/data/presentation 패키지를 소유하고, chat·create·my의 하위 기능도 패키지로 구분합니다. `checkModuleArchitecture`가 프로젝트 의존과 Kotlin PSI 기반 계층 경계를 검사하며 루트 `check`에 연결되어 있습니다. navigation의 기존 Kotlin 패키지는 직렬화 호환을 위해 유지합니다.
 

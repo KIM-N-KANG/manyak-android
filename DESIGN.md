@@ -787,7 +787,7 @@ components:
 
 **`text-field-focused`** — 경계를 한 단계 진한 회색 `{colors.border-input}`으로 바꿉니다. 포커스에 브랜드 색을 쓰지 않습니다(2026-08-24 결정 — 입력 경계는 무채색 사다리로만 말합니다).
 
-입력란 사이 이동과 같은 입력란 재터치(라벨·여백 포함)에서는 키보드를 유지합니다. 입력란 밖의 빈 영역·버튼·칩을 탭하면 포커스와 키보드를 닫으며, 버튼·칩의 동작도 그대로 실행합니다. 채팅 작성 버튼과 추가 정보 편집 버튼의 예외는 [Android 계약](../knk-harness/docs/spec/3-3-android-spec.md)을 따르며, 해당 버튼에도 `keepKeyboardOnTap`을 적용합니다. 스크롤·드래그·다중 터치는 포커스를 해제하지 않습니다. 앱 루트·공통 시트·입력 다이얼로그에 `clearFocusOnTap`을 적용하고, 공통 입력 컴포넌트와 직접 사용하는 `BasicTextField`는 `keepKeyboardOnTap`으로 입력 영역을 구분합니다. 두 modifier 모두 터치 이벤트를 소비하지 않습니다.
+입력란 사이 이동과 같은 입력란 재터치(라벨·여백 포함)에서는 키보드를 유지합니다. 입력란 밖의 빈 영역·버튼·칩을 탭하면 포커스와 키보드를 닫으며, 버튼·칩의 동작도 그대로 실행합니다. 채팅 작성 버튼과 추가 정보 편집 버튼의 예외는 [Android 계약](../knk-harness/docs/domain/AGENTS.md)을 따르며, 해당 버튼에도 `keepKeyboardOnTap`을 적용합니다. 스크롤·드래그·다중 터치는 포커스를 해제하지 않습니다. 앱 루트·공통 시트·입력 다이얼로그에 `clearFocusOnTap`을 적용하고, 공통 입력 컴포넌트와 직접 사용하는 `BasicTextField`는 `keepKeyboardOnTap`으로 입력 영역을 구분합니다. 두 modifier 모두 터치 이벤트를 소비하지 않습니다.
 
 **`text-field-error`** — 경계를 `{colors.border-danger}`로 바꾸고, 오류 문구를 `{colors.text-danger}` + `{typography.body-small}`로 아래에 둡니다. 색만으로 오류를 알리지 않습니다.
 
@@ -839,7 +839,7 @@ components:
 
 **`section-header`** — 메인 탭의 상단 헤더. `TopAppBar` 위에 배경 `{colors.surface}`와 제목 색 `{colors.text}`를 얹는다. 좌우 여백은 앱 바 기본값이 16dp 라 `{spacing.gutter}`와 같고, 로고와 섹션 이름(`{typography.title-large}`) 사이도 `{spacing.gutter}`다. 높이는 최소 64dp 이고 제목이 커지면 함께 늘어난다. 구분선과 그림자를 두지 않는다. `TopAppBar`가 아직 실험 API 라 `@OptIn`이 필요하며, 사용처는 이 컴포넌트와 퍼널 헤더(`funnel-header`) 둘이다.
 
-**`tab-bar`** — 홈·채팅·마이 고정 3탭. 배경 `{colors.surface}`, 위쪽 경계 `{colors.border}` 1dp. 아이콘(`{sizes.tab-icon}`) 아래에 이름을 `{typography.label-small}`로 둔다. 선택은 filled 아이콘 + `{colors.text}`, 비선택은 outline 아이콘 + `{colors.text-subtle}`이고 아이콘과 라벨이 같은 색을 쓴다. 라벨이 이름을 맡으므로 **아이콘은 장식으로 두고 접근성 이름을 붙이지 않는다** — 둘 다 붙이면 탐색 서비스가 같은 이름을 두 번 읽는다. 선택을 색 하나로만 구분하지 않고 아이콘 모양을 함께 바꾼다.
+**`tab-bar`**: [공통 UI 요구사항](../knk-harness/docs/ui/2-2-REQUIREMENTS.md#2-2-1-적용-범위)에 따라 홈, 채팅, 제작, 마이 고정 4탭을 제공한다. 배경 `{colors.surface}`, 위쪽 경계 `{colors.border}` 1dp. 아이콘(`{sizes.tab-icon}`) 아래에 이름을 `{typography.label-small}`로 둔다. 선택은 filled 아이콘 + `{colors.text}`, 비선택은 outline 아이콘 + `{colors.text-subtle}`이고 아이콘과 라벨이 같은 색을 쓴다. 라벨이 이름을 맡으므로 **아이콘은 장식으로 두고 접근성 이름을 붙이지 않는다**. 둘 다 붙이면 탐색 서비스가 같은 이름을 두 번 읽는다. 선택을 색 하나로만 구분하지 않고 아이콘 모양을 함께 바꾼다.
 
 **위쪽 경계선을 두는 이유는 바 배경이 화면 바탕과 같은 `{colors.surface}`이기 때문이다.** 콘텐츠는 바 아래로 흘러 들어가므로, 경계선이 없으면 어디까지가 콘텐츠인지 드러나지 않는다. 이 시스템은 그림자를 쓰지 않으니 경계선이 유일한 수단이다. 상단 헤더는 반대다 — 헤더 위로는 아무것도 흐르지 않아 구분할 대상이 없다.
 
@@ -958,7 +958,7 @@ components:
 - **토큰 값이 웹과 같은지 자동으로 확인할 방법이 없습니다.** 생성기가 레포 밖에 있고 웹은 자체 CSS 변수를 쓰므로, 두 클라이언트의 값이 갈리는지는 사람이 봐야 합니다. 다크 보조 텍스트 두 단계는 지금 앱이 웹보다 밝습니다(2026-08-29).
 - **모션 토큰은 화면 전환과 요소 및 목록 등장, 실시간 이미지 안내를 정의합니다.** 눌림 상태는 여전히 색 변화로만 정의되어 있고, 스켈레톤 같은 나머지 모션은 정의되지 않았습니다. 필요해지는 시점에 `{motion.*}`에 단계를 추가합니다.
 
-**`FullscreenImageViewer`** — 상세 썸네일·주변 인물과 채팅 인물 이미지에 공용으로 사용합니다. 바탕은 `{colors.image-viewer-scrim}`(검정 92%), 닫기 아이콘은 `{colors.text-inverse}`입니다. 핀치 1~5배·팬·더블탭 2.5배 토글을 제공하며 X·화면 탭·시스템 뒤로가기로 닫습니다. `CharacterImage`는 4:3 원본 전체 표시와 실패 시 영역 제거를 유지하며, 버튼 접근성 이름은 “{이름} 인물 이미지 크게 보기”입니다.
+**`FullscreenImageViewer`**: 상세 썸네일, 주변 인물과 채팅 인물 이미지에 공용으로 사용한다. 바탕은 `{colors.image-viewer-scrim}`(검정 92%), 닫기 아이콘은 `{colors.text-inverse}`다. 핀치 1~5배, 팬, 더블탭 2.5배 토글을 제공하며 X, 이미지 밖 배경 탭, 시스템 뒤로가기로 닫는다. [Android 화면 배치](../knk-harness/docs/ui/ANDROID/3-3-LAYOUT.md#3-3-1-셸과-조작)에 따라 그림 위 탭으로 닫지 않으며 배경 탭은 떼는 즉시 닫는다. 두 번째 탭 대기는 그림 위 탭에만 적용한다. `CharacterImage`는 4:3 원본 전체 표시와 실패 시 영역 제거를 유지하며, 버튼 접근성 이름은 “{이름} 인물 이미지 크게 보기”다.
 
 ### 장르 검색 콤보박스
 

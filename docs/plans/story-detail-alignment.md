@@ -4,7 +4,7 @@
 
 - 티켓: [KNK-1516](https://kimandkang.atlassian.net/browse/KNK-1516)
 - Android 기준: `fa83a744`, 하네스 기준: `2d9e14c`. 두 저장소 모두 fetch한 `origin/dev`에서 분기했습니다.
-- 계약: 하네스 `docs/spec/3-1-client-spec.md`의 스토리 상세 및 기본 심벌, `docs/spec/3-3-android-spec.md`의 플랫폼 계약.
+- 계약: 하네스 [STORY 공통](../../../knk-harness/docs/domain/STORY/CLIENT/AGENTS.md)와 [Android](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md)의 상세 화면과 기본 심벌 계약.
 - dev Swagger를 2026-10-03 확인했습니다. `StoryCharacterResponse.description`은 nullable string, `StoryDetailResponse.visibility`는 PUBLIC 또는 PRIVATE입니다.
 - 홈 정렬 변경, 일반 제작과 수정 기능, 앱 링크는 제외합니다.
 
@@ -18,7 +18,7 @@
 6. 공용 StoryCover에서 표지가 없으면 초안과 동일한 심벌 및 배경색을 사용합니다. 상세 헤더의 투명도는 표지 유무와 무관하게 스크롤로 전환하며, 표지 없는 경우 기본 전경색을 사용합니다. 별도 헤더 그라데이션은 제거했습니다.
 7. 웹의 `useStoryFooterBackground`와 같이 스크롤 끝까지 남은 거리에 따라 CTA와 페이드 배경을 메타 정보 배경색으로 전환합니다. 메타 정보가 화면에 처음 들어오는 지점부터 스크롤 끝까지를 전환 범위로 삼아, 항목이 나타나는 순간 진행률이 뛰지 않도록 했습니다. 스크롤 위치로 계산한 진행률을 elementEnterMillis(200ms)의 선형 애니메이션으로 따라가 빠른 스크롤에서도 색상이 급격히 바뀌지 않게 합니다.
 
-구조 결정은 하네스 [A-049](../../../knk-harness/docs/adr/1-3-android-adr.md#a-049)에 기록합니다.
+구조 결정은 하네스 [A-049](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-049)에 기록합니다.
 
 ## 검증
 

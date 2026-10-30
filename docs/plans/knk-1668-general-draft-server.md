@@ -4,7 +4,7 @@
 
 [KNK-1668](https://kimandkang.atlassian.net/browse/KNK-1668)은 회원 일반 제작 임시 저장본을 Room 대신 서버 초안(`/users/me/story-drafts`)에 보관해 다른 기기와 웹에서 이어서 만들게 합니다. 웹은 [KNK-1667](https://kimandkang.atlassian.net/browse/KNK-1667)에서 같은 계약으로 먼저 옮겼습니다.
 
-정본은 [공통 임시 저장 계약](../../../knk-harness/docs/spec/3-1-client-spec.md#fe-screen-009-일반-제작스토리-수정)(KNK-1667 하네스 브랜치), [서버 초안 계약](../../../knk-harness/docs/spec/4-backend-server-spec.md#story-drafts), [Android spec](../../../knk-harness/docs/spec/3-3-android-spec.md), [Android design](../../../knk-harness/docs/design/1-2-android-design.md)입니다. API는 2026-10-16에 조회한 [dev Swagger JSON](https://dev-api.manyak.app/v3/api-docs)과 서버 `StoryDraftService`로 확인했습니다. 오류 본문의 `details`는 `ApiErrorResponse`의 `{field, message}` 목록입니다.
+정본은 [공통 임시 저장 계약](../../../knk-harness/docs/domain/STORY/CLIENT/2-2-REQUIREMENTS.md#2-2-6-일반-제작과-수정-입력)(KNK-1667 하네스 브랜치), [서버 초안 계약](../../../knk-harness/docs/domain/STORY/BACKEND/4-2-CONTRACT.md#4-2-23-초안-목록), [Android spec](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md), [Android design](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md)입니다. API는 2026-10-16에 조회한 [dev Swagger JSON](https://dev-api.manyak.app/v3/api-docs)과 서버 `StoryDraftService`로 확인했습니다. 오류 본문의 `details`는 `ApiErrorResponse`의 `{field, message}` 목록입니다.
 
 ## 확정한 선택
 
@@ -14,7 +14,7 @@
 - Room 스키마는 바꾸지 않습니다. 이관 전 초안과 접수 연결 행만 남습니다.
 - 충돌 확인의 보조 버튼은 Android 규칙대로 "닫기"입니다.
 
-선택 이유는 [A-074](../../../knk-harness/docs/adr/1-3-android-adr.md#a-074-일반-제작-임시-저장본을-서버-초안으로-옮기고-room에는-이관-전-초안과-접수-연결만-남기기)에 기록합니다.
+선택 이유는 [A-074](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-074)에 기록합니다.
 
 ## 검증 결과
 

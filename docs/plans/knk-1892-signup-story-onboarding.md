@@ -1,7 +1,7 @@
 # 신규 가입 오리지널 스토리 온보딩 (KNK-1892)
 
 - 작성일: 2026-10-28
-- 근거 정본: 하네스 [Android 내비게이션·화면 계약](../../../knk-harness/docs/spec/3-3-android-spec.md#3-3-2-내비게이션화면-계약), [Android 내비게이션과 화면](../../../knk-harness/docs/design/1-2-android-design.md#1-2-4-내비게이션과-화면), [분석 Spec](../../../knk-harness/docs/spec/6-analytics.md). 결정 이유는 Android ADR A-083에 남긴다.
+- 근거 정본: 하네스 [Android 내비게이션·화면 계약](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/3-1-INFORMATION-ARCHITECTURE.md#3-1-1-목적지), [Android 내비게이션과 화면](../../../knk-harness/docs/platform/CLIENT/ANDROID/3-EXECUTION.md#3-1-요청과-취소), [분석 Spec](../../../knk-harness/docs/reference/ANALYTICS.md). 결정 이유는 Android ADR A-083에 남긴다.
 - 서버 계약: dev Swagger `GET /stories?filter=original&sort=chats`(인증 없음, 커서 페이지). 2026-10-28 기준 오리지널 14편이고 첫 페이지(기본 20개)에 모두 들어온다. 썸네일은 525×700 이상이라 큰 카드에 그대로 쓴다.
 
 ## 목표와 제외 범위
