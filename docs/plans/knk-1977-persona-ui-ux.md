@@ -53,10 +53,9 @@
 - 공용 `ManyakBottomSheet`에 `dismissOnContentDrag`(기본 true)를 더했습니다. false면 본문 스크롤이 쓰고 남은 끌기와 플링을 시트에 넘기지 않습니다. 좌우 여백도 본문 끌기로 잡히도록 가로 여백을 스크롤 안으로 옮겼고, 다른 시트의 배치는 그대로입니다(상세 옵션 시트 글자 시작 16dp 확인). 시트 차원에서 막으므로 목록에만 두었던 처리는 지웠습니다.
 - emulator-5554에서 목록 빠른 끌기, 제목 쪽 끌기, 좌우 여백 끌기에는 시트가 남고, 핸들 끌기, 바깥 탭과 뒤로가기로는 닫히는 것을 확인했습니다.
 
-## 모서리 맞춤
+## 모서리
 
-- 사용자 확인에서 시트 곡률이 웹과 다르다는 지적이 있었습니다. 웹은 `--radius` 10px 기준으로 시트 위쪽 `rounded-t-xl`(20px), 회색 카드 `rounded-xl`(20px), 선택지 `rounded-lg`(16px)입니다. Android는 카드가 `shapes.control`(14dp), 선택지가 `shapes.menuItem`(10dp)이라 카드를 `shapes.overlay`(20dp), 선택지와 생성하기를 `shapes.card`(16dp)로 바꿨습니다(보관 경로: `../../captures/knk-1977/radius-after.png`).
-- 남은 차이는 이번 화면만의 것이 아니라 그대로 뒀습니다. 웹 `lg` 버튼은 `rounded-lg`(16px)이지만 Android 48dp 버튼은 앱 전체가 `shapes.control`(14dp)이고, 웹 셀렉트 항목은 `rounded-sm`(12px)이지만 Android 셀렉트 메뉴 항목은 `shapes.menuItem`(10dp)입니다.
+- 웹 값(카드 20px, 선택지 16px)에 맞춰 바꿔 봤다가 사용자 요청으로 원래 값(카드 `shapes.control` 14dp, 선택지 `shapes.menuItem` 10dp)으로 되돌렸습니다.
 
 ## 복구
 

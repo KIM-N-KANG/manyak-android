@@ -95,7 +95,7 @@ internal fun ChatStartSheet(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .clip(ManyakTheme.shapes.overlay)
+                    .clip(ManyakTheme.shapes.control)
                     .background(ManyakTheme.colors.backgroundNeutralRaised),
         ) {
             ChoiceRow(
@@ -332,7 +332,7 @@ private fun ChoiceItem(
             Modifier
                 .fillMaxWidth()
                 .heightIn(min = ManyakTheme.sizes.control)
-                .clip(ManyakTheme.shapes.card)
+                .clip(ManyakTheme.shapes.menuItem)
                 .background(if (checked) colors.overlayPressed else colors.backgroundNeutralRaised)
                 .selectable(selected = checked, role = Role.RadioButton, onClick = onClick)
                 .padding(horizontal = ManyakTheme.spacing.compact, vertical = ManyakTheme.spacing.component),
@@ -365,7 +365,7 @@ private fun CreatePersonaOption(onClick: () -> Unit) {
             Modifier
                 .fillMaxWidth()
                 .heightIn(min = ManyakTheme.sizes.control)
-                .clip(ManyakTheme.shapes.card)
+                .clip(ManyakTheme.shapes.menuItem)
                 .clickable(role = Role.Button, onClick = onClick)
                 .padding(horizontal = ManyakTheme.spacing.compact, vertical = ManyakTheme.spacing.component),
         verticalAlignment = Alignment.CenterVertically,
