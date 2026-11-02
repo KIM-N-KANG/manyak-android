@@ -217,12 +217,15 @@ private fun <T> ChoiceRow(
     }
 }
 
-/** 행 전체가 펼침 단추다. 보조기술에는 펼치기와 접기 동작으로 알린다. */
+/**
+ * 행 전체가 펼침 단추다. 펼침과 꺾쇠 회전이 곧 반응이라 눌림 리플은 그리지 않는다. 보조기술에는 펼치기와
+ * 접기 동작으로 알린다.
+ */
 private fun Modifier.expandToggle(
     expanded: Boolean,
     onToggle: () -> Unit,
 ): Modifier =
-    clickable(role = Role.Button, onClick = onToggle).semantics {
+    clickable(interactionSource = null, indication = null, role = Role.Button, onClick = onToggle).semantics {
         val action = {
             onToggle()
             true
