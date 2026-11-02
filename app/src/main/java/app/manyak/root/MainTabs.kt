@@ -214,6 +214,7 @@ private fun MainTabsContent(
                     onEditStory = onEditStory,
                     onEditSubmission = onEditSubmission,
                     onResumeCreation = onResumeCreation,
+                    onOpenHome = onLeaveTab,
                 )
             }
         }

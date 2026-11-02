@@ -6,19 +6,23 @@ import app.manyak.analytics.entity.AnalyticsEvent
 import app.manyak.analytics.entity.CompletionStage
 import app.manyak.analytics.entity.CreateStep
 import app.manyak.analytics.entity.CreditShortageTrigger
+import app.manyak.analytics.presentation.toAnalyticsEvent
 import app.manyak.common.domain.credit.AttendanceClaimer
 import app.manyak.common.domain.credit.CreditPolicyRepository
 import app.manyak.common.domain.credit.TrialsRepository
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.story.CreateTutorialProgress
 import app.manyak.common.domain.user.UserProfileRepository
 import app.manyak.common.entity.credit.CreditPolicy
 import app.manyak.common.entity.credit.Trials
+import app.manyak.common.entity.story.CreateTutorialStage
 import app.manyak.common.entity.story.StoryVisibility
 import app.manyak.common.entity.user.UserProfile
 import app.manyak.common.presentation.credit.AttendanceOutcome
 import app.manyak.common.presentation.credit.CreditShortageController
 import app.manyak.common.presentation.credit.CreditShortageUiState
 import app.manyak.common.presentation.mvi.MviViewModel
+import app.manyak.common.presentation.story.CreateTutorialController
 import app.manyak.create.domain.StoryCreationRepository
 import app.manyak.create.entity.ArtStyle
 import app.manyak.create.entity.StoryCompletionCommand
@@ -32,6 +36,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -90,6 +95,19 @@ data class CreateAdditionalInfoUiState(
     /** 버리면 아쉬운 추가 정보가 있는지. 빈 입력 칸만 있는 상태는 아니다. */
     val hasAdditionalInfo: Boolean
         get() = selectedRecommendations.isNotEmpty() || additionalInfos.any { it.value.isNotBlank() }
+
+    /** 고른 스토리라인이 복원되고 안내를 가릴 시트, 다이얼로그, 완성 요청이 없을 때만 첫 진입 안내를 받는다. */
+    val tutorialScreen: CreateTutorialStage?
+        get() =
+            CreateTutorialStage.ADDITIONAL_INFO.takeIf {
+                !isRestoring &&
+                    !entryFailed &&
+                    storylines.isNotEmpty() &&
+                    !isSubmitting &&
+                    exitWarning == null &&
+                    !showReselectWarningDialog &&
+                    creditShortage == null
+            }
 
     companion object {
         const val INITIAL_INPUT_COUNT: Int = 1
@@ -274,6 +292,7 @@ class CreateAdditionalInfoViewModel
         private val trialsRepository: TrialsRepository,
         attendance: AttendanceClaimer,
         private val analytics: Analytics,
+        tutorialProgress: CreateTutorialProgress,
     ) : MviViewModel<
             CreateAdditionalInfoIntent,
             CreateAdditionalInfoUiState,
@@ -301,6 +320,18 @@ class CreateAdditionalInfoViewModel
             )
 
         val draftSave = storylineGenerationStore.draftSave
+
+        /** 첫 진입 안내. 화면이 보이는 동안 몰고 버튼을 받는다. */
+        val tutorial =
+            CreateTutorialController(
+                scope = viewModelScope,
+                progress = tutorialProgress,
+                screen =
+                    combine(uiState, draftSave) { state, save ->
+                        state.tutorialScreen.takeIf { save.conflictVersion == null }
+                    },
+                report = { analytics.track(it.toAnalyticsEvent()) },
+            )
 
         /** 서버 저장의 실패와 충돌 뒤 덮어쓰기 성공 안내. */
         val draftMessages = storylineGenerationStore.draftMessages

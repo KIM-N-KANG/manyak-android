@@ -51,6 +51,7 @@ import app.manyak.create.presentation.component.FunnelEntryStatus
 import app.manyak.create.presentation.component.FunnelExitWarningDialog
 import app.manyak.create.presentation.component.FunnelNeutralButton
 import app.manyak.create.presentation.component.FunnelPrimaryButton
+import app.manyak.create.presentation.component.FunnelTutorial
 import app.manyak.create.presentation.component.SaveDraftWhenBackgrounded
 import app.manyak.create.presentation.component.StorylineGeneratingContent
 import app.manyak.create.presentation.preview.previewStorylines
@@ -84,6 +85,7 @@ fun CreateStorylineScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val draftSave by viewModel.draftSave.collectAsStateWithLifecycle()
+    val tutorialGenres by viewModel.tutorialGenres.collectAsStateWithLifecycle()
     val currentOnOpenAdditionalInfoStep by rememberUpdatedState(onOpenAdditionalInfoStep)
     val currentOnLeaveFunnel by rememberUpdatedState(onLeaveFunnel)
     val currentOnRestartAtKeyword by rememberUpdatedState(onRestartAtKeyword)
@@ -141,6 +143,8 @@ fun CreateStorylineScreen(
         modifier = modifier,
         draftSave = draftSave,
     )
+
+    FunnelTutorial(viewModel.tutorial, tutorialGenres)
 
     state.exitWarning?.let { warning ->
         FunnelExitWarningDialog(

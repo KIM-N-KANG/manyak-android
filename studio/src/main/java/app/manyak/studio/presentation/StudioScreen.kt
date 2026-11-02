@@ -52,6 +52,7 @@ import app.manyak.studio.presentation.component.MyStoriesSkeleton
 import app.manyak.studio.presentation.component.MyStoryCard
 import app.manyak.studio.presentation.component.MyStoryPlaceholders
 import app.manyak.studio.presentation.component.StudioDialogs
+import app.manyak.studio.presentation.component.StudioTutorialDialog
 import kotlinx.coroutines.launch
 import app.manyak.common.R as CommonR
 import app.manyak.report.R as ReportR
@@ -79,6 +80,7 @@ fun StudioScreen(
     refreshRequest: Int = 0,
     onEditStory: (String) -> Unit = {},
     onEditSubmission: (String) -> Unit = {},
+    onOpenHome: () -> Unit = {},
     viewModel: StudioViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -149,6 +151,8 @@ fun StudioScreen(
         onIntent = viewModel::onIntent,
         modifier = modifier,
     )
+
+    StudioTutorialDialog(viewModel.tutorial, onOpenHome)
 }
 
 @Composable

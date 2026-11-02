@@ -1,5 +1,6 @@
 package app.manyak.analytics.entity
 
+import app.manyak.common.entity.story.CreateTutorialStage
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -75,6 +76,30 @@ class AnalyticsEventContractTest {
             AnalyticsEvent.ChatTourSkipButtonClicked("chat-fixture", stepNumber = 1),
             "client_chat_tourSkipButton_clicked",
             mapOf("chat_id" to "chat-fixture", "step_number" to 1),
+        )
+    }
+
+    @Test
+    fun `create tutorial events use the web names and stage values`() {
+        assertEvent(
+            AnalyticsEvent.CreateTutorialStepViewed(CreateTutorialStage.ADDITIONAL_INFO),
+            "client_storyCreate_tutorialStep_viewed",
+            mapOf("stage" to "additional-info"),
+        )
+        assertEvent(
+            AnalyticsEvent.CreateTutorialSkipButtonClicked(CreateTutorialStage.INTRO),
+            "client_storyCreate_tutorialSkipButton_clicked",
+            mapOf("stage" to "intro"),
+        )
+        assertEvent(
+            AnalyticsEvent.CreateTutorialCompleted(toOriginals = true),
+            "client_storyCreate_tutorial_completed",
+            mapOf("action" to "originals"),
+        )
+        assertEvent(
+            AnalyticsEvent.CreateTutorialCompleted(toOriginals = false),
+            "client_storyCreate_tutorial_completed",
+            mapOf("action" to "close"),
         )
     }
 
