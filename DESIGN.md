@@ -35,6 +35,7 @@ colors:
   background-disabled: "#EEEEEE"
   border: "#EEEEEE"
   border-strong: "#B9B9B9"
+  border-overlay: "#00000000"
   border-input: "#8D8D8D"
   border-brand: "#00995F"
   border-danger: "#E23531"
@@ -74,6 +75,7 @@ colors-dark:
   background-disabled: "#3A3A3A"
   border: "#2C2C2C"
   border-strong: "#3A3A3A"
+  border-overlay: "#2C2C2C"
   border-input: "#666666"
   border-brand: "#58C58F"
   border-danger: "#FF7669"
@@ -175,6 +177,7 @@ sizes:
   generation-dot-radius: 1dp
   tour-card-width: 288dp
   tour-step-dot: 6dp
+  mascot-avatar: 48dp
   studio-cover-width: 128dp
   unread-dot: 8dp
   unread-dot-inline: 6dp
@@ -388,6 +391,23 @@ components:
     dotSize: "{sizes.tour-step-dot}"
     dotActiveColor: "{colors.text-subtle}"
     dotInactiveColor: "{colors.border}"
+  create-tutorial-dialog:
+    backgroundColor: "{colors.surface}"
+    borderColor: "{colors.border-overlay}"
+    scrimColor: "{colors.tour-scrim}"
+    rounded: "{rounded.overlay}"
+    margin: "0 {spacing.component}"
+    padding: "{spacing.gutter}"
+    avatarSize: "{sizes.mascot-avatar}"
+    avatarBackgroundColor: "{colors.background-brand-subtle}"
+    mascotColor: "{colors.brand}"
+    gap: "{spacing.component}"
+    nameTypography: "{typography.label-large}"
+    nameColor: "{colors.text-brand}"
+    messageTypography: "{typography.body-large}"
+    messageColor: "{colors.text}"
+    buttonHeight: "{sizes.control-compact}"
+    buttonGap: "{spacing.inline}"
   chat-small-button:
     backgroundColor: "{colors.brand}"
     textColor: "{colors.text-inverse}"
@@ -498,7 +518,7 @@ components:
 | 파일 | 내용 |
 | --- | --- |
 | `ManyakLogo.kt` | 로고 락업. 높이는 토큰, 폭은 원본 비율 |
-| `ManyakMascot.kt` | 로고 심벌을 눈이 움직이는 마스코트로 그리는 `DrawScope` 함수. 동그란 눈 외에 힘주는·웃는·졸린·반짝이는·윙크·어지러운 눈을 그린다. 시작 화면, 완성 중 표지, 채팅 실시간 이미지 대기가 쓴다 |
+| `ManyakMascot.kt` | 로고 심벌을 눈이 움직이는 마스코트로 그리는 `DrawScope` 함수. 동그란 눈 외에 힘주는·웃는·졸린·반짝이는·윙크·어지러운 눈을 그린다. 시작 화면, 완성 중 표지, 채팅 실시간 이미지 대기, 간편 제작 첫 진입 안내가 쓴다 |
 | `ManyakSectionHeader.kt` | 메인 탭 상단 헤더 |
 | `ManyakNavigationBar.kt` · `ManyakNavigationItem.kt` | 하단 탭 바와 그 항목 |
 | `ProgressIndicator.kt` | 로딩 스피너와 지연 표시 헬퍼 |
@@ -507,6 +527,7 @@ components:
 | `credit/CreditBalanceCard.kt` | 내 이프 카드(라벨·잔액·충전 버튼). 마이와 채팅 메뉴 시트가 같이 쓴다 |
 | `ManyakOptionsSheet.kt` · `ManyakOptionItem.kt` | 카드 옵션·상세 옵션·채팅 메뉴의 바텀 시트 틀과 항목 버튼 |
 | `ManyakCheckbox.kt` | 동의·확인 항목의 체크 표시. 줄이 토글을 맡고 상자는 그리기만 한다 |
+| `CreateTutorialDialog.kt` | 간편 제작 첫 진입 안내 대화창과 그 안에서 말하는 마스코트. 문구와 버튼 콜백만 받고 간편 제작 화면과 제작 탭이 같이 쓴다 |
 
 `designsystem/src/main/java/app/manyak/designsystem/mascot/`
 
@@ -560,6 +581,7 @@ components:
 - **점선 경계** (`{colors.border-strong}` — 라이트 #B9B9B9 / 다크 #3A3A3A): 점선은 잉크가 절반만 닿아 같은 색이어도 실선보다 한참 연하게 읽힙니다. 실선 이웃과 같은 무게로 보이게 하는 한 단계 진한 장식 경계이며, **점선에만** 씁니다 — 실선에 쓰면 그냥 진한 테두리가 됩니다.
 - **입력 경계** (`{colors.border-input}` — 라이트 #8D8D8D / 다크 #666666): 경계가 유일한 식별 수단일 때. **표면이 아니라 자기 채움색 기준으로** 역산한 값입니다 — 표면 기준으로 잡았더니 `{colors.background-neutral}` 위에서 2.85로 미달했기 때문입니다.
 - **포커스 링** (`{colors.border-focused}`): 선택된 테두리 `{colors.border-brand}`와 같은 값입니다.
+- **떠 있는 안내 카드 경계** (`{colors.border-overlay}`, 라이트 투명 / 다크 #2C2C2C): 바탕과 같은 `{colors.surface}`로 딤 위에 뜨는 카드(간편 제작 첫 진입 안내)가 다크에서 딤에 묻히지 않게 두르는 1dp 경계입니다. 웹 카드의 다크 전용 테두리와 같습니다.
 - 상태 경계 `{colors.border-danger}` · `{colors.border-warning}` · `{colors.border-information}`는 각 배너·입력창에 씁니다.
 
 ### 쓰면 안 되는 조합
@@ -678,6 +700,7 @@ components:
 | `{sizes.generation-dot-radius}` | 1dp | 마스코트 무대 바탕 점 반지름 |
 | `{sizes.tour-card-width}` | 288dp | 채팅 안내 투어 카드의 폭. 좁은 화면에서는 좌우 `{spacing.gutter}`를 남기고 줄어든다 |
 | `{sizes.tour-step-dot}` | 6dp | 채팅 안내 투어 카드의 스텝 점 지름 |
+| `{sizes.mascot-avatar}` | 48dp | 간편 제작 첫 진입 안내 대화창에서 마스코트가 말하는 둥근 프로필의 지름 |
 | `{sizes.studio-cover-width}` | 128dp | 제작 탭의 스토리, 초안, 검수 제출본 표지 폭 |
 | `{sizes.unread-dot}` | 8dp | 헤더 공지 버튼 아이콘 오른쪽 위의 안 읽음 점 지름 |
 | `{sizes.unread-dot-inline}` | 6dp | 공지 목록 제목 끝에 붙는 안 읽음 점 지름 |
@@ -804,6 +827,8 @@ components:
 **`chat-realtime-image-nudge`**: 시트가 완전히 펼쳐진 뒤 화면 전체를 `{colors.tour-scrim}`으로 덮고, 실시간 이미지 행을 `{rounded.control}`로 뚫습니다. 하이라이트는 시트 좌우에서 `{spacing.compact}`(8dp) 안쪽이며 행 내용까지 같은 여백을 둡니다. 카드는 행 아래 `{spacing.component}` 간격, `{sizes.tour-card-width}` 폭, `{colors.surface-raised}` 배경과 `{rounded.control}` 모서리, `{spacing.gutter}` 내부 여백을 사용합니다. 제목과 설명은 투어와 같은 타이포를 쓰고 오른쪽 아래 확인 버튼(`chat-small-button` 주 동작)을 둡니다. 모션은 `nudge-dim-enter`, `nudge-card-delay`, `nudge-card-enter`, `nudge-exit`을 따릅니다. 카드가 아래 공간보다 길면 카드 안에서 스크롤합니다.
 
 **`chat-tour-card`** — 채팅 첫 진입 안내 투어. 딤 `{colors.tour-scrim}`은 대상 버튼을 `{spacing.dense}`만큼 넓힌 `{rounded.control}` 모양으로 뚫고, 카드는 `{colors.surface-raised}` · `{rounded.control}` · 내부 여백 `{spacing.gutter}` · 폭 `{sizes.tour-card-width}`(좁으면 좌우 `{spacing.gutter}`를 남기고 줄어듦)입니다. 카드는 하이라이트와 `{spacing.component}` 떨어져 아래에, 아래 공간이 모자라면 위에 놓이고 가로는 하이라이트 중앙이 기본이며 가장자리에서는 그쪽 변에 맞춥니다. 제목 `{typography.body-large-strong}`, 설명 `{typography.body-medium}` + `{colors.text-subtle}`, 아래 줄에 스텝 점(`{sizes.tour-step-dot}`, 현재 `{colors.text-subtle}` · 나머지 `{colors.border}`)과 건너뛰기(`chat-small-button` 글자형), 다음/완료(`chat-small-button` 주 동작)를 둡니다. 점과 버튼 사이는 `{spacing.inline}`입니다. 그림자는 두지 않습니다.
+
+**`create-tutorial-dialog`**: 간편 제작 첫 진입 안내. 웹 카드와 같은 모양이라 앱 다이얼로그(`overlay`)와 따로 둡니다. 창 딤은 `{colors.tour-scrim}`과 같은 검정 50%이고 카드는 좌우 `{spacing.component}`만 남기고 화면 폭을 채워 세로 가운데에 놓입니다. 카드는 `{colors.surface}`, `{rounded.overlay}`, `{colors.border-overlay}` 1dp 경계(다크에만 보임), 안쪽 여백 `{spacing.gutter}`입니다. 좌상단 `{sizes.mascot-avatar}` 원(`{colors.background-brand-subtle}`) 안에서 `{colors.brand}` 마스코트가 말하고, 오른쪽 `{spacing.component}`에 이름 “마냑”(`{typography.label-large}` + `{colors.text-brand}`)과 `{spacing.inline}` 아래 대사(`{typography.body-large}` + `{colors.text}`)를 둡니다. 대사 아래 `{spacing.gutter}`에 버튼 줄을 오른쪽 정렬하고 간격은 `{spacing.inline}`입니다. 버튼의 보이는 높이는 `{sizes.control-compact}`, 보조는 `{colors.text}` 글자 버튼, 주 동작은 `{colors.brand}` 채움 버튼이며 둘 다 `{rounded.control}`, `{typography.label-large}`입니다. 창 전환은 끄고 카드가 250ms 동안 0.95배에서 커지며 나타납니다. **단계가 바뀌어도 같은 호출 자리에서 다시 그려 창을 유지하고** 대사만 `{motion.element-enter}`로 교차 페이드합니다. 단계마다 창을 새로 열면 딤이 두 번 페이드돼 깜빡입니다. 바깥 탭으로 닫지 않습니다.
 
 **`chat-small-button`** — 채팅방 안내 카드와 실패 안내 아래의 작은 버튼. 웹의 작은 버튼(`size="sm"`)과 같게 최소 높이 `{sizes.control-small}`, 가로 여백 `{spacing.component}`, `{typography.label-small}`, `{rounded.menu-item}`입니다. 주 동작은 `{colors.brand}` 바탕에 `{colors.text-inverse}`, 테두리형(선택지 실패의 다시 시도)은 `{colors.surface-raised}` 바탕에 `{colors.border}` 1dp 경계와 `{colors.text}`, 글자형(투어 건너뛰기)은 바탕 없이 `{colors.text}`입니다. M3 `Button`은 최소 높이 40dp가 붙어 쓰지 않습니다. 구멍은 스텝이 바뀔 때 `{motion.element-enter}`로 다음 대상에 옮겨 가고, 카드는 같은 시간에 `{spacing.compact}` 아래에서 올라오며 나타납니다.
 

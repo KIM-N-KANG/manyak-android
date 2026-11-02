@@ -44,6 +44,8 @@ data class ManyakSizes(
     val tourCardWidth: Dp,
     /** 6dp — 채팅 안내 투어 카드의 스텝 점 지름 */
     val tourStepDot: Dp,
+    /** 48dp 간편 제작 첫 진입 안내 대화창에서 마스코트가 말하는 둥근 프로필의 지름 */
+    val mascotAvatar: Dp,
     /** 128dp 제작 탭의 스토리, 초안, 검수 제출본 표지 폭 */
     val studioCoverWidth: Dp,
     /** 헤더 공지 버튼 아이콘 오른쪽 위의 안 읽음 점 지름 */
@@ -76,6 +78,7 @@ internal val ManyakDefaultSizes =
         generationDotRadius = 1.dp,
         tourCardWidth = 288.dp,
         tourStepDot = 6.dp,
+        mascotAvatar = 48.dp,
         studioCoverWidth = 128.dp,
         unreadDot = 8.dp,
         unreadDotInline = 6.dp,

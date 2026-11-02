@@ -5,6 +5,7 @@ import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.studio.entity.StorySubmission
 import app.manyak.studio.entity.SubmissionStatus
+import app.manyak.studio.testing.FakeCreateTutorialProgress
 import app.manyak.studio.testing.FakeCreationProgressAccess
 import app.manyak.studio.testing.FakeStoryRepository
 import app.manyak.studio.testing.sampleStories
@@ -313,7 +314,14 @@ class StudioSubmissionTest {
                 }
             for (status in SubmissionStatus.entries) {
                 val repository = repository(status)
-                val vm = StudioViewModel(FakeCreationProgressAccess(), repository, analytics, repository)
+                val vm =
+                    StudioViewModel(
+                        FakeCreationProgressAccess(),
+                        repository,
+                        analytics,
+                        repository,
+                        FakeCreateTutorialProgress(),
+                    )
                 vm.onIntent(StudioIntent.ScreenShown)
                 runCurrent()
                 vm.onIntent(StudioIntent.OpenCardOptions(StudioCard.Submission(repository.currentSubmissions.single())))
@@ -337,7 +345,13 @@ class StudioSubmissionTest {
         }
 
     private fun viewModel(repository: FakeStoryRepository) =
-        StudioViewModel(FakeCreationProgressAccess(), repository, NoOpAnalytics, repository)
+        StudioViewModel(
+            FakeCreationProgressAccess(),
+            repository,
+            NoOpAnalytics,
+            repository,
+            FakeCreateTutorialProgress(),
+        )
 
     private fun repository(status: SubmissionStatus) =
         FakeStoryRepository().apply {

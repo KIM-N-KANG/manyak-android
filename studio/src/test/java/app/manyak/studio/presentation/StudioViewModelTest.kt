@@ -7,11 +7,14 @@ import app.manyak.common.domain.story.CreationProgressAccess
 import app.manyak.common.entity.story.CompletionFailure
 import app.manyak.common.entity.story.CompletionRequestStatus
 import app.manyak.common.entity.story.CompletionRequestSummary
+import app.manyak.common.entity.story.CreateTutorialStage
 import app.manyak.common.entity.story.CreationProgressSummary
 import app.manyak.common.entity.story.CreationResumePoint
 import app.manyak.common.entity.story.CreationStage
+import app.manyak.common.presentation.story.CreateTutorialController
 import app.manyak.report.entity.StoryReportReason
 import app.manyak.report.presentation.StoryReportAction
+import app.manyak.studio.testing.FakeCreateTutorialProgress
 import app.manyak.studio.testing.FakeCreationProgressAccess
 import app.manyak.studio.testing.FakeStoryRepository
 import app.manyak.studio.testing.sampleStories
@@ -60,6 +63,26 @@ class StudioViewModelTest {
         assertTrue(StudioUiState(drafts = listOf(local)).showCreateFab)
         assertTrue(StudioUiState(loadFailed = true, drafts = listOf(local)).showCreateFab)
     }
+
+    @Test
+    fun `완성 중 카드가 보이면 안내 마지막 단계를 열고 버튼으로 닫으면 모두 마친다`() =
+        runTest(dispatcher) {
+            val store = FakeCreationProgressAccess(requests = listOf(pendingRequest("request")))
+            val tutorial = FakeCreateTutorialProgress(next = CreateTutorialStage.COMPLETING)
+            val viewModel = studioViewModel(store, FakeStoryRepository(), NoOpAnalytics, tutorial)
+            backgroundScope.launch { viewModel.tutorial.drive() }
+            runCurrent()
+            advanceTimeBy(CreateTutorialController.OPEN_DELAY_MS + 1)
+            runCurrent()
+
+            assertEquals(CreateTutorialStage.COMPLETING, viewModel.tutorial.stage.value)
+
+            viewModel.tutorial.primary()
+            runCurrent()
+
+            assertNull(viewModel.tutorial.stage.value)
+            assertNull(tutorial.next())
+        }
 
     @Test
     fun `초안이 없으면 카드 없이 바로 새 생성으로 진입한다`() =
@@ -656,4 +679,5 @@ private fun studioViewModel(
     store: CreationProgressAccess,
     repository: FakeStoryRepository,
     analytics: app.manyak.analytics.domain.Analytics,
-): StudioViewModel = StudioViewModel(store, repository, analytics, repository)
+    tutorial: FakeCreateTutorialProgress = FakeCreateTutorialProgress(),
+): StudioViewModel = StudioViewModel(store, repository, analytics, repository, tutorial)

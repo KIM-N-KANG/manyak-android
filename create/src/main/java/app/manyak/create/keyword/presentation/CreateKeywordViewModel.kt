@@ -4,8 +4,12 @@ import androidx.lifecycle.viewModelScope
 import app.manyak.analytics.domain.Analytics
 import app.manyak.analytics.entity.AnalyticsEvent
 import app.manyak.analytics.entity.CreateStep
+import app.manyak.analytics.presentation.toAnalyticsEvent
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.story.CreateTutorialProgress
+import app.manyak.common.entity.story.CreateTutorialStage
 import app.manyak.common.presentation.mvi.MviViewModel
+import app.manyak.common.presentation.story.CreateTutorialController
 import app.manyak.create.domain.StoryCreationRepository
 import app.manyak.create.entity.CharacterGender
 import app.manyak.create.entity.GenreCatalog
@@ -28,6 +32,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.text.Normalizer
 
@@ -174,6 +179,18 @@ data class CreateKeywordUiState(
 
     val isFooterEnabled: Boolean
         get() = providedTags !is ProvidedTags.Failed
+
+    /** 진입 판정이 끝나고 안내를 가릴 다이얼로그나 생성 요청이 없을 때만 인사와 키워드 안내를 받는다. */
+    val tutorialScreen: CreateTutorialStage?
+        get() =
+            CreateTutorialStage.KEYWORD.takeIf {
+                !isRestoring &&
+                    !entryFailed &&
+                    draftConflictVersion == null &&
+                    !isGeneratingStorylines &&
+                    exitWarning == null &&
+                    pendingRemoveCharacterId == null
+            }
 
     /** 복원 전에는 무엇이 저장돼 있는지 몰라 변경 여부를 판정하지 않는다. */
     val hasUnsavedChanges: Boolean
@@ -453,6 +470,7 @@ class CreateKeywordViewModel
         private val storyCreationRepository: StoryCreationRepository,
         private val storylineGenerationStore: StorylineGenerationStore,
         private val analytics: Analytics,
+        tutorialProgress: CreateTutorialProgress,
         @Assisted private val resume: Boolean = false,
         @Assisted("server") private val server: Boolean = false,
     ) : MviViewModel<CreateKeywordIntent, CreateKeywordUiState, CreateKeywordEvent, CreateKeywordEffect>(
@@ -474,6 +492,15 @@ class CreateKeywordViewModel
                 onEvent = { dispatchEvent(it) },
                 onEffect = { dispatchEffect(it) },
                 onSaved = { analytics.track(AnalyticsEvent.DraftSaved(CreateStep.KEYWORD)) },
+            )
+
+        /** 첫 진입 안내. 화면이 보이는 동안 몰고 버튼을 받는다. */
+        val tutorial =
+            CreateTutorialController(
+                scope = viewModelScope,
+                progress = tutorialProgress,
+                screen = uiState.map { it.tutorialScreen },
+                report = { analytics.track(it.toAnalyticsEvent()) },
             )
 
         init {

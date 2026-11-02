@@ -369,4 +369,12 @@
         <item>막차 승객</item>
         <item>얼굴 없는 역무원</item>
     </string-array>
+    <string name="create_tutorial_intro">반가워요! 키워드로 스토리 만들고\n스토리 속 등장인물과 대화해 보세요.</string>
+    <string name="create_tutorial_keyword">장르와 인물을 골라 주세요.\n내가 주인공인 1인칭 스토리예요.</string>
+    <string name="create_tutorial_storyline">%1$s 만든 스토리라인 3개예요.\n마음에 드는 하나를 골라 주세요.</string>
+    <string name="create_tutorial_storyline_genre_fallback">장르</string>
+    <string name="create_tutorial_additional_info">마지막이에요!\n원하는 설정을 더하면 완성돼요.</string>
+    <string name="create_tutorial_start">시작하기</string>
+    <string name="create_tutorial_skip">건너뛰기</string>
+    <string name="create_tutorial_confirm">확인</string>
 </resources>

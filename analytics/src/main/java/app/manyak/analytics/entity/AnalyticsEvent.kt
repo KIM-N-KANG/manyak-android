@@ -1,6 +1,7 @@
 package app.manyak.analytics.entity
 
 import app.manyak.common.entity.auth.AuthProvider
+import app.manyak.common.entity.story.CreateTutorialStage
 
 /**
  * 이벤트 카탈로그. 이름과 프로퍼티는 웹과 같은 공통 계약을 쓰고, 값을 이름에 넣지 않는다.
@@ -223,6 +224,24 @@ sealed class AnalyticsEvent(
     data class StoryCreateCompleted(
         val storyId: String,
     ) : AnalyticsEvent("client_storyCreate_completed", mapOf("story_id" to storyId))
+
+    // 간편 제작 첫 진입 안내. 마지막 단계는 제작 탭에서 열지만 같은 storyCreate 이름을 쓴다.
+    data class CreateTutorialStepViewed(
+        val stage: CreateTutorialStage,
+    ) : AnalyticsEvent("client_storyCreate_tutorialStep_viewed", mapOf("stage" to stage.wire))
+
+    /** 첫 단계의 "건너뛰기"와 뒤로가기. */
+    data class CreateTutorialSkipButtonClicked(
+        val stage: CreateTutorialStage,
+    ) : AnalyticsEvent("client_storyCreate_tutorialSkipButton_clicked", mapOf("stage" to stage.wire))
+
+    /** 마지막 단계를 버튼이나 뒤로가기로 닫았다. 뒤로가기는 닫기와 같다. */
+    data class CreateTutorialCompleted(
+        val toOriginals: Boolean,
+    ) : AnalyticsEvent(
+            "client_storyCreate_tutorial_completed",
+            mapOf("action" to if (toOriginals) "originals" else "close"),
+        )
 
     // storyOnboarding — 신규 가입 첫 화면. position 은 오리지널 목록 안의 0부터 센 순번이다.
     data object StoryOnboardingViewed : AnalyticsEvent("client_storyOnboarding_viewed")
