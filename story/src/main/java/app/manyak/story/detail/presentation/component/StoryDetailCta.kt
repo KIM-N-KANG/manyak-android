@@ -24,7 +24,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import app.manyak.designsystem.component.ManyakIconButton
 import app.manyak.designsystem.component.ManyakProgressIndicator
 import app.manyak.designsystem.component.ScrollEdgeFade
@@ -41,8 +40,6 @@ import app.manyak.story.R as StoryR
 @Composable
 @Suppress("LongParameterList")
 internal fun StartChatCta(
-    isStarting: Boolean,
-    summary: String,
     canLike: Boolean,
     isLiked: Boolean,
     isTogglingLike: Boolean,
@@ -74,8 +71,8 @@ internal fun StartChatCta(
                 }
                 StartChatButton(
                     modifier = Modifier.weight(1f),
-                    isStarting = isStarting,
-                    summary = summary,
+                    label = stringResource(StoryR.string.story_detail_start_chat),
+                    isStarting = false,
                     onClick = onClick,
                 )
             }
@@ -83,16 +80,11 @@ internal fun StartChatCta(
     }
 }
 
-/**
- * 주 동작. 진행 중에도 라벨 자리를 유지해 버튼 크기와 접근성 이름이 그대로 남는다.
- *
- * 라벨 아래 [summary] 한 줄로 무엇으로 시작하는지 보인다. 두 줄이 옆 하트 버튼과 같은 높이 안에 들도록
- * 세로 안쪽 여백을 걷는다.
- */
+/** 주 동작. 진행 중에도 라벨 자리를 유지해 버튼 크기와 접근성 이름이 그대로 남는다. */
 @Composable
-private fun StartChatButton(
+internal fun StartChatButton(
+    label: String,
     isStarting: Boolean,
-    summary: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -111,23 +103,11 @@ private fun StartChatButton(
             ),
     ) {
         Box(contentAlignment = Alignment.Center) {
-            Column(
+            Text(
                 modifier = Modifier.alpha(if (isStarting) 0f else 1f),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    text = stringResource(StoryR.string.story_detail_start_chat),
-                    style = ManyakTheme.typography.labelLarge,
-                )
-                Text(
-                    text = summary,
-                    style = ManyakTheme.typography.labelTiny,
-                    // 라벨보다 한 단계 옅게 둬 버튼 이름이 먼저 읽히게 한다(웹과 같은 80%).
-                    color = ManyakTheme.colors.textInverse.copy(alpha = SUMMARY_ALPHA),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
+                text = label,
+                style = ManyakTheme.typography.labelLarge,
+            )
             if (isStarting) {
                 ManyakProgressIndicator(
                     modifier = Modifier.size(ManyakTheme.sizes.icon),
@@ -160,42 +140,3 @@ private fun LikeButton(
         enabled = enabled,
     )
 }
-
-/**
- * 채팅 시작 버튼 아래 요약. 페르소나 이름은 5자, 시작 상황 이름은 10자까지 보이고 넘치면 말줄임표를 붙인다.
- * 시작 상황이 없으면 페르소나 부분만 보인다.
- *
- * @param personaName 고른 페르소나. null 이면 기본 주인공이다.
- */
-@Composable
-internal fun chatStartSummary(
-    personaName: String?,
-    startSettingName: String?,
-): String {
-    val persona =
-        truncateSummaryPart(
-            personaName ?: stringResource(StoryR.string.story_detail_persona_default),
-            SUMMARY_PERSONA_MAX_LENGTH,
-        )
-    val setting = startSettingName?.let { truncateSummaryPart(it, SUMMARY_SETTING_MAX_LENGTH) }.orEmpty()
-    return if (setting.isEmpty()) {
-        stringResource(StoryR.string.story_detail_start_chat_summary_persona_only, persona)
-    } else {
-        stringResource(StoryR.string.story_detail_start_chat_summary, persona, setting)
-    }
-}
-
-/** 앞뒤 공백을 뺀 글을 [maxLength] 글자까지 남긴다. 이모지가 반으로 갈리지 않게 코드 포인트로 센다. */
-internal fun truncateSummaryPart(
-    text: String,
-    maxLength: Int,
-): String {
-    val trimmed = text.trim()
-    if (trimmed.codePointCount(0, trimmed.length) <= maxLength) return trimmed
-    return trimmed.substring(0, trimmed.offsetByCodePoints(0, maxLength)) + ELLIPSIS
-}
-
-private const val SUMMARY_PERSONA_MAX_LENGTH = 5
-private const val SUMMARY_SETTING_MAX_LENGTH = 10
-private const val SUMMARY_ALPHA = 0.8f
-private const val ELLIPSIS = "…"

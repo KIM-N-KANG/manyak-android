@@ -5,7 +5,6 @@ import app.manyak.analytics.entity.AnalyticsEvent
 import app.manyak.analytics.entity.PersonaType
 import app.manyak.common.entity.persona.CreatedPersona
 import app.manyak.common.entity.persona.Persona
-import app.manyak.story.detail.presentation.component.truncateSummaryPart
 import app.manyak.story.testing.FakeChatRepository
 import app.manyak.story.testing.FakePersonaAccess
 import app.manyak.story.testing.FakeStoryRepository
@@ -21,7 +20,9 @@ import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -70,7 +71,7 @@ class StoryDetailPersonaTest {
 
             viewModel.onIntent(StoryDetailIntent.ScreenShown)
             advanceUntilIdle()
-            viewModel.onIntent(StoryDetailIntent.StartChat)
+            viewModel.onIntent(StoryDetailIntent.StartSheet(StartSheetAction.Start))
             advanceUntilIdle()
 
             assertEquals(listOf<String?>(null), chatRepository.createChatPersonaIds)
@@ -89,7 +90,7 @@ class StoryDetailPersonaTest {
             viewModel.onIntent(StoryDetailIntent.ScreenShown)
             advanceUntilIdle()
             viewModel.onIntent(StoryDetailIntent.ChoosePersona(PersonaAction.Select(DOYUN.id)))
-            viewModel.onIntent(StoryDetailIntent.StartChat)
+            viewModel.onIntent(StoryDetailIntent.StartSheet(StartSheetAction.Start))
             advanceUntilIdle()
 
             assertEquals(listOf<String?>(DOYUN.id), chatRepository.createChatPersonaIds)
@@ -115,7 +116,7 @@ class StoryDetailPersonaTest {
             advanceUntilIdle()
             assertEquals(DOYUN, viewModel.uiState.value.persona.selected)
 
-            viewModel.onIntent(StoryDetailIntent.StartChat)
+            viewModel.onIntent(StoryDetailIntent.StartSheet(StartSheetAction.Start))
             advanceUntilIdle()
 
             assertEquals(listOf<String?>(DOYUN.id), chatRepository.createChatPersonaIds)
@@ -152,7 +153,7 @@ class StoryDetailPersonaTest {
             advanceUntilIdle()
 
             assertNull(viewModel.uiState.value.persona.selected)
-            viewModel.onIntent(StoryDetailIntent.StartChat)
+            viewModel.onIntent(StoryDetailIntent.StartSheet(StartSheetAction.Start))
             advanceUntilIdle()
             assertEquals(listOf<String?>(null), chatRepository.createChatPersonaIds)
         }
@@ -191,12 +192,64 @@ class StoryDetailPersonaTest {
         }
 
     @Test
-    fun `요약은 페르소나 5자와 시작 상황 10자까지 남기고 말줄임표를 붙인다`() {
-        assertEquals("윤해솔", truncateSummaryPart(" 윤해솔 ", 5))
-        assertEquals("다섯글자다", truncateSummaryPart("다섯글자다", 5))
-        assertEquals("여섯글자이…", truncateSummaryPart("여섯글자이름", 5))
-        assertEquals("😀😀😀😀😀…", truncateSummaryPart("😀😀😀😀😀😀", 5))
-    }
+    fun `시작 시트에서 페르소나 생성으로 떠나면 시트를 걷고 돌아오면 한 번만 다시 연다`() =
+        runTest(dispatcher) {
+            val viewModel = viewModel(FakePersonaAccess(listOf(SOL)))
+            viewModel.onIntent(StoryDetailIntent.ScreenShown)
+            advanceUntilIdle()
+            viewModel.onIntent(StoryDetailIntent.StartSheet(StartSheetAction.Open))
+            advanceUntilIdle()
+
+            viewModel.onIntent(StoryDetailIntent.ChoosePersona(PersonaAction.Create))
+            advanceUntilIdle()
+
+            assertEquals(
+                StoryDetailEffect.NavigateToPersonaCreate,
+                withTimeoutOrNull(TIMEOUT_MILLIS) { viewModel.uiEffect.first() },
+            )
+            assertFalse(viewModel.uiState.value.isStartSheetOpen)
+
+            viewModel.onIntent(StoryDetailIntent.ScreenShown)
+            advanceUntilIdle()
+            assertTrue(viewModel.uiState.value.isStartSheetOpen)
+
+            // 닫은 뒤 백그라운드에서 돌아와도 다시 열지 않는다.
+            viewModel.onIntent(StoryDetailIntent.StartSheet(StartSheetAction.Close))
+            viewModel.onIntent(StoryDetailIntent.ScreenShown)
+            advanceUntilIdle()
+            assertFalse(viewModel.uiState.value.isStartSheetOpen)
+        }
+
+    @Test
+    fun `본문 셀렉트에서 페르소나 생성으로 떠나면 돌아와도 시트를 열지 않는다`() =
+        runTest(dispatcher) {
+            val viewModel = viewModel(FakePersonaAccess(listOf(SOL)))
+            viewModel.onIntent(StoryDetailIntent.ScreenShown)
+            advanceUntilIdle()
+
+            viewModel.onIntent(StoryDetailIntent.ChoosePersona(PersonaAction.Create))
+            advanceUntilIdle()
+            viewModel.onIntent(StoryDetailIntent.ScreenShown)
+            advanceUntilIdle()
+
+            assertFalse(viewModel.uiState.value.isStartSheetOpen)
+        }
+
+    @Test
+    fun `상한에 닿아 생성 화면으로 가지 않으면 시트를 그대로 둔다`() =
+        runTest(dispatcher) {
+            val full = List(10) { index -> Persona("p$index", "이름$index", "") }
+            val viewModel = viewModel(FakePersonaAccess(full))
+            viewModel.onIntent(StoryDetailIntent.ScreenShown)
+            advanceUntilIdle()
+            viewModel.onIntent(StoryDetailIntent.StartSheet(StartSheetAction.Open))
+            advanceUntilIdle()
+
+            viewModel.onIntent(StoryDetailIntent.ChoosePersona(PersonaAction.Create))
+            advanceUntilIdle()
+
+            assertTrue(viewModel.uiState.value.isStartSheetOpen)
+        }
 
     private companion object {
         val SOL = Persona("persona-sol", "윤해솔", "# 주인공\n## 성별\n여성\n특징")

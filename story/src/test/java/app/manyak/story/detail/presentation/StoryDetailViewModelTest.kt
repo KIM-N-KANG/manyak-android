@@ -168,7 +168,7 @@ class StoryDetailViewModelTest {
             viewModel.onIntent(StoryDetailIntent.ScreenShown)
             advanceUntilIdle()
             viewModel.onIntent(StoryDetailIntent.SelectStartSetting("setting-b"))
-            viewModel.onIntent(StoryDetailIntent.StartChat)
+            viewModel.onIntent(StoryDetailIntent.StartSheet(StartSheetAction.Start))
             advanceUntilIdle()
 
             assertEquals(listOf("setting-b"), chatRepository.createChatStartSettingIds)
@@ -189,7 +189,7 @@ class StoryDetailViewModelTest {
 
             viewModel.onIntent(StoryDetailIntent.ScreenShown)
             advanceUntilIdle()
-            viewModel.onIntent(StoryDetailIntent.StartChat)
+            viewModel.onIntent(StoryDetailIntent.StartSheet(StartSheetAction.Start))
             advanceUntilIdle()
 
             assertEquals(listOf<String?>(null), chatRepository.createChatStartSettingIds)
@@ -204,9 +204,9 @@ class StoryDetailViewModelTest {
             viewModel.onIntent(StoryDetailIntent.ScreenShown)
             advanceUntilIdle()
 
-            viewModel.onIntent(StoryDetailIntent.StartChat)
-            viewModel.onIntent(StoryDetailIntent.StartChat)
-            viewModel.onIntent(StoryDetailIntent.StartChat)
+            viewModel.onIntent(StoryDetailIntent.StartSheet(StartSheetAction.Start))
+            viewModel.onIntent(StoryDetailIntent.StartSheet(StartSheetAction.Start))
+            viewModel.onIntent(StoryDetailIntent.StartSheet(StartSheetAction.Start))
             advanceUntilIdle()
 
             assertEquals(1, chatRepository.createChatStartSettingIds.size)
@@ -221,7 +221,7 @@ class StoryDetailViewModelTest {
 
             viewModel.onIntent(StoryDetailIntent.ScreenShown)
             advanceUntilIdle()
-            viewModel.onIntent(StoryDetailIntent.StartChat)
+            viewModel.onIntent(StoryDetailIntent.StartSheet(StartSheetAction.Start))
             advanceUntilIdle()
 
             val state = viewModel.uiState.value
@@ -230,9 +230,47 @@ class StoryDetailViewModelTest {
 
             // 다시 누를 수 있어야 한다.
             chatRepository.queuedCreateChatResults += DomainResult.Success(CreatedChat(id = "chat-2"))
-            viewModel.onIntent(StoryDetailIntent.StartChat)
+            viewModel.onIntent(StoryDetailIntent.StartSheet(StartSheetAction.Start))
             advanceUntilIdle()
             assertEquals(2, chatRepository.createChatStartSettingIds.size)
+        }
+
+    @Test
+    fun `시작 시트는 채팅 생성 중에 닫히지 않고 실패하면 남는다`() =
+        runTest(dispatcher) {
+            val chatRepository = FakeChatRepository()
+            chatRepository.queuedCreateChatResults += DomainResult.Failure(DomainError.Network)
+            val viewModel = viewModel(chatRepository = chatRepository)
+            viewModel.onIntent(StoryDetailIntent.ScreenShown)
+            advanceUntilIdle()
+            viewModel.onIntent(StoryDetailIntent.StartSheet(StartSheetAction.Open))
+            advanceUntilIdle()
+
+            viewModel.onIntent(StoryDetailIntent.StartSheet(StartSheetAction.Start))
+            viewModel.onIntent(StoryDetailIntent.StartSheet(StartSheetAction.Close))
+            advanceUntilIdle()
+
+            assertTrue(viewModel.uiState.value.isStartSheetOpen)
+            assertEquals(StoryDetailEffect.ShowChatStartFailed, viewModel.uiEffect.first())
+        }
+
+    @Test
+    fun `시작 시트의 채팅 시작이 성공하면 시트를 걷고 돌아오기 전에는 다시 열지 않는다`() =
+        runTest(dispatcher) {
+            val viewModel = viewModel()
+            viewModel.onIntent(StoryDetailIntent.ScreenShown)
+            advanceUntilIdle()
+            viewModel.onIntent(StoryDetailIntent.StartSheet(StartSheetAction.Open))
+            advanceUntilIdle()
+
+            viewModel.onIntent(StoryDetailIntent.StartSheet(StartSheetAction.Start))
+            advanceUntilIdle()
+            assertFalse(viewModel.uiState.value.isStartSheetOpen)
+
+            // 채팅방이 올라오는 중에 CTA 를 눌러도 시트가 다시 뜨지 않는다.
+            viewModel.onIntent(StoryDetailIntent.StartSheet(StartSheetAction.Open))
+            advanceUntilIdle()
+            assertFalse(viewModel.uiState.value.isStartSheetOpen)
         }
 
     @Test
@@ -242,7 +280,7 @@ class StoryDetailViewModelTest {
 
             viewModel.onIntent(StoryDetailIntent.ScreenShown)
             advanceUntilIdle()
-            viewModel.onIntent(StoryDetailIntent.StartChat)
+            viewModel.onIntent(StoryDetailIntent.StartSheet(StartSheetAction.Start))
             advanceUntilIdle()
             // 성공 직후에 풀면 화면이 사라지는 중에 버튼이 되살아나 깜빡인다.
             assertTrue(viewModel.uiState.value.isStartingChat)

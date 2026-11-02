@@ -44,6 +44,8 @@ data class StoryDetailUiState(
     val selectedStartSettingId: String? = null,
     val imageViewerUrl: String? = null,
     val isStartingChat: Boolean = false,
+    /** 채팅 시작 시트. 회전에 살아남아야 해 화면 로컬이 아니라 여기에 둔다. */
+    val isStartSheetOpen: Boolean = false,
     val report: StoryReportUiState = StoryReportUiState(),
     /** 삭제 확인 다이얼로그. 내 스토리로 들어온 상세에서만 열린다. */
     val isDeleteDialogOpen: Boolean = false,
@@ -81,7 +83,9 @@ sealed interface StoryDetailIntent {
         val action: PersonaAction,
     ) : StoryDetailIntent
 
-    data object StartChat : StoryDetailIntent
+    data class StartSheet(
+        val action: StartSheetAction,
+    ) : StoryDetailIntent
 
     /** 하단 CTA 의 좋아요 버튼. 현재 상태의 반대로 보낸다. */
     data object ToggleLike : StoryDetailIntent
@@ -96,6 +100,16 @@ sealed interface StoryDetailIntent {
     data object ConfirmDelete : StoryDetailIntent
 
     data object DismissDeleteDialog : StoryDetailIntent
+}
+
+sealed interface StartSheetAction {
+    /** 하단 CTA. 바로 채팅을 만들지 않고 시작 시트를 연다. */
+    data object Open : StartSheetAction
+
+    data object Close : StartSheetAction
+
+    /** 시트의 "채팅 시작하기". */
+    data object Start : StartSheetAction
 }
 
 sealed interface StoryDetailEvent {
@@ -122,10 +136,9 @@ sealed interface StoryDetailEvent {
         val persona: StoryPersonaUiState,
     ) : StoryDetailEvent
 
-    data object ChatStartRequested : StoryDetailEvent
-
-    /** 시작이 실패했거나 채팅방에서 돌아왔다. 시작 잠금을 걷는다. */
-    data object ChatStartReleased : StoryDetailEvent
+    data class ChatStart(
+        val change: ChatStartChange,
+    ) : StoryDetailEvent
 
     data class Like(
         val change: LikeChange,
@@ -152,6 +165,18 @@ sealed interface LikeChange {
     ) : LikeChange
 
     data object Finished : LikeChange
+}
+
+/** 시작 시트와 채팅 생성의 진행. 좋아요와 같이 한 갈래로 묶는다. */
+sealed interface ChatStartChange {
+    data class SheetVisible(
+        val visible: Boolean,
+    ) : ChatStartChange
+
+    data object Requested : ChatStartChange
+
+    /** 시작이 실패했거나 채팅방에서 돌아왔다. 시작 잠금을 걷는다. */
+    data object Released : ChatStartChange
 }
 
 sealed interface StoryDetailEffect {
@@ -212,6 +237,9 @@ class StoryDetailViewModel
         private var likeJob: Job? = null
         private var reloadAfterCurrent = false
 
+        /** 시작 시트에서 페르소나 생성으로 떠났다. 돌아오면 시트를 다시 연다. */
+        private var reopenStartSheetOnReturn = false
+
         /**
          * 고른 시작 설정의 장부. UiState 가 아니라 여기서 읽는 이유는 상태 반영이 이벤트 채널을 거쳐
          * 한 박자 늦어서다 — 고른 직후 채팅 시작이 들어오면 UiState 에는 아직 이전 선택이 있다.
@@ -244,7 +272,15 @@ class StoryDetailViewModel
                 access = personaAccess,
                 analytics = analytics,
                 emit = { snapshot -> dispatchEvent(StoryDetailEvent.PersonaChanged(snapshot)) },
-                notify = { effect -> dispatchEffect(effect) },
+                notify = { effect ->
+                    // 시트는 모달이라 열려 있는 동안의 생성은 시트에서 누른 것이다. 생성 화면이 올라오는 동안
+                    // 시트가 그 위에 남지 않게 걷고, 돌아오면 다시 연다.
+                    if (effect == StoryDetailEffect.NavigateToPersonaCreate && uiState.value.isStartSheetOpen) {
+                        reopenStartSheetOnReturn = true
+                        dispatchEvent(StoryDetailEvent.ChatStart(ChatStartChange.SheetVisible(false)))
+                    }
+                    dispatchEffect(effect)
+                },
             )
 
         init {
@@ -273,7 +309,7 @@ class StoryDetailViewModel
 
                 is StoryDetailIntent.ChoosePersona -> persona.handle(intent.action)
 
-                StoryDetailIntent.StartChat -> startChat(state)
+                is StoryDetailIntent.StartSheet -> handleStartSheet(intent.action, state)
 
                 StoryDetailIntent.ToggleLike -> toggleLike(state)
 
@@ -285,6 +321,26 @@ class StoryDetailViewModel
                 StoryDetailIntent.ConfirmDelete -> delete()
 
                 StoryDetailIntent.DismissDeleteDialog -> dismissDeleteDialog()
+            }
+        }
+
+        private suspend fun handleStartSheet(
+            action: StartSheetAction,
+            state: StoryDetailUiState,
+        ) {
+            when (action) {
+                // 시작에 성공해 잠긴 동안은 채팅방으로 넘어가는 중이라 다시 열지 않는다.
+                StartSheetAction.Open ->
+                    if (state.story != null && !state.isStartingChat) {
+                        dispatchEvent(StoryDetailEvent.ChatStart(ChatStartChange.SheetVisible(true)))
+                    }
+
+                StartSheetAction.Close ->
+                    if (startChatJob?.isActive != true) {
+                        dispatchEvent(StoryDetailEvent.ChatStart(ChatStartChange.SheetVisible(false)))
+                    }
+
+                StartSheetAction.Start -> startChat(state)
             }
         }
 
@@ -342,7 +398,11 @@ class StoryDetailViewModel
             // 성공 직후에 풀면 화면이 사라지는 중에 버튼이 되살아나 깜빡인다. 그래서 복귀 시점에 푼다.
             // 요청이 아직 살아 있으면 풀지 않는다. 구성 변경으로 화면만 다시 만들어졌을 때
             // 잠금과 스피너가 사라지면 진행 중인 생성이 없는 것처럼 보이고, 다시 눌러도 반응이 없다.
-            if (startChatJob?.isActive != true) dispatchEvent(StoryDetailEvent.ChatStartReleased)
+            if (startChatJob?.isActive != true) dispatchEvent(StoryDetailEvent.ChatStart(ChatStartChange.Released))
+            if (reopenStartSheetOnReturn) {
+                reopenStartSheetOnReturn = false
+                dispatchEvent(StoryDetailEvent.ChatStart(ChatStartChange.SheetVisible(true)))
+            }
             load(showProgress = state.story == null, ensureFresh = true)
             persona.refresh()
         }
@@ -352,17 +412,20 @@ class StoryDetailViewModel
             if (startChatJob?.isActive == true) return
             val personaId = persona.commitForChat()
             analytics.track(AnalyticsEvent.ChatStartButtonClicked(story.id, personaType(personaId)))
-            dispatchEvent(StoryDetailEvent.ChatStartRequested)
+            dispatchEvent(StoryDetailEvent.ChatStart(ChatStartChange.Requested))
             startChatJob =
                 viewModelScope.launch {
                     val result = chatRepository.createChat(story.id, selectedStartSettingId, personaId)
                     when (result) {
-                        // 잠금은 여기서 풀지 않는다 — 복귀 시 ScreenShown 이 푼다.
-                        is DomainResult.Success ->
+                        // 잠금은 여기서 풀지 않는다 — 복귀 시 ScreenShown 이 푼다. 시트는 채팅방이 올라오는 동안
+                        // 그 위에 남지 않게 먼저 걷는다.
+                        is DomainResult.Success -> {
+                            dispatchEvent(StoryDetailEvent.ChatStart(ChatStartChange.SheetVisible(false)))
                             dispatchEffect(StoryDetailEffect.NavigateToChat(result.value.id))
+                        }
 
                         is DomainResult.Failure -> {
-                            dispatchEvent(StoryDetailEvent.ChatStartReleased)
+                            dispatchEvent(StoryDetailEvent.ChatStart(ChatStartChange.Released))
                             dispatchEffect(StoryDetailEffect.ShowChatStartFailed)
                         }
                     }
@@ -442,9 +505,7 @@ class StoryDetailViewModel
 
                 is StoryDetailEvent.PersonaChanged -> state.copy(persona = event.persona)
 
-                StoryDetailEvent.ChatStartRequested -> state.copy(isStartingChat = true)
-
-                StoryDetailEvent.ChatStartReleased -> state.copy(isStartingChat = false)
+                is StoryDetailEvent.ChatStart -> state.reduceChatStart(event.change)
 
                 is StoryDetailEvent.Report -> state.copy(report = state.report.reduceReport(event.change))
 
@@ -456,6 +517,13 @@ class StoryDetailViewModel
 
                 is StoryDetailEvent.Like -> state.reduceLike(event.change)
             }
+    }
+
+private fun StoryDetailUiState.reduceChatStart(change: ChatStartChange): StoryDetailUiState =
+    when (change) {
+        is ChatStartChange.SheetVisible -> copy(isStartSheetOpen = change.visible)
+        ChatStartChange.Requested -> copy(isStartingChat = true)
+        ChatStartChange.Released -> copy(isStartingChat = false)
     }
 
 private fun StoryDetailUiState.reduceLike(change: LikeChange): StoryDetailUiState =
