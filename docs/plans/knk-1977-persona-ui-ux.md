@@ -47,6 +47,11 @@
 - 펼친 목록에 중첩 스크롤 연결을 두어, 목록이 스크롤할 수 있을 때는 끝에서 남은 끌기와 플링을 목록이 삼키게 했습니다. 스크롤할 것이 없는 짧은 목록은 그대로 넘겨 다른 시트처럼 끌어서 닫힙니다.
 - 수정 뒤 같은 기기에서 느린 끌기와 빠른 플링 모두 시트가 남고 목록만 맨 위로 갔으며, 제목 쪽에서 끌어내리면 시트가 닫히는 것을 확인했습니다.
 
+## 모서리 맞춤
+
+- 사용자 확인에서 시트 곡률이 웹과 다르다는 지적이 있었습니다. 웹은 `--radius` 10px 기준으로 시트 위쪽 `rounded-t-xl`(20px), 회색 카드 `rounded-xl`(20px), 선택지 `rounded-lg`(16px)입니다. Android는 카드가 `shapes.control`(14dp), 선택지가 `shapes.menuItem`(10dp)이라 카드를 `shapes.overlay`(20dp), 선택지와 생성하기를 `shapes.card`(16dp)로 바꿨습니다(보관 경로: `../../captures/knk-1977/radius-after.png`).
+- 남은 차이는 이번 화면만의 것이 아니라 그대로 뒀습니다. 웹 `lg` 버튼은 `rounded-lg`(16px)이지만 Android 48dp 버튼은 앱 전체가 `shapes.control`(14dp)이고, 웹 셀렉트 항목은 `rounded-sm`(12px)이지만 Android 셀렉트 메뉴 항목은 `shapes.menuItem`(10dp)입니다.
+
 ## 복구
 
 서버, 저장 스키마와 라우트 변경은 없습니다. 되돌릴 때는 이 변경을 revert합니다.
