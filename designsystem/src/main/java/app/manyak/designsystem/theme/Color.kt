@@ -84,6 +84,8 @@ data class ManyakColors(
     val surfaceRaised: Color,
     val backgroundNeutral: Color,
     val backgroundNeutralPressed: Color,
+    /** 시트처럼 떠 있는 표면 위의 보조 채움. 다크에서 [backgroundNeutral] 은 [surfaceRaised] 와 같아 묻힌다. */
+    val backgroundNeutralRaised: Color,
     /**
      * 눌림 리플의 색과 농도. 알파가 곧 리플의 눌림 농도라, 흰 행에서는 보조 배경 눌림 색에 가깝게
      * 어두워지고 표지 위에서는 옅은 스크림이 된다.
@@ -132,6 +134,7 @@ internal val ManyakLightColors =
         surfaceRaised = Gray0,
         backgroundNeutral = Gray100,
         backgroundNeutralPressed = Gray150,
+        backgroundNeutralRaised = Gray100,
         overlayPressed = PressedOverlayLight,
         imageViewerScrim = Color.Black.copy(alpha = 0.92f),
         tourScrim = Color.Black.copy(alpha = 0.5f),
@@ -174,6 +177,7 @@ internal val ManyakDarkColors =
         surfaceRaised = Gray900,
         backgroundNeutral = Gray900,
         backgroundNeutralPressed = Gray750,
+        backgroundNeutralRaised = Gray850,
         overlayPressed = PressedOverlayDark,
         imageViewerScrim = Color.Black.copy(alpha = 0.92f),
         tourScrim = Color.Black.copy(alpha = 0.5f),

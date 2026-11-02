@@ -63,11 +63,11 @@ import app.manyak.designsystem.component.rememberDelayedProgressVisibility
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.report.presentation.StoryReportAction
 import app.manyak.report.presentation.component.StoryReportSheet
+import app.manyak.story.detail.presentation.component.ChatStartSheet
 import app.manyak.story.detail.presentation.component.PersonaPick
 import app.manyak.story.detail.presentation.component.StartChatCta
 import app.manyak.story.detail.presentation.component.StoryDetailHeaderMenu
 import app.manyak.story.detail.presentation.component.StoryDetailSkeleton
-import app.manyak.story.detail.presentation.component.chatStartSummary
 import app.manyak.story.detail.presentation.component.storyDetailBody
 import app.manyak.story.detail.presentation.preview.previewStartSettings
 import app.manyak.story.detail.presentation.preview.previewStory
@@ -236,7 +236,7 @@ private fun StoryDetailContent(
     }
 }
 
-/** 본문 위에 얹히는 것들 — 이미지 뷰어와 신고 시트. 본문 배치와 섞이지 않게 따로 둔다. */
+/** 본문 위에 얹히는 것들 — 이미지 뷰어, 채팅 시작 시트와 신고 시트. 본문 배치와 섞이지 않게 따로 둔다. */
 @Composable
 private fun StoryDetailOverlays(
     state: StoryDetailUiState,
@@ -246,6 +246,21 @@ private fun StoryDetailOverlays(
         imageUrl = state.imageViewerUrl,
         onClose = { onIntent(StoryDetailIntent.CloseImageViewer) },
     )
+
+    if (state.isStartSheetOpen && state.story != null) {
+        ChatStartSheet(
+            personas = state.persona.personas,
+            selectedPersona = state.persona.selected,
+            startSettings = state.story.startSettings,
+            selectedStartSetting = state.selectedStartSetting,
+            isStarting = state.isStartingChat,
+            onSelectPersona = { id -> onIntent(StoryDetailIntent.ChoosePersona(PersonaAction.Select(id))) },
+            onCreatePersona = { onIntent(StoryDetailIntent.ChoosePersona(PersonaAction.Create)) },
+            onSelectStartSetting = { id -> onIntent(StoryDetailIntent.SelectStartSetting(id)) },
+            onStart = { onIntent(StoryDetailIntent.StartSheet(StartSheetAction.Start)) },
+            onDismiss = { onIntent(StoryDetailIntent.StartSheet(StartSheetAction.Close)) },
+        )
+    }
 
     if (state.report.isSheetOpen) {
         StoryReportSheet(
@@ -370,16 +385,10 @@ private fun StoryDetailLoaded(
                 Modifier
                     .align(Alignment.BottomCenter)
                     .onSizeChanged { size -> ctaHeight = with(density) { size.height.toDp() } },
-            isStarting = state.isStartingChat,
-            summary =
-                chatStartSummary(
-                    personaName = state.persona.selected?.name,
-                    startSettingName = state.selectedStartSetting?.name,
-                ),
             canLike = state.canLike,
             isLiked = story.isLiked,
             isTogglingLike = state.isTogglingLike,
-            onClick = { onIntent(StoryDetailIntent.StartChat) },
+            onClick = { onIntent(StoryDetailIntent.StartSheet(StartSheetAction.Open)) },
             onToggleLike = { onIntent(StoryDetailIntent.ToggleLike) },
             backgroundColor = storyFooterBackground(listState),
         )
