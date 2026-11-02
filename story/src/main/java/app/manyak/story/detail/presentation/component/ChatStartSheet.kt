@@ -35,10 +35,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -47,7 +43,6 @@ import androidx.compose.ui.semantics.expand
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import app.manyak.common.entity.persona.Persona
 import app.manyak.designsystem.component.ManyakBottomSheet
@@ -90,6 +85,8 @@ internal fun ChatStartSheet(
     ManyakBottomSheet(
         onDismissRequest = onDismiss,
         dismissEnabled = !isStarting,
+        // 목록을 끌다 시트가 닫히지 않게 핸들, 바깥 탭과 뒤로가기로만 닫는다.
+        dismissOnContentDrag = false,
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.section),
     ) {
         StartSheetHeader()
@@ -290,33 +287,10 @@ private fun <T> ChoiceList(
     // 고른 항목이 잘린 목록 아래에 숨지 않도록 그 위 두 칸부터 보이며 연다. 5줄 반의 가운데쯤이다.
     val checkedIndex = options.indexOfFirst { option -> option.value == selected }
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = (checkedIndex - 2).coerceAtLeast(0))
-    // 목록 끝에서 남은 끌기와 플링을 여기서 삼킨다. 시트로 넘어가면 목록을 맨 위로 끌어내리던 손길에 시트가
-    // 닫힌다. 스크롤할 것이 없는 짧은 목록은 다른 시트처럼 끌어서 닫을 수 있게 넘긴다.
-    val containOverscroll =
-        remember(listState) {
-            object : NestedScrollConnection {
-                private val scrollable get() = listState.canScrollForward || listState.canScrollBackward
-
-                override fun onPostScroll(
-                    consumed: Offset,
-                    available: Offset,
-                    source: NestedScrollSource,
-                ): Offset = if (scrollable) available else Offset.Zero
-
-                override suspend fun onPostFling(
-                    consumed: Velocity,
-                    available: Velocity,
-                ): Velocity = if (scrollable) available else Velocity.Zero
-            }
-        }
     val bottomPadding = if (footer != null) ManyakTheme.spacing.inline else ManyakTheme.spacing.compact
     Column(modifier = Modifier.padding(horizontal = ManyakTheme.spacing.compact)) {
         LazyColumn(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = ManyakTheme.sizes.choiceListMaxHeight)
-                    .nestedScroll(containOverscroll),
+            modifier = Modifier.fillMaxWidth().heightIn(max = ManyakTheme.sizes.choiceListMaxHeight),
             state = listState,
             contentPadding = PaddingValues(bottom = bottomPadding),
             verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
