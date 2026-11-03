@@ -113,6 +113,20 @@ class AnalyticsEventContractTest {
         )
     }
 
+    @Test
+    fun `chat edit and fork clicks carry the target turn number`() {
+        assertEvent(
+            AnalyticsEvent.ChatEditButtonClicked(chatId = "chat-1", turnNumber = 2),
+            "client_chat_editButton_clicked",
+            mapOf("chat_id" to "chat-1", "turn_number" to 2),
+        )
+        assertEvent(
+            AnalyticsEvent.ChatForkButtonClicked(chatId = "chat-1", turnNumber = 1),
+            "client_chat_forkButton_clicked",
+            mapOf("chat_id" to "chat-1", "turn_number" to 1),
+        )
+    }
+
     private fun assertEvent(
         event: AnalyticsEvent,
         name: String,

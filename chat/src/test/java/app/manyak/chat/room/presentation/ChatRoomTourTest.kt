@@ -7,6 +7,7 @@ import app.manyak.chat.testing.FakeAttendanceClaimer
 import app.manyak.chat.testing.FakeChatPreferencesRepository
 import app.manyak.chat.testing.FakeChatRepository
 import app.manyak.chat.testing.FakeCreditPolicyRepository
+import app.manyak.chat.testing.FakeCreditTransactionReader
 import app.manyak.chat.testing.FakeReportRepository
 import app.manyak.chat.testing.FakeTrialsRepository
 import app.manyak.chat.testing.FakeUserProfileRepository
@@ -160,6 +161,7 @@ class ChatRoomTourTest {
         creditPolicyRepository = FakeCreditPolicyRepository(),
         profileRepository = FakeUserProfileRepository(),
         attendance = FakeAttendanceClaimer(),
+        creditTransactions = FakeCreditTransactionReader(),
         analytics = analytics,
     )
 }

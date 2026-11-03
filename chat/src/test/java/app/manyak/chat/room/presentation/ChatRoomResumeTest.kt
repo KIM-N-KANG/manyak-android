@@ -10,6 +10,7 @@ import app.manyak.chat.testing.FakeAttendanceClaimer
 import app.manyak.chat.testing.FakeChatPreferencesRepository
 import app.manyak.chat.testing.FakeChatRepository
 import app.manyak.chat.testing.FakeCreditPolicyRepository
+import app.manyak.chat.testing.FakeCreditTransactionReader
 import app.manyak.chat.testing.FakeReportRepository
 import app.manyak.chat.testing.FakeTrialsRepository
 import app.manyak.chat.testing.FakeUserProfileRepository
@@ -157,7 +158,7 @@ class ChatRoomResumeTest {
             assertEquals(listOf("gen-9"), repository.resumedGenerationIds)
             assertTrue(state.isStreaming)
             assertEquals("문을 민다", state.streaming?.userInput)
-            assertNull(state.regeneratingTurnId)
+            assertNull(state.replacingTurnId)
             // 생성 중인 턴이 있으면 선택지를 만들지 않는다.
             assertEquals(emptyList<Long>(), repository.generatedChoiceTurnIds)
 
@@ -176,12 +177,12 @@ class ChatRoomResumeTest {
             val repository = FakeChatRepository()
             repository.queuedChatDetailResults +=
                 DomainResult.Success(
-                    detail(generating = GeneratingTurn("gen-9", userInput = "문을 연다.", regeneratingTurnId = 1)),
+                    detail(generating = GeneratingTurn("gen-9", userInput = "문을 연다.", targetTurnId = 1)),
                 )
             val viewModel = viewModel(repository)
             advanceUntilIdle()
 
-            assertEquals(1L, viewModel.uiState.value.regeneratingTurnId)
+            assertEquals(1L, viewModel.uiState.value.replacingTurnId)
             assertTrue(viewModel.uiState.value.isStreaming)
         }
 
@@ -293,6 +294,7 @@ class ChatRoomResumeTest {
             creditPolicyRepository = FakeCreditPolicyRepository(),
             profileRepository = FakeUserProfileRepository(),
             attendance = FakeAttendanceClaimer(),
+            creditTransactions = FakeCreditTransactionReader(),
             analytics = NoOpAnalytics,
         )
 
@@ -309,7 +311,7 @@ class ChatRoomResumeTest {
     }
 
     private fun continuing(generationId: String) =
-        GeneratingTurn(generationId, userInput = "문을 민다", regeneratingTurnId = null)
+        GeneratingTurn(generationId, userInput = "문을 민다", targetTurnId = null)
 
     private fun detail(
         turns: List<ChatTurn> = sampleChatDetail().turns,

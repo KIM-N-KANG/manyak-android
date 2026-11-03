@@ -34,6 +34,7 @@ import app.manyak.chat.room.presentation.suggestion.shouldGenerateChoices
 import app.manyak.chat.room.presentation.tour.ChatTourStep
 import app.manyak.common.domain.credit.AttendanceClaimer
 import app.manyak.common.domain.credit.CreditPolicyRepository
+import app.manyak.common.domain.credit.CreditTransactionReader
 import app.manyak.common.domain.credit.TrialsRepository
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
@@ -41,8 +42,12 @@ import app.manyak.common.domain.error.map
 import app.manyak.common.domain.error.valueOrNull
 import app.manyak.common.domain.user.UserProfileRepository
 import app.manyak.common.presentation.credit.AttendanceOutcome
+import app.manyak.common.presentation.credit.CreditHistoryChange
+import app.manyak.common.presentation.credit.CreditHistoryController
+import app.manyak.common.presentation.credit.CreditHistoryUiState
 import app.manyak.common.presentation.credit.CreditShortageController
 import app.manyak.common.presentation.credit.CreditShortageUiState
+import app.manyak.common.presentation.credit.reduceCreditHistory
 import app.manyak.common.presentation.mvi.MviViewModel
 import app.manyak.designsystem.component.isAllowedCharacterImageUrl
 import app.manyak.designsystem.text.PassageSegment
@@ -85,6 +90,36 @@ data class StreamingTurn(
     val segments: List<PassageSegment> = emptyList(),
 )
 
+/** 사용자 입력을 그 자리에서 고치는 중인 턴과 고치던 입력. */
+data class TurnEditing(
+    val turnId: Long,
+    val draft: String,
+)
+
+/** 원래 입력과 다른 문장이 남아 있어야 보낼 수 있다. 생성 중인지는 부르는 쪽이 따로 본다. */
+internal fun canSubmitEdit(
+    original: String,
+    draft: String,
+): Boolean = draft.isNotBlank() && draft.trim() != original.trim()
+
+/** 응답을 바꾸거나 채팅을 새로 만드는 턴 조작의 확인 창. */
+sealed interface TurnConfirm {
+    data class Regenerate(
+        val turnId: Long,
+    ) : TurnConfirm
+
+    /** [laterTurnCount] 는 고친 턴 뒤에 이어진 턴 수다. 0 이면 응답만 바뀐다. */
+    data class Edit(
+        val turnId: Long,
+        val userInput: String,
+        val laterTurnCount: Int,
+    ) : TurnConfirm
+
+    data class Fork(
+        val turnId: Long,
+    ) : TurnConfirm
+}
+
 data class ChatRoomUiState(
     val isLoading: Boolean = true,
     val storyTitle: String = "",
@@ -113,8 +148,15 @@ data class ChatRoomUiState(
     val streaming: StreamingTurn? = null,
     /** 전송 잠금. [streaming] 과 따로 두는 이유는 둘의 수명이 갈리는 경우가 있기 때문이다. */
     val isStreaming: Boolean = false,
-    /** 재생성 중인 턴. 그 턴은 목록에서 자리를 지킨 채 [streaming] 으로 바뀐다. */
-    val regeneratingTurnId: Long? = null,
+    /** 재생성이나 입력 수정이 대신하는 턴. 그 턴은 목록에서 자리를 지킨 채 [streaming] 으로 바뀐다. */
+    val replacingTurnId: Long? = null,
+    /** 입력 수정 중. 끝나면 [replacingTurnId] 부터 새 턴 하나로 바뀌므로 그 뒤의 턴을 그리지 않는다. */
+    val hidesLaterTurns: Boolean = false,
+    /** 입력을 고치는 중인 턴. 그 턴이 목록에 없으면 편집기를 그리지 않는다. */
+    val editing: TurnEditing? = null,
+    val turnConfirm: TurnConfirm? = null,
+    /** 포크 요청 중. 포크 버튼을 잠근다. */
+    val isForking: Boolean = false,
     /** 삭제 요청 중. 확인 다이얼로그의 버튼을 잠근다. */
     val isDeleting: Boolean = false,
     /** 이 방이 참조하는 스토리. 신고·새 채팅의 대상이라 조회 전에는 진입점을 두지 않는다. 삭제된 스토리는 빈 문자열이다. */
@@ -124,6 +166,8 @@ data class ChatRoomUiState(
     val creditBalance: Long? = null,
     /** 이프 부족 시트. 닫혀 있으면 null 이다. */
     val creditShortage: CreditShortageUiState? = null,
+    /** 채팅 메뉴가 보이는 이프 내역. 메뉴 화면이면 null 이다. */
+    val creditHistory: CreditHistoryUiState? = null,
     /** 같은 스토리로 새 채팅을 만드는 중. 메뉴 항목을 잠그고 시트 닫기를 막는다. */
     val isStartingNewChat: Boolean = false,
     /** 공유 링크를 발급하는 중. 메뉴 항목을 잠그고 시트 닫기를 막는다. */
@@ -218,10 +262,34 @@ sealed interface ChatRoomIntent {
 
     data object ChoicesRetried : ChatRoomIntent
 
-    /** 마지막 턴의 AI 출력을 다시 만든다. */
+    /** 마지막 턴의 다시 생성 버튼. 쓸 수 있으면 확인 창을 연다. */
     data class RegenerateRequested(
         val turnId: Long,
     ) : ChatRoomIntent
+
+    /** 사용자 입력의 입력 수정 버튼. 그 자리에 원래 입력을 채운 편집기를 연다. */
+    data class EditRequested(
+        val turnId: Long,
+    ) : ChatRoomIntent
+
+    data class EditDraftChanged(
+        val text: String,
+    ) : ChatRoomIntent
+
+    data object EditCancelled : ChatRoomIntent
+
+    /** 편집기의 보내기. 쓸 수 있으면 확인 창을 연다. */
+    data object EditSubmitted : ChatRoomIntent
+
+    /** AI 응답의 포크 버튼. 확인 창을 연다. */
+    data class ForkRequested(
+        val turnId: Long,
+    ) : ChatRoomIntent
+
+    /** 재생성, 입력 수정과 포크 확인 창의 확정. */
+    data object TurnConfirmAccepted : ChatRoomIntent
+
+    data object TurnConfirmDismissed : ChatRoomIntent
 
     /** 확인 다이얼로그에서 삭제를 확정했다. */
     data object DeleteConfirmed : ChatRoomIntent
@@ -267,6 +335,23 @@ sealed interface ChatRoomIntent {
     data object CreditShortageAttendance : CreditShortage
 
     data object CreditShortageDismissed : CreditShortage
+
+    /** 채팅 메뉴 안의 이프 내역. 시트를 닫지 않고 메뉴와 내역을 오간다. */
+    sealed interface CreditHistory : ChatRoomIntent
+
+    /** 이프 카드의 내역. 들어올 때마다 첫 페이지부터 다시 읽는다. */
+    data object CreditHistoryOpened : CreditHistory
+
+    /** 돌아가기, 뒤로가기나 시트 닫기로 내역을 떠났다. 다시 열면 메뉴부터 보인다. */
+    data object CreditHistoryClosed : CreditHistory
+
+    data object CreditHistoryRetried : CreditHistory
+
+    /** 머리글의 새로고침. 받아 둔 뒷 페이지는 버리고 첫 페이지만 다시 읽는다. */
+    data object CreditHistoryRefresh : CreditHistory
+
+    /** 목록 끝에 닿았거나 다음 페이지 재시도를 눌렀다. */
+    data object CreditHistoryLoadMore : CreditHistory
 }
 
 sealed interface ChatRoomEvent {
@@ -326,15 +411,16 @@ sealed interface ChatRoomEvent {
     ) : ChatRoomEvent
 
     /**
-     * 컴포저를 거치지 않는 생성의 진행 블록을 연다. 재생성과 다른 곳에서 시작한 생성의 이어받기다.
-     * [regeneratingTurnId] 가 있으면 그 턴을 진행 블록으로 **대체한다**. 이어받는 생성은 서버 확정 목록과
-     * 함께 오므로 [turns] 도 같은 사건으로 바꾼다.
+     * 컴포저를 거치지 않는 생성의 진행 블록을 연다. 재생성, 입력 수정과 다른 곳에서 시작한 생성의 이어받기다.
+     * [replacingTurnId] 가 있으면 그 턴을 진행 블록으로 **대체하고**, [hidesLaterTurns] 면 그 뒤의 턴을 숨긴다.
+     * 이어받는 생성은 서버 확정 목록과 함께 오므로 [turns] 도 같은 사건으로 바꾼다.
      */
     data class GenerationStarted(
         val turns: List<ChatRoomTurn>,
         val userInput: String,
         val realtimeImage: Boolean,
-        val regeneratingTurnId: Long?,
+        val replacingTurnId: Long?,
+        val hidesLaterTurns: Boolean = false,
     ) : ChatRoomEvent
 
     /** 다시 붙은 연결이 사건을 처음부터 다시 보낸다. 쌓아 둔 본문을 비운다. */
@@ -384,6 +470,12 @@ sealed interface ChatRoomEvent {
         val sheet: CreditShortageUiState?,
     ) : ChatRoomEvent
 
+    data class CreditHistoryChanged(
+        val change: CreditHistoryChange,
+    ) : ChatRoomEvent
+
+    data object CreditHistoryClosed : ChatRoomEvent
+
     data class NewChatStartChanged(
         val inProgress: Boolean,
     ) : ChatRoomEvent
@@ -408,6 +500,18 @@ sealed interface ChatRoomEvent {
     ) : ChatRoomEvent
 
     data object TourClosed : ChatRoomEvent
+
+    data class EditingChanged(
+        val editing: TurnEditing?,
+    ) : ChatRoomEvent
+
+    data class TurnConfirmChanged(
+        val confirm: TurnConfirm?,
+    ) : ChatRoomEvent
+
+    data class ForkChanged(
+        val inProgress: Boolean,
+    ) : ChatRoomEvent
 }
 
 sealed interface ChatRoomEffect {
@@ -434,6 +538,13 @@ sealed interface ChatRoomEffect {
 
     data object ShowNewChatFailed : ChatRoomEffect
 
+    /** 포크로 새 채팅이 만들어졌다. 화면이 지금 방 위에 새 방을 연다. 뒤로가기는 지금 방이다. */
+    data class OpenChat(
+        val chatId: String,
+    ) : ChatRoomEffect
+
+    data object ShowForkFailed : ChatRoomEffect
+
     /** 공유 링크가 발급됐다. 화면이 시트를 닫고 [turnCount] 를 넣은 문구와 함께 시스템 공유 시트로 보낸다. */
     data class ShareLink(
         val url: String,
@@ -457,9 +568,10 @@ sealed interface ChatRoomEffect {
 }
 
 /**
- * 채팅방. 상세 조회 렌더에 더해 턴 진행(SSE)과 재생성, 끊긴 생성의 이어받기, 추천 입력과 선택지를 맡는다.
+ * 채팅방. 상세 조회 렌더에 더해 턴 진행(SSE)과 재생성, 입력 수정, 끊긴 생성의 이어받기, 포크, 추천 입력과
+ * 선택지를 맡는다.
  *
- * 턴 진행, 재생성, 이어받기가 확정 목록과 전송 잠금을 함께 바꾸므로 한 클래스에 둔다. 나누면 같은 정본을
+ * 턴 진행, 재생성, 입력 수정, 이어받기가 확정 목록과 전송 잠금을 함께 바꾸므로 한 클래스에 둔다. 나누면 같은 정본을
  * 여러 곳이 고치게 된다.
  */
 @Suppress("TooManyFunctions", "LargeClass")
@@ -475,6 +587,7 @@ class ChatRoomViewModel
         private val creditPolicyRepository: CreditPolicyRepository,
         private val profileRepository: UserProfileRepository,
         attendance: AttendanceClaimer,
+        creditTransactions: CreditTransactionReader,
         private val analytics: Analytics,
     ) : MviViewModel<ChatRoomIntent, ChatRoomUiState, ChatRoomEvent, ChatRoomEffect>(ChatRoomUiState()) {
         private var preferencesJob: Job? = null
@@ -506,12 +619,21 @@ class ChatRoomViewModel
                 notify = { outcome -> dispatchEffect(ChatRoomEffect.ShowAttendanceOutcome(outcome)) },
             )
 
+        /** 채팅 메뉴의 이프 내역은 이프 충전의 내역 탭과 같은 목록이라 공유 컨트롤러가 조회한다. */
+        private val creditHistory =
+            CreditHistoryController(
+                scope = viewModelScope,
+                reader = creditTransactions,
+                emit = { change -> dispatchEvent(ChatRoomEvent.CreditHistoryChanged(change)) },
+            )
+
         private var choicesJob: Job? = null
         private var choicesToggleJob: Job? = null
         private var regenerateCooldownJob: Job? = null
         private var deleteJob: Job? = null
         private var newChatJob: Job? = null
         private var shareJob: Job? = null
+        private var forkJob: Job? = null
         private var tourJob: Job? = null
         private var realtimeImageNudgeJob: Job? = null
         private var realtimeImageNudgePending = false
@@ -547,8 +669,16 @@ class ChatRoomViewModel
         /** 전송하며 비운 입력. 턴이 열리지 못하면 그대로 되돌린다. */
         private var sent: SentInput? = null
 
-        /** 재생성 중인 턴. 실패 복구가 이어쓰기와 갈리는 지점을 이 값이 가른다. */
-        private var regeneratingTurnId: Long? = null
+        /** 재생성이나 입력 수정이 대신하는 턴. 실패 복구가 이어쓰기와 갈리는 지점을 이 값이 가른다. */
+        private var replacingTurnId: Long? = null
+
+        /** 진행 중인 생성이 입력 수정인지. 끝내 받지 못했을 때 저장 여부를 대상 턴이 사라졌는지로 가린다. */
+        private var isEditGeneration = false
+
+        /** 입력을 고치는 중인 턴. 수정이 완료돼야 비우고 실패와 거절에는 남겨 다시 보낼 수 있게 한다. */
+        private var editing: TurnEditing? = null
+
+        private var turnConfirm: TurnConfirm? = null
 
         /** 생성의 사건을 받는 중인지. 결과를 확정하는 동안은 끊지 않으려고 [isStreaming] 과 따로 둔다. */
         private var receiving = false
@@ -681,7 +811,29 @@ class ChatRoomViewModel
                         uiState.value.report,
                     )
 
-                is ChatRoomIntent.RegenerateRequested -> regenerate(intent.turnId)
+                else -> handleTurnAction(intent)
+            }
+        }
+
+        /** 확정 턴의 버튼과 그 확인 창. 다시 생성, 입력 수정과 포크다. */
+        private suspend fun handleTurnAction(intent: ChatRoomIntent) {
+            when (intent) {
+                is ChatRoomIntent.RegenerateRequested -> requestRegenerate(intent.turnId)
+
+                is ChatRoomIntent.EditRequested -> openEditor(intent.turnId)
+
+                is ChatRoomIntent.EditDraftChanged ->
+                    editing?.let { current -> updateEditing(current.copy(draft = intent.text)) }
+
+                ChatRoomIntent.EditCancelled -> updateEditing(null)
+
+                ChatRoomIntent.EditSubmitted -> submitEdit()
+
+                is ChatRoomIntent.ForkRequested -> requestFork(intent.turnId)
+
+                ChatRoomIntent.TurnConfirmAccepted -> acceptTurnConfirm()
+
+                ChatRoomIntent.TurnConfirmDismissed -> showTurnConfirm(null)
 
                 else -> handleSuggestion(intent)
             }
@@ -708,19 +860,133 @@ class ChatRoomViewModel
             }
         }
 
+        private suspend fun handleCreditHistory(intent: ChatRoomIntent.CreditHistory) {
+            when (intent) {
+                ChatRoomIntent.CreditHistoryOpened, ChatRoomIntent.CreditHistoryRetried -> creditHistory.load()
+
+                ChatRoomIntent.CreditHistoryLoadMore ->
+                    uiState.value.creditHistory?.let { history -> creditHistory.loadMore(history) }
+
+                ChatRoomIntent.CreditHistoryRefresh ->
+                    uiState.value.creditHistory?.let { history -> creditHistory.refresh(history) }
+
+                // 읽던 페이지를 먼저 버린다. 닫은 뒤 늦게 온 응답이 내역 화면을 되살리지 않는다.
+                ChatRoomIntent.CreditHistoryClosed -> {
+                    creditHistory.cancel()
+                    dispatchEvent(ChatRoomEvent.CreditHistoryClosed)
+                }
+            }
+        }
+
         /** 시트를 연다. 보낸 입력은 이미 컴포저에 그대로 있거나 되돌아가 있다. */
         private suspend fun showCreditShortage() {
             analytics.track(AnalyticsEvent.CreditShortageShown(CreditShortageTrigger.CHAT_TURN))
             creditShortage.open()
         }
 
-        private suspend fun regenerate(turnId: Long) {
+        /** 클릭은 확인 전에 센다. 확인 창을 닫아도 버튼을 누른 것이다. */
+        private suspend fun requestRegenerate(turnId: Long) {
             // 화면이 본 마지막 턴과 지금 마지막 턴이 다르면 낡은 클릭이다.
             val turn = turns.lastOrNull()?.takeIf { last -> last.id == turnId } ?: return
             analytics.track(AnalyticsEvent.RegenerateTurnButtonClicked(chatId, turnNumber = turns.size))
-            startTurn(userInput = turn.userInput, regeneratedTurnId = turn.id) { realtimeImage ->
+            if (canConfirmGeneration()) showTurnConfirm(TurnConfirm.Regenerate(turn.id))
+        }
+
+        private suspend fun regenerate(turnId: Long) {
+            val turn = turns.lastOrNull()?.takeIf { last -> last.id == turnId } ?: return
+            startTurn(userInput = turn.userInput, replacedTurnId = turn.id) { realtimeImage ->
                 chatRepository.regenerateTurn(chatId, turn.id, realtimeImage)
             }
+        }
+
+        private suspend fun openEditor(turnId: Long) {
+            // 생성 중에는 버튼이 잠겨 있다. 접근성 서비스의 반복 클릭도 같이 버린다.
+            if (isStreaming) return
+            val index = turns.indexOfFirst { turn -> turn.id == turnId }
+            if (index == -1) return
+            analytics.track(AnalyticsEvent.ChatEditButtonClicked(chatId, turnNumber = index + 1))
+            updateEditing(TurnEditing(turnId = turnId, draft = turns[index].userInput))
+        }
+
+        /** 앞뒤 공백을 뺀 입력을 보낸다. 확인 창은 뒤 턴이 사라지는지에 따라 문구와 색이 다르다. */
+        private suspend fun submitEdit() {
+            val current = editing ?: return
+            val index = turns.indexOfFirst { turn -> turn.id == current.turnId }
+            if (index == -1 || !canSubmitEdit(turns[index].userInput, current.draft)) return
+            if (!canConfirmGeneration()) return
+            showTurnConfirm(
+                TurnConfirm.Edit(
+                    turnId = current.turnId,
+                    userInput = current.draft.trim(),
+                    laterTurnCount = turns.lastIndex - index,
+                ),
+            )
+        }
+
+        private suspend fun edit(confirm: TurnConfirm.Edit) {
+            startTurn(userInput = confirm.userInput, replacedTurnId = confirm.turnId, isEdit = true) { realtimeImage ->
+                chatRepository.editTurn(chatId, confirm.turnId, confirm.userInput, realtimeImage)
+            }
+        }
+
+        private suspend fun requestFork(turnId: Long) {
+            if (isStreaming || forkJob?.isActive == true) return
+            val index = turns.indexOfFirst { turn -> turn.id == turnId }
+            if (index == -1) return
+            analytics.track(AnalyticsEvent.ChatForkButtonClicked(chatId, turnNumber = index + 1))
+            showTurnConfirm(TurnConfirm.Fork(turnId))
+        }
+
+        /**
+         * 지금 방은 그대로 두고 새 방을 그 위에 연다. 지금 방은 새 방 아래에 남으므로 성공해도 잠금을 푼다.
+         * 돌아왔을 때 포크 버튼이 잠겨 있으면 안 된다. 두 번째 포크는 확인 창을 다시 거쳐야 해 이동 중에 생기지 않는다.
+         */
+        private fun fork(turnId: Long) {
+            if (forkJob?.isActive == true) return
+            forkJob =
+                viewModelScope.launch {
+                    dispatchEvent(ChatRoomEvent.ForkChanged(inProgress = true))
+                    when (val result = chatRepository.forkChat(chatId, turnId)) {
+                        is DomainResult.Success -> dispatchEffect(ChatRoomEffect.OpenChat(result.value.id))
+
+                        is DomainResult.Failure -> dispatchEffect(ChatRoomEffect.ShowForkFailed)
+                    }
+                    dispatchEvent(ChatRoomEvent.ForkChanged(inProgress = false))
+                }
+        }
+
+        /**
+         * 이프를 쓰는 생성의 확인 창을 열어도 되는지. 생성 중이면 버리고, 이프가 확실히 모자라면 확인 없이
+         * 시트를 연다. 확인한 뒤에 모자란다고 알리면 조작 하나를 헛되이 시킨다.
+         */
+        private suspend fun canConfirmGeneration(): Boolean {
+            if (streamJob?.isActive == true) return false
+            if (isCreditShort()) {
+                showCreditShortage()
+                return false
+            }
+            return true
+        }
+
+        private suspend fun acceptTurnConfirm() {
+            // 연타로 두 번 들어온 확정은 이미 닫힌 창의 것이다.
+            val confirm = turnConfirm ?: return
+            showTurnConfirm(null)
+            when (confirm) {
+                is TurnConfirm.Regenerate -> regenerate(confirm.turnId)
+                is TurnConfirm.Edit -> edit(confirm)
+                is TurnConfirm.Fork -> fork(confirm.turnId)
+            }
+        }
+
+        private suspend fun showTurnConfirm(confirm: TurnConfirm?) {
+            turnConfirm = confirm
+            dispatchEvent(ChatRoomEvent.TurnConfirmChanged(confirm))
+        }
+
+        private suspend fun updateEditing(next: TurnEditing?) {
+            editing = next
+            dispatchEvent(ChatRoomEvent.EditingChanged(next))
         }
 
         private suspend fun updateComposer(next: ChatComposerState) {
@@ -934,6 +1200,8 @@ class ChatRoomViewModel
 
                 is ChatRoomIntent.CreditShortage -> handleCreditShortage(intent)
 
+                is ChatRoomIntent.CreditHistory -> handleCreditHistory(intent)
+
                 else -> handleTour(intent)
             }
         }
@@ -998,14 +1266,15 @@ class ChatRoomViewModel
          */
         private suspend fun startTurn(
             userInput: String,
-            regeneratedTurnId: Long? = null,
+            replacedTurnId: Long? = null,
+            isEdit: Boolean = false,
             inputMode: MessageInputMode? = null,
             stream: (realtimeImage: Boolean) -> Flow<ChatStreamEvent>,
         ) {
             // 스트림을 만들기 전에 막는다 — 진행 중에 또 만들면 버린 요청이 서버 기록에 남는다.
             if (streamJob?.isActive == true) return
             // 스트림이 끝난 직후의 재생성 연타는 곧바로 또 보낸다. 이어쓰기는 새 입력이라 막지 않는다.
-            if (regeneratedTurnId != null && regenerateCooldownJob?.isActive == true) return
+            if (replacedTurnId != null && regenerateCooldownJob?.isActive == true) return
             if (userInput.isBlank()) return
             if (isCreditShort()) {
                 // 서버도 402 로 막지만, 그 뒤에 되돌리면 보낸 모습이 잠깐 보였다 사라진다. 아는 잔액으로
@@ -1021,8 +1290,8 @@ class ChatRoomViewModel
             // 상태를 바꾸기 전에 만든다 — 출처 판정이 아직 비우지 않은 채우기 기억을 봐야 한다.
             val realtimeImage = realtimeImageEnabled
             val events = stream(realtimeImage)
-            if (regeneratedTurnId == null) {
-                // 이어쓰기만 컴포저를 비운다 — 재생성은 쓰던 초안을 건드리지 않는다.
+            if (replacedTurnId == null) {
+                // 이어쓰기만 컴포저를 비운다. 재생성과 입력 수정은 쓰던 초안을 건드리지 않는다.
                 // 다음 턴의 입력이 앞 턴에서 채운 문장과 대조되면 안 된다.
                 sent = SentInput(composer = composer, filled = filled)
                 filled = null
@@ -1030,14 +1299,15 @@ class ChatRoomViewModel
             } else {
                 sent = null
             }
-            regeneratingTurnId = regeneratedTurnId
+            replacingTurnId = replacedTurnId
+            isEditGeneration = isEdit
             choicesJob?.cancel()
             realtimeImageNudgeJob?.cancel()
             isStreaming = true
             streamJob =
                 viewModelScope.launch {
                     dispatchEvent(
-                        if (regeneratedTurnId == null) {
+                        if (replacedTurnId == null) {
                             ChatRoomEvent.SendStarted(
                                 userInput = userInput,
                                 composer = composer,
@@ -1048,7 +1318,8 @@ class ChatRoomViewModel
                                 turns = turns,
                                 userInput = userInput,
                                 realtimeImage = realtimeImage,
-                                regeneratingTurnId = regeneratedTurnId,
+                                replacingTurnId = replacedTurnId,
+                                hidesLaterTurns = isEdit,
                             )
                         },
                     )
@@ -1120,7 +1391,8 @@ class ChatRoomViewModel
         }
 
         private suspend fun beginResume(target: GeneratingTurn) {
-            regeneratingTurnId = target.regeneratingTurnId
+            replacingTurnId = target.targetTurnId
+            isEditGeneration = target.isEdit
             sent = null
             isStreaming = true
             choicesJob?.cancel()
@@ -1131,7 +1403,8 @@ class ChatRoomViewModel
                     userInput = target.userInput,
                     // 서버가 알려 주지 않아 지금 설정을 따른다. 진행 블록의 로딩 모양에만 쓰인다.
                     realtimeImage = realtimeImageEnabled,
-                    regeneratingTurnId = target.regeneratingTurnId,
+                    replacingTurnId = target.targetTurnId,
+                    hidesLaterTurns = target.isEdit,
                 ),
             )
         }
@@ -1184,7 +1457,7 @@ class ChatRoomViewModel
             sent = null
             // 완료 순간의 설정으로 판단한다. 저장을 기다리는 중 토글이 바뀌어도 다시 판단하지 않는다.
             val imageWasEnabled = realtimeImageEnabled
-            if (regeneratingTurnId == null && preferences.recordCompletedTurn() == NUDGE_TURN_COUNT) {
+            if (replacingTurnId == null && preferences.recordCompletedTurn() == NUDGE_TURN_COUNT) {
                 realtimeImageNudgePending = !imageWasEnabled
             }
             // 완료된 턴이 체험 한 회와 이프를 썼을 수 있다. 다음 턴의 배지와 잔액 선검사가 낡은 값을
@@ -1193,11 +1466,13 @@ class ChatRoomViewModel
             viewModelScope.launch { profileRepository.refresh() }
             if (detail != null) {
                 dispatchEvent(ChatRoomEvent.TurnConfirmed(turns))
+                // 고친 턴은 새 턴으로 바뀌어 편집기가 붙을 자리가 없다.
+                if (isEditGeneration && editing?.turnId == replacingTurnId) updateEditing(null)
                 generateChoices()
             } else {
-                // 재생성은 대상 턴이 목록에 그대로 있어 블록만 걷으면 기존 본문이 돌아온다.
+                // 재생성과 입력 수정은 대상 턴이 목록에 그대로 있어 블록만 걷으면 기존 본문이 돌아온다.
                 dispatchEvent(
-                    if (regeneratingTurnId != null) ChatRoomEvent.StreamCleared else ChatRoomEvent.StreamSettled,
+                    if (replacingTurnId != null) ChatRoomEvent.StreamCleared else ChatRoomEvent.StreamSettled,
                 )
                 dispatchEffect(ChatRoomEffect.ShowStreamFailure(null))
             }
@@ -1208,7 +1483,7 @@ class ChatRoomViewModel
          * 서버가 생성을 실패로 끝냈다(`error` 사건).
          *
          * **블록을 걷는 것이 곧 복원이다** — 이어쓰기면 낙관적으로 붙였던 밴드가 사라지고, 재생성이면
-         * 자리를 지키고 있던 대상 턴이 그대로 다시 보인다. 실패로 끝나도 저장된 턴이 있을 수 있어 확정
+         * 자리를 지키고 있던 대상 턴이, 입력 수정이면 숨겼던 뒤의 턴과 고치던 입력이 그대로 다시 보인다. 실패로 끝나도 저장된 턴이 있을 수 있어 확정
          * 상태를 다시 읽은 뒤 알린다.
          */
         private suspend fun failTurn(message: String?) {
@@ -1247,8 +1522,8 @@ class ChatRoomViewModel
          *
          * 다른 생성이 진행 중이면 그 생성을 이어받는다. 따라가던 생성이 아직 진행 중이어도 곧바로 다시
          * 따라가지 않는다. 시도를 다 쓴 생성을 또 따라가면 끝없이 반복하고, 재진입이나 다시 보내기(409)로
-         * 이어받을 수 있다. 이어쓰기는 새 턴이 저장됐으면 실패 안내 없이 완료로 보인다. 재생성은 상세만으로
-         * 성공과 실패를 가리지 못해 확정 본문만 보인다.
+         * 이어받을 수 있다. 이어쓰기는 새 턴이 저장됐으면, 입력 수정은 대상 턴이 숨겨졌으면 실패 안내 없이
+         * 완료로 보인다. 재생성은 상세만으로 성공과 실패를 가리지 못해 확정 본문만 보인다.
          */
         private suspend fun settleLost(
             lostGenerationId: String?,
@@ -1259,8 +1534,14 @@ class ChatRoomViewModel
             if (generating != null && generating.generationId != lostGenerationId) return generating
             // 서버에 닿은 입력이라 컴포저로 되돌리지 않는다.
             sent = null
+            val saved =
+                if (isEditGeneration) {
+                    turns.none { turn -> turn.id == replacingTurnId }
+                } else {
+                    turns.size > baseTurnCount
+                }
             when {
-                regeneratingTurnId != null -> {
+                replacingTurnId != null && !isEditGeneration -> {
                     isStreaming = false
                     if (detail != null) {
                         dispatchEvent(ChatRoomEvent.TurnConfirmed(turns))
@@ -1271,7 +1552,7 @@ class ChatRoomViewModel
                     finishStream()
                 }
 
-                detail != null && turns.size > baseTurnCount -> completeTurn(detail)
+                detail != null && saved -> completeTurn(detail)
 
                 else -> {
                     clearStream()
@@ -1297,12 +1578,13 @@ class ChatRoomViewModel
         }
 
         private fun finishStream() {
-            regeneratingTurnId = null
+            replacingTurnId = null
+            isEditGeneration = false
             scheduleRealtimeImageNudge()
         }
 
         private suspend fun showStreamFailure(message: String?) {
-            analytics.track(AnalyticsEvent.StreamErrorShown(chatId, turns.activeTurnNumber(regeneratingTurnId)))
+            analytics.track(AnalyticsEvent.StreamErrorShown(chatId, turns.activeTurnNumber(replacingTurnId)))
             dispatchEffect(ChatRoomEffect.ShowStreamFailure(message))
         }
 
@@ -1438,6 +1720,8 @@ private fun reduceChatRoom(
         ChatRoomEvent.DeleteFailed,
         is ChatRoomEvent.CreditBalanceChanged,
         is ChatRoomEvent.CreditShortageChanged,
+        is ChatRoomEvent.CreditHistoryChanged,
+        ChatRoomEvent.CreditHistoryClosed,
         is ChatRoomEvent.NewChatStartChanged,
         is ChatRoomEvent.ShareChanged,
         is ChatRoomEvent.ModelsLoaded,
@@ -1447,7 +1731,7 @@ private fun reduceChatRoom(
         else -> reduceTurn(state, event)
     }
 
-/** 헤더 메뉴에서 갈라지는 상태 전이 — 삭제·새 채팅·공유·이프 잔액. */
+/** 헤더 메뉴에서 갈라지는 상태 전이. 삭제, 새 채팅, 공유, 이프 잔액과 내역. */
 private fun reduceMenu(
     state: ChatRoomUiState,
     event: ChatRoomEvent,
@@ -1460,6 +1744,13 @@ private fun reduceMenu(
         is ChatRoomEvent.CreditBalanceChanged -> state.copy(creditBalance = event.balance)
 
         is ChatRoomEvent.CreditShortageChanged -> state.copy(creditShortage = event.sheet)
+
+        is ChatRoomEvent.CreditHistoryChanged ->
+            state.copy(
+                creditHistory = (state.creditHistory ?: CreditHistoryUiState()).reduceCreditHistory(event.change),
+            )
+
+        ChatRoomEvent.CreditHistoryClosed -> state.copy(creditHistory = null)
 
         is ChatRoomEvent.NewChatStartChanged -> state.copy(isStartingNewChat = event.inProgress)
 
@@ -1497,7 +1788,8 @@ private fun reduceTurn(
                 turns = event.turns,
                 streaming = StreamingTurn(userInput = event.userInput, realtimeImage = event.realtimeImage),
                 isStreaming = true,
-                regeneratingTurnId = event.regeneratingTurnId,
+                replacingTurnId = event.replacingTurnId,
+                hidesLaterTurns = event.hidesLaterTurns,
                 choicesProgress = null,
             )
 
@@ -1521,13 +1813,14 @@ private fun reduceTurn(
                 turns = event.turns,
                 streaming = null,
                 isStreaming = false,
-                regeneratingTurnId = null,
+                replacingTurnId = null,
+                hidesLaterTurns = false,
             )
 
         is ChatRoomEvent.TurnsRefreshed -> state.copy(turns = event.turns, choicesProgress = null)
 
         ChatRoomEvent.StreamCleared ->
-            state.copy(streaming = null, isStreaming = false, regeneratingTurnId = null)
+            state.copy(streaming = null, isStreaming = false, replacingTurnId = null, hidesLaterTurns = false)
 
         ChatRoomEvent.StreamSettled -> state.copy(isStreaming = false)
 
@@ -1549,6 +1842,12 @@ private fun reduceChoices(
         is ChatRoomEvent.TourStepChanged -> state.copy(tourStep = event.index)
 
         ChatRoomEvent.TourClosed -> state.copy(tourOpen = false, tourStep = null)
+
+        is ChatRoomEvent.EditingChanged -> state.copy(editing = event.editing)
+
+        is ChatRoomEvent.TurnConfirmChanged -> state.copy(turnConfirm = event.confirm)
+
+        is ChatRoomEvent.ForkChanged -> state.copy(isForking = event.inProgress)
 
         else -> state
     }
@@ -1592,9 +1891,11 @@ private fun app.manyak.chat.entity.ChatTurn.toUi(): ChatRoomTurn =
 /** 다음에 열릴 턴의 번호. 웹과 같이 1부터 센다. */
 private fun List<ChatRoomTurn>.nextTurnNumber(): Int = size + 1
 
-/** 진행 중인 턴의 번호. 재생성이면 그 자리, 이어쓰기면 새 자리다. */
-private fun List<ChatRoomTurn>.activeTurnNumber(regeneratingTurnId: Long?): Int =
-    if (regeneratingTurnId != null) size else size + 1
+/** 진행 중인 턴의 번호. 재생성과 입력 수정이면 대상 턴의 자리, 이어쓰기면 새 자리다. */
+private fun List<ChatRoomTurn>.activeTurnNumber(replacingTurnId: Long?): Int {
+    val index = indexOfFirst { turn -> turn.id == replacingTurnId }
+    return if (index == -1) size + 1 else index + 1
+}
 
 private val ChatInputMode.messageInputMode: MessageInputMode
     get() = if (this == ChatInputMode.BLOCK) MessageInputMode.BLOCK else MessageInputMode.PLAIN

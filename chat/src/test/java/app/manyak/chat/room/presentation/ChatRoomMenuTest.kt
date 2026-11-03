@@ -5,12 +5,18 @@ import app.manyak.chat.testing.FakeAttendanceClaimer
 import app.manyak.chat.testing.FakeChatPreferencesRepository
 import app.manyak.chat.testing.FakeChatRepository
 import app.manyak.chat.testing.FakeCreditPolicyRepository
+import app.manyak.chat.testing.FakeCreditTransactionReader
 import app.manyak.chat.testing.FakeReportRepository
 import app.manyak.chat.testing.FakeTrialsRepository
 import app.manyak.chat.testing.FakeUserProfileRepository
 import app.manyak.chat.testing.sampleChatDetail
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.entity.credit.CreditTransaction
+import app.manyak.common.entity.credit.CreditTransactionPage
+import app.manyak.common.entity.credit.CreditTransactionReason
+import app.manyak.common.entity.credit.CreditTransactionType
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -29,7 +35,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-/** 헤더 메뉴 시트의 새 채팅 시작하기·공유하기와 내 이프 카드. */
+/** 헤더 메뉴 시트의 새 채팅 시작하기, 공유하기, 내 이프 카드와 이프 내역. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ChatRoomMenuTest {
     private val dispatcher = StandardTestDispatcher()
@@ -153,9 +159,131 @@ class ChatRoomMenuTest {
             assertEquals(1_130L, viewModel.uiState.value.creditBalance)
         }
 
+    @Test
+    fun `내역을 열면 첫 페이지를 보이고 돌아가면 메뉴로, 다시 열면 첫 페이지부터 읽는다`() =
+        runTest(dispatcher) {
+            val credits = FakeCreditTransactionReader(pages = mapOf(null to page("a", next = "c1")))
+            val viewModel = loaded(FakeChatRepository(), credits = credits)
+
+            viewModel.onIntent(ChatRoomIntent.CreditHistoryOpened)
+            advanceUntilIdle()
+            assertEquals(
+                listOf("a"),
+                viewModel.uiState.value.creditHistory
+                    ?.items
+                    ?.map { it.title },
+            )
+
+            viewModel.onIntent(ChatRoomIntent.CreditHistoryClosed)
+            advanceUntilIdle()
+            assertNull(viewModel.uiState.value.creditHistory)
+
+            viewModel.onIntent(ChatRoomIntent.CreditHistoryOpened)
+            advanceUntilIdle()
+            assertEquals(listOf<String?>(null, null), credits.requests)
+        }
+
+    @Test
+    fun `목록 끝에서 다음 커서로 이어 붙이고 실패하면 보던 목록을 남긴다`() =
+        runTest(dispatcher) {
+            val credits =
+                FakeCreditTransactionReader(
+                    pages = mapOf(null to page("a", next = "c1"), "c1" to page("b", next = "c2")),
+                )
+            val viewModel = loaded(FakeChatRepository(), credits = credits)
+            viewModel.onIntent(ChatRoomIntent.CreditHistoryOpened)
+            advanceUntilIdle()
+
+            viewModel.onIntent(ChatRoomIntent.CreditHistoryLoadMore)
+            advanceUntilIdle()
+            viewModel.onIntent(ChatRoomIntent.CreditHistoryLoadMore)
+            advanceUntilIdle()
+
+            val history = viewModel.uiState.value.creditHistory
+            assertEquals(listOf<String?>(null, "c1", "c2"), credits.requests)
+            assertEquals(listOf("a", "b"), history?.items?.map { it.title })
+            assertTrue(history?.loadMoreFailed == true)
+            assertFalse(history?.canLoadMore == true)
+        }
+
+    @Test
+    fun `새로고침은 응답까지 목록을 두고 뒷 페이지를 버린 첫 페이지로 바꾼다`() =
+        runTest(dispatcher) {
+            val credits =
+                FakeCreditTransactionReader(
+                    pages = mapOf(null to page("a", next = "c1"), "c1" to page("b", next = null)),
+                )
+            val viewModel = loaded(FakeChatRepository(), credits = credits)
+            viewModel.onIntent(ChatRoomIntent.CreditHistoryOpened)
+            advanceUntilIdle()
+            viewModel.onIntent(ChatRoomIntent.CreditHistoryLoadMore)
+            advanceUntilIdle()
+
+            val gate = CompletableDeferred<Unit>()
+            credits.gate = gate
+            credits.pages = mapOf(null to page("new", next = "c2"))
+            viewModel.onIntent(ChatRoomIntent.CreditHistoryRefresh)
+            advanceUntilIdle()
+            val refreshing = viewModel.uiState.value.creditHistory
+            assertTrue(refreshing?.isRefreshing == true)
+            assertEquals(listOf("a", "b"), refreshing?.items?.map { it.title })
+            assertFalse(refreshing?.canLoadMore == true)
+
+            gate.complete(Unit)
+            advanceUntilIdle()
+            val refreshed = viewModel.uiState.value.creditHistory
+            assertEquals(listOf<String?>(null, "c1", null), credits.requests)
+            assertEquals(listOf("new"), refreshed?.items?.map { it.title })
+            assertEquals("c2", refreshed?.nextCursor)
+            assertFalse(refreshed?.isRefreshing == true)
+        }
+
+    @Test
+    fun `닫은 뒤 늦게 온 응답은 내역을 되살리지 않는다`() =
+        runTest(dispatcher) {
+            val gate = CompletableDeferred<Unit>()
+            val credits = FakeCreditTransactionReader(pages = mapOf(null to page("a", next = null)), gate = gate)
+            val viewModel = loaded(FakeChatRepository(), credits = credits)
+
+            viewModel.onIntent(ChatRoomIntent.CreditHistoryOpened)
+            advanceUntilIdle()
+            assertTrue(
+                viewModel.uiState.value.creditHistory
+                    ?.isLoading == true,
+            )
+
+            viewModel.onIntent(ChatRoomIntent.CreditHistoryClosed)
+            advanceUntilIdle()
+            gate.complete(Unit)
+            advanceUntilIdle()
+
+            assertNull(viewModel.uiState.value.creditHistory)
+        }
+
+    private fun page(
+        title: String,
+        next: String?,
+    ) = DomainResult.Success(
+        CreditTransactionPage(
+            items =
+                listOf(
+                    CreditTransaction(
+                        type = CreditTransactionType.SPEND,
+                        reason = CreditTransactionReason.CHAT_TURN,
+                        amount = 20,
+                        title = title,
+                        expiresDate = null,
+                        createdDate = "2026-11-04",
+                    ),
+                ),
+            nextCursor = next,
+        ),
+    )
+
     private fun TestScope.loaded(
         repository: FakeChatRepository,
         profiles: FakeUserProfileRepository = FakeUserProfileRepository(),
+        credits: FakeCreditTransactionReader = FakeCreditTransactionReader(),
     ): ChatRoomViewModel {
         val viewModel =
             ChatRoomViewModel(
@@ -167,6 +295,7 @@ class ChatRoomMenuTest {
                 creditPolicyRepository = FakeCreditPolicyRepository(),
                 profileRepository = profiles,
                 attendance = FakeAttendanceClaimer(),
+                creditTransactions = credits,
                 analytics = NoOpAnalytics,
             )
         advanceUntilIdle()

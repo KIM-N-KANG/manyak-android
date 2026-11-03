@@ -42,14 +42,46 @@ fun ManyakDestructiveDialog(
     inProgress: Boolean = false,
     inProgressLabel: String? = null,
 ) {
+    ManyakConfirmDialog(
+        title = title,
+        description = description,
+        confirmLabel = confirmLabel,
+        cancelLabel = cancelLabel,
+        onConfirm = onConfirm,
+        onDismiss = onDismiss,
+        modifier = modifier,
+        destructive = true,
+        inProgress = inProgress,
+        inProgressLabel = inProgressLabel,
+    )
+}
+
+/**
+ * 확인 다이얼로그. 파괴적 확인과 자리, 순서와 크기가 같고 [destructive] 가 아니면 확정 버튼만 주 동작 색으로
+ * 칠한다. 같은 흐름 안에서도 잃는 것이 있을 때만 danger 색을 쓴다.
+ */
+@Composable
+fun ManyakConfirmDialog(
+    title: String,
+    description: String,
+    confirmLabel: String,
+    cancelLabel: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+    destructive: Boolean = false,
+    inProgress: Boolean = false,
+    inProgressLabel: String? = null,
+) {
     ManyakDialog(modifier = modifier, onDismissRequest = onDismiss) {
-        ManyakDestructiveDialogContent(
+        ConfirmDialogContent(
             title = title,
             description = description,
             confirmLabel = confirmLabel,
             cancelLabel = cancelLabel,
             onConfirm = onConfirm,
             onDismiss = onDismiss,
+            destructive = destructive,
             inProgress = inProgress,
             inProgressLabel = inProgressLabel,
         )
@@ -57,13 +89,14 @@ fun ManyakDestructiveDialog(
 }
 
 @Composable
-private fun ManyakDestructiveDialogContent(
+private fun ConfirmDialogContent(
     title: String,
     description: String,
     confirmLabel: String,
     cancelLabel: String,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
+    destructive: Boolean,
     inProgress: Boolean,
     inProgressLabel: String?,
 ) {
@@ -91,9 +124,10 @@ private fun ManyakDestructiveDialogContent(
                     color = ManyakTheme.colors.textSubtle,
                 )
             }
-            DestructiveConfirmButton(
+            ConfirmButton(
                 label = confirmLabel,
                 onClick = onConfirm,
+                destructive = destructive,
                 inProgress = inProgress,
                 inProgressLabel = inProgressLabel,
             )
@@ -102,22 +136,25 @@ private fun ManyakDestructiveDialogContent(
 }
 
 @Composable
-private fun DestructiveConfirmButton(
+private fun ConfirmButton(
     label: String,
     onClick: () -> Unit,
+    destructive: Boolean,
     inProgress: Boolean,
     inProgressLabel: String?,
 ) {
+    val container = if (destructive) ManyakTheme.colors.backgroundDangerSubtle else ManyakTheme.colors.brand
+    val content = if (destructive) ManyakTheme.colors.textDanger else ManyakTheme.colors.textInverse
     Button(
         onClick = onClick,
         enabled = !inProgress,
         shape = ManyakTheme.shapes.control,
         colors =
             ButtonDefaults.buttonColors(
-                containerColor = ManyakTheme.colors.backgroundDangerSubtle,
-                contentColor = ManyakTheme.colors.textDanger,
-                disabledContainerColor = ManyakTheme.colors.backgroundDangerSubtle,
-                disabledContentColor = ManyakTheme.colors.textDanger,
+                containerColor = container,
+                contentColor = content,
+                disabledContainerColor = container,
+                disabledContentColor = content,
             ),
     ) {
         Box(contentAlignment = Alignment.Center) {
@@ -139,7 +176,7 @@ private fun DestructiveConfirmButton(
                                     Modifier
                                 },
                             ),
-                    color = ManyakTheme.colors.textDanger,
+                    color = content,
                 )
             }
         }

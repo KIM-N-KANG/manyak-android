@@ -13,6 +13,10 @@
     <string name="scene_image_open">장면 이미지 크게 보기</string>
     <string name="credit_balance_label">내 이프</string>
     <string name="credit_balance_charge">충전</string>
+    <string name="credit_balance_history">내역</string>
+    <string name="credit_history_empty">아직 이프 내역이 없어요</string>
+    <string name="credit_history_load_failed">이프 내역을 불러오지 못했어요</string>
+    <string name="credit_history_loading">이프 내역을 불러오는 중</string>
     <string name="delete_in_progress">삭제 중</string>
     <string name="credit_shortage_title">이프가 부족해요</string>
     <string name="credit_shortage_description">이프를 충전하면 이어서 할 수 있어요</string>

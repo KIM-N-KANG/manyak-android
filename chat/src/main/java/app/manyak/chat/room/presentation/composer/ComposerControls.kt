@@ -30,6 +30,8 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.manyak.designsystem.component.ManyakIconButton
 import app.manyak.designsystem.component.ManyakProgressIndicator
@@ -176,12 +178,14 @@ internal fun ComposerTextField(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     leading: (@Composable () -> Unit)? = null,
     onDisabledTap: (() -> Unit)? = null,
+    contentDescription: String? = null,
 ) {
     val focused by interactionSource.collectIsFocusedAsState()
     Box(modifier = modifier) {
         ComposerTextFieldBody(
             state = state,
             placeholder = placeholder,
+            contentDescription = contentDescription,
             enabled = enabled,
             maxLines = maxLines,
             textColor = textColor,
@@ -208,6 +212,7 @@ internal fun ComposerTextField(
 private fun ComposerTextFieldBody(
     state: TextFieldState,
     placeholder: String,
+    contentDescription: String?,
     enabled: Boolean,
     maxLines: Int,
     textColor: Color,
@@ -218,7 +223,17 @@ private fun ComposerTextFieldBody(
     leading: (@Composable () -> Unit)?,
 ) {
     BasicTextField(
-        modifier = Modifier.fillMaxWidth().keepKeyboardOnTap(enabled),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .keepKeyboardOnTap(enabled)
+                .then(
+                    if (contentDescription == null) {
+                        Modifier
+                    } else {
+                        Modifier.semantics { this.contentDescription = contentDescription }
+                    },
+                ),
         state = state,
         enabled = enabled,
         lineLimits = TextFieldLineLimits.MultiLine(maxHeightInLines = maxLines),

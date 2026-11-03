@@ -9,6 +9,7 @@ import app.manyak.chat.testing.FakeAttendanceClaimer
 import app.manyak.chat.testing.FakeChatPreferencesRepository
 import app.manyak.chat.testing.FakeChatRepository
 import app.manyak.chat.testing.FakeCreditPolicyRepository
+import app.manyak.chat.testing.FakeCreditTransactionReader
 import app.manyak.chat.testing.FakeReportRepository
 import app.manyak.chat.testing.FakeTrialsRepository
 import app.manyak.chat.testing.FakeUserProfileRepository
@@ -60,12 +61,11 @@ class ChatRoomRegenerateTest {
             viewModel.type("이어서 쓰던 문장")
             advanceUntilIdle()
 
-            viewModel.onIntent(ChatRoomIntent.RegenerateRequested(turnId = 1))
-            advanceUntilIdle()
+            regenerate(viewModel)
 
             val state = viewModel.uiState.value
             assertEquals(listOf(1L), repository.regeneratedTurnIds)
-            assertEquals(1L, state.regeneratingTurnId)
+            assertEquals(1L, state.replacingTurnId)
             // 사용자 입력은 그 턴의 것을 그대로 쓴다 — AI 출력 자리만 바뀐다.
             assertEquals("문을 연다.", state.streaming?.userInput)
             // 재생성은 이어쓰기와 달리 컴포저를 비우지 않는다.
@@ -92,7 +92,7 @@ class ChatRoomRegenerateTest {
 
             val state = viewModel.uiState.value
             assertNull(state.streaming)
-            assertNull(state.regeneratingTurnId)
+            assertNull(state.replacingTurnId)
             assertFalse(state.isStreaming)
             assertEquals(ORIGINAL_OUTPUT, state.turns.single().aiOutput)
             assertTrue(repository.chatDetailIds.size > readsBefore)
@@ -112,8 +112,7 @@ class ChatRoomRegenerateTest {
             repository.streamEvents.send(ChatStreamEvent.Completed)
             advanceUntilIdle()
 
-            viewModel.onIntent(ChatRoomIntent.RegenerateRequested(turnId = 1))
-            advanceUntilIdle()
+            regenerate(viewModel)
             repository.regenerateEvents.send(ChatStreamEvent.Failed(DomainError.Unknown, null))
             advanceUntilIdle()
 
@@ -136,7 +135,7 @@ class ChatRoomRegenerateTest {
 
             assertTrue(repository.chatDetailIds.size > readsBefore)
             assertEquals(2, viewModel.uiState.value.turns.size)
-            assertNull(viewModel.uiState.value.regeneratingTurnId)
+            assertNull(viewModel.uiState.value.replacingTurnId)
             assertNull(withTimeoutOrNull(100) { viewModel.uiEffect.first() })
         }
 
@@ -172,7 +171,7 @@ class ChatRoomRegenerateTest {
             val state = viewModel.uiState.value
             assertEquals("다시 쓴 이야기.", state.turns.single().aiOutput)
             assertNull(state.streaming)
-            assertNull(state.regeneratingTurnId)
+            assertNull(state.replacingTurnId)
         }
 
     @Test
@@ -187,13 +186,51 @@ class ChatRoomRegenerateTest {
 
             viewModel.onIntent(ChatRoomIntent.RegenerateRequested(turnId = 1))
             runCurrent()
+            viewModel.onIntent(ChatRoomIntent.TurnConfirmAccepted)
+            runCurrent()
             assertEquals(listOf(1L), repository.regeneratedTurnIds)
 
             advanceTimeBy(COOLDOWN_PASSED_MILLIS)
             runCurrent()
+            regenerate(viewModel)
+            assertEquals(listOf(1L, 1L), repository.regeneratedTurnIds)
+        }
+
+    @Test
+    fun `다시 생성은 확인 창을 거치고 그대로 두면 요청하지 않는다`() =
+        runTest(dispatcher) {
+            val repository = FakeChatRepository()
+            val viewModel = loaded(repository)
+
             viewModel.onIntent(ChatRoomIntent.RegenerateRequested(turnId = 1))
             advanceUntilIdle()
-            assertEquals(listOf(1L, 1L), repository.regeneratedTurnIds)
+            assertEquals(TurnConfirm.Regenerate(turnId = 1), viewModel.uiState.value.turnConfirm)
+            assertEquals(emptyList<Long>(), repository.regeneratedTurnIds)
+
+            viewModel.onIntent(ChatRoomIntent.TurnConfirmDismissed)
+            advanceUntilIdle()
+
+            assertNull(viewModel.uiState.value.turnConfirm)
+            assertEquals(emptyList<Long>(), repository.regeneratedTurnIds)
+            assertNull(viewModel.uiState.value.streaming)
+        }
+
+    @Test
+    fun `이프가 모자라면 확인 창 없이 부족 시트를 연다`() =
+        runTest(dispatcher) {
+            val repository = FakeChatRepository()
+            repository.queuedChatDetailResults += DomainResult.Success(detail(listOf(turn())))
+            val viewModel = viewModel(repository, FakeUserProfileRepository(refreshedBalance = 10))
+            advanceUntilIdle()
+            // 프로필은 메뉴를 열 때 읽힌다.
+            viewModel.onIntent(ChatRoomIntent.MenuOpened)
+            advanceUntilIdle()
+
+            viewModel.onIntent(ChatRoomIntent.RegenerateRequested(turnId = 1))
+            advanceUntilIdle()
+
+            assertNull(viewModel.uiState.value.turnConfirm)
+            assertNotNull(viewModel.uiState.value.creditShortage)
         }
 
     @Test
@@ -206,6 +243,7 @@ class ChatRoomRegenerateTest {
             viewModel.onIntent(ChatRoomIntent.RegenerateRequested(turnId = 99))
             advanceUntilIdle()
 
+            assertNull(viewModel.uiState.value.turnConfirm)
             assertEquals(emptyList<Long>(), repository.regeneratedTurnIds)
             assertNull(viewModel.uiState.value.streaming)
         }
@@ -227,18 +265,21 @@ class ChatRoomRegenerateTest {
             )
         }
 
-    private fun viewModel(repository: FakeChatRepository) =
-        ChatRoomViewModel(
-            chatId = "chat-1",
-            chatRepository = repository,
-            reportRepository = FakeReportRepository(),
-            preferences = FakeChatPreferencesRepository(),
-            trialsRepository = FakeTrialsRepository(),
-            creditPolicyRepository = FakeCreditPolicyRepository(),
-            profileRepository = FakeUserProfileRepository(),
-            attendance = FakeAttendanceClaimer(),
-            analytics = NoOpAnalytics,
-        )
+    private fun viewModel(
+        repository: FakeChatRepository,
+        profiles: FakeUserProfileRepository = FakeUserProfileRepository(),
+    ) = ChatRoomViewModel(
+        chatId = "chat-1",
+        chatRepository = repository,
+        reportRepository = FakeReportRepository(),
+        preferences = FakeChatPreferencesRepository(),
+        trialsRepository = FakeTrialsRepository(),
+        creditPolicyRepository = FakeCreditPolicyRepository(),
+        profileRepository = profiles,
+        attendance = FakeAttendanceClaimer(),
+        creditTransactions = FakeCreditTransactionReader(),
+        analytics = NoOpAnalytics,
+    )
 
     private fun TestScope.loaded(repository: FakeChatRepository): ChatRoomViewModel {
         repository.queuedChatDetailResults += DomainResult.Success(detail(listOf(turn())))
@@ -249,10 +290,17 @@ class ChatRoomRegenerateTest {
 
     private fun TestScope.regenerating(repository: FakeChatRepository): ChatRoomViewModel {
         val viewModel = loaded(repository)
-        viewModel.onIntent(ChatRoomIntent.RegenerateRequested(turnId = 1))
-        advanceUntilIdle()
+        regenerate(viewModel)
         assertNotNull(viewModel.uiState.value.streaming)
         return viewModel
+    }
+
+    /** 다시 생성 버튼을 누르고 확인 창에서 다시 생성하기를 고른다. */
+    private fun TestScope.regenerate(viewModel: ChatRoomViewModel) {
+        viewModel.onIntent(ChatRoomIntent.RegenerateRequested(turnId = 1))
+        advanceUntilIdle()
+        viewModel.onIntent(ChatRoomIntent.TurnConfirmAccepted)
+        advanceUntilIdle()
     }
 
     /** 블럭 하나에 문장을 넣는다. 기본 모드가 블럭이라 첫 칸이 상황이다. */

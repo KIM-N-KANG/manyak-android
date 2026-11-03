@@ -2,6 +2,7 @@ package app.manyak.my.credit.data.di
 
 import app.manyak.common.domain.credit.AttendanceClaimer
 import app.manyak.common.domain.credit.CreditPolicyRepository
+import app.manyak.common.domain.credit.CreditTransactionReader
 import app.manyak.common.domain.credit.TrialsRepository
 import app.manyak.my.credit.data.repository.CreditPolicyRepositoryImpl
 import app.manyak.my.credit.data.repository.CreditRepositoryImpl
@@ -23,6 +24,10 @@ abstract class CreditModule {
     @Binds
     @Singleton
     abstract fun bindAttendanceClaimer(impl: CreditRepositoryImpl): AttendanceClaimer
+
+    @Binds
+    @Singleton
+    abstract fun bindCreditTransactionReader(impl: CreditRepositoryImpl): CreditTransactionReader
 
     @Binds
     @Singleton

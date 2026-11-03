@@ -1,10 +1,10 @@
 package app.manyak.my.credit.data.dto
 
 import app.manyak.common.data.time.toDisplayDate
-import app.manyak.my.credit.entity.CreditTransaction
-import app.manyak.my.credit.entity.CreditTransactionPage
-import app.manyak.my.credit.entity.CreditTransactionReason
-import app.manyak.my.credit.entity.CreditTransactionType
+import app.manyak.common.entity.credit.CreditTransaction
+import app.manyak.common.entity.credit.CreditTransactionPage
+import app.manyak.common.entity.credit.CreditTransactionReason
+import app.manyak.common.entity.credit.CreditTransactionType
 import kotlinx.serialization.Serializable
 import kotlin.math.absoluteValue
 

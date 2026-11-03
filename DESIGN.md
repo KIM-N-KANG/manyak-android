@@ -523,7 +523,8 @@ components:
 | `ProgressIndicator.kt` | 로딩 스피너와 지연 표시 헬퍼 |
 | `PullToRefresh.kt` | 당겨서 새로고침 컨테이너. 표시자를 셸 헤더 아래로 내린다 |
 | `credit/CreditAmountText.kt` | 이프 마크 + (취소선 정가) + 수치. 마크는 글자 크기를 따른다 |
-| `credit/CreditBalanceCard.kt` | 내 이프 카드(라벨·잔액·충전 버튼). 마이와 채팅 메뉴 시트가 같이 쓴다 |
+| `credit/CreditBalanceCard.kt` | 내 이프 카드(라벨, 잔액, 충전 버튼). 마이와 채팅 메뉴 시트가 같이 쓴다. 채팅 메뉴는 충전 왼쪽 4dp 간격에 "내역" 버튼을 둔다. 바탕은 `{colors.overlay-pressed}`를 카드 위에 한 겹 더해 라이트는 카드보다 진하고 다크는 밝으며 글자는 `{colors.text}`다. 강조색은 충전만 쓴다. 카드 바탕은 `{colors.background-neutral-raised}`로 바꿔 다크 시트에서도 묻히지 않게 한다 |
+| `credit/CreditHistory.kt` | 이프 내역 행, 골격, 빈 상태, 오류와 다음 페이지 자리, 목록 끝 감지. 이프 충전 내역 탭과 채팅 메뉴의 이프 내역이 같이 쓴다 |
 | `ManyakOptionsSheet.kt` · `ManyakOptionItem.kt` | 카드 옵션·상세 옵션·채팅 메뉴의 바텀 시트 틀과 항목 버튼 |
 | `ManyakCheckbox.kt` | 동의·확인 항목의 체크 표시. 줄이 토글을 맡고 상자는 그리기만 한다 |
 | `CreateTutorialDialog.kt` | 간편 제작 첫 진입 안내 대화창과 그 안에서 말하는 마스코트. 문구와 버튼 콜백만 받고 간편 제작 화면과 제작 탭이 같이 쓴다 |
@@ -821,7 +822,7 @@ components:
 
 **`card`** — 배경 `{colors.surface}`, 경계 `{colors.border}` 1dp, 모서리 `{rounded.card}`, 내부 여백 `{spacing.component}`. 제목 `{typography.title-medium}`, 본문 `{typography.body-medium}`, 메타 `{typography.body-small}` + `{colors.text-subtle}`.
 
-**`overlay`** — 다이얼로그. 배경 `{colors.surface-raised}`, 모서리 `{rounded.overlay}`, 내부 여백 `{spacing.gutter}`.
+**`overlay`** — 다이얼로그. 배경 `{colors.surface-raised}`, 모서리 `{rounded.overlay}`, 내부 여백 `{spacing.gutter}`. 확인 다이얼로그(`ManyakConfirmDialog`)는 제목, 설명 아래 오른쪽 정렬 버튼 줄에 `{colors.text-subtle}` 글자 버튼과 확정 버튼을 둡니다. 확정 버튼은 `{rounded.control}`, `{typography.label-large}`이며 기본은 `{colors.brand}` 채움, 무언가를 잃는 확인(`ManyakDestructiveDialog`, 뒤 대화가 사라지는 채팅 입력 수정)만 `{colors.background-danger-subtle}` + `{colors.text-danger}`입니다(2026-11-04).
 
 **`sheet`** — 바텀시트. 배경 `{colors.surface-raised}`, 모서리는 `{rounded.sheet}`로 위쪽 두 곳만 깎습니다 — 아래쪽은 화면 끝에 붙어 있어 깎으면 그 틈으로 스크림이 비칩니다. 내부 여백은 좌·우·아래 `{spacing.gutter}`이고 **위쪽은 두지 않습니다** — 드래그 핸들이 자체 여백을 갖고 있어 겹칩니다. 하단 안전 영역과 키보드 높이는 그 아래로 시트가 직접 낍니다. **하단 닫기는 `button-text` 규칙의 전체 폭·최소 높이 `{sizes.control}`(48dp)·주 동작 버튼과 같은 글자 스타일(`{typography.label-large}`)·보조색 텍스트 버튼이며, 위에 주 동작 버튼이 있을 때만 그 짝으로 둡니다.** 신고·초대 코드 온보딩·광고 알림 동의 시트가 그렇습니다. **주 동작 버튼이 없는 시트 — 읽기 전용(선택한 키워드·채팅 설정)과 항목을 고르는 옵션 시트(카드 옵션·상세 옵션·채팅 메뉴) — 에는 닫기 버튼을 두지 않고** 스크림·끌어내리기·뒤로가기로만 닫습니다(2026-09-18) — 닫기 하나뿐인 줄은 자리만 차지합니다. **닫힘을 막은 시트는 핸들 드래그도 잠급니다**(2026-09-20) — 끌리기만 하고 닫히지 않는 튕김이 "닫을 수 있다"는 신호가 됩니다. 끌어내리기가 아예 없는 시트(필수 동의)는 핸들 자체를 두지 않고 위쪽 여백을 `{spacing.gutter}`로 채우며, 전송 중처럼 잠깐 잠그는 시트는 핸들이 사라졌다 나타나지 않게 그대로 둡니다. 본문에 스크롤 목록이 있어 목록을 끌다 시트가 닫히기 쉬운 시트(채팅 시작 시트)는 `dismissOnContentDrag = false`로 본문 끌기를 시트에 넘기지 않고 핸들 끌기, 스크림 탭과 뒤로가기로만 닫습니다(2026-11-02).
 

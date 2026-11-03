@@ -5,6 +5,7 @@ import app.manyak.chat.data.api.dto.ChatChoicesResponseDto
 import app.manyak.chat.data.api.dto.ChatCreateRequestDto
 import app.manyak.chat.data.api.dto.ChatCreateResponseDto
 import app.manyak.chat.data.api.dto.ChatDetailResponseDto
+import app.manyak.chat.data.api.dto.ChatForkRequestDto
 import app.manyak.chat.data.api.dto.ChatModelDto
 import app.manyak.chat.data.api.dto.ChatShareResponseDto
 import retrofit2.Response
@@ -52,6 +53,13 @@ interface ChatApi {
         @Path("chatId") chatId: String,
         @Path("turnId") turnId: Long,
     ): Response<ChatChoicesResponseDto>
+
+    /** [ChatForkRequestDto.turnId] 의 AI 응답까지 복사한 새 채팅을 만든다. 원래 채팅은 그대로이고 무료다. */
+    @POST("chats/{chatId}/fork")
+    suspend fun forkChat(
+        @Path("chatId") chatId: String,
+        @Body body: ChatForkRequestDto,
+    ): Response<ChatCreateResponseDto>
 
     /** 공유 열람 토큰 발급. 같은 진행 시점이면 멱등이라 다시 불러도 같은 토큰이 온다. */
     @POST("chats/{chatId}/shares")

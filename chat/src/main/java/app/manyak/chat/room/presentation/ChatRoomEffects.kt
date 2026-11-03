@@ -2,6 +2,7 @@ package app.manyak.chat.room.presentation
 
 import android.content.Context
 import androidx.activity.compose.LocalActivity
+import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -34,6 +35,7 @@ internal fun ChatRoomEffects(
     storyTitle: String,
     onDeleted: () -> Unit,
     onReplaceChat: (String) -> Unit,
+    onOpenChat: (String) -> Unit,
     onOpenCreditCharge: () -> Unit,
     onCloseMenu: () -> Unit,
     onCloseDeleteDialog: () -> Unit,
@@ -43,6 +45,7 @@ internal fun ChatRoomEffects(
     val currentStoryTitle by rememberUpdatedState(storyTitle)
     val currentOnDeleted by rememberUpdatedState(onDeleted)
     val currentOnReplaceChat by rememberUpdatedState(onReplaceChat)
+    val currentOnOpenChat by rememberUpdatedState(onOpenChat)
     val currentOnOpenCreditCharge by rememberUpdatedState(onOpenCreditCharge)
     val currentOnCloseMenu by rememberUpdatedState(onCloseMenu)
     val currentOnCloseDeleteDialog by rememberUpdatedState(onCloseDeleteDialog)
@@ -66,6 +69,8 @@ internal fun ChatRoomEffects(
                         currentOnCloseMenu()
                         currentOnReplaceChat(effect.chatId)
                     }
+
+                    is ChatRoomEffect.OpenChat -> currentOnOpenChat(effect.chatId)
 
                     is ChatRoomEffect.ShareLink -> {
                         currentOnCloseMenu()
@@ -108,16 +113,24 @@ private fun ChatRoomEffect.toastText(context: Context): String? =
     when (this) {
         is ChatRoomEffect.ShowStreamFailure -> message ?: context.getString(ChatR.string.chat_room_stream_error)
         is ChatRoomEffect.ShowAttendanceOutcome -> context.attendanceOutcomeText(outcome)
-        ChatRoomEffect.ChatDeleted -> context.getString(ChatR.string.chat_room_deleted)
-        ChatRoomEffect.ShowDeleteFailed -> context.getString(ChatR.string.chat_room_delete_failed)
-        ChatRoomEffect.ShowReportSubmitted -> context.getString(ReportR.string.story_report_submitted)
-        ChatRoomEffect.ShowReportFailed -> context.getString(ReportR.string.story_report_failed)
-        ChatRoomEffect.ShowNewChatFailed -> context.getString(ChatR.string.chat_room_new_chat_failed)
-        ChatRoomEffect.ShowShareFailed -> context.getString(ChatR.string.chat_room_share_failed)
-        ChatRoomEffect.ShowModelChangeFailed -> context.getString(ChatR.string.chat_model_change_failed)
-        ChatRoomEffect.ShowLongResponseChangeFailed -> context.getString(ChatR.string.chat_response_long_change_failed)
-        ChatRoomEffect.ShowComposerLocked -> context.getString(ChatR.string.chat_composer_locked_streaming)
-        is ChatRoomEffect.NavigateToChat, is ChatRoomEffect.ShareLink, ChatRoomEffect.OpenCreditCharge -> null
+        else -> fixedToastRes()?.let(context::getString)
+    }
+
+/** 문구가 고정된 효과의 토스트. 화면 이동, 공유와 충전처럼 토스트 없는 효과는 null 이다. */
+@StringRes
+private fun ChatRoomEffect.fixedToastRes(): Int? =
+    when (this) {
+        ChatRoomEffect.ChatDeleted -> ChatR.string.chat_room_deleted
+        ChatRoomEffect.ShowDeleteFailed -> ChatR.string.chat_room_delete_failed
+        ChatRoomEffect.ShowReportSubmitted -> ReportR.string.story_report_submitted
+        ChatRoomEffect.ShowReportFailed -> ReportR.string.story_report_failed
+        ChatRoomEffect.ShowNewChatFailed -> ChatR.string.chat_room_new_chat_failed
+        ChatRoomEffect.ShowForkFailed -> ChatR.string.chat_room_fork_failed
+        ChatRoomEffect.ShowShareFailed -> ChatR.string.chat_room_share_failed
+        ChatRoomEffect.ShowModelChangeFailed -> ChatR.string.chat_model_change_failed
+        ChatRoomEffect.ShowLongResponseChangeFailed -> ChatR.string.chat_response_long_change_failed
+        ChatRoomEffect.ShowComposerLocked -> ChatR.string.chat_composer_locked_streaming
+        else -> null
     }
 
 private fun Context.attendanceOutcomeText(outcome: AttendanceOutcome): String =

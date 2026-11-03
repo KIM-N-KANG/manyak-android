@@ -19,7 +19,7 @@ import app.manyak.designsystem.theme.ManyakTheme
 /**
  * 안내 카드와 실패 안내 아래에 놓이는 작은 버튼. 웹의 작은 버튼과 같은 높이, 여백, 글자를 쓴다.
  * M3 `Button` 은 최소 높이 40dp 와 최소 폭이 붙어 이 크기로 줄일 수 없어 직접 그린다.
- * 기본은 주 동작 색이고, 테두리형과 글자형은 호출부가 색을 바꿔 쓴다.
+ * 기본은 주 동작 색이고, 테두리형과 글자형은 호출부가 색을 바꿔 쓴다. 잠기면 색과 관계없이 비활성 색이다.
  */
 @Composable
 internal fun ChatSmallButton(
@@ -29,6 +29,7 @@ internal fun ChatSmallButton(
     containerColor: Color = ManyakTheme.colors.brand,
     contentColor: Color = ManyakTheme.colors.textInverse,
     borderColor: Color = Color.Transparent,
+    enabled: Boolean = true,
 ) {
     val shape = ManyakTheme.shapes.menuItem
     Box(
@@ -37,13 +38,17 @@ internal fun ChatSmallButton(
                 // 큰 글자에서는 글줄이 높이를 넘기므로 최소값으로만 잡는다.
                 .heightIn(min = ManyakTheme.sizes.controlSmall)
                 .clip(shape)
-                .background(containerColor)
+                .background(if (enabled) containerColor else ManyakTheme.colors.backgroundDisabled)
                 .border(SmallButtonBorderWidth, borderColor, shape)
-                .clickable(role = Role.Button, onClick = onClick)
+                .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
                 .padding(horizontal = ManyakTheme.spacing.component),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = text, style = ManyakTheme.typography.labelSmall, color = contentColor)
+        Text(
+            text = text,
+            style = ManyakTheme.typography.labelSmall,
+            color = if (enabled) contentColor else ManyakTheme.colors.textDisabled,
+        )
     }
 }
 
