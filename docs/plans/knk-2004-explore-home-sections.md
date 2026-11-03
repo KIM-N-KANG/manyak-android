@@ -2,7 +2,7 @@
 
 - 작성일: 2026-11-03
 - 티켓: [KNK-2004](https://kimandkang.atlassian.net/browse/KNK-2004) (상위 KNK-2001), 웹 짝 KNK-2003
-- 브랜치: Android `feat/KNK-2004-apply-explore-tab-and-home-sections`(fetch한 `origin/dev` `bf99c53f`에서 분기), 하네스 같은 이름(KNK-2003 브랜치 `225b5f1` 위에 쌓음, KNK-2003 하네스 PR #493 머지 전)
+- 브랜치: Android `feat/KNK-2004-apply-explore-tab-and-home-sections`(fetch한 `origin/dev` `bf99c53f`에서 분기), 하네스 `docs/KNK-2004-apply-android-explore-and-home-specs`(KNK-2003 #493 머지 뒤 `origin/dev` `6c70db1`에서 분기, PR #496)
 - 계약: 하네스 STORY 공통 [2-2-2 탐색과 제작 목록](../../../knk-harness/docs/domain/STORY/CLIENT/2-2-REQUIREMENTS.md#2-2-2-탐색과-제작-목록), [3-3-1 배치](../../../knk-harness/docs/domain/STORY/CLIENT/3-3-LAYOUT.md#3-3-1-홈과-제작-목록), 결정 C-017, C-018, C-019, 서버 `GET /stories/home`, `GET /stories/explore`(dev Swagger로 확인). 분석은 카드 클릭과 노출의 `section` `explore`. Android 결정 A-090.
 - 참고 구현: manyak-web `feat/KNK-2003-apply-explore-tab-and-home-sections`(`6a5a45fc`)의 `src/features/stories/explore/`, `list/components/home-section*.tsx`, `_shared/components/story-card.tsx`, `studio/menu/components/created-story-*.tsx`
 
