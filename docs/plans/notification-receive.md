@@ -1,7 +1,7 @@
 # 알림 수신과 딥링크 진입 (KNK-1134)
 
 - 작성일: 2026-09-08
-- 근거 정본: 하네스 `design/1-2-android-design.md §1-2-6 알림 수신·탭 진입`, `spec/4-backend-server-spec.md §4-3-5 푸시 발송 모듈`(공통 키 `recipientId`, KNK-1220)
+- 현재 기준: 하네스 [NOTIFICATION 공통](../../../knk-harness/docs/domain/NOTIFICATION/CLIENT/AGENTS.md)와 [Android](../../../knk-harness/docs/domain/NOTIFICATION/CLIENT/ANDROID/AGENTS.md), [NOTIFICATION API](../../../knk-harness/docs/domain/NOTIFICATION/BACKEND/4-2-CONTRACT.md) (공통 키 `recipientId`, KNK-1220)
 
 ## 목표와 제외 범위
 

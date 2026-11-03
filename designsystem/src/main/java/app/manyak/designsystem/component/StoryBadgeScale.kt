@@ -24,7 +24,7 @@ enum class StoryBadgeScale {
         @Composable
         get() =
             when (this) {
-                Compact -> ManyakTheme.typography.labelSmall
+                Compact -> ManyakTheme.typography.labelSmall.copy(lineHeightStyle = FullLineHeight)
                 Large -> ManyakTheme.typography.labelLarge.copy(lineHeightStyle = FullLineHeight)
             }
 
@@ -47,7 +47,7 @@ enum class StoryBadgeScale {
 
 /**
  * Compose 기본 `Trim.Both` 는 한 줄 글자의 행간 여유를 잘라 뱃지가 글꼴 높이만큼 낮아진다.
- * 웹과 같은 높이가 나오도록 CSS `line-height` 처럼 줄 상자 전체를 남긴다.
+ * 웹과 같은 높이(Compact 20dp, Large 28dp)가 나오도록 CSS `line-height` 처럼 줄 상자 전체를 남긴다.
  */
 private val FullLineHeight =
     LineHeightStyle(

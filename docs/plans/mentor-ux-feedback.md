@@ -1,8 +1,10 @@
 # 멘토 UX 피드백 반영 (KNK-1180)
 
-> **KNK-1197 구조 이전 안내 (2026-09-05)** — 아래 구현 순서·모듈 경로·코드 예시·본문의 문서 절 번호와 검수 항목은 작성 당시 기록입니다. 현재 소유 위치와 검증 결과는 [모듈 재구성 기록](./module-reorganization.md), 현재 계층·의존 규칙은 [하네스 모듈 아키텍처](../../../knk-harness/docs/design/1-2-android-design.md#1-2-2-모듈과-소유권)를 따릅니다.
+이 문서의 실행 단계와 과거 변경 서술은 작성 당시 경로를 보존합니다. 현재 기준은 [STORY 공통](../../../knk-harness/docs/domain/STORY/CLIENT/AGENTS.md)와 [Android](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md)에서 확인합니다. 이전 문서는 [당시 하네스](https://github.com/KIM-N-KANG/knk-harness/blob/8aa505cbf7a5390e67ca48a42fb94d89d21eb3ad/docs/)에서 확인합니다.
 
-- 현재 계약: [Android Spec §3-3-2](../../../knk-harness/docs/spec/3-3-android-spec.md#3-3-2-내비게이션화면-계약). 2026-09-03 선택 근거: [Android ADR A-028~A-031](../../../knk-harness/docs/adr/1-3-android-adr.md#a-028).
+> **KNK-1197 구조 이전 안내 (2026-09-05)** — 아래 구현 순서·모듈 경로·코드 예시·본문의 문서 절 번호와 검수 항목은 작성 당시 기록입니다. 현재 소유 위치와 검증 결과는 [모듈 재구성 기록](./module-reorganization.md), 현재 계층·의존 규칙은 [하네스 모듈 아키텍처](../../../knk-harness/docs/platform/CLIENT/ANDROID/1-COMPONENT-ARCHITECTURE.md#1-1-책임과-의존)를 따릅니다.
+
+- 현재 계약: [Android Spec §3-3-2](../../../knk-harness/docs/ui/ANDROID/3-1-INFORMATION-ARCHITECTURE.md#3-1-1-셸과-진입). 2026-09-03 선택 근거: [Android ADR A-028~A-031](../../../knk-harness/docs/ui/ANDROID/DECISIONS.md#a-028).
 - 작성일: 2026-09-03
 
 ## 목표
@@ -20,7 +22,7 @@
 
 ## 1. 뒤로가기 화면 전환
 
-화면 전환의 선택 근거는 [Android ADR A-028](../../../knk-harness/docs/adr/1-3-android-adr.md#a-028)에 보존되어 있습니다. 이 레포가 새로 내린 것은 아래뿐입니다.
+화면 전환의 선택 근거는 [Android ADR A-028](../../../knk-harness/docs/ui/ANDROID/DECISIONS.md#a-028)에 보존되어 있습니다. 이 레포가 새로 내린 것은 아래뿐입니다.
 
 - **길이 토큰 `{motion.screen-slide}` 250ms 추가**(`DESIGN.md`). 탭 페이드 150ms 는 그대로 두고 밀기만 따로 둡니다.
 - **전환 정의는 `:app`의 `NavTransitions.kt` 한 곳**에 둡니다. `NavDisplay` 세 곳(인증·메인·탭 셸)이 이 파일의 값을 받고, 퍼널 세 목적지는 `entry(metadata = …)`로 축을 고릅니다. 퍼널 판정은 전환 반대편 `Scene`의 마지막 엔트리 키가 퍼널 라우트인지로 합니다 — 라우트 타입만 보므로 `:core:navigation` 외에 새 의존이 생기지 않습니다.
@@ -33,7 +35,7 @@
 
 ## 2. 카드 옵션 다이얼로그 · 내 스토리 상세 삭제
 
-카드 옵션과 상세 삭제의 선택 근거는 [Android ADR A-029](../../../knk-harness/docs/adr/1-3-android-adr.md#a-029)·[A-030](../../../knk-harness/docs/adr/1-3-android-adr.md#a-030)에 보존되어 있습니다. 이 레포가 새로 내린 것은 아래뿐입니다.
+카드 옵션과 상세 삭제의 선택 근거는 [Android ADR A-029](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-029)·[A-030](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-030)에 보존되어 있습니다. 이 레포가 새로 내린 것은 아래뿐입니다.
 
 - **옵션 다이얼로그 상단에는 회색 상자 안에 카드 미리보기**를 두고 항목과 8dp 띄웁니다. 목록 카드와 같은 정보를 표지·서체·간격·뱃지 크기만 한 단계씩 작게 그린 `ChatCardPreview`·`MyStoryCardPreview`이고, 회색 상자 위에서 장르 뱃지 바탕이 묻히지 않도록 그 자리만 밝은 알약을 씁니다.
 - **옵션 다이얼로그 `ManyakOptionsDialog`와 더보기 버튼 `ManyakMoreButton`을 `:core:ui`에** 둡니다. 채팅 목록과 제작 탭 두 사용처가 동시에 생겨 공용 승격 조건을 만족합니다. 내 스토리 카드의 기존 팝업 메뉴는 이 다이얼로그로 대체했고, 처음 바텀 시트로 만들었다가 내용에 비해 시트 높이가 남아 가운데 다이얼로그로 바꿨습니다.
@@ -51,7 +53,7 @@
 
 ## 3. 무료 충전 탭 당겨서 새로고침
 
-작성 당시 규칙은 마이 · 이프 충전 절(2026-09-03)에 있었습니다. 현재 계약은 [공통 Spec](../../../knk-harness/docs/spec/3-1-client-spec.md)을 따릅니다. 이 레포가 새로 내린 것은 아래뿐입니다.
+작성 당시 규칙은 마이 · 이프 충전 절(2026-09-03)에 있었습니다. 현재 계약은 [공통 Spec](../../../knk-harness/docs/ui/AGENTS.md)을 따릅니다. 이 레포가 새로 내린 것은 아래뿐입니다.
 
 - **내역 탭의 `Refresh`와 별개의 `RefreshProfile` 인텐트**를 둡니다. 같은 인텐트를 쓰면 무료 충전 탭에서 당겨도 내역 첫 페이지까지 다시 읽고 내역 탭 표시자 상태가 함께 바뀝니다. 진행 상태도 `isRefreshingProfile`로 따로 둡니다.
 - 기존 `ManyakPullToRefreshBox`를 `verticalScroll` Column 에 그대로 씌웁니다. 내용이 짧아도 당길 수 있습니다.
@@ -63,7 +65,7 @@
 
 ## 4. 제작 퍼널 닫기(X) 확인 다이얼로그
 
-이탈 가드의 선택 근거는 [Android ADR A-031](../../../knk-harness/docs/adr/1-3-android-adr.md#a-031)에 보존되어 있습니다. 이 레포가 새로 내린 것은 아래뿐입니다.
+이탈 가드의 선택 근거는 [Android ADR A-031](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-031)에 보존되어 있습니다. 이 레포가 새로 내린 것은 아래뿐입니다.
 
 - `FunnelExitWarning`에 세 번째 값 `SAVED_DRAFT`를 더해 저장분·진행 중 레코드만 남은 이탈도 다이얼로그를 거칩니다. 세 단계 ViewModel의 판정 분기 하나만 바뀌고 이탈 처리 자체는 그대로입니다.
 - 키워드 단계는 `PendingStoryCreationStore.read()`로 레코드 유무를 봅니다 — 스토리라인·추가 정보 단계의 `hasContentToPreserve()`와 같은 판정입니다.
@@ -75,7 +77,7 @@
 
 ## 5. 응답 생성 중 입력창 탭 안내
 
-작성 당시 규칙은 채팅방 · 전송 조건과 잠금 절(2026-09-03)에 있었습니다. 현재 계약은 [공통 Spec §3-1-5](../../../knk-harness/docs/spec/3-1-client-spec.md#3-1-5-채팅-플레이와-sse-스트리밍)을 따릅니다. 이 레포가 새로 내린 것은 아래뿐입니다.
+작성 당시 규칙은 채팅방 · 전송 조건과 잠금 절(2026-09-03)에 있었습니다. 현재 계약은 [공통 Spec §3-1-5](../../../knk-harness/docs/domain/CHAT/CLIENT/AGENTS.md)을 따릅니다. 이 레포가 새로 내린 것은 아래뿐입니다.
 
 - 비활성 `BasicTextField`는 터치를 받지 않으므로 잠겨 있을 때만 그 위에 투명한 탭 자리를 깔아 `onLockedTap`을 올립니다. 눌림 표시는 두지 않습니다 — 입력할 수 없는 자리가 눌리는 것처럼 보이면 안 됩니다.
 - 탭은 `LockedComposerTapped` 인텐트로 ViewModel에 올리고, 생성 중일 때만 `ShowComposerLocked` 효과를 내 화면이 토스트를 띄웁니다. 잠금 판정은 ViewModel 상태가 정본이라 화면이 직접 토스트를 띄우지 않습니다.

@@ -92,7 +92,7 @@ fun StoryThumbnail(
 /**
  * 3:4 표지 본체. 원본이 없으면 placeholder 아이콘을 그린다. 표지 위에 얹는 것은 전부 [overlay] 가
  * 맡으므로 이 컴포넌트 자체는 무엇이 위에 오는지 알지 않는다. [overlay] 는 [CoverOverlayScope.backdrop]
- * 으로 뒤의 표지를 흐린 바탕을 깔 수 있다.
+ * 으로 뒤의 표지를 흐린 바탕을 깔 수 있다. [onPictureReady] 는 주소가 있는 표지의 그림을 받았거나 받지 못했을 때 불린다.
  *
  * 화면 폭을 꽉 채우는 자리에서는 [shape] 를 각지게 바꾼다 — 가장자리에 닿은 둥근 모서리는
  * 화면이 잘린 것처럼 보인다.
@@ -106,6 +106,7 @@ fun StoryCover(
     modifier: Modifier = Modifier,
     shape: Shape = ManyakTheme.shapes.card,
     showBorder: Boolean = false,
+    onPictureReady: () -> Unit = {},
     overlay: @Composable CoverOverlayScope.() -> Unit = {},
 ) {
     // 표지는 선 두께만큼 안으로 들이고 **반지름도 그만큼 줄여** 테두리와 동심원으로 맞춘다.
@@ -148,7 +149,7 @@ fun StoryCover(
                         .background(ManyakTheme.colors.backgroundNeutral),
                 contentAlignment = Alignment.Center,
             ) {
-                CoverPicture(thumbnailUrl = thumbnailUrl)
+                CoverPicture(thumbnailUrl = thumbnailUrl, onReady = onPictureReady)
             }
             // 겹침 요소도 테두리 안쪽에 둔다. 바깥에 두면 표지 위에 얹히면서 테두리까지 덮는다.
             val overlayScope = remember(this, backdrop) { CoverOverlayScopeImpl(this, backdrop) }
@@ -157,9 +158,12 @@ fun StoryCover(
     }
 }
 
-/** 표지 그림. 주소가 없으면 기본 심벌을 그린다. */
+/** 표지 그림. 주소가 없으면 기본 심벌을 그린다. [onReady]는 그림을 받았거나 받지 못했을 때 부른다. */
 @Composable
-private fun CoverPicture(thumbnailUrl: String?) {
+private fun CoverPicture(
+    thumbnailUrl: String?,
+    onReady: () -> Unit,
+) {
     if (thumbnailUrl == null) {
         Icon(
             modifier = Modifier.size(ThumbnailPlaceholderSize),
@@ -185,15 +189,12 @@ private fun CoverPicture(thumbnailUrl: String?) {
             // 표지는 카드의 텍스트 줄이 이미 말하는 것을 되풀이하므로 낭독 대상이 아니다.
             contentDescription = null,
             contentScale = ContentScale.Crop,
+            onSuccess = { onReady() },
+            onError = { onReady() },
         )
     }
 }
 
-/**
- * 표지 위 지표 뱃지 하나. 좋아요 수와 누적 턴 수가 같은 모양을 쓰므로 아이콘과 문구만 갈린다.
- * 표지 위에 놓이므로 색은 테마가 아니라 표지 대비로 정한다. 목록 카드와 상세 히어로 모두 웹 목록 카드처럼
- * 뒤의 표지를 흐려 깐다. 웹 상세는 흐림 없는 진한 바탕이지만 앱은 두 자리를 같은 결로 맞췄다.
- */
 @Composable
 private fun CountBadge(
     @DrawableRes iconRes: Int,
@@ -201,16 +202,45 @@ private fun CountBadge(
     @StringRes descriptionRes: Int,
     scale: StoryBadgeScale,
     backdrop: CoverBackdrop?,
-    modifier: Modifier = Modifier,
 ) {
     val formatted = remember(count) { formatCompactCount(count) }
-    val description = stringResource(descriptionRes, formatted)
+    StoryCoverBadge(
+        iconRes = iconRes,
+        text = formatted,
+        description = stringResource(descriptionRes, formatted),
+        backdrop = backdrop,
+        scale = scale,
+    )
+}
 
+/**
+ * 표지 위 알약 뱃지 하나. 좋아요 수, 누적 턴 수와 제작 카드의 공개 범위가 같은 모양을 쓰므로 아이콘과 문구만 갈린다.
+ * [bright] 는 흐린 어두운 바탕 대신 밝은 바탕에 검은 글자를 쓴다. 공개와 비공개처럼 색 없이 명암으로만 가를 때 쓴다.
+ * 표지 위에 놓이므로 색은 테마가 아니라 표지 대비로 정한다. 목록 카드와 상세 히어로 모두 웹 목록 카드처럼
+ * 뒤의 표지를 흐려 깐다. 웹 상세는 흐림 없는 진한 바탕이지만 앱은 두 자리를 같은 결로 맞췄다.
+ */
+@Composable
+@Suppress("LongParameterList")
+fun StoryCoverBadge(
+    @DrawableRes iconRes: Int,
+    text: String,
+    description: String,
+    backdrop: CoverBackdrop?,
+    modifier: Modifier = Modifier,
+    scale: StoryBadgeScale = StoryBadgeScale.Compact,
+    bright: Boolean = false,
+) {
+    val contentColor = if (bright) Color.Black else Color.White
     Row(
         modifier =
             modifier
-                .coverBackdrop(backdrop, ManyakTheme.shapes.pill)
-                .padding(
+                .then(
+                    if (bright) {
+                        Modifier.background(BrightBadgeColor, ManyakTheme.shapes.pill)
+                    } else {
+                        Modifier.coverBackdrop(backdrop, ManyakTheme.shapes.pill)
+                    },
+                ).padding(
                     horizontal = scale.horizontalPadding,
                     vertical = scale.verticalPadding,
                 )
@@ -223,12 +253,12 @@ private fun CountBadge(
             modifier = Modifier.size(if (scale == StoryBadgeScale.Compact) BadgeIconSize else LargeBadgeIconSize),
             painter = painterResource(iconRes),
             contentDescription = null,
-            tint = Color.White,
+            tint = contentColor,
         )
         Text(
-            text = formatted,
+            text = text,
             style = scale.textStyle,
-            color = Color.White,
+            color = contentColor,
         )
     }
 }
@@ -252,3 +282,6 @@ private val ThumbnailBorderWidth = 1.dp
 internal val StoryOverlayScrim = Color(0xFF111414).copy(alpha = OVERLAY_SCRIM_ALPHA)
 
 private const val OVERLAY_SCRIM_ALPHA = 0.7f
+
+/** 밝은 표지 뱃지 바탕. 표지 그림과 무관하게 같은 색이라 흐리지 않는다. */
+private val BrightBadgeColor = Color.White.copy(alpha = 0.9f)

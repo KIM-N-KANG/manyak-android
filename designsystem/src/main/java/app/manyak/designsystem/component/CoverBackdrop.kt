@@ -156,12 +156,16 @@ private class CoverBackdropNode(
 
 /**
  * ORIGINAL 태그(`ic_story_original_tag`)의 바탕. 웹 도안의 바탕 필드(#111414 20%)를 표지 흐림 위에 깐다.
- * 좌상단은 표지 안쪽 곡률, 우하단은 도안의 곡률이다.
+ * 좌상단은 표지 안쪽 곡률, 우하단은 도안의 곡률이다. 모서리 없는 표지(탐색 타일)에 얹으면 [squareTopStart] 로 좌상단을 각지게 둔다.
  */
-fun Modifier.originalTagBackdrop(backdrop: CoverBackdrop?): Modifier =
-    coverBackdrop(backdrop, OriginalTagShape, OriginalTagTint)
+fun Modifier.originalTagBackdrop(
+    backdrop: CoverBackdrop?,
+    squareTopStart: Boolean = false,
+): Modifier = coverBackdrop(backdrop, if (squareTopStart) SquareOriginalTagShape else OriginalTagShape, OriginalTagTint)
 
 private val OriginalTagShape = RoundedCornerShape(topStart = 15.dp, bottomEnd = 6.dp)
+
+private val SquareOriginalTagShape = RoundedCornerShape(bottomEnd = 6.dp)
 
 private val OriginalTagTint = Color(0xFF111414).copy(alpha = 0.2f)
 

@@ -6,16 +6,20 @@ import app.manyak.analytics.entity.AnalyticsEvent
 import app.manyak.analytics.entity.PendingCreationStage
 import app.manyak.analytics.entity.ReportSource
 import app.manyak.analytics.entity.StoryListSection
+import app.manyak.analytics.presentation.toAnalyticsEvent
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.story.CreateTutorialProgress
 import app.manyak.common.domain.story.CreationProgressAccess
 import app.manyak.common.entity.story.CompletionFailure
 import app.manyak.common.entity.story.CompletionRequestStatus
 import app.manyak.common.entity.story.CompletionRequestSummary
+import app.manyak.common.entity.story.CreateTutorialStage
 import app.manyak.common.entity.story.CreationProgressSummary
 import app.manyak.common.entity.story.CreationResumePoint
 import app.manyak.common.entity.story.CreationStage
 import app.manyak.common.entity.story.StorySummary
 import app.manyak.common.presentation.mvi.MviViewModel
+import app.manyak.common.presentation.story.CreateTutorialController
 import app.manyak.report.domain.ReportRepository
 import app.manyak.report.presentation.StoryReportAction
 import app.manyak.report.presentation.StoryReportChange
@@ -92,6 +96,16 @@ data class StudioUiState(
     val hasProgressCards: Boolean get() = hasLocalCards || submissions.isNotEmpty()
 
     val hasLocalCards: Boolean get() = drafts.isNotEmpty() || completionRequests.isNotEmpty()
+
+    /** 완성 중 카드가 보이고 안내를 가릴 시트와 다이얼로그가 없을 때만 첫 진입 안내의 마지막 단계를 받는다. */
+    val tutorialScreen: CreateTutorialStage?
+        get() =
+            CreateTutorialStage.COMPLETING.takeIf {
+                completionRequests.any { it.status == CompletionRequestStatus.PENDING } &&
+                    optionsTarget == null &&
+                    deleteTarget == null &&
+                    !report.isSheetOpen
+            }
 }
 
 sealed interface StudioIntent {
@@ -266,6 +280,7 @@ class StudioViewModel
         private val storyRepository: StudioRepository,
         private val analytics: Analytics,
         reportRepository: ReportRepository,
+        tutorialProgress: CreateTutorialProgress,
     ) : MviViewModel<StudioIntent, StudioUiState, StudioEvent, StudioEffect>(StudioUiState()) {
         private var loadJob: Job? = null
         private var deleteJob: Job? = null
@@ -298,6 +313,15 @@ class StudioViewModel
                         if (submitted) StudioEffect.ShowReportSubmitted else StudioEffect.ShowReportFailed,
                     )
                 },
+            )
+
+        /** 간편 제작 첫 진입 안내의 마지막 단계. 화면이 보이는 동안 몰고 버튼을 받는다. */
+        val tutorial =
+            CreateTutorialController(
+                scope = viewModelScope,
+                progress = tutorialProgress,
+                screen = uiState.map { it.tutorialScreen },
+                report = { analytics.track(it.toAnalyticsEvent()) },
             )
 
         init {

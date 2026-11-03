@@ -21,6 +21,7 @@ colors:
   surface-raised: "#FFFFFF"
   background-neutral: "#F5F5F5"
   background-neutral-pressed: "#EEEEEE"
+  background-neutral-raised: "#F5F5F5"
   overlay-pressed: "#0F000000"
   image-viewer-scrim: "#EB000000"
   tour-scrim: "#80000000"
@@ -35,6 +36,7 @@ colors:
   background-disabled: "#EEEEEE"
   border: "#EEEEEE"
   border-strong: "#B9B9B9"
+  border-overlay: "#00000000"
   border-input: "#8D8D8D"
   border-brand: "#00995F"
   border-danger: "#E23531"
@@ -60,6 +62,7 @@ colors-dark:
   surface-raised: "#1F1F1F"
   background-neutral: "#1F1F1F"
   background-neutral-pressed: "#575757"
+  background-neutral-raised: "#2C2C2C"
   overlay-pressed: "#14FFFFFF"
   image-viewer-scrim: "#EB000000"
   tour-scrim: "#80000000"
@@ -74,6 +77,7 @@ colors-dark:
   background-disabled: "#3A3A3A"
   border: "#2C2C2C"
   border-strong: "#3A3A3A"
+  border-overlay: "#2C2C2C"
   border-input: "#666666"
   border-brand: "#58C58F"
   border-danger: "#FF7669"
@@ -142,11 +146,6 @@ typography:
     fontSize: 12sp
     fontWeight: 500
     lineHeight: 16sp
-  label-tiny:
-    fontFamily: "Pretendard"
-    fontSize: 11sp
-    fontWeight: 500
-    lineHeight: 16sp
 
 rounded:
   checkbox: 6dp
@@ -175,9 +174,12 @@ sizes:
   generation-dot-radius: 1dp
   tour-card-width: 288dp
   tour-step-dot: 6dp
+  mascot-avatar: 48dp
   studio-cover-width: 128dp
   unread-dot: 8dp
   unread-dot-inline: 6dp
+  menu-max-height: 240dp
+  choice-list-max-height: 284dp
 
 spacing:
   hairline: 2dp
@@ -388,6 +390,23 @@ components:
     dotSize: "{sizes.tour-step-dot}"
     dotActiveColor: "{colors.text-subtle}"
     dotInactiveColor: "{colors.border}"
+  create-tutorial-dialog:
+    backgroundColor: "{colors.surface}"
+    borderColor: "{colors.border-overlay}"
+    scrimColor: "{colors.tour-scrim}"
+    rounded: "{rounded.overlay}"
+    margin: "0 {spacing.component}"
+    padding: "{spacing.gutter}"
+    avatarSize: "{sizes.mascot-avatar}"
+    avatarBackgroundColor: "{colors.background-brand-subtle}"
+    mascotColor: "{colors.brand}"
+    gap: "{spacing.component}"
+    nameTypography: "{typography.label-large}"
+    nameColor: "{colors.text-brand}"
+    messageTypography: "{typography.body-large}"
+    messageColor: "{colors.text}"
+    buttonHeight: "{sizes.control-compact}"
+    buttonGap: "{spacing.inline}"
   chat-small-button:
     backgroundColor: "{colors.brand}"
     textColor: "{colors.text-inverse}"
@@ -498,7 +517,7 @@ components:
 | 파일 | 내용 |
 | --- | --- |
 | `ManyakLogo.kt` | 로고 락업. 높이는 토큰, 폭은 원본 비율 |
-| `ManyakMascot.kt` | 로고 심벌을 눈이 움직이는 마스코트로 그리는 `DrawScope` 함수. 동그란 눈 외에 힘주는·웃는·졸린·반짝이는·윙크·어지러운 눈을 그린다. 시작 화면, 완성 중 표지, 채팅 실시간 이미지 대기가 쓴다 |
+| `ManyakMascot.kt` | 로고 심벌을 눈이 움직이는 마스코트로 그리는 `DrawScope` 함수. 동그란 눈 외에 힘주는·웃는·졸린·반짝이는·윙크·어지러운 눈을 그린다. 시작 화면, 완성 중 표지, 채팅 실시간 이미지 대기, 간편 제작 첫 진입 안내가 쓴다 |
 | `ManyakSectionHeader.kt` | 메인 탭 상단 헤더 |
 | `ManyakNavigationBar.kt` · `ManyakNavigationItem.kt` | 하단 탭 바와 그 항목 |
 | `ProgressIndicator.kt` | 로딩 스피너와 지연 표시 헬퍼 |
@@ -507,6 +526,7 @@ components:
 | `credit/CreditBalanceCard.kt` | 내 이프 카드(라벨·잔액·충전 버튼). 마이와 채팅 메뉴 시트가 같이 쓴다 |
 | `ManyakOptionsSheet.kt` · `ManyakOptionItem.kt` | 카드 옵션·상세 옵션·채팅 메뉴의 바텀 시트 틀과 항목 버튼 |
 | `ManyakCheckbox.kt` | 동의·확인 항목의 체크 표시. 줄이 토글을 맡고 상자는 그리기만 한다 |
+| `CreateTutorialDialog.kt` | 간편 제작 첫 진입 안내 대화창과 그 안에서 말하는 마스코트. 문구와 버튼 콜백만 받고 간편 제작 화면과 제작 탭이 같이 쓴다 |
 
 `designsystem/src/main/java/app/manyak/designsystem/mascot/`
 
@@ -534,6 +554,7 @@ components:
 - **표면** (`{colors.surface}` — 라이트 #FCFCFC / 다크 #131313): 앱 바탕·카드·시트. 화면의 기본 바닥입니다.
 - **떠 있는 표면** (`{colors.surface-raised}` — 라이트 #FFFFFF / 다크 #1F1F1F): 팝오버·플로팅. **순백을 쓰는 유일한 자리**입니다.
 - **보조 배경** (`{colors.background-neutral}` — 라이트 #F5F5F5 / 다크 #191919): 입력창·비강조 채움. 눌림은 `{colors.background-neutral-pressed}`.
+- **떠 있는 표면 위 보조 배경** (`{colors.background-neutral-raised}` — 라이트 #F5F5F5 / 다크 #2C2C2C): 바텀시트 안의 회색 카드처럼 `{colors.surface-raised}` 위에 까는 채움. 다크에서는 `{colors.background-neutral}`이 시트 바탕과 같은 값이라 한 단계 밝게 둔다. 웹의 시트 위 `bg-muted`와 같은 관계다(2026-11-02).
 - **눌림 리플** (`{colors.overlay-pressed}` — 라이트 검정 6% / 다크 흰 8%): 리플의 색이고 알파가 곧 눌림 농도다. 흰 행에서는 보조 배경 눌림 색 근처가 되고, 표지 위에서는 옅은 스크림이 된다. 배경색이 없는 카드에도 같은 규칙으로 눌림을 말하기 위한 값이라 채움 색이 아니라 반투명이다.
 - **비활성 채움** (`{colors.background-disabled}`): 비활성 컨트롤의 바닥.
 - **투어 딤** (`{colors.tour-scrim}` — 검정 50%, 라이트·다크 공통): 채팅 안내 투어가 하이라이트한 버튼만 뚫고 나머지를 덮는다. 이미지 뷰어 스크림(92%)보다 옅은 것은 뒤 화면이 어디인지 읽혀야 안내가 성립하기 때문이다. 웹과 같은 값이다.
@@ -560,6 +581,7 @@ components:
 - **점선 경계** (`{colors.border-strong}` — 라이트 #B9B9B9 / 다크 #3A3A3A): 점선은 잉크가 절반만 닿아 같은 색이어도 실선보다 한참 연하게 읽힙니다. 실선 이웃과 같은 무게로 보이게 하는 한 단계 진한 장식 경계이며, **점선에만** 씁니다 — 실선에 쓰면 그냥 진한 테두리가 됩니다.
 - **입력 경계** (`{colors.border-input}` — 라이트 #8D8D8D / 다크 #666666): 경계가 유일한 식별 수단일 때. **표면이 아니라 자기 채움색 기준으로** 역산한 값입니다 — 표면 기준으로 잡았더니 `{colors.background-neutral}` 위에서 2.85로 미달했기 때문입니다.
 - **포커스 링** (`{colors.border-focused}`): 선택된 테두리 `{colors.border-brand}`와 같은 값입니다.
+- **떠 있는 안내 카드 경계** (`{colors.border-overlay}`, 라이트 투명 / 다크 #2C2C2C): 바탕과 같은 `{colors.surface}`로 딤 위에 뜨는 카드(간편 제작 첫 진입 안내)가 다크에서 딤에 묻히지 않게 두르는 1dp 경계입니다. 웹 카드의 다크 전용 테두리와 같습니다.
 - 상태 경계 `{colors.border-danger}` · `{colors.border-warning}` · `{colors.border-information}`는 각 배너·입력창에 씁니다.
 
 ### 쓰면 안 되는 조합
@@ -603,7 +625,6 @@ components:
 | `{typography.label-large}` | 14sp | 500 | 20sp | 버튼·탭 라벨 |
 | `{typography.body-small}` | 12sp | 400 | 16sp | 메타 정보·보조 설명 |
 | `{typography.label-small}` | 12sp | 500 | 16sp | 타임스탬프·최소 보조 문구 · 표지 위 뱃지 |
-| `{typography.label-tiny}` | 11sp | 500 | 16sp | 버튼 라벨 아래 보조 줄(채팅 시작 버튼의 페르소나와 시작 상황 요약) |
 
 ### 원칙
 
@@ -678,9 +699,12 @@ components:
 | `{sizes.generation-dot-radius}` | 1dp | 마스코트 무대 바탕 점 반지름 |
 | `{sizes.tour-card-width}` | 288dp | 채팅 안내 투어 카드의 폭. 좁은 화면에서는 좌우 `{spacing.gutter}`를 남기고 줄어든다 |
 | `{sizes.tour-step-dot}` | 6dp | 채팅 안내 투어 카드의 스텝 점 지름 |
+| `{sizes.mascot-avatar}` | 48dp | 간편 제작 첫 진입 안내 대화창에서 마스코트가 말하는 둥근 프로필의 지름 |
 | `{sizes.studio-cover-width}` | 128dp | 제작 탭의 스토리, 초안, 검수 제출본 표지 폭 |
 | `{sizes.unread-dot}` | 8dp | 헤더 공지 버튼 아이콘 오른쪽 위의 안 읽음 점 지름 |
 | `{sizes.unread-dot-inline}` | 6dp | 공지 목록 제목 끝에 붙는 안 읽음 점 지름 |
+| `{sizes.menu-max-height}` | 240dp | 셀렉트와 장르 검색 메뉴의 최대 높이. 40dp 항목과 4dp 간격으로 5줄 반이 보여 아래에 더 있다는 것이 드러난다 |
+| `{sizes.choice-list-max-height}` | 284dp | 시트 안에서 펼치는 선택 목록의 최대 높이. 48dp 항목과 4dp 간격으로 5줄 반이 보인다 |
 
 `{sizes.tab-icon}`이 `{sizes.icon}`보다 큰 이유는 놓이는 자리가 다르기 때문이다. `{sizes.icon}`은 같은 줄의
 라벨 옆에 붙어 글자 크기에 맞추지만, 탭 아이콘은 라벨 위에 놓인 탭의 주된 시각 요소다. 웹 하단
@@ -787,11 +811,11 @@ components:
 
 **`text-field-focused`** — 경계를 한 단계 진한 회색 `{colors.border-input}`으로 바꿉니다. 포커스에 브랜드 색을 쓰지 않습니다(2026-08-24 결정 — 입력 경계는 무채색 사다리로만 말합니다).
 
-입력란 사이 이동과 같은 입력란 재터치(라벨·여백 포함)에서는 키보드를 유지합니다. 입력란 밖의 빈 영역·버튼·칩을 탭하면 포커스와 키보드를 닫으며, 버튼·칩의 동작도 그대로 실행합니다. 채팅 작성 버튼과 추가 정보 편집 버튼의 예외는 [Android 계약](../knk-harness/docs/spec/3-3-android-spec.md)을 따르며, 해당 버튼에도 `keepKeyboardOnTap`을 적용합니다. 스크롤·드래그·다중 터치는 포커스를 해제하지 않습니다. 앱 루트·공통 시트·입력 다이얼로그에 `clearFocusOnTap`을 적용하고, 공통 입력 컴포넌트와 직접 사용하는 `BasicTextField`는 `keepKeyboardOnTap`으로 입력 영역을 구분합니다. 두 modifier 모두 터치 이벤트를 소비하지 않습니다.
+입력란 사이 이동과 같은 입력란 재터치(라벨·여백 포함)에서는 키보드를 유지합니다. 입력란 밖의 빈 영역·버튼·칩을 탭하면 포커스와 키보드를 닫으며, 버튼·칩의 동작도 그대로 실행합니다. 채팅 작성 버튼과 추가 정보 편집 버튼의 예외는 [Android 계약](../knk-harness/docs/domain/AGENTS.md)을 따르며, 해당 버튼에도 `keepKeyboardOnTap`을 적용합니다. 스크롤·드래그·다중 터치는 포커스를 해제하지 않습니다. 앱 루트·공통 시트·입력 다이얼로그에 `clearFocusOnTap`을 적용하고, 공통 입력 컴포넌트와 직접 사용하는 `BasicTextField`는 `keepKeyboardOnTap`으로 입력 영역을 구분합니다. 두 modifier 모두 터치 이벤트를 소비하지 않습니다.
 
 **`text-field-error`** — 경계를 `{colors.border-danger}`로 바꾸고, 오류 문구를 `{colors.text-danger}` + `{typography.body-small}`로 아래에 둡니다. 색만으로 오류를 알리지 않습니다.
 
-**셀렉트 메뉴**(성별 등) — 앵커는 text-field 와 같은 형태이고, 미선택(랜덤) 값은 placeholder 색(`{colors.text-disabled}`)으로 낮춥니다. 메뉴는 앵커와 같은 폭으로 항상 앵커 아래에 `{spacing.inline}` 떨어져 열리며, 배경 `{colors.surface-raised}` + 경계 `{colors.border}` + **연한 그림자**를 쓰고, 판 안쪽 여백과 항목 사이 간격은 모두 `{spacing.inline}`이고, 각 항목은 `{rounded.menu-item}` 모서리와 세로 `{spacing.control-vertical}` · 가로 `{spacing.control-horizontal}` 여백을 사용합니다. 선택된 항목은 `{colors.background-neutral}` 채움과 체크 표시로 드러냅니다 — 그림자 금지 규칙의 예외로, 떠 있는 흰 메뉴가 흰 앵커·표면과 겹쳐 경계만으로는 층이 드러나지 않기 때문입니다. 값 항목 아래에는 고를 수 있는 값이 아닌 동작 항목(상세의 "페르소나 생성하기")을 둘 수 있습니다. 같은 여백에 왼쪽 `{sizes.icon-small}` 더하기 아이콘을 두고 선택 채움과 체크는 두지 않으며, 누르면 메뉴를 닫고 동작을 실행합니다.
+**셀렉트 메뉴**(성별 등) — 앵커는 text-field 와 같은 형태이고, 미선택(랜덤) 값은 placeholder 색(`{colors.text-disabled}`)으로 낮춥니다. 메뉴는 앵커와 같은 폭으로 항상 앵커 아래에 `{spacing.inline}` 떨어져 열리며, 배경 `{colors.surface-raised}` + 경계 `{colors.border}` + **연한 그림자**를 쓰고, 판 안쪽 여백과 항목 사이 간격은 모두 `{spacing.inline}`이고, 각 항목은 `{rounded.menu-item}` 모서리와 세로 `{spacing.control-vertical}` · 가로 `{spacing.control-horizontal}` 여백을 사용합니다. 선택된 항목은 `{colors.background-neutral}` 채움과 체크 표시로 드러냅니다 — 그림자 금지 규칙의 예외로, 떠 있는 흰 메뉴가 흰 앵커·표면과 겹쳐 경계만으로는 층이 드러나지 않기 때문입니다. 항목은 장르 검색 메뉴와 같이 최소 `{sizes.input}`(40dp)이고, 값 항목은 `{sizes.menu-max-height}`(5줄 반)를 넘으면 메뉴 안에서 스크롤합니다(2026-11-02). 값 항목 아래에는 고를 수 있는 값이 아닌 동작 항목(상세의 "페르소나 생성하기")을 둘 수 있습니다. 값 목록과 `{colors.border}` 1dp 구분선으로 나눠 스크롤 밖에 고정하고, 같은 여백에 왼쪽 `{sizes.icon-small}` 더하기 아이콘과 라벨을 `{colors.text-subtle}`로 흐리게 두며 선택 채움과 체크는 두지 않습니다. 누르면 메뉴를 닫고 동작을 실행합니다.
 
 ### 컨테이너
 
@@ -799,11 +823,13 @@ components:
 
 **`overlay`** — 다이얼로그. 배경 `{colors.surface-raised}`, 모서리 `{rounded.overlay}`, 내부 여백 `{spacing.gutter}`.
 
-**`sheet`** — 바텀시트. 배경 `{colors.surface-raised}`, 모서리는 `{rounded.sheet}`로 위쪽 두 곳만 깎습니다 — 아래쪽은 화면 끝에 붙어 있어 깎으면 그 틈으로 스크림이 비칩니다. 내부 여백은 좌·우·아래 `{spacing.gutter}`이고 **위쪽은 두지 않습니다** — 드래그 핸들이 자체 여백을 갖고 있어 겹칩니다. 하단 안전 영역과 키보드 높이는 그 아래로 시트가 직접 낍니다. **하단 닫기는 `button-text` 규칙의 전체 폭·최소 높이 `{sizes.control}`(48dp)·주 동작 버튼과 같은 글자 스타일(`{typography.label-large}`)·보조색 텍스트 버튼이며, 위에 주 동작 버튼이 있을 때만 그 짝으로 둡니다.** 신고·초대 코드 온보딩·광고 알림 동의 시트가 그렇습니다. **주 동작 버튼이 없는 시트 — 읽기 전용(선택한 키워드·채팅 설정)과 항목을 고르는 옵션 시트(카드 옵션·상세 옵션·채팅 메뉴) — 에는 닫기 버튼을 두지 않고** 스크림·끌어내리기·뒤로가기로만 닫습니다(2026-09-18) — 닫기 하나뿐인 줄은 자리만 차지합니다. **닫힘을 막은 시트는 핸들 드래그도 잠급니다**(2026-09-20) — 끌리기만 하고 닫히지 않는 튕김이 "닫을 수 있다"는 신호가 됩니다. 끌어내리기가 아예 없는 시트(필수 동의)는 핸들 자체를 두지 않고 위쪽 여백을 `{spacing.gutter}`로 채우며, 전송 중처럼 잠깐 잠그는 시트는 핸들이 사라졌다 나타나지 않게 그대로 둡니다.
+**`sheet`** — 바텀시트. 배경 `{colors.surface-raised}`, 모서리는 `{rounded.sheet}`로 위쪽 두 곳만 깎습니다 — 아래쪽은 화면 끝에 붙어 있어 깎으면 그 틈으로 스크림이 비칩니다. 내부 여백은 좌·우·아래 `{spacing.gutter}`이고 **위쪽은 두지 않습니다** — 드래그 핸들이 자체 여백을 갖고 있어 겹칩니다. 하단 안전 영역과 키보드 높이는 그 아래로 시트가 직접 낍니다. **하단 닫기는 `button-text` 규칙의 전체 폭·최소 높이 `{sizes.control}`(48dp)·주 동작 버튼과 같은 글자 스타일(`{typography.label-large}`)·보조색 텍스트 버튼이며, 위에 주 동작 버튼이 있을 때만 그 짝으로 둡니다.** 신고·초대 코드 온보딩·광고 알림 동의 시트가 그렇습니다. **주 동작 버튼이 없는 시트 — 읽기 전용(선택한 키워드·채팅 설정)과 항목을 고르는 옵션 시트(카드 옵션·상세 옵션·채팅 메뉴) — 에는 닫기 버튼을 두지 않고** 스크림·끌어내리기·뒤로가기로만 닫습니다(2026-09-18) — 닫기 하나뿐인 줄은 자리만 차지합니다. **닫힘을 막은 시트는 핸들 드래그도 잠급니다**(2026-09-20) — 끌리기만 하고 닫히지 않는 튕김이 "닫을 수 있다"는 신호가 됩니다. 끌어내리기가 아예 없는 시트(필수 동의)는 핸들 자체를 두지 않고 위쪽 여백을 `{spacing.gutter}`로 채우며, 전송 중처럼 잠깐 잠그는 시트는 핸들이 사라졌다 나타나지 않게 그대로 둡니다. 본문에 스크롤 목록이 있어 목록을 끌다 시트가 닫히기 쉬운 시트(채팅 시작 시트)는 `dismissOnContentDrag = false`로 본문 끌기를 시트에 넘기지 않고 핸들 끌기, 스크림 탭과 뒤로가기로만 닫습니다(2026-11-02).
 
 **`chat-realtime-image-nudge`**: 시트가 완전히 펼쳐진 뒤 화면 전체를 `{colors.tour-scrim}`으로 덮고, 실시간 이미지 행을 `{rounded.control}`로 뚫습니다. 하이라이트는 시트 좌우에서 `{spacing.compact}`(8dp) 안쪽이며 행 내용까지 같은 여백을 둡니다. 카드는 행 아래 `{spacing.component}` 간격, `{sizes.tour-card-width}` 폭, `{colors.surface-raised}` 배경과 `{rounded.control}` 모서리, `{spacing.gutter}` 내부 여백을 사용합니다. 제목과 설명은 투어와 같은 타이포를 쓰고 오른쪽 아래 확인 버튼(`chat-small-button` 주 동작)을 둡니다. 모션은 `nudge-dim-enter`, `nudge-card-delay`, `nudge-card-enter`, `nudge-exit`을 따릅니다. 카드가 아래 공간보다 길면 카드 안에서 스크롤합니다.
 
 **`chat-tour-card`** — 채팅 첫 진입 안내 투어. 딤 `{colors.tour-scrim}`은 대상 버튼을 `{spacing.dense}`만큼 넓힌 `{rounded.control}` 모양으로 뚫고, 카드는 `{colors.surface-raised}` · `{rounded.control}` · 내부 여백 `{spacing.gutter}` · 폭 `{sizes.tour-card-width}`(좁으면 좌우 `{spacing.gutter}`를 남기고 줄어듦)입니다. 카드는 하이라이트와 `{spacing.component}` 떨어져 아래에, 아래 공간이 모자라면 위에 놓이고 가로는 하이라이트 중앙이 기본이며 가장자리에서는 그쪽 변에 맞춥니다. 제목 `{typography.body-large-strong}`, 설명 `{typography.body-medium}` + `{colors.text-subtle}`, 아래 줄에 스텝 점(`{sizes.tour-step-dot}`, 현재 `{colors.text-subtle}` · 나머지 `{colors.border}`)과 건너뛰기(`chat-small-button` 글자형), 다음/완료(`chat-small-button` 주 동작)를 둡니다. 점과 버튼 사이는 `{spacing.inline}`입니다. 그림자는 두지 않습니다.
+
+**`create-tutorial-dialog`**: 간편 제작 첫 진입 안내. 웹 카드와 같은 모양이라 앱 다이얼로그(`overlay`)와 따로 둡니다. 창 딤은 `{colors.tour-scrim}`과 같은 검정 50%이고 카드는 좌우 `{spacing.component}`만 남기고 화면 폭을 채워 세로 가운데에 놓입니다. 카드는 `{colors.surface}`, `{rounded.overlay}`, `{colors.border-overlay}` 1dp 경계(다크에만 보임), 안쪽 여백 `{spacing.gutter}`입니다. 좌상단 `{sizes.mascot-avatar}` 원(`{colors.background-brand-subtle}`) 안에서 `{colors.brand}` 마스코트가 말하고, 오른쪽 `{spacing.component}`에 이름 “마냑”(`{typography.label-large}` + `{colors.text-brand}`)과 `{spacing.inline}` 아래 대사(`{typography.body-large}` + `{colors.text}`)를 둡니다. 대사 아래 `{spacing.gutter}`에 버튼 줄을 오른쪽 정렬하고 간격은 `{spacing.inline}`입니다. 버튼의 보이는 높이는 `{sizes.control-compact}`, 보조는 `{colors.text}` 글자 버튼, 주 동작은 `{colors.brand}` 채움 버튼이며 둘 다 `{rounded.control}`, `{typography.label-large}`입니다. 창 전환은 끄고 카드가 250ms 동안 0.95배에서 커지며 나타납니다. **단계가 바뀌어도 같은 호출 자리에서 다시 그려 창을 유지하고** 대사만 `{motion.element-enter}`로 교차 페이드합니다. 단계마다 창을 새로 열면 딤이 두 번 페이드돼 깜빡입니다. 바깥 탭으로 닫지 않습니다.
 
 **`chat-small-button`** — 채팅방 안내 카드와 실패 안내 아래의 작은 버튼. 웹의 작은 버튼(`size="sm"`)과 같게 최소 높이 `{sizes.control-small}`, 가로 여백 `{spacing.component}`, `{typography.label-small}`, `{rounded.menu-item}`입니다. 주 동작은 `{colors.brand}` 바탕에 `{colors.text-inverse}`, 테두리형(선택지 실패의 다시 시도)은 `{colors.surface-raised}` 바탕에 `{colors.border}` 1dp 경계와 `{colors.text}`, 글자형(투어 건너뛰기)은 바탕 없이 `{colors.text}`입니다. M3 `Button`은 최소 높이 40dp가 붙어 쓰지 않습니다. 구멍은 스텝이 바뀔 때 `{motion.element-enter}`로 다음 대상에 옮겨 가고, 카드는 같은 시간에 `{spacing.compact}` 아래에서 올라오며 나타납니다.
 
@@ -839,7 +865,7 @@ components:
 
 **`section-header`** — 메인 탭의 상단 헤더. `TopAppBar` 위에 배경 `{colors.surface}`와 제목 색 `{colors.text}`를 얹는다. 좌우 여백은 앱 바 기본값이 16dp 라 `{spacing.gutter}`와 같고, 로고와 섹션 이름(`{typography.title-large}`) 사이도 `{spacing.gutter}`다. 높이는 최소 64dp 이고 제목이 커지면 함께 늘어난다. 구분선과 그림자를 두지 않는다. `TopAppBar`가 아직 실험 API 라 `@OptIn`이 필요하며, 사용처는 이 컴포넌트와 퍼널 헤더(`funnel-header`) 둘이다.
 
-**`tab-bar`** — 홈·채팅·마이 고정 3탭. 배경 `{colors.surface}`, 위쪽 경계 `{colors.border}` 1dp. 아이콘(`{sizes.tab-icon}`) 아래에 이름을 `{typography.label-small}`로 둔다. 선택은 filled 아이콘 + `{colors.text}`, 비선택은 outline 아이콘 + `{colors.text-subtle}`이고 아이콘과 라벨이 같은 색을 쓴다. 라벨이 이름을 맡으므로 **아이콘은 장식으로 두고 접근성 이름을 붙이지 않는다** — 둘 다 붙이면 탐색 서비스가 같은 이름을 두 번 읽는다. 선택을 색 하나로만 구분하지 않고 아이콘 모양을 함께 바꾼다.
+**`tab-bar`**: [공통 UI 요구사항](../knk-harness/docs/ui/2-2-REQUIREMENTS.md#2-2-1-적용-범위)에 따라 홈, 채팅, 제작, 탐색, 마이 고정 5탭을 제공한다. 탐색 아이콘은 웹과 같은 나침반(`ic_nav_explore_outline`, `ic_nav_explore_filled`)이다. 배경 `{colors.surface}`, 위쪽 경계 `{colors.border}` 1dp. 아이콘(`{sizes.tab-icon}`) 아래에 이름을 `{typography.label-small}`로 둔다. 선택은 filled 아이콘 + `{colors.text}`, 비선택은 outline 아이콘 + `{colors.text-subtle}`이고 아이콘과 라벨이 같은 색을 쓴다. 라벨이 이름을 맡으므로 **아이콘은 장식으로 두고 접근성 이름을 붙이지 않는다**. 둘 다 붙이면 탐색 서비스가 같은 이름을 두 번 읽는다. 선택을 색 하나로만 구분하지 않고 아이콘 모양을 함께 바꾼다.
 
 **위쪽 경계선을 두는 이유는 바 배경이 화면 바탕과 같은 `{colors.surface}`이기 때문이다.** 콘텐츠는 바 아래로 흘러 들어가므로, 경계선이 없으면 어디까지가 콘텐츠인지 드러나지 않는다. 이 시스템은 그림자를 쓰지 않으니 경계선이 유일한 수단이다. 상단 헤더는 반대다 — 헤더 위로는 아무것도 흐르지 않아 구분할 대상이 없다.
 
@@ -847,11 +873,15 @@ components:
 
 선택에 `{colors.brand}` 계열을 쓰지 않는 것은 **이 시스템에서 초록이 "지금 누를 것"을 뜻하기 때문이다.** 하단 바는 늘 떠 있는 chrome 이라 초록을 상시 띄우면 화면 안의 주 동작과 강조가 겹치고, 어느 쪽이 다음 행동인지 흐려진다. 선택 여부는 아이콘 모양이 이미 말하므로 색은 위계(`{colors.text}` ↔ `{colors.text-subtle}`)만 맡는다.
 
-**홈 스토리 카드 글자** — 표지 아래 제목(`{typography.body-large-strong}`)과 제작자(`{typography.body-medium}` + `{colors.text-subtle}`) 줄은 표지 가장자리에서 좌우 `{spacing.inline}` 안쪽에 두고, 스켈레톤도 같게 둔다. 웹 카드와 같은 굵기와 배치다. 표지 옆에 글을 두는 목록은 글 영역을 위아래로 띄운다. 채팅 목록 카드는 `{spacing.hairline}`, 제작 탭 카드(내 스토리, 진행, 제출본)는 `{spacing.inline}`이고 스켈레톤도 같다. 채팅 목록 카드도 내 스토리 카드처럼 글 영역이 표지 높이를 최소치로 삼아 제목과 미리보기는 위에, 메타 줄(턴 수, 날짜)은 표지 아랫변에 맞춰 아래 끝에 두되 미리보기에서 최소 `{spacing.compact}`를 띄우고, 스켈레톤도 같다. 그러려면 표지가 글 영역보다 높아야 해서 채팅 목록 표지 폭은 56dp다. 내 스토리 카드는 홈 카드처럼 좋아요 수와 턴 수를 표지 우하단 `Compact` 뱃지로 얹고(표지가 좁아 큰 수 둘이 한 줄에 들지 않으면 뱃지 단위로 줄을 바꾼다), 메타 줄에는 공개 범위(`ic_lock_open_outline` 공개, `ic_lock_outline` 비공개)와 제작일을 둔다.
+**홈 스토리 카드 글자** — 표지 아래 제목(`{typography.body-large-strong}`) 한 줄, `{spacing.hairline}` 아래 한 줄 소개(`{typography.body-medium}` + `{colors.text-subtle}`) 두 줄, `{spacing.compact}` 아래 `Compact` 장르 뱃지 한 줄(넘치면 `+N`)을 표지 가장자리에서 좌우 `{spacing.inline}` 안쪽에 두고, 작성자는 두지 않는다. 소개는 비어도 두 줄 자리를 지켜 옆 카드와 장르 줄 높이가 맞는다. 제목과 소개는 앱의 다른 글과 달리 `LineBreak.Simple`로 글자 단위로 끊어 잘린 줄을 끝까지 채운다. 표지 위에는 왼쪽 위 ORIGINAL 태그와 오른쪽 아래 턴 수 `Compact` 뱃지만 둔다. 스켈레톤은 표지, 제목 줄, 소개 줄 자리다. 웹 카드와 같은 굵기와 배치다. 표지 옆에 글을 두는 목록은 글 영역을 위아래로 띄운다. 채팅 목록 카드는 `{spacing.hairline}`, 제작 탭 카드(내 스토리, 진행, 제출본)는 `{spacing.inline}`이고 스켈레톤도 같다. 채팅 목록 카드도 내 스토리 카드처럼 글 영역이 표지 높이를 최소치로 삼아 제목과 미리보기는 위에, 메타 줄(턴 수, 날짜)은 표지 아랫변에 맞춰 아래 끝에 두되 미리보기에서 최소 `{spacing.compact}`를 띄우고, 스켈레톤도 같다. 그러려면 표지가 글 영역보다 높아야 해서 채팅 목록 표지 폭은 56dp다. 내 스토리 카드는 홈 카드처럼 좋아요 수와 턴 수를 표지 우하단 `Compact` 뱃지로 얹고(표지가 좁아 큰 수 둘이 한 줄에 들지 않으면 뱃지 단위로 줄을 바꾼다), 공개 범위는 표지 왼쪽 위 `{spacing.compact}`의 `Compact` 뱃지(`StoryCoverBadge`)로 둔다. 공개는 흰 90% 바탕에 검은 글자와 디자인이 준 지구본(`ic_globe_outline`), 비공개는 좋아요 수 뱃지와 같은 흐린 어두운 바탕에 흰 글자와 자물쇠(`ic_lock_outline`)로 색 없이 명암만 달리하고, 메타 줄에는 제작일만 둔다.
 
-**`story-list-toolbar`** — 홈 목록 위의 필터·정렬 줄. 배경 `{colors.surface}`, 위아래 여백 `{spacing.compact}`. 왼쪽은 필터 칩(전체·오리지널, `{spacing.compact}` 간격, 폭이 모자라면 칩 영역만 가로 스크롤하고 시작 여백은 `{spacing.gutter}`), 오른쪽 끝은 정렬 이름(`{typography.body-medium}`)과 `{sizes.icon-small}` 아래 셰브론(`ic_chevron_down`, `{colors.text-subtle}`)이다. **필터 칩은 키워드 칩과 달리 알약(`{rounded.pill}`)이고 선택을 `{colors.brand}` 채움 + `{colors.text-inverse}` 글자로 말하며, 선택 칩만 글자를 `{typography.label-large}`(같은 크기의 Medium)로 올린다** — 웹과 같은 필터 문법이고, 일반 제작의 시작 상황 칩도 선택 글자를 같은 롤로 올린다. 미선택은 `{colors.surface-raised}` + `{colors.border}` 1dp이고, 치수는 키워드 칩과 같은 최소 높이 `{sizes.input}`·여백 세로 `{spacing.control-vertical}` · 가로 `{spacing.control-horizontal}`이며 키워드 칩처럼 눌림 리플을 두지 않는다. 목록은 줄 아래로 `{spacing.compact}`를 더 띄우고 시작한다. 정렬 메뉴는 셀렉트와 같은 `ManyakSelectMenu`를 앵커 오른쪽 끝에 맞춰 연다. 줄은 목록 위에 겹쳐 두고 아래로 8dp 스크롤하면 위로 밀려 잘려 나가고, 위로 32dp 스크롤하거나 맨 위 64dp 안이면 다시 내려온다. 모션은 웹과 같은 사라짐 150ms `cubic-bezier(0.4, 0, 1, 1)`, 나타남 300ms `cubic-bezier(0.32, 0.72, 0, 1)`이다 — 토큰의 요소 모션(200·150ms)과 달리 두 플랫폼이 같은 곡선을 쓰도록 이 자리에서만 고정했다. 필터나 정렬을 바꾸면 그 자리에서 바로 목록을 골격으로 덮고, 새 목록이 와도 최소 500ms는 골격을 지킨 뒤 `{motion.element-enter}` 교차 페이드로 새 목록을 보인다. 응답이 빠르고 두 목록에 같은 카드가 많으면 목록이 바뀐 것이 보이지 않기 때문이다. 첫 조회와 새로고침에는 쓰지 않는다. 웹은 응답이 늦을 때만 골격을 보인다.
+**`home-section`**: 홈 섹션 하나. 이름(`{typography.title-medium-strong}`, 좌우 `{spacing.gutter}`) 아래 `{spacing.component}`를 띄워 가로로 넘기는 카드 줄을 둔다. 줄은 좌우 `{spacing.gutter}` 여백과 카드 사이 `{spacing.compact}`이고, 카드 폭은 (줄 폭 − 32dp − 16dp) ÷ 2라 카드 두 장 다음 셋째 카드가 화면 오른쪽 끝에 16dp만 보인다. 스냅과 더 보기는 없다. 섹션은 셸 여백 바로 아래에서 시작해 사이 `{spacing.block}`, 마지막 아래 `{spacing.gutter}`로 쌓는다. 골격은 섹션 2개와 섹션마다 카드 3장이고, 제목, 소개 두 줄, 장르 뱃지 자리의 높이를 같은 글자 스타일과 뱃지를 보이지 않게 그려 잡아 글자 크기와 무관하게 실제 카드와 높이가 같다.
 
-**`pull-to-refresh`** — 목록을 당겨서 새로고침할 때의 표시자. M3 `PullToRefreshBox` 기본 표시자 위에 배경 `{colors.surface-raised}`와 스피너 색 `{colors.progress-indicator}`를 얹는다. 목록은 셸 헤더 아래로 흘러 들어가도 되지만 표시자는 그 자리에서 헤더에 완전히 가리므로, 셸이 넘긴 콘텐츠 여백의 **상단만큼 내려** 헤더 뒤에서 나오게 한다. 발동 거리는 M3 기본 80dp 대신 56dp다. M3는 손가락 이동의 절반만 당김으로 세므로 112dp를 끌면 새로고침되고(기본은 160dp), 표시자도 기본 80dp가 아니라 같은 56dp까지만 내려와 멈춘다. 홈은 필터·정렬 바(`story-list-toolbar`)가 목록 위에 겹쳐 있어 셸 여백에서 내리면 바에 가리므로, 목록이 시작하는 줄(바 아래 `{spacing.compact}`)에서 내린다. 응답이 빨라도 당긴 뒤 스피너가 최소 800ms는 돌아 새로고침됐다는 것이 보이게 한다. 목록이 그려진 상태에만 두고 골격·조회 실패·빈 목록에는 두지 않는다.
+**`explore-grid`**: 탐색 탭의 표지 그리드. 셸 여백 말고는 좌우와 위아래 여백 없이 세 열로 붙이고 타일 사이는 `{spacing.hairline}`이다. 타일은 모서리와 테두리 없는 3:4 표지(`StoryCover`의 `RectangleShape`)에 ORIGINAL 태그(폭 56dp, 좌상단 각진 바탕)만 얹고 턴 수 뱃지와 글은 두지 않는다. 당겨서 새로 섞으면 칸 자리는 그대로 두고 칸마다 이전 표지 위에 새 표지를 겹친다. 새 표지는 그림을 받은 뒤 불투명도 0, 크기 96%에서 420ms `cubic-bezier(0.22, 1, 0.36, 1)`로 나타나고 왼쪽 위 칸부터 대각선 한 칸마다 45ms, 최대 450ms 늦춘다. 이전 표지는 새 표지가 다 나타난 뒤 걷는다. 시스템 애니메이션을 끄면 Compose 애니메이션이 바로 끝나 지연 없이 바뀐다. 웹과 같은 값이라 토큰 대신 이 자리에서 고정했다. 골격은 표지 12장이다.
+
+**`studio-section-title`**: 제작 탭의 진행 중과 내 스토리 구역 제목. 제목 `{typography.body-large-strong}` 옆 `{spacing.dense}`에 개수 `{typography.label-large}` + `{colors.text-subtle}`을 세로 가운데에 맞춰 둔다. 크기가 다른 두 글자를 기준선에 맞추면 개수가 내려앉아 보인다. 좌우 `{spacing.gutter}`, 위 `{spacing.compact}`(진행 중 구역 뒤의 내 스토리는 `{spacing.section}`), 아래 `{spacing.inline}`. 카드가 없는 구역은 제목도 두지 않는다.
+
+**`pull-to-refresh`** — 목록을 당겨서 새로고침할 때의 표시자. M3 `PullToRefreshBox` 기본 표시자 위에 배경 `{colors.surface-raised}`와 스피너 색 `{colors.progress-indicator}`를 얹는다. 목록은 셸 헤더 아래로 흘러 들어가도 되지만 표시자는 그 자리에서 헤더에 완전히 가리므로, 셸이 넘긴 콘텐츠 여백의 **상단만큼 내려** 헤더 뒤에서 나오게 한다. 발동 거리는 M3 기본 80dp 대신 56dp다. M3는 손가락 이동의 절반만 당김으로 세므로 112dp를 끌면 새로고침되고(기본은 160dp), 표시자도 기본 80dp가 아니라 같은 56dp까지만 내려와 멈춘다. 표시자 뒤에는 그라데이션 같은 배경을 따로 깔지 않는다. 응답이 빨라도 당긴 뒤 스피너가 최소 300ms는 돌아 새로고침됐다는 것이 보이게 한다. 목록이 그려진 상태에만 두고 골격·조회 실패·빈 목록에는 두지 않는다.
 
 **`skeleton`** — 받는 동안 자리를 지키는 골격 조각(`SkeletonPlaceholder`). 바탕은 `{colors.border}`이고, 한 화면의 조각이 함께 불투명도 100%와 50% 사이를 700ms씩 오가며 맥동한다. 보조 배경(`{colors.background-neutral}`)은 화면 바탕과 거의 같아, 맥동으로 옅어지면 빈 화면과 구분되지 않는다. 웹은 `bg-muted`(#F5F5F5)라 Android 골격이 한 단계 진하다.
 
@@ -859,9 +889,11 @@ components:
 
 **표지 위 뱃지**: 목록 카드의 좋아요 수와 턴 수 뱃지, ORIGINAL 태그, 화풍 이름, 상세 인물 카드의 이전·다음 버튼은 웹의 `backdrop-blur-md`처럼 뒤 그림을 흐려 바탕에 깝니다(`coverBackdrop`). 흐림은 웹과 같은 표준편차 12dp이고 그 위에 검정 20%를, ORIGINAL 태그는 도안 색 #111414 20%를 덮습니다. 뒤 그림을 흐릴 수 없는 API 31 미만은 흐림 대신 #111414 70%를 깝니다. 상세 히어로의 좋아요 수와 턴 수 뱃지도 같은 흐린 바탕입니다. 웹 상세는 흐림 없는 검정 70%라 이 자리만 웹과 다릅니다. 턴 수 아이콘은 웹과 같은 말풍선(Hugeicons BubbleChat)입니다.
 
-**스토리 뱃지 크기**: 상세 히어로의 좋아요 수와 턴 수 뱃지, 상세 장르와 본 엔딩 뱃지, 제작 탭 카드 장르 뱃지는 웹과 같은 높이 28dp입니다(`StoryBadgeScale.Large`). `{typography.label-large}`(14sp, 줄 높이 20sp)에 여백 가로 `{spacing.component}`, 세로 `{spacing.inline}`이고, 웹 CSS처럼 한 줄 글자의 줄 상자를 자르지 않습니다(`LineHeightStyle.Trim.None`, Compose 기본 `Trim.Both`는 글꼴 높이로 잘라 뱃지가 3dp 낮아집니다). 카드에서 접힌 장르는 웹과 같이 `+N` 글자 뱃지로 보입니다. 목록 카드 표지 뱃지는 `Compact`(`{typography.label-small}`, 여백 가로 `{spacing.compact}`, 세로 `{spacing.hairline}`)입니다.
+**스토리 뱃지 크기**: 상세 히어로의 좋아요 수와 턴 수 뱃지, 상세 장르와 본 엔딩 뱃지, 제작 탭 카드 장르 뱃지는 웹과 같은 높이 28dp입니다(`StoryBadgeScale.Large`). `{typography.label-large}`(14sp, 줄 높이 20sp)에 여백 가로 `{spacing.component}`, 세로 `{spacing.inline}`이고, 웹 CSS처럼 한 줄 글자의 줄 상자를 자르지 않습니다(`LineHeightStyle.Trim.None`, Compose 기본 `Trim.Both`는 글꼴 높이로 잘라 뱃지가 3dp 낮아집니다). 카드에서 접힌 장르는 웹과 같이 `+N` 글자 뱃지로 보입니다. 홈 카드 장르 뱃지와 목록 카드 표지 뱃지는 `Compact`(`{typography.label-small}`, 여백 가로 `{spacing.compact}`, 세로 `{spacing.hairline}`)이고 같은 이유로 줄 상자를 자르지 않아 웹과 같은 높이 20dp입니다.
 
 **스토리 상세 하단 배경**: 스크롤 끝에 가까워질수록 CTA와 위쪽 페이드의 색상을 `{colors.surface}`에서 메타 정보의 `{colors.background-neutral}`로 부드럽게 전환합니다. 맨 아래에서는 메타 정보와 CTA 배경이 같은 색으로 이어지며, 위로 스크롤하면 원래 색으로 돌아갑니다. 메타 정보가 없는 상세는 `{colors.surface}`를 유지합니다. 메타 정보가 처음 보일 때 전환을 0부터 시작하고 `{motion.element-enter}`(200ms)로 진행률을 부드럽게 따라갑니다.
+
+**`chat-start-sheet`** — 상세의 "새 채팅 시작하기"가 여는 채팅 시작 시트(2026-11-02, KNK-1977). `sheet` 위에 제목 `{typography.title-large}`와 설명 `{typography.body-large}` + `{colors.text-subtle}`을 `{spacing.compact}` 간격으로 두고, `{spacing.section}` 아래 `{rounded.control}` 회색 카드(`{colors.background-neutral-raised}`) 하나에 페르소나 행과 시작 상황 행을 `{colors.surface-raised}` 1dp 선으로 나눕니다. 행은 `{spacing.gutter}` 여백에 라벨 `{typography.body-medium}` + `{colors.text-subtle}`, `{spacing.inline}` 아래 값 `{typography.body-large-strong}`, 시작 상황은 그 아래 상황 설명 글을 두 줄까지 보이고 오른쪽에 `{sizes.icon}` 꺾쇠를 둡니다. 행은 펼침과 꺾쇠 회전이 반응이라 눌림 리플을 그리지 않습니다. 행을 누르면 값과 설명이 접혀 들어가고 선택지 목록이 펼쳐지며, 높이와 투명도는 셀렉트 꺾쇠와 같은 감쇠 없는 스프링으로 바뀝니다. 선택지는 최소 `{sizes.control}`, `{rounded.menu-item}`, 가로 `{spacing.compact}` 세로 `{spacing.component}` 여백의 `{typography.body-large}`이고 사이 `{spacing.inline}`입니다. 고른 항목은 `{colors.overlay-pressed}` 채움과 `{sizes.icon}` 체크로 드러냅니다. 목록은 `{sizes.choice-list-max-height}`를 넘으면 그 안에서 스크롤하고, 열 때 고른 항목 위 두 칸부터 보여 고른 값이 가려지지 않게 합니다. 본문 어디를 끌어도 시트는 내려가지 않고 핸들 끌기, 스크림 탭과 뒤로가기로만 닫힙니다. 페르소나 목록 아래에는 글자 시작선에 맞춘 구분선과 `{colors.text-subtle}` 더하기 아이콘의 "페르소나 생성하기"를 스크롤 밖에 고정합니다. 시작 상황이 하나면 꺾쇠 없이 펼치지 않습니다. 카드 아래 `{spacing.section}`에 전체 폭 brand "채팅 시작하기"를 두고, 생성 중에는 라벨 자리를 유지한 스피너로 바꾸며 시트를 닫지 않습니다. 하단 CTA "새 채팅 시작하기"는 한 줄 라벨만 둡니다.
 
 **스토리 상세 구획 간격**: 본문 구획(주요 내용, 채팅 시작 상황, 주변 인물) 사이는 `{spacing.block}`(32dp)이고, 끝의 메타 블록은 바로 위 구획과 `{spacing.gutter}`(16dp)만 띄웁니다. 간격은 목록의 일정 간격이 아니라 항목이 각자 걸며, 메타 블록 위 간격은 블록 안 여백이 아닌 별도 항목이라 하단 배경 전환이 회색 블록이 보일 때 시작합니다. 시작 상황의 "상황 이름"과 "엔딩" 제목 옆에는 같은 정보 툴팁 버튼을 둡니다.
 
@@ -958,7 +990,7 @@ components:
 - **토큰 값이 웹과 같은지 자동으로 확인할 방법이 없습니다.** 생성기가 레포 밖에 있고 웹은 자체 CSS 변수를 쓰므로, 두 클라이언트의 값이 갈리는지는 사람이 봐야 합니다. 다크 보조 텍스트 두 단계는 지금 앱이 웹보다 밝습니다(2026-08-29).
 - **모션 토큰은 화면 전환과 요소 및 목록 등장, 실시간 이미지 안내를 정의합니다.** 눌림 상태는 여전히 색 변화로만 정의되어 있고, 스켈레톤 같은 나머지 모션은 정의되지 않았습니다. 필요해지는 시점에 `{motion.*}`에 단계를 추가합니다.
 
-**`FullscreenImageViewer`** — 상세 썸네일·주변 인물과 채팅 인물 이미지에 공용으로 사용합니다. 바탕은 `{colors.image-viewer-scrim}`(검정 92%), 닫기 아이콘은 `{colors.text-inverse}`입니다. 핀치 1~5배·팬·더블탭 2.5배 토글을 제공하며 X·화면 탭·시스템 뒤로가기로 닫습니다. `CharacterImage`는 4:3 원본 전체 표시와 실패 시 영역 제거를 유지하며, 버튼 접근성 이름은 “{이름} 인물 이미지 크게 보기”입니다.
+**`FullscreenImageViewer`**: 상세 썸네일, 주변 인물과 채팅 인물 이미지에 공용으로 사용한다. 바탕은 `{colors.image-viewer-scrim}`(검정 92%), 닫기 아이콘은 `{colors.text-inverse}`다. 핀치 1~5배, 팬, 더블탭 2.5배 토글을 제공하며 X, 이미지 밖 배경 탭, 시스템 뒤로가기로 닫는다. [Android 화면 배치](../knk-harness/docs/ui/ANDROID/3-3-LAYOUT.md#3-3-1-셸과-조작)에 따라 그림 위 탭으로 닫지 않으며 배경 탭은 떼는 즉시 닫는다. 두 번째 탭 대기는 그림 위 탭에만 적용한다. `CharacterImage`는 4:3 원본 전체 표시와 실패 시 영역 제거를 유지하며, 버튼 접근성 이름은 “{이름} 인물 이미지 크게 보기”다.
 
 ### 장르 검색 콤보박스
 
@@ -968,7 +1000,7 @@ components:
 
 | 크기 토큰 | 값 | 용도 |
 | --- | --- | --- |
-| `sizes.genreMenuMaxHeight` | 240dp | 검색 메뉴 최대 높이 |
+| `sizes.menuMaxHeight` | 240dp | 검색 메뉴 최대 높이(셀렉트 메뉴와 공용) |
 | `sizes.inputBorderWidth` | 1dp | 입력 스타일의 검색 메뉴 경계 |
 | `sizes.selectMenuElevation` | 4dp | 입력 아래 선택 메뉴의 그림자 |
 

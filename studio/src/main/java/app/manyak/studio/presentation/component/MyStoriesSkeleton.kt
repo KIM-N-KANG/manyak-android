@@ -36,17 +36,38 @@ internal fun MyStoriesSkeleton(modifier: Modifier = Modifier) {
         // 아직 아무것도 없는 자리이므로 스크롤로 더 볼 것이 없다.
         userScrollEnabled = false,
     ) {
-        item { MyStoryPlaceholders() }
+        item { MyStoryPlaceholders(withSectionTitle = true) }
     }
 }
 
-/** 카드 골격 묶음. 초안 같은 로컬 카드가 먼저 그려진 목록에서는 그 아래 한 항목으로 서버 목록 자리를 잡는다. */
+/**
+ * 카드 골격 묶음. 초안 같은 로컬 카드가 먼저 그려진 목록에서는 그 아래 한 항목으로 서버 목록 자리를 잡는다.
+ * 목록 전체를 덮을 때는 [withSectionTitle] 로 맨 위에 구역 제목 자리를 둔다.
+ */
 @Composable
-internal fun MyStoryPlaceholders(modifier: Modifier = Modifier) {
+internal fun MyStoryPlaceholders(
+    modifier: Modifier = Modifier,
+    withSectionTitle: Boolean = false,
+) {
     val description = stringResource(StudioR.string.studio_loading)
     val alpha = rememberSkeletonPulseAlpha()
 
     Column(modifier = modifier.semantics { contentDescription = description }) {
+        if (withSectionTitle) {
+            val titleLine = ManyakTheme.typography.bodyLargeStrong.lineHeight
+            val titleHeight = with(LocalDensity.current) { titleLine.toDp() }
+            SkeletonPlaceholder(
+                modifier =
+                    Modifier
+                        .padding(
+                            start = ManyakTheme.spacing.gutter,
+                            top = ManyakTheme.spacing.compact,
+                            bottom = ManyakTheme.spacing.inline,
+                        ).width(SectionTitleWidth)
+                        .height(titleHeight),
+                alpha = alpha,
+            )
+        }
         repeat(PLACEHOLDER_CARD_COUNT) {
             CardPlaceholder(alpha = alpha)
         }
@@ -127,7 +148,7 @@ private fun TextLinesPlaceholder(
     }
 }
 
-/** 공개 범위·제작일 자리. 카드와 같이 오른쪽 끝에 붙는다. */
+/** 제작일 자리. 카드와 같이 오른쪽 끝에 붙는다. */
 @Composable
 private fun MetaLinePlaceholder(
     alpha: Float,
@@ -136,11 +157,7 @@ private fun MetaLinePlaceholder(
     val metaStyle = ManyakTheme.typography.bodyMedium
     val metaHeight = with(LocalDensity.current) { metaStyle.fontSize.toDp() }
 
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact, Alignment.End),
-    ) {
-        SkeletonPlaceholder(modifier = Modifier.width(MetaNarrowWidth).height(metaHeight), alpha = alpha)
+    Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
         SkeletonPlaceholder(modifier = Modifier.width(MetaWideWidth).height(metaHeight), alpha = alpha)
     }
 }
@@ -155,5 +172,5 @@ private const val INTRO_LAST_LINE_WIDTH_FRACTION = 0.6f
 
 private val BadgeWideWidth = 72.dp
 private val BadgeNarrowWidth = 56.dp
-private val MetaNarrowWidth = 48.dp
+private val SectionTitleWidth = 80.dp
 private val MetaWideWidth = 72.dp

@@ -51,6 +51,7 @@ import app.manyak.create.presentation.component.FunnelEntryStatus
 import app.manyak.create.presentation.component.FunnelExitWarningDialog
 import app.manyak.create.presentation.component.FunnelNeutralButton
 import app.manyak.create.presentation.component.FunnelPrimaryButton
+import app.manyak.create.presentation.component.FunnelTutorial
 import app.manyak.create.presentation.component.SaveDraftWhenBackgrounded
 import app.manyak.create.presentation.component.labelRes
 import app.manyak.create.presentation.component.resource
@@ -120,6 +121,8 @@ fun CreateKeywordScreen(
         onIntent = viewModel::onIntent,
         modifier = modifier,
     )
+
+    FunnelTutorial(viewModel.tutorial)
 
     if (state.pendingRemoveCharacterId != null) {
         ManyakDestructiveDialog(

@@ -12,11 +12,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -159,14 +162,26 @@ fun <T> ManyakSelectMenu(
                     .padding(ManyakTheme.spacing.inline),
             verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
         ) {
-            options.forEach { option ->
-                SelectMenuItem(
-                    label = option.label,
-                    selected = option.value == selected,
-                    onClick = { onSelect(option.value) },
-                )
+            // 값이 길게 쌓여도 동작 항목은 스크롤 밖에 남아 늘 보인다.
+            Column(
+                modifier =
+                    Modifier
+                        .heightIn(max = ManyakTheme.sizes.menuMaxHeight)
+                        .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
+            ) {
+                options.forEach { option ->
+                    SelectMenuItem(
+                        label = option.label,
+                        selected = option.value == selected,
+                        onClick = { onSelect(option.value) },
+                    )
+                }
             }
-            action?.let { SelectMenuAction(action = it) }
+            action?.let {
+                Box(Modifier.fillMaxWidth().height(BorderWidth).background(ManyakTheme.colors.border))
+                SelectMenuAction(action = it)
+            }
         }
     }
 }
@@ -182,6 +197,8 @@ private fun SelectMenuItem(
         modifier =
             modifier
                 .fillMaxWidth()
+                // 장르 검색 메뉴의 항목과 같은 높이라 최대 높이에서 5줄 반이 보인다.
+                .heightIn(min = ManyakTheme.sizes.input)
                 .clip(ManyakTheme.shapes.menuItem)
                 .background(
                     if (selected) ManyakTheme.colors.backgroundNeutral else ManyakTheme.colors.surfaceRaised,
@@ -221,6 +238,7 @@ private fun SelectMenuAction(
         modifier =
             modifier
                 .fillMaxWidth()
+                .heightIn(min = ManyakTheme.sizes.input)
                 .clip(ManyakTheme.shapes.menuItem)
                 .clickable(role = Role.Button, onClick = action.onClick)
                 .padding(
@@ -235,12 +253,13 @@ private fun SelectMenuAction(
             painter = painterResource(action.iconRes),
             // 동작 이름이 항목의 이름이라 아이콘에 따로 이름을 붙이지 않는다.
             contentDescription = null,
-            tint = ManyakTheme.colors.text,
+            tint = ManyakTheme.colors.textSubtle,
         )
+        // 고를 값과 갈리도록 한 단계 흐리게 둔다.
         Text(
             text = action.label,
             style = ManyakTheme.typography.bodyMedium,
-            color = ManyakTheme.colors.text,
+            color = ManyakTheme.colors.textSubtle,
         )
     }
 }

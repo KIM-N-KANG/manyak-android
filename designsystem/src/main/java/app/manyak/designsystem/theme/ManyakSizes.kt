@@ -44,14 +44,18 @@ data class ManyakSizes(
     val tourCardWidth: Dp,
     /** 6dp — 채팅 안내 투어 카드의 스텝 점 지름 */
     val tourStepDot: Dp,
+    /** 48dp 간편 제작 첫 진입 안내 대화창에서 마스코트가 말하는 둥근 프로필의 지름 */
+    val mascotAvatar: Dp,
     /** 128dp 제작 탭의 스토리, 초안, 검수 제출본 표지 폭 */
     val studioCoverWidth: Dp,
     /** 헤더 공지 버튼 아이콘 오른쪽 위의 안 읽음 점 지름 */
     val unreadDot: Dp,
     /** 목록 제목 끝에 붙는 안 읽음 점 지름 */
     val unreadDotInline: Dp,
-    /** 240dp 장르 검색 결과 메뉴의 최대 높이 */
-    val genreMenuMaxHeight: Dp,
+    /** 240dp 셀렉트와 장르 검색 메뉴의 최대 높이. 40dp 항목이 5줄 반 보인다 */
+    val menuMaxHeight: Dp,
+    /** 284dp 시트 안에서 펼치는 선택 목록의 최대 높이. 48dp 항목이 5줄 반 보인다 */
+    val choiceListMaxHeight: Dp,
     /** 1dp 입력과 검색 메뉴의 경계 두께 */
     val inputBorderWidth: Dp,
     /** 4dp 입력 아래에 겹쳐지는 선택 메뉴의 그림자 */
@@ -76,10 +80,12 @@ internal val ManyakDefaultSizes =
         generationDotRadius = 1.dp,
         tourCardWidth = 288.dp,
         tourStepDot = 6.dp,
+        mascotAvatar = 48.dp,
         studioCoverWidth = 128.dp,
         unreadDot = 8.dp,
         unreadDotInline = 6.dp,
-        genreMenuMaxHeight = 240.dp,
+        menuMaxHeight = 240.dp,
+        choiceListMaxHeight = 284.dp,
         inputBorderWidth = 1.dp,
         selectMenuElevation = 4.dp,
     )

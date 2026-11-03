@@ -78,4 +78,4 @@ fun ManyakPullToRefreshBox(
 // 끌어야 해서 너무 길다. 표시자도 기본값만큼 내려오면 지나치게 내려와 보여 같은 거리에서 멈춘다.
 private val RefreshThreshold = 56.dp
 
-private const val MIN_REFRESH_INDICATOR_MILLIS = 800L
+private const val MIN_REFRESH_INDICATOR_MILLIS = 300L

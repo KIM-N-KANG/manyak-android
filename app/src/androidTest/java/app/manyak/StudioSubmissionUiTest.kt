@@ -14,8 +14,10 @@ import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import app.manyak.analytics.domain.NoOpAnalytics
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.story.CreateTutorialProgress
 import app.manyak.common.domain.story.CreationProgressAccess
 import app.manyak.common.entity.story.CompletionRequestSummary
+import app.manyak.common.entity.story.CreateTutorialStage
 import app.manyak.common.entity.story.CreationProgressSummary
 import app.manyak.common.entity.story.StorySummary
 import app.manyak.designsystem.theme.ManyakTheme
@@ -39,7 +41,10 @@ class StudioSubmissionUiTest {
     fun cardsAndCancellationUseAppComponentsAndKeepConfirmationOnRestore() {
         val repository = SubmissionUiRepository()
         lateinit var vm: StudioViewModel
-        compose.runOnUiThread { vm = StudioViewModel(EmptyCreationProgress, repository, NoOpAnalytics, repository) }
+        compose.runOnUiThread {
+            vm =
+                StudioViewModel(EmptyCreationProgress, repository, NoOpAnalytics, repository, FinishedTutorial)
+        }
         val dark = mutableStateOf(false)
         val restoration = StateRestorationTester(compose)
         restoration.setContent {
@@ -131,4 +136,12 @@ private object EmptyCreationProgress : CreationProgressAccess {
     override suspend fun refreshCompletionRequests() = Unit
 
     override suspend fun deleteCompletionRequest(requestId: String) = false
+}
+
+private object FinishedTutorial : CreateTutorialProgress {
+    override suspend fun next(): CreateTutorialStage? = null
+
+    override suspend fun finish(stage: CreateTutorialStage) = Unit
+
+    override suspend fun finishAll() = Unit
 }

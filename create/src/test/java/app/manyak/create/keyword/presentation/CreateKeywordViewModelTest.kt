@@ -18,6 +18,7 @@ import app.manyak.create.presentation.state.DRAFT_SAVE_LOCK_MS
 import app.manyak.create.presentation.state.DraftSaveStatus
 import app.manyak.create.presentation.state.FunnelExitWarning
 import app.manyak.create.presentation.state.StorylineGenerationStore
+import app.manyak.create.testing.FakeCreateTutorialProgress
 import app.manyak.create.testing.FakePendingStoryCreationStore
 import app.manyak.create.testing.FakeSimpleDraftStore
 import app.manyak.create.testing.FakeStoryCompletionSubmitter
@@ -76,6 +77,7 @@ class CreateKeywordViewModelTest {
                     server,
                 ),
             analytics = NoOpAnalytics,
+            tutorialProgress = FakeCreateTutorialProgress(),
         )
 
     @Test
@@ -316,6 +318,7 @@ class CreateKeywordViewModelTest {
                     storyCreationRepository = repository,
                     storylineGenerationStore = store,
                     analytics = NoOpAnalytics,
+                    tutorialProgress = FakeCreateTutorialProgress(),
                 )
 
             viewModel.onIntent(CreateKeywordIntent.LeaveFunnel)
@@ -633,6 +636,7 @@ class CreateKeywordViewModelTest {
                     storyCreationRepository = repository,
                     storylineGenerationStore = store,
                     analytics = NoOpAnalytics,
+                    tutorialProgress = FakeCreateTutorialProgress(),
                 )
             advanceUntilIdle()
 

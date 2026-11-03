@@ -1,4 +1,4 @@
-package app.manyak.studio.presentation.component
+package app.manyak.designsystem.component
 
 import org.junit.Assert.assertEquals
 import org.junit.Test

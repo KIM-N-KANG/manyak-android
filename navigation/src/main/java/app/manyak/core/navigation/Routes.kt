@@ -17,7 +17,7 @@ import kotlinx.serialization.Serializable
 data object LoginRoute : NavKey
 
 /**
- * 하단 탭 넷을 두르는 셸. 메인 백스택에서는 이 키 하나로 보이고, 탭 목적지들은 셸이 소유한
+ * 하단 탭 다섯을 두르는 셸. 메인 백스택에서는 이 키 하나로 보이고, 탭 목적지들은 셸이 소유한
  * 탭별 백스택 안에만 있다.
  *
  * 셸을 두르지 않는 화면(스토리 상세·제작 퍼널·채팅 화면 등)은 이 키 위에 쌓아, 헤더와 하단 탭이
@@ -43,10 +43,13 @@ data object ChatListRoute : NavKey
 data object StudioRoute : NavKey
 
 @Serializable
+data object ExploreRoute : NavKey
+
+@Serializable
 data object MyRoute : NavKey
 
 /**
- * 스토리 상세. 셸 없이 [MainTabsRoute] 위에 쌓이는 전체 화면이고, 홈·제작 목록의 카드 탭이 진입점이다.
+ * 스토리 상세. 셸 없이 [MainTabsRoute] 위에 쌓이는 전체 화면이고, 홈, 탐색과 제작 목록의 카드 탭이 진입점이다.
  *
  * 규칙대로 식별자만 싣는다 — 목록 카드가 이미 그린 값을 함께 넘기지 않는다. 카드는 축소 썸네일과
  * 요약 필드만 들고 있어 히어로 원본·주요 내용·시작 설정은 어차피 조회해야 하고, 두 경로로 그린

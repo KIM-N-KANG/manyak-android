@@ -1,10 +1,12 @@
 # 제작 로딩 표현 갱신
 
+아래 캡처와 `build/qa` 자료 중 현재 checkout에 포함되지 않은 항목은 원래 로컬 경로로 표시한다. 당시 검증 기록은 보존하되 이 문서에서 해당 파일을 열거나 결과를 재확인할 수는 없다.
+
 - 티켓: [KNK-1323](https://kimandkang.atlassian.net/browse/KNK-1323)
 - 작업일: 2026-09-17
 - 브랜치: Android·하네스 모두 `design/KNK-1323-refresh-creation-loading`
 - 분기 기준: fetch한 `origin/dev` — Android `e0119b20`, 하네스 `9afdad8`
-- 계약: [공통 제작 퍼널](../../../knk-harness/docs/spec/3-1-client-spec.md#3-1-4-스토리-생성-퍼널), [Android 제작](../../../knk-harness/docs/spec/3-3-android-spec.md#제작과-데이터-보존)
+- 계약: [공통 제작 퍼널](../../../knk-harness/docs/domain/STORY/CLIENT/2-2-REQUIREMENTS.md#2-2-4-간편-제작-입력), [Android 제작](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md)
 
 ## 변경과 근거
 
@@ -38,11 +40,11 @@
 
 | 증거 | 경로 |
 | --- | --- |
-| 제작 카드 전·후 | [전](../../captures/knk-1323/studio-before.png) · [후](../../captures/knk-1323/studio-after.png) |
-| 제작 카드 다크 | [다크](../../captures/knk-1323/studio-dark.png) |
-| 스토리라인 전·후 | [전](../../captures/knk-1323/storyline-before.png) · [후](../../captures/knk-1323/storyline-after.png) |
-| 스토리라인 힌트·테마·글자 크기 | [다크](../../captures/knk-1323/storyline-dark.png) · [큰 글자](../../captures/knk-1323/storyline-large.png) |
-| 주변 인물 안내 | [0명](../../captures/knk-1323/supporting-empty.png) · [인물 있음](../../captures/knk-1323/supporting-populated.png) |
+| 제작 카드 전·후 | 전 (보관 경로: `../../captures/knk-1323/studio-before.png`) · 후 (보관 경로: `../../captures/knk-1323/studio-after.png`) |
+| 제작 카드 다크 | 다크 (보관 경로: `../../captures/knk-1323/studio-dark.png`) |
+| 스토리라인 전·후 | 전 (보관 경로: `../../captures/knk-1323/storyline-before.png`) · 후 (보관 경로: `../../captures/knk-1323/storyline-after.png`) |
+| 스토리라인 힌트·테마·글자 크기 | 다크 (보관 경로: `../../captures/knk-1323/storyline-dark.png`) · 큰 글자 (보관 경로: `../../captures/knk-1323/storyline-large.png`) |
+| 주변 인물 안내 | 0명 (보관 경로: `../../captures/knk-1323/supporting-empty.png`) · 인물 있음 (보관 경로: `../../captures/knk-1323/supporting-populated.png`) |
 
 캡처는 기존 `/captures` ignore 규칙에 따라 로컬에만 남습니다. 화면 검증은 Compose Preview의 샘플 상태이며 실제 로그인·생성 API·폴링 완료 흐름, 4:3 화면, TalkBack 낭독은 수동 실행하지 않았습니다. Preview는 실제 화면의 상단 인셋을 포함하지 않아 상태 표시줄이 겹치는 부분이 있습니다.
 
@@ -56,8 +58,8 @@
 
 보완 후 `:designsystem:ktlintCheck :designsystem:detekt :designsystem:testDebugUnitTest :create:ktlintCheck :create:detekt :create:compileDebugKotlin :app:installDebug`를 다시 통과했습니다. 에뮬레이터 화면 녹화의 연속 프레임에서 점의 이동·크기 변화, 텍스트 시머와 캐스케이드 전환을 확인했습니다.
 
-- [표지 로딩 영상](../../captures/knk-1323/loading-demo.mp4)
-- [순환 문구 영상](../../captures/knk-1323/phrases-demo.mp4)
+- 표지 로딩 영상 (보관 경로: `../../captures/knk-1323/loading-demo.mp4`)
+- 순환 문구 영상 (보관 경로: `../../captures/knk-1323/phrases-demo.mp4`)
 
 영상은 화면 녹화에서 해당 컴포넌트 영역만 잘랐으며 재생 속도는 바꾸지 않았습니다.
 
@@ -67,4 +69,4 @@
 
 - 사용자 요청에 따라 중심의 가로·세로 기본 주기를 10,681→9,710ms, 13,195→11,995ms로 줄여 약 10% 빠르게 조정했습니다.
 - 7,319ms 보조 위상을 가로 2%·세로 1.6% 크기로 섞어 이동 경로에 작은 불규칙성을 추가했습니다. 매 프레임 난수를 생성하지 않아 움직임과 반복 경계가 연속적으로 이어집니다. 점의 최대 변위·크기·밝기는 유지합니다.
-- `:designsystem:ktlintCheck :designsystem:detekt :designsystem:testDebugUnitTest :app:installDebug` 통과. Pixel_10(Android 17)에 설치한 진행 카드 Preview를 8초 녹화하고 별도 시점 스크린샷을 확인했습니다. [조정 영상](../../captures/knk-1323/tuned-loading.mp4)은 원래 재생 속도입니다.
+- `:designsystem:ktlintCheck :designsystem:detekt :designsystem:testDebugUnitTest :app:installDebug` 통과. Pixel_10(Android 17)에 설치한 진행 카드 Preview를 8초 녹화하고 별도 시점 스크린샷을 확인했습니다. 조정 영상 (보관 경로: `../../captures/knk-1323/tuned-loading.mp4`)은 원래 재생 속도입니다.

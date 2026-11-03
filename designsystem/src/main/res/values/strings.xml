@@ -6,6 +6,7 @@
     <string name="story_like_count_description">좋아요 수 %1$s</string>
     <string name="story_thumbnail_placeholder">썸네일 없음</string>
     <string name="story_turn_count_description">누적 턴 수 %1$s</string>
+    <string name="story_genre_overflow">+%1$d</string>
     <string name="designsystem_preview_label">메뉴</string>
     <string name="image_viewer_close">닫기</string>
     <string name="character_image_open">%1$s 인물 이미지 크게 보기</string>
@@ -22,4 +23,6 @@
     <string name="credit_shortage_attendance_rewarded">출석 체크 보상으로 %1$d 이프를 받았어요</string>
     <string name="credit_shortage_attendance_already">오늘은 이미 출석 체크했어요</string>
     <string name="credit_shortage_attendance_failed">출석 체크에 실패했어요</string>
+    <string name="create_tutorial_label">스토리 만들기 안내</string>
+    <string name="create_tutorial_speaker">마냑</string>
 </resources>

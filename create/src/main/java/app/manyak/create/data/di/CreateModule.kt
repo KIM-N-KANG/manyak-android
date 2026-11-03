@@ -1,9 +1,11 @@
 package app.manyak.create.data.di
 
+import app.manyak.common.domain.story.CreateTutorialProgress
 import app.manyak.common.domain.story.CreationProgressAccess
 import app.manyak.create.data.completion.StoryCompletionExecutor
 import app.manyak.create.data.database.PendingStoryCreationRoomStore
 import app.manyak.create.data.database.StoryCompletionRequestRoomStore
+import app.manyak.create.data.datastore.CreateTutorialStore
 import app.manyak.create.data.draft.SimpleDraftServerStore
 import app.manyak.create.data.repository.StoryCreationRepositoryImpl
 import app.manyak.create.domain.PendingStoryCreationStore
@@ -44,4 +46,8 @@ abstract class CreateModule {
     @Binds
     @Singleton
     abstract fun bindCreationProgressAccess(impl: CreationProgressRepository): CreationProgressAccess
+
+    @Binds
+    @Singleton
+    abstract fun bindCreateTutorialProgress(impl: CreateTutorialStore): CreateTutorialProgress
 }

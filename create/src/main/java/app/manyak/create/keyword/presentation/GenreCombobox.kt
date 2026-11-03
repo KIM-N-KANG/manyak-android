@@ -226,7 +226,7 @@ private fun GenreDropdownMenu(
             .coerceAtLeast(
                 0,
             )
-    val height = minOf(ManyakTheme.sizes.genreMenuMaxHeight, with(density) { available.toDp() })
+    val height = minOf(ManyakTheme.sizes.menuMaxHeight, with(density) { available.toDp() })
     val position =
         remember(gap) {
             object : PopupPositionProvider {

@@ -51,6 +51,7 @@ import app.manyak.create.presentation.component.FunnelEntryStatus
 import app.manyak.create.presentation.component.FunnelExitWarningDialog
 import app.manyak.create.presentation.component.FunnelNeutralButton
 import app.manyak.create.presentation.component.FunnelPrimaryButton
+import app.manyak.create.presentation.component.FunnelTutorial
 import app.manyak.create.presentation.component.ReselectWarningDialog
 import app.manyak.create.presentation.component.SaveDraftWhenBackgrounded
 import app.manyak.create.presentation.component.VisibilityField
@@ -137,6 +138,8 @@ fun CreateAdditionalInfoScreen(
         modifier = modifier,
         draftSave = draftSave,
     )
+
+    FunnelTutorial(viewModel.tutorial)
 
     state.creditShortage?.let { sheet -> AdditionalInfoCreditShortageSheet(sheet, viewModel::onIntent) }
 

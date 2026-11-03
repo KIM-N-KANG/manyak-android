@@ -4,8 +4,12 @@ import androidx.lifecycle.viewModelScope
 import app.manyak.analytics.domain.Analytics
 import app.manyak.analytics.entity.AnalyticsEvent
 import app.manyak.analytics.entity.CreateStep
+import app.manyak.analytics.presentation.toAnalyticsEvent
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.story.CreateTutorialProgress
+import app.manyak.common.entity.story.CreateTutorialStage
 import app.manyak.common.presentation.mvi.MviViewModel
+import app.manyak.common.presentation.story.CreateTutorialController
 import app.manyak.create.domain.StoryCreationRepository
 import app.manyak.create.entity.StoryTag
 import app.manyak.create.entity.StoryTagCategory
@@ -23,6 +27,10 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 /** 생성 진행 중이거나, 결과(실패 시 빈 목록 포함)를 보여 주는 화면 콘텐츠. */
@@ -79,6 +87,17 @@ data class CreateStorylineUiState(
     val selectedKeywords: SelectedKeywords = SelectedKeywords.Hidden,
 ) {
     val storylines: List<Storyline> get() = (content as? StorylineContent.Loaded)?.storylines.orEmpty()
+
+    /** 생성이 끝나 고를 스토리라인이 있고 안내를 가릴 시트와 다이얼로그가 없을 때만 첫 진입 안내를 받는다. */
+    val tutorialScreen: CreateTutorialStage?
+        get() =
+            CreateTutorialStage.STORYLINE.takeIf {
+                storylines.isNotEmpty() &&
+                    !hasGenerationError &&
+                    !entryFailed &&
+                    exitWarning == null &&
+                    selectedKeywords == SelectedKeywords.Hidden
+            }
 
     val activeStoryline: Storyline? get() = storylines.getOrNull(activeIndex)
 
@@ -190,6 +209,7 @@ class CreateStorylineViewModel
         private val storylineGenerationStore: StorylineGenerationStore,
         private val storyCreationRepository: StoryCreationRepository,
         private val analytics: Analytics,
+        tutorialProgress: CreateTutorialProgress,
         @Assisted private val resume: Boolean = false,
         @Assisted("server") private val server: Boolean = false,
     ) : MviViewModel<CreateStorylineIntent, CreateStorylineUiState, CreateStorylineEvent, CreateStorylineEffect>(
@@ -211,6 +231,30 @@ class CreateStorylineViewModel
         private var isLeaving = false
 
         private var selectedKeywordsJob: Job? = null
+
+        /**
+         * 추가 정보 단계에서 저장한 초안을 열어 곧장 넘어갔다. 떠나는 이 화면 위에 안내가 뜨지 않게 하고, 돌아와도 이번
+         * 진입에서는 스토리라인 안내를 열지 않는다.
+         */
+        private val forwarded = MutableStateFlow(false)
+
+        private val genres = MutableStateFlow(emptyList<String>())
+
+        /** 스토리라인 안내 문구에 넣을 장르 이름. 생성 요청의 선택 순서다. */
+        val tutorialGenres: StateFlow<List<String>> = genres.asStateFlow()
+
+        /** 첫 진입 안내. 화면이 보이는 동안 몰고 버튼을 받는다. */
+        val tutorial =
+            CreateTutorialController(
+                scope = viewModelScope,
+                progress = tutorialProgress,
+                screen =
+                    combine(uiState, storylineGenerationStore.draftSave, forwarded) { state, save, away ->
+                        state.tutorialScreen.takeIf { save.conflictVersion == null && !away }
+                    },
+                report = { analytics.track(it.toAnalyticsEvent()) },
+                prepare = { genres.value = storylineGenerationStore.tutorialGenres() },
+            )
 
         val draftSave = storylineGenerationStore.draftSave
 
@@ -242,6 +286,7 @@ class CreateStorylineViewModel
                     return@launch
                 }
                 storylineGenerationStore.takeResumeStorylineIndex()?.let { index ->
+                    forwarded.value = true
                     dispatchEffect(CreateStorylineEffect.NavigateToAdditionalInfo(index))
                 }
                 storylineGenerationStore.state.collect { generation ->
@@ -613,6 +658,13 @@ private fun CreateStorylineIntent.analyticsEvent(
                 ?.let { AnalyticsEvent.StorylineOptionSelected(it, state.activeIndex) }
         else -> null
     }
+
+/** 생성에 실린 장르 이름. 이름표를 받지 못하면 비워 두고 안내 문구가 "장르"로 대신한다. */
+private suspend fun StorylineGenerationStore.tutorialGenres(): List<String> {
+    val command = generationCommand ?: return emptyList()
+    val names = (tagCatalog() as? DomainResult.Success)?.value?.associateBy(StoryTag::id).orEmpty()
+    return command.genreTagIds.mapNotNull { id -> names[id]?.name } + command.customGenreTags
+}
 
 /** 분석 이벤트의 `creation_id`. 생성 결과가 없으면 프로퍼티를 채울 수 없어 이벤트를 내지 않는다. */
 private fun StorylineGenerationStore.creationId(): String? =

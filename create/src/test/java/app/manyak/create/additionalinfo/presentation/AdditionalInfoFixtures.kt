@@ -3,6 +3,7 @@ package app.manyak.create.additionalinfo.presentation
 import app.manyak.analytics.domain.NoOpAnalytics
 import app.manyak.create.presentation.state.StorylineGenerationStore
 import app.manyak.create.testing.FakeAttendanceClaimer
+import app.manyak.create.testing.FakeCreateTutorialProgress
 import app.manyak.create.testing.FakeCreditPolicyRepository
 import app.manyak.create.testing.FakePendingStoryCreationStore
 import app.manyak.create.testing.FakeSimpleDraftStore
@@ -29,6 +30,7 @@ internal fun additionalInfoViewModel(
     credit.trials,
     credit.attendance,
     NoOpAnalytics,
+    FakeCreateTutorialProgress(),
 )
 
 /** 이프 잔액, 정책, 체험. 기본은 모두 몰라 선검사가 막지 않는다. */

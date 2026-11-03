@@ -2,9 +2,9 @@
 
 - 작성일: 2026-10-27
 - 상위: KNK-1868. 웹 KNK-1869. 서버 KNK-1865
-- 근거 정본: 하네스 ADR [A-082](../../../knk-harness/docs/adr/1-3-android-adr.md#a-082),
-  [Android 간편 제작 흐름과 보존](../../../knk-harness/docs/spec/3-3-android-spec.md#간편-제작-흐름과-보존),
-  [Android 구조](../../../knk-harness/docs/design/1-2-android-design.md#제작-카드와-다중-완성-진행),
+- 근거 정본: 하네스 ADR [A-082](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-082),
+  [Android 간편 제작 흐름과 보존](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md),
+  [Android 구조](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md),
   서버 계약은 manyak-server KNK-1865(PR #419, 2026-10-27 dev 병합·배포)와 하네스 `STORY/BACKEND/4-2-CONTRACT.md`의 422 `CONTENT_REJECTED`.
   dev OpenAPI에는 422가 없다(컨트롤러 응답 명세를 바꾸지 않음). 응답 형식은 서버 코드와 계약 문서로 확인했다
 

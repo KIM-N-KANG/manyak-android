@@ -1,4 +1,4 @@
-package app.manyak.studio.presentation.component
+package app.manyak.designsystem.component
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -10,23 +10,23 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.constrainHeight
 import androidx.compose.ui.unit.constrainWidth
-import app.manyak.designsystem.component.StoryBadgeScale
-import app.manyak.designsystem.component.StoryGenreBadge
 import app.manyak.designsystem.theme.ManyakTheme
-import app.manyak.studio.R as StudioR
+import app.manyak.designsystem.R as DesignsystemR
 
 /**
- * 카드의 장르 뱃지 한 줄. 폭에 들어가는 만큼만 보이고 나머지는 `+N` 뱃지로 접는다.
+ * 목록 카드의 장르 뱃지 한 줄. 제작 탭 카드와 홈 카드가 함께 쓰고 크기 단계만 다르다.
+ *
+ * 폭에 들어가는 만큼만 보이고 나머지는 `+N` 뱃지로 접는다.
  *
  * 웹과 같은 규칙이다 — 몇 개까지라는 상수가 아니라 실제 폭을 재서 정하고, 접을 때는 `+N` 자리를
  * 남길 수 있는 지점까지만 센다. 뱃지가 최소 하나는 보이므로 아주 좁은 폭에서는 그 하나가 잘린다.
  * 낭독기에는 접힌 것까지 장르 전체를 한 문장으로 읽힌다.
  */
 @Composable
-internal fun StoryGenreBadges(
+fun StoryGenreBadges(
     genres: List<String>,
+    scale: StoryBadgeScale,
     modifier: Modifier = Modifier,
-    scale: StoryBadgeScale = BadgeScale,
     containerColor: Color = ManyakTheme.colors.backgroundNeutral,
 ) {
     val description = genres.joinToString(separator = ", ")
@@ -116,14 +116,11 @@ private fun OverflowBadge(
     modifier: Modifier = Modifier,
 ) {
     StoryGenreBadge(
-        text = stringResource(StudioR.string.studio_genre_overflow, hiddenCount),
+        text = stringResource(DesignsystemR.string.story_genre_overflow, hiddenCount),
         modifier = modifier,
         scale = scale,
         containerColor = containerColor,
     )
 }
-
-/** 카드 뱃지도 상세와 같은 크기를 쓴다 — 표지가 커지며 카드가 좁은 자리가 아니게 됐다. */
-private val BadgeScale = StoryBadgeScale.Large
 
 private enum class GenreBadgeSlot { Genres, OverflowProbe, Overflow }

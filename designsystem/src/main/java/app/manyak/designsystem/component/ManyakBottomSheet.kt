@@ -23,6 +23,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import app.manyak.designsystem.theme.ManyakTheme
 import kotlinx.coroutines.flow.first
@@ -41,6 +46,8 @@ import kotlinx.coroutines.flow.first
  * @param dismissOnBackPress false 면 뒤로가기도 막는다. 기본은 [dismissEnabled] 와 같다 — 뒤로가기는
  * 끌어내리기 판정을 거치지 않고 [onDismissRequest] 를 부르므로 따로 잠가야 한다.
  * @param onExpanded 시트가 완전히 펼쳐진 뒤 호출한다. 시트 위 안내가 움직이는 행을 가리지 않게 한다.
+ * @param dismissOnContentDrag false 면 본문을 끌어도 시트가 내려가지 않고 핸들 끌기, 바깥 탭과 뒤로가기로만 닫힌다.
+ * 본문 안 목록을 끝까지 끌다가 시트까지 닫히는 일을 막는다.
  * @param dragHandleVisible false 면 핸들을 두지 않는다. 끌어내릴 수 없는 시트(필수 동의)에 핸들이 있으면 닫을 수
  * 있다는 신호가 되어서다. 전송 중처럼 잠깐 잠그는 시트는 핸들이 사라졌다 나타나지 않게 그대로 둔다.
  */
@@ -51,6 +58,7 @@ fun ManyakBottomSheet(
     modifier: Modifier = Modifier,
     dismissEnabled: Boolean = true,
     dismissOnBackPress: Boolean = dismissEnabled,
+    dismissOnContentDrag: Boolean = true,
     dragHandleVisible: Boolean = true,
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
     onExpanded: () -> Unit = {},
@@ -106,8 +114,10 @@ fun ManyakBottomSheet(
                     .clearFocusOnTap()
                     .imePadding()
                     .navigationBarsPadding()
-                    .padding(horizontal = ManyakTheme.spacing.gutter)
+                    .then(if (dismissOnContentDrag) Modifier else Modifier.nestedScroll(KeepSheetOnContentDrag))
+                    // 좌우 여백도 스크롤 안에 두어 여백을 끌어도 본문 끌기로 처리한다.
                     .verticalScroll(rememberScrollState())
+                    .padding(horizontal = ManyakTheme.spacing.gutter)
                     // 위쪽은 드래그 핸들이 자체 여백을 갖고 있어 핸들이 없을 때만 둔다.
                     .padding(
                         top = if (dragHandleVisible) 0.dp else ManyakTheme.spacing.gutter,
@@ -117,4 +127,18 @@ fun ManyakBottomSheet(
             content = content,
         )
     }
+}
+
+/** 본문 스크롤이 쓰고 남은 끌기와 플링을 시트에 넘기지 않는다. 핸들은 본문 밖이라 그대로 끌린다. */
+private object KeepSheetOnContentDrag : NestedScrollConnection {
+    override fun onPostScroll(
+        consumed: Offset,
+        available: Offset,
+        source: NestedScrollSource,
+    ): Offset = available
+
+    override suspend fun onPostFling(
+        consumed: Velocity,
+        available: Velocity,
+    ): Velocity = available
 }

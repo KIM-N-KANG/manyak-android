@@ -4,7 +4,7 @@
 
 - Jira: KNK-1827
 - Android와 하네스 브랜치: `feat/KNK-1827-user-notification-inbox`, fetch한 `origin/dev` 기준
-- [공통 계약](../../../knk-harness/docs/spec/3-1-client-spec.md#fe-screen-015-알림함), [Android 계약](../../../knk-harness/docs/spec/3-3-android-spec.md), [현재 구조](../../../knk-harness/docs/design/1-2-android-design.md#회원-알림함)
+- [공통 계약](../../../knk-harness/docs/domain/NOTIFICATION/CLIENT/2-2-REQUIREMENTS.md#2-2-3-회원-알림함), [Android 계약](../../../knk-harness/docs/domain/NOTIFICATION/CLIENT/ANDROID/AGENTS.md), [현재 구조](../../../knk-harness/docs/domain/NOTIFICATION/CLIENT/ANDROID/AGENTS.md)
 - 웹 `src/features/notifications`의 문구, 분류, 읽음 처리와 목적지 우선순위를 확인했습니다. 서버 계약은 2026-10-24 dev Swagger의 알림 API 네 개와 공지 `tag`를 확인했습니다.
 
 ## 변경

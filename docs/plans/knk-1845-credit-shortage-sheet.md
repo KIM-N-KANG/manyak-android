@@ -2,9 +2,9 @@
 
 - 작성일: 2026-10-25
 - 상위: KNK-1841. 웹 KNK-1844
-- 근거 정본: 하네스 ADR [A-081](../../../knk-harness/docs/adr/1-3-android-adr.md#a-081),
-  [공통 이프 부족 처리](../../../knk-harness/docs/spec/3-1-client-spec.md#fe-screen-008-로그인마이-페이지),
-  [Android 계약](../../../knk-harness/docs/spec/3-3-android-spec.md), [Android 구조](../../../knk-harness/docs/design/1-2-android-design.md)
+- 근거 정본: 하네스 ADR [A-081](../../../knk-harness/docs/domain/PAYMENT/CLIENT/ANDROID/DECISIONS.md#a-081),
+  [공통 이프 부족 처리](../../../knk-harness/docs/domain/PAYMENT/CLIENT/2-2-REQUIREMENTS.md#2-2-5-이프-부족과-입력-보존),
+  [Android 계약](../../../knk-harness/docs/domain/PAYMENT/CLIENT/ANDROID/AGENTS.md), [Android 구조](../../../knk-harness/docs/domain/PAYMENT/CLIENT/ANDROID/AGENTS.md)
 
 ## 목표와 제외 범위
 

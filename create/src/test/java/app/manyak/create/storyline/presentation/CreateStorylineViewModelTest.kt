@@ -8,6 +8,7 @@ import app.manyak.create.entity.PendingStoryCreation
 import app.manyak.create.entity.StorylineRating
 import app.manyak.create.presentation.state.FunnelExitWarning
 import app.manyak.create.presentation.state.StorylineGenerationStore
+import app.manyak.create.testing.FakeCreateTutorialProgress
 import app.manyak.create.testing.FakePendingStoryCreationStore
 import app.manyak.create.testing.FakeSimpleDraftStore
 import app.manyak.create.testing.FakeStoryCompletionSubmitter
@@ -77,7 +78,8 @@ class CreateStorylineViewModelTest {
                 ).bind(TEST_DRAFT_ID)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
-            val viewModel = CreateStorylineViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics)
+            val viewModel =
+                CreateStorylineViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics, FakeCreateTutorialProgress())
             advanceUntilIdle()
 
             assertTrue(
@@ -102,7 +104,8 @@ class CreateStorylineViewModelTest {
                     FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
             store.generate(sampleGenerationInput())
-            val viewModel = CreateStorylineViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics)
+            val viewModel =
+                CreateStorylineViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics, FakeCreateTutorialProgress())
             advanceUntilIdle()
 
             assertEquals(
@@ -275,7 +278,8 @@ class CreateStorylineViewModelTest {
                 ).bind(TEST_DRAFT_ID)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
-            val viewModel = CreateStorylineViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics)
+            val viewModel =
+                CreateStorylineViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics, FakeCreateTutorialProgress())
             advanceUntilIdle()
 
             viewModel.onIntent(CreateStorylineIntent.LeaveFunnel)
@@ -308,7 +312,8 @@ class CreateStorylineViewModelTest {
                 ).bind(TEST_DRAFT_ID)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
-            val viewModel = CreateStorylineViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics)
+            val viewModel =
+                CreateStorylineViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics, FakeCreateTutorialProgress())
             advanceUntilIdle()
             viewModel.onIntent(CreateStorylineIntent.SelectStoryline(1))
             advanceUntilIdle()
@@ -343,7 +348,8 @@ class CreateStorylineViewModelTest {
                 ).bind(TEST_DRAFT_ID)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
-            val viewModel = CreateStorylineViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics)
+            val viewModel =
+                CreateStorylineViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics, FakeCreateTutorialProgress())
             advanceUntilIdle()
             viewModel.onIntent(CreateStorylineIntent.SelectStoryline(1))
             advanceUntilIdle()
@@ -373,7 +379,8 @@ class CreateStorylineViewModelTest {
                 ).bind(TEST_DRAFT_ID)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
-            val viewModel = CreateStorylineViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics)
+            val viewModel =
+                CreateStorylineViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics, FakeCreateTutorialProgress())
             advanceUntilIdle()
 
             viewModel.onIntent(CreateStorylineIntent.LeaveFunnel)
@@ -403,7 +410,8 @@ class CreateStorylineViewModelTest {
                 ).bind(TEST_DRAFT_ID)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
-            val viewModel = CreateStorylineViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics)
+            val viewModel =
+                CreateStorylineViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics, FakeCreateTutorialProgress())
             advanceUntilIdle()
 
             viewModel.onIntent(CreateStorylineIntent.LeaveFunnel)
@@ -434,7 +442,8 @@ class CreateStorylineViewModelTest {
                 ).bind(TEST_DRAFT_ID)
             store.generate(sampleGenerationInput())
             advanceUntilIdle()
-            val viewModel = CreateStorylineViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics)
+            val viewModel =
+                CreateStorylineViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics, FakeCreateTutorialProgress())
             advanceUntilIdle()
 
             viewModel.onIntent(CreateStorylineIntent.LeaveFunnel)
@@ -470,7 +479,8 @@ class CreateStorylineViewModelTest {
                     FakeSimpleDraftStore(),
                 ).bind(TEST_DRAFT_ID)
 
-            val viewModel = CreateStorylineViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics)
+            val viewModel =
+                CreateStorylineViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics, FakeCreateTutorialProgress())
 
             // 복원 결과가 오기 전 첫 프레임. 여기서 로딩을 확정해 그리면 재개 진입 때마다
             // "스토리라인을 만들고 있어요"가 스쳐 지나간다.
@@ -495,7 +505,8 @@ class CreateStorylineViewModelTest {
             // 키워드 화면이 생성을 시작한 직후 — 아직 응답 전이라 스토어는 생성 중이다.
             store.generate(sampleGenerationInput())
 
-            val viewModel = CreateStorylineViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics)
+            val viewModel =
+                CreateStorylineViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics, FakeCreateTutorialProgress())
 
             assertEquals(StorylineContent.Generating, viewModel.uiState.value.content)
         }
@@ -517,7 +528,8 @@ class CreateStorylineViewModelTest {
             ).bind(TEST_DRAFT_ID)
         store.generate(sampleGenerationInput())
         advanceUntilIdle()
-        val viewModel = CreateStorylineViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics)
+        val viewModel =
+            CreateStorylineViewModel(TEST_DRAFT_ID, store, repository, NoOpAnalytics, FakeCreateTutorialProgress())
         advanceUntilIdle()
         return Triple(repository, store, viewModel)
     }
