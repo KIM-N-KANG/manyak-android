@@ -34,6 +34,7 @@ import app.manyak.chat.room.presentation.suggestion.shouldGenerateChoices
 import app.manyak.chat.room.presentation.tour.ChatTourStep
 import app.manyak.common.domain.credit.AttendanceClaimer
 import app.manyak.common.domain.credit.CreditPolicyRepository
+import app.manyak.common.domain.credit.CreditTransactionReader
 import app.manyak.common.domain.credit.TrialsRepository
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
@@ -41,8 +42,12 @@ import app.manyak.common.domain.error.map
 import app.manyak.common.domain.error.valueOrNull
 import app.manyak.common.domain.user.UserProfileRepository
 import app.manyak.common.presentation.credit.AttendanceOutcome
+import app.manyak.common.presentation.credit.CreditHistoryChange
+import app.manyak.common.presentation.credit.CreditHistoryController
+import app.manyak.common.presentation.credit.CreditHistoryUiState
 import app.manyak.common.presentation.credit.CreditShortageController
 import app.manyak.common.presentation.credit.CreditShortageUiState
+import app.manyak.common.presentation.credit.reduceCreditHistory
 import app.manyak.common.presentation.mvi.MviViewModel
 import app.manyak.designsystem.component.isAllowedCharacterImageUrl
 import app.manyak.designsystem.text.PassageSegment
@@ -161,6 +166,8 @@ data class ChatRoomUiState(
     val creditBalance: Long? = null,
     /** 이프 부족 시트. 닫혀 있으면 null 이다. */
     val creditShortage: CreditShortageUiState? = null,
+    /** 채팅 메뉴가 보이는 이프 내역. 메뉴 화면이면 null 이다. */
+    val creditHistory: CreditHistoryUiState? = null,
     /** 같은 스토리로 새 채팅을 만드는 중. 메뉴 항목을 잠그고 시트 닫기를 막는다. */
     val isStartingNewChat: Boolean = false,
     /** 공유 링크를 발급하는 중. 메뉴 항목을 잠그고 시트 닫기를 막는다. */
@@ -328,6 +335,23 @@ sealed interface ChatRoomIntent {
     data object CreditShortageAttendance : CreditShortage
 
     data object CreditShortageDismissed : CreditShortage
+
+    /** 채팅 메뉴 안의 이프 내역. 시트를 닫지 않고 메뉴와 내역을 오간다. */
+    sealed interface CreditHistory : ChatRoomIntent
+
+    /** 이프 카드의 내역. 들어올 때마다 첫 페이지부터 다시 읽는다. */
+    data object CreditHistoryOpened : CreditHistory
+
+    /** 돌아가기, 뒤로가기나 시트 닫기로 내역을 떠났다. 다시 열면 메뉴부터 보인다. */
+    data object CreditHistoryClosed : CreditHistory
+
+    data object CreditHistoryRetried : CreditHistory
+
+    /** 머리글의 새로고침. 받아 둔 뒷 페이지는 버리고 첫 페이지만 다시 읽는다. */
+    data object CreditHistoryRefresh : CreditHistory
+
+    /** 목록 끝에 닿았거나 다음 페이지 재시도를 눌렀다. */
+    data object CreditHistoryLoadMore : CreditHistory
 }
 
 sealed interface ChatRoomEvent {
@@ -446,6 +470,12 @@ sealed interface ChatRoomEvent {
         val sheet: CreditShortageUiState?,
     ) : ChatRoomEvent
 
+    data class CreditHistoryChanged(
+        val change: CreditHistoryChange,
+    ) : ChatRoomEvent
+
+    data object CreditHistoryClosed : ChatRoomEvent
+
     data class NewChatStartChanged(
         val inProgress: Boolean,
     ) : ChatRoomEvent
@@ -557,6 +587,7 @@ class ChatRoomViewModel
         private val creditPolicyRepository: CreditPolicyRepository,
         private val profileRepository: UserProfileRepository,
         attendance: AttendanceClaimer,
+        creditTransactions: CreditTransactionReader,
         private val analytics: Analytics,
     ) : MviViewModel<ChatRoomIntent, ChatRoomUiState, ChatRoomEvent, ChatRoomEffect>(ChatRoomUiState()) {
         private var preferencesJob: Job? = null
@@ -586,6 +617,14 @@ class ChatRoomViewModel
                 profiles = profileRepository,
                 emit = { sheet -> dispatchEvent(ChatRoomEvent.CreditShortageChanged(sheet)) },
                 notify = { outcome -> dispatchEffect(ChatRoomEffect.ShowAttendanceOutcome(outcome)) },
+            )
+
+        /** 채팅 메뉴의 이프 내역은 이프 충전의 내역 탭과 같은 목록이라 공유 컨트롤러가 조회한다. */
+        private val creditHistory =
+            CreditHistoryController(
+                scope = viewModelScope,
+                reader = creditTransactions,
+                emit = { change -> dispatchEvent(ChatRoomEvent.CreditHistoryChanged(change)) },
             )
 
         private var choicesJob: Job? = null
@@ -818,6 +857,24 @@ class ChatRoomViewModel
                 }
 
                 ChatRoomIntent.CreditShortageDismissed -> creditShortage.dismiss()
+            }
+        }
+
+        private suspend fun handleCreditHistory(intent: ChatRoomIntent.CreditHistory) {
+            when (intent) {
+                ChatRoomIntent.CreditHistoryOpened, ChatRoomIntent.CreditHistoryRetried -> creditHistory.load()
+
+                ChatRoomIntent.CreditHistoryLoadMore ->
+                    uiState.value.creditHistory?.let { history -> creditHistory.loadMore(history) }
+
+                ChatRoomIntent.CreditHistoryRefresh ->
+                    uiState.value.creditHistory?.let { history -> creditHistory.refresh(history) }
+
+                // 읽던 페이지를 먼저 버린다. 닫은 뒤 늦게 온 응답이 내역 화면을 되살리지 않는다.
+                ChatRoomIntent.CreditHistoryClosed -> {
+                    creditHistory.cancel()
+                    dispatchEvent(ChatRoomEvent.CreditHistoryClosed)
+                }
             }
         }
 
@@ -1142,6 +1199,8 @@ class ChatRoomViewModel
                 ChatRoomIntent.ChoicesRetried -> generateChoices()
 
                 is ChatRoomIntent.CreditShortage -> handleCreditShortage(intent)
+
+                is ChatRoomIntent.CreditHistory -> handleCreditHistory(intent)
 
                 else -> handleTour(intent)
             }
@@ -1661,6 +1720,8 @@ private fun reduceChatRoom(
         ChatRoomEvent.DeleteFailed,
         is ChatRoomEvent.CreditBalanceChanged,
         is ChatRoomEvent.CreditShortageChanged,
+        is ChatRoomEvent.CreditHistoryChanged,
+        ChatRoomEvent.CreditHistoryClosed,
         is ChatRoomEvent.NewChatStartChanged,
         is ChatRoomEvent.ShareChanged,
         is ChatRoomEvent.ModelsLoaded,
@@ -1670,7 +1731,7 @@ private fun reduceChatRoom(
         else -> reduceTurn(state, event)
     }
 
-/** 헤더 메뉴에서 갈라지는 상태 전이 — 삭제·새 채팅·공유·이프 잔액. */
+/** 헤더 메뉴에서 갈라지는 상태 전이. 삭제, 새 채팅, 공유, 이프 잔액과 내역. */
 private fun reduceMenu(
     state: ChatRoomUiState,
     event: ChatRoomEvent,
@@ -1683,6 +1744,13 @@ private fun reduceMenu(
         is ChatRoomEvent.CreditBalanceChanged -> state.copy(creditBalance = event.balance)
 
         is ChatRoomEvent.CreditShortageChanged -> state.copy(creditShortage = event.sheet)
+
+        is ChatRoomEvent.CreditHistoryChanged ->
+            state.copy(
+                creditHistory = (state.creditHistory ?: CreditHistoryUiState()).reduceCreditHistory(event.change),
+            )
+
+        ChatRoomEvent.CreditHistoryClosed -> state.copy(creditHistory = null)
 
         is ChatRoomEvent.NewChatStartChanged -> state.copy(isStartingNewChat = event.inProgress)
 

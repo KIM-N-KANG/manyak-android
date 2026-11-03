@@ -1,4 +1,4 @@
-package app.manyak.my.credit.entity
+package app.manyak.common.entity.credit
 
 /**
  * 이프 내역 한 줄.

@@ -5,10 +5,10 @@ import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.user.UserProfileRepository
 import app.manyak.common.entity.credit.AttendanceResult
+import app.manyak.common.entity.credit.CreditTransactionPage
 import app.manyak.common.entity.user.AccountStatus
 import app.manyak.common.entity.user.UserProfile
 import app.manyak.my.credit.domain.CreditRepository
-import app.manyak.my.credit.entity.CreditTransactionPage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -88,7 +88,7 @@ class CreditChargeViewModelTest {
             assertEquals(1, fixture.profileRepository.refreshCount)
             assertEquals(true, fixture.viewModel.uiState.value.attendedToday)
             assertEquals(false, fixture.viewModel.uiState.value.isRefreshingProfile)
-            assertEquals(false, fixture.viewModel.uiState.value.isRefreshing)
+            assertEquals(false, fixture.viewModel.uiState.value.history.isRefreshing)
         }
 
     private class Fixture(
