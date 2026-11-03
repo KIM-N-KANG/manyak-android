@@ -205,6 +205,8 @@ class ChatRoomSettingsTest {
 
             viewModel.onIntent(ChatRoomIntent.RegenerateRequested(turnId = 1))
             advanceUntilIdle()
+            viewModel.onIntent(ChatRoomIntent.TurnConfirmAccepted)
+            advanceUntilIdle()
 
             assertEquals(listOf(false), repository.regeneratedRealtimeImages)
             assertEquals(

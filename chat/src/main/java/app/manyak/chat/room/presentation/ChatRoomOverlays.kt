@@ -8,6 +8,7 @@ import app.manyak.chat.room.presentation.tour.ChatTourOverlay
 import app.manyak.chat.room.presentation.tour.ChatTourTargets
 import app.manyak.chat.room.presentation.tour.chatTourSteps
 import app.manyak.common.presentation.credit.CreditShortageUiState
+import app.manyak.designsystem.component.ManyakConfirmDialog
 import app.manyak.designsystem.component.ManyakDestructiveDialog
 import app.manyak.designsystem.credit.CreditShortageSheet
 import app.manyak.report.presentation.StoryReportUiState
@@ -34,6 +35,68 @@ internal fun ChatRoomDeleteDialog(
     )
 }
 
+/** 상태가 여닫는 다이얼로그와 시트. 화면 본체가 길어지지 않게 모아 둔다. */
+@Composable
+internal fun ChatRoomStateOverlays(
+    state: ChatRoomUiState,
+    onIntent: (ChatRoomIntent) -> Unit,
+) {
+    ChatRoomTurnConfirmDialog(confirm = state.turnConfirm, onIntent = onIntent)
+    ChatRoomReportSheet(state = state.report, onIntent = onIntent)
+    ChatRoomCreditShortageSheet(state = state.creditShortage, onIntent = onIntent)
+}
+
+/**
+ * 재생성, 입력 수정과 포크의 확인. 입력 수정은 뒤의 턴이 사라질 때만 위험색이고 마지막 턴이면 재생성처럼
+ * 응답만 바뀐다고 알린다. 머무르는 쪽은 앱의 다른 확인 창과 같이 "닫기"다.
+ */
+@Composable
+private fun ChatRoomTurnConfirmDialog(
+    confirm: TurnConfirm?,
+    onIntent: (ChatRoomIntent) -> Unit,
+) {
+    if (confirm == null) return
+    val onConfirm = { onIntent(ChatRoomIntent.TurnConfirmAccepted) }
+    val onDismiss = { onIntent(ChatRoomIntent.TurnConfirmDismissed) }
+    when (confirm) {
+        is TurnConfirm.Regenerate ->
+            ManyakConfirmDialog(
+                title = stringResource(ChatR.string.chat_room_regenerate_confirm_title),
+                description = stringResource(ChatR.string.chat_room_response_replaced),
+                confirmLabel = stringResource(ChatR.string.chat_room_regenerate_confirm_confirm),
+                cancelLabel = stringResource(ChatR.string.chat_room_turn_confirm_cancel),
+                onConfirm = onConfirm,
+                onDismiss = onDismiss,
+            )
+
+        is TurnConfirm.Edit ->
+            ManyakConfirmDialog(
+                title = stringResource(ChatR.string.chat_room_edit_confirm_title),
+                description =
+                    if (confirm.laterTurnCount > 0) {
+                        stringResource(ChatR.string.chat_room_edit_confirm_later_turns, confirm.laterTurnCount)
+                    } else {
+                        stringResource(ChatR.string.chat_room_response_replaced)
+                    },
+                confirmLabel = stringResource(ChatR.string.chat_room_edit_confirm_confirm),
+                cancelLabel = stringResource(ChatR.string.chat_room_turn_confirm_cancel),
+                onConfirm = onConfirm,
+                onDismiss = onDismiss,
+                destructive = confirm.laterTurnCount > 0,
+            )
+
+        is TurnConfirm.Fork ->
+            ManyakConfirmDialog(
+                title = stringResource(ChatR.string.chat_room_fork_confirm_title),
+                description = stringResource(ChatR.string.chat_room_fork_confirm_description),
+                confirmLabel = stringResource(ChatR.string.chat_room_fork_confirm_confirm),
+                cancelLabel = stringResource(ChatR.string.chat_room_turn_confirm_cancel),
+                onConfirm = onConfirm,
+                onDismiss = onDismiss,
+            )
+    }
+}
+
 /** 신고 시트. 화면 본체가 길어지지 않게 따로 둔다. */
 @Composable
 internal fun ChatRoomReportSheet(
@@ -47,7 +110,7 @@ internal fun ChatRoomReportSheet(
     )
 }
 
-/** 이프 부족 시트. 전송과 재생성의 잔액 선검사나 402 에서 열린다. */
+/** 이프 부족 시트. 전송, 재생성과 입력 수정의 잔액 선검사나 402 에서 열린다. */
 @Composable
 internal fun ChatRoomCreditShortageSheet(
     state: CreditShortageUiState?,

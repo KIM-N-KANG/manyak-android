@@ -1,5 +1,6 @@
 package app.manyak.chat.data.sse
 
+import app.manyak.chat.data.api.dto.ChatEditTurnRequestDto
 import app.manyak.chat.data.api.dto.ChatRegenerateRequestDto
 import app.manyak.chat.data.api.dto.ChatTurnStreamRequestDto
 import app.manyak.chat.entity.ChatStreamEvent
@@ -55,6 +56,16 @@ class ChatSseSource
         ): Flow<ChatStreamEvent> =
             stream(
                 listOf(PATH_CHATS, chatId, PATH_TURNS, PATH_REGENERATE, PATH_STREAM),
+                json.encodeToString(request),
+            )
+
+        /** 대상 턴이 없거나 이미 숨긴 턴이면 스트림이 열리지 않고 404 다. */
+        fun editTurn(
+            chatId: String,
+            request: ChatEditTurnRequestDto,
+        ): Flow<ChatStreamEvent> =
+            stream(
+                listOf(PATH_CHATS, chatId, PATH_TURNS, PATH_EDIT, PATH_STREAM),
                 json.encodeToString(request),
             )
 
@@ -179,6 +190,7 @@ class ChatSseSource
             const val PATH_TURNS = "turns"
             const val PATH_STREAM = "stream"
             const val PATH_REGENERATE = "regenerate"
+            const val PATH_EDIT = "edit"
             const val PATH_GENERATIONS = "generations"
         }
     }

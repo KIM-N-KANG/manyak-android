@@ -7,9 +7,11 @@ import app.manyak.chat.entity.ChatSummary
 import app.manyak.chat.entity.UserSource
 import app.manyak.common.domain.chat.ChatStarter
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.entity.chat.CreatedChat
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 
+@Suppress("TooManyFunctions") // 채팅 API 경로마다 하나씩이다.
 interface ChatRepository : ChatStarter {
     /**
      * 내 채팅 목록 — 최근 활동순. 서버가 준 순서를 그대로 돌려주고 여기서 다시 정렬하지 않는다.
@@ -78,6 +80,19 @@ interface ChatRepository : ChatStarter {
     ): Flow<ChatStreamEvent>
 
     /**
+     * 완료된 턴 [turnId] 의 사용자 입력을 [userInput] 으로 고쳐 그 턴부터 다시 생성한다. 그 턴부터 마지막
+     * 턴까지 숨겨지고 새 턴 하나가 붙는다. 사건 계약은 [streamTurn] 과 같다.
+     *
+     * 대상 턴이 없거나 이미 숨긴 턴이면 스트림이 열리지 않고 404 가 온다.
+     */
+    fun editTurn(
+        chatId: String,
+        turnId: Long,
+        userInput: String,
+        realtimeImage: Boolean,
+    ): Flow<ChatStreamEvent>
+
+    /**
      * 진행 중이거나 막 끝난 생성에 다시 붙는다. 사건을 처음부터 다시 받으며 사건 계약은 [streamTurn] 과 같다.
      * 생성과 과금은 반복되지 않는다.
      */
@@ -96,6 +111,15 @@ interface ChatRepository : ChatStarter {
         chatId: String,
         turnId: Long,
     ): DomainResult<Unit>
+
+    /**
+     * [turnId] 의 AI 응답까지 복사한 새 채팅을 만든다. 원래 채팅은 바뀌지 않는다. 성공하면 내 채팅
+     * 목록이 바뀌었다고 알린다.
+     */
+    suspend fun forkChat(
+        chatId: String,
+        turnId: Long,
+    ): DomainResult<CreatedChat>
 
     /**
      * 공유 열람 링크를 발급한다. 돌려주는 값은 웹 열람 화면의 절대 URL 이다 — 링크를 받는 쪽은 앱이

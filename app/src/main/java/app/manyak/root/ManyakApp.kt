@@ -363,7 +363,7 @@ private fun MainNavDisplay(
     )
 }
 
-/** 채팅방. 셸 없이 전체 화면으로 열리고, 메뉴의 새 채팅은 지금 방을 걷어내고 그 자리에 선다. */
+/** 채팅방. 셸 없이 전체 화면으로 열리고, 메뉴의 새 채팅은 지금 방을 걷어내고 그 자리에 서며 포크는 위에 쌓인다. */
 private fun EntryProviderScope<NavKey>.chatRoomEntry(
     backStack: MutableList<NavKey>,
     onSelectChatTab: () -> Unit,
@@ -379,6 +379,8 @@ private fun EntryProviderScope<NavKey>.chatRoomEntry(
                 onSelectChatTab()
             },
             onReplaceChat = { chatId -> backStack.replaceTop(ChatRoomRoute(chatId)) },
+            // 포크한 방은 원래 방 위에 쌓는다. 뒤로가면 원래 채팅이 그대로 있다.
+            onOpenChat = { chatId -> backStack.push(ChatRoomRoute(chatId)) },
             onOpenCreditCharge = { backStack.push(MyCreditChargeRoute()) },
         )
     }

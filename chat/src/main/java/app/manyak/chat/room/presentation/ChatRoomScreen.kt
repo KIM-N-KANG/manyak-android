@@ -56,6 +56,7 @@ import app.manyak.designsystem.R as DesignsystemR
  * 채팅방. 셸 없는 전체 화면이며 상세 조회 렌더와 턴 진행, 추천 입력·선택지, 헤더 메뉴(새 채팅·신고·삭제)를 담는다.
  *
  * @param onReplaceChat 메뉴에서 새 채팅을 만들었다. 지금 방을 걷어내고 그 자리에 새 방을 연다.
+ * @param onOpenChat 포크로 새 채팅을 만들었다. 지금 방 위에 새 방을 연다. 뒤로가기는 지금 방이다.
  */
 @Composable
 fun ChatRoomScreen(
@@ -63,6 +64,7 @@ fun ChatRoomScreen(
     onBack: () -> Unit,
     onDeleted: () -> Unit,
     onReplaceChat: (String) -> Unit,
+    onOpenChat: (String) -> Unit,
     onOpenCreditCharge: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ChatRoomViewModel =
@@ -82,6 +84,7 @@ fun ChatRoomScreen(
         storyTitle = state.storyTitle,
         onDeleted = onDeleted,
         onReplaceChat = onReplaceChat,
+        onOpenChat = onOpenChat,
         onOpenCreditCharge = onOpenCreditCharge,
         onCloseMenu = { menuOpen = false },
         onCloseDeleteDialog = { confirmingDelete = false },
@@ -133,8 +136,7 @@ fun ChatRoomScreen(
         )
     }
 
-    ChatRoomReportSheet(state = state.report, onIntent = viewModel::onIntent)
-    ChatRoomCreditShortageSheet(state = state.creditShortage, onIntent = viewModel::onIntent)
+    ChatRoomStateOverlays(state = state, onIntent = viewModel::onIntent)
 }
 
 @Composable

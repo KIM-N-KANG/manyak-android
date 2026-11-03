@@ -120,6 +120,8 @@ class ChatRoomRealtimeImageNudgeTest {
             advanceUntilIdle()
             model.onIntent(ChatRoomIntent.RegenerateRequested(1))
             runCurrent()
+            model.onIntent(ChatRoomIntent.TurnConfirmAccepted)
+            runCurrent()
             repository.regenerateEvents.send(ChatStreamEvent.Completed)
             repository.regenerateEvents.close()
             advanceUntilIdle()

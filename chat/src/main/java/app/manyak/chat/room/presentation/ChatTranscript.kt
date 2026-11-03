@@ -17,7 +17,6 @@ import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -28,7 +27,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -54,7 +52,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.manyak.chat.list.presentation.label
 import app.manyak.chat.room.presentation.message.ChatAiOutput
-import app.manyak.chat.room.presentation.message.ChatUserBand
 import app.manyak.chat.room.presentation.suggestion.ChatSuggestionArea
 import app.manyak.chat.room.presentation.suggestion.ChatSuggestions
 import app.manyak.chat.room.presentation.suggestion.hasSuggestionArea
@@ -90,12 +87,14 @@ internal fun ChatTranscript(
     // 첫 턴 앞의 항목 수 — 안내 문구 하나와 프롤로그. 재생성 앵커가 턴 인덱스에 더한다.
     val headerCount = 1 + (if (state.prologue.isNotBlank()) 1 else 0)
     val streaming = state.streaming
-    // 재생성은 대상 턴 자리에서 진행하므로 목록 끝에 블록을 더하지 않는다.
-    val appendsStreaming = streaming != null && state.regeneratingTurnId == null
+    // 재생성과 입력 수정은 대상 턴 자리에서 진행하므로 목록 끝에 블록을 더하지 않는다.
+    val appendsStreaming = streaming != null && state.replacingTurnId == null
+    val turns = visibleTurns(state)
+    val editingIndex = editingIndexOf(state, turns)
     // 진행 중에는 추천을 그리지 않는다 — 이미 보낸 뒤라 고를 것이 아니다.
     val showsSuggestions = streaming == null && hasSuggestionArea(state)
     val itemCount =
-        headerCount + state.turns.size + (if (appendsStreaming) 1 else 0) +
+        headerCount + turns.size + (if (appendsStreaming) 1 else 0) +
             (if (showsSuggestions) 1 else 0) + 1
 
     EnterAtLastMessage(listState = listState, itemCount = itemCount, hasTurns = state.turns.isNotEmpty())
@@ -107,7 +106,8 @@ internal fun ChatTranscript(
         padPx = padPx,
     )
     ReclaimAnchorPad(listState = listState, isStreaming = state.isStreaming, padPx = padPx)
-    KeepReadingPosition(listState = listState, anchored = state.isStreaming)
+    // 입력을 고치는 동안도 멈춘다. 붙잡을 줄은 아래가 아니라 키보드를 부른 편집기다.
+    KeepReadingPosition(listState = listState, anchored = state.isStreaming || state.editing != null)
 
     Box(
         modifier = modifier.fillMaxWidth().backgroundTap(onBackgroundTap),
@@ -119,24 +119,16 @@ internal fun ChatTranscript(
                     key = "prologue",
                 ) { ChatAiOutput(content = state.prologue, onCharacterImageClick = onCharacterImageClick) }
             }
-            itemsIndexed(state.turns, key = { _, turn -> turn.id }) { index, turn ->
-                if (streaming != null && turn.id == state.regeneratingTurnId) {
-                    StreamingBlock(streaming = streaming, onCharacterImageClick = onCharacterImageClick)
-                } else {
-                    TurnBlock(
-                        turn = turn,
-                        onCharacterImageClick = onCharacterImageClick,
-                        isLast = streaming == null && index == state.turns.lastIndex,
-                        onRegenerate = { onIntent(ChatRoomIntent.RegenerateRequested(turn.id)) },
-                    )
-                }
-            }
+            turnItems(state, turns, editingIndex, onIntent, onCharacterImageClick)
             if (appendsStreaming && streaming != null) {
                 item(
                     key = "streaming",
                 ) { StreamingBlock(streaming = streaming, onCharacterImageClick = onCharacterImageClick) }
             }
-            if (showsSuggestions) suggestionItem(state, state.suggestions, state.turns.lastOrNull()?.id, onIntent)
+            if (showsSuggestions) {
+                // 추천은 마지막 턴의 것이라 어느 턴을 고치든 그 뒤에 있다.
+                suggestionItem(state, state.suggestions, turns.lastOrNull()?.id, editingIndex != -1, onIntent)
+            }
             item(key = ANCHOR_PAD_KEY) { AnchorPad(padPx = padPx) }
         }
         // 목록이 컴포저 위 경계에서 잘리는 것을 부드럽게 만든다. 컴포저가 커지면 이 상자가 줄어들어
@@ -167,35 +159,16 @@ private fun Modifier.backgroundTap(onTap: () -> Unit): Modifier {
     }
 }
 
-/** 확정 턴 하나. 재생성 버튼은 **마지막 턴에만** 붙는다 — 앞선 턴을 바꾸면 뒤 이야기와 어긋난다. */
-@Composable
-private fun TurnBlock(
-    turn: ChatRoomTurn,
-    onCharacterImageClick: (String) -> Unit,
-    isLast: Boolean,
-    onRegenerate: () -> Unit,
-) {
-    Column {
-        if (turn.userInput.isNotBlank()) ChatUserBand(text = turn.userInput)
-        if (turn.aiOutput.isNotBlank()) {
-            ChatAiOutput(
-                content = turn.aiOutput,
-                endingName = turn.reachedEnding,
-                onCharacterImageClick = onCharacterImageClick,
-            )
-        }
-        if (isLast && canRegenerate(turn)) RegenerateButton(onClick = onRegenerate)
-    }
-}
-
 private fun LazyListScope.suggestionItem(
     state: ChatRoomUiState,
     suggestions: ChatSuggestions,
     lastTurnId: Long?,
+    dimmed: Boolean,
     onIntent: (ChatRoomIntent) -> Unit,
 ) {
     item(key = "suggestions") {
         ChatSuggestionArea(
+            modifier = Modifier.dimmedWhile(dimmed),
             suggestions = suggestions,
             progress = state.choicesProgress,
             lastTurnId = lastTurnId,

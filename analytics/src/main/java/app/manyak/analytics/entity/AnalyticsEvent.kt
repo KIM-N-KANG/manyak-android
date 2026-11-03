@@ -444,6 +444,18 @@ sealed class AnalyticsEvent(
         val turnNumber: Int,
     ) : AnalyticsEvent("client_chat_regenerateButton_clicked", mapOf("chat_id" to chatId, "turn_number" to turnNumber))
 
+    /** 사용자 입력의 입력 수정 버튼. 편집기를 여는 클릭이며 [turnNumber] 는 고칠 턴의 번호다. */
+    data class ChatEditButtonClicked(
+        val chatId: String,
+        val turnNumber: Int,
+    ) : AnalyticsEvent("client_chat_editButton_clicked", mapOf("chat_id" to chatId, "turn_number" to turnNumber))
+
+    /** AI 응답의 포크 버튼. 확인 전 클릭이며 [turnNumber] 는 복사할 마지막 턴의 번호다. */
+    data class ChatForkButtonClicked(
+        val chatId: String,
+        val turnNumber: Int,
+    ) : AnalyticsEvent("client_chat_forkButton_clicked", mapOf("chat_id" to chatId, "turn_number" to turnNumber))
+
     data class StreamErrorShown(
         val chatId: String,
         val turnNumber: Int,

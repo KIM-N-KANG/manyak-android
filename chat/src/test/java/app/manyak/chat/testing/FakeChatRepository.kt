@@ -162,6 +162,32 @@ internal class FakeChatRepository : ChatRepository {
         return regenerateEvents.receiveAsFlow()
     }
 
+    /** 입력 수정도 따로 둔다. 요청은 (대상 턴, 고친 입력, 실시간 이미지) 순이다. */
+    val editEvents = Channel<ChatStreamEvent>(Channel.UNLIMITED)
+    val editRequests = mutableListOf<Triple<Long, String, Boolean>>()
+
+    override fun editTurn(
+        chatId: String,
+        turnId: Long,
+        userInput: String,
+        realtimeImage: Boolean,
+    ): Flow<ChatStreamEvent> {
+        editRequests += Triple(turnId, userInput, realtimeImage)
+        return editEvents.receiveAsFlow()
+    }
+
+    val forkedTurnIds = mutableListOf<Long>()
+    val queuedForkResults = ArrayDeque<DomainResult<CreatedChat>>()
+
+    override suspend fun forkChat(
+        chatId: String,
+        turnId: Long,
+    ): DomainResult<CreatedChat> {
+        yield()
+        forkedTurnIds += turnId
+        return queuedForkResults.removeFirstOrNull() ?: DomainResult.Success(CreatedChat(id = "chat-forked"))
+    }
+
     val generatedChoiceTurnIds = mutableListOf<Long>()
     val queuedChoicesResults = ArrayDeque<DomainResult<Unit>>()
 

@@ -50,13 +50,15 @@ data class ChatModel(
     val turnCost: Long,
 )
 
-/** 진행 중인 생성. 이어쓰기와 재생성을 합쳐 채팅마다 하나만 돈다. */
+/** 진행 중인 생성. 이어쓰기, 재생성과 입력 수정을 합쳐 채팅마다 하나만 돈다. */
 data class GeneratingTurn(
     /** 재연결 경로에 싣는 생성 ID. */
     val generationId: String,
     val userInput: String,
-    /** 재생성이면 교체 중인 턴, 이어쓰기면 `null` 이다. */
-    val regeneratingTurnId: Long?,
+    /** 재생성과 입력 수정이 대신하는 턴, 이어쓰기면 `null` 이다. */
+    val targetTurnId: Long?,
+    /** 입력 수정이면 끝난 뒤 [targetTurnId] 부터 새 턴 하나로 바뀌어, 진행 중에는 그 뒤의 턴을 숨긴다. */
+    val isEdit: Boolean = false,
 )
 
 /** 턴 하나 — 사용자 입력과 그에 대한 AI 출력의 짝. */
