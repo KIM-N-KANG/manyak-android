@@ -1,8 +1,6 @@
 package app.manyak.home.presentation
 
 import android.widget.Toast
-import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -10,34 +8,19 @@ import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyGridState
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -50,27 +33,21 @@ import app.manyak.analytics.presentation.rememberImpressionTracker
 import app.manyak.analytics.presentation.trackImpression
 import app.manyak.common.entity.story.StorySummary
 import app.manyak.designsystem.component.LoadFailedContent
-import app.manyak.designsystem.component.LoadMoreFooter
 import app.manyak.designsystem.component.ManyakPullToRefreshBox
 import app.manyak.designsystem.component.rememberDelayedProgressVisibility
-import app.manyak.designsystem.component.withScreenMargins
 import app.manyak.designsystem.theme.ManyakTheme
-import app.manyak.home.entity.StoryListQuery
+import app.manyak.home.entity.HomeSection
+import app.manyak.home.presentation.component.HomeSectionRow
+import app.manyak.home.presentation.component.HomeSectionsSkeleton
 import app.manyak.home.presentation.component.StoryCard
-import app.manyak.home.presentation.component.StoryGridSkeleton
-import app.manyak.home.presentation.component.StoryListToolbar
-import app.manyak.home.presentation.component.rememberToolbarHideState
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.first
 import app.manyak.common.R as CommonR
 import app.manyak.home.R as HomeR
 
 /**
- * 홈 탭(공개 스토리 목록). 헤더와 하단 탭은 셸이 그리므로 여기서는 콘텐츠만 둔다.
+ * 홈 탭(홈 섹션). 헤더와 하단 탭은 셸이 그리므로 여기서는 콘텐츠만 둔다.
  *
  * [contentPadding] 은 셸의 chrome 이 차지한 만큼이므로 `Modifier.padding` 이 아니라 목록의
- * `contentPadding` 으로 넘긴다 — 그래야 콘텐츠가 헤더 아래로 흘러 들어간다.
+ * `contentPadding` 으로 넘긴다. 그래야 콘텐츠가 헤더 아래로 흘러 들어간다.
  */
 @Composable
 fun HomeScreen(
@@ -103,9 +80,6 @@ fun HomeScreen(
     )
 }
 
-/**
- * 필터·정렬 바는 모든 상태에서 목록 위에 겹쳐 둔다. 목록 쪽은 바 높이만큼 위 여백을 더 비운다.
- */
 @Composable
 private fun HomeContent(
     state: HomeUiState,
@@ -114,111 +88,27 @@ private fun HomeContent(
     onIntent: (HomeIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val density = LocalDensity.current
-    val layoutDirection = LocalLayoutDirection.current
-    var toolbarHeightPx by remember { mutableIntStateOf(0) }
-    val listPadding =
-        PaddingValues(
-            start = contentPadding.calculateStartPadding(layoutDirection),
-            top =
-                contentPadding.calculateTopPadding() +
-                    with(density) { toolbarHeightPx.toDp() } +
-                    ManyakTheme.spacing.compact,
-            end = contentPadding.calculateEndPadding(layoutDirection),
-            bottom = contentPadding.calculateBottomPadding(),
-        )
-
-    // 첫 페이지가 새로 오면(조건 변경·새로고침) 새 목록의 맨 위에서 시작하고, 그 사이 구성 변경에서는 위치를 지킨다.
-    // 새 응답을 기다리는 동안 남겨 둔 이전 목록은 보던 위치 그대로 둔다.
-    val gridState = rememberSaveable(state.firstPageVersion, saver = LazyGridState.Saver) { LazyGridState() }
-    val hideState = rememberToolbarHideState()
-    val alwaysShownOffsetPx = with(density) { ToolbarAlwaysShownScroll.toPx() }
-    val toolbarVisible by remember(gridState, alwaysShownOffsetPx) {
-        derivedStateOf {
-            val nearTop =
-                gridState.firstVisibleItemIndex == 0 &&
-                    gridState.firstVisibleItemScrollOffset <= alwaysShownOffsetPx
-            nearTop || !hideState.hidden
-        }
-    }
-
-    Box(modifier = modifier.fillMaxSize().nestedScroll(hideState)) {
-        StoriesContent(
-            state = state,
-            gridState = gridState,
-            listPadding = listPadding,
-            onOpenStory = onOpenStory,
-            onIntent = onIntent,
-        )
-        StoryListToolbar(
-            modifier =
-                Modifier
-                    .padding(
-                        start = contentPadding.calculateStartPadding(layoutDirection),
-                        top = contentPadding.calculateTopPadding(),
-                        end = contentPadding.calculateEndPadding(layoutDirection),
-                    ).onSizeChanged { size -> toolbarHeightPx = size.height },
-            query = state.query,
-            visible = toolbarVisible,
-            onSelectFilter = { filter -> onIntent(HomeIntent.SelectFilter(filter)) },
-            onSelectSort = { sort -> onIntent(HomeIntent.SelectSort(sort)) },
-        )
-    }
-}
-
-@Composable
-@Suppress("LongParameterList")
-private fun StoriesContent(
-    state: HomeUiState,
-    gridState: LazyGridState,
-    listPadding: PaddingValues,
-    onOpenStory: (String) -> Unit,
-    onIntent: (HomeIntent) -> Unit,
-) {
     // 금방 끝나는 조회에서 자리만 잡았다 사라지는 깜빡임을 만들지 않는다.
     val showProgress = rememberDelayedProgressVisibility(state.isLoading)
-    val switching = rememberQuerySwitching(state.query, state.isLoading)
+    val listPadding = contentPadding.withSectionListBottom()
 
-    Crossfade(
-        targetState = switching,
-        animationSpec = tween(ManyakTheme.motion.elementEnterMillis),
-        label = "storyListSwitch",
-    ) { showsSwitchSkeleton ->
-        if (showsSwitchSkeleton) {
-            StoryGridSkeleton(contentPadding = listPadding.withScreenMargins())
-        } else {
-            StoriesState(state, gridState, listPadding, showProgress, onOpenStory, onIntent)
-        }
-    }
-}
-
-@Composable
-@Suppress("LongParameterList")
-private fun StoriesState(
-    state: HomeUiState,
-    gridState: LazyGridState,
-    listPadding: PaddingValues,
-    showProgress: Boolean,
-    onOpenStory: (String) -> Unit,
-    onIntent: (HomeIntent) -> Unit,
-) {
     when {
-        state.isLoading && state.stories.isEmpty() ->
-            if (showProgress) StoryGridSkeleton(contentPadding = listPadding.withScreenMargins())
+        state.isLoading && state.sections.isEmpty() ->
+            if (showProgress) HomeSectionsSkeleton(contentPadding = listPadding, modifier = modifier)
 
         state.loadFailed ->
             LoadFailedContent(
                 message = stringResource(CommonR.string.story_load_failed),
                 onRetry = { onIntent(HomeIntent.Retry) },
                 modifier =
-                    Modifier
+                    modifier
                         .fillMaxSize()
-                        .padding(listPadding)
+                        .padding(contentPadding)
                         .padding(horizontal = ManyakTheme.spacing.gutter),
             )
 
-        state.stories.isEmpty() ->
-            Box(modifier = Modifier.fillMaxSize().padding(listPadding), contentAlignment = Alignment.Center) {
+        state.sections.isEmpty() ->
+            Box(modifier = modifier.fillMaxSize().padding(contentPadding), contentAlignment = Alignment.Center) {
                 Text(
                     text = stringResource(HomeR.string.home_stories_empty),
                     style = ManyakTheme.typography.bodyMedium,
@@ -227,86 +117,52 @@ private fun StoriesState(
             }
 
         else ->
-            StoryGrid(
-                state = state,
-                gridState = gridState,
-                listPadding = listPadding,
-                onOpenStory = onOpenStory,
-                onIntent = onIntent,
-            )
+            ManyakPullToRefreshBox(
+                isRefreshing = state.isRefreshing,
+                onRefresh = { onIntent(HomeIntent.Refresh) },
+                contentPadding = contentPadding,
+                modifier = modifier,
+            ) {
+                HomeSections(sections = state.sections, listPadding = listPadding, onOpenStory = onOpenStory)
+            }
     }
 }
 
-/**
- * 필터나 정렬을 바꾼 뒤 새 목록을 보이기 전인지. 바꾸자마자 골격으로 덮고, 새 첫 페이지가 빨리 와도
- * [MIN_SWITCH_SKELETON_MILLIS] 동안은 골격을 지킨다. 목록이 순간 바뀌면 두 목록에 같은 카드가 많을 때
- * 바뀐 줄 모른다. 첫 조회와 새로고침은 조건이 그대로라 해당하지 않는다.
- */
 @Composable
-private fun rememberQuerySwitching(
-    query: StoryListQuery,
-    isLoading: Boolean,
-): Boolean {
-    var shownQuery by remember { mutableStateOf(query) }
-    val loading by rememberUpdatedState(isLoading)
-    LaunchedEffect(query) {
-        if (query == shownQuery) return@LaunchedEffect
-        delay(MIN_SWITCH_SKELETON_MILLIS)
-        snapshotFlow { loading }.first { !it }
-        shownQuery = query
-    }
-    return query != shownQuery
-}
-
-@Composable
-@Suppress("LongParameterList")
-private fun StoryGrid(
-    state: HomeUiState,
-    gridState: LazyGridState,
+private fun HomeSections(
+    sections: List<HomeSection>,
     listPadding: PaddingValues,
     onOpenStory: (String) -> Unit,
-    onIntent: (HomeIntent) -> Unit,
-    modifier: Modifier = Modifier,
 ) {
     val analytics = LocalAnalytics.current
     val impressions = rememberImpressionTracker()
-    LoadMoreWhenGridEnds(gridState = gridState, state = state, onLoadMore = { onIntent(HomeIntent.LoadMore) })
 
-    // 필터 바가 목록 위에 겹쳐 있어 셸 여백에서 내리면 바에 가린다. 목록이 시작하는 줄에서 내린다.
-    ManyakPullToRefreshBox(
-        isRefreshing = state.isRefreshing,
-        onRefresh = { onIntent(HomeIntent.Refresh) },
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
         contentPadding = listPadding,
-        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.block),
     ) {
-        LazyVerticalGrid(
-            modifier = Modifier.fillMaxSize(),
-            state = gridState,
-            columns = GridCells.Fixed(GRID_COLUMNS),
-            contentPadding = listPadding.withScreenMargins(),
-            horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
-            verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.gutter),
-        ) {
-            itemsIndexed(state.stories, key = { _, story -> story.id }) { index, story ->
-                StoryCard(
-                    story = story,
-                    onClick = {
-                        analytics.track(AnalyticsEvent.StoryCardClicked(story.id, index, StoryListSection.ORIGINAL))
-                        onOpenStory(story.id)
-                    },
-                    modifier =
-                        Modifier.trackImpression(impressions, key = story.id) {
+        itemsIndexed(sections, key = { index, section -> section.listKey(index) }) { index, section ->
+            val sectionKey = section.listKey(index)
+            HomeSectionRow(name = section.name) { cardWidth ->
+                itemsIndexed(section.stories, key = { _, story -> story.id }) { position, story ->
+                    StoryCard(
+                        story = story,
+                        onClick = {
                             analytics.track(
-                                AnalyticsEvent.StoryCardImpressed(story.id, index, StoryListSection.ORIGINAL),
+                                AnalyticsEvent.StoryCardClicked(story.id, position, StoryListSection.ORIGINAL),
                             )
+                            onOpenStory(story.id)
                         },
-                )
-            }
-            if (state.isLoadingMore || state.loadMoreFailed) {
-                item(key = LOAD_MORE_KEY, span = { GridItemSpan(maxLineSpan) }) {
-                    LoadMoreFooter(
-                        isLoading = state.isLoadingMore,
-                        onRetry = { onIntent(HomeIntent.LoadMore) },
+                        // 같은 스토리가 여러 섹션에 있으면 섹션마다 따로 보이므로 노출도 섹션마다 센다.
+                        modifier =
+                            Modifier
+                                .width(cardWidth)
+                                .trackImpression(impressions, key = "$sectionKey/${story.id}") {
+                                    val event =
+                                        AnalyticsEvent.StoryCardImpressed(story.id, position, StoryListSection.ORIGINAL)
+                                    analytics.track(event)
+                                },
                     )
                 }
             }
@@ -314,48 +170,35 @@ private fun StoryGrid(
     }
 }
 
-/**
- * 목록 끝 두 줄 앞에 닿으면 다음 커서를 잇는다. **실패한 뒤에는 자동으로 다시 요청하지 않는다** —
- * 끝에 머무는 동안 같은 실패를 반복하게 되므로, 그 자리에서는 목록 끝의 다시 시도가 이어받는다.
- */
-@Composable
-private fun LoadMoreWhenGridEnds(
-    gridState: LazyGridState,
-    state: HomeUiState,
-    onLoadMore: () -> Unit,
-) {
-    val canLoadMore = state.hasMore && !state.isLoadingMore && !state.loadMoreFailed && !state.isRefreshing
+/** 기본 섹션은 id 가 없어 이름과 순번으로 가른다. */
+private fun HomeSection.listKey(index: Int): String = id ?: "default/$index/$name"
 
-    // 스크롤 위치를 컴포지션에서 읽으면 프레임마다 다시 그린다. 배치 정보는 효과 안에서만 본다.
-    LaunchedEffect(gridState, canLoadMore) {
-        if (!canLoadMore) return@LaunchedEffect
-        snapshotFlow {
-            val layout = gridState.layoutInfo
-            val lastIndex = layout.visibleItemsInfo.lastOrNull()?.index ?: return@snapshotFlow false
-            lastIndex >= layout.totalItemsCount - 1 - LOAD_MORE_AHEAD_ITEMS
-        }.distinctUntilChanged()
-            .collect { nearEnd -> if (nearEnd) onLoadMore() }
-    }
+/** 셸 여백 위에 바로 첫 섹션을 붙이고 마지막 섹션 아래만 띄운다. */
+@Composable
+private fun PaddingValues.withSectionListBottom(): PaddingValues {
+    val layoutDirection = LocalLayoutDirection.current
+    return PaddingValues(
+        start = calculateStartPadding(layoutDirection),
+        top = calculateTopPadding(),
+        end = calculateEndPadding(layoutDirection),
+        bottom = calculateBottomPadding() + ManyakTheme.spacing.gutter,
+    )
 }
 
-internal const val GRID_COLUMNS = 2
-
-/** 끝에 닿기 전에 미리 읽기 시작하는 거리. 두 줄이다. */
-private const val LOAD_MORE_AHEAD_ITEMS = GRID_COLUMNS * 2
-
-private const val LOAD_MORE_KEY = "load-more"
-
-private const val MIN_SWITCH_SKELETON_MILLIS = 500L
-
-/** 목록 맨 위에서 이만큼 안쪽이면 스크롤 방향과 무관하게 바를 보인다. 바 높이보다 크게 둔다. */
-private val ToolbarAlwaysShownScroll: Dp = 64.dp
-
-@Preview(showBackground = true, name = "홈 · 목록")
+@Preview(showBackground = true, name = "홈 섹션")
 @Composable
 private fun HomeContentPreview() {
     ManyakTheme(darkTheme = false) {
         HomeContent(
-            state = HomeUiState(isLoading = false, stories = previewStories()),
+            state =
+                HomeUiState(
+                    isLoading = false,
+                    sections =
+                        listOf(
+                            HomeSection(id = null, name = "인기 스토리", stories = previewStories()),
+                            HomeSection(id = null, name = "오리지널 스토리", stories = previewStories().reversed()),
+                        ),
+                ),
             contentPadding = PaddingValues(),
             onOpenStory = {},
             onIntent = {},
@@ -378,27 +221,26 @@ private fun HomeLoadFailedPreview() {
 
 private fun previewStories(): List<StorySummary> =
     listOf(
-        previewStory(id = "1", title = "두 번째 시계공", turnCount = 1_284, isOriginal = true),
-        previewStory(id = "2", title = "달빛 아래의 계약", turnCount = 312, isOriginal = false),
-        previewStory(id = "3", title = "아주 긴 제목은 한 줄에서 잘려 카드 높이를 흔들지 않는다", turnCount = 7, isOriginal = true),
-        previewStory(id = "4", title = "잊힌 등대", turnCount = 0, isOriginal = false),
+        previewStory(id = "1", title = "두 번째 시계공", genres = listOf("판타지", "미스터리"), isOriginal = true),
+        previewStory(id = "2", title = "달빛 아래의 계약", genres = listOf("로맨스", "판타지", "스릴러", "코미디")),
+        previewStory(id = "3", title = "아주 긴 제목은 한 줄에서 잘려 카드 높이를 흔들지 않는다", genres = emptyList()),
     )
 
 private fun previewStory(
     id: String,
     title: String,
-    turnCount: Long,
-    isOriginal: Boolean,
+    genres: List<String>,
+    isOriginal: Boolean = false,
 ): StorySummary =
     StorySummary(
         id = id,
         title = title,
-        authorNickname = "마냑",
+        authorNickname = null,
         thumbnailUrl = null,
-        oneLineIntro = "",
-        genres = emptyList(),
+        oneLineIntro = "멈춘 시계탑을 고치는 견습공이 시간의 틈에서 다른 자신을 만나는 이야기",
+        genres = genres,
         likeCount = 0,
-        turnCount = turnCount,
+        turnCount = 1_284,
         createdDate = null,
         isOriginal = isOriginal,
     )

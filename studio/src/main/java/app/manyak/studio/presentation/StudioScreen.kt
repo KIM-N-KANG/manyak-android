@@ -276,7 +276,7 @@ private fun StoriesStatus(
 }
 
 /**
- * 초안 → 검수 제출본 → 완성 요청 → 완성된 스토리 순의 한 목록. 초안과 완성 요청은 각각 처음 임시 저장 최신순이다. 키는 종류별 접두사로 나눠 로컬 카드와
+ * 진행 중 구역(초안 → 검수 제출본)과 내 스토리 구역(완성 요청 → 완성된 스토리) 순의 한 목록. 초안과 완성 요청은 각각 처음 임시 저장 최신순이다. 키는 종류별 접두사로 나눠 로컬 카드와
  * 서버 스토리가 겹치지 않는다. 서버 목록을 처음 읽는 동안은 로컬 카드 아래에 골격을, 조회가 실패했으면 재시도를 둔다.
  */
 @Composable
@@ -312,11 +312,12 @@ private fun MyStories(
             // 좌우 여백은 카드가 스스로 갖는다 — 채팅 목록과 같은 리듬이다.
             contentPadding = contentPadding.withRowListMargins(),
         ) {
-            progressCards(state, onOpenStory, onIntent)
+            progressCards(state, onIntent)
+            val stories = if (state.isListLoading) emptyList() else state.stories
+            storySectionHead(state, storyCount = stories.size, onOpenStory = onOpenStory)
             if (showSkeleton) {
                 item(key = SKELETON_KEY) { MyStoryPlaceholders() }
             }
-            val stories = if (state.isListLoading) emptyList() else state.stories
             itemsIndexed(stories, key = { _, story -> "$STORY_KEY_PREFIX${story.id}" }) { index, story ->
                 MyStoryCard(
                     story = story,

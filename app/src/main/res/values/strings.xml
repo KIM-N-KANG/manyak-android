@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">마냑</string>
     <string name="main_tab_chat">채팅</string>
+    <string name="main_tab_explore">탐색</string>
     <string name="main_tab_home">홈</string>
     <string name="main_tab_my">마이</string>
     <string name="main_tab_studio">제작</string>

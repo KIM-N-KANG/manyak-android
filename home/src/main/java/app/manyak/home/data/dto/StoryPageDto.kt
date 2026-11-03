@@ -2,6 +2,7 @@ package app.manyak.home.data.dto
 
 import app.manyak.common.data.story.StorySummaryDto
 import app.manyak.common.data.story.toDomain
+import app.manyak.home.entity.HomeSection
 import app.manyak.home.entity.StoryListFilter
 import app.manyak.home.entity.StoryListSort
 import app.manyak.home.entity.StoryPage
@@ -18,6 +19,27 @@ fun StoryPageDto.toDomain(): StoryPage =
         items = items.map { story -> story.toDomain() },
         nextCursor = nextCursor?.takeIf { cursor -> cursor.isNotBlank() },
     )
+
+@Serializable
+data class StoryHomeDto(
+    val sections: List<StoryHomeSectionDto> = emptyList(),
+)
+
+@Serializable
+data class StoryHomeSectionDto(
+    val id: String? = null,
+    val name: String = "",
+    val items: List<StorySummaryDto> = emptyList(),
+)
+
+fun StoryHomeDto.toDomain(): List<HomeSection> =
+    sections.map { section ->
+        HomeSection(
+            id = section.id,
+            name = section.name,
+            stories = section.items.map { story -> story.toDomain() },
+        )
+    }
 
 internal val StoryListFilter.queryValue: String
     get() =
