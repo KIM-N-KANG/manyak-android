@@ -523,7 +523,8 @@ components:
 | `ProgressIndicator.kt` | 로딩 스피너와 지연 표시 헬퍼 |
 | `PullToRefresh.kt` | 당겨서 새로고침 컨테이너. 표시자를 셸 헤더 아래로 내린다 |
 | `credit/CreditAmountText.kt` | 이프 마크 + (취소선 정가) + 수치. 마크는 글자 크기를 따른다 |
-| `credit/CreditBalanceCard.kt` | 내 이프 카드(라벨·잔액·충전 버튼). 마이와 채팅 메뉴 시트가 같이 쓴다 |
+| `credit/CreditBalanceCard.kt` | 내 이프 카드(라벨, 잔액, 충전 버튼). 마이와 채팅 메뉴 시트가 같이 쓴다. 채팅 메뉴는 충전 왼쪽 4dp 간격에 "내역" 버튼을 둔다. 바탕은 `{colors.overlay-pressed}`를 카드 위에 한 겹 더해 라이트는 카드보다 진하고 다크는 밝으며 글자는 `{colors.text}`다. 강조색은 충전만 쓴다. 카드 바탕은 `{colors.background-neutral-raised}`로 바꿔 다크 시트에서도 묻히지 않게 한다 |
+| `credit/CreditHistory.kt` | 이프 내역 행, 골격, 빈 상태, 오류와 다음 페이지 자리, 목록 끝 감지. 이프 충전 내역 탭과 채팅 메뉴의 이프 내역이 같이 쓴다 |
 | `ManyakOptionsSheet.kt` · `ManyakOptionItem.kt` | 카드 옵션·상세 옵션·채팅 메뉴의 바텀 시트 틀과 항목 버튼 |
 | `ManyakCheckbox.kt` | 동의·확인 항목의 체크 표시. 줄이 토글을 맡고 상자는 그리기만 한다 |
 | `CreateTutorialDialog.kt` | 간편 제작 첫 진입 안내 대화창과 그 안에서 말하는 마스코트. 문구와 버튼 콜백만 받고 간편 제작 화면과 제작 탭이 같이 쓴다 |

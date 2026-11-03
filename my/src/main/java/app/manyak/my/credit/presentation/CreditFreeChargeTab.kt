@@ -166,7 +166,7 @@ private fun AttendanceNotes(modifier: Modifier = Modifier) {
 private fun CreditFreeChargeTabPreview() {
     ManyakTheme(darkTheme = false) {
         CreditFreeChargeTab(
-            state = CreditChargeUiState(balance = 3230, attendedToday = false, isLoading = false),
+            state = CreditChargeUiState(balance = 3230, attendedToday = false),
             onIntent = {},
             onOpenInvite = {},
         )

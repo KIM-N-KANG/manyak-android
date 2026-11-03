@@ -5,10 +5,12 @@ import app.manyak.analytics.domain.Analytics
 import app.manyak.analytics.entity.AnalyticsEvent
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.domain.user.UserProfileRepository
+import app.manyak.common.presentation.credit.CreditHistoryChange
+import app.manyak.common.presentation.credit.CreditHistoryController
+import app.manyak.common.presentation.credit.CreditHistoryUiState
+import app.manyak.common.presentation.credit.reduceCreditHistory
 import app.manyak.common.presentation.mvi.MviViewModel
 import app.manyak.my.credit.domain.CreditRepository
-import app.manyak.my.credit.entity.CreditTransaction
-import app.manyak.my.credit.entity.CreditTransactionPage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -39,18 +41,10 @@ data class CreditChargeUiState(
     /** 오늘 출석했는지. 프로필을 아직 못 읽었으면 null 이라 버튼을 눌러도 되는지 알 수 없다. */
     val attendedToday: Boolean? = null,
     val isClaimingAttendance: Boolean = false,
-    val isLoading: Boolean = true,
-    val loadFailed: Boolean = false,
-    val items: List<CreditTransaction> = emptyList(),
-    val nextCursor: String? = null,
-    val isLoadingMore: Boolean = false,
-    val loadMoreFailed: Boolean = false,
-    val isRefreshing: Boolean = false,
+    val history: CreditHistoryUiState = CreditHistoryUiState(),
     /** 무료 충전 탭을 당겨 프로필을 다시 읽는 중. 내역 탭의 [isRefreshing] 과 표시자가 따로 논다. */
     val isRefreshingProfile: Boolean = false,
 ) {
-    val hasMore: Boolean get() = nextCursor != null
-
     /** 프로필을 읽었고 오늘 아직 안 받았고 요청이 진행 중이 아닐 때만 누를 수 있다. */
     val canClaimAttendance: Boolean get() = attendedToday == false && !isClaimingAttendance
 }
@@ -65,29 +59,13 @@ sealed interface CreditChargeEvent {
 
     data object AttendanceFinished : CreditChargeEvent
 
-    data object LoadStarted : CreditChargeEvent
-
-    data class Loaded(
-        val page: CreditTransactionPage,
+    data class History(
+        val change: CreditHistoryChange,
     ) : CreditChargeEvent
-
-    data object LoadFailed : CreditChargeEvent
-
-    data object RefreshStarted : CreditChargeEvent
-
-    data object RefreshFailed : CreditChargeEvent
 
     data object ProfileRefreshStarted : CreditChargeEvent
 
     data object ProfileRefreshFinished : CreditChargeEvent
-
-    data object LoadMoreStarted : CreditChargeEvent
-
-    data class MoreLoaded(
-        val page: CreditTransactionPage,
-    ) : CreditChargeEvent
-
-    data object LoadMoreFailed : CreditChargeEvent
 }
 
 sealed interface CreditChargeEffect {
@@ -123,6 +101,13 @@ class CreditChargeViewModel
         /** 마지막으로 프로필을 다시 읽은 시점. 없으면 아직 한 번도 읽지 않았다. */
         private var lastRefreshMark: TimeSource.Monotonic.ValueTimeMark? = null
 
+        private val history =
+            CreditHistoryController(
+                scope = viewModelScope,
+                reader = creditRepository,
+                emit = { change -> dispatchEvent(CreditChargeEvent.History(change)) },
+            )
+
         init {
             analytics.track(AnalyticsEvent.CreditChargeViewed)
             viewModelScope.launch {
@@ -141,13 +126,17 @@ class CreditChargeViewModel
             when (intent) {
                 CreditChargeIntent.ScreenShown -> {
                     refreshBalanceIfStale()
-                    if (uiState.value.items.isEmpty()) loadFirstPage()
+                    if (uiState.value.history.items
+                            .isEmpty()
+                    ) {
+                        history.load()
+                    }
                 }
 
-                CreditChargeIntent.Retry -> loadFirstPage()
+                CreditChargeIntent.Retry -> history.load()
                 CreditChargeIntent.Refresh -> refresh()
                 CreditChargeIntent.RefreshProfile -> refreshProfile()
-                CreditChargeIntent.LoadMore -> loadNextPage()
+                CreditChargeIntent.LoadMore -> history.loadMore(uiState.value.history)
                 CreditChargeIntent.ClaimAttendance -> claimAttendance()
             }
         }
@@ -162,32 +151,9 @@ class CreditChargeViewModel
 
                 CreditChargeEvent.AttendanceStarted -> state.copy(isClaimingAttendance = true)
                 CreditChargeEvent.AttendanceFinished -> state.copy(isClaimingAttendance = false)
-                CreditChargeEvent.LoadStarted -> state.copy(isLoading = true, loadFailed = false)
-                is CreditChargeEvent.Loaded ->
-                    state.copy(
-                        isLoading = false,
-                        loadFailed = false,
-                        items = event.page.items,
-                        nextCursor = event.page.nextCursor,
-                        loadMoreFailed = false,
-                        isRefreshing = false,
-                    )
-
-                CreditChargeEvent.LoadFailed -> state.copy(isLoading = false, loadFailed = true)
-                CreditChargeEvent.RefreshStarted -> state.copy(isRefreshing = true)
-                // 새로고침 실패는 보고 있던 목록을 건드리지 않는다 — 알림은 토스트가 맡는다.
-                CreditChargeEvent.RefreshFailed -> state.copy(isRefreshing = false)
+                is CreditChargeEvent.History -> state.copy(history = state.history.reduceCreditHistory(event.change))
                 CreditChargeEvent.ProfileRefreshStarted -> state.copy(isRefreshingProfile = true)
                 CreditChargeEvent.ProfileRefreshFinished -> state.copy(isRefreshingProfile = false)
-                CreditChargeEvent.LoadMoreStarted -> state.copy(isLoadingMore = true, loadMoreFailed = false)
-                is CreditChargeEvent.MoreLoaded ->
-                    state.copy(
-                        isLoadingMore = false,
-                        items = state.items + event.page.items,
-                        nextCursor = event.page.nextCursor,
-                    )
-                // 이미 그린 목록은 지우지 않는다. 실패한 것은 다음 페이지뿐이다.
-                CreditChargeEvent.LoadMoreFailed -> state.copy(isLoadingMore = false, loadMoreFailed = true)
             }
 
         /**
@@ -195,14 +161,16 @@ class CreditChargeViewModel
          * 다시 읽는다 — 사용자가 명시적으로 요청한 갱신이라 방금 읽었다는 이유로 건너뛰면 안 된다.
          */
         private suspend fun refresh() {
-            if (uiState.value.isRefreshing) return
-            dispatchEvent(CreditChargeEvent.RefreshStarted)
+            if (uiState.value.history.isRefreshing) return
+            dispatchEvent(CreditChargeEvent.History(CreditHistoryChange.RefreshStarted))
             lastRefreshMark = TimeSource.Monotonic.markNow()
             userProfileRepository.refresh()
             when (val result = creditRepository.getTransactions()) {
-                is DomainResult.Success -> dispatchEvent(CreditChargeEvent.Loaded(result.value))
+                is DomainResult.Success ->
+                    dispatchEvent(CreditChargeEvent.History(CreditHistoryChange.Loaded(result.value)))
+                // 새로고침 실패는 보고 있던 목록을 건드리지 않는다. 알림은 토스트가 맡는다.
                 is DomainResult.Failure -> {
-                    dispatchEvent(CreditChargeEvent.RefreshFailed)
+                    dispatchEvent(CreditChargeEvent.History(CreditHistoryChange.RefreshFailed))
                     dispatchEffect(CreditChargeEffect.ShowRefreshFailed)
                 }
             }
@@ -221,31 +189,6 @@ class CreditChargeViewModel
                 dispatchEffect(CreditChargeEffect.ShowRefreshFailed)
             }
             dispatchEvent(CreditChargeEvent.ProfileRefreshFinished)
-        }
-
-        private suspend fun loadFirstPage() {
-            dispatchEvent(CreditChargeEvent.LoadStarted)
-            when (val result = creditRepository.getTransactions()) {
-                is DomainResult.Success -> dispatchEvent(CreditChargeEvent.Loaded(result.value))
-                is DomainResult.Failure -> dispatchEvent(CreditChargeEvent.LoadFailed)
-            }
-        }
-
-        /**
-         * 다음 페이지. 커서는 서버가 준 값을 그대로 되돌려 주기만 한다.
-         *
-         * 목록 끝은 스크롤 한 번에 여러 프레임 동안 참이라 진행 플래그로 중복 요청을 막는다.
-         * 실패 뒤 자동 재요청을 멈추는 것은 화면이 맡는다 — 같은 실패를 스크롤마다 반복하지 않는다.
-         */
-        private suspend fun loadNextPage() {
-            val state = uiState.value
-            val cursor = state.nextCursor ?: return
-            if (state.isLoading || state.isLoadingMore) return
-            dispatchEvent(CreditChargeEvent.LoadMoreStarted)
-            when (val result = creditRepository.getTransactions(cursor)) {
-                is DomainResult.Success -> dispatchEvent(CreditChargeEvent.MoreLoaded(result.value))
-                is DomainResult.Failure -> dispatchEvent(CreditChargeEvent.LoadMoreFailed)
-            }
         }
 
         /**

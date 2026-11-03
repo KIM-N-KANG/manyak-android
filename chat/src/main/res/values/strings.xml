@@ -71,6 +71,10 @@
     <string name="chat_room_fork_failed">새 채팅을 시작하지 못했어요</string>
     <string name="chat_room_load_error">채팅을 불러오지 못했어요</string>
     <string name="chat_room_menu">채팅 메뉴</string>
+    <string name="chat_room_menu_credit_history">이프 내역</string>
+    <string name="chat_room_menu_credit_history_back">채팅 메뉴로 돌아가기</string>
+    <string name="chat_room_menu_credit_history_refresh">새로고침</string>
+    <string name="chat_room_menu_credit_history_refreshing">새로고침 중</string>
     <string name="chat_room_new_chat">새 채팅 시작하기</string>
     <string name="chat_room_new_chat_failed">채팅을 시작하지 못했어요</string>
     <string name="chat_room_regenerate">다시 생성</string>

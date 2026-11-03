@@ -1,6 +1,5 @@
-package app.manyak.my.credit.presentation
+package app.manyak.designsystem.credit
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,34 +8,103 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import app.manyak.designsystem.component.LoadFailedContent
+import app.manyak.designsystem.component.LoadMoreFooter
 import app.manyak.designsystem.component.SkeletonPlaceholder
 import app.manyak.designsystem.component.rememberSkeletonPulseAlpha
 import app.manyak.designsystem.theme.ManyakTheme
-import app.manyak.my.credit.entity.CreditTransaction
-import app.manyak.my.credit.entity.CreditTransactionReason
-import app.manyak.my.credit.entity.CreditTransactionType
-import app.manyak.my.presentation.component.labelRes
-import java.text.NumberFormat
-import app.manyak.my.R as MyR
+import kotlinx.coroutines.flow.distinctUntilChanged
+import app.manyak.designsystem.R as DesignsystemR
 
 /**
- * 내역 한 줄. 사유·대상·날짜가 왼쪽에, 금액이 오른쪽에 온다.
- *
- * 부호와 색은 서버가 계산한 분류(`type`)만 보고 정한다 — 금액 부호로 다시 판단하지 않는다.
+ * 이프 내역 목록의 상태별 자리. 이프 충전의 내역 탭과 채팅 메뉴의 이프 내역이 같은 목록을 그린다.
+ * 목록 줄은 [row] 가 그린다. 원장 줄을 문구로 바꾸는 일은 이 모듈이 모르는 entity 의 몫이다.
+ */
+@Suppress("LongParameterList")
+fun <T> LazyListScope.creditHistoryItems(
+    items: List<T>,
+    isLoading: Boolean,
+    loadFailed: Boolean,
+    isLoadingMore: Boolean,
+    loadMoreFailed: Boolean,
+    onRetry: () -> Unit,
+    onLoadMore: () -> Unit,
+    row: @Composable (T) -> Unit,
+) {
+    when {
+        isLoading -> item { CreditHistorySkeleton() }
+
+        loadFailed ->
+            item {
+                LoadFailedContent(
+                    message = stringResource(DesignsystemR.string.credit_history_load_failed),
+                    onRetry = onRetry,
+                    modifier = Modifier.fillMaxWidth().padding(top = ManyakTheme.spacing.block),
+                )
+            }
+
+        items.isEmpty() -> item { EmptyCreditHistory() }
+
+        else -> {
+            // 원장 줄에는 안정된 식별자가 없어 key 를 주지 않는다.
+            items(items) { item -> row(item) }
+            if (isLoadingMore || loadMoreFailed) {
+                item { LoadMoreFooter(isLoading = isLoadingMore, onRetry = onLoadMore) }
+            }
+        }
+    }
+}
+
+/**
+ * 목록 끝에 닿으면 다음 페이지를 잇는다. [enabled] 는 실패한 뒤 거짓이 되어야 한다. 끝에 머무는 동안
+ * 같은 실패를 반복하게 되므로 그 자리에서는 재시도 버튼이 이어받는다.
  */
 @Composable
-internal fun CreditTransactionRow(
-    transaction: CreditTransaction,
+fun LoadMoreWhenListEnds(
+    listState: LazyListState,
+    enabled: Boolean,
+    onLoadMore: () -> Unit,
+) {
+    val currentOnLoadMore by rememberUpdatedState(onLoadMore)
+
+    // 스크롤 위치를 컴포지션에서 읽으면 프레임마다 다시 그린다. 배치 정보는 효과 안에서만 본다.
+    LaunchedEffect(listState, enabled) {
+        if (!enabled) return@LaunchedEffect
+        snapshotFlow {
+            val layout = listState.layoutInfo
+            val lastIndex = layout.visibleItemsInfo.lastOrNull()?.index ?: return@snapshotFlow false
+            lastIndex >= layout.totalItemsCount - 1
+        }.distinctUntilChanged()
+            .collect { reachedEnd -> if (reachedEnd) currentOnLoadMore() }
+    }
+}
+
+/** 내역 한 줄. 사유, 대상, 날짜가 왼쪽에, 금액이 오른쪽에 온다. 획득만 강조색이다. */
+@Composable
+fun CreditHistoryRow(
+    label: String,
+    subtitle: String?,
+    dateLine: String?,
+    amount: String,
+    isEarned: Boolean,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -49,85 +117,50 @@ internal fun CreditTransactionRow(
             verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
         ) {
             Text(
-                text = stringResource(transaction.reason.labelRes()),
+                text = label,
                 style = ManyakTheme.typography.bodyLargeStrong,
                 color = ManyakTheme.colors.text,
             )
-            transaction.subtitle()?.let { subtitle ->
+            subtitle?.let {
                 Text(
-                    text = subtitle,
+                    text = it,
                     style = ManyakTheme.typography.bodyMedium,
                     color = ManyakTheme.colors.textSubtle,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            transaction.dateLine()?.let { dateLine ->
+            dateLine?.let {
                 Text(
-                    text = dateLine,
+                    text = it,
                     style = ManyakTheme.typography.bodySmall,
                     color = ManyakTheme.colors.textSubtlest,
                 )
             }
         }
-        CreditTransactionAmount(transaction = transaction)
+        Text(
+            text = amount,
+            style = ManyakTheme.typography.bodyLargeStrong.copy(fontFeatureSettings = "tnum"),
+            color = if (isEarned) ManyakTheme.colors.textBrand else ManyakTheme.colors.text,
+        )
     }
 }
 
 @Composable
-private fun CreditTransactionAmount(
-    transaction: CreditTransaction,
-    modifier: Modifier = Modifier,
-) {
-    val amount = NumberFormat.getInstance().format(transaction.amount)
-    val isEarned = transaction.type == CreditTransactionType.EARN
-    val amountRes =
-        if (isEarned) MyR.string.my_credit_history_amount_earned else MyR.string.my_credit_history_amount_spent
-
+private fun EmptyCreditHistory(modifier: Modifier = Modifier) {
     Text(
-        modifier = modifier,
-        text = stringResource(amountRes, amount),
-        style = ManyakTheme.typography.bodyLargeStrong.copy(fontFeatureSettings = "tnum"),
-        color = if (isEarned) ManyakTheme.colors.textBrand else ManyakTheme.colors.text,
+        modifier = modifier.fillMaxWidth().padding(top = ManyakTheme.spacing.block),
+        text = stringResource(DesignsystemR.string.credit_history_empty),
+        style = ManyakTheme.typography.bodyLargeStrong,
+        color = ManyakTheme.colors.textSubtle,
+        textAlign = TextAlign.Center,
     )
 }
 
-/** 소모는 어느 스토리에 썼는지가 정보의 전부다. 제목이 없는 소모는 지워진 스토리다. */
-@Composable
-private fun CreditTransaction.subtitle(): String? =
-    when {
-        title != null -> title
-        type == CreditTransactionType.SPEND -> stringResource(MyR.string.my_credit_history_deleted_story)
-        else -> null
-    }
-
-/** 발생일과 만료일. 소멸 줄의 만료일은 발생일이 아니라 회수된 로트의 실제 만료일이다. */
-@Composable
-private fun CreditTransaction.dateLine(): String? {
-    val expires = expiresDate?.let { date -> stringResource(MyR.string.my_credit_history_expires, date) }
-    return listOfNotNull(createdDate, expires).joinToString(DATE_SEPARATOR).takeIf { line -> line.isNotEmpty() }
-}
-
-@StringRes
-private fun CreditTransactionReason.labelRes(): Int =
-    when (this) {
-        CreditTransactionReason.SIGNUP_REWARD -> MyR.string.my_credit_reason_signup
-        CreditTransactionReason.ATTENDANCE_REWARD -> MyR.string.my_credit_reason_attendance
-        CreditTransactionReason.INVITE_REWARD -> MyR.string.my_credit_reason_invite
-        CreditTransactionReason.REFUND -> MyR.string.my_credit_reason_refund
-        CreditTransactionReason.STORY_CREATION -> MyR.string.my_credit_reason_story_creation
-        CreditTransactionReason.CHAT_TURN -> MyR.string.my_credit_reason_chat_turn
-        CreditTransactionReason.CHAT_IMAGE -> MyR.string.my_credit_reason_chat_image
-        CreditTransactionReason.PURCHASE -> MyR.string.my_credit_reason_purchase
-        CreditTransactionReason.PURCHASE_REVERSAL -> MyR.string.my_credit_reason_purchase_reversal
-        CreditTransactionReason.EXPIRE -> MyR.string.my_credit_reason_expire
-        CreditTransactionReason.UNKNOWN -> MyR.string.my_credit_reason_unknown
-    }
-
 /** 조회 중 자리를 잡아 두는 골격. 내역 줄과 같은 구조라 목록이 도착해도 요소가 튀지 않는다. */
 @Composable
-internal fun CreditHistorySkeleton(modifier: Modifier = Modifier) {
-    val description = stringResource(MyR.string.my_credit_history_loading)
+private fun CreditHistorySkeleton(modifier: Modifier = Modifier) {
+    val description = stringResource(DesignsystemR.string.credit_history_loading)
     val alpha = rememberSkeletonPulseAlpha()
 
     Column(
@@ -176,8 +209,6 @@ private fun RowPlaceholder(
         SkeletonPlaceholder(modifier = Modifier.width(AmountWidth).height(labelHeight), alpha = alpha)
     }
 }
-
-private const val DATE_SEPARATOR = " · "
 
 private const val PLACEHOLDER_ROW_COUNT = 8
 
