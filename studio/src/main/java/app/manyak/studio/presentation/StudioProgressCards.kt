@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
@@ -98,7 +99,10 @@ internal fun LazyListScope.storySectionHead(
 private val StudioUiState.hasProgressSection: Boolean
     get() = !isListLoading && (drafts.isNotEmpty() || submissions.isNotEmpty())
 
-/** 구역 제목과 그 옆의 작은 개수. 앞 구역 뒤에 오면([following]) 위 여백을 넓혀 구역을 가른다. */
+/**
+ * 구역 제목과 그 옆의 작은 개수. 크기가 다른 두 글자를 기준선에 맞추면 개수가 내려앉아 보여 세로 가운데에 맞춘다.
+ * 앞 구역 뒤에 오면([following]) 위 여백을 넓혀 구역을 가른다.
+ */
 @Composable
 private fun StudioSectionTitle(
     title: String,
@@ -116,15 +120,14 @@ private fun StudioSectionTitle(
                     bottom = ManyakTheme.spacing.inline,
                 ).semantics(mergeDescendants = true) { heading() },
         horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.dense),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            modifier = Modifier.alignByBaseline(),
             text = title,
             style = ManyakTheme.typography.bodyLargeStrong,
             color = ManyakTheme.colors.text,
         )
         Text(
-            modifier = Modifier.alignByBaseline(),
             text = count.toString(),
             style = ManyakTheme.typography.labelLarge,
             color = ManyakTheme.colors.textSubtle,
