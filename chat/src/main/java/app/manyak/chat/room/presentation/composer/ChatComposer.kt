@@ -218,7 +218,7 @@ internal fun SyncedTextField(
  * 되돌려 보내, 보낸 뒤에도 입력창에 쓰던 글자가 남는다.
  */
 @Composable
-private fun rememberSyncedTextFieldState(
+internal fun rememberSyncedTextFieldState(
     text: String,
     onTextChange: (String) -> Unit,
 ): TextFieldState {

@@ -4,6 +4,8 @@ import app.manyak.chat.data.api.ChatApi
 import app.manyak.chat.data.api.ChatUserApi
 import app.manyak.chat.data.api.dto.ChangeChatSettingsRequestDto
 import app.manyak.chat.data.api.dto.ChatCreateRequestDto
+import app.manyak.chat.data.api.dto.ChatEditTurnRequestDto
+import app.manyak.chat.data.api.dto.ChatForkRequestDto
 import app.manyak.chat.data.api.dto.ChatRegenerateRequestDto
 import app.manyak.chat.data.api.dto.ChatTurnStreamRequestDto
 import app.manyak.chat.data.api.dto.toDomain
@@ -111,6 +113,24 @@ class ChatRepositoryImpl
                 .regenerateTurn(chatId, ChatRegenerateRequestDto(turnId = turnId, realtimeImage = realtimeImage))
                 .notifyOnCompleted()
 
+        override fun editTurn(
+            chatId: String,
+            turnId: Long,
+            userInput: String,
+            realtimeImage: Boolean,
+        ): Flow<ChatStreamEvent> =
+            sseSource
+                .editTurn(
+                    chatId,
+                    ChatEditTurnRequestDto(
+                        turnId = turnId,
+                        userInput = userInput,
+                        // 편집기는 일반 글 입력이라 추천을 채운 출처가 없다.
+                        userSource = UserSource.TYPED.wireValue,
+                        realtimeImage = realtimeImage,
+                    ),
+                ).notifyOnCompleted()
+
         override fun resumeGeneration(
             chatId: String,
             generationId: String,
@@ -124,6 +144,14 @@ class ChatRepositoryImpl
             chatId: String,
             turnId: Long,
         ): DomainResult<Unit> = apiCall { chatApi.generateChoices(chatId, turnId) }.map { }
+
+        override suspend fun forkChat(
+            chatId: String,
+            turnId: Long,
+        ): DomainResult<CreatedChat> =
+            apiCall { chatApi.forkChat(chatId, ChatForkRequestDto(turnId = turnId)) }
+                .map { it.toDomain() }
+                .also { result -> if (result is DomainResult.Success) changes.tryEmit(Unit) }
 
         /** 없는 채팅을 지우려 한 것은 사용자가 할 일이 없는 상태라 성공으로 접는다. */
         override suspend fun createShareLink(chatId: String): DomainResult<String> =

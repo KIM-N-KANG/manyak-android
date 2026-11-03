@@ -51,6 +51,21 @@ data class ChatRegenerateRequestDto(
     val realtimeImage: Boolean,
 )
 
+/** 입력 수정 요청. [turnId] 부터 숨기고 고친 입력으로 새 턴을 만든다. [realtimeImage] 규칙은 턴 진행과 같다. */
+@Serializable
+data class ChatEditTurnRequestDto(
+    val turnId: Long,
+    val userInput: String,
+    val userSource: String,
+    val realtimeImage: Boolean,
+)
+
+/** 포크 요청. [turnId] 의 AI 응답까지 복사한다. 응답은 채팅 생성과 같은 구조다. */
+@Serializable
+data class ChatForkRequestDto(
+    val turnId: Long,
+)
+
 /**
  * 선택지 생성 응답. **렌더 소스가 아니다** — 화면은 상세 재조회의 `turns[].choices` 로 그린다.
  * 본문을 무시하지 않고 받아 두는 이유는 성공 응답에 본문이 없으면 역직렬화 실패로 판정되기 때문이다.
@@ -134,7 +149,7 @@ data class ChangeChatSettingsRequestDto(
     val longResponse: Boolean? = null,
 )
 
-/** 진행 중인 생성. [type] 은 `CONTINUE`(이어쓰기) 또는 `REGENERATE`(재생성)다. */
+/** 진행 중인 생성. [type] 은 `CONTINUE`(이어쓰기), `REGENERATE`(재생성) 또는 `EDIT`(입력 수정)다. */
 @Serializable
 data class GeneratingTurnDto(
     val generationId: String,
@@ -173,14 +188,18 @@ fun ChatDetailResponseDto.toDomain(): ChatDetail =
         longResponse = longResponse,
         generatingTurn =
             generatingTurn?.let { generating ->
+                // 대상 턴이 없으면 자리를 잡을 수 없어 이어쓰기처럼 목록 끝에 그린다.
+                val targetTurnId = generating.targetTurnId.takeIf { generating.type in TargetedTypes }
                 GeneratingTurn(
                     generationId = generating.generationId,
                     userInput = generating.userInput,
-                    regeneratingTurnId = generating.targetTurnId.takeIf { generating.type == TYPE_REGENERATE },
+                    targetTurnId = targetTurnId,
+                    isEdit = targetTurnId != null && generating.type == TYPE_EDIT,
                 )
             },
     )
 
-private const val TYPE_REGENERATE = "REGENERATE"
+private const val TYPE_EDIT = "EDIT"
+private val TargetedTypes = setOf("REGENERATE", TYPE_EDIT)
 
 fun ChatModelDto.toDomain(): ChatModel = ChatModel(code = code, name = name, turnCost = turnCost)

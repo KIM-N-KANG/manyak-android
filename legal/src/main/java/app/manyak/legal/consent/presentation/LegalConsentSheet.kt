@@ -38,7 +38,6 @@ import app.manyak.designsystem.component.ManyakProgressIndicator
 import app.manyak.designsystem.component.ManyakTextButton
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.legal.presentation.titleRes
-import app.manyak.designsystem.R as DesignsystemR
 import app.manyak.legal.R as LegalR
 
 /**
@@ -325,7 +324,7 @@ fun ConsentLoadFailureContent(
                 Text(
                     text =
                         stringResource(
-                            if (forbidden) LegalR.string.consent_logout else DesignsystemR.string.common_retry,
+                            if (forbidden) LegalR.string.consent_logout else LegalR.string.consent_load_failed_retry,
                         ),
                     style = ManyakTheme.typography.labelLarge,
                 )

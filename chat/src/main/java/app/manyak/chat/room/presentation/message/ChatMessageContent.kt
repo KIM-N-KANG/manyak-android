@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
@@ -29,14 +30,18 @@ import app.manyak.chat.R as ChatR
  *
  * 폭을 좁힌 말풍선을 쓰면 같은 문단이 웹과 다른 줄 수로 읽힌다. 채팅방 본문은 대화 UI가 아니라
  * 읽는 이야기다.
+ *
+ * @param action 본문 아래 오른쪽에 붙는 버튼. 여백은 버튼이 갖는다.
  */
 @Composable
 internal fun ChatUserBand(
     text: String,
     modifier: Modifier = Modifier,
+    action: (@Composable () -> Unit)? = null,
 ) {
-    Box(modifier = modifier.fillMaxWidth().background(ManyakTheme.colors.backgroundNeutral)) {
+    Column(modifier = modifier.fillMaxWidth().background(ManyakTheme.colors.backgroundNeutral)) {
         ChatPassage(text = text)
+        if (action != null) Box(modifier = Modifier.align(Alignment.End)) { action() }
     }
 }
 

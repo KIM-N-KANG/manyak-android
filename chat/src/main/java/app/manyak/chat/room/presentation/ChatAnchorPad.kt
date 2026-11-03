@@ -57,7 +57,7 @@ internal fun anchorPadFloor(
  * **뷰포트 높이가 바뀌면 다시 잡는다** — 키보드가 내려가 화면이 커지면 깔아 둔 자리가 한 화면에
  * 모자라져 목록이 앵커를 놓고 되돌아간다. 사용자 스크롤은 높이를 바꾸지 않으므로 되잡기와 싸우지 않는다.
  *
- * 재생성은 목록 끝이 아니라 **대상 턴 자리**를 맞춘다. 바뀌는 곳이 화면 밖이면 무엇이 다시 만들어지는지
+ * 재생성과 입력 수정은 목록 끝이 아니라 **대상 턴 자리**를 맞춘다. 바뀌는 곳이 화면 밖이면 무엇이 다시 만들어지는지
  * 보이지 않는다.
  */
 @Composable
@@ -169,7 +169,7 @@ private class AnchorState(
 }
 
 /**
- * 스트리밍 블록이 놓인 자리. 이어쓰기는 목록 끝(패드 앞), 재생성은 대상 턴 자리다.
+ * 스트리밍 블록이 놓인 자리. 이어쓰기는 목록 끝(패드 앞), 재생성과 입력 수정은 대상 턴 자리다.
  * [headerCount] 는 첫 턴 앞에 놓인 항목 수(안내 문구·프롤로그)다.
  */
 private fun anchorIndexOf(
@@ -177,8 +177,8 @@ private fun anchorIndexOf(
     itemCount: Int,
     headerCount: Int,
 ): Int {
-    val regenerating = state.regeneratingTurnId ?: return (itemCount - 2).coerceAtLeast(0)
-    val turnIndex = state.turns.indexOfFirst { turn -> turn.id == regenerating }
+    val replacing = state.replacingTurnId ?: return (itemCount - 2).coerceAtLeast(0)
+    val turnIndex = state.turns.indexOfFirst { turn -> turn.id == replacing }
     return (headerCount + turnIndex).coerceAtLeast(0)
 }
 
