@@ -3,6 +3,7 @@ package app.manyak.home.testing
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.common.entity.story.StorySummary
 import app.manyak.home.domain.HomeRepository
+import app.manyak.home.entity.HomeSection
 import app.manyak.home.entity.StoryListQuery
 import app.manyak.home.entity.StoryPage
 import kotlinx.coroutines.CompletableDeferred
@@ -54,5 +55,28 @@ internal class FakeStoryRepository : HomeRepository {
         requests += query to cursor
         inFlightGate?.await()
         return queuedResults.removeFirstOrNull() ?: DomainResult.Success(StoryPage(sampleStories(), nextCursor = null))
+    }
+
+    var homeRequests = 0
+    val queuedHomeResults = ArrayDeque<DomainResult<List<HomeSection>>>()
+
+    override suspend fun homeSections(): DomainResult<List<HomeSection>> {
+        yield()
+        homeRequests += 1
+        inFlightGate?.await()
+        return queuedHomeResults.removeFirstOrNull()
+            ?: DomainResult.Success(listOf(HomeSection(id = null, name = "인기 스토리", stories = sampleStories())))
+    }
+
+    /** 탐색 요청의 커서. 순서대로 쌓인다. */
+    val exploreRequests = mutableListOf<String?>()
+    val queuedExploreResults = ArrayDeque<DomainResult<StoryPage>>()
+
+    override suspend fun exploreStories(cursor: String?): DomainResult<StoryPage> {
+        yield()
+        exploreRequests += cursor
+        inFlightGate?.await()
+        return queuedExploreResults.removeFirstOrNull()
+            ?: DomainResult.Success(StoryPage(sampleStories(), nextCursor = null))
     }
 }

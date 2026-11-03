@@ -1,6 +1,7 @@
 package app.manyak.home.domain
 
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.home.entity.HomeSection
 import app.manyak.home.entity.StoryListQuery
 import app.manyak.home.entity.StoryPage
 
@@ -10,4 +11,10 @@ interface HomeRepository {
         query: StoryListQuery,
         cursor: String? = null,
     ): DomainResult<StoryPage>
+
+    /** 홈 섹션 전체. 카드가 없는 섹션도 그대로 담아 온다. */
+    suspend fun homeSections(): DomainResult<List<HomeSection>>
+
+    /** 탐색 한 페이지. [cursor] 가 없으면 새로 섞은 순서의 첫 페이지다. */
+    suspend fun exploreStories(cursor: String? = null): DomainResult<StoryPage>
 }

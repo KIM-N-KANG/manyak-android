@@ -30,6 +30,11 @@ internal enum class MainTab(
         unselectedIconRes = DesignsystemR.drawable.ic_nav_studio_outline,
         nameRes = AppR.string.main_tab_studio,
     ),
+    EXPLORE(
+        selectedIconRes = DesignsystemR.drawable.ic_nav_explore_filled,
+        unselectedIconRes = DesignsystemR.drawable.ic_nav_explore_outline,
+        nameRes = AppR.string.main_tab_explore,
+    ),
     MY(
         selectedIconRes = DesignsystemR.drawable.ic_nav_my_filled,
         unselectedIconRes = DesignsystemR.drawable.ic_nav_my_outline,

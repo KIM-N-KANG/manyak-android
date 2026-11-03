@@ -650,6 +650,7 @@ enum class StoryListSection(
 ) {
     ORIGINAL("original"),
     CREATED("created"),
+    EXPLORE("explore"),
 }
 
 enum class CreateButtonSource(

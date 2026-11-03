@@ -5,8 +5,10 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -23,6 +25,7 @@ import androidx.navigation3.ui.NavDisplay
 import app.manyak.chat.list.presentation.ChatListScreen
 import app.manyak.common.entity.story.CreationResumePoint
 import app.manyak.core.navigation.ChatListRoute
+import app.manyak.core.navigation.ExploreRoute
 import app.manyak.core.navigation.HomeRoute
 import app.manyak.core.navigation.MyRoute
 import app.manyak.core.navigation.StudioRoute
@@ -31,6 +34,7 @@ import app.manyak.designsystem.component.ManyakNavigationBar
 import app.manyak.designsystem.component.ManyakNavigationItem
 import app.manyak.designsystem.component.ManyakSectionHeader
 import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.home.explore.presentation.ExploreScreen
 import app.manyak.home.presentation.HomeScreen
 import app.manyak.my.profile.presentation.MyScreen
 import app.manyak.notice.presentation.NoticeUnreadIntent
@@ -40,14 +44,14 @@ import app.manyak.notification.inbox.presentation.NotificationUnreadViewModel
 import app.manyak.studio.presentation.StudioScreen
 
 /**
- * 하단 탭 넷을 두르는 셸. 헤더와 하단 바를 여기서만 그리고, 탭 화면에는 chrome 이 차지한 여백만 넘긴다.
+ * 하단 탭 다섯을 두르는 셸. 헤더와 하단 바를 여기서만 그리고, 탭 화면에는 chrome 이 차지한 여백만 넘긴다.
  *
  * **탭마다 백스택을 따로 소유한다.** 탭을 옮겨도 떠난 탭의 백스택과 그에 묶인 상태가 남아 있어,
  * 돌아왔을 때 스크롤 위치와 목록 상태가 유지된다. 탭 전환 자체는 어느 백스택을 그릴지 고르는 일이라
  * 이력에 쌓이지 않는다.
  */
 @Composable
-@Suppress("LongParameterList")
+@Suppress("LongParameterList", "LongMethod")
 internal fun MainTabsScreen(
     selectedTab: MainTab,
     studioRefreshRequest: Int,
@@ -74,6 +78,9 @@ internal fun MainTabsScreen(
     notificationUnreadViewModel: NotificationUnreadViewModel = hiltViewModel(),
 ) {
     val backStacks = rememberTabBackStacks()
+    // 다른 탭에서 탐색 탭으로 들어올 때마다 오른다. 탐색은 이 값이 바뀔 때만 새로 섞고, 상세에서 돌아오거나
+    // 탐색 탭을 다시 누를 때는 보던 순서를 남긴다.
+    var exploreEntryRequest by rememberSaveable { mutableIntStateOf(0) }
     val unreadNotifications by notificationUnreadViewModel.uiState.collectAsStateWithLifecycle()
     LifecycleResumeEffect(notificationUnreadViewModel) {
         notificationUnreadViewModel.onIntent(Unit)
@@ -105,7 +112,12 @@ internal fun MainTabsScreen(
                 selectedTab = selectedTab,
                 // 이미 선택된 탭을 다시 누르면 그 탭의 시작 목적지로 되돌린다.
                 onSelectTab = { tab ->
-                    if (tab == selectedTab) backStacks.getValue(tab).popToStart() else onSelectTab(tab)
+                    if (tab == selectedTab) {
+                        backStacks.getValue(tab).popToStart()
+                    } else {
+                        if (tab == MainTab.EXPLORE) exploreEntryRequest++
+                        onSelectTab(tab)
+                    }
                 },
             )
         },
@@ -113,6 +125,7 @@ internal fun MainTabsScreen(
         MainTabsContent(
             selectedTab = selectedTab,
             studioRefreshRequest = studioRefreshRequest,
+            exploreEntryRequest = exploreEntryRequest,
             backStacks = backStacks,
             contentPadding = innerPadding,
             onLeaveTab = { onSelectTab(MainTab.HOME) },
@@ -165,6 +178,7 @@ private fun MainTabsBar(
 private fun MainTabsContent(
     selectedTab: MainTab,
     studioRefreshRequest: Int,
+    exploreEntryRequest: Int,
     backStacks: Map<MainTab, NavBackStack<NavKey>>,
     contentPadding: PaddingValues,
     onLeaveTab: () -> Unit,
@@ -190,6 +204,7 @@ private fun MainTabsContent(
     // 화면에 남는다. 상태로 넘겨 화면이 그릴 때마다 현재 값을 읽게 한다.
     val padding = rememberUpdatedState(contentPadding)
     val studioRefresh = rememberUpdatedState(studioRefreshRequest)
+    val exploreEntry = rememberUpdatedState(exploreEntryRequest)
     val unreadNotice = rememberUpdatedState(hasUnreadNotice)
     val screenTransition = rememberTabCrossfade()
 
@@ -218,6 +233,16 @@ private fun MainTabsContent(
                 )
             }
         }
+    val exploreEntries =
+        rememberTabEntries(backStacks.getValue(MainTab.EXPLORE)) {
+            entry<ExploreRoute> {
+                ExploreScreen(
+                    contentPadding = padding.value,
+                    entryRequest = exploreEntry.value,
+                    onOpenStory = onOpenStory,
+                )
+            }
+        }
     val myEntries =
         rememberTabEntries(backStacks.getValue(MainTab.MY)) {
             entry<MyRoute> {
@@ -243,6 +268,7 @@ private fun MainTabsContent(
             MainTab.HOME -> homeEntries
             MainTab.CHAT -> homeEntries.take(1) + chatEntries
             MainTab.STUDIO -> homeEntries.take(1) + studioEntries
+            MainTab.EXPLORE -> homeEntries.take(1) + exploreEntries
             MainTab.MY -> homeEntries.take(1) + myEntries
         }
 
@@ -276,12 +302,14 @@ private fun rememberTabBackStacks(): Map<MainTab, NavBackStack<NavKey>> {
     val home = rememberNavBackStack(HomeRoute)
     val chat = rememberNavBackStack(ChatListRoute)
     val studio = rememberNavBackStack(StudioRoute)
+    val explore = rememberNavBackStack(ExploreRoute)
     val my = rememberNavBackStack(MyRoute)
-    return remember(home, chat, studio, my) {
+    return remember(home, chat, studio, explore, my) {
         mapOf(
             MainTab.HOME to home,
             MainTab.CHAT to chat,
             MainTab.STUDIO to studio,
+            MainTab.EXPLORE to explore,
             MainTab.MY to my,
         )
     }
