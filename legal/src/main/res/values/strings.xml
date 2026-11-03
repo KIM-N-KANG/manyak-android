@@ -8,8 +8,9 @@
     <string name="consent_item_marketing_description">이벤트·혜택 소식과 출석 리마인드를 알림으로 받아요</string>
     <string name="consent_item_privacy">[필수] 개인정보 처리방침 동의</string>
     <string name="consent_item_terms">[필수] 서비스 이용약관 동의</string>
-    <string name="consent_load_failed_description">잠시 후 다시 시도해주세요</string>
-    <string name="consent_load_failed_title">동의 상태를 확인하지 못했어요</string>
+    <string name="consent_load_failed_description">확인이 끝나야 서비스를 이용할 수 있어요</string>
+    <string name="consent_load_failed_retry">다시 시도하기</string>
+    <string name="consent_load_failed_title">약관 동의 내역을 불러오지 못했어요</string>
     <string name="consent_submit">동의하기</string>
     <string name="consent_title">서비스 이용을 위해 동의가 필요해요</string>
     <string name="consent_view_document">보기</string>
