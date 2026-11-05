@@ -54,7 +54,7 @@ internal fun MyStoryPlaceholders(
 
     Column(modifier = modifier.semantics { contentDescription = description }) {
         if (withSectionTitle) {
-            val titleLine = ManyakTheme.typography.bodyLargeStrong.lineHeight
+            val titleLine = ManyakTheme.typography.titleMediumStrong.lineHeight
             val titleHeight = with(LocalDensity.current) { titleLine.toDp() }
             SkeletonPlaceholder(
                 modifier =

@@ -124,7 +124,7 @@ private fun StudioSectionTitle(
     ) {
         Text(
             text = title,
-            style = ManyakTheme.typography.bodyLargeStrong,
+            style = ManyakTheme.typography.titleMediumStrong,
             color = ManyakTheme.colors.text,
         )
         Text(

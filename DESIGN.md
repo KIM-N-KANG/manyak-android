@@ -25,6 +25,10 @@ colors:
   overlay-pressed: "#0F000000"
   image-viewer-scrim: "#EB000000"
   tour-scrim: "#80000000"
+  image-caption: "#000000"
+  text-on-image: "#FFFFFF"
+  text-on-image-subtle: "#CCFFFFFF"
+  background-on-image: "#26FFFFFF"
   background-brand-bold: "#00804B"
   background-brand-bold-pressed: "#006034"
   background-brand-subtle: "#E8F8EE"
@@ -66,6 +70,10 @@ colors-dark:
   overlay-pressed: "#14FFFFFF"
   image-viewer-scrim: "#EB000000"
   tour-scrim: "#80000000"
+  image-caption: "#000000"
+  text-on-image: "#FFFFFF"
+  text-on-image-subtle: "#CCFFFFFF"
+  background-on-image: "#26FFFFFF"
   background-brand-bold: "#00804B"
   background-brand-bold-pressed: "#006034"
   background-brand-subtle: "#00411F"
@@ -141,6 +149,12 @@ typography:
     fontSize: 12sp
     fontWeight: 400
     lineHeight: 16sp
+  label-tiny:
+    fontFamily: "Pretendard"
+    fontSize: 11sp
+    fontWeight: 500
+    lineHeight: 14sp
+
   label-small:
     fontFamily: "Pretendard"
     fontSize: 12sp
@@ -162,6 +176,7 @@ sizes:
   input: 40dp
   control-compact: 40dp
   control-small: 32dp
+  control-tiny: 28dp
   control: 48dp
   icon-tiny: 12dp
   icon-small: 16dp
@@ -559,6 +574,7 @@ components:
 - **눌림 리플** (`{colors.overlay-pressed}` — 라이트 검정 6% / 다크 흰 8%): 리플의 색이고 알파가 곧 눌림 농도다. 흰 행에서는 보조 배경 눌림 색 근처가 되고, 표지 위에서는 옅은 스크림이 된다. 배경색이 없는 카드에도 같은 규칙으로 눌림을 말하기 위한 값이라 채움 색이 아니라 반투명이다.
 - **비활성 채움** (`{colors.background-disabled}`): 비활성 컨트롤의 바닥.
 - **투어 딤** (`{colors.tour-scrim}` — 검정 50%, 라이트·다크 공통): 채팅 안내 투어가 하이라이트한 버튼만 뚫고 나머지를 덮는다. 이미지 뷰어 스크림(92%)보다 옅은 것은 뒤 화면이 어디인지 읽혀야 안내가 성립하기 때문이다. 웹과 같은 값이다.
+- **그림 아래 글 영역** (`{colors.image-caption}` 검정, `{colors.text-on-image}` 흰색, `{colors.text-on-image-subtle}` 흰 80%, `{colors.background-on-image}` 흰 15%, 라이트와 다크 공통): 탐색 타일처럼 표지 바로 아래 붙는 검은 글 영역과 그 위 글자, 장르 뱃지 바탕. 그림과 이어지는 자리라 테마와 무관하게 같은 값이고, 표지 아래 덮개도 `{colors.image-caption}`에서 옅어진다. 웹과 같은 값이다.
 
 ### 텍스트
 
@@ -625,6 +641,7 @@ components:
 | `{typography.body-medium}` | 14sp | 400 | 20sp | 본문 기본 |
 | `{typography.label-large}` | 14sp | 500 | 20sp | 버튼·탭 라벨 |
 | `{typography.body-small}` | 12sp | 400 | 16sp | 메타 정보·보조 설명 |
+| `{typography.label-tiny}` | 11sp | 500 | 14sp | 탐색 타일 장르 뱃지 |
 | `{typography.label-small}` | 12sp | 500 | 16sp | 타임스탬프·최소 보조 문구 · 표지 위 뱃지 |
 
 ### 원칙
@@ -685,6 +702,7 @@ components:
 | 토큰 | 값 | 용도 |
 | --- | --- | --- |
 | `{sizes.control-small}` | 32dp | 작은 보조 버튼, 인물 머리 줄의 접기와 삭제 |
+| `{sizes.control-tiny}` | 28dp | 홈 섹션 이름 줄 끝의 이전, 다음 화살표. 제목 줄 높이 안에 드는 원형 보조 버튼 |
 | `{sizes.input}` | 40dp | 입력창·칩·셀렉트 앵커의 최소 높이 |
 | `{sizes.control-compact}` | 40dp | 카드 안에 놓이는 라벨 버튼의 보이는 높이. 터치 영역은 48dp 를 유지한다 |
 | `{sizes.control}` | 48dp | 버튼·탭처럼 탭 가능한 일반 컨트롤의 높이 |
@@ -876,11 +894,13 @@ components:
 
 **홈 스토리 카드 글자** — 표지 아래 제목(`{typography.body-large-strong}`) 한 줄, `{spacing.hairline}` 아래 한 줄 소개(`{typography.body-medium}` + `{colors.text-subtle}`) 두 줄, `{spacing.compact}` 아래 `Compact` 장르 뱃지 한 줄(넘치면 `+N`)을 표지 가장자리에서 좌우 `{spacing.inline}` 안쪽에 두고, 작성자는 두지 않는다. 소개는 비어도 두 줄 자리를 지켜 옆 카드와 장르 줄 높이가 맞는다. 제목과 소개는 앱의 다른 글과 달리 `LineBreak.Simple`로 글자 단위로 끊어 잘린 줄을 끝까지 채운다. 표지 위에는 왼쪽 위 ORIGINAL 태그와 오른쪽 아래 턴 수 `Compact` 뱃지만 둔다. 스켈레톤은 표지, 제목 줄, 소개 줄 자리다. 웹 카드와 같은 굵기와 배치다. 표지 옆에 글을 두는 목록은 글 영역을 위아래로 띄운다. 채팅 목록 카드는 `{spacing.hairline}`, 제작 탭 카드(내 스토리, 진행, 제출본)는 `{spacing.inline}`이고 스켈레톤도 같다. 채팅 목록 카드도 내 스토리 카드처럼 글 영역이 표지 높이를 최소치로 삼아 제목과 미리보기는 위에, 메타 줄(턴 수, 날짜)은 표지 아랫변에 맞춰 아래 끝에 두되 미리보기에서 최소 `{spacing.compact}`를 띄우고, 스켈레톤도 같다. 그러려면 표지가 글 영역보다 높아야 해서 채팅 목록 표지 폭은 56dp다. 내 스토리 카드는 홈 카드처럼 좋아요 수와 턴 수를 표지 우하단 `Compact` 뱃지로 얹고(표지가 좁아 큰 수 둘이 한 줄에 들지 않으면 뱃지 단위로 줄을 바꾼다), 공개 범위는 표지 왼쪽 위 `{spacing.compact}`의 `Compact` 뱃지(`StoryCoverBadge`)로 둔다. 공개는 흰 90% 바탕에 검은 글자와 디자인이 준 지구본(`ic_globe_outline`), 비공개는 좋아요 수 뱃지와 같은 흐린 어두운 바탕에 흰 글자와 자물쇠(`ic_lock_outline`)로 색 없이 명암만 달리하고, 메타 줄에는 제작일만 둔다.
 
-**`home-section`**: 홈 섹션 하나. 이름(`{typography.title-medium-strong}`, 좌우 `{spacing.gutter}`) 아래 `{spacing.component}`를 띄워 가로로 넘기는 카드 줄을 둔다. 줄은 좌우 `{spacing.gutter}` 여백과 카드 사이 `{spacing.compact}`이고, 카드 폭은 (줄 폭 − 32dp − 16dp) ÷ 2라 카드 두 장 다음 셋째 카드가 화면 오른쪽 끝에 16dp만 보인다. 스냅과 더 보기는 없다. 섹션은 셸 여백 바로 아래에서 시작해 사이 `{spacing.block}`, 마지막 아래 `{spacing.gutter}`로 쌓는다. 골격은 섹션 2개와 섹션마다 카드 3장이고, 제목, 소개 두 줄, 장르 뱃지 자리의 높이를 같은 글자 스타일과 뱃지를 보이지 않게 그려 잡아 글자 크기와 무관하게 실제 카드와 높이가 같다.
+**`home-section`**: 홈 섹션 하나. 이름(`{typography.title-large}`, 좌우 `{spacing.gutter}`, 한 줄 말줄임) 아래 `{spacing.component}`를 띄워 가로로 넘기는 카드 줄을 둔다. 카드가 셋 이상이면 이름 줄 오른쪽 끝에 이전, 다음 화살표를 둔다. `{sizes.control-tiny}` `{colors.background-neutral}` 원에 `{sizes.icon-small}` `{colors.text}` 꺾쇠, 사이 `{spacing.inline}`이고, 넘길 곳이 없는 방향은 불투명도 40%로 끈다. 누르면 카드 한 장씩 부드럽게 넘겨 카드 시작점에 맞추고, 넘기는 중에 다시 누르면 가던 목적지에서 한 장 더 간다. 애니메이션 배율이 0이면 바로 옮긴다. 줄은 좌우 `{spacing.gutter}` 여백과 카드 사이 `{spacing.compact}`이고, 카드 폭은 (줄 폭 − 32dp − 16dp) ÷ 2라 카드 두 장 다음 셋째 카드가 화면 오른쪽 끝에 16dp만 보인다. 스냅과 더 보기는 없다. 섹션은 셸 여백 바로 아래에서 시작해 사이 `{spacing.block}`, 마지막 아래 `{spacing.gutter}`로 쌓는다. 골격은 섹션 2개와 섹션마다 카드 3장이고, 제목, 소개 두 줄, 장르 뱃지 자리의 높이를 같은 글자 스타일과 뱃지를 보이지 않게 그려 잡아 글자 크기와 무관하게 실제 카드와 높이가 같다.
 
-**`explore-grid`**: 탐색 탭의 표지 그리드. 셸 여백 말고는 좌우와 위아래 여백 없이 세 열로 붙이고 타일 사이는 `{spacing.hairline}`이다. 타일은 모서리와 테두리 없는 3:4 표지(`StoryCover`의 `RectangleShape`)에 ORIGINAL 태그(폭 56dp, 좌상단 각진 바탕)만 얹고 턴 수 뱃지와 글은 두지 않는다. 당겨서 새로 섞으면 칸 자리는 그대로 두고 칸마다 이전 표지 위에 새 표지를 겹친다. 새 표지는 그림을 받은 뒤 불투명도 0, 크기 96%에서 420ms `cubic-bezier(0.22, 1, 0.36, 1)`로 나타나고 왼쪽 위 칸부터 대각선 한 칸마다 45ms, 최대 450ms 늦춘다. 이전 표지는 새 표지가 다 나타난 뒤 걷는다. 시스템 애니메이션을 끄면 Compose 애니메이션이 바로 끝나 지연 없이 바뀐다. 웹과 같은 값이라 토큰 대신 이 자리에서 고정했다. 골격은 표지 12장이다.
+**`explore-grid`**: 탐색 탭의 타일 그리드. 셸 여백 말고는 좌우와 위아래 여백 없이 두 열로 붙이고 타일 사이는 `{spacing.hairline}`이다. 타일은 위에 모서리와 테두리 없는 3:4 표지(`StoryCover`의 `RectangleShape`)를 온전히 두고 아래에 `{colors.image-caption}` 글 영역을 붙인다. 표지 아래 절반에는 그 검정에서 위로 감속 곡선 13단계로 옅어지는 덮개를 깔아 경계 없이 잇는다(직선 그라데이션은 끝에 띠가 보인다). 글 영역은 표지 아래 `{spacing.section}`만큼 겹쳐 올라가 제목 줄이 덮개 위에 놓이고, 좌우와 아래 `{spacing.component}` 안쪽에 제목(`{typography.body-medium-strong}` + `{colors.text-on-image}`) 한 줄, `{spacing.hairline}` 아래 한 줄 소개(`{typography.body-small}` + `{colors.text-on-image-subtle}`) 두 줄, `{spacing.dense}` 아래 `Tiny` 장르 뱃지 한 줄(`{colors.background-on-image}` 바탕, 넘치면 `+N`)을 둔다. 소개와 장르는 비어도 자리를 지켜 모든 타일 높이가 같다. 표지 위에는 ORIGINAL 태그(폭 72dp, 좌상단 각진 바탕)만 얹고 턴 수와 작성자는 두지 않는다. 낭독기는 타일 하나를 제목으로 읽는다. 당겨서 새로 섞으면 칸 자리는 그대로 두고 칸마다 이전 타일 위에 새 타일을 겹친다. 새 타일은 표지 그림을 받은 뒤 불투명도 0, 크기 96%에서 420ms `cubic-bezier(0.22, 1, 0.36, 1)`로 나타나고 왼쪽 위 칸부터 대각선 한 칸마다 45ms, 최대 450ms 늦춘다(두 열 기준). 이전 타일은 새 타일이 다 나타난 뒤 걷는다. 시스템 애니메이션을 끄면 Compose 애니메이션이 바로 끝나 지연 없이 바뀐다. 웹과 같은 값이라 토큰 대신 이 자리에서 고정했다. 골격은 같은 높이의 칸 12장이고 글 영역 자리에 제목, 소개 두 줄과 장르 막대를 둔다.
 
-**`studio-section-title`**: 제작 탭의 진행 중과 내 스토리 구역 제목. 제목 `{typography.body-large-strong}` 옆 `{spacing.dense}`에 개수 `{typography.label-large}` + `{colors.text-subtle}`을 세로 가운데에 맞춰 둔다. 크기가 다른 두 글자를 기준선에 맞추면 개수가 내려앉아 보인다. 좌우 `{spacing.gutter}`, 위 `{spacing.compact}`(진행 중 구역 뒤의 내 스토리는 `{spacing.section}`), 아래 `{spacing.inline}`. 카드가 없는 구역은 제목도 두지 않는다.
+**`story-search`**: 스토리 검색 화면. 탐색 헤더의 알림 버튼 왼쪽에 같은 `ManyakIconButton`의 돋보기(`ic_search`)를 두고 누르면 셸 위 전체 화면으로 연다. 헤더는 뒤로가기 오른쪽에 `ManyakTextField` 검색 입력(오른쪽 `{spacing.gutter}`)이고, 입력 왼쪽에 `{sizes.icon-small}` `{colors.text-subtle}` 돋보기, 글자가 있으면 오른쪽 끝에 `{sizes.icon}` 지우기 버튼(`ic_close`, `{sizes.icon-small}`, `{colors.text-subtlest}`)을 둔다. 지우기 버튼이 입력 줄 높이보다 크면 칸이 늘어나므로 줄 높이 안에 맞춘다. 검색 전에는 좌우 `{spacing.gutter}`, 위 `{spacing.compact}`, 아래 `{spacing.gutter}`, 구역 사이 `{spacing.block}`으로 “최근 검색어”와 “장르로 찾기” 구역을 쌓는다. 구역 제목은 `{typography.title-medium-strong}`, 제목과 칩 사이 `{spacing.compact}`이고 최근 검색어 제목 줄 끝에 높이 `{sizes.control-small}`의 “전체 삭제” 글자 버튼(`{typography.label-small}` + `{colors.text-subtle}`)을 글자 끝이 오른쪽 여백에 맞게 둔다. 칩은 높이 `{sizes.input}`, `{typography.body-medium}`, `{colors.background-neutral}` 알약이고 사이 `{spacing.compact}`로 줄을 바꿔 쌓는다. 최근 검색어 칩은 왼쪽 `{spacing.control-horizontal}` 안쪽과 최대 글자 폭 192dp(넘치면 말줄임), 오른쪽 `{sizes.input}` 삭제 버튼과 14dp x이고, 대표 장르 칩은 좌우 `{spacing.control-horizontal}`이다. 결과는 `explore-grid`와 같은 타일, 골격과 목록 끝 스피너, 재시도를 쓰고 결과 없음과 실패는 가운데 문구다.
+
+**`studio-section-title`**: 제작 탭의 진행 중과 내 스토리 구역 제목. 제목 `{typography.title-medium-strong}`(검색 화면 구역 제목과 같은 18sp) 옆 `{spacing.dense}`에 개수 `{typography.label-large}` + `{colors.text-subtle}`을 세로 가운데에 맞춰 둔다. 크기가 다른 두 글자를 기준선에 맞추면 개수가 내려앉아 보인다. 좌우 `{spacing.gutter}`, 위 `{spacing.compact}`(진행 중 구역 뒤의 내 스토리는 `{spacing.section}`), 아래 `{spacing.inline}`. 카드가 없는 구역은 제목도 두지 않는다.
 
 **`pull-to-refresh`** — 목록을 당겨서 새로고침할 때의 표시자. M3 `PullToRefreshBox` 기본 표시자 위에 배경 `{colors.surface-raised}`와 스피너 색 `{colors.progress-indicator}`를 얹는다. 목록은 셸 헤더 아래로 흘러 들어가도 되지만 표시자는 그 자리에서 헤더에 완전히 가리므로, 셸이 넘긴 콘텐츠 여백의 **상단만큼 내려** 헤더 뒤에서 나오게 한다. 발동 거리는 M3 기본 80dp 대신 56dp다. M3는 손가락 이동의 절반만 당김으로 세므로 112dp를 끌면 새로고침되고(기본은 160dp), 표시자도 기본 80dp가 아니라 같은 56dp까지만 내려와 멈춘다. 표시자 뒤에는 그라데이션 같은 배경을 따로 깔지 않는다. 응답이 빨라도 당긴 뒤 스피너가 최소 300ms는 돌아 새로고침됐다는 것이 보이게 한다. 목록이 그려진 상태에만 두고 골격·조회 실패·빈 목록에는 두지 않는다.
 
@@ -890,7 +910,7 @@ components:
 
 **표지 위 뱃지**: 목록 카드의 좋아요 수와 턴 수 뱃지, ORIGINAL 태그, 화풍 이름, 상세 인물 카드의 이전·다음 버튼은 웹의 `backdrop-blur-md`처럼 뒤 그림을 흐려 바탕에 깝니다(`coverBackdrop`). 흐림은 웹과 같은 표준편차 12dp이고 그 위에 검정 20%를, ORIGINAL 태그는 도안 색 #111414 20%를 덮습니다. 뒤 그림을 흐릴 수 없는 API 31 미만은 흐림 대신 #111414 70%를 깝니다. 상세 히어로의 좋아요 수와 턴 수 뱃지도 같은 흐린 바탕입니다. 웹 상세는 흐림 없는 검정 70%라 이 자리만 웹과 다릅니다. 턴 수 아이콘은 웹과 같은 말풍선(Hugeicons BubbleChat)입니다.
 
-**스토리 뱃지 크기**: 상세 히어로의 좋아요 수와 턴 수 뱃지, 상세 장르와 본 엔딩 뱃지, 제작 탭 카드 장르 뱃지는 웹과 같은 높이 28dp입니다(`StoryBadgeScale.Large`). `{typography.label-large}`(14sp, 줄 높이 20sp)에 여백 가로 `{spacing.component}`, 세로 `{spacing.inline}`이고, 웹 CSS처럼 한 줄 글자의 줄 상자를 자르지 않습니다(`LineHeightStyle.Trim.None`, Compose 기본 `Trim.Both`는 글꼴 높이로 잘라 뱃지가 3dp 낮아집니다). 카드에서 접힌 장르는 웹과 같이 `+N` 글자 뱃지로 보입니다. 홈 카드 장르 뱃지와 목록 카드 표지 뱃지는 `Compact`(`{typography.label-small}`, 여백 가로 `{spacing.compact}`, 세로 `{spacing.hairline}`)이고 같은 이유로 줄 상자를 자르지 않아 웹과 같은 높이 20dp입니다.
+**스토리 뱃지 크기**: 상세 히어로의 좋아요 수와 턴 수 뱃지, 상세 장르와 본 엔딩 뱃지, 제작 탭 카드 장르 뱃지는 웹과 같은 높이 28dp입니다(`StoryBadgeScale.Large`). `{typography.label-large}`(14sp, 줄 높이 20sp)에 여백 가로 `{spacing.component}`, 세로 `{spacing.inline}`이고, 웹 CSS처럼 한 줄 글자의 줄 상자를 자르지 않습니다(`LineHeightStyle.Trim.None`, Compose 기본 `Trim.Both`는 글꼴 높이로 잘라 뱃지가 3dp 낮아집니다). 카드에서 접힌 장르는 웹과 같이 `+N` 글자 뱃지로 보입니다. 탐색 타일 장르 뱃지는 `Tiny`(`{typography.label-tiny}`, 여백 가로 `{spacing.dense}`, 세로 `{spacing.hairline}`, 높이 18dp)입니다. 홈 카드 장르 뱃지와 목록 카드 표지 뱃지는 `Compact`(`{typography.label-small}`, 여백 가로 `{spacing.compact}`, 세로 `{spacing.hairline}`)이고 같은 이유로 줄 상자를 자르지 않아 웹과 같은 높이 20dp입니다.
 
 **스토리 상세 하단 배경**: 스크롤 끝에 가까워질수록 CTA와 위쪽 페이드의 색상을 `{colors.surface}`에서 메타 정보의 `{colors.background-neutral}`로 부드럽게 전환합니다. 맨 아래에서는 메타 정보와 CTA 배경이 같은 색으로 이어지며, 위로 스크롤하면 원래 색으로 돌아갑니다. 메타 정보가 없는 상세는 `{colors.surface}`를 유지합니다. 메타 정보가 처음 보일 때 전환을 0부터 시작하고 `{motion.element-enter}`(200ms)로 진행률을 부드럽게 따라갑니다.
 

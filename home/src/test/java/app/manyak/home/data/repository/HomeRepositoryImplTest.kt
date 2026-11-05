@@ -3,6 +3,8 @@ package app.manyak.home.data.repository
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.home.data.api.ExploreApi
 import app.manyak.home.data.api.StoryApi
+import app.manyak.home.data.dto.GenreCatalogDto
+import app.manyak.home.data.dto.GenreDto
 import app.manyak.home.data.dto.StoryHomeDto
 import app.manyak.home.data.dto.StoryPageDto
 import app.manyak.home.entity.StoryListFilter
@@ -84,6 +86,18 @@ class HomeRepositoryImplTest {
             assertEquals(listOf("explore", "c1"), api.lastRequest)
             assertEquals("c2", (result as DomainResult.Success).value.nextCursor)
         }
+
+    @Test
+    fun `검색은 검색어와 커서를 그대로 싣고 대표 장르는 이름만 서버 순서로 돌려준다`() =
+        runTest {
+            val api = RecordingStoryApi(StoryPageDto(nextCursor = "c2"))
+            val repository = HomeRepositoryImpl(api, api)
+
+            repository.searchStories(query = "시계공", cursor = "c1")
+
+            assertEquals(listOf("search", "시계공", "c1"), api.lastRequest)
+            assertEquals(listOf("로맨스", "판타지"), (repository.featuredGenres() as DomainResult.Success).value)
+        }
 }
 
 private class RecordingStoryApi(
@@ -108,4 +122,15 @@ private class RecordingStoryApi(
         lastRequest = listOf("explore", cursor)
         return Response.success(page)
     }
+
+    override suspend fun search(
+        q: String,
+        cursor: String?,
+    ): Response<StoryPageDto> {
+        lastRequest = listOf("search", q, cursor)
+        return Response.success(page)
+    }
+
+    override suspend fun genres(): Response<GenreCatalogDto> =
+        Response.success(GenreCatalogDto(featuredGenres = listOf(GenreDto("로맨스"), GenreDto("판타지"))))
 }
