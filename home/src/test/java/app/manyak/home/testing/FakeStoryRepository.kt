@@ -79,4 +79,23 @@ internal class FakeStoryRepository : HomeRepository {
         return queuedExploreResults.removeFirstOrNull()
             ?: DomainResult.Success(StoryPage(sampleStories(), nextCursor = null))
     }
+
+    /** 검색 요청의 검색어와 커서. 순서대로 쌓인다. */
+    val searchRequests = mutableListOf<Pair<String, String?>>()
+    val queuedSearchResults = ArrayDeque<DomainResult<StoryPage>>()
+
+    override suspend fun searchStories(
+        query: String,
+        cursor: String?,
+    ): DomainResult<StoryPage> {
+        yield()
+        searchRequests += query to cursor
+        inFlightGate?.await()
+        return queuedSearchResults.removeFirstOrNull()
+            ?: DomainResult.Success(StoryPage(sampleStories(), nextCursor = null))
+    }
+
+    var featuredGenresResult: DomainResult<List<String>> = DomainResult.Success(listOf("로맨스", "판타지"))
+
+    override suspend fun featuredGenres(): DomainResult<List<String>> = featuredGenresResult
 }

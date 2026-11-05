@@ -36,6 +36,7 @@ import app.manyak.designsystem.component.ManyakSectionHeader
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.home.explore.presentation.ExploreScreen
 import app.manyak.home.presentation.HomeScreen
+import app.manyak.home.search.presentation.StorySearchHeaderButton
 import app.manyak.my.profile.presentation.MyScreen
 import app.manyak.notice.presentation.NoticeUnreadIntent
 import app.manyak.notice.presentation.NoticeUnreadViewModel
@@ -72,6 +73,7 @@ internal fun MainTabsScreen(
     onOpenNotificationSettings: () -> Unit,
     onOpenNotices: () -> Unit,
     onOpenNotifications: () -> Unit,
+    onOpenSearch: () -> Unit,
     onOpenProfileEdit: () -> Unit,
     modifier: Modifier = Modifier,
     noticeUnreadViewModel: NoticeUnreadViewModel = hiltViewModel(),
@@ -103,6 +105,11 @@ internal fun MainTabsScreen(
             }
             when (selectedTab) {
                 MainTab.HOME -> ManyakBrandHeader(actions = notificationButton)
+                MainTab.EXPLORE ->
+                    ManyakSectionHeader(titleRes = selectedTab.nameRes) {
+                        StorySearchHeaderButton(onClick = onOpenSearch)
+                        notificationButton()
+                    }
                 MainTab.MY -> ManyakSectionHeader(titleRes = selectedTab.nameRes)
                 else -> ManyakSectionHeader(titleRes = selectedTab.nameRes, actions = notificationButton)
             }

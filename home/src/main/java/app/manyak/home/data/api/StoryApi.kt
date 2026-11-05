@@ -1,5 +1,6 @@
 package app.manyak.home.data.api
 
+import app.manyak.home.data.dto.GenreCatalogDto
 import app.manyak.home.data.dto.StoryHomeDto
 import app.manyak.home.data.dto.StoryPageDto
 import retrofit2.Response
@@ -19,6 +20,20 @@ interface StoryApi {
     /** 홈 섹션 목록. 섹션과 카드 모두 서버가 정한 순서다. */
     @GET("stories/home")
     suspend fun home(): Response<StoryHomeDto>
+
+    /**
+     * 공개 스토리 검색. 관련도순이고 다음 페이지는 같은 [q] 에 응답의 nextCursor 를 싣는다. 탐색과 달리 본인 스토리도
+     * 결과에 들어가 토큰이 필요 없다.
+     */
+    @GET("stories/search")
+    suspend fun search(
+        @Query("q") q: String,
+        @Query("cursor") cursor: String?,
+    ): Response<StoryPageDto>
+
+    /** 제공 장르 목록. 검색 화면은 대표 장르만 쓴다. */
+    @GET("stories/genres")
+    suspend fun genres(): Response<GenreCatalogDto>
 }
 
 /**
