@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -33,14 +32,12 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.times
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.toSize
-import androidx.core.view.ViewCompat
 import app.manyak.designsystem.theme.ManyakTheme
 import coil3.compose.AsyncImage
 import app.manyak.designsystem.R as DesignsystemR
@@ -130,20 +127,6 @@ private fun Modifier.viewerTaps(
             if (zoom.isOnImage(second)) zoom.toggle(tap = second, viewportCenter = size.center) else onClose()
         }
     }
-
-/** 어두운 이미지 위에서 상태 바 아이콘을 밝히고 닫을 때 원래 값으로 되돌린다. */
-@Composable
-fun LightSystemBarIcons() {
-    val view = LocalView.current
-    DisposableEffect(view) {
-        val controller = ViewCompat.getWindowInsetsController(view)
-        val wasLightStatusBars = controller?.isAppearanceLightStatusBars
-        controller?.isAppearanceLightStatusBars = false
-        onDispose {
-            wasLightStatusBars?.let { controller.isAppearanceLightStatusBars = it }
-        }
-    }
-}
 
 /** 확대 배율과 이동량. 이동은 뷰포트 밖으로 이미지가 빠져나가지 않는 범위로만 허용한다. */
 private class ZoomState {

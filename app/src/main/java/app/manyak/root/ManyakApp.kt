@@ -24,10 +24,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.core.view.ViewCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
@@ -74,10 +72,12 @@ import app.manyak.core.navigation.WithdrawalRoute
 import app.manyak.create.additionalinfo.presentation.CreateAdditionalInfoScreen
 import app.manyak.create.keyword.presentation.CreateKeywordScreen
 import app.manyak.create.storyline.presentation.CreateStorylineScreen
+import app.manyak.designsystem.component.LocalSystemBarIconRequests
 import app.manyak.designsystem.component.ManyakNeutralButton
 import app.manyak.designsystem.component.ManyakProgressIndicator
 import app.manyak.designsystem.component.clearFocusOnTap
 import app.manyak.designsystem.component.rememberDelayedProgressVisibility
+import app.manyak.designsystem.component.rememberSystemBarIconRequests
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.legal.consent.presentation.LegalConsentPhase
 import app.manyak.legal.consent.presentation.LegalConsentSheet
@@ -130,9 +130,9 @@ fun ManyakApp(
         LocalCreditPolicy provides creditPolicy,
         LocalTrials provides trials,
         LocalAnalytics provides viewModel.analytics,
+        LocalSystemBarIconRequests provides rememberSystemBarIconRequests(darkTheme),
     ) {
         ManyakTheme(darkTheme = darkTheme) {
-            SystemBarIconAppearance(darkTheme = darkTheme)
             Surface(modifier = modifier.fillMaxSize().clearFocusOnTap(), color = ManyakTheme.colors.surface) {
                 when (val state = sessionState) {
                     SessionState.Undetermined ->
@@ -170,20 +170,6 @@ fun ManyakApp(
                 }
             }
         }
-    }
-}
-
-/**
- * 시스템 바 아이콘 밝기를 앱 테마에 맞춘다. edge-to-edge 기본값은 **시스템** 다크 모드를 따르므로,
- * 앱에서 테마를 강제하면 상태 바 시계·배터리가 배경과 같은 밝기가 되어 읽히지 않는다.
- */
-@Composable
-private fun SystemBarIconAppearance(darkTheme: Boolean) {
-    val view = LocalView.current
-    LaunchedEffect(view, darkTheme) {
-        val controller = ViewCompat.getWindowInsetsController(view) ?: return@LaunchedEffect
-        controller.isAppearanceLightStatusBars = !darkTheme
-        controller.isAppearanceLightNavigationBars = !darkTheme
     }
 }
 

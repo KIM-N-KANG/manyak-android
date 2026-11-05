@@ -29,7 +29,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,7 +36,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
@@ -49,7 +47,6 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import androidx.core.view.ViewCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.manyak.common.entity.auth.AuthProvider
@@ -58,6 +55,7 @@ import app.manyak.common.presentation.credit.creditAmountText
 import app.manyak.common.presentation.error.messageResOrNull
 import app.manyak.core.navigation.LegalDocument
 import app.manyak.designsystem.component.CoverBackdrop
+import app.manyak.designsystem.component.LightSystemBarIcons
 import app.manyak.designsystem.component.ManyakLogo
 import app.manyak.designsystem.component.ManyakProgressIndicator
 import app.manyak.designsystem.component.coverBackdrop
@@ -78,30 +76,13 @@ fun LoginScreen(
 
     // 배경 이미지를 전제로 잡은 화면이라 시스템 테마와 무관하게 어두운 팔레트로 고정한다.
     ManyakTheme(darkTheme = true) {
-        DarkSystemBars()
+        LightSystemBarIcons(navigationBars = true)
         LoginContent(
             state = state,
             onSignIn = { provider -> viewModel.onIntent(LoginIntent.SignIn(provider)) },
             onOpenLegalDocument = onOpenLegalDocument,
             modifier = modifier,
         )
-    }
-}
-
-/** 화면이 어두우므로 시스템 바 아이콘도 밝은 쪽으로 바꾼다. 화면을 벗어나면 원래대로 돌려놓는다. */
-@Composable
-private fun DarkSystemBars() {
-    val view = LocalView.current
-    DisposableEffect(view) {
-        val controller = ViewCompat.getWindowInsetsController(view)
-        val wasLightStatusBars = controller?.isAppearanceLightStatusBars
-        val wasLightNavigationBars = controller?.isAppearanceLightNavigationBars
-        controller?.isAppearanceLightStatusBars = false
-        controller?.isAppearanceLightNavigationBars = false
-        onDispose {
-            wasLightStatusBars?.let { controller.isAppearanceLightStatusBars = it }
-            wasLightNavigationBars?.let { controller.isAppearanceLightNavigationBars = it }
-        }
     }
 }
 
