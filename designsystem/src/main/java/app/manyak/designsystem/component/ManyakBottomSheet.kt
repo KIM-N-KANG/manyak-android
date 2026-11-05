@@ -1,5 +1,6 @@
 package app.manyak.designsystem.component
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -43,8 +44,8 @@ import kotlinx.coroutines.flow.first
  *
  * @param dismissEnabled false 면 끌어내리기·스크림 탭으로 닫는 것을 막고 핸들 드래그 자체도 잠근다(예: 전송 중 —
  * 결과를 못 본 채 사라지지 않게). 닫히지 않는 시트가 끌리기만 하면 튕기는 움직임이 "닫을 수 있다" 는 신호가 된다.
- * @param dismissOnBackPress false 면 뒤로가기도 막는다. 기본은 [dismissEnabled] 와 같다 — 뒤로가기는
- * 끌어내리기 판정을 거치지 않고 [onDismissRequest] 를 부르므로 따로 잠가야 한다.
+ * @param dismissOnBackPress false 면 뒤로가기도 막는다. 기본은 [dismissEnabled] 와 같다. 뒤로가기는
+ * 끌어내리기 판정을 거치지 않고 [onDismissRequest] 를 부르므로 따로 잠가야 한다. 시트가 열려 있는 동안 바뀌어도 바로 따른다.
  * @param onExpanded 시트가 완전히 펼쳐진 뒤 호출한다. 시트 위 안내가 움직이는 행을 가리지 않게 한다.
  * @param dismissOnContentDrag false 면 본문을 끌어도 시트가 내려가지 않고 핸들 끌기, 바깥 탭과 뒤로가기로만 닫힌다.
  * 본문 안 목록을 끝까지 끌다가 시트까지 닫히는 일을 막는다.
@@ -92,7 +93,9 @@ fun ManyakBottomSheet(
         sheetGesturesEnabled = dismissEnabled,
         properties =
             ModalBottomSheetProperties(
-                shouldDismissOnBackPress = dismissOnBackPress,
+                // 창의 뒤로가기 콜백은 시트를 열 때 값으로 고정되어 이후 변경을 따르지 않는다. 창 콜백은 늘 켜 두고
+                // 잠글 때는 본문의 BackHandler 가 먼저 받아 삼킨다.
+                shouldDismissOnBackPress = true,
                 shouldDismissOnClickOutside = dismissEnabled,
             ),
         dragHandle =
@@ -107,6 +110,7 @@ fun ManyakBottomSheet(
                 null
             },
     ) {
+        BackHandler(enabled = !dismissOnBackPress) {}
         Column(
             modifier =
                 Modifier
