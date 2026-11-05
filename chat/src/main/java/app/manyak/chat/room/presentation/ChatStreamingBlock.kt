@@ -45,6 +45,9 @@ import app.manyak.chat.R as ChatR
  * 진행 중인 턴. 이어쓰기면 목록 끝에, 재생성이면 대상 턴 자리에 놓인다.
  *
  * 본문은 도착한 그대로가 아니라 타자기 공개를 거친다 — 배칭된 덩이가 아니라 글자가 이어서 나타난다.
+ *
+ * 입력 수정 버튼을 잠긴 채 미리 그린다. 확정 턴에만 있으면 응답이 끝나는 순간 위쪽 밴드가 버튼 높이만큼
+ * 자라 아래 응답이 밀린다.
  */
 @Composable
 internal fun StreamingBlock(
@@ -53,7 +56,7 @@ internal fun StreamingBlock(
 ) {
     val revealed = rememberTypewriterSegments(streaming.segments)
     Column {
-        ChatUserBand(text = streaming.userInput)
+        ChatUserBand(text = streaming.userInput) { EditTurnButton(enabled = false, onClick = {}) }
         StreamingOutput(
             realtimeImage = streaming.realtimeImage,
             segments = revealed,
