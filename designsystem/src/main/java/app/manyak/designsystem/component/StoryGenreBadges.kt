@@ -28,10 +28,14 @@ fun StoryGenreBadges(
     scale: StoryBadgeScale,
     modifier: Modifier = Modifier,
     containerColor: Color = ManyakTheme.colors.backgroundNeutral,
+    contentColor: Color = ManyakTheme.colors.textSubtle,
 ) {
     val description = genres.joinToString(separator = ", ")
     // 측정 스코프는 composition 이 아니라 테마 토큰을 읽을 수 없으므로 여기서 값으로 붙잡는다.
     val badgeGap = ManyakTheme.spacing.inline
+    val badge: @Composable (String) -> Unit = { text ->
+        StoryGenreBadge(text = text, scale = scale, containerColor = containerColor, contentColor = contentColor)
+    }
 
     SubcomposeLayout(
         modifier = modifier.clearAndSetSemantics { contentDescription = description },
@@ -40,9 +44,7 @@ fun StoryGenreBadges(
         val badgeConstraints = constraints.copy(minWidth = 0, minHeight = 0)
         val badges =
             subcompose(GenreBadgeSlot.Genres) {
-                genres.forEach { genre ->
-                    StoryGenreBadge(text = genre, scale = scale, containerColor = containerColor)
-                }
+                genres.forEach { genre -> badge(genre) }
             }.map { measurable -> measurable.measure(badgeConstraints) }
 
         val totalWidth = badges.sumOf { badge -> badge.width } + gap * (badges.size - 1)
@@ -54,9 +56,9 @@ fun StoryGenreBadges(
         } else {
             // 접힘 개수가 가장 클 때의 +N 폭으로 자리를 재면, 실제 +N 이 더 좁을 수는 있어도 넘칠 일은 없다.
             val widestOverflow =
-                subcompose(GenreBadgeSlot.OverflowProbe) {
-                    OverflowBadge(hiddenCount = genres.size - 1, scale = scale, containerColor = containerColor)
-                }.first().measure(badgeConstraints)
+                subcompose(
+                    GenreBadgeSlot.OverflowProbe,
+                ) { badge(overflowLabel(genres.size - 1)) }.first().measure(badgeConstraints)
             visibleCount =
                 visibleBadgeCount(
                     widths = badges.map { badge -> badge.width },
@@ -66,11 +68,7 @@ fun StoryGenreBadges(
                 )
             overflowBadge =
                 subcompose(GenreBadgeSlot.Overflow) {
-                    OverflowBadge(
-                        hiddenCount = genres.size - visibleCount,
-                        scale = scale,
-                        containerColor = containerColor,
-                    )
+                    badge(overflowLabel(genres.size - visibleCount))
                 }.first().measure(badgeConstraints)
         }
 
@@ -109,18 +107,7 @@ internal fun visibleBadgeCount(
 }
 
 @Composable
-private fun OverflowBadge(
-    hiddenCount: Int,
-    scale: StoryBadgeScale,
-    containerColor: Color,
-    modifier: Modifier = Modifier,
-) {
-    StoryGenreBadge(
-        text = stringResource(DesignsystemR.string.story_genre_overflow, hiddenCount),
-        modifier = modifier,
-        scale = scale,
-        containerColor = containerColor,
-    )
-}
+private fun overflowLabel(hiddenCount: Int): String =
+    stringResource(DesignsystemR.string.story_genre_overflow, hiddenCount)
 
 private enum class GenreBadgeSlot { Genres, OverflowProbe, Overflow }

@@ -44,6 +44,7 @@ val MaruBuri =
  */
 @Immutable
 data class ManyakTypography(
+    val labelTiny: TextStyle,
     val labelSmall: TextStyle,
     val labelLarge: TextStyle,
     val bodySmall: TextStyle,
@@ -76,6 +77,14 @@ private val ReadingLineHeight =
 
 internal val ManyakDefaultTypography =
     ManyakTypography(
+        // 탐색 타일의 장르 뱃지처럼 표지 아래 좁은 글 영역 안의 가장 작은 라벨
+        labelTiny =
+            TextStyle(
+                fontFamily = Pretendard,
+                fontWeight = FontWeight.Medium,
+                fontSize = 11.sp,
+                lineHeight = 14.sp,
+            ),
         // 타임스탬프·최소 보조 문구
         labelSmall =
             TextStyle(

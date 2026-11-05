@@ -92,6 +92,14 @@ data class ManyakColors(
      */
     val overlayPressed: Color,
     val imageViewerScrim: Color,
+    /** 표지 아래에 붙는 검은 글 영역과 표지를 그 검정으로 잇는 덮개. 그림 위라 라이트와 다크가 같다. */
+    val imageCaption: Color,
+    /** [imageCaption] 위 글자 */
+    val textOnImage: Color,
+    /** [imageCaption] 위 보조 글자 */
+    val textOnImageSubtle: Color,
+    /** [imageCaption] 위 반투명 채움. 탐색 타일의 장르 뱃지 바탕 */
+    val backgroundOnImage: Color,
     /** 채팅 안내 투어의 딤. 하이라이트한 버튼만 뚫어 두므로 뒤 화면이 무엇인지는 읽혀야 한다. */
     val tourScrim: Color,
     val backgroundBrandBold: Color,
@@ -138,6 +146,10 @@ internal val ManyakLightColors =
         overlayPressed = PressedOverlayLight,
         imageViewerScrim = Color.Black.copy(alpha = 0.92f),
         tourScrim = Color.Black.copy(alpha = 0.5f),
+        imageCaption = Color.Black,
+        textOnImage = Color.White,
+        textOnImageSubtle = Color.White.copy(alpha = 0.8f),
+        backgroundOnImage = Color.White.copy(alpha = 0.15f),
         backgroundBrandBold = Green800,
         backgroundBrandBoldPressed = Green900,
         backgroundBrandSubtle = Green50,
@@ -181,6 +193,10 @@ internal val ManyakDarkColors =
         overlayPressed = PressedOverlayDark,
         imageViewerScrim = Color.Black.copy(alpha = 0.92f),
         tourScrim = Color.Black.copy(alpha = 0.5f),
+        imageCaption = Color.Black,
+        textOnImage = Color.White,
+        textOnImageSubtle = Color.White.copy(alpha = 0.8f),
+        backgroundOnImage = Color.White.copy(alpha = 0.15f),
         backgroundBrandBold = Green800,
         backgroundBrandBoldPressed = Green900,
         backgroundBrandSubtle = Green950,
