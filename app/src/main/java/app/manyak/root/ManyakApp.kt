@@ -68,6 +68,7 @@ import app.manyak.core.navigation.ProfileEditRoute
 import app.manyak.core.navigation.StoryDetailRoute
 import app.manyak.core.navigation.StoryEditRoute
 import app.manyak.core.navigation.StoryOnboardingRoute
+import app.manyak.core.navigation.StorySearchRoute
 import app.manyak.core.navigation.StudioRoute
 import app.manyak.core.navigation.WithdrawalRoute
 import app.manyak.create.additionalinfo.presentation.CreateAdditionalInfoScreen
@@ -348,12 +349,14 @@ private fun MainNavDisplay(
                         onOpenNotificationSettings = { backStack.push(NotificationSettingsRoute) },
                         onOpenNotices = { backStack.push(NoticeListRoute) },
                         onOpenNotifications = { backStack.push(NotificationInboxRoute) },
+                        onOpenSearch = { backStack.push(StorySearchRoute) },
                         onOpenProfileEdit = { backStack.push(ProfileEditRoute) },
                     )
                 }
                 myDestinationEntries(backStack)
                 noticeEntries(backStack)
                 notificationInboxEntry(backStack, openStudio)
+                storySearchEntry(backStack)
                 storyDetailEntry(backStack, backStack.enterChat(finishOnboarding)) { selectedTab = MainTab.STUDIO }
                 generalStoryEntries(backStack, openStudio)
                 creationFunnelEntries(backStack) { selectedTab = MainTab.STUDIO }

@@ -7,12 +7,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -24,10 +27,12 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -377,7 +382,12 @@ private fun CharacterCardImage(
     }
 }
 
-/** 인물 이미지 위 좌우의 이전, 다음 버튼. 표지 뱃지와 같이 뒤의 인물 이미지를 흐려 바탕에 깐다. */
+/**
+ * 인물 이미지 위 좌우의 이전, 다음 버튼. 표지 뱃지와 같이 뒤의 인물 이미지를 흐려 바탕에 깐다.
+ *
+ * 보이는 원보다 넓게, 이미지 끝의 세로 띠 전체를 누름 영역으로 쓴다. 원을 조금 빗나가 눌러도 확대 창이
+ * 열리지 않고 인물이 넘어간다. 눌림 리플은 띠가 아니라 원에만 그린다.
+ */
 @Composable
 private fun CharacterStepButton(
     contentDescription: String,
@@ -386,23 +396,37 @@ private fun CharacterStepButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
     Box(
         modifier =
             modifier
-                .padding(ManyakTheme.spacing.compact)
-                .size(ManyakTheme.sizes.controlSmall)
-                .clip(ManyakTheme.shapes.pill)
-                .coverBackdrop(backdrop, ManyakTheme.shapes.pill)
-                .clickable(role = Role.Button, onClick = onClick)
-                .semantics { this.contentDescription = contentDescription },
-        contentAlignment = Alignment.Center,
+                .fillMaxHeight()
+                .width(ManyakTheme.sizes.control)
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    role = Role.Button,
+                    onClick = onClick,
+                ).semantics { this.contentDescription = contentDescription }
+                .padding(horizontal = ManyakTheme.spacing.compact),
+        contentAlignment = if (flipped) Alignment.CenterStart else Alignment.CenterEnd,
     ) {
-        Icon(
-            modifier = Modifier.size(ManyakTheme.sizes.icon).rotate(if (flipped) 180f else 0f),
-            painter = painterResource(DesignsystemR.drawable.ic_chevron_right),
-            contentDescription = null,
-            tint = ManyakTheme.colors.textInverse,
-        )
+        Box(
+            modifier =
+                Modifier
+                    .size(ManyakTheme.sizes.controlSmall)
+                    .clip(ManyakTheme.shapes.pill)
+                    .coverBackdrop(backdrop, ManyakTheme.shapes.pill)
+                    .indication(interactionSource, ripple()),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                modifier = Modifier.size(ManyakTheme.sizes.icon).rotate(if (flipped) 180f else 0f),
+                painter = painterResource(DesignsystemR.drawable.ic_chevron_right),
+                contentDescription = null,
+                tint = ManyakTheme.colors.textInverse,
+            )
+        }
     }
 }
 

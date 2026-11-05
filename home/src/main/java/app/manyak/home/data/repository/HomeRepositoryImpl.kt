@@ -38,4 +38,15 @@ class HomeRepositoryImpl
 
         override suspend fun exploreStories(cursor: String?): DomainResult<StoryPage> =
             apiCall { exploreApi.explore(cursor) }.map { page -> page.toDomain() }
+
+        override suspend fun searchStories(
+            query: String,
+            cursor: String?,
+        ): DomainResult<StoryPage> =
+            apiCall { storyApi.search(q = query, cursor = cursor) }.map { page ->
+                page.toDomain()
+            }
+
+        override suspend fun featuredGenres(): DomainResult<List<String>> =
+            apiCall { storyApi.genres() }.map { catalog -> catalog.featuredGenres.map { genre -> genre.name } }
     }

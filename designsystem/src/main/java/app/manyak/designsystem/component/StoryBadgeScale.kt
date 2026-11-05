@@ -13,6 +13,9 @@ import app.manyak.designsystem.theme.ManyakTheme
  * 단계로 고른다 — 값으로 받으면 두 화면의 뱃지가 조금씩 어긋난다.
  */
 enum class StoryBadgeScale {
+    /** 탐색 타일. 표지 아래 검은 글 영역의 작은 글자에 맞춘다. */
+    Tiny,
+
     /** 목록 카드. 2열 그리드라 폭이 좁고 카드의 다른 글자도 작다. */
     Compact,
 
@@ -24,6 +27,7 @@ enum class StoryBadgeScale {
         @Composable
         get() =
             when (this) {
+                Tiny -> ManyakTheme.typography.labelTiny.copy(lineHeightStyle = FullLineHeight)
                 Compact -> ManyakTheme.typography.labelSmall.copy(lineHeightStyle = FullLineHeight)
                 Large -> ManyakTheme.typography.labelLarge.copy(lineHeightStyle = FullLineHeight)
             }
@@ -32,6 +36,7 @@ enum class StoryBadgeScale {
         @Composable
         get() =
             when (this) {
+                Tiny -> ManyakTheme.spacing.dense
                 Compact -> ManyakTheme.spacing.compact
                 Large -> ManyakTheme.spacing.component
             }
@@ -40,14 +45,14 @@ enum class StoryBadgeScale {
         @Composable
         get() =
             when (this) {
-                Compact -> ManyakTheme.spacing.hairline
+                Tiny, Compact -> ManyakTheme.spacing.hairline
                 Large -> ManyakTheme.spacing.inline
             }
 }
 
 /**
  * Compose 기본 `Trim.Both` 는 한 줄 글자의 행간 여유를 잘라 뱃지가 글꼴 높이만큼 낮아진다.
- * 웹과 같은 높이(Compact 20dp, Large 28dp)가 나오도록 CSS `line-height` 처럼 줄 상자 전체를 남긴다.
+ * 웹과 같은 높이(Tiny 18dp, Compact 20dp, Large 28dp)가 나오도록 CSS `line-height` 처럼 줄 상자 전체를 남긴다.
  */
 private val FullLineHeight =
     LineHeightStyle(

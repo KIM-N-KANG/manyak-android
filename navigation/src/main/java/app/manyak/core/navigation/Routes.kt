@@ -49,6 +49,13 @@ data object ExploreRoute : NavKey
 data object MyRoute : NavKey
 
 /**
+ * 스토리 검색. 탐색 헤더의 검색 버튼이 진입점이고 `:home` 이 화면을 소유한다. 셸 위에 쌓여 하단 탭이 없고,
+ * 뒤로가기는 탐색 탭으로 돌아온다. 제출한 검색어는 화면 상태가 지키므로 라우트에 싣지 않는다.
+ */
+@Serializable
+data object StorySearchRoute : NavKey
+
+/**
  * 스토리 상세. 셸 없이 [MainTabsRoute] 위에 쌓이는 전체 화면이고, 홈, 탐색과 제작 목록의 카드 탭이 진입점이다.
  *
  * 규칙대로 식별자만 싣는다 — 목록 카드가 이미 그린 값을 함께 넘기지 않는다. 카드는 축소 썸네일과
