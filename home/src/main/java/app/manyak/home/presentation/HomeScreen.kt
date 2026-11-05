@@ -144,7 +144,7 @@ private fun HomeSections(
     ) {
         itemsIndexed(sections, key = { index, section -> section.listKey(index) }) { index, section ->
             val sectionKey = section.listKey(index)
-            HomeSectionRow(name = section.name) { cardWidth ->
+            HomeSectionRow(name = section.name, cardCount = section.stories.size) { cardWidth ->
                 itemsIndexed(section.stories, key = { _, story -> story.id }) { position, story ->
                     StoryCard(
                         story = story,

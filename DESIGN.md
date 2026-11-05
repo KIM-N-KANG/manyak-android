@@ -162,6 +162,7 @@ sizes:
   input: 40dp
   control-compact: 40dp
   control-small: 32dp
+  control-tiny: 28dp
   control: 48dp
   icon-tiny: 12dp
   icon-small: 16dp
@@ -685,6 +686,7 @@ components:
 | 토큰 | 값 | 용도 |
 | --- | --- | --- |
 | `{sizes.control-small}` | 32dp | 작은 보조 버튼, 인물 머리 줄의 접기와 삭제 |
+| `{sizes.control-tiny}` | 28dp | 홈 섹션 이름 줄 끝의 이전, 다음 화살표. 제목 줄 높이 안에 드는 원형 보조 버튼 |
 | `{sizes.input}` | 40dp | 입력창·칩·셀렉트 앵커의 최소 높이 |
 | `{sizes.control-compact}` | 40dp | 카드 안에 놓이는 라벨 버튼의 보이는 높이. 터치 영역은 48dp 를 유지한다 |
 | `{sizes.control}` | 48dp | 버튼·탭처럼 탭 가능한 일반 컨트롤의 높이 |
@@ -876,7 +878,7 @@ components:
 
 **홈 스토리 카드 글자** — 표지 아래 제목(`{typography.body-large-strong}`) 한 줄, `{spacing.hairline}` 아래 한 줄 소개(`{typography.body-medium}` + `{colors.text-subtle}`) 두 줄, `{spacing.compact}` 아래 `Compact` 장르 뱃지 한 줄(넘치면 `+N`)을 표지 가장자리에서 좌우 `{spacing.inline}` 안쪽에 두고, 작성자는 두지 않는다. 소개는 비어도 두 줄 자리를 지켜 옆 카드와 장르 줄 높이가 맞는다. 제목과 소개는 앱의 다른 글과 달리 `LineBreak.Simple`로 글자 단위로 끊어 잘린 줄을 끝까지 채운다. 표지 위에는 왼쪽 위 ORIGINAL 태그와 오른쪽 아래 턴 수 `Compact` 뱃지만 둔다. 스켈레톤은 표지, 제목 줄, 소개 줄 자리다. 웹 카드와 같은 굵기와 배치다. 표지 옆에 글을 두는 목록은 글 영역을 위아래로 띄운다. 채팅 목록 카드는 `{spacing.hairline}`, 제작 탭 카드(내 스토리, 진행, 제출본)는 `{spacing.inline}`이고 스켈레톤도 같다. 채팅 목록 카드도 내 스토리 카드처럼 글 영역이 표지 높이를 최소치로 삼아 제목과 미리보기는 위에, 메타 줄(턴 수, 날짜)은 표지 아랫변에 맞춰 아래 끝에 두되 미리보기에서 최소 `{spacing.compact}`를 띄우고, 스켈레톤도 같다. 그러려면 표지가 글 영역보다 높아야 해서 채팅 목록 표지 폭은 56dp다. 내 스토리 카드는 홈 카드처럼 좋아요 수와 턴 수를 표지 우하단 `Compact` 뱃지로 얹고(표지가 좁아 큰 수 둘이 한 줄에 들지 않으면 뱃지 단위로 줄을 바꾼다), 공개 범위는 표지 왼쪽 위 `{spacing.compact}`의 `Compact` 뱃지(`StoryCoverBadge`)로 둔다. 공개는 흰 90% 바탕에 검은 글자와 디자인이 준 지구본(`ic_globe_outline`), 비공개는 좋아요 수 뱃지와 같은 흐린 어두운 바탕에 흰 글자와 자물쇠(`ic_lock_outline`)로 색 없이 명암만 달리하고, 메타 줄에는 제작일만 둔다.
 
-**`home-section`**: 홈 섹션 하나. 이름(`{typography.title-medium-strong}`, 좌우 `{spacing.gutter}`) 아래 `{spacing.component}`를 띄워 가로로 넘기는 카드 줄을 둔다. 줄은 좌우 `{spacing.gutter}` 여백과 카드 사이 `{spacing.compact}`이고, 카드 폭은 (줄 폭 − 32dp − 16dp) ÷ 2라 카드 두 장 다음 셋째 카드가 화면 오른쪽 끝에 16dp만 보인다. 스냅과 더 보기는 없다. 섹션은 셸 여백 바로 아래에서 시작해 사이 `{spacing.block}`, 마지막 아래 `{spacing.gutter}`로 쌓는다. 골격은 섹션 2개와 섹션마다 카드 3장이고, 제목, 소개 두 줄, 장르 뱃지 자리의 높이를 같은 글자 스타일과 뱃지를 보이지 않게 그려 잡아 글자 크기와 무관하게 실제 카드와 높이가 같다.
+**`home-section`**: 홈 섹션 하나. 이름(`{typography.title-large}`, 좌우 `{spacing.gutter}`, 한 줄 말줄임) 아래 `{spacing.component}`를 띄워 가로로 넘기는 카드 줄을 둔다. 카드가 셋 이상이면 이름 줄 오른쪽 끝에 이전, 다음 화살표를 둔다. `{sizes.control-tiny}` `{colors.background-neutral}` 원에 `{sizes.icon-small}` `{colors.text}` 꺾쇠, 사이 `{spacing.inline}`이고, 넘길 곳이 없는 방향은 불투명도 40%로 끈다. 누르면 카드 한 장씩 부드럽게 넘겨 카드 시작점에 맞추고, 넘기는 중에 다시 누르면 가던 목적지에서 한 장 더 간다. 애니메이션 배율이 0이면 바로 옮긴다. 줄은 좌우 `{spacing.gutter}` 여백과 카드 사이 `{spacing.compact}`이고, 카드 폭은 (줄 폭 − 32dp − 16dp) ÷ 2라 카드 두 장 다음 셋째 카드가 화면 오른쪽 끝에 16dp만 보인다. 스냅과 더 보기는 없다. 섹션은 셸 여백 바로 아래에서 시작해 사이 `{spacing.block}`, 마지막 아래 `{spacing.gutter}`로 쌓는다. 골격은 섹션 2개와 섹션마다 카드 3장이고, 제목, 소개 두 줄, 장르 뱃지 자리의 높이를 같은 글자 스타일과 뱃지를 보이지 않게 그려 잡아 글자 크기와 무관하게 실제 카드와 높이가 같다.
 
 **`explore-grid`**: 탐색 탭의 표지 그리드. 셸 여백 말고는 좌우와 위아래 여백 없이 세 열로 붙이고 타일 사이는 `{spacing.hairline}`이다. 타일은 모서리와 테두리 없는 3:4 표지(`StoryCover`의 `RectangleShape`)에 ORIGINAL 태그(폭 56dp, 좌상단 각진 바탕)만 얹고 턴 수 뱃지와 글은 두지 않는다. 당겨서 새로 섞으면 칸 자리는 그대로 두고 칸마다 이전 표지 위에 새 표지를 겹친다. 새 표지는 그림을 받은 뒤 불투명도 0, 크기 96%에서 420ms `cubic-bezier(0.22, 1, 0.36, 1)`로 나타나고 왼쪽 위 칸부터 대각선 한 칸마다 45ms, 최대 450ms 늦춘다. 이전 표지는 새 표지가 다 나타난 뒤 걷는다. 시스템 애니메이션을 끄면 Compose 애니메이션이 바로 끝나 지연 없이 바뀐다. 웹과 같은 값이라 토큰 대신 이 자리에서 고정했다. 골격은 표지 12장이다.
 
