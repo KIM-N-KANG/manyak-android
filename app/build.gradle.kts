@@ -78,8 +78,8 @@ android {
         applicationId = "app.manyak"
         minSdk = 24
         targetSdk = 37
-        versionCode = 25
-        versionName = "1.9.0"
+        versionCode = 26
+        versionName = "1.9.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
