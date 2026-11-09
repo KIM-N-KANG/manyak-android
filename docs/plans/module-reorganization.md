@@ -29,13 +29,13 @@
 
 | 현재 파일 묶음 | 목표 소유 위치 | 함께 옮기거나 확인할 것 |
 | --- | --- | --- |
-| [ChatListScreen](../../chat/src/main/java/app/manyak/chat/list/presentation/ChatListScreen.kt), ChatListViewModel·ChatCard·ChatListSkeleton·RelativeTime | `chat/list/presentation` | 목록 ViewModel·상대 시간 테스트 |
-| [ChatRoomScreen](../../chat/src/main/java/app/manyak/chat/room/presentation/ChatRoomScreen.kt), ChatRoomViewModel·Transcript·TurnStream·Regenerate·AnchorPad·Status | `chat/room/presentation` | 삭제·재생성·스트림·추천·앵커 테스트 |
+| [ChatListScreen](../../feature/chat/src/main/java/app/manyak/chat/list/presentation/ChatListScreen.kt), ChatListViewModel·ChatCard·ChatListSkeleton·RelativeTime | `chat/list/presentation` | 목록 ViewModel·상대 시간 테스트 |
+| [ChatRoomScreen](../../feature/chat/src/main/java/app/manyak/chat/room/presentation/ChatRoomScreen.kt), ChatRoomViewModel·Transcript·TurnStream·Regenerate·AnchorPad·Status | `chat/room/presentation` | 삭제·재생성·스트림·추천·앵커 테스트 |
 | chat의 composer·message·suggestion | `chat/room/presentation` 하위 패키지 | 기존 내부 참조를 같은 chat 모듈 안에서 유지; 같은 위치로 관련 테스트 이동 |
-| [CreateKeywordScreen](../../create/src/main/java/app/manyak/create/keyword/presentation/CreateKeywordScreen.kt), Keyword 입력·캐릭터·성별 선택·선택 키워드 UI·Reducer | `create/keyword/presentation` | 키워드 상태·ViewModel 테스트; GenderSelectField는 KeywordCharacterForm에서 사용 |
+| [CreateKeywordScreen](../../feature/create/src/main/java/app/manyak/create/keyword/presentation/CreateKeywordScreen.kt), Keyword 입력·캐릭터·성별 선택·선택 키워드 UI·Reducer | `create/keyword/presentation` | 키워드 상태·ViewModel 테스트; GenderSelectField는 KeywordCharacterForm에서 사용 |
 | CreateStorylineScreen·ViewModel·RatingButtons | `create/storyline/presentation` | 스토리라인 ViewModel 테스트 |
 | CreateAdditionalInfoScreen·ViewModel·AdditionalInfoSections | `create/additionalinfo/presentation` | 추가 정보 ViewModel 테스트 |
-| [StorylineGenerationStore](../../create/src/main/java/app/manyak/create/presentation/state/StorylineGenerationStore.kt), DraftSave·CreateFunnelModule | `create/presentation/state`, `create/presentation/di` | 기존 ActivityRetained 수명·Scope와 스토어 테스트 유지 |
+| [StorylineGenerationStore](../../feature/create/src/main/java/app/manyak/create/presentation/state/StorylineGenerationStore.kt), DraftSave·CreateFunnelModule | `create/presentation/state`, `create/presentation/di` | 기존 ActivityRetained 수명·Scope와 스토어 테스트 유지 |
 | CreateFunnelChrome·CreateGeneratingLoading·PreviewFixtures | `create/presentation/component`, `create/presentation/preview` | 단계 간 실제 공유만 남김 |
 | MyScreen·MyViewModel·ProfileHeader·CreditCard·MenuItem·AccountLinkDialogs | `my/profile/presentation` | MyViewModelTest; 계정 연동 UI와 auth 구현을 구분 |
 | CreditCharge·CreditFreeCharge·CreditHistory 파일 묶음 | `my/credit/presentation` | CreditChargeViewModelTest |
@@ -51,23 +51,23 @@
 
 | 현재 파일/책임 | 목표 소유자 | 이동 시 해소할 참조 |
 | --- | --- | --- |
-| [MviViewModel](../../common/src/main/java/app/manyak/common/presentation/mvi/MviViewModel.kt)·DomainErrorMessages | common/presentation | 공통 오류·세션 안내 값과 문자열도 함께 배치; designsystem 역참조 금지 |
+| [MviViewModel](../../core/common/src/main/java/app/manyak/common/presentation/mvi/MviViewModel.kt)·DomainErrorMessages | common/presentation | 공통 오류·세션 안내 값과 문자열도 함께 배치; designsystem 역참조 금지 |
 | DomainResult·DomainError와 실제 공유 값/포트 | common/domain·entity | DomainError의 AuthProvider 참조를 빠뜨리지 않음 |
 | ManyakTheme·토큰·기본 UI·폰트·시각 자산 | designsystem | data·analytics·기능 모델에 의존하는 업무 코드가 함께 들어가지 않도록 분리 |
-| [CreditAmount](../../common/src/main/java/app/manyak/common/presentation/credit/CreditPolicyPresentation.kt) | 정책 전달/숫자 변환은 common, 시각적 로딩 표현은 designsystem | 기존 rememberSkeletonPulseAlpha 호출 때문에 파일째 이동할 수 없음 |
-| [Routes](../../navigation/src/main/java/app/manyak/core/navigation/Routes.kt) | navigation | 첫 이동에서 Kotlin 패키지·직렬화 타입 이름 보존 |
-| [AnalyticsEvent](../../analytics/src/main/java/app/manyak/analytics/entity/AnalyticsEvent.kt)·SDK 구현 | analytics | 기능 enum 변환을 호출부로 옮겨 분석→기능 역참조 제거 |
-| [NetworkModule](../../network/src/main/java/app/manyak/network/data/di/HttpModule.kt)·ApiCall·인터셉터 | network와 각 API 소유 기능의 data/di | 클라이언트/직렬화 기반과 업무 API provider를 분리; timeout·qualifier 유지 |
-| [SessionTokenManager](../../auth/src/main/java/app/manyak/auth/data/session/SessionTokenManager.kt)·SessionGate·TokenStore·Crypto·소셜 SDK·AccountLink | auth | 인터셉터의 구현 참조를 토큰 접근 계약으로 교체; auth→my 금지 |
-| [SessionRepositoryImpl](../../auth/src/main/java/app/manyak/auth/data/repository/SessionRepositoryImpl.kt) | auth/data | 프로필은 공통 계약, 초대 안내는 최소 writer로 사용; 기록 시점 유지 |
-| [UserApi](../../my/src/main/java/app/manyak/my/profile/data/api/ProfileApi.kt) | auth·chat·studio·my의 해당 data/api | me·withdraw·myChats·myStories/delete·credit·invite 동작별 소유자를 정해 분리 |
+| [CreditAmount](../../core/common/src/main/java/app/manyak/common/presentation/credit/CreditPolicyPresentation.kt) | 정책 전달/숫자 변환은 common, 시각적 로딩 표현은 designsystem | 기존 rememberSkeletonPulseAlpha 호출 때문에 파일째 이동할 수 없음 |
+| [Routes](../../core/navigation/src/main/java/app/manyak/core/navigation/Routes.kt) | navigation | 첫 이동에서 Kotlin 패키지·직렬화 타입 이름 보존 |
+| [AnalyticsEvent](../../core/analytics/src/main/java/app/manyak/analytics/entity/AnalyticsEvent.kt)·SDK 구현 | analytics | 기능 enum 변환을 호출부로 옮겨 분석→기능 역참조 제거 |
+| [NetworkModule](../../core/network/src/main/java/app/manyak/network/data/di/HttpModule.kt)·ApiCall·인터셉터 | network와 각 API 소유 기능의 data/di | 클라이언트/직렬화 기반과 업무 API provider를 분리; timeout·qualifier 유지 |
+| [SessionTokenManager](../../core/auth/src/main/java/app/manyak/auth/data/session/SessionTokenManager.kt)·SessionGate·TokenStore·Crypto·소셜 SDK·AccountLink | auth | 인터셉터의 구현 참조를 토큰 접근 계약으로 교체; auth→my 금지 |
+| [SessionRepositoryImpl](../../core/auth/src/main/java/app/manyak/auth/data/repository/SessionRepositoryImpl.kt) | auth/data | 프로필은 공통 계약, 초대 안내는 최소 writer로 사용; 기록 시점 유지 |
+| [UserApi](../../feature/my/src/main/java/app/manyak/my/profile/data/api/ProfileApi.kt) | auth·chat·studio·my의 해당 data/api | me·withdraw·myChats·myStories/delete·credit·invite 동작별 소유자를 정해 분리 |
 | StoryRepository·구현·StoryApi/DetailApi | home·studio·story·report의 소유 동작 | 목록·상세·삭제·신고 계약을 분리; 원래 Repository 전체를 common으로 이동하지 않음 |
 | ChatRepository·ChatApi·SSE·ChatPreferencesStore | chat/domain·entity·data | create/story에는 채팅 생성 포트와 결과 ID만 공개 |
 | StoryCreationRepository·SimpleStory/Generation/Rating/CreationRequest API | create/domain·entity·data | 관련 DTO·생성 함수·DI provider를 같은 단위로 이동 |
-| [ManyakDatabase](../../create/src/main/java/app/manyak/create/data/database/ManyakDatabase.kt)·PendingStoryCreationRoomStore·LegacyPendingCreationFile | create/data | studio에 관찰/폐기 계약 제공; Application의 레거시 파일 정리 연결도 유지 |
+| [ManyakDatabase](../../feature/create/src/main/java/app/manyak/create/data/database/ManyakDatabase.kt)·PendingStoryCreationRoomStore·LegacyPendingCreationFile | create/data | studio에 관찰/폐기 계약 제공; Application의 레거시 파일 정리 연결도 유지 |
 | UserProfileRepositoryImpl·ProfileCacheStore·InviteOnboardingStore | my/profile·my/invite, my 공통 data 구성 | 같은 profile DataStore 파일의 단일 인스턴스 유지; 사용자 귀속 정리 등록 |
 | Credit·Invite·Feedback 계약/구현 | my의 해당 하위 기능 | 공개 이프 정책만 common 계약으로 앱 루트에 제공 |
-| [StoryReport](../../report/src/main/java/app/manyak/report/presentation/StoryReport.kt)·StoryReportSheet | 권장안 report | 네 화면의 상태/Scope 유지; Repository·API·분석과 함께 공유 업무로 분리 |
+| [StoryReport](../../core/report/src/main/java/app/manyak/report/presentation/StoryReport.kt)·StoryReportSheet | 권장안 report | 네 화면의 상태/Scope 유지; Repository·API·분석과 함께 공유 업무로 분리 |
 | DeviceIdStore·ThemePreferencesStore·공통 dispatcher 기반 | common/data 및 필요한 공통 계약 | 기존 파일·키 유지, 기기 ID의 HTTP/분석 단일 값 유지 |
 | [SessionCleanupSteps](../../app/src/main/java/app/manyak/session/SessionCleanupSteps.kt)·종료 Coordinator·루트/탭 | app 유지 | 각 저장소 정리 구현의 중앙 등록·순서와 화면 진입 연결만 갱신 |
 

@@ -515,7 +515,7 @@ components:
 
 ## 코드 대응
 
-`designsystem/src/main/java/app/manyak/designsystem/theme/`
+`core/designsystem/src/main/java/app/manyak/designsystem/theme/`
 
 | 파일 | 내용 |
 | --- | --- |
@@ -527,13 +527,14 @@ components:
 | `ManyakMotion.kt` | 화면 전환과 요소 및 안내 모션 시간 |
 | `Theme.kt` | `ManyakTheme` 컴포저블·접근자, M3 슬롯 파생 |
 
-`designsystem/src/main/java/app/manyak/designsystem/component/`
+`core/designsystem/src/main/java/app/manyak/designsystem/component/`
 
 | 파일 | 내용 |
 | --- | --- |
 | `ManyakLogo.kt` | 로고 락업. 높이는 토큰, 폭은 원본 비율 |
 | `ManyakMascot.kt` | 로고 심벌을 눈이 움직이는 마스코트로 그리는 `DrawScope` 함수. 동그란 눈 외에 힘주는·웃는·졸린·반짝이는·윙크·어지러운 눈을 그린다. 시작 화면, 완성 중 표지, 채팅 실시간 이미지 대기, 간편 제작 첫 진입 안내가 쓴다 |
 | `ManyakSectionHeader.kt` | 메인 탭 상단 헤더 |
+| `ManyakDetailHeader.kt` | 셸 밖 하위 목적지의 상단 헤더(뒤로가기, 제목, 제목 옆 요소). 마이 하위 화면과 이프 충전이 같이 쓴다 |
 | `ManyakNavigationBar.kt` · `ManyakNavigationItem.kt` | 하단 탭 바와 그 항목 |
 | `ProgressIndicator.kt` | 로딩 스피너와 지연 표시 헬퍼 |
 | `PullToRefresh.kt` | 당겨서 새로고침 컨테이너. 표시자를 셸 헤더 아래로 내린다 |
@@ -544,7 +545,7 @@ components:
 | `ManyakCheckbox.kt` | 동의·확인 항목의 체크 표시. 줄이 토글을 맡고 상자는 그리기만 한다 |
 | `CreateTutorialDialog.kt` | 간편 제작 첫 진입 안내 대화창과 그 안에서 말하는 마스코트. 문구와 버튼 콜백만 받고 간편 제작 화면과 제작 탭이 같이 쓴다 |
 
-`designsystem/src/main/java/app/manyak/designsystem/mascot/`
+`core/designsystem/src/main/java/app/manyak/designsystem/mascot/`
 
 | 파일 | 내용 |
 | --- | --- |

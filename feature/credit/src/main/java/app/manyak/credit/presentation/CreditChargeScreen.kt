@@ -1,0 +1,329 @@
+package app.manyak.credit.presentation
+
+import android.widget.Toast
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
+import app.manyak.analytics.entity.AnalyticsEvent
+import app.manyak.analytics.presentation.LocalAnalytics
+import app.manyak.common.entity.credit.CreditTransaction
+import app.manyak.common.entity.credit.CreditTransactionReason
+import app.manyak.common.entity.credit.CreditTransactionType
+import app.manyak.common.presentation.credit.CreditHistoryUiState
+import app.manyak.common.presentation.credit.amountText
+import app.manyak.common.presentation.credit.dateLine
+import app.manyak.common.presentation.credit.isEarned
+import app.manyak.common.presentation.credit.reasonLabel
+import app.manyak.common.presentation.credit.subtitle
+import app.manyak.credit.R
+import app.manyak.designsystem.component.ManyakDetailHeader
+import app.manyak.designsystem.component.ManyakInfoTooltipButton
+import app.manyak.designsystem.component.ManyakPullToRefreshBox
+import app.manyak.designsystem.component.SkeletonPlaceholder
+import app.manyak.designsystem.component.rememberSkeletonPulseAlpha
+import app.manyak.designsystem.component.swipeBetweenTabs
+import app.manyak.designsystem.credit.CreditAmountText
+import app.manyak.designsystem.credit.CreditHistoryRow
+import app.manyak.designsystem.credit.LoadMoreWhenListEnds
+import app.manyak.designsystem.credit.creditHistoryItems
+import app.manyak.designsystem.theme.ManyakTheme
+import java.text.NumberFormat
+import app.manyak.common.R as CommonR
+import app.manyak.designsystem.R as DesignsystemR
+
+/**
+ * 이프 충전.
+ *
+ * 잔액 상자와 탭 줄은 화면 위에 고정하고 탭 내용만 스크롤한다 — 잔액은 어느 탭에서 무엇을 하든
+ * 계속 보여야 하는 값이라, 스크롤을 따라 올려 보내면 출석하러 들어온 사람이 지금 얼마인지 모르는
+ * 채로 버튼을 누르게 된다.
+ */
+@Composable
+fun CreditChargeScreen(
+    openHistory: Boolean,
+    onBack: () -> Unit,
+    inviteEntry: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: CreditChargeViewModel = hiltViewModel(),
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val context = LocalContext.current
+    // 보상 금액은 효과가 도착할 때 정해져 서식만 나중에 채운다.
+    val attendanceClaimed = stringResource(R.string.credit_attendance_claimed)
+    val attendanceAlready = stringResource(R.string.credit_attendance_already)
+    val attendanceFailed = stringResource(R.string.credit_attendance_failed)
+    val refreshFailed = stringResource(CommonR.string.story_refresh_failed)
+
+    LaunchedEffect(viewModel, lifecycleOwner) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            viewModel.uiEffect.collect { effect ->
+                val message =
+                    when (effect) {
+                        CreditChargeEffect.ShowRefreshFailed -> refreshFailed
+                        is CreditChargeEffect.AttendanceRewarded -> attendanceClaimed.format(effect.amount)
+                        CreditChargeEffect.AttendanceAlreadyDone -> attendanceAlready
+                        CreditChargeEffect.AttendanceFailed -> attendanceFailed
+                    }
+                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    // 이프는 채팅·제작에서 줄어들고 여기서 출석으로 늘어난다. 화면이 보일 때마다 잔액을 맞춘다.
+    LifecycleEventEffect(Lifecycle.Event.ON_START) { viewModel.onIntent(CreditChargeIntent.ScreenShown) }
+
+    Column(
+        modifier =
+            modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.safeDrawing),
+    ) {
+        CreditChargeHeader(onBack = onBack)
+        CreditBalanceBox(
+            balance = state.balance,
+            modifier = Modifier.padding(horizontal = ManyakTheme.spacing.gutter),
+        )
+        CreditChargeTabs(
+            openHistory = openHistory,
+            state = state,
+            onIntent = viewModel::onIntent,
+            inviteEntry = inviteEntry,
+        )
+    }
+}
+
+/** 탭 줄과 고른 탭의 내용. 탭을 누르거나 내용을 좌우로 밀어 바꾼다. */
+@Composable
+private fun ColumnScope.CreditChargeTabs(
+    openHistory: Boolean,
+    state: CreditChargeUiState,
+    onIntent: (CreditChargeIntent) -> Unit,
+    inviteEntry: @Composable () -> Unit,
+) {
+    // 탭은 목적지가 아니라 화면 상태다. 라우트는 처음 열 탭만 정하고, 이후 선택은 구성 변경에서만 유지한다.
+    var selectedTab by rememberSaveable {
+        mutableStateOf(if (openHistory) CreditChargeTab.HISTORY else CreditChargeTab.FREE)
+    }
+    val analytics = LocalAnalytics.current
+    val selectTab: (CreditChargeTab) -> Unit = { tab ->
+        // 같은 탭 재선택은 전환이 아니다.
+        if (tab != selectedTab) analytics.track(AnalyticsEvent.CreditChargeTabSelected(tab.name.lowercase()))
+        selectedTab = tab
+    }
+    CreditChargeTabRow(
+        selected = selectedTab,
+        onSelect = selectTab,
+        modifier = Modifier.padding(top = ManyakTheme.spacing.gutter),
+    )
+    val contentModifier =
+        Modifier.weight(1f).swipeBetweenTabs(
+            selectedIndex = selectedTab.ordinal,
+            tabCount = CreditChargeTab.entries.size,
+            onSelect = { selectTab(CreditChargeTab.entries[it]) },
+        )
+    when (selectedTab) {
+        CreditChargeTab.FREE ->
+            CreditFreeChargeTab(
+                state = state,
+                onIntent = onIntent,
+                inviteEntry = inviteEntry,
+                modifier = contentModifier,
+            )
+
+        CreditChargeTab.HISTORY ->
+            CreditHistoryTab(
+                state = state,
+                onIntent = onIntent,
+                modifier = contentModifier,
+            )
+    }
+}
+
+/** 제목 옆 안내는 앱 안 구매가 아직 없다는 사실을 알린다 — 충전하러 들어와 구매 탭을 찾는 사람이 있다. */
+@Composable
+private fun CreditChargeHeader(onBack: () -> Unit) {
+    ManyakDetailHeader(
+        titleRes = R.string.credit_charge_title,
+        onBack = onBack,
+        titleTrailing = {
+            ManyakInfoTooltipButton(
+                text = stringResource(R.string.credit_purchase_notice_tooltip),
+                contentDescription = stringResource(R.string.credit_purchase_notice),
+            )
+        },
+    )
+}
+
+/** 내역 탭. 원장 목록만 담고 잔액은 화면 위 상자가 이미 말한다. */
+@Composable
+private fun CreditHistoryTab(
+    state: CreditChargeUiState,
+    onIntent: (CreditChargeIntent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val history = state.history
+    val listState = rememberLazyListState()
+    LoadMoreWhenListEnds(
+        listState = listState,
+        enabled = history.canLoadMore,
+        onLoadMore = { onIntent(CreditChargeIntent.LoadMore) },
+    )
+
+    ManyakPullToRefreshBox(
+        modifier = modifier,
+        isRefreshing = history.isRefreshing,
+        onRefresh = { onIntent(CreditChargeIntent.Refresh) },
+        // 헤더가 목록 위에 따로 있어 표시자를 내려 둘 chrome 이 없다.
+        contentPadding = PaddingValues(),
+    ) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            state = listState,
+            contentPadding =
+                PaddingValues(
+                    start = ManyakTheme.spacing.gutter,
+                    end = ManyakTheme.spacing.gutter,
+                    top = ManyakTheme.spacing.compact,
+                    bottom = ManyakTheme.spacing.screenBottom,
+                ),
+        ) {
+            creditHistoryItems(
+                items = history.items,
+                isLoading = history.isLoading,
+                loadFailed = history.loadFailed,
+                isLoadingMore = history.isLoadingMore,
+                loadMoreFailed = history.loadMoreFailed,
+                onRetry = { onIntent(CreditChargeIntent.Retry) },
+                onLoadMore = { onIntent(CreditChargeIntent.LoadMore) },
+            ) { transaction ->
+                CreditHistoryRow(
+                    label = transaction.reasonLabel(),
+                    subtitle = transaction.subtitle(),
+                    dateLine = transaction.dateLine(),
+                    amount = transaction.amountText(),
+                    isEarned = transaction.isEarned,
+                )
+            }
+        }
+    }
+}
+
+/** 내 이프 잔액. 라벨이 위, 값이 아래 오른쪽에 온다. */
+@Composable
+private fun CreditBalanceBox(
+    balance: Long?,
+    modifier: Modifier = Modifier,
+) {
+    val density = LocalDensity.current
+    val balanceHeight =
+        with(density) {
+            ManyakTheme.typography.headlineSmall.fontSize
+                .toDp()
+        }
+
+    Column(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .background(ManyakTheme.colors.backgroundNeutral, ManyakTheme.shapes.card)
+                .padding(ManyakTheme.spacing.gutter),
+        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
+    ) {
+        Text(
+            text = stringResource(DesignsystemR.string.credit_balance_label),
+            style = ManyakTheme.typography.bodyMediumStrong,
+            color = ManyakTheme.colors.textSubtle,
+        )
+        if (balance == null) {
+            SkeletonPlaceholder(
+                alpha = rememberSkeletonPulseAlpha(),
+                modifier =
+                    Modifier
+                        .align(Alignment.End)
+                        .width(BalanceSkeletonWidth)
+                        .heightIn(min = balanceHeight),
+            )
+        } else {
+            CreditAmountText(
+                modifier = Modifier.align(Alignment.End),
+                amount = remember(balance) { NumberFormat.getInstance().format(balance) },
+                style = ManyakTheme.typography.headlineSmall.copy(fontFeatureSettings = "tnum"),
+                color = ManyakTheme.colors.text,
+            )
+        }
+    }
+}
+
+private val BalanceSkeletonWidth = 96.dp
+
+@Preview(showBackground = true, name = "이프 충전 · 내역")
+@Composable
+private fun CreditHistoryTabPreview() {
+    ManyakTheme(darkTheme = false) {
+        CreditHistoryTab(
+            state =
+                CreditChargeUiState(
+                    balance = 3230,
+                    history =
+                        CreditHistoryUiState(
+                            isLoading = false,
+                            items =
+                                listOf(
+                                    CreditTransaction(
+                                        type = CreditTransactionType.SPEND,
+                                        reason = CreditTransactionReason.CHAT_TURN,
+                                        amount = 20,
+                                        title = "유운잔검기",
+                                        expiresDate = null,
+                                        createdDate = "2026-08-31",
+                                    ),
+                                    CreditTransaction(
+                                        type = CreditTransactionType.EARN,
+                                        reason = CreditTransactionReason.ATTENDANCE_REWARD,
+                                        amount = 700,
+                                        title = null,
+                                        expiresDate = "2026-09-30",
+                                        createdDate = "2026-08-31",
+                                    ),
+                                ),
+                        ),
+                ),
+            onIntent = {},
+        )
+    }
+}

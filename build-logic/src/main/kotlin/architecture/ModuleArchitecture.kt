@@ -29,13 +29,29 @@ class ModuleArchitecture : AutoCloseable {
     fun check(
         graph: Map<String, Set<String>>,
         sources: Map<String, String>,
+        testGraph: Map<String, Set<String>> = emptyMap(),
     ): List<String> {
         val errors = mutableListOf<String>()
-        graph.forEach { (module, dependencies) ->
-            val allowed = allowedDependencies[module]
-            if (allowed == null) errors += "Unknown module: $module"
-            dependencies.filter { it !in allowed.orEmpty() }.forEach {
+        graph.keys.forEach { path ->
+            val module = path.substringAfterLast(':')
+            val expected = pathOf(module)
+            if (expected == null) {
+                errors += "Unknown module: $path"
+            } else if (path != expected) {
+                errors += "$module must be registered as :$expected"
+            }
+        }
+        val moduleGraph = byModule(graph)
+        moduleGraph.forEach { (module, dependencies) ->
+            val allowed = allowedDependencies[module].orEmpty()
+            dependencies.filter { it !in allowed }.forEach {
                 errors += "$module must not depend on $it"
+            }
+        }
+        byModule(testGraph).forEach { (module, dependencies) ->
+            val allowed = allowedDependencies[module].orEmpty() + "testing" - module
+            dependencies.filter { it !in allowed }.forEach {
+                errors += "$module tests must not depend on $it"
             }
         }
         val files = sources.mapValues { (path, source) -> factory.createFile(path.substringAfterLast('/'), source) }
@@ -49,7 +65,14 @@ class ModuleArchitecture : AutoCloseable {
                     }
                 }.toMap()
         files.forEach { (path, file) ->
-            val module = path.substringBefore('/')
+            val module =
+                graph.keys
+                    .firstOrNull { path.startsWith(it.replace(':', '/') + "/") }
+                    ?.substringAfterLast(':')
+            if (module == null) {
+                errors += "$path: not inside a registered module"
+                return@forEach
+            }
             val pkg = file.packageFqName.asString()
             val expectedPackage =
                 when (module) {
@@ -61,21 +84,26 @@ class ModuleArchitecture : AutoCloseable {
                 errors += "$path: package $pkg does not belong to $module"
             }
             val layer = layerOf(pkg)
-            if (module !in setOf("app", "navigation", "designsystem") && layer == null) {
+            if (module !in layerFree && layer == null) {
                 errors += "$path: production code needs an entity/domain/data/presentation package"
             }
             references(file).forEach { reference ->
-                checkReference(path, module, layer, reference, graph, errors)
+                checkReference(path, module, layer, reference, moduleGraph, errors)
                 var target = reference
                 val visited = mutableSetOf<String>()
                 while (visited.add(target)) {
                     target = aliases[target] ?: break
-                    checkReference(path, module, layer, target, graph, errors)
+                    checkReference(path, module, layer, target, moduleGraph, errors)
                 }
             }
         }
         return errors.distinct().sorted()
     }
+
+    private fun byModule(graph: Map<String, Set<String>>): Map<String, Set<String>> =
+        graph.entries.associate { (path, dependencies) ->
+            path.substringAfterLast(':') to dependencies.map { it.substringAfterLast(':') }.toSet()
+        }
 
     private fun references(file: KtFile): Set<String> =
         buildSet {
@@ -125,7 +153,7 @@ class ModuleArchitecture : AutoCloseable {
         if (target != null && target != module && target !in graph[module].orEmpty()) {
             errors += "$path: $reference needs an explicit, allowed module dependency"
         }
-        if (module == "app" || module == "designsystem" || module == "navigation") return
+        if (module in layerFree) return
         if (target == "network" && module != "network" && layer != "data") {
             errors += "$path: only data may use network: $reference"
         }
@@ -157,8 +185,35 @@ class ModuleArchitecture : AutoCloseable {
     companion object {
         private val externalPrefixes = setOf("android.", "androidx.", "okhttp3.", "retrofit2.")
         private val features =
-            setOf("home", "chat", "studio", "story", "login", "legal", "my", "create", "notification", "notice")
+            setOf(
+                "home",
+                "chat",
+                "studio",
+                "story",
+                "login",
+                "legal",
+                "my",
+                "create",
+                "notification",
+                "notice",
+                "onboarding",
+                "credit",
+            )
         private val infrastructure = setOf("common", "designsystem", "navigation", "analytics", "network", "auth")
+        private val core = infrastructure + "report" + "testing"
+
+        /** Modules without entity/domain/data/presentation packages. testing is a test-only helper module. */
+        private val layerFree = setOf("app", "navigation", "designsystem", "testing")
+
+        /** Gradle path without the leading colon; null for an unknown module. */
+        private fun pathOf(module: String): String? =
+            when (module) {
+                "app" -> "app"
+                in core -> "core:$module"
+                in features -> "feature:$module"
+                else -> null
+            }
+
         val allowedDependencies: Map<String, Set<String>> =
             buildMap {
                 put("app", infrastructure + features + "report")
@@ -169,6 +224,8 @@ class ModuleArchitecture : AutoCloseable {
                 put("analytics", setOf("common"))
                 put("auth", setOf("common", "network"))
                 put("report", setOf("common", "network", "designsystem", "analytics"))
+                // Production code never depends on testing; test source sets may (see testGraph).
+                put("testing", setOf("common"))
                 features.forEach { feature ->
                     put(
                         feature,

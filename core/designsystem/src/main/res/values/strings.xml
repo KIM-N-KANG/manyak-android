@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_logo_description">마냑</string>
+    <string name="common_retry">다시 시도</string>
+    <string name="input_counter">%1$d / %2$d</string>
+    <string name="story_like_count_description">좋아요 수 %1$s</string>
+    <string name="story_thumbnail_placeholder">썸네일 없음</string>
+    <string name="story_turn_count_description">누적 턴 수 %1$s</string>
+    <string name="story_genre_overflow">+%1$d</string>
+    <string name="designsystem_preview_label">메뉴</string>
+    <string name="image_viewer_close">닫기</string>
+    <string name="detail_header_back">뒤로</string>
+    <string name="character_image_open">%1$s 인물 이미지 크게 보기</string>
+    <string name="scene_image_open">장면 이미지 크게 보기</string>
+    <string name="credit_balance_label">내 이프</string>
+    <string name="credit_balance_charge">충전</string>
+    <string name="credit_balance_history">내역</string>
+    <string name="credit_history_empty">아직 이프 내역이 없어요</string>
+    <string name="credit_history_load_failed">이프 내역을 불러오지 못했어요</string>
+    <string name="credit_history_loading">이프 내역을 불러오는 중</string>
+    <string name="delete_in_progress">삭제 중</string>
+    <string name="credit_shortage_title">이프가 부족해요</string>
+    <string name="credit_shortage_description">이프를 충전하면 이어서 할 수 있어요</string>
+    <string name="credit_shortage_charge">이프 충전하기</string>
+    <string name="credit_shortage_attendance">출석 체크하기</string>
+    <string name="credit_shortage_attendance_in_progress">출석 체크 중</string>
+    <string name="credit_shortage_close">닫기</string>
+    <string name="credit_shortage_attendance_rewarded">출석 체크 보상으로 %1$d 이프를 받았어요</string>
+    <string name="credit_shortage_attendance_already">오늘은 이미 출석 체크했어요</string>
+    <string name="credit_shortage_attendance_failed">출석 체크에 실패했어요</string>
+    <string name="create_tutorial_label">스토리 만들기 안내</string>
+    <string name="create_tutorial_speaker">마냑</string>
+</resources>
