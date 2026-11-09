@@ -30,11 +30,11 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.designsystem.component.FocusScrollMargin
+import app.manyak.designsystem.component.ManyakDetailHeader
 import app.manyak.designsystem.component.ManyakInputCounter
 import app.manyak.designsystem.component.ManyakMultilineTextField
 import app.manyak.designsystem.component.ManyakTextField
 import app.manyak.designsystem.theme.ManyakTheme
-import app.manyak.my.presentation.component.MyDetailHeader
 import app.manyak.my.presentation.component.MyFieldLabel
 import app.manyak.my.presentation.component.MyFieldMessage
 import app.manyak.my.presentation.component.MyPrimaryButton
@@ -73,7 +73,7 @@ fun FeedbackScreen(
                     .fillMaxSize()
                     .windowInsetsPadding(WindowInsets.safeDrawing),
         ) {
-            MyDetailHeader(titleRes = MyR.string.my_feedback, onBack = onBack)
+            ManyakDetailHeader(titleRes = MyR.string.my_feedback, onBack = onBack)
             FeedbackContent(
                 state = state,
                 onIntent = viewModel::onIntent,

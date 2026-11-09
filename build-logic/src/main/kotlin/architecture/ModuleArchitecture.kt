@@ -197,6 +197,7 @@ class ModuleArchitecture : AutoCloseable {
                 "notification",
                 "notice",
                 "onboarding",
+                "credit",
             )
         private val infrastructure = setOf("common", "designsystem", "navigation", "analytics", "network", "auth")
         private val core = infrastructure + "report" + "testing"

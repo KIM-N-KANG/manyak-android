@@ -127,10 +127,10 @@ internal fun MenuTrailingIcon(
 }
 
 /**
- * 친구 초대로 가는 줄. 마이와 이프 충전의 무료 충전 탭이 같은 줄을 써야 해서 한 곳에 둔다.
+ * 친구 초대로 가는 줄. 마이와 이프 충전의 무료 충전 탭이 같은 줄을 써야 해서 한 곳에 두고, 이프 충전에는 앱이 넘긴다.
  */
 @Composable
-internal fun InviteMenuItem(
+fun InviteMenuItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {

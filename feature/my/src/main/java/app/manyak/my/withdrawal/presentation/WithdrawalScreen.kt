@@ -29,8 +29,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.designsystem.component.ManyakCheckbox
+import app.manyak.designsystem.component.ManyakDetailHeader
 import app.manyak.designsystem.theme.ManyakTheme
-import app.manyak.my.presentation.component.MyDetailHeader
 import app.manyak.my.presentation.component.MyPrimaryButton
 import app.manyak.my.R as MyR
 
@@ -64,7 +64,7 @@ fun WithdrawalScreen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.safeDrawing),
     ) {
-        MyDetailHeader(titleRes = MyR.string.my_withdrawal, onBack = onBack)
+        ManyakDetailHeader(titleRes = MyR.string.my_withdrawal, onBack = onBack)
         WithdrawalContent(
             state = state,
             onIntent = viewModel::onIntent,

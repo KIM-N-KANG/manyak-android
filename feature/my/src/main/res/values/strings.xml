@@ -2,20 +2,7 @@
 <resources>
     <string name="my_app_version">버전 정보</string>
     <string name="my_app_version_unknown">알 수 없음</string>
-    <string name="my_attendance_already">오늘은 이미 출석 체크했어요</string>
-    <string name="my_attendance_claim">출석 하기</string>
-    <string name="my_attendance_claimed">출석 체크 보상으로 %1$d 이프를 받았어요</string>
-    <string name="my_attendance_done">출석 완료</string>
-    <string name="my_attendance_failed">출석 체크에 실패했어요</string>
-    <string name="my_attendance_headline">매일 출석하고\n매일 %1$s 이프 받으세요</string>
     <string name="my_attendance_in_progress">출석 체크 중</string>
-    <string name="my_attendance_note_expiry">보상으로 받은 이프는 적립일로부터 30일 동안 사용할 수 있어요</string>
-    <string name="my_attendance_note_reset">매일 오전 00시에 초기화돼요</string>
-    <string name="my_credit_charge_tab_free">무료 충전</string>
-    <string name="my_credit_charge_title">이프 충전</string>
-    <string name="my_credit_history">내역</string>
-    <string name="my_credit_purchase_notice">이프 구매 안내</string>
-    <string name="my_credit_purchase_notice_tooltip">이프 구매는 웹에서 할 수 있어요.\n앱 구매 기능도 준비하고 있어요.</string>
     <string name="my_feedback">피드백</string>
     <string name="my_invite">친구 초대</string>
     <string name="my_invite_reward">하고 %1$s 이프 받기</string>

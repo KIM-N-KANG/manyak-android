@@ -9,6 +9,7 @@
     <string name="story_genre_overflow">+%1$d</string>
     <string name="designsystem_preview_label">메뉴</string>
     <string name="image_viewer_close">닫기</string>
+    <string name="detail_header_back">뒤로</string>
     <string name="character_image_open">%1$s 인물 이미지 크게 보기</string>
     <string name="scene_image_open">장면 이미지 크게 보기</string>
     <string name="credit_balance_label">내 이프</string>

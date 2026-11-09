@@ -45,6 +45,7 @@ import app.manyak.common.entity.persona.Persona
 import app.manyak.designsystem.component.LoadFailedContent
 import app.manyak.designsystem.component.ManyakAddButton
 import app.manyak.designsystem.component.ManyakDestructiveDialog
+import app.manyak.designsystem.component.ManyakDetailHeader
 import app.manyak.designsystem.component.ManyakMoreButton
 import app.manyak.designsystem.component.ManyakOptionItem
 import app.manyak.designsystem.component.ManyakOptionsSheet
@@ -54,7 +55,6 @@ import app.manyak.designsystem.component.moreButtonTitleAlignment
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.my.persona.domain.parsePersonaDescription
 import app.manyak.my.persona.domain.personaFeatureSummary
-import app.manyak.my.presentation.component.MyDetailHeader
 import app.manyak.common.R as CommonR
 import app.manyak.designsystem.R as DesignsystemR
 import app.manyak.my.R as MyR
@@ -102,7 +102,7 @@ fun PersonaListScreen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.safeDrawing),
     ) {
-        MyDetailHeader(titleRes = MyR.string.my_persona_manage, onBack = onBack)
+        ManyakDetailHeader(titleRes = MyR.string.my_persona_manage, onBack = onBack)
         PersonaListContent(state = state, onIntent = viewModel::onIntent, modifier = Modifier.weight(1f))
     }
     PersonaListDialogs(state = state, onIntent = viewModel::onIntent)

@@ -50,13 +50,13 @@ import app.manyak.common.presentation.credit.LocalCreditPolicy
 import app.manyak.common.presentation.credit.creditAmountText
 import app.manyak.common.presentation.share.shareText
 import app.manyak.designsystem.component.FocusScrollMargin
+import app.manyak.designsystem.component.ManyakDetailHeader
 import app.manyak.designsystem.component.ManyakTextField
 import app.manyak.designsystem.component.SkeletonPlaceholder
 import app.manyak.designsystem.component.rememberSkeletonPulseAlpha
 import app.manyak.designsystem.credit.creditAmountAlpha
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.my.invite.entity.Invite
-import app.manyak.my.presentation.component.MyDetailHeader
 import app.manyak.my.presentation.component.MyFieldLabel
 import app.manyak.my.presentation.component.MyFieldMessage
 import app.manyak.my.presentation.component.MyOutlineButton
@@ -107,7 +107,7 @@ fun InviteScreen(
                     .fillMaxSize()
                     .windowInsetsPadding(WindowInsets.safeDrawing),
         ) {
-            MyDetailHeader(titleRes = MyR.string.my_invite, onBack = onBack)
+            ManyakDetailHeader(titleRes = MyR.string.my_invite, onBack = onBack)
             InviteContent(
                 state = state,
                 onIntent = viewModel::onIntent,

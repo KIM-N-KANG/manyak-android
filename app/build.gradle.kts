@@ -176,6 +176,7 @@ dependencies {
     implementation(projects.feature.chat)
     implementation(projects.feature.studio)
     implementation(projects.feature.my)
+    implementation(projects.feature.credit)
     implementation(projects.feature.create)
     implementation(projects.feature.story)
     implementation(projects.feature.notification)

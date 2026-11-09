@@ -72,6 +72,7 @@ import app.manyak.core.navigation.WithdrawalRoute
 import app.manyak.create.additionalinfo.presentation.CreateAdditionalInfoScreen
 import app.manyak.create.keyword.presentation.CreateKeywordScreen
 import app.manyak.create.storyline.presentation.CreateStorylineScreen
+import app.manyak.credit.presentation.CreditChargeScreen
 import app.manyak.designsystem.component.LocalSystemBarIconRequests
 import app.manyak.designsystem.component.ManyakNeutralButton
 import app.manyak.designsystem.component.ManyakProgressIndicator
@@ -84,13 +85,13 @@ import app.manyak.legal.consent.presentation.LegalConsentSheet
 import app.manyak.legal.consent.presentation.LegalConsentViewModel
 import app.manyak.legal.presentation.LegalDocumentScreen
 import app.manyak.login.presentation.LoginScreen
-import app.manyak.my.credit.presentation.CreditChargeScreen
 import app.manyak.my.feedback.presentation.FeedbackScreen
 import app.manyak.my.invite.presentation.InviteScreen
 import app.manyak.my.licenses.presentation.OpenSourceLicenseScreen
 import app.manyak.my.persona.presentation.PersonaFormScreen
 import app.manyak.my.persona.presentation.PersonaListScreen
 import app.manyak.my.profile.presentation.ProfileEditScreen
+import app.manyak.my.profile.presentation.component.InviteMenuItem
 import app.manyak.my.withdrawal.presentation.WithdrawalScreen
 import app.manyak.notification.settings.presentation.NotificationSettingsScreen
 import app.manyak.R as AppR
@@ -384,8 +385,8 @@ private fun EntryProviderScope<NavKey>.myDestinationEntries(backStack: MutableLi
         CreditChargeScreen(
             openHistory = route.openHistory,
             onBack = { backStack.pop() },
-            // 무료 충전 탭의 초대 줄은 마이와 같은 목적지로 간다.
-            onOpenInvite = { backStack.push(MyInviteRoute) },
+            // 무료 충전 탭의 초대 줄은 마이의 같은 줄을 그대로 넣어 같은 목적지로 간다.
+            inviteEntry = { InviteMenuItem(onClick = { backStack.push(MyInviteRoute) }) },
         )
     }
     entry<MyFeedbackRoute> {

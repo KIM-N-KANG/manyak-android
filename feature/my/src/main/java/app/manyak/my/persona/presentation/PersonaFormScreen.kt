@@ -36,6 +36,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import app.manyak.designsystem.component.FocusScrollMargin
 import app.manyak.designsystem.component.LoadFailedContent
+import app.manyak.designsystem.component.ManyakDetailHeader
 import app.manyak.designsystem.component.ManyakInputCounter
 import app.manyak.designsystem.component.ManyakMultilineTextField
 import app.manyak.designsystem.component.ManyakProgressIndicator
@@ -44,7 +45,6 @@ import app.manyak.designsystem.component.ManyakSelectOption
 import app.manyak.designsystem.component.ManyakTextField
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.my.persona.entity.PersonaGender
-import app.manyak.my.presentation.component.MyDetailHeader
 import app.manyak.my.presentation.component.MyFieldLabel
 import app.manyak.my.presentation.component.MyFieldMessage
 import app.manyak.my.presentation.component.MyPrimaryButton
@@ -77,7 +77,7 @@ fun PersonaFormScreen(
                     .fillMaxSize()
                     .windowInsetsPadding(WindowInsets.safeDrawing),
         ) {
-            MyDetailHeader(
+            ManyakDetailHeader(
                 titleRes = if (state.isEdit) MyR.string.persona_edit_header else MyR.string.persona_create_header,
                 onBack = onBack,
             )

@@ -1,8 +1,8 @@
 package app.manyak.di
 
 import app.manyak.common.domain.session.UserScopedStore
+import app.manyak.credit.data.repository.TrialsRepositoryImpl
 import app.manyak.legal.consent.data.repository.ConsentRepositoryImpl
-import app.manyak.my.credit.data.repository.TrialsRepositoryImpl
 import app.manyak.my.invite.data.datastore.InviteOnboardingStore
 import app.manyak.my.persona.data.repository.PersonaRepositoryImpl
 import app.manyak.my.profile.data.datastore.ProfileCacheStore

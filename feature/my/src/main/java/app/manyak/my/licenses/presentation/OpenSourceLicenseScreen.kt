@@ -30,9 +30,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import app.manyak.designsystem.component.ManyakDetailHeader
 import app.manyak.designsystem.component.ManyakProgressIndicator
 import app.manyak.designsystem.theme.ManyakTheme
-import app.manyak.my.presentation.component.MyDetailHeader
 import com.mikepenz.aboutlibraries.Libs
 import com.mikepenz.aboutlibraries.entity.License
 import com.mikepenz.aboutlibraries.ui.compose.produceLibraries
@@ -70,7 +70,7 @@ fun OpenSourceLicenseScreen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.safeDrawing),
     ) {
-        MyDetailHeader(titleRes = MyR.string.my_open_source_license, onBack = onBack)
+        ManyakDetailHeader(titleRes = MyR.string.my_open_source_license, onBack = onBack)
         if (groups.isEmpty()) {
             LoadingContent()
         } else {

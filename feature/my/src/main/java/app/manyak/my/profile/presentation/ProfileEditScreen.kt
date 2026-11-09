@@ -47,12 +47,12 @@ import app.manyak.common.entity.user.UserProfile
 import app.manyak.designsystem.component.FocusScrollMargin
 import app.manyak.designsystem.component.LoadFailedContent
 import app.manyak.designsystem.component.ManyakDestructiveDialog
+import app.manyak.designsystem.component.ManyakDetailHeader
 import app.manyak.designsystem.component.ManyakInputCounter
 import app.manyak.designsystem.component.ManyakTextField
 import app.manyak.designsystem.component.SkeletonPlaceholder
 import app.manyak.designsystem.component.rememberSkeletonPulseAlpha
 import app.manyak.designsystem.theme.ManyakTheme
-import app.manyak.my.presentation.component.MyDetailHeader
 import app.manyak.my.presentation.component.MyFieldLabel
 import app.manyak.my.presentation.component.MyFieldMessage
 import app.manyak.my.presentation.component.MyPrimaryButton
@@ -84,7 +84,7 @@ fun ProfileEditScreen(
                     .fillMaxSize()
                     .windowInsetsPadding(WindowInsets.safeDrawing),
         ) {
-            MyDetailHeader(
+            ManyakDetailHeader(
                 titleRes = MyR.string.profile_edit_header,
                 onBack = { viewModel.onIntent(ProfileEditIntent.Back) },
             )
