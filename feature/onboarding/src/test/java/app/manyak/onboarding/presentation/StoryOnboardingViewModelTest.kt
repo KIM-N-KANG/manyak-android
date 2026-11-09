@@ -1,4 +1,4 @@
-package app.manyak.home.onboarding.presentation
+package app.manyak.onboarding.presentation
 
 import app.manyak.analytics.domain.Analytics
 import app.manyak.analytics.entity.AnalyticsEvent
@@ -6,11 +6,9 @@ import app.manyak.analytics.entity.StoryOnboardingDetailSource
 import app.manyak.common.domain.chat.ChatStarter
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.story.PopularOriginalStories
 import app.manyak.common.entity.chat.CreatedChat
-import app.manyak.home.entity.StoryListFilter
-import app.manyak.home.entity.StoryListQuery
-import app.manyak.home.entity.StoryListSort
-import app.manyak.home.testing.FakeStoryRepository
+import app.manyak.common.entity.story.StorySummary
 import app.manyak.testing.MainDispatcherRule
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -20,6 +18,7 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.yield
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -34,21 +33,18 @@ class StoryOnboardingViewModelTest {
     val mainDispatcherRule = MainDispatcherRule(dispatcher)
 
     private val analytics = RecordingAnalytics()
-    private val repository = FakeStoryRepository()
+    private val stories = FakePopularOriginalStories()
     private val chatStarter = FakeChatStarter()
 
-    private fun viewModel() = StoryOnboardingViewModel(repository, chatStarter, analytics)
+    private fun viewModel() = StoryOnboardingViewModel(stories, chatStarter, analytics)
 
     @Test
-    fun `진입하면 오리지널 채팅순 첫 페이지를 읽고 진입을 한 번 센다`() =
+    fun `진입하면 인기 오리지널 첫 페이지를 읽고 진입을 한 번 센다`() =
         runTest(dispatcher) {
             val viewModel = viewModel()
             advanceUntilIdle()
 
-            assertEquals(
-                listOf(StoryListQuery(StoryListFilter.ORIGINAL, StoryListSort.CHATS) to null),
-                repository.requests,
-            )
+            assertEquals(1, stories.requests)
             assertEquals(2, viewModel.uiState.value.stories.size)
             assertEquals(listOf(AnalyticsEvent.StoryOnboardingViewed), analytics.events)
         }
@@ -150,7 +146,7 @@ class StoryOnboardingViewModelTest {
     @Test
     fun `조회가 실패하면 실패 화면을 기록하고 다시 시도로 읽는다`() =
         runTest(dispatcher) {
-            repository.queuedResults += DomainResult.Failure(DomainError.Network)
+            stories.queuedResults += DomainResult.Failure(DomainError.Network)
             val viewModel = viewModel()
             advanceUntilIdle()
             assertTrue(viewModel.uiState.value.loadFailed)
@@ -197,3 +193,32 @@ private class FakeChatStarter : ChatStarter {
         return result ?: DomainResult.Success(CreatedChat("chat-$storyId"))
     }
 }
+
+/** 조회 결과는 큐에서 꺼내고 비면 스토리 두 편을 돌려준다. */
+private class FakePopularOriginalStories : PopularOriginalStories {
+    var requests = 0
+        private set
+    val queuedResults = ArrayDeque<DomainResult<List<StorySummary>>>()
+
+    override suspend fun firstPage(): DomainResult<List<StorySummary>> {
+        // 실제 네트워크 호출처럼 반드시 한 번 양보한다.
+        yield()
+        requests++
+        return queuedResults.removeFirstOrNull()
+            ?: DomainResult.Success(listOf(sampleStory("story-1"), sampleStory("story-2")))
+    }
+}
+
+private fun sampleStory(id: String) =
+    StorySummary(
+        id = id,
+        title = "스토리 $id",
+        authorNickname = "마냑",
+        thumbnailUrl = null,
+        oneLineIntro = "",
+        genres = emptyList(),
+        likeCount = 0,
+        turnCount = 0,
+        createdDate = null,
+        isOriginal = true,
+    )

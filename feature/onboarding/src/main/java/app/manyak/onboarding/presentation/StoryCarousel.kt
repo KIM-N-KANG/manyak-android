@@ -1,4 +1,4 @@
-package app.manyak.home.onboarding.presentation
+package app.manyak.onboarding.presentation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -51,10 +51,10 @@ import app.manyak.designsystem.component.SkeletonPlaceholder
 import app.manyak.designsystem.component.StoryCover
 import app.manyak.designsystem.component.rememberSkeletonPulseAlpha
 import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.onboarding.R
 import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
 import app.manyak.designsystem.R as DesignsystemR
-import app.manyak.home.R as HomeR
 
 /**
  * 가운데 카드와 양옆 카드 일부가 보이는 무한 순환 캐러셀.
@@ -126,7 +126,7 @@ private fun CarouselCard(
     val shape = ManyakTheme.shapes.featureCard
     val clickLabel =
         stringResource(
-            if (isCenter) HomeR.string.story_onboarding_detail else HomeR.string.story_onboarding_select_story,
+            if (isCenter) R.string.story_onboarding_detail else R.string.story_onboarding_select_story,
         )
     Column(
         modifier =
@@ -192,7 +192,7 @@ private fun TitleRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = stringResource(HomeR.string.story_onboarding_detail),
+                text = stringResource(R.string.story_onboarding_detail),
                 style = ManyakTheme.typography.labelSmall,
                 color = ManyakTheme.colors.textSubtlest,
             )
@@ -209,7 +209,7 @@ private fun TitleRow(
 /** 목록을 받기 전 같은 자리에 둔 카드 골격 세 장. 실제 캐러셀과 같은 크기와 옆 카드 모양을 쓴다. */
 @Composable
 internal fun CarouselSkeleton() {
-    val loading = stringResource(HomeR.string.home_loading)
+    val loading = stringResource(R.string.story_onboarding_loading)
     BoxWithConstraints(
         modifier = Modifier.fillMaxSize().semantics { contentDescription = loading },
         contentAlignment = Alignment.Center,

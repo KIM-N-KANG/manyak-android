@@ -1,4 +1,4 @@
-package app.manyak.home.onboarding.domain
+package app.manyak.onboarding.domain
 
 import app.manyak.common.domain.invite.SignupOnboardingWriter
 import kotlinx.coroutines.flow.Flow

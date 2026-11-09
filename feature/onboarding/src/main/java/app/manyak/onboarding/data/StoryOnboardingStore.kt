@@ -1,4 +1,4 @@
-package app.manyak.home.onboarding.data
+package app.manyak.onboarding.data
 
 import android.content.Context
 import androidx.datastore.core.DataStore
@@ -11,7 +11,7 @@ import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.preferencesDataStoreFile
 import app.manyak.common.data.di.IoDispatcher
 import app.manyak.common.domain.session.UserScopedStore
-import app.manyak.home.onboarding.domain.StoryOnboardingRepository
+import app.manyak.onboarding.domain.StoryOnboardingRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow

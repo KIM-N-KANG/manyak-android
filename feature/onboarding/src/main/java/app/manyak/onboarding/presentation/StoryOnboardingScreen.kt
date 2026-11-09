@@ -1,4 +1,4 @@
-package app.manyak.home.onboarding.presentation
+package app.manyak.onboarding.presentation
 
 import android.widget.Toast
 import androidx.compose.animation.Crossfade
@@ -46,8 +46,8 @@ import app.manyak.designsystem.component.LoadFailedContent
 import app.manyak.designsystem.component.ManyakProgressIndicator
 import app.manyak.designsystem.component.ManyakTextButton
 import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.onboarding.R
 import app.manyak.common.R as CommonR
-import app.manyak.home.R as HomeR
 
 /**
  * 신규 가입 회원의 첫 화면. 셸도 뒤로가기 버튼도 없다 — 채팅을 시작하거나 간편 제작으로 가야 벗어난다.
@@ -81,7 +81,7 @@ fun StoryOnboardingScreen(
                         Toast
                             .makeText(
                                 context,
-                                HomeR.string.story_onboarding_start_chat_failed,
+                                R.string.story_onboarding_start_chat_failed,
                                 Toast.LENGTH_SHORT,
                             ).show()
                 }
@@ -175,7 +175,7 @@ private fun OnboardingHeader(
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
             modifier = Modifier.semantics { heading() },
-            text = stringResource(HomeR.string.story_onboarding_title),
+            text = stringResource(R.string.story_onboarding_title),
             style = ManyakTheme.typography.headlineSmall,
             color = ManyakTheme.colors.text,
         )
@@ -183,7 +183,7 @@ private fun OnboardingHeader(
         // 좁은 화면과 큰 글자에서는 버튼이 다음 줄로 내려간다. 문구 옆에 붙을 때는 글자 기준선이 맞도록 가운데 정렬한다.
         FlowRow(itemVerticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = stringResource(HomeR.string.story_onboarding_create_prompt),
+                text = stringResource(R.string.story_onboarding_create_prompt),
                 style = ManyakTheme.typography.bodyMedium,
                 color = ManyakTheme.colors.textSubtle,
             )
@@ -192,7 +192,7 @@ private fun OnboardingHeader(
                 contentPadding = PaddingValues(horizontal = ManyakTheme.spacing.compact),
             ) {
                 Text(
-                    text = stringResource(HomeR.string.story_onboarding_create),
+                    text = stringResource(R.string.story_onboarding_create),
                     style = ManyakTheme.typography.labelLarge,
                     color = ManyakTheme.colors.textBrand,
                 )
@@ -205,7 +205,7 @@ private fun OnboardingHeader(
 private fun EmptyStories() {
     Text(
         modifier = Modifier.fillMaxWidth().padding(horizontal = ManyakTheme.spacing.gutter),
-        text = stringResource(HomeR.string.story_onboarding_empty),
+        text = stringResource(R.string.story_onboarding_empty),
         style = ManyakTheme.typography.bodyLargeStrong,
         color = ManyakTheme.colors.text,
         textAlign = TextAlign.Center,
@@ -243,7 +243,7 @@ private fun StartChatButton(
         Box(contentAlignment = Alignment.Center) {
             Text(
                 modifier = Modifier.alpha(if (isStarting) 0f else 1f),
-                text = stringResource(HomeR.string.story_onboarding_start_chat),
+                text = stringResource(R.string.story_onboarding_start_chat),
                 style = ManyakTheme.typography.labelLarge,
             )
             if (isStarting) {

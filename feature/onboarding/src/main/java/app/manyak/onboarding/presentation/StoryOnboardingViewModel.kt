@@ -1,4 +1,4 @@
-package app.manyak.home.onboarding.presentation
+package app.manyak.onboarding.presentation
 
 import androidx.lifecycle.viewModelScope
 import app.manyak.analytics.domain.Analytics
@@ -6,12 +6,9 @@ import app.manyak.analytics.entity.AnalyticsEvent
 import app.manyak.analytics.entity.StoryOnboardingDetailSource
 import app.manyak.common.domain.chat.ChatStarter
 import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.domain.story.PopularOriginalStories
 import app.manyak.common.entity.story.StorySummary
 import app.manyak.common.presentation.mvi.MviViewModel
-import app.manyak.home.domain.HomeRepository
-import app.manyak.home.entity.StoryListFilter
-import app.manyak.home.entity.StoryListQuery
-import app.manyak.home.entity.StoryListSort
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -90,7 +87,7 @@ sealed interface StoryOnboardingEffect {
 class StoryOnboardingViewModel
     @Inject
     constructor(
-        private val storyRepository: HomeRepository,
+        private val stories: PopularOriginalStories,
         private val chatStarter: ChatStarter,
         private val analytics: Analytics,
     ) : MviViewModel<StoryOnboardingIntent, StoryOnboardingUiState, StoryOnboardingEvent, StoryOnboardingEffect>(
@@ -136,14 +133,12 @@ class StoryOnboardingViewModel
                 StoryOnboardingEvent.ChatStartReleased -> state.copy(isStartingChat = false)
             }
 
-        // ponytail: 첫 페이지(20편)만 읽는다. 오리지널이 그보다 많아지면 다음 커서까지 이어 읽는다.
         private fun load() {
             loadJob =
                 viewModelScope.launch {
                     dispatchEvent(StoryOnboardingEvent.LoadStarted)
-                    val query = StoryListQuery(StoryListFilter.ORIGINAL, StoryListSort.CHATS)
-                    when (val result = storyRepository.publicStories(query)) {
-                        is DomainResult.Success -> dispatchEvent(StoryOnboardingEvent.Loaded(result.value.items))
+                    when (val result = stories.firstPage()) {
+                        is DomainResult.Success -> dispatchEvent(StoryOnboardingEvent.Loaded(result.value))
                         is DomainResult.Failure -> {
                             analytics.track(AnalyticsEvent.StoryOnboardingLoadErrorShown)
                             dispatchEvent(StoryOnboardingEvent.LoadFailed)
