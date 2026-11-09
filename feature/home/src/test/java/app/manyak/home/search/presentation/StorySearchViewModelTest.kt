@@ -8,39 +8,30 @@ import app.manyak.home.search.domain.RecentSearchRepository
 import app.manyak.home.search.domain.prependRecentSearch
 import app.manyak.home.testing.FakeStoryRepository
 import app.manyak.home.testing.sampleStories
-import kotlinx.coroutines.Dispatchers
+import app.manyak.testing.MainDispatcherRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class StorySearchViewModelTest {
     private val dispatcher = StandardTestDispatcher()
+
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule(dispatcher)
+
     private val repository = FakeStoryRepository()
     private val recent = FakeRecentSearches()
-
-    @Before
-    fun setUp() {
-        Dispatchers.setMain(dispatcher)
-    }
-
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
-    }
 
     private fun viewModel(saved: SavedStateHandle = SavedStateHandle()) =
         StorySearchViewModel(repository, recent, saved)

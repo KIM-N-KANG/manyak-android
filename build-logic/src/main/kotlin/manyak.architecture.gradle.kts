@@ -1,4 +1,5 @@
 import architecture.CheckModuleArchitecture
+import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ProjectDependency
 
 val architectureCompiler =
@@ -25,10 +26,12 @@ val architectureCheck =
 gradle.projectsEvaluated {
     // Grouping projects such as :core and :feature have no build file and own no code.
     val modules = rootProject.subprojects.filter { it.buildFile.exists() }
-    val graph =
+
+    fun graph(test: Boolean) =
         modules.associate { module ->
             module.path.removePrefix(":") to
                 module.configurations
+                    .filter { it.isTestConfiguration() == test }
                     .flatMap { configuration ->
                         configuration.dependencies
                             .withType<ProjectDependency>()
@@ -37,7 +40,11 @@ gradle.projectsEvaluated {
                     }.toSet()
         }
     architectureCheck.configure {
-        dependencyGraph.set(graph)
+        dependencyGraph.set(graph(test = false))
+        testDependencyGraph.set(graph(test = true))
         sources.from(modules.map { it.fileTree("src/main") { include("**/*.kt") } })
     }
 }
+
+// Configurations used only by test source sets, such as testImplementation, androidTestImplementation and kspTest.
+fun Configuration.isTestConfiguration() = name.startsWith("test") || name.startsWith("androidTest") || "Test" in name

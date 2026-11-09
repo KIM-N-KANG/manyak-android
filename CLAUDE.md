@@ -54,7 +54,7 @@
 
 모듈 소유권, 계층과 의존 규칙은 하네스 [공용 Android 컴포넌트 구조](../knk-harness/docs/platform/CLIENT/ANDROID/1-COMPONENT-ARCHITECTURE.md)를 따릅니다. 실제 모듈 등록은 `settings.gradle.kts`를 확인하세요.
 
-`app`이 `core/`의 기반 모듈과 `feature/`의 화면 기능 모듈을 조립합니다. Gradle 경로도 폴더를 따라 `:core:<모듈>`, `:feature:<모듈>`이고 의존은 `projects.core.common`, `projects.feature.home`처럼 씁니다. 기능 간 공유 업무인 report는 `core/`에 둡니다. 기능은 필요한 entity/domain/data/presentation 패키지를 소유하고, chat·create·my의 하위 기능도 패키지로 구분합니다. `checkModuleArchitecture`가 프로젝트 의존과 Kotlin PSI 기반 계층 경계를 검사하며 루트 `check`에 연결되어 있습니다. navigation의 기존 Kotlin 패키지는 직렬화 호환을 위해 유지합니다.
+`app`이 `core/`의 기반 모듈과 `feature/`의 화면 기능 모듈을 조립합니다. Gradle 경로도 폴더를 따라 `:core:<모듈>`, `:feature:<모듈>`이고 의존은 `projects.core.common`, `projects.feature.home`처럼 씁니다. 기능 간 공유 업무인 report는 `core/`에 둡니다. `core/testing`은 테스트 소스 세트 전용으로, 여러 모듈이 같이 쓰는 `MainDispatcherRule`과 core 계약의 Fake만 둡니다. 프로덕션 의존은 `checkModuleArchitecture`가 막고, 한 모듈만 쓰는 Fake는 그 모듈의 `src/test`에 둡니다. 기능은 필요한 entity/domain/data/presentation 패키지를 소유하고, chat·create·my의 하위 기능도 패키지로 구분합니다. `checkModuleArchitecture`가 프로젝트 의존과 Kotlin PSI 기반 계층 경계를 검사하며 루트 `check`에 연결되어 있습니다. navigation의 기존 Kotlin 패키지는 직렬화 호환을 위해 유지합니다.
 
 - 모듈을 추가·삭제·이름 변경하면 `settings.gradle.kts`와 함께 `.idea/gradle.xml`의 `<option value="$PROJECT_DIR$/<core|feature>/<모듈>" />` 목록도 같은 커밋에서 갱신합니다(알파벳 순). 이 파일은 추적 대상이라, 빠뜨리면 사용자가 IDE 싱크할 때 diff가 남습니다. `build-logic`의 `ModuleArchitecture.kt` 모듈 집합도 함께 고치고(모듈이 정해진 그룹 경로에 등록됐는지도 이 집합으로 검사합니다) `:build-logic:ktlintCheck`까지 로컬 검증에 포함합니다.
 

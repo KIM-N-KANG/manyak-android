@@ -8,29 +8,26 @@ import app.manyak.common.entity.credit.Trials
 import app.manyak.common.presentation.credit.AttendanceOutcome
 import app.manyak.create.entity.PendingStoryCreation
 import app.manyak.create.presentation.state.StorylineGenerationState
-import app.manyak.create.testing.FakeAttendanceClaimer
-import app.manyak.create.testing.FakeCreditPolicyRepository
 import app.manyak.create.testing.FakePendingStoryCreationStore
-import app.manyak.create.testing.FakeTrialsRepository
 import app.manyak.create.testing.FakeUserProfileRepository
 import app.manyak.create.testing.TEST_DRAFT_ID
 import app.manyak.create.testing.sampleProfile
-import kotlinx.coroutines.Dispatchers
+import app.manyak.testing.FakeAttendanceClaimer
+import app.manyak.testing.FakeCreditPolicyRepository
+import app.manyak.testing.FakeTrialsRepository
+import app.manyak.testing.MainDispatcherRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withTimeoutOrNull
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 
 /** 완성 전 잔액 선검사와 이프 부족 시트. */
@@ -38,15 +35,8 @@ import org.junit.Test
 class CreateAdditionalInfoCreditShortageTest {
     private val dispatcher = StandardTestDispatcher()
 
-    @Before
-    fun setUp() {
-        Dispatchers.setMain(dispatcher)
-    }
-
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
-    }
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule(dispatcher)
 
     @Test
     fun `체험을 다 쓰고 아는 잔액이 완성 비용보다 적으면 완성 요청 없이 이프 부족 시트를 연다`() =

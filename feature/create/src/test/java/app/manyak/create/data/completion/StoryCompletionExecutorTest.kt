@@ -16,8 +16,8 @@ import app.manyak.create.entity.StoryCompletionRequest
 import app.manyak.create.testing.FakePendingStoryCreationStore
 import app.manyak.create.testing.FakeStoryCompletionRequestStore
 import app.manyak.create.testing.FakeStoryCreationRepository
-import app.manyak.create.testing.FakeTrialsRepository
 import app.manyak.create.testing.sampleStorylineGeneration
+import app.manyak.testing.FakeTrialsRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch

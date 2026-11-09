@@ -3,47 +3,37 @@ package app.manyak.chat.room.presentation
 import app.manyak.analytics.domain.NoOpAnalytics
 import app.manyak.chat.entity.ChatStreamEvent
 import app.manyak.chat.room.presentation.composer.InputBlockType
-import app.manyak.chat.testing.FakeAttendanceClaimer
 import app.manyak.chat.testing.FakeChatPreferencesRepository
 import app.manyak.chat.testing.FakeChatRepository
-import app.manyak.chat.testing.FakeCreditPolicyRepository
 import app.manyak.chat.testing.FakeCreditTransactionReader
 import app.manyak.chat.testing.FakeReportRepository
-import app.manyak.chat.testing.FakeTrialsRepository
 import app.manyak.chat.testing.FakeUserProfileRepository
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
-import kotlinx.coroutines.Dispatchers
+import app.manyak.testing.FakeAttendanceClaimer
+import app.manyak.testing.FakeCreditPolicyRepository
+import app.manyak.testing.FakeTrialsRepository
+import app.manyak.testing.MainDispatcherRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withTimeoutOrNull
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ChatRoomDeleteTest {
     private val dispatcher = StandardTestDispatcher()
 
-    @Before
-    fun setUp() {
-        Dispatchers.setMain(dispatcher)
-    }
-
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
-    }
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule(dispatcher)
 
     @Test
     fun `삭제를 확정하면 진행 중인 스트림을 끊고 지운다`() =

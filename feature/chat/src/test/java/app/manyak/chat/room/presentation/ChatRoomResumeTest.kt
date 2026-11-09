@@ -6,34 +6,31 @@ import app.manyak.chat.entity.ChatStreamEvent
 import app.manyak.chat.entity.ChatTurn
 import app.manyak.chat.entity.GeneratingTurn
 import app.manyak.chat.room.presentation.composer.InputBlockType
-import app.manyak.chat.testing.FakeAttendanceClaimer
 import app.manyak.chat.testing.FakeChatPreferencesRepository
 import app.manyak.chat.testing.FakeChatRepository
-import app.manyak.chat.testing.FakeCreditPolicyRepository
 import app.manyak.chat.testing.FakeCreditTransactionReader
 import app.manyak.chat.testing.FakeReportRepository
-import app.manyak.chat.testing.FakeTrialsRepository
 import app.manyak.chat.testing.FakeUserProfileRepository
 import app.manyak.chat.testing.sampleChatDetail
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
 import app.manyak.designsystem.text.PassageSegment
-import kotlinx.coroutines.Dispatchers
+import app.manyak.testing.FakeAttendanceClaimer
+import app.manyak.testing.FakeCreditPolicyRepository
+import app.manyak.testing.FakeTrialsRepository
+import app.manyak.testing.MainDispatcherRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withTimeoutOrNull
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 
 /** 끊긴 생성과 나갔다 들어온 방의 생성 중인 턴을 이어받는다. */
@@ -41,15 +38,8 @@ import org.junit.Test
 class ChatRoomResumeTest {
     private val dispatcher = StandardTestDispatcher()
 
-    @Before
-    fun setUp() {
-        Dispatchers.setMain(dispatcher)
-    }
-
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
-    }
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule(dispatcher)
 
     @Test
     fun `보낼 때 화면의 마지막 턴을 싣고 첫 턴이면 null 을 싣는다`() =

@@ -8,32 +8,23 @@ import app.manyak.notification.inbox.entity.InboxNotification
 import app.manyak.notification.inbox.entity.NotificationCategory
 import app.manyak.notification.inbox.entity.NotificationPage
 import app.manyak.notification.inbox.entity.NotificationUnreadCount
+import app.manyak.testing.MainDispatcherRule
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class NotificationInboxViewModelTest {
-    @Before fun setUp() {
-        Dispatchers.setMain(StandardTestDispatcher())
-    }
-
-    @After fun tearDown() {
-        Dispatchers.resetMain()
-    }
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
 
     @Test
     fun `첫 조회 실패는 재시도하고 새로고침 실패는 목록을 유지한다`() =

@@ -3,31 +3,28 @@ package app.manyak.chat.room.presentation
 import app.manyak.analytics.domain.NoOpAnalytics
 import app.manyak.chat.entity.ChatStreamEvent
 import app.manyak.chat.room.presentation.composer.InputBlockType
-import app.manyak.chat.testing.FakeAttendanceClaimer
 import app.manyak.chat.testing.FakeChatPreferencesRepository
 import app.manyak.chat.testing.FakeChatRepository
-import app.manyak.chat.testing.FakeCreditPolicyRepository
 import app.manyak.chat.testing.FakeCreditTransactionReader
 import app.manyak.chat.testing.FakeReportRepository
-import app.manyak.chat.testing.FakeTrialsRepository
 import app.manyak.chat.testing.FakeUserProfileRepository
 import app.manyak.chat.testing.sampleChatDetail
 import app.manyak.common.domain.error.DomainError
 import app.manyak.common.domain.error.DomainResult
-import kotlinx.coroutines.Dispatchers
+import app.manyak.testing.FakeAttendanceClaimer
+import app.manyak.testing.FakeCreditPolicyRepository
+import app.manyak.testing.FakeTrialsRepository
+import app.manyak.testing.MainDispatcherRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withTimeoutOrNull
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
-import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 
 /** 채팅 설정 시트의 실시간 이미지 토글. 요청 본문과 진행 블록의 스냅샷을 고정한다. */
@@ -35,15 +32,8 @@ import org.junit.Test
 class ChatRoomSettingsTest {
     private val dispatcher = StandardTestDispatcher()
 
-    @Before
-    fun setUp() {
-        Dispatchers.setMain(dispatcher)
-    }
-
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
-    }
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule(dispatcher)
 
     @Test
     fun `저장된 실시간 이미지 설정을 진입 시 상태로 올린다`() =

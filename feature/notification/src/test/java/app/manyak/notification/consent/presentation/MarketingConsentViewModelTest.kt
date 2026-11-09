@@ -10,39 +10,26 @@ import app.manyak.notification.consent.domain.MarketingConsentPromptRepository
 import app.manyak.notification.consent.entity.ConsentChange
 import app.manyak.notification.settings.domain.PushSettingsRepository
 import app.manyak.notification.settings.entity.PushSettings
-import kotlinx.coroutines.Dispatchers
+import app.manyak.testing.MainDispatcherRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 
 /** 시트를 띄우는 조건, 저장 요청의 모양, 거절·허용 기록 시점, 약관 시트의 선택 항목 처리를 고정한다. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class MarketingConsentViewModelTest {
-    private val dispatcher = StandardTestDispatcher()
-
-    @Before
-    fun setUp() {
-        Dispatchers.setMain(dispatcher)
-    }
-
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
-    }
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
 
     @Test
     fun `물을 차례이고 서버가 미동의면 시트를 띄운다`() =

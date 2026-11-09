@@ -2,17 +2,17 @@ package app.manyak.create.additionalinfo.presentation
 
 import app.manyak.analytics.domain.NoOpAnalytics
 import app.manyak.create.presentation.state.StorylineGenerationStore
-import app.manyak.create.testing.FakeAttendanceClaimer
 import app.manyak.create.testing.FakeCreateTutorialProgress
-import app.manyak.create.testing.FakeCreditPolicyRepository
 import app.manyak.create.testing.FakePendingStoryCreationStore
 import app.manyak.create.testing.FakeSimpleDraftStore
 import app.manyak.create.testing.FakeStoryCompletionSubmitter
 import app.manyak.create.testing.FakeStoryCreationRepository
-import app.manyak.create.testing.FakeTrialsRepository
 import app.manyak.create.testing.FakeUserProfileRepository
 import app.manyak.create.testing.TEST_DRAFT_ID
 import app.manyak.create.testing.sampleGenerationInput
+import app.manyak.testing.FakeAttendanceClaimer
+import app.manyak.testing.FakeCreditPolicyRepository
+import app.manyak.testing.FakeTrialsRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle

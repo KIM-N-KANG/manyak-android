@@ -5,35 +5,22 @@ import app.manyak.common.domain.error.DomainResult
 import app.manyak.notification.consent.entity.ConsentChange
 import app.manyak.notification.settings.domain.PushSettingsRepository
 import app.manyak.notification.settings.entity.PushSettings
-import kotlinx.coroutines.Dispatchers
+import app.manyak.testing.MainDispatcherRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
-import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 
 /** 야간·광고의 종속 규칙과 저장 실패의 되돌리기를 고정한다. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class NotificationSettingsViewModelTest {
-    private val dispatcher = StandardTestDispatcher()
-
-    @Before
-    fun setUp() {
-        Dispatchers.setMain(dispatcher)
-    }
-
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
-    }
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
 
     @Test
     fun `불러온 값을 그대로 든다`() =

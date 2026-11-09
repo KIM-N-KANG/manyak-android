@@ -5,31 +5,24 @@ import app.manyak.common.domain.error.DomainResult
 import app.manyak.notice.entity.NoticeDetail
 import app.manyak.notice.entity.NoticePage
 import app.manyak.notice.entity.NoticeSummary
-import kotlinx.coroutines.Dispatchers
+import app.manyak.testing.MainDispatcherRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 
 /** 안 읽음 판정의 갱신, 커서 이어 붙이기와 실패 자리, 상세 읽음 기록과 404 를 고정한다. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class NoticeViewModelsTest {
-    @Before
-    fun setUp() = Dispatchers.setMain(StandardTestDispatcher())
-
-    @After
-    fun tearDown() = Dispatchers.resetMain()
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
 
     private val now = System.currentTimeMillis()
     private val day = 24L * 60 * 60 * 1000

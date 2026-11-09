@@ -29,6 +29,7 @@ class ModuleArchitecture : AutoCloseable {
     fun check(
         graph: Map<String, Set<String>>,
         sources: Map<String, String>,
+        testGraph: Map<String, Set<String>> = emptyMap(),
     ): List<String> {
         val errors = mutableListOf<String>()
         graph.keys.forEach { path ->
@@ -40,14 +41,17 @@ class ModuleArchitecture : AutoCloseable {
                 errors += "$module must be registered as :$expected"
             }
         }
-        val moduleGraph =
-            graph.entries.associate { (path, dependencies) ->
-                path.substringAfterLast(':') to dependencies.map { it.substringAfterLast(':') }.toSet()
-            }
+        val moduleGraph = byModule(graph)
         moduleGraph.forEach { (module, dependencies) ->
             val allowed = allowedDependencies[module].orEmpty()
             dependencies.filter { it !in allowed }.forEach {
                 errors += "$module must not depend on $it"
+            }
+        }
+        byModule(testGraph).forEach { (module, dependencies) ->
+            val allowed = allowedDependencies[module].orEmpty() + "testing" - module
+            dependencies.filter { it !in allowed }.forEach {
+                errors += "$module tests must not depend on $it"
             }
         }
         val files = sources.mapValues { (path, source) -> factory.createFile(path.substringAfterLast('/'), source) }
@@ -80,7 +84,7 @@ class ModuleArchitecture : AutoCloseable {
                 errors += "$path: package $pkg does not belong to $module"
             }
             val layer = layerOf(pkg)
-            if (module !in setOf("app", "navigation", "designsystem") && layer == null) {
+            if (module !in layerFree && layer == null) {
                 errors += "$path: production code needs an entity/domain/data/presentation package"
             }
             references(file).forEach { reference ->
@@ -95,6 +99,11 @@ class ModuleArchitecture : AutoCloseable {
         }
         return errors.distinct().sorted()
     }
+
+    private fun byModule(graph: Map<String, Set<String>>): Map<String, Set<String>> =
+        graph.entries.associate { (path, dependencies) ->
+            path.substringAfterLast(':') to dependencies.map { it.substringAfterLast(':') }.toSet()
+        }
 
     private fun references(file: KtFile): Set<String> =
         buildSet {
@@ -144,7 +153,7 @@ class ModuleArchitecture : AutoCloseable {
         if (target != null && target != module && target !in graph[module].orEmpty()) {
             errors += "$path: $reference needs an explicit, allowed module dependency"
         }
-        if (module == "app" || module == "designsystem" || module == "navigation") return
+        if (module in layerFree) return
         if (target == "network" && module != "network" && layer != "data") {
             errors += "$path: only data may use network: $reference"
         }
@@ -178,7 +187,10 @@ class ModuleArchitecture : AutoCloseable {
         private val features =
             setOf("home", "chat", "studio", "story", "login", "legal", "my", "create", "notification", "notice")
         private val infrastructure = setOf("common", "designsystem", "navigation", "analytics", "network", "auth")
-        private val core = infrastructure + "report"
+        private val core = infrastructure + "report" + "testing"
+
+        /** Modules without entity/domain/data/presentation packages. testing is a test-only helper module. */
+        private val layerFree = setOf("app", "navigation", "designsystem", "testing")
 
         /** Gradle path without the leading colon; null for an unknown module. */
         private fun pathOf(module: String): String? =
@@ -199,6 +211,8 @@ class ModuleArchitecture : AutoCloseable {
                 put("analytics", setOf("common"))
                 put("auth", setOf("common", "network"))
                 put("report", setOf("common", "network", "designsystem", "analytics"))
+                // Production code never depends on testing; test source sets may (see testGraph).
+                put("testing", setOf("common"))
                 features.forEach { feature ->
                     put(
                         feature,

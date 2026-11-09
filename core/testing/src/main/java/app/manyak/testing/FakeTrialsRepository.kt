@@ -1,4 +1,4 @@
-package app.manyak.create.testing
+package app.manyak.testing
 
 import app.manyak.common.domain.credit.TrialsRepository
 import app.manyak.common.entity.credit.Trials

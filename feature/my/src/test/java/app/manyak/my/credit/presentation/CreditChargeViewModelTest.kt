@@ -9,31 +9,24 @@ import app.manyak.common.entity.credit.CreditTransactionPage
 import app.manyak.common.entity.user.AccountStatus
 import app.manyak.common.entity.user.UserProfile
 import app.manyak.my.credit.domain.CreditRepository
-import kotlinx.coroutines.Dispatchers
+import app.manyak.testing.MainDispatcherRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
-import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 
 /** 마이에서 옮겨 온 출석 계약. 지급 결과를 잔액에 직접 더하지 않고 프로필을 다시 읽는지 본다. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class CreditChargeViewModelTest {
-    @Before
-    fun setUp() = Dispatchers.setMain(StandardTestDispatcher())
-
-    @After
-    fun tearDown() = Dispatchers.resetMain()
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
 
     @Test
     fun `출석 보상을 받으면 프로필을 다시 읽어 잔액을 맞춘다`() =

@@ -23,6 +23,37 @@ class ModuleArchitectureTest {
     }
 
     @Test
+    fun `testing is only for test source sets`() {
+        assertViolation(
+            mapOf("feature:home" to setOf("core:testing"), "core:testing" to setOf("core:common")),
+            emptyMap(),
+            "home must not depend on testing",
+        )
+        val errors =
+            check(
+                mapOf("feature:home" to setOf("core:common"), "core:testing" to setOf("core:common")),
+                emptyMap(),
+                testGraph = mapOf("feature:home" to setOf("core:testing")),
+            )
+        assertTrue(errors.toString(), errors.isEmpty())
+        assertViolation(
+            mapOf("feature:home" to emptySet()),
+            emptyMap(),
+            "home tests must not depend on chat",
+            testGraph = mapOf("feature:home" to setOf("feature:chat")),
+        )
+        assertViolation(
+            mapOf("feature:home" to emptySet()),
+            mapOf(
+                "feature/home/Screen.kt" to
+                    "package app.manyak.home.presentation\nimport app.manyak.testing.FakeTrialsRepository",
+            ),
+            "needs an explicit, allowed module dependency",
+            testGraph = mapOf("feature:home" to setOf("core:testing")),
+        )
+    }
+
+    @Test
     fun `presentation cannot import data with an alias`() {
         assertViolation(
             mapOf("feature:home" to emptySet()),
@@ -177,14 +208,16 @@ class ModuleArchitectureTest {
     private fun check(
         graph: Map<String, Set<String>>,
         sources: Map<String, String>,
-    ) = ModuleArchitecture().use { it.check(graph, sources) }
+        testGraph: Map<String, Set<String>> = emptyMap(),
+    ) = ModuleArchitecture().use { it.check(graph, sources, testGraph) }
 
     private fun assertViolation(
         graph: Map<String, Set<String>>,
         sources: Map<String, String>,
         expected: String,
+        testGraph: Map<String, Set<String>> = emptyMap(),
     ) {
-        val errors = check(graph, sources)
+        val errors = check(graph, sources, testGraph)
         assertTrue("Expected $expected, got $errors", errors.any { expected in it })
     }
 }

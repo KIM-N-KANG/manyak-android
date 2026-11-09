@@ -13,7 +13,7 @@ import app.manyak.create.entity.StoryTagCategory
 import app.manyak.create.general.data.GeneralReviewWatch
 import app.manyak.create.general.entity.GeneralDraftOpen
 import app.manyak.create.testing.FakeStoryCreationRepository
-import kotlinx.coroutines.Dispatchers
+import app.manyak.testing.MainDispatcherRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancel
@@ -22,29 +22,26 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
-import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class GeneralStoryViewModelTest {
     private val dispatcher = StandardTestDispatcher()
-    private val models = mutableListOf<GeneralStoryViewModel>()
 
-    @Before fun setUp() {
-        Dispatchers.setMain(dispatcher)
-    }
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule(dispatcher)
+
+    private val models = mutableListOf<GeneralStoryViewModel>()
 
     @After fun tearDown() {
         models.forEach { it.viewModelScope.cancel() }
-        Dispatchers.resetMain()
     }
 
     @Test

@@ -12,37 +12,24 @@ import app.manyak.common.entity.consent.ConsentItem
 import app.manyak.common.entity.consent.RequiredConsent
 import app.manyak.legal.consent.domain.ConsentRepository
 import app.manyak.legal.consent.entity.ConsentStatus
-import kotlinx.coroutines.Dispatchers
+import app.manyak.testing.MainDispatcherRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 
 /** 회원 진입 판정, 체크·제출 규칙, 버전 불일치 재조회, 뒤로가기 로그아웃, 세션 교체, 가입 대기 동의를 고정한다. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class LegalConsentViewModelTest {
-    private val dispatcher = StandardTestDispatcher()
-
-    @Before
-    fun setUp() {
-        Dispatchers.setMain(dispatcher)
-    }
-
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
-    }
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
 
     @Test
     fun `회원이 되면 조회하고 필요 항목이 있으면 시트를 띄운다`() =

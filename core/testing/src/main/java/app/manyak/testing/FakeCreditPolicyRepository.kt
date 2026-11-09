@@ -1,4 +1,4 @@
-package app.manyak.chat.testing
+package app.manyak.testing
 
 import app.manyak.common.domain.credit.CreditPolicyRepository
 import app.manyak.common.entity.credit.CreditPolicy

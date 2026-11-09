@@ -28,7 +28,8 @@ manyak-android/
 │   ├── navigation/            # 라우트 단일 등록처
 │   ├── designsystem/          # ManyakTheme · 시각적 공용 컴포넌트
 │   ├── common/                # 실제 공통 entity/domain/data/presentation
-│   └── report/                # 공유 신고 업무
+│   ├── report/                # 공유 신고 업무
+│   └── testing/               # 테스트 전용: MainDispatcherRule · 공용 Fake
 └── feature/                   # 화면 기능 (:feature:<모듈>)
     ├── home/, studio/, story/ # 오리지널 목록 · 내 목록 · 상세
     ├── chat/                  # list/presentation · room/presentation
@@ -38,7 +39,7 @@ manyak-android/
     └── login/, legal/         # 로그인 · 웹 문서 화면 · 약관 동의 시트
 ```
 
-런타임 모듈은 17개이며 내부 계층·하위 기능은 Kotlin 패키지입니다. Kotlin 패키지는 폴더 그룹과 무관하게 `app.manyak.<모듈>`을 유지합니다. 구조·계층·공통 코드의 정본은 [하네스 Android 설계](../knk-harness/docs/platform/CLIENT/ANDROID/AGENTS.md), 이동·검증 내역은 [모듈 재구성 기록](docs/plans/module-reorganization.md)을 확인하세요. 디자인 규칙은 [DESIGN.md](DESIGN.md)에 있습니다.
+런타임 모듈은 17개(테스트 전용 `core/testing` 제외)이며 내부 계층·하위 기능은 Kotlin 패키지입니다. Kotlin 패키지는 폴더 그룹과 무관하게 `app.manyak.<모듈>`을 유지합니다. 구조·계층·공통 코드의 정본은 [하네스 Android 설계](../knk-harness/docs/platform/CLIENT/ANDROID/AGENTS.md), 이동·검증 내역은 [모듈 재구성 기록](docs/plans/module-reorganization.md)을 확인하세요. 디자인 규칙은 [DESIGN.md](DESIGN.md)에 있습니다.
 
 ## 실행하기
 
