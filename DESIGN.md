@@ -515,7 +515,7 @@ components:
 
 ## 코드 대응
 
-`designsystem/src/main/java/app/manyak/designsystem/theme/`
+`core/designsystem/src/main/java/app/manyak/designsystem/theme/`
 
 | 파일 | 내용 |
 | --- | --- |
@@ -527,7 +527,7 @@ components:
 | `ManyakMotion.kt` | 화면 전환과 요소 및 안내 모션 시간 |
 | `Theme.kt` | `ManyakTheme` 컴포저블·접근자, M3 슬롯 파생 |
 
-`designsystem/src/main/java/app/manyak/designsystem/component/`
+`core/designsystem/src/main/java/app/manyak/designsystem/component/`
 
 | 파일 | 내용 |
 | --- | --- |
@@ -544,7 +544,7 @@ components:
 | `ManyakCheckbox.kt` | 동의·확인 항목의 체크 표시. 줄이 토글을 맡고 상자는 그리기만 한다 |
 | `CreateTutorialDialog.kt` | 간편 제작 첫 진입 안내 대화창과 그 안에서 말하는 마스코트. 문구와 버튼 콜백만 받고 간편 제작 화면과 제작 탭이 같이 쓴다 |
 
-`designsystem/src/main/java/app/manyak/designsystem/mascot/`
+`core/designsystem/src/main/java/app/manyak/designsystem/mascot/`
 
 | 파일 | 내용 |
 | --- | --- |

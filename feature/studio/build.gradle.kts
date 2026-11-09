@@ -1,18 +1,19 @@
 plugins {
     id("manyak.android.compose")
     id("manyak.hilt")
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
-    namespace = "app.manyak.login"
+    namespace = "app.manyak.studio"
 }
 
 dependencies {
-    implementation(projects.common)
-    implementation(projects.auth)
-    implementation(projects.navigation)
-    implementation(projects.designsystem)
-    implementation(projects.analytics)
+    implementation(projects.core.report)
+    implementation(projects.core.common)
+    implementation(projects.core.network)
+    implementation(projects.core.designsystem)
+    implementation(projects.core.analytics)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui)
@@ -23,6 +24,10 @@ dependencies {
     implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
     implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.retrofit)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(platform(libs.okhttp.bom))
+    implementation(libs.okhttp.logging.interceptor)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     testImplementation(libs.junit)

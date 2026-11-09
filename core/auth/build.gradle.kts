@@ -9,8 +9,8 @@ android {
 }
 
 dependencies {
-    implementation(projects.common)
-    implementation(projects.network)
+    implementation(projects.core.common)
+    implementation(projects.core.network)
     implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)

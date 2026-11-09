@@ -20,25 +20,27 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/analytics" />
             <option value="$PROJECT_DIR$/app" />
-            <option value="$PROJECT_DIR$/auth" />
             <option value="$PROJECT_DIR$/build-logic" />
-            <option value="$PROJECT_DIR$/chat" />
-            <option value="$PROJECT_DIR$/common" />
-            <option value="$PROJECT_DIR$/create" />
-            <option value="$PROJECT_DIR$/designsystem" />
-            <option value="$PROJECT_DIR$/home" />
-            <option value="$PROJECT_DIR$/legal" />
-            <option value="$PROJECT_DIR$/login" />
-            <option value="$PROJECT_DIR$/my" />
-            <option value="$PROJECT_DIR$/navigation" />
-            <option value="$PROJECT_DIR$/network" />
-            <option value="$PROJECT_DIR$/notice" />
-            <option value="$PROJECT_DIR$/notification" />
-            <option value="$PROJECT_DIR$/report" />
-            <option value="$PROJECT_DIR$/story" />
-            <option value="$PROJECT_DIR$/studio" />
+            <option value="$PROJECT_DIR$/core" />
+            <option value="$PROJECT_DIR$/core/analytics" />
+            <option value="$PROJECT_DIR$/core/auth" />
+            <option value="$PROJECT_DIR$/core/common" />
+            <option value="$PROJECT_DIR$/core/designsystem" />
+            <option value="$PROJECT_DIR$/core/navigation" />
+            <option value="$PROJECT_DIR$/core/network" />
+            <option value="$PROJECT_DIR$/core/report" />
+            <option value="$PROJECT_DIR$/feature" />
+            <option value="$PROJECT_DIR$/feature/chat" />
+            <option value="$PROJECT_DIR$/feature/create" />
+            <option value="$PROJECT_DIR$/feature/home" />
+            <option value="$PROJECT_DIR$/feature/legal" />
+            <option value="$PROJECT_DIR$/feature/login" />
+            <option value="$PROJECT_DIR$/feature/my" />
+            <option value="$PROJECT_DIR$/feature/notice" />
+            <option value="$PROJECT_DIR$/feature/notification" />
+            <option value="$PROJECT_DIR$/feature/story" />
+            <option value="$PROJECT_DIR$/feature/studio" />
           </set>
         </option>
       </GradleProjectSettings>

@@ -5,30 +5,40 @@ plugins {
 }
 
 android {
-    namespace = "app.manyak.studio"
+    namespace = "app.manyak.chat"
+    defaultConfig { testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
 }
 
 dependencies {
-    implementation(projects.report)
-    implementation(projects.common)
-    implementation(projects.network)
-    implementation(projects.designsystem)
-    implementation(projects.analytics)
+    implementation(projects.core.common)
+    implementation(projects.core.network)
+    implementation(projects.core.designsystem)
+    implementation(projects.core.analytics)
+    implementation(projects.core.report)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
     implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.retrofit)
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.okhttp.sse)
     implementation(libs.kotlinx.serialization.json)
     implementation(platform(libs.okhttp.bom))
     implementation(libs.okhttp.logging.interceptor)
     debugImplementation(libs.androidx.compose.ui.tooling)
+
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.androidx.junit)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

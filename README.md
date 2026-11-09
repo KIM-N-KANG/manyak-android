@@ -20,23 +20,25 @@
 manyak-android/
 ├── build-logic/           # 공통 Gradle convention plugin · 모듈/계층 검사
 ├── gradle/                # Wrapper · 버전 카탈로그
-├── app/                   # Navigation 3 백스택 · 메인 탭 · 세션 조율 · DI 조립
-├── auth/                  # 인증 · 토큰 · 세션 · 계정 연동
-├── network/               # HTTP · 직렬화 · 공통 통신 오류 변환
-├── analytics/             # 이벤트 계약 · 분석/크래시 SDK
-├── navigation/            # 라우트 단일 등록처
-├── designsystem/          # ManyakTheme · 시각적 공용 컴포넌트
-├── common/                # 실제 공통 entity/domain/data/presentation
-├── report/                # 공유 신고 업무
-├── home/, studio/, story/ # 오리지널 목록 · 내 목록 · 상세
-├── chat/                  # list/presentation · room/presentation
-├── create/                # keyword · storyline · additionalinfo
-├── my/                    # profile · credit · invite · feedback · withdrawal · licenses
-├── notification/, notice/ # 푸시 토큰 · 알림 설정 · 광고 동의 / 공지사항 목록 · 상세 · 안 읽음
-└── login/, legal/         # 로그인 · 웹 문서 화면 · 약관 동의 시트
+├── app/                       # Navigation 3 백스택 · 메인 탭 · 세션 조율 · DI 조립
+├── core/                      # 여러 기능이 함께 쓰는 기반 (:core:<모듈>)
+│   ├── auth/                  # 인증 · 토큰 · 세션 · 계정 연동
+│   ├── network/               # HTTP · 직렬화 · 공통 통신 오류 변환
+│   ├── analytics/             # 이벤트 계약 · 분석/크래시 SDK
+│   ├── navigation/            # 라우트 단일 등록처
+│   ├── designsystem/          # ManyakTheme · 시각적 공용 컴포넌트
+│   ├── common/                # 실제 공통 entity/domain/data/presentation
+│   └── report/                # 공유 신고 업무
+└── feature/                   # 화면 기능 (:feature:<모듈>)
+    ├── home/, studio/, story/ # 오리지널 목록 · 내 목록 · 상세
+    ├── chat/                  # list/presentation · room/presentation
+    ├── create/                # keyword · storyline · additionalinfo
+    ├── my/                    # profile · credit · invite · feedback · withdrawal · licenses
+    ├── notification/, notice/ # 푸시 토큰 · 알림 설정 · 광고 동의 / 공지사항 목록 · 상세 · 안 읽음
+    └── login/, legal/         # 로그인 · 웹 문서 화면 · 약관 동의 시트
 ```
 
-런타임 모듈은 17개이며 내부 계층·하위 기능은 Kotlin 패키지입니다. 구조·계층·공통 코드의 정본은 [하네스 Android 설계](../knk-harness/docs/platform/CLIENT/ANDROID/AGENTS.md), 이동·검증 내역은 [모듈 재구성 기록](docs/plans/module-reorganization.md)을 확인하세요. 디자인 규칙은 [DESIGN.md](DESIGN.md)에 있습니다.
+런타임 모듈은 17개이며 내부 계층·하위 기능은 Kotlin 패키지입니다. Kotlin 패키지는 폴더 그룹과 무관하게 `app.manyak.<모듈>`을 유지합니다. 구조·계층·공통 코드의 정본은 [하네스 Android 설계](../knk-harness/docs/platform/CLIENT/ANDROID/AGENTS.md), 이동·검증 내역은 [모듈 재구성 기록](docs/plans/module-reorganization.md)을 확인하세요. 디자인 규칙은 [DESIGN.md](DESIGN.md)에 있습니다.
 
 ## 실행하기
 

@@ -23,10 +23,11 @@ val architectureCheck =
 
 // Capture immutable inputs after every module has declared its dependencies; the task action uses no Project API.
 gradle.projectsEvaluated {
-    val modules = rootProject.subprojects
+    // Grouping projects such as :core and :feature have no build file and own no code.
+    val modules = rootProject.subprojects.filter { it.buildFile.exists() }
     val graph =
         modules.associate { module ->
-            module.name to
+            module.path.removePrefix(":") to
                 module.configurations
                     .flatMap { configuration ->
                         configuration.dependencies

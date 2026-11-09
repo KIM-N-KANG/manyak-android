@@ -46,7 +46,7 @@
 - 코드 주석에 `하네스 §1-2-4`·`공통 계약`·`FE-SCREEN-008`·`검수 #4` 같은 스펙 참조를 넣지 않습니다. 코드만 보고는 알 수 없는 이유만 남기고, 핵심 결정 근거는 하네스의 영역별 ADR 한 파일에 결정 단위로 추가합니다. 기존 확정 기록은 보존하고 후속 결정에 대체 ID·범위를 남깁니다.
 - 화면 ViewModel은 `:common`의 `MviViewModel`을 상속합니다(Intent → 부수효과 → Event → `reduce` → State, 일회성 출력은 Effect). `reduce`는 순수 함수입니다.
 - 화면 부수효과는 구성 변경(회전·다크 모드·글자 크기)에서 다시 실행되고 `remember` 값은 사라집니다. 되돌리기·초기화·저장을 하는 효과는 `configuration-changes` 스킬 기준으로 점검합니다.
-- 라우트는 `:navigation`의 `Routes.kt` 한 곳에만 등록하고 **복원 가능한 식별자만** 싣습니다. 화면 기능 모듈끼리 직접 참조하지 않습니다.
+- 라우트는 `:core:navigation`의 `Routes.kt` 한 곳에만 등록하고 **복원 가능한 식별자만** 싣습니다. 화면 기능 모듈끼리 직접 참조하지 않습니다.
 - 오류는 `:common`의 `DomainError`로 올리고 문구는 `:common`의 `DomainErrorMessages`가 붙입니다.
 - 두 번째 사용처가 생기기 전에는 공용 컴포넌트를 `:designsystem`으로 올리지 않습니다.
 
@@ -54,9 +54,9 @@
 
 모듈 소유권, 계층과 의존 규칙은 하네스 [공용 Android 컴포넌트 구조](../knk-harness/docs/platform/CLIENT/ANDROID/1-COMPONENT-ARCHITECTURE.md)를 따릅니다. 실제 모듈 등록은 `settings.gradle.kts`를 확인하세요.
 
-`app`이 최상위 기능·기반 모듈을 조립합니다. 기능은 필요한 entity/domain/data/presentation 패키지를 소유하고, chat·create·my의 하위 기능도 패키지로 구분합니다. `checkModuleArchitecture`가 프로젝트 의존과 Kotlin PSI 기반 계층 경계를 검사하며 루트 `check`에 연결되어 있습니다. navigation의 기존 Kotlin 패키지는 직렬화 호환을 위해 유지합니다.
+`app`이 `core/`의 기반 모듈과 `feature/`의 화면 기능 모듈을 조립합니다. Gradle 경로도 폴더를 따라 `:core:<모듈>`, `:feature:<모듈>`이고 의존은 `projects.core.common`, `projects.feature.home`처럼 씁니다. 기능 간 공유 업무인 report는 `core/`에 둡니다. 기능은 필요한 entity/domain/data/presentation 패키지를 소유하고, chat·create·my의 하위 기능도 패키지로 구분합니다. `checkModuleArchitecture`가 프로젝트 의존과 Kotlin PSI 기반 계층 경계를 검사하며 루트 `check`에 연결되어 있습니다. navigation의 기존 Kotlin 패키지는 직렬화 호환을 위해 유지합니다.
 
-- 모듈을 추가·삭제·이름 변경하면 `settings.gradle.kts`와 함께 `.idea/gradle.xml`의 `<option value="$PROJECT_DIR$/<모듈>" />` 목록도 같은 커밋에서 갱신합니다(알파벳 순). 이 파일은 추적 대상이라, 빠뜨리면 사용자가 IDE 싱크할 때 diff가 남습니다. `build-logic`의 `ModuleArchitecture.kt` 모듈 집합도 함께 고치고 `:build-logic:ktlintCheck`까지 로컬 검증에 포함합니다.
+- 모듈을 추가·삭제·이름 변경하면 `settings.gradle.kts`와 함께 `.idea/gradle.xml`의 `<option value="$PROJECT_DIR$/<core|feature>/<모듈>" />` 목록도 같은 커밋에서 갱신합니다(알파벳 순). 이 파일은 추적 대상이라, 빠뜨리면 사용자가 IDE 싱크할 때 diff가 남습니다. `build-logic`의 `ModuleArchitecture.kt` 모듈 집합도 함께 고치고(모듈이 정해진 그룹 경로에 등록됐는지도 이 집합으로 검사합니다) `:build-logic:ktlintCheck`까지 로컬 검증에 포함합니다.
 
 ## 명령어
 
@@ -77,6 +77,8 @@
 - 로컬 검증에 변경 모듈의 `ktlintCheck`·`detekt`도 포함합니다. 몇 초면 끝나고, CI까지 끌고 갈 종류가 아닙니다.
 
   ```bash
-  ./gradlew :<모듈>:ktlintCheck :<모듈>:detekt :<모듈>:testDebugUnitTest
+  ./gradlew :feature:<모듈>:ktlintCheck :feature:<모듈>:detekt :feature:<모듈>:testDebugUnitTest
   ```
+
+  기반 모듈은 `:core:<모듈>`, 앱은 `:app`입니다.
 - UI 동작에 대한 주장은 `installDebug` 후 에뮬레이터에서 `adb exec-out screencap`으로 전후를 비교해 확인합니다. 확인하지 못했으면 코드로만 판단했다고 밝힙니다.

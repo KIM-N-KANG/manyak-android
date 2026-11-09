@@ -5,40 +5,35 @@ plugins {
 }
 
 android {
-    namespace = "app.manyak.chat"
-    defaultConfig { testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
+    namespace = "app.manyak.my"
 }
 
 dependencies {
-    implementation(projects.common)
-    implementation(projects.network)
-    implementation(projects.designsystem)
-    implementation(projects.analytics)
-    implementation(projects.report)
+    implementation(projects.core.auth)
+    implementation(projects.core.navigation)
+    implementation(projects.core.common)
+    implementation(projects.core.network)
+    implementation(projects.core.designsystem)
+    implementation(projects.core.analytics)
     implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
-    implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
+    implementation(libs.coil.compose)
+    implementation(libs.aboutlibraries.compose.core)
+    implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.retrofit)
-    implementation(libs.androidx.datastore.preferences)
-    implementation(libs.okhttp.sse)
     implementation(libs.kotlinx.serialization.json)
     implementation(platform(libs.okhttp.bom))
     implementation(libs.okhttp.logging.interceptor)
     debugImplementation(libs.androidx.compose.ui.tooling)
-
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(libs.androidx.junit)
-    debugImplementation(libs.androidx.compose.ui.test.manifest)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

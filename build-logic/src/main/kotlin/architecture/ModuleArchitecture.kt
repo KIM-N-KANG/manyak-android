@@ -31,10 +31,22 @@ class ModuleArchitecture : AutoCloseable {
         sources: Map<String, String>,
     ): List<String> {
         val errors = mutableListOf<String>()
-        graph.forEach { (module, dependencies) ->
-            val allowed = allowedDependencies[module]
-            if (allowed == null) errors += "Unknown module: $module"
-            dependencies.filter { it !in allowed.orEmpty() }.forEach {
+        graph.keys.forEach { path ->
+            val module = path.substringAfterLast(':')
+            val expected = pathOf(module)
+            if (expected == null) {
+                errors += "Unknown module: $path"
+            } else if (path != expected) {
+                errors += "$module must be registered as :$expected"
+            }
+        }
+        val moduleGraph =
+            graph.entries.associate { (path, dependencies) ->
+                path.substringAfterLast(':') to dependencies.map { it.substringAfterLast(':') }.toSet()
+            }
+        moduleGraph.forEach { (module, dependencies) ->
+            val allowed = allowedDependencies[module].orEmpty()
+            dependencies.filter { it !in allowed }.forEach {
                 errors += "$module must not depend on $it"
             }
         }
@@ -49,7 +61,14 @@ class ModuleArchitecture : AutoCloseable {
                     }
                 }.toMap()
         files.forEach { (path, file) ->
-            val module = path.substringBefore('/')
+            val module =
+                graph.keys
+                    .firstOrNull { path.startsWith(it.replace(':', '/') + "/") }
+                    ?.substringAfterLast(':')
+            if (module == null) {
+                errors += "$path: not inside a registered module"
+                return@forEach
+            }
             val pkg = file.packageFqName.asString()
             val expectedPackage =
                 when (module) {
@@ -65,12 +84,12 @@ class ModuleArchitecture : AutoCloseable {
                 errors += "$path: production code needs an entity/domain/data/presentation package"
             }
             references(file).forEach { reference ->
-                checkReference(path, module, layer, reference, graph, errors)
+                checkReference(path, module, layer, reference, moduleGraph, errors)
                 var target = reference
                 val visited = mutableSetOf<String>()
                 while (visited.add(target)) {
                     target = aliases[target] ?: break
-                    checkReference(path, module, layer, target, graph, errors)
+                    checkReference(path, module, layer, target, moduleGraph, errors)
                 }
             }
         }
@@ -159,6 +178,17 @@ class ModuleArchitecture : AutoCloseable {
         private val features =
             setOf("home", "chat", "studio", "story", "login", "legal", "my", "create", "notification", "notice")
         private val infrastructure = setOf("common", "designsystem", "navigation", "analytics", "network", "auth")
+        private val core = infrastructure + "report"
+
+        /** Gradle path without the leading colon; null for an unknown module. */
+        private fun pathOf(module: String): String? =
+            when (module) {
+                "app" -> "app"
+                in core -> "core:$module"
+                in features -> "feature:$module"
+                else -> null
+            }
+
         val allowedDependencies: Map<String, Set<String>> =
             buildMap {
                 put("app", infrastructure + features + "report")

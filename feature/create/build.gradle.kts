@@ -27,11 +27,11 @@ room {
 }
 
 dependencies {
-    implementation(projects.common)
-    implementation(projects.auth)
-    implementation(projects.network)
-    implementation(projects.designsystem)
-    implementation(projects.analytics)
+    implementation(projects.core.common)
+    implementation(projects.core.auth)
+    implementation(projects.core.network)
+    implementation(projects.core.designsystem)
+    implementation(projects.core.analytics)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui)

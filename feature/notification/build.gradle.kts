@@ -5,29 +5,30 @@ plugins {
 }
 
 android {
-    namespace = "app.manyak.story"
+    namespace = "app.manyak.notification"
 }
 
 dependencies {
-    implementation(projects.report)
-    implementation(projects.common)
-    implementation(projects.network)
-    implementation(projects.designsystem)
-    implementation(projects.analytics)
+    implementation(projects.core.common)
+    implementation(projects.core.auth)
+    implementation(projects.core.network)
+    implementation(projects.core.designsystem)
+    implementation(projects.core.navigation)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
     implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui)
-    implementation(libs.androidx.compose.ui.graphics)
+    implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
     implementation(libs.androidx.activity.compose)
-    implementation(libs.coil.compose)
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.datastore.preferences)
     implementation(libs.kotlinx.coroutines.core)
-    implementation(libs.retrofit)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.retrofit)
     implementation(platform(libs.okhttp.bom))
     implementation(libs.okhttp.logging.interceptor)
     debugImplementation(libs.androidx.compose.ui.tooling)
