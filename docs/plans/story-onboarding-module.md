@@ -5,7 +5,7 @@
 - 상태: 구현, 로컬 전체 검증과 에뮬레이터 확인 완료
 - Android: `refactor/KNK-2049-improve-module-folder-structure`
 - 하네스: `docs/KNK-2049-improve-module-folder-structure`
-- 정본: [STORY Android ADR A-095](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/DECISIONS.md#a-095), [STORY 컴포넌트 구조](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/4-2-COMPONENT-ARCHITECTURE.md#4-2-1-소유권)
+- 정본: [STORY Android ADR A-095](../../../knk-harness/docs/spec/STORY/CLIENT/ANDROID/DECISIONS.md#a-095), [STORY 컴포넌트 구조](../../../knk-harness/docs/spec/STORY/CLIENT/ANDROID/4-2-COMPONENT-ARCHITECTURE.md#4-2-1-소유권)
 
 ## 목표와 범위
 

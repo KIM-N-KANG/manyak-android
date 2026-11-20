@@ -3,7 +3,7 @@
 - 작성일: 2026-11-02
 - 티켓: [KNK-1977](https://kimandkang.atlassian.net/browse/KNK-1977) (상위 KNK-1114), 웹 짝 KNK-1976
 - 브랜치: Android `design/KNK-1977-improve-persona-ui-ux`(fetch한 `origin/dev` `39831acd`에서 분기), 하네스 같은 이름(`origin/dev` `de83e69` 기준)
-- 계약: 하네스 [공통 요구 2-2-3](../../../knk-harness/docs/domain/STORY/CLIENT/2-2-REQUIREMENTS.md#2-2-3-상세와-플레이-시작), [공통 흐름 3-2-1](../../../knk-harness/docs/domain/STORY/CLIENT/3-2-INTERACTION-FLOWS.md#3-2-1-탐색과-상세) 3번과 6번, [공통 배치 3-3-2](../../../knk-harness/docs/domain/STORY/CLIENT/3-3-LAYOUT.md#3-3-2-상세와-이미지)의 시작, 새 채팅 CTA, 시작 시트, 시작 시트 행, 시작 중. 분석은 `client_storyDetail_chatStartButton_clicked`(시트의 "채팅 시작하기")와 `client_storyDetail_persona_selected`(시트 포함, 같은 값 재선택 제외). Android 결정 A-089.
+- 계약: 하네스 [공통 요구 2-2-3](../../../knk-harness/docs/spec/STORY/CLIENT/2-2-REQUIREMENTS.md#2-2-3-상세와-플레이-시작), [공통 흐름 3-2-1](../../../knk-harness/docs/spec/STORY/CLIENT/3-2-INTERACTION-FLOWS.md#3-2-1-탐색과-상세) 3번과 6번, [공통 배치 3-3-2](../../../knk-harness/docs/spec/STORY/CLIENT/3-3-LAYOUT.md#3-3-2-상세와-이미지)의 시작, 새 채팅 CTA, 시작 시트, 시작 시트 행, 시작 중. 분석은 `client_storyDetail_chatStartButton_clicked`(시트의 "채팅 시작하기")와 `client_storyDetail_persona_selected`(시트 포함, 같은 값 재선택 제외). Android 결정 A-089.
 - 참고 구현: 웹 `src/features/stories/detail/`의 `components/chat-start-sheet.tsx`, `components/story-persona-select.tsx`, `hooks/use-detail-personas.ts`, `constants/start-setting-copy.ts`(manyak-web `e81442bd`)
 
 ## 변경

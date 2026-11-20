@@ -92,4 +92,4 @@ PR에서는 CI(`.github/workflows/android-ci.yml`)가 `check`와 `assembleDebug`
 | `docs/plans/`                                          | 기능별 구현 순서·검증·실행 결과    |
 | [공용 Android](../knk-harness/docs/platform/CLIENT/ANDROID/AGENTS.md) | 현재 앱 기술 구조·상태 수명·요청 흐름 |
 
-기능별 사용자 계약, 현재 구조와 검증은 [도메인 목록](../knk-harness/docs/domain/AGENTS.md)에서 해당 CLIENT와 ANDROID 세트를 찾아 확인합니다. 결정 이유는 각 세트의 DECISIONS에 보존합니다. 변경 순서와 실행 결과는 `docs/plans/`, 관련 티켓과 검증 근거는 해당 PR에 남깁니다. 공통 계약과 결정은 하네스를 참조하고 복사하지 않습니다.
+기능별 사용자 계약, 현재 구조와 검증은 [도메인 목록](../knk-harness/docs/spec/AGENTS.md)에서 해당 CLIENT와 ANDROID 세트를 찾아 확인합니다. 결정 이유는 각 세트의 DECISIONS에 보존합니다. 변경 순서와 실행 결과는 `docs/plans/`, 관련 티켓과 검증 근거는 해당 PR에 남깁니다. 공통 계약과 결정은 하네스를 참조하고 복사하지 않습니다.

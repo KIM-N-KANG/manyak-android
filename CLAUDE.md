@@ -4,7 +4,7 @@
 
 ## 정본 문서
 
-[도메인 목록](../knk-harness/docs/domain/AGENTS.md)에서 관련 도메인을 선택하고 `CLIENT/` 공통 문서와 `CLIENT/ANDROID/`를 단계마다 함께 확인합니다. 사용자 목표와 ID는 공통 문서가 소유하며 플랫폼 구현과 검증은 ANDROID에 둡니다.
+[도메인 목록](../knk-harness/docs/spec/AGENTS.md)에서 관련 도메인을 선택하고 `CLIENT/` 공통 문서와 `CLIENT/ANDROID/`를 단계마다 함께 확인합니다. 사용자 목표와 ID는 공통 문서가 소유하며 플랫폼 구현과 검증은 ANDROID에 둡니다.
 
 | 확인할 것 | 위치 |
 | --- | --- |
