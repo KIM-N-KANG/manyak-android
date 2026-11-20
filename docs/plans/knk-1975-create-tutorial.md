@@ -3,7 +3,7 @@
 - 작성일: 2026-11-02
 - 티켓: [KNK-1975](https://kimandkang.atlassian.net/browse/KNK-1975) (상위 KNK-1114)
 - 브랜치: Android `feat/KNK-1975-android-create-tutorial`(fetch한 `origin/dev` `3a77e5d3`에서 분기), 하네스 같은 이름(KNK-1974 병합 뒤 fetch한 `origin/dev` `16210d7` 기준)
-- 계약: 하네스 [공통 제작 안내 흐름](../../../knk-harness/docs/domain/STORY/CLIENT/3-2-INTERACTION-FLOWS.md#3-2-6-제작-안내), [공통 문구](../../../knk-harness/docs/domain/STORY/CLIENT/3-3-LAYOUT.md#3-3-7-제작-안내), [Android 요구](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/2-2-REQUIREMENTS.md#2-2-4-간편-제작-첫-진입-안내), 결정 C-016과 A-088. 하네스 계약은 KNK-1975 하네스 PR이 병합되기 전까지 그 브랜치에만 있다.
+- 계약: 하네스 [공통 제작 안내 흐름](../../../knk-harness/docs/spec/STORY/CLIENT/3-2-INTERACTION-FLOWS.md#3-2-6-제작-안내), [공통 문구](../../../knk-harness/docs/spec/STORY/CLIENT/3-3-LAYOUT.md#3-3-7-제작-안내), [Android 요구](../../../knk-harness/docs/spec/STORY/CLIENT/ANDROID/2-2-REQUIREMENTS.md#2-2-4-간편-제작-첫-진입-안내), 결정 C-016과 A-088. 하네스 계약은 KNK-1975 하네스 PR이 병합되기 전까지 그 브랜치에만 있다.
 - 참고 구현: 웹 `src/features/stories/_shared/`의 `constants/create-tutorial.ts`, `hooks/use-create-tutorial.ts`, `utils/create-tutorial-storage.ts`, `components/create-tutorial-dialog.tsx`, `utils/draw-tutorial-mascot-stage.ts`
 
 ## 변경

@@ -5,7 +5,7 @@
 | 확인할 것 | 정본 |
 | --- | --- |
 | 공통 화면·동작·API 사용 계약 | [공통 spec](../../../knk-harness/docs/ui/AGENTS.md) |
-| Android 사용자 모델·플랫폼 예외·수용 기준 | [도메인별 Android 계약](../../../knk-harness/docs/domain/AGENTS.md) |
+| Android 사용자 모델·플랫폼 예외·수용 기준 | [도메인별 Android 계약](../../../knk-harness/docs/spec/AGENTS.md) |
 | 스택·MVI·내비게이션·세션·저장·라이프사이클·관측 구조 | [Android 기반](../../../knk-harness/docs/platform/CLIENT/ANDROID/AGENTS.md) |
 | 모듈·계층·의존 방향 | [모듈 아키텍처](../../../knk-harness/docs/platform/CLIENT/ANDROID/1-COMPONENT-ARCHITECTURE.md#1-1-책임과-의존) |
 | 중요한 선택 이유와 대체 관계 | [공통 ADR](../../../knk-harness/docs/reference/decisions/DOCUMENTATION.md), [Android 기반 결정](../../../knk-harness/docs/platform/CLIENT/ANDROID/DECISIONS.md), [공통 UI 결정](../../../knk-harness/docs/ui/ANDROID/DECISIONS.md), 각 도메인의 CLIENT/ANDROID/DECISIONS.md |
