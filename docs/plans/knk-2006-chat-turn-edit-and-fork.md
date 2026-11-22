@@ -3,7 +3,7 @@
 - 작성일: 2026-11-04
 - 티켓: [KNK-2006](https://kimandkang.atlassian.net/browse/KNK-2006) (상위 KNK-2002), 웹 짝 KNK-2005
 - 브랜치: Android `feat/KNK-2006-chat-turn-edit-and-fork`(fetch한 `origin/dev` `7ea996a5`에서 분기), 하네스 같은 이름(`origin/feat/KNK-2005-chat-turn-edit-and-fork` `4e3bbce` 기준, 아직 dev 미병합)
-- 계약: 하네스 CHAT [공통 요구 2-2-8](../../../knk-harness/docs/domain/CHAT/CLIENT/2-2-REQUIREMENTS.md#2-2-8-입력-수정과-포크), [공통 배치 3-3-7](../../../knk-harness/docs/domain/CHAT/CLIENT/3-3-LAYOUT.md#3-3-7-재생성-입력-수정과-포크), [공통 연동 4-1](../../../knk-harness/docs/domain/CHAT/CLIENT/4-1-CONTRACT.md), 결정 C-002, C-003, C-004. 서버는 BACKEND 4-2-19 `POST /chats/{chatId}/turns/edit/stream`, 4-2-20 `POST /chats/{chatId}/fork`(dev Swagger의 `EditChatRequest`, `ForkChatRequest`, `GeneratingTurnResponse.type`의 `EDIT`과 대조). 분석은 `client_chat_editButton_clicked`, `client_chat_forkButton_clicked`(`chat_id`, `turn_number`). Android 결정 A-091.
+- 계약: 하네스 CHAT [공통 요구 2-2-8](../../../knk-harness/docs/spec/CHAT/CLIENT/2-2-REQUIREMENTS.md#2-2-8-입력-수정과-포크), [공통 배치 3-3-7](../../../knk-harness/docs/spec/CHAT/CLIENT/3-3-LAYOUT.md#3-3-7-재생성-입력-수정과-포크), [공통 연동 4-1](../../../knk-harness/docs/spec/CHAT/CLIENT/4-1-CONTRACT.md), 결정 C-002, C-003, C-004. 서버는 BACKEND 4-2-19 `POST /chats/{chatId}/turns/edit/stream`, 4-2-20 `POST /chats/{chatId}/fork`(dev Swagger의 `EditChatRequest`, `ForkChatRequest`, `GeneratingTurnResponse.type`의 `EDIT`과 대조). 분석은 `client_chat_editButton_clicked`, `client_chat_forkButton_clicked`(`chat_id`, `turn_number`). Android 결정 A-091.
 - 참고 구현: 웹 `src/features/chats/room/`의 `hooks/use-chat-stream.ts`, `components/chat-room.tsx`, `components/messages/chat-turn-item.tsx`, `chat-turn-editor.tsx`, `chat-messages.tsx`, `constants.ts`(manyak-web `875905b6`, `c1f6a8c0`)
 
 ## 변경

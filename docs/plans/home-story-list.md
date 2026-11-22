@@ -2,7 +2,7 @@
 
 - 작성일: 2026-09-26
 - 지라: KNK-1429 (상위 KNK-1428 · 웹 KNK-1421·KNK-1426)
-- 현재 기준: 하네스 [STORY 공통](../../../knk-harness/docs/domain/STORY/CLIENT/AGENTS.md)와 [Android](../../../knk-harness/docs/domain/STORY/CLIENT/ANDROID/AGENTS.md)
+- 현재 기준: 하네스 [STORY 공통](../../../knk-harness/docs/spec/STORY/CLIENT/AGENTS.md)와 [Android](../../../knk-harness/docs/spec/STORY/CLIENT/ANDROID/AGENTS.md)
 
 ## 범위
 
