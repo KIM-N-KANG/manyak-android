@@ -37,6 +37,6 @@ description: 인증 인프라·토큰 갱신·세션 종료·민감 정보 정�
 
 ## 결과와 검증
 
-클라이언트 결정, 서버 합의 항목, 미결정, 노출 위험만 보고합니다. 프로젝트 공통 계약이 바뀔 때만 `docs/plans/_project.md`를 갱신합니다.
+클라이언트 결정, 서버 합의 항목, 미결정, 노출 위험만 보고합니다. 프로젝트 공통 계약이 바뀔 때만 `CLAUDE.md`를 갱신합니다.
 
 실행은 `android-change-verification`에 맡기고 필요한 경우 `auth-session` 또는 `session-cleanup` 위험 태그를 전달합니다.

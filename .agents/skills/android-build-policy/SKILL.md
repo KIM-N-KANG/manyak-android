@@ -35,8 +35,8 @@ description: Gradle·플러그인·toolchain·정적 검사·variant·빌드 캐
 
 ## 작업 흐름
 
-1. 실제 구성과 `docs/plans/_project.md`의 빌드 결정을 읽습니다.
+1. 실제 구성과 `CLAUDE.md`의 빌드 결정을 읽습니다.
 2. 요청과 직접 관련된 항목만 검사합니다.
 3. 확인된 불일치와 선택이 필요한 정책을 나눠 보고합니다.
 4. 변경 후 검증은 `android-change-verification`으로 가장 작은 관련 작업을 선택합니다.
-5. 프로젝트 공통 정책이 바뀐 경우에만 `_project.md`를 갱신합니다.
+5. 프로젝트 공통 정책이 바뀐 경우에만 `CLAUDE.md`를 갱신합니다.

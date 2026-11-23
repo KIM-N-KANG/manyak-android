@@ -29,6 +29,6 @@ description: 푸시 알림, 등록 토큰, 알림 채널, 딥링크·앱링크 �
 
 ## 결과와 검증
 
-채널·토큰·페이로드·라우트 결정과 서버 합의 항목만 남깁니다. 프로젝트 공통 계약이 바뀔 때만 `docs/plans/_project.md`를 갱신합니다.
+채널·토큰·페이로드·라우트 결정과 서버 합의 항목만 남깁니다. 프로젝트 공통 계약이 바뀔 때만 `CLAUDE.md`를 갱신합니다.
 
 실제 확인은 변경 내용에 따라 `push-registration`, `notification-delivery`, `external-entry`, `permission` 중 필요한 위험 태그만 `android-change-verification`에 넘깁니다. 기능 완료 시에는 변경된 경로만 확인하고, 전체 알림 상태·기기 매트릭스는 릴리스 또는 명시적 QA 요청에서만 수행합니다.

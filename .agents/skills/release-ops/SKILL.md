@@ -7,7 +7,7 @@ description: Android 환경 분리·CI·서명·호환성·단계적 배포·롤
 
 ## 경계
 
-하네스의 배포 스펙, `docs/plans/_project.md`, 실제 Gradle·CI 구성을 먼저 읽습니다. 배포·원격 설정·스토어 변경 같은 외부 작업은 사용자가 명시적으로 요청한 범위에서만 수행합니다.
+하네스의 배포 스펙, `CLAUDE.md`, 실제 Gradle·CI 구성을 먼저 읽습니다. 배포·원격 설정·스토어 변경 같은 외부 작업은 사용자가 명시적으로 요청한 범위에서만 수행합니다.
 
 ## 환경과 비밀
 
@@ -42,4 +42,4 @@ description: Android 환경 분리·CI·서명·호환성·단계적 배포·롤
 - 버전 코드, 단계적 배포, 중단 기준
 - 긴급 차단·설정 조회 실패의 안전한 기본 동작
 
-점검 실행은 `release` 위험 태그로 `android-change-verification`에 맡깁니다. 프로젝트 공통 결정이 바뀔 때만 `_project.md`를 갱신합니다.
+점검 실행은 `release` 위험 태그로 `android-change-verification`에 맡깁니다. 프로젝트 공통 결정이 바뀔 때만 `CLAUDE.md`를 갱신합니다.

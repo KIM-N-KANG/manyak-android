@@ -88,7 +88,7 @@ android {
         manifestPlaceholders["metaAppId"] = metaProperty("META_APP_ID")
         manifestPlaceholders["metaClientToken"] = metaProperty("META_CLIENT_TOKEN")
 
-        // 약관·개인정보처리방침은 웹 페이지를 그대로 연다(docs/plans/login.md 결정 1).
+        // 약관과 개인정보처리방침은 웹 페이지를 그대로 연다.
         // 본문 정본이 웹 하나뿐이라 환경과 무관하게 운영 웹을 가리킨다.
         val webBaseUrl = localProperties.getProperty("WEB_BASE_URL") ?: "https://manyak.app"
         buildConfigField("String", "WEB_BASE_URL", "\"$webBaseUrl\"")

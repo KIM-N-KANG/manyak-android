@@ -23,6 +23,6 @@ description: 코루틴의 수명·취소·dispatcher 또는 Flow의 공유·구�
 
 ## 결과와 검증
 
-수명, dispatcher 경계, cold/hot 선택, 공유 정책, 오류 위치만 기록합니다. 여러 기능이 따라야 하는 공통 기술 결정으로 채택한 경우에만 `docs/plans/_project.md`를 갱신합니다.
+수명, dispatcher 경계, cold/hot 선택, 공유 정책, 오류 위치만 기록합니다. 여러 기능이 따라야 하는 공통 기술 결정으로 채택한 경우에만 `CLAUDE.md`를 갱신합니다.
 
 검증이 필요하면 `coroutine-lifecycle` 또는 `flow-sharing` 태그를 `android-change-verification`에 전달하고 실행은 그 스킬에 맡깁니다.
