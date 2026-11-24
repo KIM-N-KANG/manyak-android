@@ -49,7 +49,6 @@ import app.manyak.designsystem.R as DesignsystemR
  */
 private val OptionMinHeight = (667.dp - 56.dp - 32.dp) / 2
 private val OptionMaxHeight = (924.dp - 56.dp - 64.dp) / 2
-private val CardBorderWidth = 1.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -131,13 +130,13 @@ private fun MethodCard(
         modifier
             .fillMaxWidth()
             .clip(shape)
-            .border(CardBorderWidth, colors.border, shape)
+            .border(ManyakTheme.sizes.borderWidth, colors.border, shape)
             .background(colors.surfaceRaised)
             .clickable(role = Role.Button, onClick = onClick)
-            .padding(CardBorderWidth),
+            .padding(ManyakTheme.sizes.borderWidth),
     ) {
         illustration(Modifier.weight(1f))
-        HorizontalDivider(thickness = CardBorderWidth, color = colors.border)
+        HorizontalDivider(thickness = ManyakTheme.sizes.borderWidth, color = colors.border)
         Column(
             Modifier.padding(
                 horizontal = ManyakTheme.spacing.gutter,

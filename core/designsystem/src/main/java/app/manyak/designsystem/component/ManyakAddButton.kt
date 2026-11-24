@@ -18,7 +18,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.unit.dp
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.designsystem.R as DesignsystemR
 
@@ -41,7 +40,7 @@ fun ManyakAddButton(
                 .heightIn(min = ManyakTheme.sizes.input)
                 .clip(shape)
                 .background(ManyakTheme.colors.backgroundNeutral)
-                .border(1.dp, ManyakTheme.colors.border, shape)
+                .border(ManyakTheme.sizes.borderWidth, ManyakTheme.colors.border, shape)
                 .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
                 .padding(
                     horizontal = ManyakTheme.spacing.controlHorizontal,

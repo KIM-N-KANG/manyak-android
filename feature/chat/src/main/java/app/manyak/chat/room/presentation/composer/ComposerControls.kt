@@ -32,7 +32,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
 import app.manyak.designsystem.component.ManyakIconButton
 import app.manyak.designsystem.component.ManyakProgressIndicator
 import app.manyak.designsystem.component.keepKeyboardOnTap
@@ -79,7 +78,7 @@ internal fun ComposerChipButton(
                 .clip(ManyakTheme.shapes.menuItem)
                 .background(
                     if (enabled) ManyakTheme.colors.backgroundNeutral else ManyakTheme.colors.backgroundDisabled,
-                ).border(ComposerBorderWidth, ManyakTheme.colors.border, ManyakTheme.shapes.menuItem)
+                ).border(ManyakTheme.sizes.borderWidth, ManyakTheme.colors.border, ManyakTheme.shapes.menuItem)
                 .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
                 .padding(horizontal = ManyakTheme.spacing.component),
         contentAlignment = Alignment.Center,
@@ -281,8 +280,5 @@ private fun Modifier.composerFieldBox(
         .heightIn(min = ManyakTheme.sizes.input)
         .clip(shape)
         .background(ManyakTheme.colors.surfaceRaised)
-        .border(ComposerBorderWidth, borderColor, shape)
+        .border(ManyakTheme.sizes.inputBorderWidth, borderColor, shape)
 }
-
-/** 입력 상자의 테두리 두께. 상자를 그리는 쪽이 쓴다. */
-internal val ComposerBorderWidth = 1.dp

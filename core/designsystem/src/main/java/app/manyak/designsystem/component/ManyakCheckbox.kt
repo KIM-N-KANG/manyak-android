@@ -10,7 +10,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.dp
 import app.manyak.designsystem.R
 import app.manyak.designsystem.theme.ManyakTheme
 
@@ -23,7 +22,7 @@ fun ManyakCheckbox(
     isChecked: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val borderWidth = if (isChecked) 1.dp else ManyakTheme.sizes.selectionBorderWidth
+    val borderWidth = if (isChecked) ManyakTheme.sizes.borderWidth else ManyakTheme.sizes.selectionBorderWidth
     val borderColor = if (isChecked) ManyakTheme.colors.brand else ManyakTheme.colors.border
     Box(
         modifier =

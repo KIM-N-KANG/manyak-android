@@ -140,7 +140,7 @@ private fun PlainComposer(
                     .fillMaxWidth()
                     .clip(shape)
                     .background(ManyakTheme.colors.surfaceRaised)
-                    .border(ComposerBorderWidth, borderColor, shape),
+                    .border(ManyakTheme.sizes.inputBorderWidth, borderColor, shape),
         ) {
             PlainInput(
                 state = state,

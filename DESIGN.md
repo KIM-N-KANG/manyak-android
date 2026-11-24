@@ -88,7 +88,7 @@
 
 | 토큰 | 용도 |
 | --- | --- |
-| `colors.border` | 구분선과 카드 테두리. 대비 요구 대상이 아님 |
+| `colors.border` | 구분선과 카드 테두리. 대비 요구 대상이 아님. 두께는 `sizes.borderWidth`, 입력 모양은 `sizes.inputBorderWidth` |
 | `colors.borderStrong` | **점선 전용** 장식 경계. 점선은 잉크가 절반만 닿아 같은 색이어도 실선보다 연하게 읽혀 한 단계 진하게 둡니다. 실선에 쓰면 진한 테두리가 될 뿐입니다 |
 | `colors.borderInput` | 경계가 유일한 식별 수단일 때. 표면이 아니라 자기 채움색 기준으로 정한 값 |
 | `colors.borderFocused` | 포커스 링. `colors.borderBrand`와 같은 값 |
@@ -182,7 +182,7 @@
 | 바닥 | `colors.surface` | 앱 바탕, 카드, 목록 |
 | 떠 있음 | `colors.surfaceRaised` | 팝오버, 바텀시트, 다이얼로그 |
 | 채움 | `colors.backgroundNeutral` | 입력창과 비강조 채움 |
-| 경계 | `colors.border` 1dp | 구분선과 카드 테두리 |
+| 경계 | `colors.border`, `sizes.borderWidth` | 구분선과 카드 테두리 |
 
 **그림자를 쓰지 않습니다.** 깊이는 표면 색 차이와 경계선으로만 만듭니다. M3의 tonal elevation도 끕니다. `surfaceTint`를 투명으로 파생해 표면이 고도에 따라 브랜드 색으로 물드는 것을 막습니다.
 
@@ -204,7 +204,8 @@
 | `sizes.logo` | 24dp | 로고 락업 높이. 폭은 원본 비율(89:32) |
 | `sizes.startupSymbol` | 64dp | 시작 화면 로고 심벌 |
 | `sizes.selectionBorderWidth` | 2dp | 미선택 체크박스 경계, 선택 테두리. M3 라디오 버튼과 같음 |
-| `sizes.inputBorderWidth` | 1dp | 입력 모양 경계(검색 메뉴, 입력 카드) |
+| `sizes.borderWidth` | 1dp | 카드, 버튼, 칩, 이미지 테두리와 구분선 |
+| `sizes.inputBorderWidth` | 1dp | 입력 모양 경계(입력창, 셀렉트 앵커와 메뉴, 검색 메뉴, 채팅 입력 상자) |
 | `sizes.selectMenuElevation` | 4dp | 그림자 예외 판의 그림자 |
 | `sizes.shimmerBandHalfWidth` | 60dp | 글자 시머 띠의 반폭 |
 | `sizes.generationDotGap`, `sizes.generationDotRadius` | 10dp, 1dp | 마스코트 무대 바탕 점의 간격과 반지름 |

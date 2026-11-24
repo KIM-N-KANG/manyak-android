@@ -114,8 +114,8 @@ fun StoryCover(
     val coverModifier =
         if (showBorder) {
             Modifier
-                .padding(ThumbnailBorderWidth)
-                .clip(shape.insetForBorder(ThumbnailBorderWidth))
+                .padding(ManyakTheme.sizes.borderWidth)
+                .clip(shape.insetForBorder(ManyakTheme.sizes.borderWidth))
         } else {
             Modifier.clip(shape)
         }
@@ -272,8 +272,6 @@ private val BadgeIconSize = 14.dp
 private val LargeBadgeIconSize = 16.dp
 
 private val ThumbnailPlaceholderSize = 32.dp
-
-private val ThumbnailBorderWidth = 1.dp
 
 /**
  * 뒤 그림을 흐릴 수 없는 API 31 미만에서 표지 위 겹침 요소가 흐림 대신 까는 필드([coverBackdrop]).

@@ -26,7 +26,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.manyak.common.entity.consent.ConsentItem
@@ -137,7 +136,7 @@ private fun ConsentItems(
             enabled = !state.isLocked,
             onToggle = { onIntent(LegalConsentIntent.ToggleAll) },
         )
-        HorizontalDivider(thickness = 1.dp, color = ManyakTheme.colors.border)
+        HorizontalDivider(thickness = ManyakTheme.sizes.borderWidth, color = ManyakTheme.colors.border)
         state.required.forEach { required ->
             ConsentRow(
                 label = stringResource(required.item.labelRes()),

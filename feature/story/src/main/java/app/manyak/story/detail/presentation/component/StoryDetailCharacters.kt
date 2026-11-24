@@ -259,7 +259,7 @@ private fun CharacterThumbnail(
                     .graphicsLayer {
                         alpha = UNSELECTED_THUMBNAIL_ALPHA + (1f - UNSELECTED_THUMBNAIL_ALPHA) * selection
                     }.clip(shape)
-                    .border(CardBorderWidth, ManyakTheme.colors.border, shape),
+                    .border(ManyakTheme.sizes.borderWidth, ManyakTheme.colors.border, shape),
         ) {
             CharacterPicture(imageUrl = character.imageUrl, contentScale = ContentScale.Crop)
         }
@@ -286,9 +286,9 @@ private fun CharacterCard(
             modifier
                 .fillMaxWidth()
                 .clip(shape)
-                .border(CardBorderWidth, colors.border, shape)
+                .border(ManyakTheme.sizes.borderWidth, colors.border, shape)
                 .background(colors.surfaceRaised)
-                .padding(CardBorderWidth),
+                .padding(ManyakTheme.sizes.borderWidth),
     ) {
         CharacterCardImage(
             character = character,
@@ -296,7 +296,7 @@ private fun CharacterCard(
             onPrevious = onPrevious,
             onNext = onNext,
         )
-        HorizontalDivider(thickness = CardBorderWidth, color = colors.border)
+        HorizontalDivider(thickness = ManyakTheme.sizes.borderWidth, color = colors.border)
         Column(
             modifier =
                 Modifier.padding(
@@ -467,7 +467,6 @@ private fun CharacterPicture(
 
 private const val VISIBLE_THUMBNAIL_COUNT = 3.5f
 private const val UNSELECTED_THUMBNAIL_ALPHA = 0.5f
-private val CardBorderWidth = 1.dp
 private val PlaceholderSymbolSize = 32.dp
 
 @Preview(showBackground = true, name = "주변 인물")

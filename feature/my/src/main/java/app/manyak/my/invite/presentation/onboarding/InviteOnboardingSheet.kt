@@ -36,7 +36,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -282,7 +281,7 @@ private fun InviteCodeField(
                         .heightIn(min = ManyakTheme.sizes.input)
                         .clip(ManyakTheme.shapes.control)
                         .background(ManyakTheme.colors.surfaceRaised)
-                        .border(1.dp, borderColor, ManyakTheme.shapes.control)
+                        .border(ManyakTheme.sizes.inputBorderWidth, borderColor, ManyakTheme.shapes.control)
                         .padding(
                             horizontal = ManyakTheme.spacing.controlHorizontal,
                             vertical = ManyakTheme.spacing.controlVertical,

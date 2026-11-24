@@ -58,9 +58,11 @@ data class ManyakSizes(
     val menuMaxHeight: Dp,
     /** 284dp 시트 안에서 펼치는 선택 목록의 최대 높이. 48dp 항목이 5줄 반 보인다 */
     val choiceListMaxHeight: Dp,
+    /** 1dp 카드, 버튼, 칩, 이미지 테두리와 구분선의 두께. 입력 모양 경계는 [inputBorderWidth] 를 쓴다 */
+    val borderWidth: Dp,
     /** 1dp 입력과 검색 메뉴의 경계 두께 */
     val inputBorderWidth: Dp,
-    /** 4dp 입력 아래에 겹쳐지는 선택 메뉴의 그림자 */
+    /** 4dp 같은 밝기의 바탕과 겹쳐 경계만으로 층이 드러나지 않는 떠 있는 판의 그림자 */
     val selectMenuElevation: Dp,
 )
 
@@ -89,6 +91,7 @@ internal val ManyakDefaultSizes =
         unreadDotInline = 6.dp,
         menuMaxHeight = 240.dp,
         choiceListMaxHeight = 284.dp,
+        borderWidth = 1.dp,
         inputBorderWidth = 1.dp,
         selectMenuElevation = 4.dp,
     )

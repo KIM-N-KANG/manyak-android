@@ -20,7 +20,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.dp
 import app.manyak.create.entity.StoryTagCategory
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.create.R as CreateR
@@ -59,7 +58,7 @@ internal fun SelectedKeywordChip(
                 .heightIn(min = ManyakTheme.sizes.input)
                 .clip(ManyakTheme.shapes.control)
                 .background(ManyakTheme.colors.backgroundBrandSubtle)
-                .border(1.dp, ManyakTheme.colors.borderBrand, ManyakTheme.shapes.control)
+                .border(ManyakTheme.sizes.borderWidth, ManyakTheme.colors.borderBrand, ManyakTheme.shapes.control)
                 .padding(
                     horizontal = ManyakTheme.spacing.controlHorizontal,
                     vertical = ManyakTheme.spacing.controlVertical,
