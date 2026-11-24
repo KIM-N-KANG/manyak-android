@@ -42,4 +42,4 @@ description: Android 환경 분리·CI·서명·호환성·단계적 배포·롤
 - 버전 코드, 단계적 배포, 중단 기준
 - 긴급 차단·설정 조회 실패의 안전한 기본 동작
 
-점검 실행은 `release` 위험 태그로 `android-change-verification`에 맡깁니다. 프로젝트 공통 결정이 바뀔 때만 `CLAUDE.md`를 갱신합니다.
+실제 릴리스 절차와 확인 순서는 하네스 `docs/operations/DEPLOYMENT.md`의 7-2 Android 앱 릴리스를 따릅니다. 프로젝트 공통 결정이 바뀔 때만 `CLAUDE.md`를 갱신합니다.
