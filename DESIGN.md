@@ -195,6 +195,7 @@ sizes:
   unread-dot-inline: 6dp
   menu-max-height: 240dp
   choice-list-max-height: 284dp
+  border-width: 1dp
 
 spacing:
   hairline: 2dp
@@ -715,6 +716,7 @@ components:
 | `{sizes.startup-symbol}` | 64dp | 시작 화면에서 혼자 튀는 로고 심벌의 크기 |
 | `{sizes.shimmer-band-half-width}` | 60dp | 텍스트 시머 띠의 반폭 |
 | `{sizes.selection-border-width}` | 2dp | 미선택 체크박스 경계·M3 라디오 버튼과 동일 |
+| `{sizes.border-width}` | 1dp | 카드, 버튼, 칩, 이미지 테두리와 구분선. 입력 모양 경계는 아래 장르 검색 콤보박스 표의 `sizes.inputBorderWidth` |
 | `{sizes.generation-dot-gap}` | 10dp | 마스코트 무대 바탕 점 간격 |
 | `{sizes.generation-dot-radius}` | 1dp | 마스코트 무대 바탕 점 반지름 |
 | `{sizes.tour-card-width}` | 288dp | 채팅 안내 투어 카드의 폭. 좁은 화면에서는 좌우 `{spacing.gutter}`를 남기고 줄어든다 |
@@ -1016,14 +1018,14 @@ components:
 
 ### 장르 검색 콤보박스
 
-장르 칩 위의 입력은 기존 `ManyakTextField`의 표면, 모서리, 글꼴, 포커스 경계를 사용합니다. 왼쪽 `ic_search`와 오른쪽 `ic_chevron_expand_y`는 `sizes.iconSmall`과 `colors.textSubtle`을 사용합니다. 아이콘은 기능 소유 모듈 `create`의 vector drawable입니다. 입력의 `leading` 슬롯은 기본값이 `null`인 선택적 확장입니다.
+장르 칩 위의 입력은 기존 `ManyakTextField`의 표면, 모서리, 글꼴, 포커스 경계를 사용합니다. 왼쪽 `ic_search`와 오른쪽 `ic_chevron_expand_y`는 `sizes.iconSmall`과 `colors.textSubtle`을 사용합니다. `ic_search`는 탐색 헤더, 스토리 검색과 함께 쓰는 `designsystem`의 vector drawable이고, `ic_chevron_expand_y`는 기능 소유 모듈 `create`의 vector drawable입니다. 입력의 `leading` 슬롯은 기본값이 `null`인 선택적 확장입니다.
 
 검색 메뉴는 입력 폭에 맞춰 아래에 열리고, 화면과 키보드의 가용 공간 안에서 스크롤합니다. `shapes.control`, `colors.surfaceRaised`, `colors.border`를 사용합니다. 각 장르 항목의 높이는 `sizes.input`(40dp)이며 항목 사이에 `spacing.inline`(4dp) 간격을 둡니다. 선택한 항목은 체크로 표시하며 최대 3개일 때 새 선택은 비활성화하고 기존 선택은 해제할 수 있습니다. 검색 항목을 누르면 칩과 같은 선택 상태를 토글한 뒤 메뉴와 키보드를 닫고 입력을 비웁니다. 대표 장르 칩은 원래 순서를 유지합니다. 대표 목록 밖의 장르는 처음 선택할 때만 마지막에 추가하며, 선택 해제와 재선택에도 칩과 그 순서를 유지합니다. 인물 특징의 키워드 추가 버튼은 유지합니다.
 
 | 크기 토큰 | 값 | 용도 |
 | --- | --- | --- |
 | `sizes.menuMaxHeight` | 240dp | 검색 메뉴 최대 높이(셀렉트 메뉴와 공용) |
-| `sizes.inputBorderWidth` | 1dp | 입력 스타일의 검색 메뉴 경계 |
-| `sizes.selectMenuElevation` | 4dp | 입력 아래 선택 메뉴의 그림자 |
+| `sizes.inputBorderWidth` | 1dp | 입력 모양 경계(입력창, 셀렉트 앵커와 메뉴, 검색 메뉴, 채팅 입력 상자) |
+| `sizes.selectMenuElevation` | 4dp | 그림자 예외 판(셀렉트 메뉴, 검색 메뉴, 툴팁, 비용 안내 판)의 그림자 |
 
 빈 검색어는 이미 받은 전체 장르를 즉시 표시합니다. 화면 수명 안에서 성공한 검색 결과도 재사용합니다. 캐시에 없는 검색은 기존 목록을 유지하며, 입력 대기 250ms가 끝나고 실제 요청이 200ms 이상 진행될 때만 로딩 문구를 표시합니다. 아직 결과가 없으면 그동안 입력 높이의 빈 공간을 유지하고 결과 없음 문구를 먼저 표시하지 않습니다. 응답이 도착하거나 검색어가 바뀌거나 메뉴를 닫으면 로딩 표시를 해제합니다.

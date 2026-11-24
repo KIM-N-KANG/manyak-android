@@ -89,7 +89,7 @@ private fun StorylineRatingButton(
                 .size(ManyakTheme.sizes.input)
                 .clip(ManyakTheme.shapes.control)
                 .background(background)
-                .border(1.dp, borderColor, ManyakTheme.shapes.control)
+                .border(ManyakTheme.sizes.borderWidth, borderColor, ManyakTheme.shapes.control)
                 .toggleable(
                     value = active,
                     interactionSource = remember { MutableInteractionSource() },

@@ -98,9 +98,9 @@ private fun InfoTooltip(
         modifier =
             modifier
                 .widthIn(max = TooltipMaxWidth)
-                .shadow(TooltipShadowElevation, ManyakTheme.shapes.control)
+                .shadow(ManyakTheme.sizes.selectMenuElevation, ManyakTheme.shapes.control)
                 .background(ManyakTheme.colors.surfaceRaised, ManyakTheme.shapes.control)
-                .border(TooltipBorderWidth, ManyakTheme.colors.border, ManyakTheme.shapes.control)
+                .border(ManyakTheme.sizes.borderWidth, ManyakTheme.colors.border, ManyakTheme.shapes.control)
                 .clip(ManyakTheme.shapes.control)
                 .padding(
                     horizontal = ManyakTheme.spacing.component,
@@ -116,8 +116,6 @@ private fun InfoTooltip(
 private val ButtonSize = 24.dp
 
 private val TooltipMaxWidth = 240.dp
-private val TooltipShadowElevation = 4.dp
-private val TooltipBorderWidth = 1.dp
 
 @Preview(showBackground = true, name = "안내 툴팁 버튼")
 @Composable

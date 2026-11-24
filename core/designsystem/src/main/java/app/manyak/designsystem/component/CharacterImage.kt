@@ -18,7 +18,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
 import app.manyak.designsystem.R
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.designsystem.theme.insetForBorder
@@ -64,8 +63,8 @@ fun CharacterImage(
             modifier =
                 Modifier
                     .matchParentSize()
-                    .padding(ImageBorderWidth)
-                    .clip(ManyakTheme.shapes.overlay.insetForBorder(ImageBorderWidth))
+                    .padding(ManyakTheme.sizes.borderWidth)
+                    .clip(ManyakTheme.shapes.overlay.insetForBorder(ManyakTheme.sizes.borderWidth))
                     .background(ManyakTheme.colors.backgroundNeutral),
             model = imageUrl,
             contentDescription = null,
@@ -100,8 +99,6 @@ fun isSceneImageUrl(imageUrl: String): Boolean =
 
 /** 인물 이미지의 가로세로 비율. */
 const val CHARACTER_IMAGE_ASPECT_RATIO = 4f / 3f
-
-private val ImageBorderWidth = 1.dp
 
 private val AllowedImageHosts = setOf("cdn.manyak.app", "dev-cdn.manyak.app")
 

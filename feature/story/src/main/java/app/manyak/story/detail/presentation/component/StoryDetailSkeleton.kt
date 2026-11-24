@@ -65,7 +65,8 @@ private fun SkeletonOverview(
                 alpha = alpha,
                 shape = RectangleShape,
             )
-            HorizontalDivider(thickness = StoryHeroBorderWidth, color = ManyakTheme.colors.border)
+            // 본문의 표지 아래와 같은 선을 그려야 본문이 도착할 때 구조가 어긋나지 않는다.
+            HorizontalDivider(thickness = ManyakTheme.sizes.borderWidth, color = ManyakTheme.colors.border)
         }
         Column(
             modifier = Modifier.padding(horizontal = ManyakTheme.spacing.gutter),

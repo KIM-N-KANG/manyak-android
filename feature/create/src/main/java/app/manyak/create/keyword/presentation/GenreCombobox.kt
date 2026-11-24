@@ -189,7 +189,7 @@ internal fun GenreSearchCombobox(
             placeholder = stringResource(R.string.create_genre_search_placeholder),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { close() }),
-            leading = { GenreInputIcon(R.drawable.ic_search) },
+            leading = { GenreInputIcon(DesignsystemR.drawable.ic_search) },
             trailing = {
                 GenreInputIcon(
                     R.drawable.ic_chevron_expand_y,

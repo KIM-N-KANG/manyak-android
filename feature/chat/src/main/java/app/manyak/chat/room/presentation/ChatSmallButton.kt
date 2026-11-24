@@ -13,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.unit.dp
 import app.manyak.designsystem.theme.ManyakTheme
 
 /**
@@ -39,7 +38,7 @@ internal fun ChatSmallButton(
                 .heightIn(min = ManyakTheme.sizes.controlSmall)
                 .clip(shape)
                 .background(if (enabled) containerColor else ManyakTheme.colors.backgroundDisabled)
-                .border(SmallButtonBorderWidth, borderColor, shape)
+                .border(ManyakTheme.sizes.borderWidth, borderColor, shape)
                 .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
                 .padding(horizontal = ManyakTheme.spacing.component),
         contentAlignment = Alignment.Center,
@@ -51,5 +50,3 @@ internal fun ChatSmallButton(
         )
     }
 }
-
-private val SmallButtonBorderWidth = 1.dp

@@ -25,7 +25,6 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.designsystem.R as DesignsystemR
 
@@ -169,7 +168,7 @@ private fun Modifier.fieldSurface(
     return this
         .clip(ManyakTheme.shapes.control)
         .background(ManyakTheme.colors.surfaceRaised)
-        .border(1.dp, borderColor, ManyakTheme.shapes.control)
+        .border(ManyakTheme.sizes.inputBorderWidth, borderColor, ManyakTheme.shapes.control)
         .padding(
             horizontal = ManyakTheme.spacing.controlHorizontal,
             vertical = ManyakTheme.spacing.controlVertical,

@@ -17,7 +17,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.designsystem.R as DesignsystemR
 
@@ -41,7 +40,7 @@ fun ManyakNavigationBar(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
-        HorizontalDivider(thickness = 1.dp, color = ManyakTheme.colors.border)
+        HorizontalDivider(thickness = ManyakTheme.sizes.borderWidth, color = ManyakTheme.colors.border)
         CompositionLocalProvider(LocalRippleConfiguration provides null) {
             NavigationBar(containerColor = ManyakTheme.colors.surface) {
                 items.forEach { item -> NavigationTab(item) }

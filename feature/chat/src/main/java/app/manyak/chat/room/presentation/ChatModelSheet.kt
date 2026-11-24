@@ -25,7 +25,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import app.manyak.chat.entity.ChatModel
 import app.manyak.chat.room.presentation.composer.ChatSettingRow
 import app.manyak.chat.room.presentation.composer.ChatSettingsGroup
@@ -57,7 +56,7 @@ internal fun ChatModelButton(
                 .heightIn(min = ManyakTheme.sizes.controlCompact)
                 .clip(ManyakTheme.shapes.control)
                 .background(ManyakTheme.colors.backgroundNeutral)
-                .border(1.dp, ManyakTheme.colors.border, ManyakTheme.shapes.control)
+                .border(ManyakTheme.sizes.borderWidth, ManyakTheme.colors.border, ManyakTheme.shapes.control)
                 .clickable(role = Role.Button, onClick = onClick)
                 // 보조기술은 "AI 모델 선택" 다음에 지금 모델 이름을 읽는다.
                 .clearAndSetSemantics { contentDescription = description }
@@ -134,13 +133,14 @@ private fun ChatModelOption(
     onClick: () -> Unit,
 ) {
     val colors = ManyakTheme.colors
+    val borderColor = if (selected) colors.borderBrand else colors.border
     Column(
         modifier =
             Modifier
                 .fillMaxWidth()
                 .clip(ManyakTheme.shapes.overlay)
                 .background(if (selected) colors.backgroundBrandSubtle else colors.surfaceRaised)
-                .border(1.dp, if (selected) colors.borderBrand else colors.border, ManyakTheme.shapes.overlay)
+                .border(ManyakTheme.sizes.borderWidth, borderColor, ManyakTheme.shapes.overlay)
                 .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
                 .padding(ManyakTheme.spacing.gutter),
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
