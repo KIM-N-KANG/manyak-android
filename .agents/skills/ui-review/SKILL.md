@@ -25,7 +25,8 @@ PR 전 화면 검사입니다. 에뮬레이터에서 화면을 실행해서 보�
 ## 2. 준비
 
 1. 기기를 확인합니다: `adb devices`. 없으면 `android emulator list`로 AVD를 보고 `android emulator start <AVD>`로 켭니다(지금은 `Pixel_10`). 기기가 둘 이상이면 모든 명령에 serial을 붙입니다(`adb -s <serial>`, `android ... --device=<serial>`).
-2. 처음 값을 적습니다: `adb shell cmd uimode night`, `adb shell settings get system font_scale`, `adb shell settings get system accelerometer_rotation`, `adb shell settings get system user_rotation`, `adb shell settings get global always_finish_activities`.
+2. 처음 값을 적습니다: `adb shell cmd uimode night`, `adb shell settings get system font_scale`, `adb shell settings get system accelerometer_rotation`, `adb shell settings get system user_rotation`, `adb shell settings get global airplane_mode_on`, `adb shell settings get global http_proxy`, `adb shell settings get global global_http_proxy_host`, `adb shell settings get global global_http_proxy_port`, `adb shell settings get global always_finish_activities`.
+   - 한 번도 바꾸지 않은 설정은 `null`로 나옵니다. 그 값은 put으로 되돌리지 않고 5번에서 `settings delete`로 지웁니다.
    - `always_finish_activities`가 1이면 "활동 유지 안 함"이 켜져 있어 회전이 프로세스 종료처럼 보입니다. 사용자에게 알리고 그 상태의 결과를 구성 변경 결과로 쓰지 않습니다.
 3. 현재 브랜치를 설치합니다: `./gradlew :app:installDebug`. 덮어쓰기 설치라 로그인과 앱 데이터는 유지됩니다.
 4. 앱을 엽니다: `adb shell am start -n app.manyak/.MainActivity`. 로그아웃 상태인지 첫 화면 캡처로 확인합니다.
@@ -33,7 +34,7 @@ PR 전 화면 검사입니다. 에뮬레이터에서 화면을 실행해서 보�
 ## 3. 살펴보기
 
 - 화면 이동은 레이아웃 트리에서 요소를 찾아 탭합니다.
-  - `android layout --pretty -o build/ui-review/<키>/<이름>.json`으로 트리를 받고 text, content description, bounds로 대상을 고릅니다. 같은 글자가 여럿이면 정확히 일치하는 노드를 먼저 고릅니다.
+  - `android layout --pretty -o build/ui-review/<키>/<이름>.json`으로 트리를 받고(기본 출력은 누를 수 있는 요소만 담음) text, content description, bounds로 대상을 고릅니다. 같은 글자가 여럿이면 정확히 일치하는 노드를 먼저 고릅니다.
   - 좌표는 `adb shell input tap <x> <y>`로 누릅니다. 글자로 찾기 어려우면 `android screen capture --annotate -o <파일>`로 번호를 붙여 보고, `android screen resolve --screenshot=<파일> --string="input tap #3"`으로 좌표를 받습니다.
   - `adb shell input text`는 한글 IME에서 영문이 자모로 바뀌므로 숫자만 넣습니다.
 - 캡처는 `android screen capture -o build/ui-review/<키>/<이름>.png`로 남깁니다. 고해상도라 Read 전에 `sips -Z 800 <파일>`로 줄입니다. 존재나 로딩 확인에는 캡처 대신 레이아웃 트리를 씁니다.
@@ -42,13 +43,13 @@ PR 전 화면 검사입니다. 에뮬레이터에서 화면을 실행해서 보�
   - 다크 모드: `adb shell cmd uimode night yes` 뒤 같은 화면을 다시 찍고 대비와 하드코딩 색을 봅니다. 끝나면 처음 값으로 되돌립니다.
   - 큰 글자: `adb shell settings put system font_scale 1.3`(필요하면 2.0) 뒤 잘림과 겹침을 봅니다.
   - 회전과 재생성: `adb shell settings put system accelerometer_rotation 0` 뒤 `user_rotation 1`과 `0`으로 돌려, 입력 중인 값, 스크롤 위치, 열린 시트가 유지되는지와 되돌리기, 초기화, 저장 효과가 다시 실행되지 않는지 봅니다. 기준은 configuration-changes 스킬입니다.
-  - 접근성: 레이아웃 트리에서 클릭할 수 있는데 text와 content description이 모두 없는 요소, bounds가 48dp(밀도 기준 픽셀로 환산)보다 작은 터치 대상, 장식인데 낭독되는 요소를 찾습니다.
+  - 접근성: 숨은 요소와 누를 수 없는 요소까지 담는 `android layout --full --pretty -o <파일>`로 트리를 받습니다. 클릭할 수 있는데 text와 content description이 모두 없는 요소, bounds가 48dp(밀도 기준 픽셀로 환산)보다 작은 터치 대상, 장식인데 낭독되는 요소를 찾습니다.
   - 상호작용: 바뀐 버튼, 시트, 다이얼로그를 직접 열고 닫습니다. 시스템 뒤로가기(`adb shell input keyevent KEYCODE_BACK`)로 닫히는지, 잠긴 시트는 닫히지 않는지 봅니다.
-  - 크래시와 오류: 검사 전 `adb logcat -c`, 끝난 뒤 `adb logcat -d -b crash`와 `adb logcat -d --pid=$(adb shell pidof app.manyak) '*:E'`로 앱 오류를 봅니다.
+  - 크래시와 오류: 검사 전 `adb logcat -c`, 끝난 뒤 `adb logcat -d -b crash`를 먼저 봅니다. 앱 오류는 `adb shell pidof app.manyak`으로 PID를 받아 `adb logcat -d --pid=<PID> '*:E'`로 보고, 크래시로 프로세스가 죽어 PID가 비면 `adb logcat -d '*:E'`에서 `app.manyak` 줄을 찾습니다.
 - 변경 전과 비교는 사용자가 요청했을 때만 합니다. 기본 체크아웃의 HEAD는 옮기지 않습니다.
-  1. `git worktree add --detach /tmp/ui-review-base origin/dev`에서 `./gradlew :app:assembleDebug`로 기준 APK를 만듭니다. `local.properties`는 기본 체크아웃의 것을 복사합니다.
+  1. `git fetch origin dev` 뒤 `git worktree add --detach /tmp/ui-review-base-<키> origin/dev`에서 `./gradlew :app:assembleDebug`로 기준 APK를 만듭니다. 같은 경로가 남아 있으면 `git worktree list`로 확인하고 `git worktree remove`로 먼저 지웁니다(변경이 남아 거부되면 멈추고 보고). `local.properties`는 기본 체크아웃의 것을 복사합니다.
   2. `adb install -r -d <기준 APK>`로 바꿔 같은 화면을 찍고, 현재 브랜치에서 다시 `./gradlew :app:installDebug`로 되돌립니다.
-  3. 끝나면 `git worktree remove /tmp/ui-review-base`로 지웁니다. 이 단계에서 DB 버전이 내려가면 앱이 시작하지 못할 수 있으므로, 브랜치가 Room 스키마를 바꿨으면 비교하지 않고 그 이유를 보고합니다.
+  3. 끝나면 `git worktree remove /tmp/ui-review-base-<키>`로 지웁니다. 이 단계에서 DB 버전이 내려가면 앱이 시작하지 못할 수 있으므로, 브랜치가 Room 스키마를 바꿨으면 비교하지 않고 그 이유를 보고합니다.
 
 ## 4. 원인 위치 짚기
 
@@ -57,7 +58,7 @@ PR 전 화면 검사입니다. 에뮬레이터에서 화면을 실행해서 보�
 
 ## 5. 정리
 
-- 2번에서 적은 처음 값으로 다크 모드, 글자 크기, 회전을 되돌리고 값을 다시 읽어 확인합니다.
+- 2번에서 적은 처음 값으로 다크 모드, 글자 크기, 회전, 비행기 모드(`adb shell cmd connectivity airplane-mode enable` 또는 `disable`), 프록시를 되돌리고 값을 다시 읽어 확인합니다. 처음 값이 `null`이던 설정(`font_scale`, `http_proxy`, `global_http_proxy_host`, `global_http_proxy_port` 등)은 `adb shell settings delete <system|global> <이름>`으로 지웁니다.
 - 비교용 worktree를 만들었으면 지웠는지 확인합니다. 직접 켠 에뮬레이터는 켜 둔 채로 둡니다.
 
 ## 6. 보고

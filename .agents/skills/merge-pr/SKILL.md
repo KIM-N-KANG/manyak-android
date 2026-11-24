@@ -23,7 +23,7 @@ description: manyak-android의 기능 PR을 머지해 달라는 요청에 사용
    gh pr view <번호> --json number,url,title,state,isDraft,baseRefName,headRefName,headRefOid,mergeable,mergeStateStatus,statusCheckRollup,body
    ```
 
-   - `state`가 `MERGED`면 머지는 건너뛰고 6번부터 정리만 합니다. `CLOSED`면 머지하지 않고 상태를 보고합니다.
+   - `state`가 `MERGED`면 머지는 건너뜁니다. 아래에서 찾은 쌓인 PR이 있으면 3번으로 base를 먼저 옮긴 뒤 6번부터 정리합니다. 원격 브랜치를 먼저 지우면 위 PR이 닫힙니다. `CLOSED`면 머지하지 않고 상태를 보고합니다.
    - `git worktree list --porcelain`에서 `branch refs/heads/<head>`인 항목을 찾습니다. 첫 항목(기본 체크아웃)이 아니면 그 경로가 6번에서 정리할 worktree입니다.
    - 위에 쌓인 PR을 찾습니다: `gh pr list --state open --base <head> --json number,title,headRefName`.
 
@@ -57,7 +57,7 @@ description: manyak-android의 기능 PR을 머지해 달라는 요청에 사용
 
 7. 브랜치를 정리합니다.
    - 기본 체크아웃이 head 브랜치에 있었으면 `dev`로 전환해 `git pull --ff-only`로 맞춥니다. 다른 작업 브랜치에 있으면 전환하지 않습니다. 어느 경우든 `git fetch origin --prune`으로 지워진 원격 브랜치 참조를 정리합니다.
-   - 원격 head 브랜치가 남아 있으면(`git ls-remote --heads origin <head>`) `git push origin --delete <head>`로 지웁니다.
+   - 원격 head 브랜치가 남아 있으면(`git ls-remote --heads origin <head>`) `git push origin --delete <head>`로 지웁니다. 지우기 전에 `gh pr list --state open --base <head>`가 비었는지 다시 봅니다. 아직 그 브랜치를 base로 쓰는 PR이 있으면 지우지 않고 3번부터 처리합니다.
    - 로컬 head 브랜치가 남아 있으면 지웁니다. squash merge라서 `git branch -d`가 거부하므로, 로컬 끝 커밋이 `headRefOid`와 같을 때만 `git branch -D <head>`를 씁니다. 다르면 지우지 않고 보고합니다.
 8. 3번에서 base를 옮긴 위 PR을 정리합니다. 위 브랜치에는 squash되기 전 아래 PR의 커밋이 그대로 있어 diff에 아래 변경이 함께 보이고, base 변경만으로는 CI가 다시 돌지 않습니다.
    - 위 PR도 머지 요청 범위에 있으면 위 브랜치에서 `git merge origin/dev`로 `dev`를 합칩니다. 충돌하면 위 브랜치 쪽을 채택하고 `git diff origin/dev...HEAD`가 위 PR의 변경만 담는지 확인한 뒤 일반 push합니다. push로 CI가 다시 돌면 2번부터 같은 절차로 머지합니다.
