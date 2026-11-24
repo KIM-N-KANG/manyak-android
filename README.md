@@ -4,12 +4,12 @@
 
 | 분류       | 사용 기술                                                        |
 | ---------- | ---------------------------------------------------------------- |
-| 언어·빌드  | Kotlin 2.3.21, AGP 9.3.1, Gradle 9.5, JDK 25                     |
+| 언어, 빌드 | Kotlin 2.3.21, AGP 9.3.1, Gradle 9.5, JDK 25                     |
 | UI         | Jetpack Compose (BOM 2026.02.01), Material 3, 자체 디자인 시스템 |
 | 내비게이션 | Navigation 3                                                     |
 | DI         | Hilt                                                             |
 | 네트워크   | Retrofit 3 + kotlinx.serialization, OkHttp 5, SSE(채팅 스트리밍) |
-| 로컬 저장  | DataStore(세션·설정), Room(제작 진행 등 로컬 데이터)             |
+| 로컬 저장  | DataStore(세션, 설정), Room(제작 진행 등 로컬 데이터)            |
 | 이미지     | Coil 3                                                           |
 | 인증       | Credential Manager + Google ID, Kakao SDK                        |
 | 정적 검사  | ktlint, detekt, Android Lint                                     |
@@ -18,36 +18,36 @@
 
 ```text
 manyak-android/
-├── build-logic/           # 공통 Gradle convention plugin · 모듈/계층 검사
-├── gradle/                # Wrapper · 버전 카탈로그
-├── app/                       # Navigation 3 백스택 · 메인 탭 · 세션 조율 · DI 조립
+├── build-logic/           # 공통 Gradle convention plugin, 모듈과 계층 검사
+├── gradle/                # Wrapper, 버전 카탈로그
+├── app/                       # Navigation 3 백스택, 메인 탭, 세션 조율, DI 조립
 ├── core/                      # 여러 기능이 함께 쓰는 기반 (:core:<모듈>)
-│   ├── auth/                  # 인증 · 토큰 · 세션 · 계정 연동
-│   ├── network/               # HTTP · 직렬화 · 공통 통신 오류 변환
-│   ├── analytics/             # 이벤트 계약 · 분석/크래시 SDK
+│   ├── auth/                  # 인증, 토큰, 세션, 계정 연동
+│   ├── network/               # HTTP, 직렬화, 공통 통신 오류 변환
+│   ├── analytics/             # 이벤트 계약, 분석과 크래시 SDK
 │   ├── navigation/            # 라우트 단일 등록처
-│   ├── designsystem/          # ManyakTheme · 시각적 공용 컴포넌트
+│   ├── designsystem/          # ManyakTheme, 시각적 공용 컴포넌트
 │   ├── common/                # 실제 공통 entity/domain/data/presentation
 │   ├── report/                # 공유 신고 업무
-│   └── testing/               # 테스트 전용: MainDispatcherRule · 공용 Fake
+│   └── testing/               # 테스트 전용: MainDispatcherRule, 공용 Fake
 └── feature/                   # 화면 기능 (:feature:<모듈>)
-    ├── home/, studio/, story/ # 오리지널 목록 · 내 목록 · 상세
+    ├── home/, studio/, story/ # 오리지널 목록, 내 목록, 상세
     ├── onboarding/            # 신규 가입 스토리 온보딩
-    ├── chat/                  # list/presentation · room/presentation
-    ├── create/                # keyword · storyline · additionalinfo
-    ├── my/                    # profile · persona · invite · feedback · withdrawal · licenses
-    ├── credit/                # 이프 충전 · 출석 · 정책 · 체험 · 내역 저장소
-    ├── notification/, notice/ # 푸시 토큰 · 알림 설정 · 광고 동의 / 공지사항 목록 · 상세 · 안 읽음
-    └── login/, legal/         # 로그인 · 웹 문서 화면 · 약관 동의 시트
+    ├── chat/                  # list/presentation, room/presentation
+    ├── create/                # keyword, storyline, additionalinfo
+    ├── my/                    # profile, persona, invite, feedback, withdrawal, licenses
+    ├── credit/                # 이프 충전, 출석, 정책, 체험, 내역 저장소
+    ├── notification/, notice/ # 푸시 토큰, 알림 설정, 광고 동의 / 공지사항 목록, 상세, 안 읽음
+    └── login/, legal/         # 로그인, 웹 문서 화면, 약관 동의 시트
 ```
 
-런타임 모듈은 19개(테스트 전용 `core/testing` 제외)이며 내부 계층·하위 기능은 Kotlin 패키지입니다. Kotlin 패키지는 폴더 그룹과 무관하게 `app.manyak.<모듈>`을 유지합니다. 구조·계층·공통 코드의 정본은 [하네스 Android 설계](../knk-harness/docs/platform/CLIENT/ANDROID/AGENTS.md), 이동·검증 내역은 [모듈 재구성 기록](docs/plans/module-reorganization.md)을 확인하세요. 디자인 규칙은 [DESIGN.md](DESIGN.md)에 있습니다.
+런타임 모듈은 19개(테스트 전용 `core/testing` 제외)이며 내부 계층과 하위 기능은 Kotlin 패키지입니다. Kotlin 패키지는 폴더 그룹과 무관하게 `app.manyak.<모듈>`을 유지합니다. 구조, 계층, 공통 코드의 정본은 [하네스 Android 설계](../knk-harness/docs/platform/CLIENT/ANDROID/AGENTS.md)를 확인하세요. 모듈 이동과 검증 내역은 삭제 전 [모듈 재구성 기록](https://github.com/KIM-N-KANG/manyak-android/blob/27b9c46bb5b7dcad1b9bb9a50f7ec18c3d1c8f31/docs/plans/module-reorganization.md)에 있습니다. 디자인 규칙은 [DESIGN.md](DESIGN.md)에 있습니다.
 
 ## 실행하기
 
 ### 사전 요구사항
 
-- **JDK 25** — Gradle 데몬 toolchain(`gradle/gradle-daemon-jvm.properties`)이며 CI도 같은 값을 씁니다.
+- **JDK 25**: Gradle 데몬 toolchain(`gradle/gradle-daemon-jvm.properties`)이며 CI도 같은 값을 씁니다.
 - **Android Studio** 최신 안정 버전, **Android SDK 37** (`compileSdk`/`targetSdk` 37, `minSdk` 24)
 - 백엔드 서버는 따로 띄우지 않아도 됩니다. 기본값이 공용 개발 서버(`https://dev-api.manyak.app`)입니다.
 
@@ -57,11 +57,11 @@ manyak-android/
 # 로컬 설정 파일 생성
 cp local.properties.example local.properties
 
-# 연결된 기기·에뮬레이터에 디버그 빌드 설치
+# 연결된 기기나 에뮬레이터에 디버그 빌드 설치
 ./gradlew installDebug
 ```
 
-`local.properties`에 소셜 로그인 키를 채우지 않으면 빌드·실행은 되지만 로그인이 시작 단계에서 실패합니다. 키는 아래 두 개를 팀에서 받아 채웁니다.
+`local.properties`에 소셜 로그인 키를 채우지 않으면 빌드와 실행은 되지만 로그인이 시작 단계에서 실패합니다. 키는 아래 두 개를 팀에서 받아 채웁니다.
 
 | 키                              | 설명                                                       |
 | ------------------------------- | ---------------------------------------------------------- |
@@ -74,7 +74,7 @@ cp local.properties.example local.properties
 
 | 명령                           | 설명                                         |
 | ------------------------------ | -------------------------------------------- |
-| `./gradlew check`              | 모듈/계층 검사 · ktlint · detekt · Android Lint · 유닛 테스트 |
+| `./gradlew check`              | 모듈과 계층 검사, ktlint, detekt, Android Lint, 유닛 테스트 |
 | `./gradlew assembleDebug`      | 디버그 APK 빌드                              |
 | `./gradlew installDebug`       | 연결된 기기에 설치                           |
 | `./gradlew ktlintFormat`       | 포맷 자동 수정                               |
@@ -87,9 +87,9 @@ PR에서는 CI(`.github/workflows/android-ci.yml`)가 `check`와 `assembleDebug`
 
 | 문서                                                   | 내용                                        |
 | ------------------------------------------------------ | ------------------------------------------- |
-| `DESIGN.md`                                            | 색·타이포·여백·컴포넌트 규칙                |
-| `CLAUDE.md`                                            | 이 저장소의 작업 규칙                       |
-| `docs/plans/`                                          | 기능별 구현 순서·검증·실행 결과    |
-| [공용 Android](../knk-harness/docs/platform/CLIENT/ANDROID/AGENTS.md) | 현재 앱 기술 구조·상태 수명·요청 흐름 |
+| `DESIGN.md`                                            | 색, 타이포, 여백, 컴포넌트 규칙             |
+| `AGENTS.md`                                            | 이 저장소의 작업 규칙                       |
+| `.agents/skills/`                                      | 에이전트 스킬 원본                          |
+| [공용 Android](../knk-harness/docs/platform/CLIENT/ANDROID/AGENTS.md) | 현재 앱 기술 구조, 상태 수명, 요청 흐름 |
 
-기능별 사용자 계약, 현재 구조와 검증은 [도메인 목록](../knk-harness/docs/spec/AGENTS.md)에서 해당 CLIENT와 ANDROID 세트를 찾아 확인합니다. 결정 이유는 각 세트의 DECISIONS에 보존합니다. 변경 순서와 실행 결과는 `docs/plans/`, 관련 티켓과 검증 근거는 해당 PR에 남깁니다. 공통 계약과 결정은 하네스를 참조하고 복사하지 않습니다.
+기능별 사용자 계약, 현재 구조와 검증은 [도메인 목록](../knk-harness/docs/spec/AGENTS.md)에서 해당 CLIENT와 ANDROID 세트를 찾아 확인합니다. 결정 이유는 각 세트의 DECISIONS에 보존합니다. 변경 순서, 실행 결과, 관련 티켓과 검증 근거는 해당 PR에 남깁니다. 공통 계약과 결정은 하네스를 참조하고 복사하지 않습니다.
