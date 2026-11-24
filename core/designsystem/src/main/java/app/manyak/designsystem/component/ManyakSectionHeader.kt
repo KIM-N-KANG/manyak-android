@@ -54,8 +54,7 @@ fun ManyakSectionHeader(
  * 하단 탭과 달리 여기서는 M3 컴포넌트가 맞다 — 탭은 끌 수 없는 눌림 피드백과 선택 표시자가
  * 걸림돌이었지만, 앱 바는 색과 제목 슬롯만 지정하면 이 디자인 시스템과 어긋나는 요소가 없다.
  *
- * [TopAppBar] 는 아직 실험 API 라 opt-in 이 필요하다. 사용처가 이 파일뿐이라, 시그니처가 바뀌어도
- * 고칠 곳은 여기 한 곳이다.
+ * [TopAppBar] 는 아직 실험 API 라 opt-in 이 필요하다. 두 헤더는 이 함수만 거치므로 opt-in 도 여기에만 둔다.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

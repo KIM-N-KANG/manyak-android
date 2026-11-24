@@ -132,14 +132,14 @@ private fun CarouselCard(
         modifier =
             modifier
                 .clip(shape)
-                .border(CardBorderWidth, colors.border, shape)
+                .border(ManyakTheme.sizes.borderWidth, colors.border, shape)
                 .background(colors.surfaceRaised)
                 .clickable(onClickLabel = clickLabel, onClick = onClick)
-                .padding(CardBorderWidth),
+                .padding(ManyakTheme.sizes.borderWidth),
     ) {
         // 바깥 카드가 모서리를 깎으므로 표지는 각지게 둔다.
         StoryCover(thumbnailUrl = story.thumbnailUrl, shape = RectangleShape)
-        HorizontalDivider(thickness = CardBorderWidth, color = colors.border)
+        HorizontalDivider(thickness = ManyakTheme.sizes.borderWidth, color = colors.border)
         Column(
             modifier =
                 Modifier.padding(
@@ -288,7 +288,8 @@ private fun cardTextAreaHeight(): Dp {
         with(LocalDensity.current) {
             typography.bodyLargeStrong.lineHeight.toDp() + typography.bodyMedium.lineHeight.toDp() * 2
         }
-    return lines + ManyakTheme.spacing.controlHorizontal * 2 + ManyakTheme.spacing.inline + CardBorderWidth * 3
+    val borders = ManyakTheme.sizes.borderWidth * 3
+    return lines + ManyakTheme.spacing.controlHorizontal * 2 + ManyakTheme.spacing.inline + borders
 }
 
 /** 순환에 쓰는 전체 페이지 수. 한 편이면 넘길 것이 없어 순환하지 않는다. */
@@ -317,8 +318,6 @@ private val CardMaxWidth = 360.dp
 private const val SIDE_CARD_SCALE = 0.88f
 private const val SIDE_CARD_ALPHA = 0.4f
 private const val PIVOT_MIDDLE = 0.5f
-
-private val CardBorderWidth = 1.dp
 
 /**
  * 카드 그림자. 높이를 크게 둬 넓게 퍼지게 하고 색을 아주 옅게 눌러, 윤곽 대신 카드 아래가 살짝 가라앉은 정도로만

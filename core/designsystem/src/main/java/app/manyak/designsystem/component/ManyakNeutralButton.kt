@@ -9,7 +9,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import app.manyak.designsystem.theme.ManyakTheme
 
 /**
@@ -38,7 +37,7 @@ fun ManyakNeutralButton(
         enabled = enabled,
         onClick = onClick,
         shape = ManyakTheme.shapes.control,
-        border = BorderStroke(NeutralBorderWidth, ManyakTheme.colors.border),
+        border = BorderStroke(ManyakTheme.sizes.borderWidth, ManyakTheme.colors.border),
         colors =
             ButtonDefaults.buttonColors(
                 containerColor = ManyakTheme.colors.backgroundNeutral,
@@ -50,8 +49,6 @@ fun ManyakNeutralButton(
         Text(text = label, style = ManyakTheme.typography.labelLarge)
     }
 }
-
-private val NeutralBorderWidth = 1.dp
 
 @Preview(showBackground = true, name = "보조 버튼")
 @Composable

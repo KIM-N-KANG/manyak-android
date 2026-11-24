@@ -221,7 +221,7 @@ private fun SeparatorLine(modifier: Modifier = Modifier) {
     Box(
         modifier =
             modifier
-                .height(SeparatorLineWidth)
+                .height(ManyakTheme.sizes.borderWidth)
                 .background(ManyakTheme.colors.border),
     )
 }
@@ -232,7 +232,6 @@ private const val MILLIS_PER_SECOND = 1_000L
 private const val HINT_ENTER_MILLIS = 500
 
 private val HintSlideDistance = 8.dp
-private val SeparatorLineWidth = 1.dp
 
 @Preview(showBackground = true, name = "스토리라인 선택 · 생성 중")
 @Composable

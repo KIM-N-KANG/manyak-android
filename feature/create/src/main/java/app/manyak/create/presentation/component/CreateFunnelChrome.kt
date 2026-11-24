@@ -140,7 +140,7 @@ private fun DraftSaveButton(
             onClick()
         },
         shape = ManyakTheme.shapes.control,
-        border = BorderStroke(1.dp, ManyakTheme.colors.border),
+        border = BorderStroke(ManyakTheme.sizes.borderWidth, ManyakTheme.colors.border),
         contentPadding = PaddingValues(horizontal = ManyakTheme.spacing.component),
         colors =
             ButtonDefaults.buttonColors(

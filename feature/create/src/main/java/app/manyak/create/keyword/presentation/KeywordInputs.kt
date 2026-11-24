@@ -60,7 +60,7 @@ internal fun KeywordChip(
                 .heightIn(min = ManyakTheme.sizes.input)
                 .clip(ManyakTheme.shapes.control)
                 .background(background)
-                .border(1.dp, borderColor, ManyakTheme.shapes.control)
+                .border(ManyakTheme.sizes.borderWidth, borderColor, ManyakTheme.shapes.control)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,

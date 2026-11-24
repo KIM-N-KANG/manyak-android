@@ -184,7 +184,7 @@ private fun LinkedAccountRow(
                 label = stringResource(provider.labelRes),
                 modifier =
                     Modifier.border(
-                        width = ProviderChipBorderWidth,
+                        width = ManyakTheme.sizes.borderWidth,
                         color = ManyakTheme.colors.border,
                         shape = ManyakTheme.shapes.pill,
                     ),
@@ -204,7 +204,7 @@ private fun LinkedAccountRow(
                             .dashedPillBorder(
                                 // 점선은 잉크가 절반만 닿아 실선 칩 옆에서 같은 색으로는 연하게 읽힌다.
                                 color = ManyakTheme.colors.borderStrong,
-                                width = ProviderChipBorderWidth,
+                                width = ManyakTheme.sizes.borderWidth,
                             ),
                 )
             }
@@ -273,6 +273,5 @@ private val ProfileAvatarSize = 56.dp
 /** 연동 칩의 높이·로고 크기는 웹 배지(24px 높이, 12px 로고)와 맞춘다. */
 private val ProviderChipHeight = 24.dp
 private val ProviderLogoSize = 12.dp
-private val ProviderChipBorderWidth = 1.dp
 private val ProviderChipDashLength = 3.dp
 private val ProviderChipDashGap = 3.dp

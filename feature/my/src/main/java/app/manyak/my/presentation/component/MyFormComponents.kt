@@ -20,7 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import app.manyak.designsystem.component.ManyakProgressIndicator
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.my.R as MyR
@@ -89,7 +88,7 @@ internal fun MyOutlineButton(
         onClick = onClick,
         enabled = enabled,
         shape = ManyakTheme.shapes.control,
-        border = BorderStroke(1.dp, ManyakTheme.colors.border),
+        border = BorderStroke(ManyakTheme.sizes.borderWidth, ManyakTheme.colors.border),
         colors =
             ButtonDefaults.buttonColors(
                 containerColor = ManyakTheme.colors.surface,

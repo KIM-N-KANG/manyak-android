@@ -42,7 +42,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import app.manyak.designsystem.theme.ManyakTheme
@@ -155,9 +154,9 @@ fun <T> ManyakSelectMenu(
             modifier =
                 modifier
                     .width(IntrinsicSize.Max)
-                    .shadow(elevation = MenuShadowElevation, shape = ManyakTheme.shapes.control)
+                    .shadow(elevation = ManyakTheme.sizes.selectMenuElevation, shape = ManyakTheme.shapes.control)
                     .background(ManyakTheme.colors.surfaceRaised, ManyakTheme.shapes.control)
-                    .border(BorderWidth, ManyakTheme.colors.border, ManyakTheme.shapes.control)
+                    .border(ManyakTheme.sizes.inputBorderWidth, ManyakTheme.colors.border, ManyakTheme.shapes.control)
                     .clip(ManyakTheme.shapes.control)
                     .padding(ManyakTheme.spacing.inline),
             verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
@@ -179,7 +178,7 @@ fun <T> ManyakSelectMenu(
                 }
             }
             action?.let {
-                Box(Modifier.fillMaxWidth().height(BorderWidth).background(ManyakTheme.colors.border))
+                Box(Modifier.fillMaxWidth().height(ManyakTheme.sizes.borderWidth).background(ManyakTheme.colors.border))
                 SelectMenuAction(action = it)
             }
         }
@@ -280,7 +279,7 @@ private fun SelectAnchor(
                 .heightIn(min = ManyakTheme.sizes.input)
                 .clip(ManyakTheme.shapes.control)
                 .background(ManyakTheme.colors.surfaceRaised)
-                .border(BorderWidth, ManyakTheme.colors.border, ManyakTheme.shapes.control)
+                .border(ManyakTheme.sizes.inputBorderWidth, ManyakTheme.colors.border, ManyakTheme.shapes.control)
                 .clickable(role = Role.Button, onClickLabel = onClickLabel, onClick = onClick)
                 .padding(horizontal = ManyakTheme.spacing.controlHorizontal),
         verticalAlignment = Alignment.CenterVertically,
@@ -310,7 +309,3 @@ private fun SelectAnchor(
 }
 
 private const val HALF_TURN = 180f
-
-private val MenuShadowElevation = 4.dp
-
-private val BorderWidth = 1.dp

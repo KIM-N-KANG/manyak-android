@@ -250,7 +250,7 @@ private fun NoticePopover(
                 Modifier
                     .widthIn(max = NoticePopoverMaxWidth)
                     .background(ManyakTheme.colors.surfaceRaised, ManyakTheme.shapes.control)
-                    .border(NoticePopoverBorderWidth, ManyakTheme.colors.border, ManyakTheme.shapes.control)
+                    .border(ManyakTheme.sizes.borderWidth, ManyakTheme.colors.border, ManyakTheme.shapes.control)
                     .padding(
                         horizontal = ManyakTheme.spacing.component,
                         vertical = ManyakTheme.spacing.compact,
@@ -326,8 +326,6 @@ internal fun ChatSettingRow(
 private val NoticeButtonSize = 24.dp
 
 private val NoticePopoverMaxWidth = 256.dp
-
-private val NoticePopoverBorderWidth = 1.dp
 
 @Preview(name = "채팅 설정 · 라이트")
 @Composable

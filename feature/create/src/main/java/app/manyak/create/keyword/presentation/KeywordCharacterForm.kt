@@ -247,7 +247,7 @@ internal fun TagsReloadButton(
         modifier = modifier.height(ManyakTheme.sizes.control),
         onClick = onClick,
         shape = ManyakTheme.shapes.control,
-        border = BorderStroke(1.dp, ManyakTheme.colors.border),
+        border = BorderStroke(ManyakTheme.sizes.borderWidth, ManyakTheme.colors.border),
         colors =
             ButtonDefaults.buttonColors(
                 containerColor = ManyakTheme.colors.surfaceRaised,

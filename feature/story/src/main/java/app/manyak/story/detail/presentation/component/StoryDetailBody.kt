@@ -24,7 +24,6 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.unit.dp
 import app.manyak.common.entity.persona.Persona
 import app.manyak.designsystem.component.CharacterImage
 import app.manyak.designsystem.component.ManyakInfoTooltipButton
@@ -164,7 +163,7 @@ private fun StoryHero(
             badgeScale = StoryBadgeScale.Large,
             shape = RectangleShape,
         )
-        HorizontalDivider(thickness = StoryHeroBorderWidth, color = ManyakTheme.colors.border)
+        HorizontalDivider(thickness = ManyakTheme.sizes.borderWidth, color = ManyakTheme.colors.border)
     }
 }
 
@@ -449,9 +448,6 @@ private fun LabeledSection(
         content()
     }
 }
-
-/** 표지 아래 경계선. 골격도 같은 선을 그려야 본문이 도착할 때 구조가 어긋나지 않는다. */
-internal val StoryHeroBorderWidth = 1.dp
 
 private const val OVERVIEW_KEY = "overview"
 private const val DESCRIPTION_KEY = "description"

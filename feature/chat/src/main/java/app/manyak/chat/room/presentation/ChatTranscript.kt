@@ -49,7 +49,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import app.manyak.chat.list.presentation.label
 import app.manyak.chat.room.presentation.message.ChatAiOutput
 import app.manyak.chat.room.presentation.suggestion.ChatSuggestionArea
@@ -287,7 +286,7 @@ private fun ScrollToBottomButton(
         modifier =
             modifier
                 .size(ManyakTheme.sizes.controlSmall)
-                .border(ButtonBorderWidth, ManyakTheme.colors.border, ManyakTheme.shapes.menuItem)
+                .border(ManyakTheme.sizes.borderWidth, ManyakTheme.colors.border, ManyakTheme.shapes.menuItem)
                 .clip(ManyakTheme.shapes.menuItem)
                 .background(ManyakTheme.colors.surfaceRaised)
                 .clickable(role = Role.Button, onClickLabel = label, onClick = onClick),
@@ -301,5 +300,3 @@ private fun ScrollToBottomButton(
         )
     }
 }
-
-private val ButtonBorderWidth = 1.dp

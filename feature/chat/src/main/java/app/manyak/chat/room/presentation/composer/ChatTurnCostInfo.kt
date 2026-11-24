@@ -184,9 +184,9 @@ private fun ChatTurnCostPanel(
         modifier =
             modifier
                 .width(PanelWidth)
-                .shadow(elevation = PanelShadowElevation, shape = ManyakTheme.shapes.control)
+                .shadow(elevation = ManyakTheme.sizes.selectMenuElevation, shape = ManyakTheme.shapes.control)
                 .background(ManyakTheme.colors.surfaceRaised, ManyakTheme.shapes.control)
-                .border(PanelBorderWidth, ManyakTheme.colors.border, ManyakTheme.shapes.control)
+                .border(ManyakTheme.sizes.borderWidth, ManyakTheme.colors.border, ManyakTheme.shapes.control)
                 .clip(ManyakTheme.shapes.control)
                 .padding(ManyakTheme.spacing.gutter),
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.component),
@@ -234,7 +234,7 @@ private fun TotalRow(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .height(PanelBorderWidth)
+                    .height(ManyakTheme.sizes.borderWidth)
                     .background(ManyakTheme.colors.border),
         )
         Row(
@@ -331,8 +331,6 @@ private fun trialText(trial: TrialUsage): String {
 }
 
 private val PanelWidth = 256.dp
-private val PanelShadowElevation = 4.dp
-private val PanelBorderWidth = 1.dp
 
 @Preview(showBackground = true, name = "이프 안내, 턴 체험 남음, 이미지 체험 다 씀, 긴 응답")
 @Composable

@@ -43,7 +43,6 @@ import androidx.compose.ui.semantics.expand
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import app.manyak.common.entity.persona.Persona
 import app.manyak.designsystem.component.ManyakBottomSheet
 import app.manyak.designsystem.text.PassageSegment
@@ -114,7 +113,7 @@ internal fun ChatStartSheet(
                 footer = { CreatePersonaOption(onClick = onCreatePersona) },
             )
             if (selectedStartSetting != null) {
-                HorizontalDivider(thickness = 1.dp, color = ManyakTheme.colors.surfaceRaised)
+                HorizontalDivider(thickness = ManyakTheme.sizes.borderWidth, color = ManyakTheme.colors.surfaceRaised)
                 ChoiceRow(
                     label = stringResource(StoryR.string.story_detail_start_sheet_start_setting),
                     value = selectedStartSetting.name,
@@ -314,7 +313,7 @@ private fun <T> ChoiceList(
                 // 선택지 글자 시작선에 맞춰 짧게 긋는다.
                 HorizontalDivider(
                     modifier = Modifier.padding(horizontal = ManyakTheme.spacing.compact),
-                    thickness = 1.dp,
+                    thickness = ManyakTheme.sizes.borderWidth,
                     color = ManyakTheme.colors.surfaceRaised,
                 )
                 footer()

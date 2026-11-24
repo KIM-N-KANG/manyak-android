@@ -28,7 +28,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.manyak.common.entity.story.CreationResumePoint
 import app.manyak.common.entity.story.CreationStage
@@ -153,8 +152,8 @@ private fun ProgressCover(
                 .aspectRatio(STORY_THUMBNAIL_ASPECT_RATIO)
                 .clip(shape)
                 .background(ManyakTheme.colors.border)
-                .padding(CoverBorderWidth)
-                .clip(shape.insetForBorder(CoverBorderWidth))
+                .padding(ManyakTheme.sizes.borderWidth)
+                .clip(shape.insetForBorder(ManyakTheme.sizes.borderWidth))
                 .background(ManyakTheme.colors.backgroundNeutral),
         contentAlignment = Alignment.Center,
     ) {
@@ -285,8 +284,6 @@ private fun CreationProgressCardKind.primaryActionRes(): Int? =
 @Composable
 private fun CreationProgressCardKind.titleColor() =
     if (this is CreationProgressCardKind.Completed) ManyakTheme.colors.text else ManyakTheme.colors.textSubtle
-
-private val CoverBorderWidth: Dp = 1.dp
 
 /** 표지 가운데 심벌 크기. 표지 placeholder 아이콘과 같은 값이다. */
 private val SymbolSize = 32.dp
