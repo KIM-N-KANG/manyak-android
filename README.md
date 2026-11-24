@@ -88,7 +88,7 @@ PR에서는 CI(`.github/workflows/android-ci.yml`)가 `check`와 `assembleDebug`
 | 문서                                                   | 내용                                        |
 | ------------------------------------------------------ | ------------------------------------------- |
 | `DESIGN.md`                                            | 색, 타이포, 여백, 컴포넌트 규칙             |
-| `CLAUDE.md`                                            | 이 저장소의 작업 규칙                       |
+| `AGENTS.md`                                            | 이 저장소의 작업 규칙                       |
 | `.agents/skills/`                                      | 에이전트 스킬 원본                          |
 | [공용 Android](../knk-harness/docs/platform/CLIENT/ANDROID/AGENTS.md) | 현재 앱 기술 구조, 상태 수명, 요청 흐름 |
 

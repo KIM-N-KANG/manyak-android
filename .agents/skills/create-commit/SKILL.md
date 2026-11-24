@@ -15,7 +15,7 @@ description: 로컬 변경사항을 팀 규칙에 맞춰 커밋해 달라는 요
 
 ## 필수 검증
 
-원본 5번이 말하는 프로젝트 필수 검증은 CLAUDE.md "검증" 절입니다.
+원본 5번이 말하는 프로젝트 필수 검증은 AGENTS.md "검증" 절입니다.
 
 - 코드를 바꾼 모듈마다 `./gradlew :<core|feature>:<모듈>:ktlintCheck :<core|feature>:<모듈>:detekt :<core|feature>:<모듈>:testDebugUnitTest`를 실행합니다. 앱은 `:app`입니다.
 - `build-logic`, 버전 카탈로그, 루트 Gradle 설정처럼 공통 빌드 로직을 바꿨으면 `./gradlew check`도 실행합니다. 그 밖의 전체 게이트는 PR CI가 맡으므로 커밋 때 반복하지 않습니다.

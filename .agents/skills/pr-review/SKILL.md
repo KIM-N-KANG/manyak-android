@@ -1,6 +1,6 @@
 ---
 name: pr-review
-description: manyak-android의 변경을 PR 전에 코드 리뷰해 달라는 요청에 사용합니다. 예를 들어 "PR 올리기 전에 리뷰해줘", "코드 리뷰해줘", "보안 점검해줘"에 적용합니다. diff를 읽어 정확성 버그, 보안과 개인정보, CLAUDE.md 규칙, 모듈 경계, 테스트와 하네스 문서 동기화를 점검하고 PR 본문에 넣을 보고서를 만듭니다. 에뮬레이터에서 화면을 실행해 보는 검사는 ui-review 스킬이 맡습니다. 코드는 고치지 않고 보고만 합니다.
+description: manyak-android의 변경을 PR 전에 코드 리뷰해 달라는 요청에 사용합니다. 예를 들어 "PR 올리기 전에 리뷰해줘", "코드 리뷰해줘", "보안 점검해줘"에 적용합니다. diff를 읽어 정확성 버그, 보안과 개인정보, AGENTS.md 규칙, 모듈 경계, 테스트와 하네스 문서 동기화를 점검하고 PR 본문에 넣을 보고서를 만듭니다. 에뮬레이터에서 화면을 실행해 보는 검사는 ui-review 스킬이 맡습니다. 코드는 고치지 않고 보고만 합니다.
 ---
 
 # PR 전 코드 리뷰 (manyak-android)
@@ -41,7 +41,7 @@ diff를 읽는 리뷰입니다. 에뮬레이터에서 화면을 띄워 보는 �
 
 ## 4. 프로젝트 규칙
 
-CLAUDE.md 규칙 중 정적 검사로 막지 못하는 것을 봅니다.
+AGENTS.md 규칙 중 정적 검사로 막지 못하는 것을 봅니다.
 
 - 디자인 토큰: 색, 크기, 여백, 모서리를 `ManyakTheme` 접근자(`core/designsystem`) 대신 팔레트 값(`#05A66B` 등), `Color(...)`, `MaterialTheme.colorScheme`, `MaterialTheme.typography`로 직접 쓴 곳. 토큰을 추가했으면 Kotlin 토큰 파일과 `DESIGN.md` 표가 함께 바뀌었는지
 - 문구: 화면 코드의 하드코딩 문자열, 소유 모듈이 아닌 `strings.xml`에 둔 문구
