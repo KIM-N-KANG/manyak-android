@@ -289,7 +289,8 @@ internal fun ExploreGridSkeleton(
  * 탐색 칸 하나의 골격. 실제 타일처럼 표지와 글 영역을 한 면으로 채우고, 면 아래쪽 글 자리에 제목, 소개 두 줄과
  * 장르 막대를 둔다. 투명도는 면에만 걸어 막대가 면과 함께 맥동한다. [alpha] 는 그리기 단계에서만 읽는다.
  *
- * [description] 이 있으면 그 칸 하나가 불러오는 중임을 낭독기에 알리고, 없으면 낭독 대상이 아니다.
+ * [description] 이 있으면 낭독기가 그 칸을 그 문구로 읽고, live region 으로 표시해 지원하는 낭독기는 칸이 나타날 때
+ * 알린다. 없으면 낭독 대상이 아니다.
  */
 @Composable
 internal fun ExploreTileSkeleton(

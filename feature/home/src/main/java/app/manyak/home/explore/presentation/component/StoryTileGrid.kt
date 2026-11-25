@@ -60,7 +60,7 @@ internal fun StoryTileGrid(
         horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.hairline),
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.hairline),
     ) {
-        itemsIndexed(stories) { position, story ->
+        itemsIndexed(stories, contentType = { _, _ -> TILE_CONTENT_TYPE }) { position, story ->
             ExploreTile(
                 story = story,
                 position = position,
@@ -75,10 +75,10 @@ internal fun StoryTileGrid(
             )
         }
         if (pulse != null) {
-            items(nextPageSkeletonCount(stories.size)) { index ->
+            items(nextPageSkeletonCount(stories.size), contentType = { SKELETON_CONTENT_TYPE }) { index ->
                 ExploreTileSkeleton(
                     alpha = { pulse.value },
-                    // 칸마다 읽으면 같은 말을 여러 번 듣게 되므로 첫 칸 하나만 알린다.
+                    // 칸마다 읽으면 같은 말을 여러 번 듣게 되므로 첫 칸 하나만 읽게 한다.
                     description = loadingDescription.takeIf { index == 0 },
                 )
             }
@@ -126,3 +126,7 @@ private const val LOAD_MORE_AHEAD_ITEMS = EXPLORE_COLUMNS * 2
 private const val LOAD_MORE_KEY = "load-more"
 
 private const val NEXT_PAGE_SKELETON_ROWS = 2
+
+// 실제 타일과 다음 페이지 골격 칸이 한 그리드에 섞여, 칸을 재사용할 때 서로 다른 칸으로 가른다.
+private const val TILE_CONTENT_TYPE = "tile"
+private const val SKELETON_CONTENT_TYPE = "skeleton"

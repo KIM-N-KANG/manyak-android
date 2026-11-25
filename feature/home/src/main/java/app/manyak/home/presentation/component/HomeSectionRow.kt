@@ -38,8 +38,8 @@ import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.home.R as HomeR
 
 /**
- * 홈 섹션 하나. 이름 아래 가로로 넘기는 카드 줄을 둔다. 카드 두 장과 셋째 카드의 앞 [PeekWidth] 가 보여 넘길
- * 카드가 있음을 알린다. 넘기는 버튼과 더 보기는 두지 않고 손으로 끌어 넘긴다.
+ * 홈 섹션 하나. 이름 아래 가로로 넘기는 카드 줄을 둔다. 카드 두 장과 셋째 카드의 앞부분이 보여 넘길 카드가
+ * 있음을 알린다. 넘기는 버튼과 더 보기는 두지 않고 손으로 끌어 넘긴다.
  */
 @Composable
 internal fun HomeSectionRow(
@@ -68,9 +68,10 @@ private fun SectionCards(
     val gutter = ManyakTheme.spacing.gutter
     val cardGap = ManyakTheme.spacing.compact
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-        // 왼쪽 여백 뒤로 두 장과 그 뒤 간격 둘을 지나 셋째 카드가 오른쪽 끝에서 PeekWidth 만큼 보이도록 폭을 정한다.
-        // 카드 시작점을 왼쪽 여백에 맞춰 넘긴 자리에서는 앞 카드도 여백에서 간격을 뺀 만큼 남아 양옆이 같은 폭이 된다.
-        val cardWidth = (maxWidth - gutter - cardGap * 2 - PeekWidth) / 2
+        // 셋째 카드가 오른쪽 끝에 왼쪽 여백에서 간격을 뺀 폭만큼 보이게 두 장의 폭을 정한다. 카드 시작점이 왼쪽
+        // 여백에 맞은 자리(처음과 끝)에서는 앞 카드도 같은 폭만 남아 양옆이 같다. 스냅이 없어 끌다 멈춘 자리는 다를 수 있다.
+        val peekWidth = gutter - cardGap
+        val cardWidth = (maxWidth - gutter - cardGap * 2 - peekWidth) / 2
         LazyRow(
             contentPadding = PaddingValues(horizontal = gutter),
             horizontalArrangement = Arrangement.spacedBy(cardGap),
@@ -187,9 +188,6 @@ private fun TextSizedPlaceholder(
 private fun InvisibleSizer(content: @Composable () -> Unit) {
     Box(modifier = Modifier.alpha(0f).clearAndSetSemantics {}) { content() }
 }
-
-/** 셋째 카드가 화면 오른쪽 끝에 걸쳐 보이는 폭. 왼쪽 여백에서 카드 사이 간격을 뺀 값과 같아야 넘긴 자리의 양옆이 같다. */
-private val PeekWidth = 8.dp
 
 private const val PLACEHOLDER_SECTION_COUNT = 2
 private const val PLACEHOLDER_CARD_COUNT = 3
