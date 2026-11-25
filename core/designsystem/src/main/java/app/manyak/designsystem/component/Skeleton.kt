@@ -8,6 +8,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -35,8 +36,18 @@ fun SkeletonPlaceholder(
 /** 정지한 회색 덩어리는 비어 있는 화면과 구분되지 않아, 옅게 맥동시켜 조회 중임을 드러낸다. */
 @Composable
 fun rememberSkeletonPulseAlpha(): Float {
+    val alpha by rememberSkeletonPulse()
+    return alpha
+}
+
+/**
+ * [rememberSkeletonPulseAlpha] 의 상태. 실제 목록 옆에 골격을 잇는 곳은 값을 그리기 단계에서만 읽어야 맥동이
+ * 목록 전체를 프레임마다 다시 구성하지 않는다.
+ */
+@Composable
+fun rememberSkeletonPulse(): State<Float> {
     val transition = rememberInfiniteTransition(label = "skeleton-pulse")
-    val alpha by transition.animateFloat(
+    return transition.animateFloat(
         initialValue = 1f,
         targetValue = PULSE_MIN_ALPHA,
         animationSpec =
@@ -46,7 +57,6 @@ fun rememberSkeletonPulseAlpha(): Float {
             ),
         label = "skeleton-pulse-alpha",
     )
-    return alpha
 }
 
 private const val PULSE_MIN_ALPHA = 0.5f

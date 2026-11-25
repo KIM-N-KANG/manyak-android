@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import app.manyak.analytics.entity.AnalyticsEvent
 import app.manyak.analytics.entity.StoryListSection
 import app.manyak.analytics.presentation.LocalAnalytics
@@ -19,12 +20,14 @@ import app.manyak.analytics.presentation.rememberImpressionTracker
 import app.manyak.analytics.presentation.trackImpression
 import app.manyak.common.entity.story.StorySummary
 import app.manyak.designsystem.component.LoadMoreFooter
+import app.manyak.designsystem.component.rememberSkeletonPulse
 import app.manyak.designsystem.theme.ManyakTheme
 import kotlinx.coroutines.flow.distinctUntilChanged
+import app.manyak.home.R as HomeR
 
 /**
- * 탐색과 검색 결과가 함께 쓰는 타일 그리드. 끝 두 줄 앞에 닿으면 다음 페이지를 잇고, 다음 페이지 조회 중이거나
- * 실패하면 목록 끝에 스피너나 다시 시도를 둔다. 카드 이벤트는 [section] 으로 목록을 구분한다.
+ * 탐색과 검색 결과가 함께 쓰는 타일 그리드. 끝 두 줄 앞에 닿으면 다음 페이지를 잇고, 다음 페이지 조회 중에는
+ * 목록 끝에 골격 칸 두 줄을, 실패하면 다시 시도를 둔다. 카드 이벤트는 [section] 으로 목록을 구분한다.
  *
  * 칸은 순번으로 자리를 지킨다. 새로 섞어도 칸이 그대로 남아 칸 안에서 타일만 바뀐다.
  */
@@ -44,6 +47,9 @@ internal fun StoryTileGrid(
 ) {
     val analytics = LocalAnalytics.current
     val impressions = rememberImpressionTracker()
+    val loadingDescription = stringResource(HomeR.string.home_loading)
+    // 받는 동안에만 맥동을 돌리고, 값은 골격 칸의 그리기 단계에서만 읽어 그리드를 다시 구성하지 않는다.
+    val pulse = if (isLoadingMore) rememberSkeletonPulse() else null
     LoadMoreWhenGridEnds(gridState = gridState, canLoadMore = canLoadMore, onLoadMore = onLoadMore)
 
     LazyVerticalGrid(
@@ -68,12 +74,28 @@ internal fun StoryTileGrid(
                     },
             )
         }
-        if (isLoadingMore || loadMoreFailed) {
+        if (pulse != null) {
+            items(nextPageSkeletonCount(stories.size)) { index ->
+                ExploreTileSkeleton(
+                    alpha = { pulse.value },
+                    // 칸마다 읽으면 같은 말을 여러 번 듣게 되므로 첫 칸 하나만 알린다.
+                    description = loadingDescription.takeIf { index == 0 },
+                )
+            }
+        } else if (loadMoreFailed) {
             item(key = LOAD_MORE_KEY, span = { GridItemSpan(maxLineSpan) }) {
-                LoadMoreFooter(isLoading = isLoadingMore, onRetry = onLoadMore)
+                LoadMoreFooter(isLoading = false, onRetry = onLoadMore)
             }
         }
     }
+}
+
+/**
+ * 다음 페이지를 받는 동안 목록 끝에 잇는 골격 칸 수. 두 줄을 온전히 잇고, 마지막 줄이 덜 찼으면 빈 칸부터 채운다.
+ */
+internal fun nextPageSkeletonCount(storyCount: Int): Int {
+    val emptyInLastRow = (EXPLORE_COLUMNS - storyCount % EXPLORE_COLUMNS) % EXPLORE_COLUMNS
+    return EXPLORE_COLUMNS * NEXT_PAGE_SKELETON_ROWS + emptyInLastRow
 }
 
 /**
@@ -102,3 +124,5 @@ private fun LoadMoreWhenGridEnds(
 private const val LOAD_MORE_AHEAD_ITEMS = EXPLORE_COLUMNS * 2
 
 private const val LOAD_MORE_KEY = "load-more"
+
+private const val NEXT_PAGE_SKELETON_ROWS = 2

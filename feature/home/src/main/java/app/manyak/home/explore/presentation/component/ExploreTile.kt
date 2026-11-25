@@ -37,22 +37,23 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.manyak.common.entity.story.StorySummary
 import app.manyak.designsystem.component.STORY_THUMBNAIL_ASPECT_RATIO
-import app.manyak.designsystem.component.SkeletonPlaceholder
 import app.manyak.designsystem.component.StoryBadgeScale
 import app.manyak.designsystem.component.StoryCover
 import app.manyak.designsystem.component.StoryGenreBadge
 import app.manyak.designsystem.component.StoryGenreBadges
 import app.manyak.designsystem.component.originalTagBackdrop
-import app.manyak.designsystem.component.rememberSkeletonPulseAlpha
+import app.manyak.designsystem.component.rememberSkeletonPulse
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.designsystem.R as DesignsystemR
 import app.manyak.home.R as HomeR
@@ -262,14 +263,14 @@ private const val SCRIM_HEIGHT_FRACTION = 0.5f
 
 private const val INTRO_LINES = 2
 
-/** 조회 중 자리를 잡아 두는 골격. 실제 타일과 같은 표지와 글 영역 높이의 칸이다. */
+/** 조회 중 자리를 잡아 두는 골격. 실제 타일과 같은 높이의 칸 [PLACEHOLDER_TILE_COUNT] 장이다. */
 @Composable
 internal fun ExploreGridSkeleton(
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
 ) {
     val description = stringResource(HomeR.string.home_loading)
-    val alpha = rememberSkeletonPulseAlpha()
+    val pulse = rememberSkeletonPulse()
     LazyVerticalGrid(
         modifier = modifier.fillMaxSize().semantics { contentDescription = description },
         columns = GridCells.Fixed(EXPLORE_COLUMNS),
@@ -279,27 +280,46 @@ internal fun ExploreGridSkeleton(
         userScrollEnabled = false,
     ) {
         items(PLACEHOLDER_TILE_COUNT) {
-            Column {
-                SkeletonPlaceholder(
-                    modifier = Modifier.fillMaxWidth().aspectRatio(STORY_THUMBNAIL_ASPECT_RATIO),
-                    alpha = alpha,
-                    shape = RectangleShape,
-                )
-                Box(modifier = Modifier.overlapAbove(ManyakTheme.spacing.section)) {
-                    // 빈 글 영역을 보이지 않게 그려 실제 타일과 같은 높이를 잡고, 그 안에 글줄 자리를 둔다.
-                    TileCaption(story = PlaceholderStory, modifier = Modifier.alpha(0f))
-                    CaptionPlaceholder(alpha = alpha, modifier = Modifier.matchParentSize())
-                }
-            }
+            ExploreTileSkeleton(alpha = { pulse.value })
+        }
+    }
+}
+
+/**
+ * 탐색 칸 하나의 골격. 실제 타일처럼 표지와 글 영역을 한 면으로 채우고, 면 아래쪽 글 자리에 제목, 소개 두 줄과
+ * 장르 막대를 둔다. 투명도는 면에만 걸어 막대가 면과 함께 맥동한다. [alpha] 는 그리기 단계에서만 읽는다.
+ *
+ * [description] 이 있으면 그 칸 하나가 불러오는 중임을 낭독기에 알리고, 없으면 낭독 대상이 아니다.
+ */
+@Composable
+internal fun ExploreTileSkeleton(
+    alpha: () -> Float,
+    modifier: Modifier = Modifier,
+    description: String? = null,
+) {
+    Column(
+        modifier =
+            modifier
+                .clearAndSetSemantics {
+                    if (description != null) {
+                        contentDescription = description
+                        liveRegion = LiveRegionMode.Polite
+                    }
+                }.graphicsLayer { this.alpha = alpha() }
+                // 공용 골격 조각과 같은 바탕이다. 조각을 겹치면 투명도가 겹쳐 막대만 따로 깜빡인다.
+                .background(ManyakTheme.colors.border),
+    ) {
+        Box(modifier = Modifier.fillMaxWidth().aspectRatio(STORY_THUMBNAIL_ASPECT_RATIO))
+        Box(modifier = Modifier.overlapAbove(ManyakTheme.spacing.section)) {
+            // 빈 글 영역을 보이지 않게 그려 실제 타일과 같은 높이를 잡고, 그 안에 글줄 자리를 둔다.
+            TileCaption(story = PlaceholderStory, modifier = Modifier.alpha(0f))
+            CaptionPlaceholder(modifier = Modifier.matchParentSize())
         }
     }
 }
 
 @Composable
-private fun CaptionPlaceholder(
-    alpha: Float,
-    modifier: Modifier = Modifier,
-) {
+private fun CaptionPlaceholder(modifier: Modifier = Modifier) {
     Column(
         modifier =
             modifier.padding(
@@ -308,21 +328,17 @@ private fun CaptionPlaceholder(
             ),
         verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
     ) {
-        SkeletonPlaceholder(
-            modifier = Modifier.fillMaxWidth(TITLE_WIDTH_FRACTION).height(TitleBarHeight),
-            alpha = alpha,
-        )
-        SkeletonPlaceholder(modifier = Modifier.fillMaxWidth().height(IntroBarHeight), alpha = alpha)
-        SkeletonPlaceholder(
-            modifier = Modifier.fillMaxWidth(INTRO_LAST_LINE_WIDTH_FRACTION).height(IntroBarHeight),
-            alpha = alpha,
-        )
-        SkeletonPlaceholder(
-            modifier = Modifier.width(GenreBarWidth).height(GenreBarHeight),
-            alpha = alpha,
-            shape = ManyakTheme.shapes.pill,
-        )
+        CaptionBar(modifier = Modifier.fillMaxWidth(TITLE_WIDTH_FRACTION).height(TitleBarHeight))
+        CaptionBar(modifier = Modifier.fillMaxWidth().height(IntroBarHeight))
+        CaptionBar(modifier = Modifier.fillMaxWidth(INTRO_LAST_LINE_WIDTH_FRACTION).height(IntroBarHeight))
+        CaptionBar(modifier = Modifier.width(GenreBarWidth).height(GenreBarHeight))
     }
+}
+
+/** 골격 면 위의 글 자리. 면 바탕보다 한 단계 진한 색이라야 같은 면 안에서 막대가 보인다. */
+@Composable
+private fun CaptionBar(modifier: Modifier = Modifier) {
+    Box(modifier = modifier.background(ManyakTheme.colors.borderStrong, ManyakTheme.shapes.pill))
 }
 
 private const val TITLE_WIDTH_FRACTION = 0.75f
