@@ -69,7 +69,7 @@ private fun SectionCards(
     val cardGap = ManyakTheme.spacing.compact
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
         // 셋째 카드가 오른쪽 끝에 왼쪽 여백에서 간격을 뺀 폭만큼 보이게 두 장의 폭을 정한다. 카드 시작점이 왼쪽
-        // 여백에 맞은 자리(처음과 끝)에서는 앞 카드도 같은 폭만 남아 양옆이 같다. 스냅이 없어 끌다 멈춘 자리는 다를 수 있다.
+        // 여백에 맞은 자리에서는 앞 카드도 같은 폭만 남아 양옆이 같다. 스냅이 없어 끌다 멈춘 자리에서는 다를 수 있다.
         val peekWidth = gutter - cardGap
         val cardWidth = (maxWidth - gutter - cardGap * 2 - peekWidth) / 2
         LazyRow(
