@@ -89,7 +89,7 @@
 | 토큰 | 용도 |
 | --- | --- |
 | `colors.border` | 구분선과 카드 테두리. 대비 요구 대상이 아님. 두께는 `sizes.borderWidth`, 입력 모양은 `sizes.inputBorderWidth` |
-| `colors.borderStrong` | **점선 전용** 장식 경계. 점선은 잉크가 절반만 닿아 같은 색이어도 실선보다 연하게 읽혀 한 단계 진하게 둡니다. 실선에 쓰면 진한 테두리가 될 뿐입니다 |
+| `colors.borderStrong` | **점선 전용** 장식 경계. 점선은 잉크가 절반만 닿아 같은 색이어도 실선보다 연하게 읽혀 한 단계 진하게 둡니다. 실선에 쓰면 진한 테두리가 될 뿐입니다. 경계 밖에서는 `colors.border` 골격 면 위의 글 자리 막대에만 씁니다 |
 | `colors.borderInput` | 경계가 유일한 식별 수단일 때. 표면이 아니라 자기 채움색 기준으로 정한 값 |
 | `colors.borderFocused` | 포커스 링. `colors.borderBrand`와 같은 값 |
 | `colors.borderOverlay` | 바탕과 같은 표면으로 딤 위에 뜨는 카드가 다크에서 묻히지 않게 두르는 1dp 경계. 라이트는 투명 |
@@ -342,7 +342,7 @@
 | `Tiny` | `typography.labelTiny` | 가로 `spacing.dense`, 세로 `spacing.hairline` | 18dp | 탐색 타일 장르 |
 
 - **스토리 본문**: 배경 `colors.surface`, `colors.text` + `typography.bodyReading`, 좌우 `spacing.gutter`. 마크업은 웹과 같은 규칙으로 파싱합니다(`parseTextSegments`, `parsePassageSegments`). `**…**`는 볼드, 단일 `*…*`(내레이션, 속마음)는 `colors.textNarration`입니다.
-- **골격**(`SkeletonPlaceholder`): 바탕 `colors.border`이고 한 화면의 조각이 함께 불투명도 100%와 50% 사이를 700ms씩 오가며 맥동합니다. `colors.backgroundNeutral`은 화면 바탕과 거의 같아 맥동으로 옅어지면 빈 화면과 구분되지 않습니다. 웹은 `bg-muted`라 Android 골격이 한 단계 진합니다.
+- **골격**(`SkeletonPlaceholder`): 바탕 `colors.border`이고 한 화면의 조각이 함께 불투명도 100%와 50% 사이를 700ms씩 오가며 맥동합니다. `colors.backgroundNeutral`은 화면 바탕과 거의 같아 맥동으로 옅어지면 빈 화면과 구분되지 않습니다. 웹은 `bg-muted`라 Android 골격이 한 단계 진합니다. 탐색 칸 골격은 조각을 따로 놓지 않고 칸 전체를 `colors.border` 한 면으로 채운 뒤 글 자리 막대를 `colors.borderStrong`으로 얹고, 투명도는 면에만 걸어 막대가 함께 맥동합니다. 실제 목록 끝에 골격을 잇는 곳은 `rememberSkeletonPulse`의 상태를 그리기 단계에서만 읽어 목록을 프레임마다 다시 구성하지 않습니다.
 - **글자 시머**(`rememberTextShimmerBrush`): 대기 문구 위를 지나가는 띠. 반폭 `sizes.shimmerBandHalfWidth`.
 - **인물 이미지**(`CharacterImage`): 장면과 채팅 인물 이미지. 4:3 원본 전체 표시, `shapes.overlay`, 실패하면 자리를 지웁니다. 버튼 접근성 이름은 "{이름} 인물 이미지 크게 보기"입니다.
 - **전체 화면 이미지 뷰어**(`FullscreenImageViewer`): 상세 썸네일, 주변 인물과 채팅 인물 이미지가 같이 씁니다. 바탕 `colors.imageViewerScrim`, 닫기 아이콘 `colors.textInverse`. 핀치 1~5배, 팬, 더블탭 2.5배 토글이고 X, 이미지 밖 배경 탭, 시스템 뒤로가기로 닫습니다. 그림 위 탭으로 닫지 않고 배경 탭은 떼는 즉시 닫으며 두 번째 탭 대기는 그림 위 탭에만 둡니다. ([공통 UI Android 3-3](../knk-harness/docs/ui/ANDROID/3-3-LAYOUT.md#3-3-1-셸과-조작))
