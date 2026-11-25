@@ -29,6 +29,9 @@ abstract class CheckModuleArchitecture
         @get:Input
         abstract val dependencyGraph: MapProperty<String, Set<String>>
 
+        @get:Input
+        abstract val testDependencyGraph: MapProperty<String, Set<String>>
+
         @get:InputFiles
         @get:PathSensitive(PathSensitivity.RELATIVE)
         abstract val sources: ConfigurableFileCollection
@@ -46,6 +49,7 @@ abstract class CheckModuleArchitecture
                     forkOptions.maxHeapSize = "512m"
                 }.submit(ArchitectureWork::class.java) {
                     graph.set(dependencyGraph)
+                    testGraph.set(testDependencyGraph)
                     sourceText.set(texts)
                 }
         }
@@ -53,14 +57,16 @@ abstract class CheckModuleArchitecture
 
 interface ArchitectureParameters : WorkParameters {
     val graph: MapProperty<String, Set<String>>
+    val testGraph: MapProperty<String, Set<String>>
     val sourceText: MapProperty<String, String>
 }
 
 abstract class ArchitectureWork : WorkAction<ArchitectureParameters> {
     override fun execute() {
         val graph = parameters.graph.get()
+        val testGraph = parameters.testGraph.get()
         val sources = parameters.sourceText.get()
-        val errors = ModuleArchitecture().use { it.check(graph, sources) }
+        val errors = ModuleArchitecture().use { it.check(graph, sources, testGraph) }
         if (errors.isNotEmpty()) {
             throw GradleException(
                 errors.joinToString("\n", prefix = "Module architecture violations:\n"),

@@ -14,7 +14,7 @@ import app.manyak.core.navigation.CreateKeywordRoute
 import app.manyak.core.navigation.MainTabsRoute
 import app.manyak.core.navigation.StoryDetailRoute
 import app.manyak.core.navigation.StoryOnboardingRoute
-import app.manyak.home.onboarding.presentation.StoryOnboardingScreen
+import app.manyak.onboarding.presentation.StoryOnboardingScreen
 import java.util.UUID
 
 /** 온보딩을 끝내는 길. 돌아갈 탭과 완료 이벤트를 받는다. 온보딩이 루트가 아니면 아무것도 하지 않는다. */

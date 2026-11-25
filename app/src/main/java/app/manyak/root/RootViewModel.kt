@@ -17,8 +17,8 @@ import app.manyak.common.entity.credit.CreditPolicy
 import app.manyak.common.entity.credit.Trials
 import app.manyak.common.entity.settings.ThemeMode
 import app.manyak.core.navigation.PushEntry
-import app.manyak.home.onboarding.domain.StoryOnboardingRepository
 import app.manyak.my.invite.domain.InviteOnboardingRepository
+import app.manyak.onboarding.domain.StoryOnboardingRepository
 import app.manyak.session.SessionTerminationCoordinator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow

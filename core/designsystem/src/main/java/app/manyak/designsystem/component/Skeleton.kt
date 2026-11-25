@@ -1,0 +1,63 @@
+package app.manyak.designsystem.component
+
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Shape
+import app.manyak.designsystem.theme.ManyakTheme
+
+/** 골격 조각 하나. 한 화면의 조각들은 [rememberSkeletonPulseAlpha] 하나를 공유해 함께 맥동시킨다. */
+@Composable
+fun SkeletonPlaceholder(
+    alpha: Float,
+    modifier: Modifier = Modifier,
+    shape: Shape = ManyakTheme.shapes.pill,
+) {
+    Box(
+        modifier =
+            modifier
+                .alpha(alpha)
+                .clip(shape)
+                // 보조 배경색은 화면 바탕과 거의 같아 맥동으로 옅어지면 빈 화면과 구분되지 않는다.
+                .background(ManyakTheme.colors.border),
+    )
+}
+
+/** 정지한 회색 덩어리는 비어 있는 화면과 구분되지 않아, 옅게 맥동시켜 조회 중임을 드러낸다. */
+@Composable
+fun rememberSkeletonPulseAlpha(): Float {
+    val alpha by rememberSkeletonPulse()
+    return alpha
+}
+
+/**
+ * [rememberSkeletonPulseAlpha] 의 상태. 실제 목록 옆에 골격을 잇는 곳은 값을 그리기 단계에서만 읽어야 맥동이
+ * 목록 전체를 프레임마다 다시 구성하지 않는다.
+ */
+@Composable
+fun rememberSkeletonPulse(): State<Float> {
+    val transition = rememberInfiniteTransition(label = "skeleton-pulse")
+    return transition.animateFloat(
+        initialValue = 1f,
+        targetValue = PULSE_MIN_ALPHA,
+        animationSpec =
+            infiniteRepeatable(
+                animation = tween(durationMillis = PULSE_DURATION_MILLIS),
+                repeatMode = RepeatMode.Reverse,
+            ),
+        label = "skeleton-pulse-alpha",
+    )
+}
+
+private const val PULSE_MIN_ALPHA = 0.5f
+private const val PULSE_DURATION_MILLIS = 700

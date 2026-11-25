@@ -14,6 +14,8 @@
 /.idea/deploymentTargetSelector.xml
 /.idea/deviceManager.xml
 /.idea/misc.xml
+# Gradle 싱크 때 IDE가 다시 쓰는 컴파일 대상 설정. 기준은 Gradle 설정이다.
+/.idea/compiler.xml
 .DS_Store
 /build
 # 모듈 build 디렉터리. app/.gitignore 처럼 모듈마다 두지 않고 한 줄로 덮는다.

@@ -1,0 +1,304 @@
+package app.manyak.create.data.completion
+
+import app.manyak.analytics.domain.Analytics
+import app.manyak.analytics.entity.AnalyticsEvent
+import app.manyak.auth.domain.SessionGate
+import app.manyak.common.domain.error.DomainError
+import app.manyak.common.domain.error.DomainResult
+import app.manyak.common.entity.story.CompletionFailure
+import app.manyak.create.entity.CompletedStory
+import app.manyak.create.entity.CompletionOutcome
+import app.manyak.create.entity.CreationProgress
+import app.manyak.create.entity.CreationRequestSnapshot
+import app.manyak.create.entity.PendingStoryCreation
+import app.manyak.create.entity.StoryCompletionCommand
+import app.manyak.create.entity.StoryCompletionRequest
+import app.manyak.create.testing.FakePendingStoryCreationStore
+import app.manyak.create.testing.FakeStoryCompletionRequestStore
+import app.manyak.create.testing.FakeStoryCreationRepository
+import app.manyak.create.testing.sampleStorylineGeneration
+import app.manyak.testing.FakeTrialsRepository
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class StoryCompletionExecutorTest {
+    private class Fixture(
+        val repository: FakeStoryCreationRepository,
+        val draftStore: FakePendingStoryCreationStore,
+        val requestStore: FakeStoryCompletionRequestStore,
+        val gate: SessionGate,
+        val executor: StoryCompletionExecutor,
+        val analytics: RecordingAnalytics,
+    )
+
+    private class RecordingAnalytics : Analytics {
+        val events = mutableListOf<AnalyticsEvent>()
+
+        override fun track(event: AnalyticsEvent) {
+            events += event
+        }
+    }
+
+    private fun TestScope.fixture(initial: List<StoryCompletionRequest> = emptyList()): Fixture {
+        val repository = FakeStoryCreationRepository()
+        val draftStore = FakePendingStoryCreationStore()
+        val requestStore = FakeStoryCompletionRequestStore(initial, draftStore)
+        val gate = SessionGate()
+        val analytics = RecordingAnalytics()
+        return Fixture(
+            repository = repository,
+            draftStore = draftStore,
+            requestStore = requestStore,
+            gate = gate,
+            executor =
+                StoryCompletionExecutor(
+                    requestStore,
+                    draftStore,
+                    repository,
+                    gate,
+                    this,
+                    FakeTrialsRepository(),
+                    analytics,
+                ),
+            analytics = analytics,
+        )
+    }
+
+    @Test
+    fun `제출은 영속 뒤 전송하고 성공 결과를 그 요청에만 반영한다`() =
+        runTest {
+            val fixture = fixture()
+            fixture.repository.queuedCompletionResults += DomainResult.Success(CompletedStory("story-a", "A"))
+
+            assertTrue(fixture.executor.submit(request("a"), "draft-a"))
+            assertTrue(fixture.executor.submit(request("b"), "draft-b"))
+            advanceUntilIdle()
+
+            assertEquals(listOf("a", "b"), fixture.repository.completionCommands.map { it.requestId })
+            assertEquals(
+                CompletionOutcome.Completed(CompletedStory("story-a", "A")),
+                fixture.requestStore.current
+                    .single { it.requestId == "a" }
+                    .outcome,
+            )
+            assertEquals(
+                CompletionOutcome.Completed(CompletedStory("story-1", "완성 스토리")),
+                fixture.requestStore.current
+                    .single { it.requestId == "b" }
+                    .outcome,
+            )
+        }
+
+    @Test
+    fun `영속 실패는 전송하지 않는다`() =
+        runTest {
+            val fixture = fixture()
+            fixture.requestStore.submitSucceeds = false
+
+            assertFalse(fixture.executor.submit(request("a"), "draft-a"))
+            advanceUntilIdle()
+
+            assertTrue(fixture.repository.completionCommands.isEmpty())
+        }
+
+    @Test
+    fun `네트워크 오류는 미확정으로 남고 새로고침이 복구 조회로 완료를 되찾는다`() =
+        runTest {
+            val fixture = fixture()
+            fixture.repository.queuedCompletionResults += DomainResult.Failure(DomainError.Network)
+            fixture.executor.submit(request("a"), "draft-a")
+            advanceUntilIdle()
+            assertEquals(
+                CompletionOutcome.Pending,
+                fixture.requestStore.current
+                    .single()
+                    .outcome,
+            )
+
+            fixture.repository.queuedCreationRequestResults +=
+                DomainResult.Success(CreationRequestSnapshot.StoryReady(CompletedStory("story-a", "A")))
+            fixture.executor.refreshCompletionRequests()
+            advanceUntilIdle()
+
+            assertEquals(
+                CompletionOutcome.Completed(CompletedStory("story-a", "A")),
+                fixture.requestStore.current
+                    .single()
+                    .outcome,
+            )
+        }
+
+    @Test
+    fun `새로고침의 404 는 미접수라 같은 requestId 로 다시 보낸다`() =
+        runTest {
+            val fixture = fixture(initial = listOf(request("a")))
+            fixture.repository.queuedCreationRequestResults += DomainResult.Failure(notFound())
+
+            fixture.executor.refreshCompletionRequests()
+            advanceUntilIdle()
+
+            assertEquals(listOf("a"), fixture.repository.completionCommands.map { it.requestId })
+            assertTrue(
+                fixture.requestStore.current
+                    .single()
+                    .outcome is CompletionOutcome.Completed,
+            )
+        }
+
+    @Test
+    fun `거절 응답은 복구 조회로 판정하고 서버가 모르는 요청만 추가 정보 단계 초안으로 되돌린다`() =
+        runTest {
+            val fixture = fixture()
+            val failures = mutableListOf<CompletionFailure>()
+            backgroundScope.launch { fixture.executor.completionFailures.collect { failures += it } }
+            fixture.repository.queuedCompletionResults +=
+                DomainResult.Failure(DomainError.Server(status = 402, code = null, requestId = null))
+            fixture.repository.queuedCreationRequestResults += DomainResult.Failure(notFound())
+            val submitted = request("a", draftId = "draft-a")
+            fixture.executor.submit(submitted, "draft-a")
+            advanceUntilIdle()
+            assertTrue(fixture.requestStore.current.isEmpty())
+            val returned = fixture.draftStore.record("draft-a") as PendingStoryCreation.Draft
+            assertEquals(submitted.command, returned.lastCompletionCommand)
+            assertEquals(0, returned.progress.selectedStorylineIndex)
+            assertEquals(listOf(CompletionFailure.FAILED), failures)
+
+            // 409 인데 서버가 진행 중이면 실패가 아니라 미확정이다.
+            fixture.repository.queuedCompletionResults +=
+                DomainResult.Failure(DomainError.Server(status = 409, code = null, requestId = null))
+            fixture.repository.queuedCreationRequestResults += DomainResult.Success(CreationRequestSnapshot.Pending)
+            fixture.executor.submit(request("b"), "draft-b")
+            advanceUntilIdle()
+            assertEquals(
+                CompletionOutcome.Pending,
+                fixture.requestStore.current
+                    .single { it.requestId == "b" }
+                    .outcome,
+            )
+        }
+
+    @Test
+    fun `수위 거절은 복구 조회 없이 초안으로 되돌리고 거절로 알린다`() =
+        runTest {
+            val fixture = fixture()
+            val failures = mutableListOf<CompletionFailure>()
+            backgroundScope.launch { fixture.executor.completionFailures.collect { failures += it } }
+            fixture.repository.queuedCompletionResults +=
+                DomainResult.Failure(DomainError.Server(status = 422, code = "CONTENT_REJECTED", requestId = null))
+            val submitted = request("a", draftId = "draft-a")
+            fixture.executor.submit(submitted, "draft-a")
+            advanceUntilIdle()
+
+            assertTrue(fixture.requestStore.current.isEmpty())
+            val returned = fixture.draftStore.record("draft-a") as PendingStoryCreation.Draft
+            assertEquals(submitted.command, returned.lastCompletionCommand)
+            assertEquals(listOf(CompletionFailure.CONTENT_REJECTED), failures)
+            assertTrue(fixture.repository.creationRequestIds.isEmpty())
+        }
+
+    @Test
+    fun `새로고침은 이전에 실패로 남은 요청도 초안으로 되돌리고 조회 실패는 다른 요청 판정을 막지 않는다`() =
+        runTest {
+            val fixture =
+                fixture(
+                    initial =
+                        listOf(
+                            request("a", draftId = "draft-a").copy(outcome = CompletionOutcome.Failed),
+                            request("b", draftId = "draft-b"),
+                            request("c", draftId = "draft-c"),
+                        ),
+                )
+            fixture.repository.queuedCreationRequestResults += DomainResult.Failure(DomainError.Network)
+            fixture.repository.queuedCreationRequestResults += DomainResult.Success(CreationRequestSnapshot.Failed)
+
+            fixture.executor.refreshCompletionRequests()
+            advanceUntilIdle()
+
+            val pending = fixture.requestStore.current.single()
+            assertEquals(CompletionOutcome.Pending, pending.outcome)
+            val returned = listOf("draft-a", "draft-b", "draft-c").filter { fixture.draftStore.record(it) != null }
+            assertEquals(2, returned.size)
+            assertTrue("draft-a" in returned)
+        }
+
+    @Test
+    fun `로그아웃 장벽 뒤에 도착한 결과는 반영하지 않는다`() =
+        runTest {
+            val fixture = fixture()
+            val release = CompletableDeferred<Unit>()
+            fixture.repository.completionGate = release
+            fixture.executor.submit(request("a"), "draft-a")
+            advanceUntilIdle()
+
+            fixture.gate.raiseBarrier()
+            release.complete(Unit)
+            advanceUntilIdle()
+
+            assertEquals(
+                CompletionOutcome.Pending,
+                fixture.requestStore.current
+                    .single()
+                    .outcome,
+            )
+        }
+
+    @Test
+    fun `완성 확정은 원 응답과 새로고침 판정 어느 쪽이든 완성 이벤트를 한 번만 낸다`() =
+        runTest {
+            val fixture = fixture()
+            fixture.repository.queuedCompletionResults += DomainResult.Success(CompletedStory("story-a", "A"))
+            fixture.repository.queuedCompletionResults += DomainResult.Failure(DomainError.Network)
+            fixture.executor.submit(request("a"), "draft-a")
+            fixture.executor.submit(request("b"), "draft-b")
+            advanceUntilIdle()
+
+            assertEquals(listOf(AnalyticsEvent.StoryCreateCompleted("story-a")), fixture.analytics.events)
+
+            fixture.repository.queuedCreationRequestResults +=
+                DomainResult.Success(CreationRequestSnapshot.StoryReady(CompletedStory("story-b", "B")))
+            fixture.executor.refreshCompletionRequests()
+            advanceUntilIdle()
+
+            // 두 번째 새로고침은 완성된 요청을 다시 조회하지 않으므로 이벤트가 늘지 않는다.
+            fixture.executor.refreshCompletionRequests()
+            advanceUntilIdle()
+
+            assertEquals(
+                listOf(
+                    AnalyticsEvent.StoryCreateCompleted("story-a"),
+                    AnalyticsEvent.StoryCreateCompleted("story-b"),
+                ),
+                fixture.analytics.events,
+            )
+        }
+
+    private fun request(
+        id: String,
+        draftId: String? = null,
+    ): StoryCompletionRequest =
+        StoryCompletionRequest(
+            command =
+                StoryCompletionCommand(
+                    requestId = id,
+                    simpleCreationId = 10,
+                    storylineId = 1,
+                    additionalInfos = emptyList(),
+                    draftId = draftId,
+                ),
+            generationCommand = null,
+            generation = sampleStorylineGeneration(),
+            progress = CreationProgress(selectedStorylineIndex = 0),
+            submittedAt = 1L,
+        )
+
+    private fun notFound() = DomainError.Server(status = 404, code = null, requestId = null)
+}

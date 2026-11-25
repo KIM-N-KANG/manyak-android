@@ -1,0 +1,311 @@
+package app.manyak.designsystem.component
+
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.window.PopupProperties
+import app.manyak.designsystem.theme.ManyakTheme
+import app.manyak.designsystem.R as DesignsystemR
+
+/**
+ * 목록에서 하나를 고르는 셀렉트. 앵커를 누르면 바로 아래에 메뉴가 열린다.
+ *
+ * 펼침 상태는 이 컴포넌트가 든다 — 밖에서 알 필요가 없는 표현 상태이고, 호출부마다 상태를 두면
+ * 열고 닫는 규칙이 화면마다 갈린다.
+ *
+ * @param placeholder [selected] 가 [options] 에 없을 때 앵커에 흐리게 보일 문구. 고르지 않은 상태를
+ * 메뉴 항목으로 두지 않는 필수 선택에서 쓴다.
+ * @param action 값 항목 아래에 붙는 동작 항목. 눌러도 선택이 바뀌지 않는다.
+ */
+@Composable
+@Suppress("LongParameterList")
+fun <T> ManyakSelectField(
+    options: List<ManyakSelectOption<T>>,
+    selected: T,
+    onSelect: (T) -> Unit,
+    modifier: Modifier = Modifier,
+    isPlaceholder: Boolean = false,
+    onClickLabel: String? = null,
+    placeholder: String? = null,
+    action: ManyakSelectAction? = null,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    var anchorWidthPx by remember { mutableIntStateOf(0) }
+    val selectedLabel = options.firstOrNull { option -> option.value == selected }?.label
+
+    Box(modifier = modifier.onSizeChanged { size -> anchorWidthPx = size.width }) {
+        SelectAnchor(
+            label = selectedLabel ?: placeholder.orEmpty(),
+            isPlaceholder = isPlaceholder || selectedLabel == null,
+            expanded = expanded,
+            onClickLabel = onClickLabel,
+            onClick = { expanded = true },
+        )
+        ManyakSelectMenu(
+            expanded = expanded,
+            modifier = Modifier.width(with(LocalDensity.current) { anchorWidthPx.toDp() }),
+            options = options,
+            selected = selected,
+            onDismiss = { expanded = false },
+            onSelect = { value ->
+                expanded = false
+                onSelect(value)
+            },
+            action =
+                action?.let {
+                    it.copy(
+                        onClick = {
+                            expanded = false
+                            it.onClick()
+                        },
+                    )
+                },
+        )
+    }
+}
+
+/**
+ * 앵커 바로 아래에 열리는 단일 선택 메뉴. 앵커와 같은 부모 안에 두고 [expanded] 로 여닫는다.
+ *
+ * 폭은 [modifier] 로 정하고, 정하지 않으면 가장 긴 항목에 맞춘다. [alignment] 는 메뉴를 앵커의 어느
+ * 끝에 맞출지다 — 화면 끝에 붙은 앵커보다 메뉴가 넓으면 그 끝에 맞춰야 화면 밖으로 밀리지 않는다.
+ *
+ * M3 `DropdownMenu`는 공간에 따라 위로 뒤집히므로, 항상 앵커 아래에 열리도록 위치를 직접 계산한다.
+ * 흰 앵커와 메뉴의 경계를 구분하기 위해 디자인 시스템의 무그림자 원칙에서 예외로 둔다.
+ */
+@Composable
+@Suppress("LongParameterList")
+fun <T> ManyakSelectMenu(
+    expanded: Boolean,
+    options: List<ManyakSelectOption<T>>,
+    selected: T,
+    onDismiss: () -> Unit,
+    onSelect: (T) -> Unit,
+    modifier: Modifier = Modifier,
+    alignment: Alignment.Horizontal = Alignment.Start,
+    action: ManyakSelectAction? = null,
+) {
+    val gapPx = with(LocalDensity.current) { ManyakTheme.spacing.inline.roundToPx() }
+    val positionProvider =
+        remember(gapPx, alignment) {
+            object : PopupPositionProvider {
+                override fun calculatePosition(
+                    anchorBounds: IntRect,
+                    windowSize: IntSize,
+                    layoutDirection: LayoutDirection,
+                    popupContentSize: IntSize,
+                ): IntOffset =
+                    IntOffset(
+                        x =
+                            anchorBounds.left +
+                                alignment.align(popupContentSize.width, anchorBounds.width, layoutDirection),
+                        y = anchorBounds.bottom + gapPx,
+                    )
+            }
+        }
+
+    ManyakPopup(
+        visible = expanded,
+        popupPositionProvider = positionProvider,
+        onDismissRequest = onDismiss,
+        properties = PopupProperties(focusable = true),
+    ) {
+        Column(
+            modifier =
+                modifier
+                    .width(IntrinsicSize.Max)
+                    .shadow(elevation = ManyakTheme.sizes.selectMenuElevation, shape = ManyakTheme.shapes.control)
+                    .background(ManyakTheme.colors.surfaceRaised, ManyakTheme.shapes.control)
+                    .border(ManyakTheme.sizes.inputBorderWidth, ManyakTheme.colors.border, ManyakTheme.shapes.control)
+                    .clip(ManyakTheme.shapes.control)
+                    .padding(ManyakTheme.spacing.inline),
+            verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
+        ) {
+            // 값이 길게 쌓여도 동작 항목은 스크롤 밖에 남아 늘 보인다.
+            Column(
+                modifier =
+                    Modifier
+                        .heightIn(max = ManyakTheme.sizes.menuMaxHeight)
+                        .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.inline),
+            ) {
+                options.forEach { option ->
+                    SelectMenuItem(
+                        label = option.label,
+                        selected = option.value == selected,
+                        onClick = { onSelect(option.value) },
+                    )
+                }
+            }
+            action?.let {
+                Box(Modifier.fillMaxWidth().height(ManyakTheme.sizes.borderWidth).background(ManyakTheme.colors.border))
+                SelectMenuAction(action = it)
+            }
+        }
+    }
+}
+
+@Composable
+private fun SelectMenuItem(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                // 장르 검색 메뉴의 항목과 같은 높이라 최대 높이에서 5줄 반이 보인다.
+                .heightIn(min = ManyakTheme.sizes.input)
+                .clip(ManyakTheme.shapes.menuItem)
+                .background(
+                    if (selected) ManyakTheme.colors.backgroundNeutral else ManyakTheme.colors.surfaceRaised,
+                ).selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
+                .padding(
+                    horizontal = ManyakTheme.spacing.controlHorizontal,
+                    vertical = ManyakTheme.spacing.controlVertical,
+                ),
+        verticalAlignment = Alignment.CenterVertically,
+        // 메뉴 폭이 가장 긴 항목에 맞춰질 때 체크가 글자에 붙지 않게 한다.
+        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+    ) {
+        Text(
+            modifier = Modifier.weight(1f),
+            text = label,
+            style = ManyakTheme.typography.bodyMedium,
+            color = ManyakTheme.colors.text,
+        )
+        if (selected) {
+            Icon(
+                modifier = Modifier.size(ManyakTheme.sizes.iconSmall),
+                painter = painterResource(DesignsystemR.drawable.ic_check),
+                // 선택 여부는 항목의 시맨틱이 이미 알린다. 아이콘까지 읽히면 같은 말이 두 번 나온다.
+                contentDescription = null,
+                tint = ManyakTheme.colors.text,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SelectMenuAction(
+    action: ManyakSelectAction,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .heightIn(min = ManyakTheme.sizes.input)
+                .clip(ManyakTheme.shapes.menuItem)
+                .clickable(role = Role.Button, onClick = action.onClick)
+                .padding(
+                    horizontal = ManyakTheme.spacing.controlHorizontal,
+                    vertical = ManyakTheme.spacing.controlVertical,
+                ),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
+    ) {
+        Icon(
+            modifier = Modifier.size(ManyakTheme.sizes.iconSmall),
+            painter = painterResource(action.iconRes),
+            // 동작 이름이 항목의 이름이라 아이콘에 따로 이름을 붙이지 않는다.
+            contentDescription = null,
+            tint = ManyakTheme.colors.textSubtle,
+        )
+        // 고를 값과 갈리도록 한 단계 흐리게 둔다.
+        Text(
+            text = action.label,
+            style = ManyakTheme.typography.bodyMedium,
+            color = ManyakTheme.colors.textSubtle,
+        )
+    }
+}
+
+@Composable
+private fun SelectAnchor(
+    label: String,
+    isPlaceholder: Boolean,
+    expanded: Boolean,
+    onClickLabel: String?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .heightIn(min = ManyakTheme.sizes.input)
+                .clip(ManyakTheme.shapes.control)
+                .background(ManyakTheme.colors.surfaceRaised)
+                .border(ManyakTheme.sizes.inputBorderWidth, ManyakTheme.colors.border, ManyakTheme.shapes.control)
+                .clickable(role = Role.Button, onClickLabel = onClickLabel, onClick = onClick)
+                .padding(horizontal = ManyakTheme.spacing.controlHorizontal),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            modifier = Modifier.weight(1f),
+            text = label,
+            style = ManyakTheme.typography.bodyMedium,
+            color = if (isPlaceholder) ManyakTheme.colors.textDisabled else ManyakTheme.colors.text,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        // 메뉴가 자리 잡는 스프링과 같이 돌아 두 움직임이 한 번에 읽힌다.
+        val rotation by animateFloatAsState(
+            targetValue = if (expanded) HALF_TURN else 0f,
+            animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow),
+            label = "selectChevron",
+        )
+        Icon(
+            modifier = Modifier.size(ManyakTheme.sizes.iconSmall).rotate(rotation),
+            painter = painterResource(DesignsystemR.drawable.ic_angle_down),
+            // 고른 값과 함께 한 줄로 읽히므로 아이콘에 따로 이름을 붙이지 않는다.
+            contentDescription = null,
+            tint = ManyakTheme.colors.textSubtle,
+        )
+    }
+}
+
+private const val HALF_TURN = 180f

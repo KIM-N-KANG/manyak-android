@@ -78,8 +78,8 @@ android {
         applicationId = "app.manyak"
         minSdk = 24
         targetSdk = 37
-        versionCode = 26
-        versionName = "1.9.1"
+        versionCode = 27
+        versionName = "1.9.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -88,7 +88,7 @@ android {
         manifestPlaceholders["metaAppId"] = metaProperty("META_APP_ID")
         manifestPlaceholders["metaClientToken"] = metaProperty("META_CLIENT_TOKEN")
 
-        // 약관·개인정보처리방침은 웹 페이지를 그대로 연다(docs/plans/login.md 결정 1).
+        // 약관과 개인정보처리방침은 웹 페이지를 그대로 연다.
         // 본문 정본이 웹 하나뿐이라 환경과 무관하게 운영 웹을 가리킨다.
         val webBaseUrl = localProperties.getProperty("WEB_BASE_URL") ?: "https://manyak.app"
         buildConfigField("String", "WEB_BASE_URL", "\"$webBaseUrl\"")
@@ -162,23 +162,25 @@ android {
 }
 
 dependencies {
-    implementation(projects.report)
-    implementation(projects.auth)
-    implementation(projects.network)
-    implementation(projects.designsystem)
-    implementation(projects.common)
-    implementation(projects.navigation)
-    implementation(projects.analytics)
-    implementation(projects.login)
-    implementation(projects.legal)
-    implementation(projects.home)
-    implementation(projects.chat)
-    implementation(projects.studio)
-    implementation(projects.my)
-    implementation(projects.create)
-    implementation(projects.story)
-    implementation(projects.notification)
-    implementation(projects.notice)
+    implementation(projects.core.report)
+    implementation(projects.core.auth)
+    implementation(projects.core.network)
+    implementation(projects.core.designsystem)
+    implementation(projects.core.common)
+    implementation(projects.core.navigation)
+    implementation(projects.core.analytics)
+    implementation(projects.feature.login)
+    implementation(projects.feature.legal)
+    implementation(projects.feature.home)
+    implementation(projects.feature.onboarding)
+    implementation(projects.feature.chat)
+    implementation(projects.feature.studio)
+    implementation(projects.feature.my)
+    implementation(projects.feature.credit)
+    implementation(projects.feature.create)
+    implementation(projects.feature.story)
+    implementation(projects.feature.notification)
+    implementation(projects.feature.notice)
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
