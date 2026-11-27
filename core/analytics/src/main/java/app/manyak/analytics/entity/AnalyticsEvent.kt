@@ -623,8 +623,6 @@ sealed class AnalyticsEvent(
     data object TermsViewed : AnalyticsEvent("client_terms_viewed")
 
     data object PrivacyViewed : AnalyticsEvent("client_privacy_viewed")
-
-    data object ServiceInfoViewed : AnalyticsEvent("client_serviceInfo_viewed")
 }
 
 /** 채팅을 시작하거나 고른 주인공의 종류. */

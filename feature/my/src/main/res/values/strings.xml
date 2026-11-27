@@ -170,4 +170,21 @@
     <string name="profile_edit_exit_leave">나가기</string>
     <string name="profile_preset_sheet_title">프로필 이미지</string>
     <string name="profile_preset_load_failed">이미지를 불러오지 못했어요</string>
+    <!-- 마이 하단 사업자 정보. 통신판매업 신고번호는 신고가 끝나면 값만 바꾼다. -->
+    <string name="my_business_name_label">상호</string>
+    <string name="my_business_name">나그네랩</string>
+    <string name="my_business_representative_label">대표</string>
+    <string name="my_business_representative">강경현</string>
+    <string name="my_business_registration_number_label">사업자등록번호</string>
+    <string name="my_business_registration_number">202-04-55303</string>
+    <string name="my_business_mail_order_number_label">통신판매업 신고번호</string>
+    <string name="my_business_mail_order_number">신고 접수</string>
+    <string name="my_business_address_label">주소</string>
+    <string name="my_business_address">경기도 용인시 기흥구 서천동로21번길 6-5, 3층 303호</string>
+    <string name="my_business_phone_label">전화</string>
+    <string name="my_business_phone">010-8126-6089</string>
+    <string name="my_business_email_label">이메일</string>
+    <string name="my_business_email">contact@manyak.app</string>
+    <string name="my_footer_terms">서비스 이용약관</string>
+    <string name="my_footer_privacy">개인정보 처리방침</string>
 </resources>

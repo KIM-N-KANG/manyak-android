@@ -69,7 +69,6 @@ class LegalViewModel
                 when (document) {
                     LegalDocument.TERMS -> AnalyticsEvent.TermsViewed
                     LegalDocument.PRIVACY -> AnalyticsEvent.PrivacyViewed
-                    LegalDocument.ABOUT -> AnalyticsEvent.ServiceInfoViewed
                 },
             )
         }

@@ -19,7 +19,7 @@ internal fun legalNavigation(
         return LegalNavigation.BLOCKED
     }
     if (!uri.host.equals(allowedHost, ignoreCase = true)) return LegalNavigation.EXTERNAL
-    return if (scheme == "https" && uri.path.trimEnd('/') in setOf("/terms", "/privacy", "/about")) {
+    return if (scheme == "https" && uri.path.trimEnd('/') in setOf("/terms", "/privacy")) {
         LegalNavigation.DOCUMENT
     } else {
         LegalNavigation.BLOCKED

@@ -205,9 +205,6 @@ data class LegalRoute(
 enum class LegalDocument {
     TERMS,
     PRIVACY,
-
-    /** 서비스 안내. 법적 문서는 아니지만 같은 웹 문서 화면으로 연다. */
-    ABOUT,
 }
 
 @Serializable
