@@ -220,7 +220,14 @@ private fun MainTabsContent(
 
     val homeEntries =
         rememberTabEntries(backStacks.getValue(MainTab.HOME)) {
-            entry<HomeRoute> { HomeScreen(contentPadding = padding.value, onOpenStory = onOpenStory) }
+            entry<HomeRoute> {
+                HomeScreen(
+                    contentPadding = padding.value,
+                    onOpenStory = onOpenStory,
+                    onOpenTerms = onOpenTerms,
+                    onOpenPrivacyPolicy = onOpenPrivacyPolicy,
+                )
+            }
         }
     val chatEntries =
         rememberTabEntries(backStacks.getValue(MainTab.CHAT)) {
