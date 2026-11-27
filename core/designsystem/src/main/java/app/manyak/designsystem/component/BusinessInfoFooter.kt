@@ -59,18 +59,17 @@ fun BusinessInfoFooter(
     onOpenPrivacyPolicy: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // 부르는 쪽이 본문 아래에 block(32dp)을 띄우고, 여기서 compact(8dp)를 더해 구분선 위가 40dp가 된다.
-    // 링크 줄은 48dp 터치 높이 안에 글자 위아래 여백을 품고 있어 맨 아래 여백을 따로 두지 않아도
-    // 보이는 여백이 16dp가 된다.
+    // 위 내용과의 48dp는 부르는 쪽이 간격 없이 붙이고 푸터가 혼자 갖는다. 링크 줄은 48dp 터치 높이 안에
+    // 글자 위아래 여백을 품고 있어 맨 아래 여백을 따로 두지 않아도 보이는 여백이 16dp가 된다.
     Column(
         modifier =
             modifier
                 .fillMaxWidth()
                 .padding(horizontal = ManyakTheme.spacing.gutter)
-                .padding(top = ManyakTheme.spacing.compact),
+                .padding(top = ManyakTheme.spacing.block + ManyakTheme.spacing.gutter),
     ) {
         HorizontalDivider(thickness = ManyakTheme.sizes.borderWidth, color = ManyakTheme.colors.border)
-        Spacer(modifier = Modifier.height(ManyakTheme.spacing.passage))
+        Spacer(modifier = Modifier.height(ManyakTheme.spacing.gutter))
         BusinessInfoPairs()
         FooterLinks(onOpenTerms = onOpenTerms, onOpenPrivacyPolicy = onOpenPrivacyPolicy)
     }

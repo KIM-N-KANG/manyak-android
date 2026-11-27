@@ -1,7 +1,6 @@
 package app.manyak.home.presentation
 
 import android.widget.Toast
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
@@ -155,11 +154,14 @@ private fun HomeSections(
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = listPadding,
-        verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.block),
     ) {
+        // 섹션 사이 간격은 섹션이 위쪽 여백으로 갖는다. 목록 간격으로 두면 마지막 섹션과 푸터 사이에도 붙는다.
         itemsIndexed(sections, key = { index, section -> section.listKey(index) }) { index, section ->
             val sectionKey = section.listKey(index)
-            HomeSectionRow(name = section.name) { cardWidth ->
+            HomeSectionRow(
+                name = section.name,
+                modifier = if (index > 0) Modifier.padding(top = ManyakTheme.spacing.block) else Modifier,
+            ) { cardWidth ->
                 itemsIndexed(section.stories, key = { _, story -> story.id }) { position, story ->
                     StoryCard(
                         story = story,

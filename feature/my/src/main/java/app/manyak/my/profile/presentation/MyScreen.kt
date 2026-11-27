@@ -2,12 +2,9 @@ package app.manyak.my.profile.presentation
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -176,49 +173,42 @@ private fun MyContent(
     modifier: Modifier = Modifier,
 ) {
     // 간격은 요소의 패딩이 아니라 열의 간격이 맡는다. 섹션 사이와 이프 카드 아래가 같은 `block` 으로 읽힌다.
-    // 사업자 정보 푸터는 메뉴가 화면보다 짧으면 화면 맨 아래에 붙도록 최소 높이를 뷰포트에 맞추고 양 끝으로 벌린다.
-    BoxWithConstraints(modifier = modifier.fillMaxSize().padding(contentPadding)) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .heightIn(min = maxHeight),
-            verticalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.block)) {
-                MyProfileSummary(state, onIntent, onOpenCreditCharge, onOpenProfileEdit)
-                MySection(labelRes = MyR.string.my_section_persona) {
-                    MyMenuItem(
-                        iconRes = DesignsystemR.drawable.ic_personal_card,
-                        labelRes = MyR.string.my_persona_manage,
-                        onClick = onOpenPersonas,
-                        trailing = { MenuTrailingIcon(iconRes = DesignsystemR.drawable.ic_chevron_right) },
-                    )
-                }
-                MySection(labelRes = MyR.string.my_section_event) {
-                    InviteMenuItem(onClick = onOpenInvite)
-                }
-                MySection(labelRes = MyR.string.my_section_display) {
-                    ThemeMenuItem(themeMode = state.themeMode, onClick = { onIntent(MyIntent.CycleTheme) })
-                }
-                NotificationSection(
-                    hasUnreadNotice = hasUnreadNotice,
-                    onOpenNotificationSettings = onOpenNotificationSettings,
-                    onOpenNotices = onOpenNotices,
+    // 사업자 정보 푸터는 메뉴 묶음 바로 아래에 붙이고, 메뉴와의 간격은 푸터가 갖는다.
+    Column(
+        modifier =
+            modifier
+                .fillMaxSize()
+                .padding(contentPadding)
+                .verticalScroll(rememberScrollState()),
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.block)) {
+            MyProfileSummary(state, onIntent, onOpenCreditCharge, onOpenProfileEdit)
+            MySection(labelRes = MyR.string.my_section_persona) {
+                MyMenuItem(
+                    iconRes = DesignsystemR.drawable.ic_personal_card,
+                    labelRes = MyR.string.my_persona_manage,
+                    onClick = onOpenPersonas,
+                    trailing = { MenuTrailingIcon(iconRes = DesignsystemR.drawable.ic_chevron_right) },
                 )
-                EtcSection(
-                    onOpenFeedback = onOpenFeedback,
-                    onOpenOpenSourceLicense = onOpenOpenSourceLicense,
-                )
-                AccountSection(state = state, onIntent = onIntent, onOpenWithdrawal = onOpenWithdrawal)
             }
-            BusinessInfoFooter(
-                onOpenTerms = onOpenTerms,
-                onOpenPrivacyPolicy = onOpenPrivacyPolicy,
-                modifier = Modifier.padding(top = ManyakTheme.spacing.block),
+            MySection(labelRes = MyR.string.my_section_event) {
+                InviteMenuItem(onClick = onOpenInvite)
+            }
+            MySection(labelRes = MyR.string.my_section_display) {
+                ThemeMenuItem(themeMode = state.themeMode, onClick = { onIntent(MyIntent.CycleTheme) })
+            }
+            NotificationSection(
+                hasUnreadNotice = hasUnreadNotice,
+                onOpenNotificationSettings = onOpenNotificationSettings,
+                onOpenNotices = onOpenNotices,
             )
+            EtcSection(
+                onOpenFeedback = onOpenFeedback,
+                onOpenOpenSourceLicense = onOpenOpenSourceLicense,
+            )
+            AccountSection(state = state, onIntent = onIntent, onOpenWithdrawal = onOpenWithdrawal)
         }
+        BusinessInfoFooter(onOpenTerms = onOpenTerms, onOpenPrivacyPolicy = onOpenPrivacyPolicy)
     }
 }
 
