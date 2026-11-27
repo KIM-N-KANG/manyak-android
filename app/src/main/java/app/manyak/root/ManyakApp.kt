@@ -327,7 +327,6 @@ private fun MainNavDisplay(
                         },
                         // 마이 하위 목적지들 — 셸 위에 쌓이는 전체 화면이고 뒤로가기는 마이 탭으로 돌아온다.
                         onOpenInvite = { backStack.push(MyInviteRoute) },
-                        onOpenServiceInfo = { backStack.push(LegalRoute(LegalDocument.ABOUT)) },
                         onOpenTerms = { backStack.push(LegalRoute(LegalDocument.TERMS)) },
                         onOpenPrivacyPolicy = { backStack.push(LegalRoute(LegalDocument.PRIVACY)) },
                         onOpenFeedback = { backStack.push(MyFeedbackRoute) },

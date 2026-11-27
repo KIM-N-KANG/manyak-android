@@ -46,7 +46,6 @@ import app.manyak.my.profile.presentation.component.MyMenuItem
 import app.manyak.my.profile.presentation.component.MySection
 import app.manyak.my.profile.presentation.component.NotificationSection
 import app.manyak.my.profile.presentation.component.ProfileHeader
-import app.manyak.common.R as CommonR
 import app.manyak.designsystem.R as DesignsystemR
 import app.manyak.my.R as MyR
 
@@ -57,7 +56,6 @@ import app.manyak.my.R as MyR
 fun MyScreen(
     contentPadding: PaddingValues,
     onOpenInvite: () -> Unit,
-    onOpenServiceInfo: () -> Unit,
     onOpenTerms: () -> Unit,
     onOpenPrivacyPolicy: () -> Unit,
     onOpenFeedback: () -> Unit,
@@ -113,7 +111,6 @@ fun MyScreen(
         state = state,
         onIntent = viewModel::onIntent,
         onOpenInvite = onOpenInvite,
-        onOpenServiceInfo = onOpenServiceInfo,
         onOpenTerms = onOpenTerms,
         onOpenPrivacyPolicy = onOpenPrivacyPolicy,
         onOpenFeedback = onOpenFeedback,
@@ -164,7 +161,6 @@ private fun MyContent(
     state: MyUiState,
     onIntent: (MyIntent) -> Unit,
     onOpenInvite: () -> Unit,
-    onOpenServiceInfo: () -> Unit,
     onOpenTerms: () -> Unit,
     onOpenPrivacyPolicy: () -> Unit,
     onOpenFeedback: () -> Unit,
@@ -213,7 +209,6 @@ private fun MyContent(
                     onOpenNotices = onOpenNotices,
                 )
                 EtcSection(
-                    onOpenServiceInfo = onOpenServiceInfo,
                     onOpenFeedback = onOpenFeedback,
                     onOpenOpenSourceLicense = onOpenOpenSourceLicense,
                 )
@@ -273,18 +268,11 @@ private fun MyCreditBalanceCard(
 
 @Composable
 private fun EtcSection(
-    onOpenServiceInfo: () -> Unit,
     onOpenFeedback: () -> Unit,
     onOpenOpenSourceLicense: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     MySection(labelRes = MyR.string.my_section_etc, modifier = modifier) {
-        MyMenuItem(
-            iconRes = DesignsystemR.drawable.ic_info,
-            labelRes = CommonR.string.my_service_info,
-            onClick = onOpenServiceInfo,
-            trailing = { MenuTrailingIcon(iconRes = DesignsystemR.drawable.ic_external_link) },
-        )
         MyMenuItem(
             iconRes = DesignsystemR.drawable.ic_mailbox,
             labelRes = MyR.string.my_feedback,
@@ -407,7 +395,6 @@ private fun MyScreenPreview() {
                 ),
             onIntent = {},
             onOpenInvite = {},
-            onOpenServiceInfo = {},
             onOpenTerms = {},
             onOpenPrivacyPolicy = {},
             onOpenFeedback = {},

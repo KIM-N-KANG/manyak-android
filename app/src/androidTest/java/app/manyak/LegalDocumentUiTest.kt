@@ -29,9 +29,9 @@ class LegalDocumentUiTest {
     fun externalWebLinkLaunchesBrowserAndInternalHomeIsBlocked() {
         val viewModel =
             LegalViewModel(
-                LegalDocument.ABOUT,
+                LegalDocument.TERMS,
                 object : LegalUrlProvider {
-                    override fun urlFor(document: LegalDocument) = "https://manyak.app/about"
+                    override fun urlFor(document: LegalDocument) = "https://manyak.app/terms"
                 },
                 NoOpAnalytics,
             )
@@ -39,14 +39,14 @@ class LegalDocumentUiTest {
         compose.setContent {
             val view = LocalView.current
             SideEffect { root = view.rootView }
-            ManyakTheme { LegalDocumentScreen(LegalDocument.ABOUT, onBack = {}, viewModel = viewModel) }
+            ManyakTheme { LegalDocumentScreen(LegalDocument.TERMS, onBack = {}, viewModel = viewModel) }
         }
         lateinit var web: WebView
         compose.runOnIdle {
             web = requireNotNull(findWebView(root))
             web.stopLoading()
             web.loadDataWithBaseURL(
-                "https://manyak.app/about",
+                "https://manyak.app/terms",
                 """<html><head><title>fixture</title></head><body>
                 <a id="internal" href="https://manyak.app/">Home</a>
                 <a id="external" href="https://example.com/help">External</a>

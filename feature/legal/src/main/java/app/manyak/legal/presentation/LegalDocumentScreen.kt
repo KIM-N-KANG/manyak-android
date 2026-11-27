@@ -256,5 +256,4 @@ fun LegalDocument.titleRes(): Int =
     when (this) {
         LegalDocument.TERMS -> LegalR.string.legal_terms_title
         LegalDocument.PRIVACY -> LegalR.string.legal_privacy_title
-        LegalDocument.ABOUT -> CommonR.string.my_service_info
     }
