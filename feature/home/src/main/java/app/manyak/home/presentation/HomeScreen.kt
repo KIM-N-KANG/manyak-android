@@ -32,6 +32,7 @@ import app.manyak.analytics.presentation.LocalAnalytics
 import app.manyak.analytics.presentation.rememberImpressionTracker
 import app.manyak.analytics.presentation.trackImpression
 import app.manyak.common.entity.story.StorySummary
+import app.manyak.designsystem.component.BusinessInfoFooter
 import app.manyak.designsystem.component.LoadFailedContent
 import app.manyak.designsystem.component.ManyakPullToRefreshBox
 import app.manyak.designsystem.component.rememberDelayedProgressVisibility
@@ -53,6 +54,8 @@ import app.manyak.home.R as HomeR
 fun HomeScreen(
     contentPadding: PaddingValues,
     onOpenStory: (String) -> Unit,
+    onOpenTerms: () -> Unit,
+    onOpenPrivacyPolicy: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
@@ -75,6 +78,8 @@ fun HomeScreen(
         state = state,
         contentPadding = contentPadding,
         onOpenStory = onOpenStory,
+        onOpenTerms = onOpenTerms,
+        onOpenPrivacyPolicy = onOpenPrivacyPolicy,
         onIntent = viewModel::onIntent,
         modifier = modifier,
     )
@@ -85,6 +90,8 @@ private fun HomeContent(
     state: HomeUiState,
     contentPadding: PaddingValues,
     onOpenStory: (String) -> Unit,
+    onOpenTerms: () -> Unit,
+    onOpenPrivacyPolicy: () -> Unit,
     onIntent: (HomeIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -123,7 +130,13 @@ private fun HomeContent(
                 contentPadding = contentPadding,
                 modifier = modifier,
             ) {
-                HomeSections(sections = state.sections, listPadding = listPadding, onOpenStory = onOpenStory)
+                HomeSections(
+                    sections = state.sections,
+                    listPadding = listPadding,
+                    onOpenStory = onOpenStory,
+                    onOpenTerms = onOpenTerms,
+                    onOpenPrivacyPolicy = onOpenPrivacyPolicy,
+                )
             }
     }
 }
@@ -133,6 +146,8 @@ private fun HomeSections(
     sections: List<HomeSection>,
     listPadding: PaddingValues,
     onOpenStory: (String) -> Unit,
+    onOpenTerms: () -> Unit,
+    onOpenPrivacyPolicy: () -> Unit,
 ) {
     val analytics = LocalAnalytics.current
     val impressions = rememberImpressionTracker()
@@ -166,6 +181,13 @@ private fun HomeSections(
                     )
                 }
             }
+        }
+        item(key = "businessInfoFooter") {
+            BusinessInfoFooter(
+                onOpenTerms = onOpenTerms,
+                onOpenPrivacyPolicy = onOpenPrivacyPolicy,
+                collapsible = true,
+            )
         }
     }
 }
@@ -201,6 +223,8 @@ private fun HomeContentPreview() {
                 ),
             contentPadding = PaddingValues(),
             onOpenStory = {},
+            onOpenTerms = {},
+            onOpenPrivacyPolicy = {},
             onIntent = {},
         )
     }
@@ -214,6 +238,8 @@ private fun HomeLoadFailedPreview() {
             state = HomeUiState(isLoading = false, loadFailed = true),
             contentPadding = PaddingValues(),
             onOpenStory = {},
+            onOpenTerms = {},
+            onOpenPrivacyPolicy = {},
             onIntent = {},
         )
     }

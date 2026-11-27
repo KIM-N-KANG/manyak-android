@@ -30,4 +30,28 @@
     <string name="credit_shortage_attendance_failed">출석 체크에 실패했어요</string>
     <string name="create_tutorial_label">스토리 만들기 안내</string>
     <string name="create_tutorial_speaker">마냑</string>
+    <!-- 홈과 마이 하단 사업자 정보. 통신판매업 신고번호와 호스팅서비스 제공자는 바뀌면 값만 고친다. -->
+    <string name="business_info_toggle">사업자 정보</string>
+    <string name="business_info_expanded">펼쳐짐</string>
+    <string name="business_info_collapsed">접힘</string>
+    <string name="business_name_label">상호</string>
+    <string name="business_name">나그네랩</string>
+    <string name="business_representative_label">대표</string>
+    <string name="business_representative">강경현</string>
+    <string name="business_registration_number_label">사업자등록번호</string>
+    <string name="business_registration_number">202-04-55303</string>
+    <string name="business_mail_order_number_label">통신판매업 신고번호</string>
+    <string name="business_mail_order_number">신고 접수</string>
+    <string name="business_address_label">주소</string>
+    <string name="business_address">경기도 용인시 기흥구 서천동로21번길 6-5, 3층 303호</string>
+    <string name="business_phone_label">전화</string>
+    <string name="business_phone">010-8126-6089</string>
+    <string name="business_email_label">이메일</string>
+    <string name="business_email">contact@manyak.app</string>
+    <string name="business_hosting_label">호스팅서비스 제공자</string>
+    <string name="business_hosting">Vercel Inc., Oracle Corporation</string>
+    <string name="business_footer_terms">서비스 이용약관</string>
+    <string name="business_footer_privacy">개인정보 처리방침</string>
+    <string name="business_footer_ftc">사업자정보 확인</string>
+    <string name="business_footer_open_failed">링크를 열 수 있는 브라우저가 없어요</string>
 </resources>

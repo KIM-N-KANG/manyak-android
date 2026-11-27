@@ -33,12 +33,12 @@ import app.manyak.common.entity.auth.AuthProvider
 import app.manyak.common.entity.settings.ThemeMode
 import app.manyak.common.entity.user.AccountStatus
 import app.manyak.common.entity.user.UserProfile
+import app.manyak.designsystem.component.BusinessInfoFooter
 import app.manyak.designsystem.component.ManyakProgressIndicator
 import app.manyak.designsystem.credit.CreditBalanceCard
 import app.manyak.designsystem.theme.ManyakTheme
 import app.manyak.my.presentation.component.labelRes
 import app.manyak.my.profile.presentation.component.AccountLinkConfirmDialog
-import app.manyak.my.profile.presentation.component.BusinessInfoFooter
 import app.manyak.my.profile.presentation.component.InviteMenuItem
 import app.manyak.my.profile.presentation.component.LinkedToOtherUserDialog
 import app.manyak.my.profile.presentation.component.MenuTrailingIcon
