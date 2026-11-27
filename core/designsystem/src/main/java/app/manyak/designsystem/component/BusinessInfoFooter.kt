@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -44,7 +45,7 @@ private val BusinessInfoItems =
         R.string.business_hosting_label to R.string.business_hosting,
     )
 
-/** 공정거래위원회 사업자정보 공개 페이지. 사업자등록번호가 바뀌면 함께 고친다. */
+/** 공정거래위원회 사업자정보 공개 페이지. `business_registration_number` 가 바뀌면 함께 고친다. */
 private const val FTC_BUSINESS_INFO_URL = "https://www.ftc.go.kr/bizCommPop.do?wrkr_no=2020455303"
 
 /**
@@ -101,18 +102,69 @@ private fun FooterLinks(
 ) {
     val context = LocalContext.current
     val openFailed = stringResource(R.string.business_footer_open_failed)
-    FlowRow(
-        itemVerticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.compact),
-    ) {
-        FooterLink(labelRes = R.string.business_footer_terms, onClick = onOpenTerms)
-        LinkDivider()
-        FooterLink(labelRes = R.string.business_footer_privacy, onClick = onOpenPrivacyPolicy)
-        LinkDivider()
-        FooterLink(
-            labelRes = R.string.business_footer_ftc,
-            onClick = { openInBrowser(context, FTC_BUSINESS_INFO_URL, openFailed) },
-        )
+    LinkLine(
+        links =
+            listOf(
+                { FooterLink(labelRes = R.string.business_footer_terms, onClick = onOpenTerms) },
+                { FooterLink(labelRes = R.string.business_footer_privacy, onClick = onOpenPrivacyPolicy) },
+                {
+                    FooterLink(
+                        labelRes = R.string.business_footer_ftc,
+                        onClick = { openInBrowser(context, FTC_BUSINESS_INFO_URL, openFailed) },
+                    )
+                },
+            ),
+    )
+}
+
+/**
+ * 링크를 줄 바꿈하며 늘어놓고 같은 줄의 링크 사이에만 세로선을 둔다. 줄이 바뀌는 자리의 세로선은 그리지 않아
+ * 앞줄 끝이나 다음 줄 맨 앞에 홀로 남지 않는다.
+ */
+@Composable
+private fun LinkLine(links: List<@Composable () -> Unit>) {
+    val gap = ManyakTheme.spacing.compact
+    Layout(
+        contents = listOf({ links.forEach { it() } }, { repeat(links.size - 1) { LinkDivider() } }),
+    ) { (linkMeasurables, dividerMeasurables), constraints ->
+        val loose = constraints.copy(minWidth = 0, minHeight = 0)
+        val linkPlaceables = linkMeasurables.map { it.measure(loose) }
+        val dividerPlaceables = dividerMeasurables.map { it.measure(loose) }
+        val gapPx = gap.roundToPx()
+        val dividerSpan = dividerPlaceables.firstOrNull()?.let { it.width + gapPx * 2 } ?: 0
+
+        // 줄마다 링크 번호를 모은다. 앞 링크와 같은 줄에 들어갈 때만 세로선 자리를 더한다.
+        val lines = mutableListOf(mutableListOf<Int>())
+        var x = 0
+        linkPlaceables.forEachIndexed { index, link ->
+            val needed = if (lines.last().isEmpty()) link.width else dividerSpan + link.width
+            if (lines.last().isNotEmpty() && x + needed > constraints.maxWidth) {
+                lines += mutableListOf<Int>()
+                x = link.width
+            } else {
+                x += needed
+            }
+            lines.last() += index
+        }
+        val lineHeights = lines.map { line -> line.maxOf { linkPlaceables[it].height } }
+        layout(constraints.maxWidth, lineHeights.sum()) {
+            var y = 0
+            lines.forEachIndexed { lineIndex, line ->
+                val height = lineHeights[lineIndex]
+                var cursor = 0
+                line.forEachIndexed { position, linkIndex ->
+                    if (position > 0) {
+                        val divider = dividerPlaceables[linkIndex - 1]
+                        divider.place(cursor + gapPx, y + (height - divider.height) / 2)
+                        cursor += dividerSpan
+                    }
+                    val link = linkPlaceables[linkIndex]
+                    link.place(cursor, y + (height - link.height) / 2)
+                    cursor += link.width
+                }
+                y += height
+            }
+        }
     }
 }
 

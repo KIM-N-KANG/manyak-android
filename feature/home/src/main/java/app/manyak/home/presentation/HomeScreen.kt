@@ -2,10 +2,10 @@ package app.manyak.home.presentation
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,7 +17,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -96,47 +95,49 @@ private fun HomeContent(
 ) {
     // 금방 끝나는 조회에서 자리만 잡았다 사라지는 깜빡임을 만들지 않는다.
     val showProgress = rememberDelayedProgressVisibility(state.isLoading)
-    val skeletonPadding = contentPadding.withSectionListBottom()
+    val showsSections = !state.loadFailed && state.sections.isNotEmpty()
 
-    when {
-        state.isLoading && state.sections.isEmpty() ->
-            if (showProgress) HomeSectionsSkeleton(contentPadding = skeletonPadding, modifier = modifier)
-
-        state.loadFailed ->
-            LoadFailedContent(
-                message = stringResource(CommonR.string.story_load_failed),
-                onRetry = { onIntent(HomeIntent.Retry) },
-                modifier =
-                    modifier
-                        .fillMaxSize()
-                        .padding(contentPadding)
-                        .padding(horizontal = ManyakTheme.spacing.gutter),
+    if (showsSections) {
+        ManyakPullToRefreshBox(
+            isRefreshing = state.isRefreshing,
+            onRefresh = { onIntent(HomeIntent.Refresh) },
+            contentPadding = contentPadding,
+            modifier = modifier,
+        ) {
+            HomeSections(
+                sections = state.sections,
+                listPadding = contentPadding,
+                onOpenStory = onOpenStory,
+                onOpenTerms = onOpenTerms,
+                onOpenPrivacyPolicy = onOpenPrivacyPolicy,
             )
+        }
+        return
+    }
 
-        state.sections.isEmpty() ->
-            Box(modifier = modifier.fillMaxSize().padding(contentPadding), contentAlignment = Alignment.Center) {
-                Text(
-                    text = stringResource(HomeR.string.home_stories_empty),
-                    style = ManyakTheme.typography.bodyMedium,
-                    color = ManyakTheme.colors.textSubtle,
-                )
-            }
+    // 첫 로딩, 오류, 빈 상태에서도 사업자 정보는 보여야 하므로 상태 안내 아래 화면 끝에 푸터를 둔다.
+    Column(modifier = modifier.fillMaxSize().padding(contentPadding)) {
+        Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+            when {
+                state.loadFailed ->
+                    LoadFailedContent(
+                        message = stringResource(CommonR.string.story_load_failed),
+                        onRetry = { onIntent(HomeIntent.Retry) },
+                        modifier = Modifier.fillMaxSize().padding(horizontal = ManyakTheme.spacing.gutter),
+                    )
 
-        else ->
-            ManyakPullToRefreshBox(
-                isRefreshing = state.isRefreshing,
-                onRefresh = { onIntent(HomeIntent.Refresh) },
-                contentPadding = contentPadding,
-                modifier = modifier,
-            ) {
-                HomeSections(
-                    sections = state.sections,
-                    listPadding = contentPadding,
-                    onOpenStory = onOpenStory,
-                    onOpenTerms = onOpenTerms,
-                    onOpenPrivacyPolicy = onOpenPrivacyPolicy,
-                )
+                state.isLoading ->
+                    if (showProgress) HomeSectionsSkeleton(contentPadding = PaddingValues())
+
+                else ->
+                    Text(
+                        text = stringResource(HomeR.string.home_stories_empty),
+                        style = ManyakTheme.typography.bodyMedium,
+                        color = ManyakTheme.colors.textSubtle,
+                    )
             }
+        }
+        BusinessInfoFooter(onOpenTerms = onOpenTerms, onOpenPrivacyPolicy = onOpenPrivacyPolicy)
     }
 }
 
@@ -184,7 +185,7 @@ private fun HomeSections(
                 }
             }
         }
-        item(key = "businessInfoFooter") {
+        item(key = BUSINESS_INFO_FOOTER_KEY) {
             BusinessInfoFooter(
                 onOpenTerms = onOpenTerms,
                 onOpenPrivacyPolicy = onOpenPrivacyPolicy,
@@ -193,20 +194,11 @@ private fun HomeSections(
     }
 }
 
+/** 섹션 key 는 서버 id 문자열이라 푸터 key 는 문자열이 아닌 값으로 겹치지 않게 둔다. */
+private const val BUSINESS_INFO_FOOTER_KEY = -1
+
 /** 기본 섹션은 id 가 없어 이름과 순번으로 가른다. */
 private fun HomeSection.listKey(index: Int): String = id ?: "default/$index/$name"
-
-/** 골격 목록용. 셸 여백 위에 바로 첫 섹션을 붙이고 마지막 섹션 아래만 띄운다. 실제 목록은 푸터가 맨 아래를 채운다. */
-@Composable
-private fun PaddingValues.withSectionListBottom(): PaddingValues {
-    val layoutDirection = LocalLayoutDirection.current
-    return PaddingValues(
-        start = calculateStartPadding(layoutDirection),
-        top = calculateTopPadding(),
-        end = calculateEndPadding(layoutDirection),
-        bottom = calculateBottomPadding() + ManyakTheme.spacing.gutter,
-    )
-}
 
 @Preview(showBackground = true, name = "홈 섹션")
 @Composable

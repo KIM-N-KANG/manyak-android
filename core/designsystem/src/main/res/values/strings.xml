@@ -30,7 +30,8 @@
     <string name="credit_shortage_attendance_failed">출석 체크에 실패했어요</string>
     <string name="create_tutorial_label">스토리 만들기 안내</string>
     <string name="create_tutorial_speaker">마냑</string>
-    <!-- 홈과 마이 하단 사업자 정보. 통신판매업 신고번호와 호스팅서비스 제공자는 바뀌면 값만 고친다. -->
+    <!-- 홈과 마이 하단 사업자 정보. 통신판매업 신고번호와 호스팅서비스 제공자는 바뀌면 값만 고친다.
+         사업자등록번호를 바꾸면 BusinessInfoFooter 의 공정위 조회 주소(wrkr_no)도 함께 고친다. -->
     <string name="business_name_label">상호</string>
     <string name="business_name">나그네랩</string>
     <string name="business_representative_label">대표</string>
