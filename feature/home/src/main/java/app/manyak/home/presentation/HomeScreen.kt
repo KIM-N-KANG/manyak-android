@@ -97,11 +97,11 @@ private fun HomeContent(
 ) {
     // 금방 끝나는 조회에서 자리만 잡았다 사라지는 깜빡임을 만들지 않는다.
     val showProgress = rememberDelayedProgressVisibility(state.isLoading)
-    val listPadding = contentPadding.withSectionListBottom()
+    val skeletonPadding = contentPadding.withSectionListBottom()
 
     when {
         state.isLoading && state.sections.isEmpty() ->
-            if (showProgress) HomeSectionsSkeleton(contentPadding = listPadding, modifier = modifier)
+            if (showProgress) HomeSectionsSkeleton(contentPadding = skeletonPadding, modifier = modifier)
 
         state.loadFailed ->
             LoadFailedContent(
@@ -132,7 +132,7 @@ private fun HomeContent(
             ) {
                 HomeSections(
                     sections = state.sections,
-                    listPadding = listPadding,
+                    listPadding = contentPadding,
                     onOpenStory = onOpenStory,
                     onOpenTerms = onOpenTerms,
                     onOpenPrivacyPolicy = onOpenPrivacyPolicy,
@@ -195,7 +195,7 @@ private fun HomeSections(
 /** 기본 섹션은 id 가 없어 이름과 순번으로 가른다. */
 private fun HomeSection.listKey(index: Int): String = id ?: "default/$index/$name"
 
-/** 셸 여백 위에 바로 첫 섹션을 붙이고 마지막 섹션 아래만 띄운다. */
+/** 골격 목록용. 셸 여백 위에 바로 첫 섹션을 붙이고 마지막 섹션 아래만 띄운다. 실제 목록은 푸터가 맨 아래를 채운다. */
 @Composable
 private fun PaddingValues.withSectionListBottom(): PaddingValues {
     val layoutDirection = LocalLayoutDirection.current

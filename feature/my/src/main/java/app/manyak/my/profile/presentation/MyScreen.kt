@@ -183,8 +183,7 @@ private fun MyContent(
                 Modifier
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
-                    .heightIn(min = maxHeight)
-                    .padding(bottom = ManyakTheme.spacing.compact),
+                    .heightIn(min = maxHeight),
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.block)) {

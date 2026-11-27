@@ -66,6 +66,7 @@ private const val FTC_BUSINESS_INFO_URL = "https://www.ftc.go.kr/bizCommPop.do?w
  * 홀로 남지 않게 한다. 링크 줄은 터치 타깃 높이를 확보하느라 위아래 여백이 정보 묶음보다 넓다.
  *
  * [collapsible] 이면 사업자 정보를 "사업자 정보" 버튼 뒤에 접어 두고, 문서 링크는 접혀 있어도 보인다.
+ * 회색 바탕이 화면 폭을 채워 본문과 나뉘므로 화면의 맨 아래에 여백 없이 붙여 둔다.
  */
 @Composable
 fun BusinessInfoFooter(
@@ -75,7 +76,20 @@ fun BusinessInfoFooter(
     collapsible: Boolean = false,
 ) {
     var expanded by rememberSaveable { mutableStateOf(!collapsible) }
-    Column(modifier = modifier.fillMaxWidth().padding(horizontal = ManyakTheme.spacing.gutter)) {
+    // 접기 버튼과 링크 줄은 48dp 터치 높이 안에 글자 위아래 여백을 품고 있다. 바탕의 여백은 그만큼 덜어
+    // 보이는 여백이 위 20dp, 아래 24dp가 되게 한다.
+    Column(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .background(ManyakTheme.colors.backgroundNeutral)
+                .padding(
+                    start = ManyakTheme.spacing.gutter,
+                    end = ManyakTheme.spacing.gutter,
+                    top = if (collapsible) ManyakTheme.spacing.inline else ManyakTheme.spacing.passage,
+                    bottom = ManyakTheme.spacing.compact,
+                ),
+    ) {
         if (collapsible) {
             BusinessInfoToggle(expanded = expanded, onToggle = { expanded = !expanded })
         }
