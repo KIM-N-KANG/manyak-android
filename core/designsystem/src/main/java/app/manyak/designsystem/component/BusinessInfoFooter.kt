@@ -19,12 +19,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -66,7 +68,7 @@ private const val FTC_BUSINESS_INFO_URL = "https://www.ftc.go.kr/bizCommPop.do?w
  * 홀로 남지 않게 한다. 링크 줄은 터치 타깃 높이를 확보하느라 위아래 여백이 정보 묶음보다 넓다.
  *
  * [collapsible] 이면 사업자 정보를 "사업자 정보" 버튼 뒤에 접어 두고, 문서 링크는 접혀 있어도 보인다.
- * 회색 바탕이 화면 폭을 채워 본문과 나뉘므로 화면의 맨 아래에 여백 없이 붙여 둔다.
+ * 본문과는 여백 안쪽의 가로 구분선으로 나눈다.
  */
 @Composable
 fun BusinessInfoFooter(
@@ -76,20 +78,21 @@ fun BusinessInfoFooter(
     collapsible: Boolean = false,
 ) {
     var expanded by rememberSaveable { mutableStateOf(!collapsible) }
-    // 접기 버튼과 링크 줄은 48dp 터치 높이 안에 글자 위아래 여백을 품고 있다. 바탕의 여백은 그만큼 덜어
-    // 보이는 여백이 위 20dp, 아래 24dp가 되게 한다.
+    // 부르는 쪽이 본문 아래에 block(32dp)을 띄우고, 여기서 compact(8dp)를 더해 구분선 위가 40dp가 된다.
+    // 접기 버튼과 링크 줄은 48dp 터치 높이 안에 글자 위아래 여백을 품고 있어, 구분선 아래와 맨 아래 여백은
+    // 그만큼 덜어 보이는 여백이 구분선 아래 20dp, 맨 아래 16dp가 되게 한다.
     Column(
         modifier =
             modifier
                 .fillMaxWidth()
-                .background(ManyakTheme.colors.backgroundNeutral)
-                .padding(
-                    start = ManyakTheme.spacing.gutter,
-                    end = ManyakTheme.spacing.gutter,
-                    top = if (collapsible) ManyakTheme.spacing.inline else ManyakTheme.spacing.passage,
-                    bottom = ManyakTheme.spacing.compact,
-                ),
+                .padding(horizontal = ManyakTheme.spacing.gutter)
+                .padding(top = ManyakTheme.spacing.compact),
     ) {
+        HorizontalDivider(thickness = ManyakTheme.sizes.borderWidth, color = ManyakTheme.colors.border)
+        Spacer(
+            modifier =
+                Modifier.height(if (collapsible) ManyakTheme.spacing.inline else ManyakTheme.spacing.passage),
+        )
         if (collapsible) {
             BusinessInfoToggle(expanded = expanded, onToggle = { expanded = !expanded })
         }
