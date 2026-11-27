@@ -39,7 +39,7 @@
 | 버튼 | `ManyakNeutralButton`, `ManyakTextButton`, `ManyakIconButton`, `ManyakMoreButton`, `ManyakAddButton`, `ManyakInfoTooltipButton` |
 | 선택과 입력 | `ManyakCheckbox`, `ManyakSwitch`, `ManyakTextField`, `ManyakMultilineTextField`, `ManyakInputCounter`, `ManyakSelectField`, `ManyakSelectOption`, `ManyakSelectAction`, `Modifier.selectionRing`, `Modifier.keepKeyboardOnTap`, `Modifier.clearFocusOnTap`, `FocusScrollMargin` |
 | 시트, 창, 팝업 | `ManyakBottomSheet`, `ManyakOptionsSheet`, `ManyakOptionItem`, `ManyakDialog`, `ManyakConfirmDialog`, `ManyakDestructiveDialog`, `ManyakPopup`, `CreateTutorialDialog` |
-| 셸 | `ManyakBrandHeader`, `ManyakSectionHeader`, `ManyakDetailHeader`, `ManyakNavigationBar`, `ManyakNavigationItem`, `ManyakPullToRefreshBox`, `SystemBarIconRequests` |
+| 셸 | `ManyakBrandHeader`, `ManyakSectionHeader`, `ManyakDetailHeader`, `ManyakNavigationBar`, `ManyakNavigationItem`, `ManyakPullToRefreshBox`, `SystemBarIconRequests`, `BusinessInfoFooter`(홈과 마이 하단 사업자 정보) |
 | 스토리 표시 | `StoryCover`, `StoryCoverBadge`, `StoryThumbnail`, `StoryBadgeScale`, `StoryGenreBadge`, `StoryGenreBadges`, `MetaChip`, `Modifier.coverBackdrop`, `CharacterImage`, `FullscreenImageViewer` |
 | 상태와 목록 | `ManyakProgressIndicator`, `rememberDelayedProgressVisibility`, `SkeletonPlaceholder`, `LoadFailedContent`, `LoadMoreFooter`, `ScrollEdgeFade`, `CyclingPhrases`, `rememberTextShimmerBrush` |
 | 배치와 모션 | `withScreenMargins`, `withRowListMargins`, `RowRevealTransition`, `Modifier.swipeBetweenTabs` |
@@ -322,6 +322,7 @@
 - **브랜드 헤더와 섹션 헤더**(`ManyakBrandHeader`, `ManyakSectionHeader`): 메인 탭 상단. 홈은 로고만, 나머지 탭은 제목(`typography.titleLarge`)만 둡니다. `TopAppBar` 위에 배경 `colors.surface`와 제목 색 `colors.text`를 얹고, 좌우 여백은 앱 바 기본값 16dp라 `spacing.gutter`와 같습니다. 높이는 최소 64dp이고 제목이 커지면 함께 늘어나며, 구분선과 그림자는 없습니다.
 - **하위 화면 헤더**(`ManyakDetailHeader`): 셸 밖 하위 목적지(마이 하위 화면, 이프 충전)의 앱 바. 뒤로가기와 제목(`typography.bodyLargeStrong`), 제목 옆 요소를 둡니다. 섹션 헤더보다 한 단 작은 것은 화면 이름이 아니라 지금 보고 있는 것의 이름이라 길어질 수 있기 때문이고, 한 줄로 자릅니다. 스토리 상세와 채팅방은 각자 헤더를 그립니다.
 - **하단 탭 바**(`ManyakNavigationBar`): 홈, 채팅, 제작, 탐색, 마이 고정 5탭([공통 UI 요구사항](../knk-harness/docs/ui/2-2-REQUIREMENTS.md#2-2-1-적용-범위)). 배경 `colors.surface`, 위쪽 `colors.border` 1dp. 아이콘(`sizes.tabIcon`) 아래 이름 `typography.labelSmall`. 선택은 filled 아이콘 + `colors.text`, 비선택은 outline 아이콘 + `colors.textSubtle`이고 아이콘과 라벨이 같은 색입니다.
+- **사업자 정보 푸터**(`BusinessInfoFooter`): 홈 섹션 목록과 마이 메뉴 바로 아래에 붙는 같은 푸터. 위 내용과 48dp(`spacing.block` + `spacing.gutter`)를 푸터가 갖고, 좌우 `spacing.gutter` 안쪽에 `colors.border` 1dp 가로 구분선, 그 아래 `spacing.gutter`에 라벨과 값 쌍을 `typography.bodySmall` + `colors.textSubtle`로 쌍 단위 줄 바꿈합니다. 아래 문서 링크 세 개는 최소 `sizes.control` 높이 버튼이고 좁으면 다음 줄로 넘기고 세로선은 같은 줄의 링크 사이에만 둡니다. 바탕은 화면과 같고 화면 맨 아래로 밀지 않으며, 홈의 첫 로딩, 빈 상태, 오류 상태에서는 안내 아래 화면 끝에 둡니다.
   - 라벨이 이름을 맡으므로 아이콘은 장식으로 두고 접근성 이름을 붙이지 않습니다. 둘 다 붙이면 같은 이름을 두 번 읽습니다.
   - 위쪽 경계선은 바 배경이 화면 바탕과 같고 콘텐츠가 바 아래로 흘러 들어가기 때문에 둡니다. 그림자를 쓰지 않으니 경계선이 유일한 수단입니다. 상단 헤더는 위로 흐르는 것이 없어 두지 않습니다.
   - `NavigationBar` 위에서 알약 선택 표시자(투명)와 리플을 지웁니다. 아이콘 모양과 색이 곧바로 바뀌는 것이 반응입니다.

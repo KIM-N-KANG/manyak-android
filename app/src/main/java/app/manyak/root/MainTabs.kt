@@ -64,7 +64,8 @@ internal fun MainTabsScreen(
     onEditSubmission: (String) -> Unit,
     onResumeCreation: (draftId: String, CreationResumePoint, onServer: Boolean) -> Unit,
     onOpenInvite: () -> Unit,
-    onOpenServiceInfo: () -> Unit,
+    onOpenTerms: () -> Unit,
+    onOpenPrivacyPolicy: () -> Unit,
     onOpenFeedback: () -> Unit,
     onOpenOpenSourceLicense: () -> Unit,
     onOpenWithdrawal: () -> Unit,
@@ -143,7 +144,8 @@ internal fun MainTabsScreen(
             onEditSubmission = onEditSubmission,
             onResumeCreation = onResumeCreation,
             onOpenInvite = onOpenInvite,
-            onOpenServiceInfo = onOpenServiceInfo,
+            onOpenTerms = onOpenTerms,
+            onOpenPrivacyPolicy = onOpenPrivacyPolicy,
             onOpenFeedback = onOpenFeedback,
             onOpenOpenSourceLicense = onOpenOpenSourceLicense,
             onOpenWithdrawal = onOpenWithdrawal,
@@ -196,7 +198,8 @@ private fun MainTabsContent(
     onEditSubmission: (String) -> Unit,
     onResumeCreation: (draftId: String, CreationResumePoint, onServer: Boolean) -> Unit,
     onOpenInvite: () -> Unit,
-    onOpenServiceInfo: () -> Unit,
+    onOpenTerms: () -> Unit,
+    onOpenPrivacyPolicy: () -> Unit,
     onOpenFeedback: () -> Unit,
     onOpenOpenSourceLicense: () -> Unit,
     onOpenWithdrawal: () -> Unit,
@@ -217,7 +220,14 @@ private fun MainTabsContent(
 
     val homeEntries =
         rememberTabEntries(backStacks.getValue(MainTab.HOME)) {
-            entry<HomeRoute> { HomeScreen(contentPadding = padding.value, onOpenStory = onOpenStory) }
+            entry<HomeRoute> {
+                HomeScreen(
+                    contentPadding = padding.value,
+                    onOpenStory = onOpenStory,
+                    onOpenTerms = onOpenTerms,
+                    onOpenPrivacyPolicy = onOpenPrivacyPolicy,
+                )
+            }
         }
     val chatEntries =
         rememberTabEntries(backStacks.getValue(MainTab.CHAT)) {
@@ -256,7 +266,8 @@ private fun MainTabsContent(
                 MyScreen(
                     contentPadding = padding.value,
                     onOpenInvite = onOpenInvite,
-                    onOpenServiceInfo = onOpenServiceInfo,
+                    onOpenTerms = onOpenTerms,
+                    onOpenPrivacyPolicy = onOpenPrivacyPolicy,
                     onOpenFeedback = onOpenFeedback,
                     onOpenOpenSourceLicense = onOpenOpenSourceLicense,
                     onOpenWithdrawal = onOpenWithdrawal,

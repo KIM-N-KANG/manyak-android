@@ -6,7 +6,7 @@ import org.junit.Test
 class LegalNavigationPolicyTest {
     @Test
     fun `문서 경로와 앵커만 내부에서 연다`() {
-        for (path in listOf("/terms", "/privacy/", "/about?source=my#guest")) {
+        for (path in listOf("/terms", "/privacy/", "/terms?source=my#article-3")) {
             assertEquals(LegalNavigation.DOCUMENT, legalNavigation("https://manyak.app$path", "manyak.app"))
         }
     }
@@ -18,6 +18,7 @@ class LegalNavigationPolicyTest {
             "https://manyak.app/",
             "https://manyak.app/onboarding",
             "https://manyak.app/my/feedback",
+            "https://manyak.app/about",
             "javascript:alert(1)",
             "intent://test",
             "file:///terms",
