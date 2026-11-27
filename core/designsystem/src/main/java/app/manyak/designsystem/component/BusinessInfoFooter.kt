@@ -5,13 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.widget.Toast
 import androidx.annotation.StringRes
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -24,25 +17,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.net.toUri
 import app.manyak.designsystem.R
@@ -67,7 +51,6 @@ private const val FTC_BUSINESS_INFO_URL = "https://www.ftc.go.kr/bizCommPop.do?w
  * 홈과 마이 맨 아래의 사업자 정보와 약관 링크. 라벨과 값은 한 쌍으로만 줄을 넘겨 라벨이 앞줄 끝에
  * 홀로 남지 않게 한다. 링크 줄은 터치 타깃 높이를 확보하느라 위아래 여백이 정보 묶음보다 넓다.
  *
- * [collapsible] 이면 사업자 정보를 "사업자 정보" 버튼 뒤에 접어 두고, 문서 링크는 접혀 있어도 보인다.
  * 본문과는 여백 안쪽의 가로 구분선으로 나눈다.
  */
 @Composable
@@ -75,12 +58,10 @@ fun BusinessInfoFooter(
     onOpenTerms: () -> Unit,
     onOpenPrivacyPolicy: () -> Unit,
     modifier: Modifier = Modifier,
-    collapsible: Boolean = false,
 ) {
-    var expanded by rememberSaveable { mutableStateOf(!collapsible) }
     // 부르는 쪽이 본문 아래에 block(32dp)을 띄우고, 여기서 compact(8dp)를 더해 구분선 위가 40dp가 된다.
-    // 접기 버튼과 링크 줄은 48dp 터치 높이 안에 글자 위아래 여백을 품고 있어, 구분선 아래와 맨 아래 여백은
-    // 그만큼 덜어 보이는 여백이 구분선 아래 20dp, 맨 아래 16dp가 되게 한다.
+    // 링크 줄은 48dp 터치 높이 안에 글자 위아래 여백을 품고 있어 맨 아래 여백을 따로 두지 않아도
+    // 보이는 여백이 16dp가 된다.
     Column(
         modifier =
             modifier
@@ -89,51 +70,9 @@ fun BusinessInfoFooter(
                 .padding(top = ManyakTheme.spacing.compact),
     ) {
         HorizontalDivider(thickness = ManyakTheme.sizes.borderWidth, color = ManyakTheme.colors.border)
-        Spacer(
-            modifier =
-                Modifier.height(if (collapsible) ManyakTheme.spacing.inline else ManyakTheme.spacing.passage),
-        )
-        if (collapsible) {
-            BusinessInfoToggle(expanded = expanded, onToggle = { expanded = !expanded })
-        }
-        AnimatedVisibility(
-            visible = expanded || !collapsible,
-            enter = expandVertically(tween(ManyakTheme.motion.elementEnterMillis)) + fadeIn(),
-            exit = shrinkVertically(tween(ManyakTheme.motion.elementExitMillis)) + fadeOut(),
-        ) {
-            BusinessInfoPairs()
-        }
+        Spacer(modifier = Modifier.height(ManyakTheme.spacing.passage))
+        BusinessInfoPairs()
         FooterLinks(onOpenTerms = onOpenTerms, onOpenPrivacyPolicy = onOpenPrivacyPolicy)
-    }
-}
-
-@Composable
-private fun BusinessInfoToggle(
-    expanded: Boolean,
-    onToggle: () -> Unit,
-) {
-    val state = stringResource(if (expanded) R.string.business_info_expanded else R.string.business_info_collapsed)
-    val rotation by animateFloatAsState(
-        targetValue = if (expanded) 180f else 0f,
-        animationSpec = tween(ManyakTheme.motion.elementEnterMillis),
-        label = "businessInfoChevron",
-    )
-    Row(
-        modifier =
-            Modifier
-                .heightIn(min = ManyakTheme.sizes.control)
-                .clickable(role = Role.Button, onClick = onToggle)
-                .semantics { stateDescription = state },
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(ManyakTheme.spacing.hairline),
-    ) {
-        FooterText(text = stringResource(R.string.business_info_toggle))
-        Icon(
-            painter = painterResource(R.drawable.ic_chevron_down),
-            contentDescription = null,
-            modifier = Modifier.size(ManyakTheme.sizes.iconSmall).rotate(rotation),
-            tint = ManyakTheme.colors.textSubtle,
-        )
     }
 }
 
@@ -230,9 +169,6 @@ private fun FooterText(text: String) {
 @Composable
 private fun BusinessInfoFooterPreview() {
     ManyakTheme(darkTheme = false) {
-        Column {
-            BusinessInfoFooter(onOpenTerms = {}, onOpenPrivacyPolicy = {})
-            BusinessInfoFooter(onOpenTerms = {}, onOpenPrivacyPolicy = {}, collapsible = true)
-        }
+        BusinessInfoFooter(onOpenTerms = {}, onOpenPrivacyPolicy = {})
     }
 }

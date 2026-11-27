@@ -186,7 +186,6 @@ private fun HomeSections(
             BusinessInfoFooter(
                 onOpenTerms = onOpenTerms,
                 onOpenPrivacyPolicy = onOpenPrivacyPolicy,
-                collapsible = true,
             )
         }
     }
